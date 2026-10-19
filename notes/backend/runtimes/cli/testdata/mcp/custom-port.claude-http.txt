@@ -1,0 +1,1 @@
+claude mcp add --transport http pwnotes http://127.0.0.1:48001/mcp --header "Authorization: Bearer abc"

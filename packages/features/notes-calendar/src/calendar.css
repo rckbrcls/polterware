@@ -1,0 +1,111 @@
+.notes-calendar {
+  --color-app-background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.notes-calendar__content {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.notes-calendar__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.notes-calendar__nav-button,
+.notes-calendar__today {
+  border: 1px solid var(--color-border-subtle) !important;
+  border-radius: var(--radius-card) !important;
+  background: var(--color-surface-subtle) !important;
+  box-shadow: 0 1px 2px var(--color-shadow-subtle);
+  color: var(--color-text-primary);
+}
+
+.notes-calendar__grid-wrap {
+  min-height: 0;
+  height: 100%;
+  flex: 1 1 auto;
+  overflow: hidden;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
+  transition: transform var(--spring-moderate-duration) var(--spring-moderate-ease);
+}
+
+.notes-calendar__grid-wrap[data-panning] {
+  user-select: none;
+}
+
+.notes-calendar__track {
+  display: flex;
+  width: 300%;
+  height: 100%;
+  transform: translate3d(-33.333333%, 0, 0);
+}
+
+.notes-calendar__pane {
+  display: flex;
+  flex: 0 0 33.333333%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.notes-calendar__pane-scroll {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.notes-calendar__pane[data-pane="neighbor"] {
+  pointer-events: none;
+}
+
+.notes-calendar__grid-wrap[data-shift] {
+  transform: translateY(8px);
+}
+
+.notes-calendar__overflow-list {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notes-calendar__grid-wrap { transition: none; transform: none; }
+}
+
+.notes-calendar:focus-visible { outline: 2px solid var(--color-text-secondary); outline-offset: -2px; }
+
+/* The calendar title sits centered in the top toolbar row instead of taking a row of its own. */
+.pw-detail-panel-root:has(.notes-calendar) .pw-detail-panel__collection-header { border-bottom: 1px solid var(--color-border-subtle); }
+.notes-calendar { position: relative; }
+.notes-calendar > .pw-page-header {
+  position: absolute; z-index: 1; top: -40px; left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: 40%; min-height: 0 !important; height: 40px;
+  padding: 0 !important; border: 0 !important; background: transparent; pointer-events: none;
+}
+.notes-calendar > .pw-page-header > div:first-child { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.notes-calendar > .pw-page-header > div:first-child > div { justify-content: center !important; }
+/* The centred title overlaps the toolbar row above, so the panels around the calendar must not clip it. */
+.pw-detail-panel__workspace:has(.notes-calendar), .pw-detail-panel__collection-panel:has(.notes-calendar) { overflow: visible; }
+
+/* The opaque sticky header carries the top gap, so the toolbar fade never sits over it and scrolled content cannot show above it. */
+.notes-calendar .pw-calendar__sticky { padding-top: 20px; transition: min-height var(--spring-fast-duration) var(--spring-fast-ease); border-bottom: 1px solid var(--color-border-subtle); }
+/* Neighbors are off screen when a pan starts, so they take the shared header height at once and their hour lines are aligned from the first pixel. */
+.notes-calendar [data-pane="neighbor"] .pw-calendar__sticky { transition: none; }
+/* The 12 AM label sits on the grid's first line, right under the header divider; keep it fully below the line instead of half hidden. */
+.notes-calendar .pw-calendar__gutter-label:first-child { transform: translateY(4px); }
+/* Day headings are hover targets; round them instead of square blocks. */
+.notes-calendar .pw-calendar .pw-button.pw-calendar__day-heading { border-radius: var(--radius-card); }
+/* Rounded headings sit inset on their own, so the square per-cell border lines are dropped to avoid broken corners. */
+.notes-calendar .pw-calendar__head-day { box-shadow: none; padding: 4px 2px; }
+.notes-calendar .pw-calendar .pw-button.pw-calendar__day-heading { height: 100%; }

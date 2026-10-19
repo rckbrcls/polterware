@@ -6,7 +6,7 @@ const columns = [
   {
     title: "Resources",
     links: [
-      { label: "Install", href: "/lore#install" },
+      { label: "Install", href: "/polterware#install" },
       { label: "Releases", href: RELEASES_URL, external: true },
       { label: "Getting started", href: `${REPO_URL}#readme`, external: true },
     ],

@@ -40,7 +40,7 @@ function ActorIcon(props: { actorKind: string; size?: number }) {
   );
 }
 
-/** Unified Change History feed (B9): human + agent justified mutations, detail in the shared panel. */
+/** Unified Change History feed (B9): human + agent justified mutations, detail in the page panel. */
 export function AgentRunHistoryCard(props: {
   changes: ProjectChangeRow[];
   selectedStepId: string;
@@ -68,7 +68,7 @@ export function AgentRunHistoryCard(props: {
   });
   onCleanup(() => detailPanelStore.getState().unregisterCollection(HISTORY_SCOPE));
 
-  // The shared panel owns selection; mirror it into the page so it loads the run.
+  // The panel store owns selection; mirror it into the page so it loads the run.
   createEffect(() => {
     const target = activeTarget();
     const stepId = target?.scopeId === HISTORY_SCOPE ? target.entityId : "";

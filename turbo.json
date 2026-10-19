@@ -6,14 +6,14 @@
       "outputs": [
         "backend/platform/gen/**",
         "packages/contracts/src/gen/**",
-        "sparky/backend/platform/gen/**",
-        "packages/sparky-contracts/src/gen/**"
+        "notes/backend/platform/gen/**",
+        "packages/notes-contracts/src/gen/**"
       ]
     },
     "dev": {
       "cache": false,
       "persistent": true,
-      "passThroughEnv": ["SPARKY_CORE_DB", "SPARKY_CORE_BIN", "SPARKY_CORE_ENDPOINT", "SPARKY_CORE_TOKEN", "REMOTE_DEBUGGING_PORT", "ELECTRON_CLI_ARGS"]
+      "passThroughEnv": ["PWNOTES_CORE_DB", "PWNOTES_CORE_BIN", "PWNOTES_CORE_ENDPOINT", "PWNOTES_CORE_TOKEN", "REMOTE_DEBUGGING_PORT", "ELECTRON_CLI_ARGS"]
     },
     "build": {
       "dependsOn": ["^build"],

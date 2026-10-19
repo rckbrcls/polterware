@@ -9,7 +9,6 @@ import {
   DETAIL_PANEL_DEFAULT_WIDTH,
   DETAIL_PANEL_MAX_WIDTH,
   DETAIL_PANEL_MIN_WIDTH,
-  DETAIL_PANEL_SIDEBAR_ID,
   DetailPanel,
   clampDetailPanelWidth,
 } from "./detail-panel";
@@ -24,7 +23,7 @@ import { repoPath } from "../test/repo-path";
 const css = () =>
   readFileSync(repoPath("packages/frontend/design-system/src/detail-panel.css"), "utf8");
 const source = () =>
-  readFileSync(repoPath("packages/frontend/design-system/src/detail-panel.tsx"), "utf8");
+  readFileSync(repoPath("packages/frontend/design-system/src/side-panel/side-panel.tsx"), "utf8");
 
 type Harness = {
   host: HTMLDivElement;
@@ -46,6 +45,10 @@ function mount(options: {
   available?: boolean;
   storageKey?: string;
   legacyStorageKey?: string;
+  mode?: "reserve" | "overlay";
+  resizable?: boolean;
+  dismissOnOutsideClick?: boolean;
+  shortcuts?: boolean;
   content?: () => JSX.Element;
 } = {}): Harness {
   let dimensions = { width: 1200, height: 800 };
@@ -68,6 +71,10 @@ function mount(options: {
         onExpandedChange={setExpanded}
         storageKey={options.storageKey}
         legacyStorageKey={options.legacyStorageKey}
+        mode={options.mode}
+        resizable={options.resizable}
+        dismissOnOutsideClick={options.dismissOnOutsideClick}
+        shortcuts={options.shortcuts}
       >
         <DetailPanel.Collection>
           <PageToolbar.Root><PageToolbar.Actions><button>Filter</button></PageToolbar.Actions></PageToolbar.Root>
@@ -91,7 +98,7 @@ function mount(options: {
   return {
     host,
     root: () => host.querySelector<HTMLElement>(".pw-detail-panel-root")!,
-    sidebar: () => host.querySelector<HTMLElement>(`#${DETAIL_PANEL_SIDEBAR_ID}`)!,
+    sidebar: () => host.querySelector<HTMLElement>(".pw-detail-panel__frame")!,
     open,
     setOpen,
     expanded,
@@ -246,6 +253,85 @@ describe("lateral DetailPanel", () => {
     divider.click();
     expect(panel.open()).toBe(true);
     panel.dispose();
+  });
+  it("never reserves collection space for an overlay, including resize, expand and exit", async () => {
+    const panel = mount({ mode: "overlay", storageKey: "test.overlay" });
+    try {
+      expect(panel.root().dataset.mode).toBe("overlay");
+      expect(panel.root().style.getPropertyValue("--detail-panel-space")).toBe("0px");
+      const divider = panel.host.querySelector<HTMLElement>(".pw-detail-panel__resize-handle")!;
+      press({ key: "ArrowLeft", shiftKey: true }, divider);
+      expect(localStorage.getItem("test.overlay")).toBe("464");
+      expect(panel.root().style.getPropertyValue("--detail-panel-width")).toBe("464px");
+      expect(panel.root().style.getPropertyValue("--detail-panel-space")).toBe("0px");
+      panel.setExpanded(true);
+      expect(panel.root().style.getPropertyValue("--detail-panel-space")).toBe("0px");
+      panel.setExpanded(false);
+      await nextPaint();
+      panel.setOpen(false);
+      expect(panel.sidebar().hidden).toBe(false);
+      expect(panel.root().style.getPropertyValue("--detail-panel-space")).toBe("0px");
+      await vi.waitFor(() => expect(panel.sidebar().hidden).toBe(true));
+      expect(panel.root().style.getPropertyValue("--detail-panel-space")).toBe("0px");
+    } finally { panel.dispose(); }
+    const restored = mount({ mode: "overlay", storageKey: "test.overlay" });
+    try { expect(restored.root().style.getPropertyValue("--detail-panel-width")).toBe("464px"); }
+    finally { restored.dispose(); }
+  });
+  it("uses distinct frame ids and dispatches each shortcut to the focused root only", () => {
+    const first = mount(), second = mount();
+    try {
+      expect(first.sidebar().id).not.toBe(second.sidebar().id);
+      for (const panel of [first, second]) {
+        expect(panel.host.querySelector('[role="separator"]')?.getAttribute("aria-controls")).toBe(panel.sidebar().id);
+      }
+      first.host.querySelector<HTMLButtonElement>(".pw-detail-panel__body button")!.focus();
+      press({ key: "j", metaKey: true, shiftKey: true });
+      expect(first.expanded()).toBe(true);
+      expect(second.expanded()).toBe(false);
+      press({ key: "j", metaKey: true });
+      expect(first.open()).toBe(false);
+      expect(second.open()).toBe(true);
+    } finally { second.dispose(); first.dispose(); }
+  });
+  it("can disable resizing, outside dismissal and global shortcuts while retaining local controls", () => {
+    const panel = mount({ resizable: false, dismissOnOutsideClick: false, shortcuts: false });
+    const outside = document.createElement("button"); document.body.append(outside);
+    try {
+      const divider = panel.host.querySelector<HTMLElement>('[role="separator"]')!;
+      expect(divider.hidden).toBe(true);
+      press({ key: "ArrowLeft" }, divider);
+      expect(panel.root().style.getPropertyValue("--detail-panel-width")).toBe("400px");
+      outside.click();
+      press({ key: "j", metaKey: true });
+      expect(panel.open()).toBe(true);
+      press({ key: "j", metaKey: true, shiftKey: true });
+      expect(panel.expanded()).toBe(false);
+      panel.host.querySelector<HTMLButtonElement>('[aria-label="Expand details"]')!.click();
+      expect(panel.expanded()).toBe(true);
+      panel.host.querySelector<HTMLButtonElement>(".pw-detail-panel__body button")!.focus();
+      press({ key: "Escape" });
+      expect(panel.expanded()).toBe(false);
+      panel.host.querySelector<HTMLButtonElement>('[aria-label="Close details"]')!.click();
+      expect(panel.open()).toBe(false);
+    } finally { outside.remove(); panel.dispose(); }
+  });
+  it("does not dismiss or claim shortcuts from hidden page roots", () => {
+    const panel = mount();
+    const outside = document.createElement("button"); document.body.append(outside);
+    try {
+      for (const hidden of ["hidden", "inert", "aria-hidden", "display"] as const) {
+        if (hidden === "display") panel.host.style.display = "none";
+        else panel.host.setAttribute(hidden, hidden === "aria-hidden" ? "true" : "");
+        outside.click();
+        press({ key: "j", metaKey: true });
+        expect(panel.open(), hidden).toBe(true);
+        panel.host.removeAttribute(hidden);
+        panel.host.style.display = "";
+      }
+      outside.click();
+      expect(panel.open()).toBe(false);
+    } finally { outside.remove(); panel.dispose(); }
   });
   it("keeps controls without a feature header and hides them when details are unavailable", () => {
     for (const message of ["No selection", "Loading details", "Details could not be loaded"]) {

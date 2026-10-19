@@ -61,6 +61,7 @@ export {
   sectionAvailable,
 } from "./route";
 export { MainSurface, PageHeader, PageContent } from "./main-surface";
+export { EntityDetailHost, type EntityDetailHostProps } from "./entity-detail-host";
 export { SidebarNav, SidebarSettingsItem } from "./sidebar";
 export type { SidebarCount } from "./sidebar";
 export { TitleBar } from "./title-bar";

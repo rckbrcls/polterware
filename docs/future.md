@@ -12,15 +12,13 @@ Category: **Project Context & Change Intelligence for AI Coding.** Polterware ke
 - Local value without Cloud. Cloud adds continuity and collaboration; it never gates local features.
 - People and agents share the same model, contracts, and audit semantics.
 - Drift is a finding, never an automatic overwrite.
-- Observe providers; never operate them. Ops, Terminal-as-product, and Nodes stay removed.
+- Ops, Terminal-as-product, and Nodes stay removed.
 - The Polterware store (SQLite, later Cloud) is the source of truth. Repositories give evidence in and receive projections out.
 - AI asks, humans decide. Agents decide only what was explicitly delegated, and that is recorded.
-- Coordination, not command: Polterware is the shared board agents read and update, not a dispatcher that launches agents.
 
 ## Explicitly not now
 
 - A rigid state machine for agents (UNDERSTAND → PLAN → …).
-- Polterware as agent dispatcher or orchestrator.
 - LLM calls or user LLM keys inside the Desktop or the local binary.
 - A sidebar for skills, plugins, or hooks as a product pillar (setup lives in Agents › Access).
 - AI-memory or "chat over the repo" positioning; codebase-wide RAG as ingest.

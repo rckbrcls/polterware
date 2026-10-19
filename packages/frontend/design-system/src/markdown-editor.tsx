@@ -55,13 +55,13 @@ export type MarkdownEditorProps = {
   attachmentActions?: { id: string; label: string; icon?: (props: { size?: number }) => JSX.Element; run: () => Promise<string[]> }[];
 };
 
-const ATTACHMENT_SCHEME = "sparky-attachment:";
+const ATTACHMENT_SCHEME = "notes-attachment:";
 
-/** Block ids embedded as `![attachment](sparky-attachment:ID)`; marked wraps them in a paragraph. */
+/** Block ids embedded as `![attachment](notes-attachment:ID)`; marked wraps them in a paragraph. */
 function adoptAttachments(html: string): string {
   if (!html.includes(ATTACHMENT_SCHEME)) return html;
   return html.replace(
-    /<p>\s*<img src="sparky-attachment:([^"]+)"[^>]*>\s*<\/p>/g,
+    /<p>\s*<img src="notes-attachment:([^"]+)"[^>]*>\s*<\/p>/g,
     (_match, id: string) => `<div data-attachment-id="${id}"></div>`,
   );
 }
@@ -83,7 +83,9 @@ turndown.addRule("attachmentBlock", {
 
 // GFM task lists: `- [ ] item` <-> TipTap taskList/taskItem.
 turndown.addRule("taskItem", {
-  filter: (node) => node.nodeName === "LI" && node.getAttribute("data-type") === "taskItem",
+  // Current TipTap marks task items with data-checked only; the taskList parent carries the type.
+  filter: (node) => node.nodeName === "LI" && (node.getAttribute("data-type") === "taskItem" || node.hasAttribute("data-checked") ||
+    node.parentElement?.getAttribute("data-type") === "taskList"),
   replacement: (content, node) => {
     const checked = (node as HTMLElement).getAttribute("data-checked") === "true";
     return `- [${checked ? "x" : " "}] ${content.trim().replace(/\n+/g, " ")}\n`;

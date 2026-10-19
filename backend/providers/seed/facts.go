@@ -24,7 +24,7 @@ func seedFacts(store *storepkg.Store) error {
 	}{
 		{"fact-single-core", "Only the local core process opens SQLite.", "AGENTS.md", "ev-agents"},
 		{"fact-core-daemon", "The core is a detached daemon that keeps running until stopped.", "AGENTS.md", "ev-agents"},
-		{"fact-renderer-bridge", "The renderer reads and writes only through window.lore.", "AGENTS.md", "ev-agents"},
+		{"fact-renderer-bridge", "The renderer reads and writes only through window.polterware.", "AGENTS.md", "ev-agents"},
 		{"fact-no-credentials", "Provider credentials are never persisted in SQLite.", "AGENTS.md", "ev-agents"},
 		{"fact-category", "The category is Project Context and Change Intelligence for AI Coding.", "AGENTS.md", "ev-agents"},
 		{"fact-store-truth", "The Polterware store is the source of truth; Polter text is input, not storage.", "AGENTS.md", "ev-agents"},

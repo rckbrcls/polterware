@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package notes.v1;
+
+option go_package = "github.com/polterware/polterware/notes/backend/platform/gen/notes/v1;notesv1";
+
+message GetAgentInfoRequest {}
+
+message GetAgentInfoResponse {
+  int32 mcp_port = 1;
+  bool token_present = 2;
+  string token = 3;
+  bool enabled = 4;
+  bool allow_file_attach = 5;
+  string claude_stdio = 6;
+  string claude_http = 7;
+  string cursor_stdio_json = 8;
+  string cursor_http_json = 9;
+}
+
+message RotateAgentTokenRequest {}
+
+message RotateAgentTokenResponse {
+  string token = 1;
+}
+
+message SetAgentEnabledRequest {
+  bool enabled = 1;
+}
+
+message SetAgentEnabledResponse {
+  bool enabled = 1;
+}
+
+message SetAllowFileAttachRequest {
+  bool allow = 1;
+}
+
+message SetAllowFileAttachResponse {
+  bool allow = 1;
+}
+
+service AgentAccessService {
+  rpc GetInfo(GetAgentInfoRequest) returns (GetAgentInfoResponse);
+  rpc RotateToken(RotateAgentTokenRequest) returns (RotateAgentTokenResponse);
+  rpc SetEnabled(SetAgentEnabledRequest) returns (SetAgentEnabledResponse);
+  rpc SetAllowFileAttach(SetAllowFileAttachRequest) returns (SetAllowFileAttachResponse);
+}

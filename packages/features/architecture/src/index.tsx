@@ -1,4 +1,5 @@
 import { batch, createEffect, createMemo, createSignal, on, onCleanup, Show, untrack } from "solid-js";
+import { EntityDetailHost } from "@polterware/feature-shell";
 import type { ArchitectureDocument, CaptureMode, NodeType } from "@polterware/frontend-canvas";
 import {
   createEmptyDocument,
@@ -850,7 +851,7 @@ export function ArchitectureView(props: {
   );
 
   return (
-    <>
+    <EntityDetailHost>
       <>
         <div class="flex h-full min-h-0 flex-col">
           <PageToolbar.Root>
@@ -1045,6 +1046,6 @@ export function ArchitectureView(props: {
         onSubmit={(d) => submitCreate(d)}
         resourceLinkPort={resourcePort()}
       />
-    </>
+    </EntityDetailHost>
   );
 }

@@ -3,10 +3,10 @@
    See DESIGN.md Materials · edge light · surface-panel. */
 
 :root {
-  --edge-light-field-highlight: rgb(255 255 255 / 0.04);
-  --edge-light-field-rim: rgb(255 255 255 / 0.032);
-  --edge-light-surface-highlight: rgb(255 255 255 / 0.055);
-  --edge-light-surface-rim: rgb(255 255 255 / 0.04);
+  --edge-light-field-highlight: rgb(255 255 255 / 0.1);
+  --edge-light-field-rim: rgb(255 255 255 / 0.1);
+  --edge-light-surface-highlight: rgb(255 255 255 / 0.1);
+  --edge-light-surface-rim: rgb(255 255 255 / 0.1);
   --material-fade-edge-bottom: linear-gradient(to bottom, var(--color-surface) 0%, var(--color-surface) 48%, color-mix(in srgb, var(--color-surface) 45%, transparent) 68%, color-mix(in srgb, var(--color-surface) 18%, transparent) 86%, transparent 100%);
   --material-fade-edge-top: linear-gradient(to top, var(--color-surface) 0%, var(--color-surface) 48%, color-mix(in srgb, var(--color-surface) 45%, transparent) 68%, color-mix(in srgb, var(--color-surface) 18%, transparent) 86%, transparent 100%);
   --material-fade-edge-toolbar-trail: linear-gradient(to bottom, var(--color-surface) 0%, color-mix(in srgb, var(--color-surface) 52%, transparent) 30%, color-mix(in srgb, var(--color-surface) 18%, transparent) 65%, transparent 100%);
@@ -132,7 +132,8 @@
   border: 1px solid var(--edge-light-field-rim);
   border-top-color: var(--edge-light-field-highlight);
   border-radius: var(--radius-control);
-  background: var(--color-surface-subtle);
+  /* Inset well: darker than the card it sits in, like the OpenCode code/input boxes. */
+  background: var(--color-app-background);
   color: var(--color-text-primary);
   transition:
     background var(--duration-control) var(--ease-standard),
@@ -150,7 +151,7 @@
 }
 
 .control-field:hover:not(:disabled):not([aria-disabled="true"]) {
-  background: var(--color-surface-raised);
+  background: var(--color-surface);
 }
 
 .control-field:disabled,
@@ -207,8 +208,11 @@
 
 /** Nested product card — same as base.css .card-panel (design-system Card). */
 .card-panel {
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--edge-light-surface-rim);
   border-radius: var(--radius-card);
   background: var(--color-surface-subtle);
-  box-shadow: 0 1px 2px var(--color-shadow-subtle);
+  /* Raised card lift, same stack as OpenCode elevation-raised */
+  box-shadow:
+    0 2px 4px var(--color-shadow),
+    0 1px 2px var(--color-shadow);
 }

@@ -21,24 +21,24 @@ Project Context and Change Intelligence for AI Coding: one local project model t
 ! Never persist provider credentials in SQLite
 
 # polterware/desktop: Desktop
-level: domain · under: polterware · decisions: ADR-0002 · path: apps/lore-desktop
+level: domain · under: polterware · decisions: ADR-0002 · path: apps/polterware-desktop
 
 Electron Main, a typed preload bridge, and a Solid renderer over the local core.
 
-! The renderer reads and writes only through window.lore
+! The renderer reads and writes only through window.polterware
 
 # polterware/desktop/main: Electron Main
-level: component · under: polterware/desktop · path: apps/lore-desktop/src/main · uses: polterware/core/server, polterware/contracts/generated
+level: component · under: polterware/desktop · path: apps/polterware-desktop/src/main · uses: polterware/core/server, polterware/contracts/generated
 
 Thin process: window security, IPC, core supervision, updater.
 
 # polterware/desktop/preload: Preload bridge
-level: component · under: polterware/desktop · path: apps/lore-desktop/src/preload · uses: polterware/desktop/main, polterware/contracts/generated
+level: component · under: polterware/desktop · path: apps/polterware-desktop/src/preload · uses: polterware/desktop/main, polterware/contracts/generated
 
-The typed window.lore surface.
+The typed window.polterware surface.
 
 # polterware/desktop/renderer: Solid renderer
-level: component · under: polterware/desktop · path: apps/lore-desktop/src/renderer · uses: polterware/desktop/preload, polterware/frontend/features, polterware/frontend/design-system, polterware/contracts/generated
+level: component · under: polterware/desktop · path: apps/polterware-desktop/src/renderer · uses: polterware/desktop/preload, polterware/frontend/features, polterware/frontend/design-system, polterware/contracts/generated
 
 Product surfaces built from the shared design system and feature packages.
 
@@ -438,7 +438,7 @@ stage: plan · under: polterware/desktop/renderer
 
 Cover request payload shapes and partial failure in the workspace loader and persister.
 
-- [ ] persist.ts payload shapes with a mocked core client §apps/lore-desktop/src/renderer/workspace/*§
+- [ ] persist.ts payload shapes with a mocked core client §apps/polterware-desktop/src/renderer/workspace/*§
 - [ ] load.ts partial-failure behavior
 - [ ] Smoke test that the contracts exports the Desktop uses exist §packages/contracts/*§
 

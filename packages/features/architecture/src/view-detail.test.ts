@@ -82,17 +82,9 @@ describe("ArchitectureViewDetail composition contract", () => {
     expect(source).not.toContain("description=");
   });
 
-  it("is wired from Architecture views activation with Open and Edit", () => {
-    expect(architectureIndex).toContain('from "./view-detail"');
-    expect(architectureIndex).toContain("<ArchitectureViewDetail");
-    expect(architectureIndex).toContain('entityKind === "arch-view"');
-    expect(architectureIndex).toContain("onOpen");
-    expect(architectureIndex).toContain("onEdit");
-    expect(architectureIndex).toContain("onDelete");
-    expect(architectureIndex).toContain("openEditView");
-    expect(architectureIndex).toContain('setDeepMode("view-edit")');
-    expect(architectureIndex).toContain("setActiveViewId");
-    expect(architectureIndex).toContain('props.onTabChange?.("map")');
+  it("stays exported from the Architecture entry after the Views tab was retired", () => {
+    expect(architectureIndex).toContain('export { ArchitectureViewDetail } from "./view-detail"');
+    expect(architectureIndex).not.toContain("<ArchitectureViewDetail");
   });
 });
 

@@ -41,7 +41,7 @@ function Gallery() {
   return <DesignSystemProvider storagePrefix="gallery" expandDetail={() => setExpanded(true)}>
     <main class="gallery" data-reduced-motion={reduced() ? "" : undefined}>
       <style>{reduced() ? "*, *::before, *::after { transition-duration: 0s !important; animation-duration: 0s !important; }" : ""}</style>
-      <header class="gallery__header"><div><h1>Design system</h1><p>Shared Polterware and Sparky primitives · preview data</p></div><Switch checked={reduced()} onCheckedChange={setReduced} aria-label="Reduced motion" /></header>
+      <header class="gallery__header"><div><h1>Design system</h1><p>Shared Polterware and Polterware Notes primitives · preview data</p></div><Switch checked={reduced()} onCheckedChange={setReduced} aria-label="Reduced motion" /></header>
       <Entry title="Checkbox"><Checkbox label="Controlled" checked={checked()} onCheckedChange={d => setChecked(d.checked === true)} /><Checkbox label="Round" shape="round" defaultChecked /><Checkbox label="Indeterminate" checked="indeterminate" /><Checkbox label="Disabled" disabled /></Entry>
       <Entry title="SegmentedControl"><SegmentedControl aria-label="Calendar view" options={options} value={segment()} onValueChange={d => setSegment(d.value)} /><SegmentedControl aria-label="Disabled view" options={options} defaultValue="day" disabled /></Entry>
       <Entry title="NumberStepper"><NumberStepper label="Minutes" value={number()} min={1} max={60} onValueChange={d => setNumber(d.value)} /><NumberStepper label="Disabled" defaultValue="5" disabled /></Entry>

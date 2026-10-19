@@ -35,10 +35,10 @@ describe("Button navigation", () => {
     const link = host.querySelector("a")!;
     const button = host.querySelector("button")!;
     expect(link.className).toBe(button.className);
-    setVariant("ghost"); setHref("/creations/lore"); setSelected(true);
+    setVariant("ghost"); setHref("/creations/polterware"); setSelected(true);
     expect(link.classList.contains("rounded-full")).toBe(true);
     expect(link.classList.contains("selected")).toBe(true);
-    expect(link.getAttribute("href")).toBe("/creations/lore");
+    expect(link.getAttribute("href")).toBe("/creations/polterware");
     expect(button.classList.contains("rounded-full")).toBe(true);
   });
 

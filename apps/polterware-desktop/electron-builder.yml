@@ -1,0 +1,38 @@
+appId: com.polterware.polterware
+productName: Polterware
+electronVersion: 44.4.5
+artifactName: Polterware-${version}-${arch}.${ext}
+publish: null
+afterPack: ../../tooling/release/sign-mac.cjs
+asar: true
+
+directories:
+  buildResources: resources
+  output: release/${version}
+
+files:
+  - out/**/*
+  - package.json
+  - "!**/*.map"
+
+extraResources:
+  - from: resources/app-icons
+    to: resources/app-icons
+    filter:
+      - "main.png"
+      - "black.png"
+      - "white.png"
+  - from: ../../dist
+    to: .
+    filter:
+      - polterware
+
+mac:
+  identity: null
+  hardenedRuntime: false
+  notarize: false
+  category: public.app-category.developer-tools
+  target:
+    - dmg
+    - zip
+  icon: resources/polterware.icon

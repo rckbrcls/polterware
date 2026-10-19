@@ -1,14 +1,26 @@
 import { createContext, createEffect, createSignal, onCleanup, untrack, useContext, type Accessor } from "solid-js";
 
 /** Portals keep their originating panel owner, including sibling callback dialogs. */
-export type PanelInteractionOwner = { enabled: Accessor<boolean>; elements: Set<HTMLElement> };
+export type PanelInteractionOwner = { enabled: Accessor<boolean>; elements: Set<HTMLElement>; parent?: PanelInteractionOwner };
 export const PanelInteractionContext = createContext<PanelInteractionOwner>();
 const owners = new Set<PanelInteractionOwner>();
 let activationOwner: PanelInteractionOwner | undefined;
 
 export function panelOwnerAt(target: EventTarget | null): PanelInteractionOwner | undefined {
   if (!(target instanceof Node)) return undefined;
-  return Array.from(owners).find((owner) => owner.enabled() && Array.from(owner.elements).some((element) => element.contains(target)));
+  for (let node: Node | null = target; node; node = node.parentNode) {
+    for (const owner of owners) {
+      if (owner.enabled() && owner.elements.has(node as HTMLElement)) return owner;
+    }
+  }
+  return undefined;
+}
+
+export function panelOwnsTarget(owner: PanelInteractionOwner, target: EventTarget | null): boolean {
+  for (let current = panelOwnerAt(target); current; current = current.parent) {
+    if (current === owner) return true;
+  }
+  return false;
 }
 
 export function rememberPanelInteraction(target: EventTarget | null) {

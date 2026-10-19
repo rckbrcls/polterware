@@ -1,4 +1,4 @@
-name: Vitals release
+name: Polterware Vitals release
 
 on:
   push:

@@ -238,7 +238,104 @@ importers:
         specifier: 2.11.14
         version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
 
-  apps/lore-desktop:
+  apps/notes-desktop:
+    dependencies:
+      '@bufbuild/protobuf':
+        specifier: ^2.15.0
+        version: 2.15.0
+      '@connectrpc/connect':
+        specifier: ^2.2.0
+        version: 2.2.0(@bufbuild/protobuf@2.15.0)
+      '@connectrpc/connect-node':
+        specifier: ^2.2.0
+        version: 2.2.0(@bufbuild/protobuf@2.15.0)(@connectrpc/connect@2.2.0(@bufbuild/protobuf@2.15.0))
+      '@polterware/feature-notes-attachments':
+        specifier: workspace:*
+        version: link:../../packages/features/notes-attachments
+      '@polterware/feature-notes-calendar':
+        specifier: workspace:*
+        version: link:../../packages/features/notes-calendar
+      '@polterware/feature-notes-focus':
+        specifier: workspace:*
+        version: link:../../packages/features/notes-focus
+      '@polterware/feature-notes-library':
+        specifier: workspace:*
+        version: link:../../packages/features/notes-library
+      '@polterware/feature-notes-map':
+        specifier: workspace:*
+        version: link:../../packages/features/notes-map
+      '@polterware/feature-notes-schedule':
+        specifier: workspace:*
+        version: link:../../packages/features/notes-schedule
+      '@polterware/feature-notes-search':
+        specifier: workspace:*
+        version: link:../../packages/features/notes-search
+      '@polterware/feature-notes-settings':
+        specifier: workspace:*
+        version: link:../../packages/features/notes-settings
+      '@polterware/feature-notes-shell':
+        specifier: workspace:*
+        version: link:../../packages/features/notes-shell
+      '@polterware/feature-notes-spaces':
+        specifier: workspace:*
+        version: link:../../packages/features/notes-spaces
+      '@polterware/frontend-design-system':
+        specifier: workspace:*
+        version: link:../../packages/frontend/design-system
+      '@polterware/notes-contracts':
+        specifier: workspace:*
+        version: link:../../packages/notes-contracts
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+    devDependencies:
+      '@electron-toolkit/utils':
+        specifier: ^4.0.0
+        version: 4.0.0(electron@44.4.5(supports-color@8.1.1))
+      '@fontsource-variable/inter':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@playwright/test':
+        specifier: ^1.63.0
+        version: 1.63.0
+      '@tailwindcss/vite':
+        specifier: ^4.3.3
+        version: 4.3.3(vite@7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@types/node':
+        specifier: ^24.13.6
+        version: 24.13.6
+      electron:
+        specifier: 44.4.5
+        version: 44.4.5(supports-color@8.1.1)
+      electron-builder:
+        specifier: ^26.15.3
+        version: 26.15.3(electron-builder-squirrel-windows@26.15.3)(supports-color@8.1.1)
+      electron-log:
+        specifier: ^5.4.4
+        version: 5.4.4
+      electron-vite:
+        specifier: ^5.0.0
+        version: 5.0.0(supports-color@8.1.1)(vite@7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      jsdom:
+        specifier: ^30.1.1
+        version: 30.1.1(@noble/hashes@2.4.0)
+      tailwindcss:
+        specifier: ^4.3.3
+        version: 4.3.3
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+      vite:
+        specifier: ^7.3.6
+        version: 7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite-plugin-solid:
+        specifier: ^2.11.14
+        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@24.13.6)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@24.13.6)(typescript@7.0.2))(vite@7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  apps/polterware-desktop:
     dependencies:
       '@bufbuild/protobuf':
         specifier: ^2.15.0
@@ -329,104 +426,7 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@24.13.6)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@24.13.6)(typescript@7.0.2))(vite@7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
 
-  apps/sparky-desktop:
-    dependencies:
-      '@bufbuild/protobuf':
-        specifier: ^2.15.0
-        version: 2.15.0
-      '@connectrpc/connect':
-        specifier: ^2.2.0
-        version: 2.2.0(@bufbuild/protobuf@2.15.0)
-      '@connectrpc/connect-node':
-        specifier: ^2.2.0
-        version: 2.2.0(@bufbuild/protobuf@2.15.0)(@connectrpc/connect@2.2.0(@bufbuild/protobuf@2.15.0))
-      '@polterware/feature-sparky-attachments':
-        specifier: workspace:*
-        version: link:../../packages/features/sparky-attachments
-      '@polterware/feature-sparky-calendar':
-        specifier: workspace:*
-        version: link:../../packages/features/sparky-calendar
-      '@polterware/feature-sparky-focus':
-        specifier: workspace:*
-        version: link:../../packages/features/sparky-focus
-      '@polterware/feature-sparky-map':
-        specifier: workspace:*
-        version: link:../../packages/features/sparky-map
-      '@polterware/feature-sparky-notes':
-        specifier: workspace:*
-        version: link:../../packages/features/sparky-notes
-      '@polterware/feature-sparky-spaces':
-        specifier: workspace:*
-        version: link:../../packages/features/sparky-spaces
-      '@polterware/feature-sparky-schedule':
-        specifier: workspace:*
-        version: link:../../packages/features/sparky-schedule
-      '@polterware/feature-sparky-search':
-        specifier: workspace:*
-        version: link:../../packages/features/sparky-search
-      '@polterware/feature-sparky-settings':
-        specifier: workspace:*
-        version: link:../../packages/features/sparky-settings
-      '@polterware/feature-sparky-shell':
-        specifier: workspace:*
-        version: link:../../packages/features/sparky-shell
-      '@polterware/frontend-design-system':
-        specifier: workspace:*
-        version: link:../../packages/frontend/design-system
-      '@polterware/sparky-contracts':
-        specifier: workspace:*
-        version: link:../../packages/sparky-contracts
-      solid-js:
-        specifier: ^1.9.15
-        version: 1.9.15
-    devDependencies:
-      '@electron-toolkit/utils':
-        specifier: ^4.0.0
-        version: 4.0.0(electron@44.4.5(supports-color@8.1.1))
-      '@fontsource-variable/inter':
-        specifier: ^5.3.0
-        version: 5.3.0
-      '@playwright/test':
-        specifier: ^1.63.0
-        version: 1.63.0
-      '@tailwindcss/vite':
-        specifier: ^4.3.3
-        version: 4.3.3(vite@7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-      '@types/node':
-        specifier: ^24.13.6
-        version: 24.13.6
-      electron:
-        specifier: 44.4.5
-        version: 44.4.5(supports-color@8.1.1)
-      electron-builder:
-        specifier: ^26.15.3
-        version: 26.15.3(electron-builder-squirrel-windows@26.15.3)(supports-color@8.1.1)
-      electron-log:
-        specifier: ^5.4.4
-        version: 5.4.4
-      electron-vite:
-        specifier: ^5.0.0
-        version: 5.0.0(supports-color@8.1.1)(vite@7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-      jsdom:
-        specifier: ^30.1.1
-        version: 30.1.1(@noble/hashes@2.4.0)
-      tailwindcss:
-        specifier: ^4.3.3
-        version: 4.3.3
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
-      vite:
-        specifier: ^7.3.6
-        version: 7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3)
-      vite-plugin-solid:
-        specifier: ^2.11.14
-        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-      vitest:
-        specifier: ^5.0.1
-        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@24.13.6)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@24.13.6)(typescript@7.0.2))(vite@7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  apps/vitals:
+  apps/vitals-desktop:
     dependencies:
       '@polterware/frontend-design-system':
         specifier: workspace:*
@@ -544,6 +544,9 @@ importers:
 
   packages/features/architecture:
     dependencies:
+      '@polterware/feature-shell':
+        specifier: workspace:*
+        version: link:../shell
       '@polterware/frontend-canvas':
         specifier: workspace:*
         version: link:../../frontend/canvas
@@ -635,8 +638,291 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@24.13.6)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@24.13.6)(typescript@7.0.2))(vite@8.3.4(@types/node@24.13.6)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
 
+  packages/features/notes-attachments:
+    dependencies:
+      '@bufbuild/protobuf':
+        specifier: ^2.15.0
+        version: 2.15.0
+      '@polterware/feature-notes-shell':
+        specifier: workspace:*
+        version: link:../notes-shell
+      '@polterware/frontend-design-system':
+        specifier: workspace:*
+        version: link:../../frontend/design-system
+      '@polterware/notes-contracts':
+        specifier: workspace:*
+        version: link:../../notes-contracts
+    devDependencies:
+      jsdom:
+        specifier: ^30.1.1
+        version: 30.1.1(@noble/hashes@2.4.0)
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+      vite-plugin-solid:
+        specifier: ^2.11.14
+        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/features/notes-calendar:
+    dependencies:
+      '@bufbuild/protobuf':
+        specifier: ^2.15.0
+        version: 2.15.0
+      '@polterware/feature-notes-shell':
+        specifier: workspace:*
+        version: link:../notes-shell
+      '@polterware/frontend-design-system':
+        specifier: workspace:*
+        version: link:../../frontend/design-system
+      '@polterware/notes-contracts':
+        specifier: workspace:*
+        version: link:../../notes-contracts
+    devDependencies:
+      jsdom:
+        specifier: ^30.1.1
+        version: 30.1.1(@noble/hashes@2.4.0)
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+      vite-plugin-solid:
+        specifier: ^2.11.14
+        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/features/notes-focus:
+    dependencies:
+      '@bufbuild/protobuf':
+        specifier: ^2.15.0
+        version: 2.15.0
+      '@polterware/feature-notes-shell':
+        specifier: workspace:*
+        version: link:../notes-shell
+      '@polterware/frontend-design-system':
+        specifier: workspace:*
+        version: link:../../frontend/design-system
+      '@polterware/notes-contracts':
+        specifier: workspace:*
+        version: link:../../notes-contracts
+    devDependencies:
+      jsdom:
+        specifier: ^30.1.1
+        version: 30.1.1(@noble/hashes@2.4.0)
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+      vite-plugin-solid:
+        specifier: ^2.11.14
+        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/features/notes-library:
+    dependencies:
+      '@bufbuild/protobuf':
+        specifier: ^2.15.0
+        version: 2.15.0
+      '@polterware/feature-notes-shell':
+        specifier: workspace:*
+        version: link:../notes-shell
+      '@polterware/frontend-design-system':
+        specifier: workspace:*
+        version: link:../../frontend/design-system
+      '@polterware/notes-contracts':
+        specifier: workspace:*
+        version: link:../../notes-contracts
+    devDependencies:
+      jsdom:
+        specifier: ^30.1.1
+        version: 30.1.1(@noble/hashes@2.4.0)
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+      vite-plugin-solid:
+        specifier: ^2.11.14
+        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/features/notes-map:
+    dependencies:
+      '@bufbuild/protobuf':
+        specifier: ^2.15.0
+        version: 2.15.0
+      '@polterware/feature-notes-shell':
+        specifier: workspace:*
+        version: link:../notes-shell
+      '@polterware/frontend-design-system':
+        specifier: workspace:*
+        version: link:../../frontend/design-system
+      '@polterware/frontend-map':
+        specifier: workspace:*
+        version: link:../../frontend/map
+      '@polterware/notes-contracts':
+        specifier: workspace:*
+        version: link:../../notes-contracts
+    devDependencies:
+      jsdom:
+        specifier: ^30.1.1
+        version: 30.1.1(@noble/hashes@2.4.0)
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+      vite-plugin-solid:
+        specifier: ^2.11.14
+        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/features/notes-schedule:
+    dependencies:
+      '@bufbuild/protobuf':
+        specifier: ^2.15.0
+        version: 2.15.0
+      '@polterware/feature-notes-shell':
+        specifier: workspace:*
+        version: link:../notes-shell
+      '@polterware/frontend-design-system':
+        specifier: workspace:*
+        version: link:../../frontend/design-system
+      '@polterware/notes-contracts':
+        specifier: workspace:*
+        version: link:../../notes-contracts
+    devDependencies:
+      jsdom:
+        specifier: ^30.1.1
+        version: 30.1.1(@noble/hashes@2.4.0)
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+      vite-plugin-solid:
+        specifier: ^2.11.14
+        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/features/notes-search:
+    dependencies:
+      '@bufbuild/protobuf':
+        specifier: ^2.15.0
+        version: 2.15.0
+      '@polterware/feature-notes-shell':
+        specifier: workspace:*
+        version: link:../notes-shell
+      '@polterware/frontend-design-system':
+        specifier: workspace:*
+        version: link:../../frontend/design-system
+      '@polterware/notes-contracts':
+        specifier: workspace:*
+        version: link:../../notes-contracts
+    devDependencies:
+      jsdom:
+        specifier: ^30.1.1
+        version: 30.1.1(@noble/hashes@2.4.0)
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+      vite-plugin-solid:
+        specifier: ^2.11.14
+        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/features/notes-settings:
+    dependencies:
+      '@bufbuild/protobuf':
+        specifier: ^2.15.0
+        version: 2.15.0
+      '@polterware/feature-notes-shell':
+        specifier: workspace:*
+        version: link:../notes-shell
+      '@polterware/frontend-design-system':
+        specifier: workspace:*
+        version: link:../../frontend/design-system
+      '@polterware/notes-contracts':
+        specifier: workspace:*
+        version: link:../../notes-contracts
+    devDependencies:
+      jsdom:
+        specifier: ^30.1.1
+        version: 30.1.1(@noble/hashes@2.4.0)
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+      vite-plugin-solid:
+        specifier: ^2.11.14
+        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/features/notes-shell:
+    dependencies:
+      '@bufbuild/protobuf':
+        specifier: ^2.15.0
+        version: 2.15.0
+      '@polterware/frontend-design-system':
+        specifier: workspace:*
+        version: link:../../frontend/design-system
+      '@polterware/frontend-shell':
+        specifier: workspace:*
+        version: link:../../frontend/shell
+      '@polterware/notes-contracts':
+        specifier: workspace:*
+        version: link:../../notes-contracts
+    devDependencies:
+      jsdom:
+        specifier: ^30.1.1
+        version: 30.1.1(@noble/hashes@2.4.0)
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+      vite-plugin-solid:
+        specifier: ^2.11.14
+        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/features/notes-spaces:
+    dependencies:
+      '@polterware/feature-notes-shell':
+        specifier: workspace:*
+        version: link:../notes-shell
+      '@polterware/frontend-design-system':
+        specifier: workspace:*
+        version: link:../../frontend/design-system
+      '@polterware/notes-contracts':
+        specifier: workspace:*
+        version: link:../../notes-contracts
+    devDependencies:
+      jsdom:
+        specifier: ^30.1.1
+        version: 30.1.1(@noble/hashes@2.4.0)
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+      vite-plugin-solid:
+        specifier: ^2.11.14
+        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+
   packages/features/settings:
     dependencies:
+      '@polterware/feature-shell':
+        specifier: workspace:*
+        version: link:../shell
       '@polterware/frontend-design-system':
         specifier: workspace:*
         version: link:../../frontend/design-system
@@ -690,286 +976,6 @@ importers:
       vitest:
         specifier: ^5.0.1
         version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@24.13.6)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@24.13.6)(typescript@7.0.2))(vite@8.3.4(@types/node@24.13.6)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  packages/features/sparky-attachments:
-    dependencies:
-      '@bufbuild/protobuf':
-        specifier: ^2.15.0
-        version: 2.15.0
-      '@polterware/feature-sparky-shell':
-        specifier: workspace:*
-        version: link:../sparky-shell
-      '@polterware/frontend-design-system':
-        specifier: workspace:*
-        version: link:../../frontend/design-system
-      '@polterware/sparky-contracts':
-        specifier: workspace:*
-        version: link:../../sparky-contracts
-    devDependencies:
-      jsdom:
-        specifier: ^30.1.1
-        version: 30.1.1(@noble/hashes@2.4.0)
-      solid-js:
-        specifier: ^1.9.15
-        version: 1.9.15
-      vite-plugin-solid:
-        specifier: ^2.11.14
-        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-      vitest:
-        specifier: ^5.0.1
-        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  packages/features/sparky-calendar:
-    dependencies:
-      '@bufbuild/protobuf':
-        specifier: ^2.15.0
-        version: 2.15.0
-      '@polterware/feature-sparky-shell':
-        specifier: workspace:*
-        version: link:../sparky-shell
-      '@polterware/frontend-design-system':
-        specifier: workspace:*
-        version: link:../../frontend/design-system
-      '@polterware/sparky-contracts':
-        specifier: workspace:*
-        version: link:../../sparky-contracts
-    devDependencies:
-      jsdom:
-        specifier: ^30.1.1
-        version: 30.1.1(@noble/hashes@2.4.0)
-      solid-js:
-        specifier: ^1.9.15
-        version: 1.9.15
-      vite-plugin-solid:
-        specifier: ^2.11.14
-        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-      vitest:
-        specifier: ^5.0.1
-        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  packages/features/sparky-focus:
-    dependencies:
-      '@bufbuild/protobuf':
-        specifier: ^2.15.0
-        version: 2.15.0
-      '@polterware/feature-sparky-shell':
-        specifier: workspace:*
-        version: link:../sparky-shell
-      '@polterware/frontend-design-system':
-        specifier: workspace:*
-        version: link:../../frontend/design-system
-      '@polterware/sparky-contracts':
-        specifier: workspace:*
-        version: link:../../sparky-contracts
-    devDependencies:
-      jsdom:
-        specifier: ^30.1.1
-        version: 30.1.1(@noble/hashes@2.4.0)
-      solid-js:
-        specifier: ^1.9.15
-        version: 1.9.15
-      vite-plugin-solid:
-        specifier: ^2.11.14
-        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-      vitest:
-        specifier: ^5.0.1
-        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  packages/features/sparky-map:
-    dependencies:
-      '@bufbuild/protobuf':
-        specifier: ^2.15.0
-        version: 2.15.0
-      '@polterware/feature-sparky-shell':
-        specifier: workspace:*
-        version: link:../sparky-shell
-      '@polterware/frontend-design-system':
-        specifier: workspace:*
-        version: link:../../frontend/design-system
-      '@polterware/frontend-map':
-        specifier: workspace:*
-        version: link:../../frontend/map
-      '@polterware/sparky-contracts':
-        specifier: workspace:*
-        version: link:../../sparky-contracts
-    devDependencies:
-      jsdom:
-        specifier: ^30.1.1
-        version: 30.1.1(@noble/hashes@2.4.0)
-      solid-js:
-        specifier: ^1.9.15
-        version: 1.9.15
-      vite-plugin-solid:
-        specifier: ^2.11.14
-        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-      vitest:
-        specifier: ^5.0.1
-        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  packages/features/sparky-notes:
-    dependencies:
-      '@bufbuild/protobuf':
-        specifier: ^2.15.0
-        version: 2.15.0
-      '@polterware/feature-sparky-shell':
-        specifier: workspace:*
-        version: link:../sparky-shell
-      '@polterware/frontend-design-system':
-        specifier: workspace:*
-        version: link:../../frontend/design-system
-      '@polterware/sparky-contracts':
-        specifier: workspace:*
-        version: link:../../sparky-contracts
-    devDependencies:
-      jsdom:
-        specifier: ^30.1.1
-        version: 30.1.1(@noble/hashes@2.4.0)
-      solid-js:
-        specifier: ^1.9.15
-        version: 1.9.15
-      vite-plugin-solid:
-        specifier: ^2.11.14
-        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-      vitest:
-        specifier: ^5.0.1
-        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  packages/features/sparky-spaces:
-    dependencies:
-      '@polterware/feature-sparky-shell':
-        specifier: workspace:*
-        version: link:../sparky-shell
-      '@polterware/frontend-design-system':
-        specifier: workspace:*
-        version: link:../../frontend/design-system
-      '@polterware/sparky-contracts':
-        specifier: workspace:*
-        version: link:../../sparky-contracts
-    devDependencies:
-      jsdom:
-        specifier: ^30.1.1
-        version: 30.1.1(@noble/hashes@2.4.0)
-      solid-js:
-        specifier: ^1.9.15
-        version: 1.9.15
-      vite-plugin-solid:
-        specifier: ^2.11.14
-        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-      vitest:
-        specifier: ^5.0.1
-        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  packages/features/sparky-schedule:
-    dependencies:
-      '@bufbuild/protobuf':
-        specifier: ^2.15.0
-        version: 2.15.0
-      '@polterware/feature-sparky-shell':
-        specifier: workspace:*
-        version: link:../sparky-shell
-      '@polterware/frontend-design-system':
-        specifier: workspace:*
-        version: link:../../frontend/design-system
-      '@polterware/sparky-contracts':
-        specifier: workspace:*
-        version: link:../../sparky-contracts
-    devDependencies:
-      jsdom:
-        specifier: ^30.1.1
-        version: 30.1.1(@noble/hashes@2.4.0)
-      solid-js:
-        specifier: ^1.9.15
-        version: 1.9.15
-      vite-plugin-solid:
-        specifier: ^2.11.14
-        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-      vitest:
-        specifier: ^5.0.1
-        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  packages/features/sparky-search:
-    dependencies:
-      '@bufbuild/protobuf':
-        specifier: ^2.15.0
-        version: 2.15.0
-      '@polterware/feature-sparky-shell':
-        specifier: workspace:*
-        version: link:../sparky-shell
-      '@polterware/frontend-design-system':
-        specifier: workspace:*
-        version: link:../../frontend/design-system
-      '@polterware/sparky-contracts':
-        specifier: workspace:*
-        version: link:../../sparky-contracts
-    devDependencies:
-      jsdom:
-        specifier: ^30.1.1
-        version: 30.1.1(@noble/hashes@2.4.0)
-      solid-js:
-        specifier: ^1.9.15
-        version: 1.9.15
-      vite-plugin-solid:
-        specifier: ^2.11.14
-        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-      vitest:
-        specifier: ^5.0.1
-        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  packages/features/sparky-settings:
-    dependencies:
-      '@bufbuild/protobuf':
-        specifier: ^2.15.0
-        version: 2.15.0
-      '@polterware/feature-sparky-shell':
-        specifier: workspace:*
-        version: link:../sparky-shell
-      '@polterware/frontend-design-system':
-        specifier: workspace:*
-        version: link:../../frontend/design-system
-      '@polterware/sparky-contracts':
-        specifier: workspace:*
-        version: link:../../sparky-contracts
-    devDependencies:
-      jsdom:
-        specifier: ^30.1.1
-        version: 30.1.1(@noble/hashes@2.4.0)
-      solid-js:
-        specifier: ^1.9.15
-        version: 1.9.15
-      vite-plugin-solid:
-        specifier: ^2.11.14
-        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-      vitest:
-        specifier: ^5.0.1
-        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  packages/features/sparky-shell:
-    dependencies:
-      '@bufbuild/protobuf':
-        specifier: ^2.15.0
-        version: 2.15.0
-      '@polterware/frontend-design-system':
-        specifier: workspace:*
-        version: link:../../frontend/design-system
-      '@polterware/frontend-shell':
-        specifier: workspace:*
-        version: link:../../frontend/shell
-      '@polterware/sparky-contracts':
-        specifier: workspace:*
-        version: link:../../sparky-contracts
-    devDependencies:
-      jsdom:
-        specifier: ^30.1.1
-        version: 30.1.1(@noble/hashes@2.4.0)
-      solid-js:
-        specifier: ^1.9.15
-        version: 1.9.15
-      vite-plugin-solid:
-        specifier: ^2.11.14
-        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
-      vitest:
-        specifier: ^5.0.1
-        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
 
   packages/frontend/canvas:
     dependencies:
@@ -1095,7 +1101,7 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
 
-  packages/sparky-contracts:
+  packages/notes-contracts:
     dependencies:
       '@bufbuild/protobuf':
         specifier: ^2.15.0

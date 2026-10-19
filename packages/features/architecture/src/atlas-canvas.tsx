@@ -1,4 +1,5 @@
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, untrack } from "solid-js";
+import { EntityDetailHost } from "@polterware/feature-shell";
 import {
   animateCollapse,
   Button,
@@ -184,7 +185,7 @@ export function AtlasCanvas(props: {
   const tab = () => normalizeArchitectureTab(props.tab);
 
   return (
-    <>
+    <EntityDetailHost>
       <div class="flex h-full min-h-0 flex-col">
         <PageToolbar.Root>
           <PageToolbar.Tabs>
@@ -277,7 +278,7 @@ export function AtlasCanvas(props: {
         cards={props.cards}
         historical={props.historical ?? false}
       />
-    </>
+    </EntityDetailHost>
   );
 }
 

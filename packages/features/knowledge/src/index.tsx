@@ -26,6 +26,7 @@ import {
   DataTable,
 } from "@polterware/frontend-design-system";
 import {
+  EntityDetailHost,
   type WorkspaceAdr,
   type WorkspaceDocument,
   type WorkspacePpmEntity,
@@ -734,8 +735,8 @@ export function KnowledgeView(props: {
   });
 
   return (
+    <EntityDetailHost>
     <Show when={!props.loading} fallback={<PageLoading layout="table" label="Loading knowledge…" />}>
-    <>
       <div class="flex h-full min-h-0 flex-col">
         <PageToolbar.Root>
           <Show
@@ -1065,7 +1066,7 @@ export function KnowledgeView(props: {
           setSourceCreateOpen(false);
         }}
       />
-    </>
     </Show>
+    </EntityDetailHost>
   );
 }

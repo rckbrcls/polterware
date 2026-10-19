@@ -75,8 +75,15 @@ describe("ArchitectureCanvasHost", () => {
     expect(moveNodes).toContain("requestAnimationFrame");
     expect(moveNodes).toContain("setNodeDragOffset(nextDragOffset)");
     expect(moveNodes).not.toContain("applyDoc(");
-    expect(upNodes.match(/applyDoc\(/g)).toHaveLength(1);
-    expect(upNodes).toContain('applyDoc(next, "immediately")');
+    // Pointer-up commits a moved drag through commitNodeDrag, which applies one document update.
+    expect(upNodes).not.toContain("applyDoc(");
+    expect(upNodes).toContain("commitNodeDrag(off)");
+    const commitNodeDrag = source.slice(
+      source.indexOf("function commitNodeDrag"),
+      source.indexOf("function springDragHome"),
+    );
+    expect(commitNodeDrag.match(/applyDoc\(/g)).toHaveLength(1);
+    expect(commitNodeDrag).toMatch(/applyDoc\([\s\S]*?"immediately",\s*\)/);
   });
 
   it("ensures no idle edge-flow rAF and preserves distance on pause/resume", () => {

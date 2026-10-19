@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "pwnotes": {
+      "command": "/Applications/Polterware Notes.app/Contents/Resources/pwnotes",
+      "args": [
+        "mcp"
+      ]
+    }
+  }
+}

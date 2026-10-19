@@ -2,9 +2,9 @@
 @import "tailwindcss";
 
 /* Scan monorepo UI sources (base.css lives under packages/configuration/tailwind) */
-@source "../../../apps/lore-desktop/src/**/*.{html,ts,tsx}";
-@source "../../../apps/sparky-desktop/src/**/*.{html,ts,tsx}";
-@source "../../../apps/vitals/src/**/*.{html,ts,tsx}";
+@source "../../../apps/polterware-desktop/src/**/*.{html,ts,tsx}";
+@source "../../../apps/notes-desktop/src/**/*.{html,ts,tsx}";
+@source "../../../apps/vitals-desktop/src/**/*.{html,ts,tsx}";
 @source "../../../packages/features/**/*.{ts,tsx}";
 @source "../../../packages/frontend/**/*.{ts,tsx}";
 
@@ -12,16 +12,16 @@
   --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  /* Surfaces — lifted neutral gray ladder shared by Lore, Sparky and Vitals (no cool/blue cast) */
-  --color-app-background: #131313;
-  --color-shell-background: #131313;
-  --color-sidebar-background: #131313;
-  --color-surface: #161616;
-  --color-surface-subtle: #191919;
-  --color-surface-raised: #1b1b1b;
-  --color-surface-hover: #1d1d1d;
-  --color-surface-active: #202020;
-  --color-surface-selected: #232323;
+  /* Surfaces — lifted neutral gray ladder shared by Polterware, Polterware Notes and Polterware Vitals (no cool/blue cast) */
+  --color-app-background: #161616;
+  --color-shell-background: #161616;
+  --color-sidebar-background: #161616;
+  --color-surface: #1b1b1b;
+  --color-surface-subtle: #242424;
+  --color-surface-raised: #292929;
+  --color-surface-hover: #2c2c2c;
+  --color-surface-active: #303030;
+  --color-surface-selected: #343434;
 
   /* Border hierarchy may use alpha; structural fills stay opaque. */
   --color-border-subtle: rgb(255 255 255 / 0.045);
@@ -114,9 +114,9 @@
   --color-accent: var(--color-info);
   --color-success-legacy: var(--color-success);
 
-  --radius-control: 10px;
+  --radius-control: 8px;
   --radius-item: 10px;
-  --radius-card: 16px;
+  --radius-card: 14px;
   --radius-surface: 22px;
   --radius-menu: 16px;
   --radius-dialog: 30px;
@@ -169,7 +169,7 @@
    * Tailwind v4 may tree-shake theme variables without utility consumers.
    */
   --color-primary: #8eccc9;
-  --color-surface-active: #202020;
+  --color-surface-active: #303030;
   --color-status-success-background: #3d8f74;
   --color-status-success-foreground: #071c16;
   --color-status-warning-background: var(--color-warning);
@@ -190,14 +190,14 @@
    * field   = inputs/selects
    * surface = MainSurface / panels
    */
-  --edge-light-field-highlight: rgb(255 255 255 / 0.04);
-  --edge-light-field-rim: rgb(255 255 255 / 0.032);
-  --edge-light-surface-highlight: rgb(255 255 255 / 0.055);
-  --edge-light-surface-rim: rgb(255 255 255 / 0.04);
+  --edge-light-field-highlight: rgb(255 255 255 / 0.1);
+  --edge-light-field-rim: rgb(255 255 255 / 0.1);
+  --edge-light-surface-highlight: rgb(255 255 255 / 0.1);
+  --edge-light-surface-rim: rgb(255 255 255 / 0.1);
 
-  --radius-control: 10px;
+  --radius-control: 8px;
   --radius-item: 10px;
-  --radius-card: 16px;
+  --radius-card: 14px;
   --radius-surface: 22px;
   --radius-menu: 16px;
   --radius-dialog: 30px;
@@ -292,7 +292,8 @@ input[type="number"]::-webkit-outer-spin-button {
   border: 1px solid var(--edge-light-field-rim);
   border-top-color: var(--edge-light-field-highlight);
   border-radius: var(--radius-control);
-  background: var(--color-surface-subtle);
+  /* Inset well: darker than the card it sits in, like the OpenCode code/input boxes. */
+  background: var(--color-app-background);
   color: var(--color-text-primary);
   transition:
     background var(--duration-control) var(--ease-standard),
@@ -310,7 +311,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .control-field:hover:not(:disabled):not([aria-disabled="true"]) {
-  background: var(--color-surface-raised);
+  background: var(--color-surface);
 }
 
 .control-field:disabled,
@@ -347,11 +348,13 @@ input[type="number"]::-webkit-outer-spin-button {
  * Nested product card — hairline + whisper outer lift (design-system Card).
  */
 .card-panel {
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--edge-light-surface-rim);
   border-radius: var(--radius-card);
   background: var(--color-surface-subtle);
-  /* Whisper lift only — keep barely visible on dark UI */
-  box-shadow: 0 1px 2px var(--color-shadow-subtle);
+  /* Raised card lift, same stack as OpenCode elevation-raised */
+  box-shadow:
+    0 2px 4px var(--color-shadow),
+    0 1px 2px var(--color-shadow);
 }
 
 /**
@@ -392,8 +395,36 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 }
 
-/* Focus ring — quiet, never brand glow. Inputs/textareas use .control-field (no ring). */
-:where(button, a, [tabindex]:not([tabindex="-1"])):focus-visible {
-  outline: 2px solid var(--color-border-strong);
-  outline-offset: 2px;
+/* No focus rings anywhere: the product relies on hover/selected surfaces, not outlines. */
+:focus,
+:focus-visible,
+[data-focus],
+[data-focus-visible],
+[data-focus-visible]::before,
+[data-focus-visible]::after,
+:focus-visible::before,
+:focus-visible::after {
+  outline: none !important;
+}
+
+/* Scrollbars: slim, rounded, transparent track; the thumb only becomes prominent on hover. */
+*::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-color: var(--color-border-strong);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-muted);
 }

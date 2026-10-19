@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+package notes.v1;
+
+option go_package = "github.com/polterware/polterware/notes/backend/platform/gen/notes/v1;notesv1";
+
+import "google/protobuf/timestamp.proto";
+
+// Schedule is the 1:1 rule for a note.
+// freq empty means one-shot. weekday_mask bit 0 is Sunday.
+// end_type is never, until, or count.
+message Schedule {
+  string note_id = 1;
+  optional bool active = 2;
+  google.protobuf.Timestamp fire_at = 3;
+  string tz = 4;
+  bool all_day = 5;
+  string freq = 6;
+  optional int32 every = 7;
+  int32 weekday_mask = 8;
+  string end_type = 9;
+  google.protobuf.Timestamp until_at = 10;
+  optional int32 occurrence_count = 11;
+  bool focus_enabled = 12;
+  optional int32 focus_work_min = 13;
+  optional int32 focus_short_break_min = 14;
+  optional int32 focus_long_break_min = 15;
+  optional int32 focus_cycles = 16;
+  optional bool focus_auto_continue = 17;
+  google.protobuf.Timestamp updated_at = 18;
+}
+
+message OccurrenceCompletion {
+  string id = 1;
+  string note_id = 2;
+  google.protobuf.Timestamp occurrence_at = 3;
+  google.protobuf.Timestamp completed_at = 4;
+}
+
+message Occurrence {
+  string note_id = 1;
+  string title = 2;
+  google.protobuf.Timestamp occurrence_at = 3;
+  google.protobuf.Timestamp fire_at = 4;
+  bool completed = 5;
+  bool overdue = 6;
+  bool all_day = 7;
+  string space_id = 8;
+  // IANA time zone of the note's schedule; civil dates (all-day) use it.
+  string tz = 9;
+}
+
+message SetScheduleRequest {
+  Schedule schedule = 1;
+}
+
+message SetScheduleResponse {
+  Schedule schedule = 1;
+}
+
+message ClearScheduleRequest {
+  string note_id = 1;
+}
+
+message ClearScheduleResponse {}
+
+message PreviewScheduleRequest {
+  Schedule schedule = 1;
+  int32 limit = 2;
+}
+
+message PreviewScheduleResponse {
+  repeated google.protobuf.Timestamp occurrences = 1;
+  string description = 2;
+}
+
+message ListOccurrencesRequest {
+  google.protobuf.Timestamp from = 1;
+  google.protobuf.Timestamp to = 2;
+  string space_id = 3;
+  bool include_descendants = 4;
+  repeated string tag_ids = 5;
+  bool include_completed = 6;
+  int32 limit = 7;
+}
+
+message ListOccurrencesResponse {
+  repeated Occurrence occurrences = 1;
+}
+
+message CompleteOccurrenceRequest {
+  string note_id = 1;
+  google.protobuf.Timestamp occurrence_at = 2;
+}
+
+message CompleteOccurrenceResponse {
+  OccurrenceCompletion completion = 1;
+}
+
+message ReopenOccurrenceRequest {
+  string note_id = 1;
+  google.protobuf.Timestamp occurrence_at = 2;
+}
+
+message ReopenOccurrenceResponse {}
+
+message SetFocusRecipeRequest {
+  string note_id = 1;
+  bool enabled = 2;
+  int32 work_min = 3;
+  int32 short_break_min = 4;
+  int32 long_break_min = 5;
+  int32 cycles = 6;
+  bool auto_continue = 7;
+}
+
+message SetFocusRecipeResponse {
+  Schedule schedule = 1;
+}
+
+service ScheduleService {
+  rpc Set(SetScheduleRequest) returns (SetScheduleResponse);
+  rpc Clear(ClearScheduleRequest) returns (ClearScheduleResponse);
+  rpc Preview(PreviewScheduleRequest) returns (PreviewScheduleResponse);
+  rpc ListOccurrences(ListOccurrencesRequest) returns (ListOccurrencesResponse);
+  rpc CompleteOccurrence(CompleteOccurrenceRequest) returns (CompleteOccurrenceResponse);
+  rpc ReopenOccurrence(ReopenOccurrenceRequest) returns (ReopenOccurrenceResponse);
+  rpc SetFocusRecipe(SetFocusRecipeRequest) returns (SetFocusRecipeResponse);
+}

@@ -252,39 +252,82 @@
   min-height: 0;
 }
 
-/* Task lists: round checkbox + text, no bullet marker */
+/* Task lists: shared-checkbox treatment with the label and text on one row. */
 .pw-md-editor__prose ul[data-type="taskList"] {
   padding-left: 0;
   list-style: none;
 }
 
-.pw-md-editor__prose li[data-type="taskItem"] {
+.pw-md-editor__prose ul[data-type="taskList"] ul[data-type="taskList"] {
+  margin: 0.2em 0 0;
+  padding-left: 1.5em;
+}
+
+.pw-md-editor__prose ul[data-type="taskList"] > li {
   display: flex;
   align-items: flex-start;
   gap: 8px;
 }
 
-.pw-md-editor__prose li[data-type="taskItem"] > label {
+.pw-md-editor__prose ul[data-type="taskList"] > li > label {
+  position: relative;
   display: flex;
+  width: 18px;
+  height: 18px;
   flex: none;
-  padding-top: 0.3em;
+  margin-top: calc((1.65em - 18px) / 2);
   user-select: none;
 }
 
-.pw-md-editor__prose li[data-type="taskItem"] > label input {
-  width: 15px;
-  height: 15px;
+.pw-md-editor__prose ul[data-type="taskList"] > li > label input {
+  appearance: none;
+  width: 18px;
+  height: 18px;
   margin: 0;
-  accent-color: var(--color-brand);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-subtle);
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
   cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
-.pw-md-editor__prose li[data-type="taskItem"] > div {
+.pw-md-editor__prose ul[data-type="taskList"] > li > label input:not(:checked):hover {
+  background: var(--color-surface-hover);
+}
+
+.pw-md-editor__prose ul[data-type="taskList"] > li > label input:checked {
+  background: var(--color-brand);
+}
+
+.pw-md-editor__prose ul[data-type="taskList"] > li > label:has(input:checked)::after {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--color-app-background);
+  border-width: 0 2px 2px 0;
+  content: "";
+  pointer-events: none;
+  transform: rotate(45deg);
+}
+
+.pw-md-editor__prose ul[data-type="taskList"] > li > label input:focus-visible {
+  outline: 2px solid var(--color-border-strong);
+  outline-offset: 2px;
+}
+
+.pw-md-editor__prose ul[data-type="taskList"] > li > div {
   min-width: 0;
   flex: 1 1 auto;
 }
 
-.pw-md-editor__prose li[data-type="taskItem"][data-checked="true"] > div {
+.pw-md-editor__prose ul[data-type="taskList"] > li > div > p {
+  margin: 0;
+}
+
+.pw-md-editor__prose ul[data-type="taskList"] > li[data-checked="true"] > div {
   color: var(--color-text-muted);
   text-decoration: line-through;
 }

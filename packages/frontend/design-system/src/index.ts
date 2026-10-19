@@ -91,6 +91,8 @@ export { prefersReducedMotion } from "./reduced-motion";
 export { animateCollapse } from "./collapse";
 export { createDragMotion } from "./drag-motion";
 export type { DragMotion } from "./drag-motion";
+export { createPanMotion } from "./pan-motion";
+export type { PanMotion } from "./pan-motion";
 export { createPlacementMotion } from "./placement-motion";
 export type { Placement, PlacementMotion } from "./placement-motion";
 export { IconSwap } from "./icon-swap";
@@ -141,9 +143,11 @@ export {
   DETAIL_PANEL_MIN_WIDTH,
   DETAIL_PANEL_SIDEBAR_ID,
   DetailPanel,
+  SidePanel,
   DetailPanelCollectionHeader,
   CollapsibleSection,
   clampDetailPanelWidth,
+  readDetailPanelWidth,
 } from "./detail-panel";
 export type {
   DetailPanelBodyProps,

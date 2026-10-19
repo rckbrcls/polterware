@@ -1,4 +1,5 @@
 import { createEffect, createSignal, on, onMount } from "solid-js";
+import { EntityDetailHost } from "@polterware/feature-shell";
 import {
   Button,
   PageContent,
@@ -80,7 +81,7 @@ export function ActivityPage(props: { projectId: string }) {
   onMount(() => void refresh());
 
   return (
-    <div class="flex h-full min-h-0 flex-col">
+    <EntityDetailHost>
       <PageToolbar.Root>
         <PageToolbar.Leading>
           <span class="pw-page-toolbar-title">Activity</span>
@@ -113,6 +114,6 @@ export function ActivityPage(props: { projectId: string }) {
           }}
         />
       </PageContent>
-    </div>
+    </EntityDetailHost>
   );
 }

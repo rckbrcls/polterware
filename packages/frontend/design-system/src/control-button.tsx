@@ -23,7 +23,7 @@ function cn(...parts: Array<string | false | null | undefined>) {
 }
 
 /**
- * Opaque control-field button. Icon form matches the Lore title-bar search control.
+ * Opaque control-field button. Icon form matches the Polterware title-bar search control.
  * Text form keeps the same chrome at `--radius-control`.
  */
 export function ControlButton(props: ControlButtonProps) {

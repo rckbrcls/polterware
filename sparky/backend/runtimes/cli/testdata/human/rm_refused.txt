@@ -1,1 +1,0 @@
-sparky: refusing to delete note ID without --yes

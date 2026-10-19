@@ -32,6 +32,8 @@ export type MapViewProps = {
   online: boolean;
   provider?: MapProviderId;
   pickEnabled?: boolean;
+  /** Corner for the zoom controls (default top-right). */
+  controlsPosition?: "top-left" | "top-right";
   onSelect?: (id: string) => void;
   onPick?: (pick: MapPick) => void;
   onBoundsChange?: (bounds: MapBounds, zoom: number) => void;
