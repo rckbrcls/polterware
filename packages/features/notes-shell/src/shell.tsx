@@ -294,7 +294,7 @@ export function NotesShell(props: { features: readonly NotesFeature[]; bridge?: 
             <Show when={sidebarTree()} fallback={
               <Show when={core.state() === "live"}>
                 <Show when={!spaces.error} fallback={<p role="status">Spaces unavailable</p>}>
-                  <Show when={tree().length}><TreeView label="Spaces" nodes={tree()} expandedValue={expandedSpaces()} selectedValue={params().id ? [params().id!] : []}
+                  <Show when={tree().length}><TreeView fluidHover label="Spaces" nodes={tree()} expandedValue={expandedSpaces()} selectedValue={params().id ? [params().id!] : []}
                     onExpandedChange={details => { setExpandedSpaces(details.expandedValue); try { localStorage.setItem("pwnotes.shell.spaces.expanded", JSON.stringify(details.expandedValue)); } catch { /* Session-only. */ } }}
                     onSelectionChange={details => { const id = details.selectedValue[0]; if (id) navigate(`/space/${encodeURIComponent(id)}`); }} /></Show>
                 </Show>
