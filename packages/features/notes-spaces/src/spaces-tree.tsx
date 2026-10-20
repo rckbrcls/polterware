@@ -217,6 +217,7 @@ export function SpacesSidebarTree() {
         <Show when={!spaces.error} fallback={<p role="status">Spaces unavailable</p>}>
           <Show when={tree().length}>
             <TreeView
+              fluidHover
               label="Spaces"
               nodes={labeledNodes(tree(), spaceNotes() ?? {}, (id) => shell.navigate(`/space/${encodeURIComponent(id)}`))}
               indicator={false}

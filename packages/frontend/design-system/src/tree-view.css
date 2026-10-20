@@ -5,6 +5,10 @@
 .pw-tree__indicator { display: flex; flex: none; color: var(--color-text-muted); transition: transform var(--spring-moderate-duration) var(--spring-moderate-ease); }
 .pw-tree__row[data-state="open"] .pw-tree__indicator { transform: rotate(90deg); }
 .pw-tree__children { position: relative; padding-left: 16px; }
+.pw-tree__children[data-fluid-hover] { isolation: isolate; }
+.pw-tree__children[data-fluid-hover] > .pw-tree__row,
+.pw-tree__children[data-fluid-hover] > [data-part="branch"] { position: relative; z-index: 1; }
+.pw-tree__hover { background: var(--color-surface-active); border-radius: var(--radius-item); }
 .pw-tree__guide { position: absolute; top: 0; bottom: 0; left: 7px; width: 1px; background: var(--color-border-subtle); }
 @media (prefers-reduced-motion: reduce) { .pw-tree__indicator { transition: none; } }
 .pw-tree__text { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
