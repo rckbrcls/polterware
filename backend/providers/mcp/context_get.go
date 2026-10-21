@@ -6,8 +6,15 @@ import (
 )
 
 func (s *Server) contextGet(args map[string]any) (string, error) {
+	projectID := stringFrom(args["project_id"])
+	scope, err := wedge.ResolveScopeRef(s.Store, projectID, stringFrom(args["scope"]), boolFrom(args["scope_exact"]))
+	if err != nil {
+		return "", err
+	}
 	pkg, err := wedge.CompileContext(s.Store, wedge.ContextInput{
-		ProjectID:   stringFrom(args["project_id"]),
+		ProjectID:   projectID,
+		ScopeNodeID: scope.NodeID,
+		ScopeExact:  scope.Exact,
 		Query:       stringFrom(args["query"]),
 		EntityID:    stringFrom(args["entity_id"]),
 		TokenBudget: intFrom(args["token_budget"], contextpkg.DefaultTokenBudget),

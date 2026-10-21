@@ -3,7 +3,7 @@ import type { CoreChangeEvent } from "../../shared/ipc";
 /** Kinds that change the project shell (switcher, environments, settings, canvas). */
 const SHELL_KINDS = new Set(["projects", "environments", "settings", "architecture"]);
 /** Kinds held in the workspace extension slices. */
-const EXTENSION_KINDS = new Set(["knowledge", "ppm", "integrations"]);
+const EXTENSION_KINDS = new Set(["knowledge", "canon", "integrations"]);
 
 const DEBOUNCE_MS = 300;
 

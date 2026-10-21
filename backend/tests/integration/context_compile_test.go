@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	contextpkg "github.com/polterware/polterware/backend/domains/context"
-	"github.com/polterware/polterware/backend/domains/ppm"
+	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/providers/demoseed"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
@@ -23,10 +23,10 @@ func TestCompileContextIncludesFactsReasonsEvidence(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fact, err := ppm.NewFact(
+	fact, err := canon.NewFact(
 		demoseed.ProjectID,
 		"module uses Go modules for dependency management",
-		ppm.TruthObserved,
+		canon.TruthObserved,
 		"import:go.mod",
 		"system",
 		"",
@@ -34,12 +34,12 @@ func TestCompileContextIncludesFactsReasonsEvidence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.UpsertPpmFact(fact); err != nil {
+	if err := store.UpsertCanonFact(fact); err != nil {
 		t.Fatal(err)
 	}
-	evidence, err := ppm.NewEvidence(
+	evidence, err := canon.NewEvidence(
 		demoseed.ProjectID,
-		ppm.EvidenceKindFile,
+		canon.EvidenceKindFile,
 		"go.mod module line",
 		"import:go.mod",
 		"go.mod",
@@ -48,10 +48,10 @@ func TestCompileContextIncludesFactsReasonsEvidence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.UpsertPpmEvidence(evidence); err != nil {
+	if err := store.UpsertCanonEvidence(evidence); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.LinkPpmEvidenceToFact(demoseed.ProjectID, fact.ID, evidence.ID); err != nil {
+	if err := store.LinkCanonEvidenceToFact(demoseed.ProjectID, fact.ID, evidence.ID); err != nil {
 		t.Fatal(err)
 	}
 

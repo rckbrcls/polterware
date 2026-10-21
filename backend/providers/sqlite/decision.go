@@ -9,14 +9,16 @@ import (
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
-// loadDecisions returns the project's ADRs with lifecycle state, oldest first.
+// loadDecisions returns the project's Verdicts with lifecycle state, oldest first.
 func (s *Store) loadDecisions(projectID string) ([]decision.Decision, error) {
 	var out []decision.Decision
-	err := s.eachRow(`SELECT id,title,status,body,extra_json FROM knowledge_items WHERE project_id=? AND kind='adr' ORDER BY created_at, id`,
+	err := s.eachRow(`SELECT k.id,k.title,k.status,k.body,k.extra_json,COALESCE(n.path,'') FROM knowledge_items k
+		LEFT JOIN atlas_nodes n ON n.id=k.scope_node_id
+		WHERE k.project_id=? AND k.kind='verdict' ORDER BY k.created_at, k.id`,
 		projectID, func(rows *sql.Rows) error {
 			var d decision.Decision
 			var extra string
-			if err := rows.Scan(&d.ID, &d.Title, &d.Status, &d.Body, &extra); err != nil {
+			if err := rows.Scan(&d.ID, &d.Title, &d.Status, &d.Body, &extra, &d.Scope); err != nil {
 				return err
 			}
 			d.Status = decision.Normalize(d.Status)
@@ -27,7 +29,7 @@ func (s *Store) loadDecisions(projectID string) ([]decision.Decision, error) {
 	return out, err
 }
 
-// applyDecisionOp creates or updates one ADR knowledge item. Fields holds
+// applyDecisionOp creates or updates one Verdict knowledge item. Fields holds
 // title, body, status, superseded_by, review_trigger, and status_reason;
 // only the keys present change.
 func applyDecisionOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
@@ -54,13 +56,13 @@ func applyDecisionOp(tx *sql.Tx, projectID string, op work.Op, now string) error
 		meta.StatusReason, _ = str("status_reason")
 		extra = decision.MergeMeta("{}", meta)
 		if _, err := tx.Exec(`INSERT INTO knowledge_items(id,project_id,title,body,kind,tags_json,summary,owner,status,extra_json,created_at,updated_at)
-			VALUES(?,?,?,?,'adr','["adr"]','','',?,?,?,?)`,
+			VALUES(?,?,?,?,'verdict','["verdict"]','','',?,?,?,?)`,
 			op.EntityID, projectID, title, body, status, extra, now, now); err != nil {
 			return err
 		}
 	case work.OpUpdate:
 		var current string
-		if err := tx.QueryRow(`SELECT title,body,status,extra_json FROM knowledge_items WHERE id=? AND kind='adr'`, op.EntityID).
+		if err := tx.QueryRow(`SELECT title,body,status,extra_json FROM knowledge_items WHERE id=? AND kind='verdict'`, op.EntityID).
 			Scan(&title, &body, &status, &current); err != nil {
 			return fmt.Errorf("decision %s not found", op.EntityID)
 		}
@@ -91,10 +93,30 @@ func applyDecisionOp(tx *sql.Tx, projectID string, op work.Op, now string) error
 	default:
 		return fmt.Errorf("decisions are never removed: supersede them")
 	}
+	if path, ok := str("scope"); ok {
+		if err := setDecisionScope(tx, projectID, op.EntityID, path); err != nil {
+			return err
+		}
+	}
 	if _, err := tx.Exec(`DELETE FROM knowledge_fts WHERE knowledge_id=?`, op.EntityID); err != nil {
 		return err
 	}
 	_, err := tx.Exec(`INSERT INTO knowledge_fts(knowledge_id, project_id, kind, title, body, summary, tags) VALUES(?,?,?,?,?,?,?)`,
-		op.EntityID, projectID, "adr", title, body, "", strings.TrimSpace("adr"))
+		op.EntityID, projectID, "verdict", title, body, "", strings.TrimSpace("verdict"))
+	return err
+}
+
+// setDecisionScope points a Verdict at the Atlas node with the given path, or
+// clears its scope when path is empty.
+func setDecisionScope(tx *sql.Tx, projectID, id, path string) error {
+	var node any
+	if path = strings.TrimSpace(path); path != "" {
+		var nodeID string
+		if err := tx.QueryRow(`SELECT id FROM atlas_nodes WHERE project_id=? AND path=? AND status<>'removed'`, projectID, path).Scan(&nodeID); err != nil {
+			return fmt.Errorf("scope %q is not an Atlas node path: list them with polterware atlas", path)
+		}
+		node = nodeID
+	}
+	_, err := tx.Exec(`UPDATE knowledge_items SET scope_node_id=? WHERE id=?`, node, id)
 	return err
 }

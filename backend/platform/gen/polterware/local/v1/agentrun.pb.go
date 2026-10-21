@@ -681,7 +681,7 @@ func (x *ListChangesResponse) GetChanges() []*ProjectChange {
 	return nil
 }
 
-// McpSession is one live MCP client connected to the core (ADR 0007).
+// McpSession is one live MCP client connected to the core (Verdict 0007).
 type McpSession struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`

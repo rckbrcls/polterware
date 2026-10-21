@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/polterware/polterware/backend/compositions/wedge"
-	"github.com/polterware/polterware/backend/domains/ppm"
+	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/projects"
 	"github.com/polterware/polterware/backend/domains/work"
 	gitpkg "github.com/polterware/polterware/backend/providers/git"
@@ -33,12 +33,12 @@ func TestScanSkipsGitOutsideWorkTree(t *testing.T) {
 	if !strings.Contains(scan.Message, "Git metadata skipped.") {
 		t.Fatalf("message: %s", scan.Message)
 	}
-	evidence, err := store.ListPpmEvidence(project.ID)
+	evidence, err := store.ListCanonEvidence(project.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, item := range evidence {
-		if item.Kind == ppm.EvidenceKindCommit {
+		if item.Kind == canon.EvidenceKindCommit {
 			t.Fatalf("commit evidence outside a work tree: %+v", item)
 		}
 	}
@@ -84,7 +84,7 @@ func TestScanStampsHeadOnObservedFacts(t *testing.T) {
 	}
 	assertHeadStamp(t, store, project.ID, headID, next.SHA, "main", "second subject")
 
-	old, err := store.GetPpmEvidence(importer.StableGitCommitEvidenceID(project.ID, meta.SHA))
+	old, err := store.GetCanonEvidence(importer.StableGitCommitEvidenceID(project.ID, meta.SHA))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,26 +129,26 @@ func TestScanRecordsNamedRepository(t *testing.T) {
 	apiHead := importer.StableGitRepoHeadEvidenceID(project.ID, "api")
 	assertHeadStamp(t, store, project.ID, rootHead, rootMeta.SHA, "main", "root subject")
 
-	head, err := store.GetPpmEvidence(apiHead)
+	head, err := store.GetCanonEvidence(apiHead)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if head.Source != "git:api:HEAD" || head.Path != extraMeta.SHA || head.Summary != "feature" {
 		t.Fatalf("api head: %+v", head)
 	}
-	commit, err := store.GetPpmEvidence(importer.StableGitRepoCommitEvidenceID(project.ID, "api", extraMeta.SHA))
+	commit, err := store.GetCanonEvidence(importer.StableGitRepoCommitEvidenceID(project.ID, "api", extraMeta.SHA))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if commit.Source != "git:api:commit" || commit.Summary != "api subject" {
 		t.Fatalf("api commit: %+v", commit)
 	}
-	facts, err := store.ListPpmFacts(project.ID, "")
+	facts, err := store.ListCanonFacts(project.ID, "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, fact := range facts {
-		linked, err := store.ListPpmEvidenceForFact(fact.ID)
+		linked, err := store.ListCanonEvidenceForFact(fact.ID)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -201,12 +201,12 @@ func TestScanLinksCommitToTask(t *testing.T) {
 		t.Fatalf("tasks: %+v", snapshot.Cards)
 	}
 	now := time.Now().UTC()
-	kept := ppm.Evidence{
-		ID: "ev-git-kept", ProjectID: project.ID, Kind: ppm.EvidenceKindCommit,
+	kept := canon.Evidence{
+		ID: "ev-git-kept", ProjectID: project.ID, Kind: canon.EvidenceKindCommit,
 		Summary: "old subject", Source: "git:commit", Path: "deadbeef", Actor: "system",
 		ObservedAt: now, CreatedAt: now, UpdatedAt: now,
 	}
-	if err := store.UpsertPpmEvidence(kept); err != nil {
+	if err := store.UpsertCanonEvidence(kept); err != nil {
 		t.Fatal(err)
 	}
 	if err := store.ReplaceCommitLinks(project.ID, kept.ID, []work.CommitLink{{
@@ -264,7 +264,7 @@ Import HEAD, branch and recent commits as evidence.
 
 func commitEvidenceBySubject(t *testing.T, store *storepkg.Store, projectID, source, subject string) string {
 	t.Helper()
-	evidence, err := store.ListPpmEvidence(projectID)
+	evidence, err := store.ListCanonEvidence(projectID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -292,21 +292,21 @@ func commitLinksByEvidence(t *testing.T, store *storepkg.Store, projectID string
 
 func assertHeadStamp(t *testing.T, store *storepkg.Store, projectID, headID, sha, branch, subject string) {
 	t.Helper()
-	head, err := store.GetPpmEvidence(headID)
+	head, err := store.GetCanonEvidence(headID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if head.Kind != ppm.EvidenceKindCommit || head.Source != "git:HEAD" || head.Path != sha || head.Summary != branch {
+	if head.Kind != canon.EvidenceKindCommit || head.Source != "git:HEAD" || head.Path != sha || head.Summary != branch {
 		t.Fatalf("head evidence: %+v", head)
 	}
-	commit, err := store.GetPpmEvidence(importer.StableGitCommitEvidenceID(projectID, sha))
+	commit, err := store.GetCanonEvidence(importer.StableGitCommitEvidenceID(projectID, sha))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if commit.Kind != ppm.EvidenceKindCommit || commit.Source != "git:commit" || commit.Summary != subject || commit.Path != sha {
+	if commit.Kind != canon.EvidenceKindCommit || commit.Source != "git:commit" || commit.Summary != subject || commit.Path != sha {
 		t.Fatalf("commit evidence: %+v", commit)
 	}
-	facts, err := store.ListPpmFacts(projectID, "")
+	facts, err := store.ListCanonFacts(projectID, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -314,7 +314,7 @@ func assertHeadStamp(t *testing.T, store *storepkg.Store, projectID, headID, sha
 		t.Fatal("expected observed facts")
 	}
 	for _, fact := range facts {
-		linked, err := store.ListPpmEvidenceForFact(fact.ID)
+		linked, err := store.ListCanonEvidenceForFact(fact.ID)
 		if err != nil {
 			t.Fatal(err)
 		}

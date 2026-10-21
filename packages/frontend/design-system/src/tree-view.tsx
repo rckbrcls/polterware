@@ -12,7 +12,7 @@ export type TreeViewProps = Omit<TreeViewRootProps<TreeViewNode>, "children" | "
   indicator?: boolean;
   /** Show the vertical guide line beside nested rows. Defaults to true. */
   guides?: boolean;
-  /** Glide one hover highlight between the leaves of each branch. */
+  /** Glide one hover highlight between the rows of each level (Spaces and their notes alike). */
   fluidHover?: boolean;
 };
 
@@ -25,12 +25,15 @@ export function TreeView(props: TreeViewProps) {
       nodeToString: (node) => node.label,
     }),
   );
+  const rows = (hover?: FluidHover) => (
+    <For each={local.nodes}>{(node, index) => <TreeNode node={node} indexPath={[index()]} indicator={local.indicator !== false} guides={local.guides !== false} fluidHover={local.fluidHover} hover={hover} />}</For>
+  );
   return (
     <ArkTreeView.Root {...rest} collection={collection()} class={`pw-tree ${local.class ?? ""}`}>
       <ArkTreeView.Label>{local.label}</ArkTreeView.Label>
-      <ArkTreeView.Tree>
-        <For each={local.nodes}>{(node, index) => <TreeNode node={node} indexPath={[index()]} indicator={local.indicator !== false} guides={local.guides !== false} fluidHover={local.fluidHover} />}</For>
-      </ArkTreeView.Tree>
+      <Show when={local.fluidHover} fallback={<ArkTreeView.Tree>{rows()}</ArkTreeView.Tree>}>
+        <FluidTreeList>{(hover, attach) => <ArkTreeView.Tree ref={attach} data-fluid-hover=""><TreeHoverHighlight hover={hover} />{rows(hover)}</ArkTreeView.Tree>}</FluidTreeList>
+      </Show>
     </ArkTreeView.Root>
   );
 }
@@ -38,18 +41,17 @@ export function TreeView(props: TreeViewProps) {
 type TreeNodeProps = { node: TreeViewNode; indexPath: number[]; indicator: boolean; guides: boolean; fluidHover?: boolean; hover?: FluidHover };
 
 function TreeNode(props: TreeNodeProps) {
+  // For can reorder or recreate rows; registration follows the live index and owner.
+  const registerRow = (element: HTMLElement) => createEffect(() => {
+    const hover = props.hover;
+    if (hover) onCleanup(hover.registerItem(props.indexPath[props.indexPath.length - 1]!, element));
+  });
   return (
     <ArkTreeView.NodeProvider node={props.node} indexPath={props.indexPath}>
       <Show
         when={props.node.children?.length}
         fallback={
-          <ArkTreeView.Item class="pw-tree__row" ref={(element) => {
-            // For can reorder or recreate rows; registration follows the live index and owner.
-            createEffect(() => {
-              const hover = props.hover;
-              if (hover) onCleanup(hover.registerItem(props.indexPath[props.indexPath.length - 1]!, element));
-            });
-          }}>
+          <ArkTreeView.Item class="pw-tree__row" ref={registerRow}>
             {props.node.icon}
             <ArkTreeView.ItemText class="pw-tree__text">{props.node.label}</ArkTreeView.ItemText>
             {props.node.trailing ? <span class="pw-tree__trailing">{props.node.trailing}</span> : null}
@@ -57,7 +59,7 @@ function TreeNode(props: TreeNodeProps) {
         }
       >
         <ArkTreeView.Branch>
-          <ArkTreeView.BranchControl class="pw-tree__row">
+          <ArkTreeView.BranchControl class="pw-tree__row" ref={registerRow}>
             {props.node.icon}
             <ArkTreeView.BranchText class="pw-tree__text">{props.node.label}</ArkTreeView.BranchText>
             <Show when={props.indicator}>
@@ -82,20 +84,19 @@ function TreeChildren(props: TreeNodeProps) {
     </For>
   </>;
   return <Show when={props.fluidHover} fallback={<ArkTreeView.BranchContent class="pw-tree__children">{rows()}</ArkTreeView.BranchContent>}>
-    <FluidTreeChildren>{rows}</FluidTreeChildren>
+    <FluidTreeList>{(hover, attach) => <ArkTreeView.BranchContent ref={attach} class="pw-tree__children" data-fluid-hover=""><TreeHoverHighlight hover={hover} />{rows(hover)}</ArkTreeView.BranchContent>}</FluidTreeList>
   </Show>;
 }
 
-function FluidTreeChildren(props: { children: (hover: FluidHover) => JSX.Element }) {
-  let container: HTMLDivElement | undefined;
+/** One gliding highlight per tree level; the root list and each open branch each own one. */
+function FluidTreeList(props: { children: (hover: FluidHover, attach: (element: HTMLElement) => void) => JSX.Element }) {
+  let container: HTMLElement | undefined;
   const hover = createFluidHover(() => container, { gapClick: false });
-  // Nested Spaces own their highlights. Their headers and descendants must not pick
-  // the nearest leaf in this ancestor list.
-  const ownsTarget = (target: EventTarget | null) => target instanceof Element &&
-    target.closest(".pw-tree__children") === container &&
-    target.closest('[data-part="branch"]') === container?.parentElement;
+  // A row belongs to the nearest level; nested levels own their rows and descendants.
+  const ownsTarget = (target: EventTarget | null) => target instanceof Element && !!container &&
+    target.closest("[data-fluid-hover]") === container;
 
-  const registerContainer = (root: HTMLDivElement) => {
+  const attach = (root: HTMLElement) => {
     container = root;
     // Native listeners preserve Ark's own event handlers.
     const listen = <K extends keyof HTMLElementEventMap>(name: K, handler: (event: HTMLElementEventMap[K]) => void) => {
@@ -121,8 +122,10 @@ function FluidTreeChildren(props: { children: (hover: FluidHover) => JSX.Element
     });
   };
 
-  return <ArkTreeView.BranchContent ref={registerContainer} class="pw-tree__children" data-fluid-hover="">
-    <FluidHoverHighlight hover={hover} class="pw-tree__hover" />
-    {props.children(hover)}
-  </ArkTreeView.BranchContent>;
+  return props.children(hover, attach);
+}
+
+/** Rendered first inside its level, so the rows paint above it. */
+function TreeHoverHighlight(props: { hover: FluidHover }) {
+  return <FluidHoverHighlight hover={props.hover} class="pw-tree__hover" />;
 }

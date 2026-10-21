@@ -12,9 +12,10 @@ export function createOutsideDismiss(options: {
   // Observe presses without taking capture from controls or canvas gestures.
   let press: { pointerId: number; x: number; y: number; moved: boolean } | undefined;
   let ignoreClick = false;
+  let openingPress = false;
   let clickReset: number | undefined;
   function reset() {
-    press = undefined; ignoreClick = false;
+    press = undefined; ignoreClick = false; openingPress = false;
     if (clickReset !== undefined) cancelAnimationFrame(clickReset);
     clickReset = undefined;
   }
@@ -27,6 +28,8 @@ export function createOutsideDismiss(options: {
     if (event.button !== 0 || event.isPrimary === false) return;
     reset();
     if (options.enabled() && isPanelVisible(options.root(), { allowModalBackground: true })) press = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, moved: false };
+    // A press that began while the panel was hidden may open it on release; its click must not dismiss it.
+    else openingPress = true;
   }
   function trackMove(event: PointerEvent) {
     if (!press || event.pointerId !== press.pointerId) return;
@@ -45,9 +48,11 @@ export function createOutsideDismiss(options: {
   function trackScroll() { if (press) press.moved = true; }
   function onClick(event: MouseEvent) {
     rememberPanelInteraction(event.target);
+    const opening = openingPress;
+    openingPress = false;
     if (!options.enabled() || event.defaultPrevented || !isPanelVisible(options.root(), { allowModalBackground: true })) return;
     const fromPointer = event.detail > 0 || ("pointerType" in event && Boolean(event.pointerType));
-    if (fromPointer && (ignoreClick || press?.moved || options.suppressClick())) return;
+    if (fromPointer && (opening || ignoreClick || press?.moved || options.suppressClick())) return;
     if (panelOwnsTarget(options.interaction, event.target) || (event.target instanceof Element && event.target.closest("[data-detail-opener]"))) return;
     options.close();
   }

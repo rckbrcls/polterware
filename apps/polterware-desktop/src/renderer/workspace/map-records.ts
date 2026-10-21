@@ -5,16 +5,14 @@ import type {
   EnvironmentKind,
   ProjectSwitcherItem,
   WorkspaceCatalogProvider,
-  WorkspaceDocument,
+  WorkspaceEvidence,
   DecisionState,
-  WorkspaceAdr,
+  WorkspaceVerdict,
   WorkspaceEntityLink,
-  WorkspacePpmEntity,
+  WorkspaceCanonEntity,
   WorkspaceIntegration,
   WorkspaceIntegrationResource,
   WorkspaceIntegrationSyncRun,
-  WorkspaceRunbook,
-  WorkspaceSource,
   WorkspaceInbox,
   WorkspaceInboxAction,
   WorkspaceInboxKind,
@@ -115,7 +113,7 @@ export function mapProjectRepos(records: Record<string, unknown>[]): ProjectRepo
   });
 }
 
-export function mapPpmEntities(items: Record<string, unknown>[]): WorkspacePpmEntity[] {
+export function mapCanonEntities(items: Record<string, unknown>[]): WorkspaceCanonEntity[] {
   return items.map((item) => ({
     id: asString(item.id),
     kind: asString(item.kind),
@@ -129,7 +127,7 @@ export function mapPpmEntities(items: Record<string, unknown>[]): WorkspacePpmEn
 
 export function mapKnowledgeEntityLinks(
   links: Record<string, unknown>[],
-  entities: WorkspacePpmEntity[],
+  entities: WorkspaceCanonEntity[],
 ): Map<string, WorkspaceEntityLink[]> {
   const byId = new Map(entities.map((entity) => [entity.id, entity]));
   const grouped = new Map<string, WorkspaceEntityLink[]>();
@@ -154,69 +152,60 @@ export function mapKnowledgeEntityLinks(
   return grouped;
 }
 
-export function mapDocuments(
+/** Evidence is one kind of item; what a person calls it (runbook, doc, source) is a tag. */
+export function mapEvidence(
   items: Record<string, unknown>[],
   linksByKnowledge: Map<string, WorkspaceEntityLink[]> = new Map(),
-): WorkspaceDocument[] {
-  return items.filter((item) => asString(item.kind) === "doc").map((item) => {
+): WorkspaceEvidence[] {
+  return items.filter((item) => asString(item.kind) === "evidence").map((item) => {
     const extra = parseJsonObject(asString(item.extraJson));
     const id = asString(item.id);
-    const entityLinks = linksByKnowledge.get(id) ?? [];
-    const componentIds = entityLinks
-      .filter((link) => link.entityKind === "component")
-      .map((link) => link.entityRefId);
-    const componentNames = entityLinks
-      .filter((link) => link.entityKind === "component")
-      .map((link) => link.entityTitle);
     return {
       id,
       title: asString(item.title),
       summary: asString(item.summary),
       bodyMarkdown: asString(item.body),
-      author: asString(extra.author, asString(item.owner, "Project maintainer")),
-      updatedAt: formatInstant(asString(item.updatedAt)),
       tags: asStringArray(item.tags),
-      componentIds: componentIds.length > 0 ? componentIds : asStringArray(extra.componentIds),
-      componentNames: componentNames.length > 0 ? componentNames : asStringArray(extra.componentNames),
-      environment: asString(extra.environment, "All"),
-      status: asString(item.status) === "draft" ? "draft" : "published",
+      path: asString(extra.path),
+      scopeNodeId: asString(item.scopeNodeId),
       owner: asString(item.owner, "Platform"),
-      entityLinks,
+      updatedAt: formatInstant(asString(item.updatedAt)),
+      entityLinks: linksByKnowledge.get(id) ?? [],
     };
   });
 }
 
 const DECISION_STATES: DecisionState[] = ["proposed", "active", "challenged", "superseded"];
 
-/** Lifecycle state of a stored ADR status; legacy "accepted" reads as active. */
+/** Lifecycle state of a stored Verdict status; legacy "accepted" reads as active. */
 export function decisionState(status: string): DecisionState {
   const value = status.trim().toLowerCase();
   if (value === "accepted") return "active";
   return DECISION_STATES.includes(value as DecisionState) ? (value as DecisionState) : "proposed";
 }
 
-function adrNumber(text: string): number | null {
+function verdictNumber(text: string): number | null {
   const match = /\badr[\s\-_]*0*(\d+)\b/i.exec(text);
   return match ? Number(match[1]) : null;
 }
 
-/** True when a `decisions:` entry names the ADR by id or ADR number. */
-function citesAdr(ref: string, id: string, title: string): boolean {
+/** True when a `decisions:` entry names the Verdict by id or Verdict number. */
+function citesVerdict(ref: string, id: string, title: string): boolean {
   if (ref.trim().toLowerCase() === id.toLowerCase()) return true;
-  const wanted = adrNumber(ref);
-  return wanted !== null && wanted === adrNumber(title);
+  const wanted = verdictNumber(ref);
+  return wanted !== null && wanted === verdictNumber(title);
 }
 
-export function mapAdrs(
+export function mapVerdicts(
   items: Record<string, unknown>[],
   linksByKnowledge: Map<string, WorkspaceEntityLink[]> = new Map(),
   nodes: { path: string; decisions: string[]; status?: string }[] = [],
-): WorkspaceAdr[] {
-  const adrItems = items.filter((item) => asString(item.kind) === "adr");
-  const titleById = new Map(adrItems.map((item) => [asString(item.id), asString(item.title)]));
+): WorkspaceVerdict[] {
+  const verdictItems = items.filter((item) => asString(item.kind) === "verdict");
+  const titleById = new Map(verdictItems.map((item) => [asString(item.id), asString(item.title)]));
   const supersededBy = (item: Record<string, unknown>) =>
     asString(parseJsonObject(asString(item.extraJson)).supersededBy);
-  return adrItems.map((item) => {
+  return verdictItems.map((item) => {
     const id = asString(item.id);
     const title = asString(item.title);
     const extra = parseJsonObject(asString(item.extraJson));
@@ -231,61 +220,13 @@ export function mapAdrs(
       state: decisionState(asString(item.status)),
       scope: extra.scope === "principle" ? "principle" : "decision",
       supersededBy: titleById.get(asString(extra.supersededBy)) ?? "",
-      supersedes: adrItems.filter((other) => supersededBy(other) === id).map((other) => asString(other.title)),
+      supersedes: verdictItems.filter((other) => supersededBy(other) === id).map((other) => asString(other.title)),
       reviewTrigger: asString(extra.reviewTrigger),
       statusReason: asString(extra.statusReason),
       governs: nodes
-        .filter((node) => node.status !== "removed" && node.decisions.some((ref) => citesAdr(ref, id, title)))
+        .filter((node) => node.status !== "removed" && node.decisions.some((ref) => citesVerdict(ref, id, title)))
         .map((node) => node.path),
-      owner: asString(item.owner, "Platform"),
-      entityLinks: linksByKnowledge.get(id) ?? [],
-    };
-  });
-}
-
-export function mapRunbooks(
-  items: Record<string, unknown>[],
-  linksByKnowledge: Map<string, WorkspaceEntityLink[]> = new Map(),
-): WorkspaceRunbook[] {
-  return items.filter((item) => asString(item.kind) === "runbook").map((item) => {
-    const extra = parseJsonObject(asString(item.extraJson));
-    const id = asString(item.id);
-    const entityLinks = linksByKnowledge.get(id) ?? [];
-    const componentLink = entityLinks.find((link) => link.entityKind === "component");
-    return {
-      id,
-      title: asString(item.title),
-      objective: asString(item.summary),
-      bodyMarkdown: asString(item.body),
-      service: asString(extra.service, "Service"),
-      severity: asSeverity(asString(extra.severity)),
-      prerequisites: asStringArray(extra.prerequisites),
-      steps: asStringArray(extra.steps),
-      commands: asStringArray(extra.commands),
-      rollback: asString(extra.rollback),
-      owner: asString(item.owner, "Platform"),
-      lastValidated: formatInstant(asString(extra.lastValidated) || asString(item.updatedAt)),
-      componentId: componentLink?.entityRefId || asString(extra.componentId) || undefined,
-      componentName: componentLink?.entityTitle || asString(extra.componentName) || undefined,
-      entityLinks,
-    };
-  });
-}
-
-export function mapSources(
-  items: Record<string, unknown>[],
-  linksByKnowledge: Map<string, WorkspaceEntityLink[]> = new Map(),
-): WorkspaceSource[] {
-  return items.filter((item) => asString(item.kind) === "source").map((item) => {
-    const extra = parseJsonObject(asString(item.extraJson));
-    const id = asString(item.id);
-    return {
-      id,
-      title: asString(item.title),
-      path: asString(extra.path),
-      summary: asString(item.summary),
-      bodyMarkdown: asString(item.body),
-      updatedAt: formatInstant(asString(item.updatedAt)),
+      scopeNodeId: asString(item.scopeNodeId),
       owner: asString(item.owner, "Platform"),
       entityLinks: linksByKnowledge.get(id) ?? [],
     };
@@ -570,9 +511,4 @@ function asFreshness(value: string): WorkspaceIntegration["freshness"] {
 function asSyncResult(value: string): WorkspaceIntegrationSyncRun["result"] {
   if (value === "partial" || value === "failed" || value === "running") return value;
   return "success";
-}
-
-function asSeverity(value: string): WorkspaceRunbook["severity"] {
-  if (value === "low" || value === "medium" || value === "critical") return value;
-  return "high";
 }

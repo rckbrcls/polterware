@@ -1,5 +1,5 @@
 import { Show, createSignal, onMount, type JSX } from "solid-js";
-import { CHROME_PRESETS, chromeStopsFromTint, parseComputedColor, renderChromeFinish, type ChromePreset, type ChromeStop } from "./chrome-finish";
+import { chromeStopsFromTint, chromeVariant, chromeVariantIndex, hashSeed, parseComputedColor, renderChromeFinish, type ChromePreset, type ChromeStop } from "./chrome-finish";
 import "./icon-tile.css";
 
 export type IconTileTone =
@@ -30,11 +30,7 @@ export const AURORA_ACCENTS: Record<AuroraPalette, string> = {
 
 /** Stable FNV-1a mapping over the ID's UTF-16 code units. */
 export function auroraForId(id: string): AuroraPalette {
-  let hash = 2166136261;
-  for (let index = 0; index < id.length; index++) {
-    hash = Math.imul(hash ^ id.charCodeAt(index), 16777619);
-  }
-  return AURORA_PALETTES[(hash >>> 0) % AURORA_PALETTES.length]!;
+  return AURORA_PALETTES[hashSeed(id) % AURORA_PALETTES.length]!;
 }
 
 export function resolveAuroraAccent(palette?: AuroraPalette | string): string {
@@ -49,6 +45,8 @@ export type AuroraCoverProps = {
   class?: string;
   chromeStops?: readonly ChromeStop[];
   chromePreset?: ChromePreset;
+  /** Seeds the procedural finish; the same seed draws the same reflection. Random when omitted. */
+  seed?: string;
 };
 
 /** Decorative cover strip using the shared chrome finish material. */
@@ -60,14 +58,15 @@ export function AuroraCover(props: AuroraCoverProps) {
   onMount(() => {
     const style = getComputedStyle(cover);
     const tint = parseComputedColor(style.color);
-    const stops = props.chromeStops ?? (tint ? chromeStopsFromTint(tint) : undefined);
+    const variant = chromeVariant(chromeVariantIndex(props.seed), props.chromePreset);
+    const stops = props.chromeStops ?? (tint ? chromeStopsFromTint(tint, variant.horizon) : undefined);
     if (!stops) return;
     const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
     const finish = renderChromeFinish(
       { width: 512 * dpr, height: 160 * dpr },
       dpr,
       {
-        ...CHROME_PRESETS[props.chromePreset ?? "horizon"],
+        ...variant.options,
         stops,
         radius: 0,
         rounding: 0,
@@ -111,6 +110,8 @@ export type IconTileProps = {
   chromeStops?: readonly ChromeStop[];
   /** Chrome reflection preset; `horizon` by default. */
   chromePreset?: ChromePreset;
+  /** Seeds the procedural finish (for example an entity id); the same seed draws the same reflection. Random when omitted. */
+  seed?: string;
 };
 
 /**
@@ -253,15 +254,17 @@ export function IconTile(props: IconTileProps) {
   const [chrome, setChrome] = createSignal<HTMLCanvasElement>();
   let tile!: HTMLSpanElement;
 
-  // Static chrome finish: rendered once on the client from the tile's computed accent and radius.
-  // Until then (SSR, first paint, no WebGL2) the tile shows its flat accent tint.
+  // Static chrome finish: rendered once on the client from the tile's computed accent and radius,
+  // with a procedural reflection picked by the seed. Until then (SSR, first paint, no WebGL2)
+  // the tile shows its flat accent tint.
   onMount(() => {
     const style = getComputedStyle(tile);
     const tint = parseComputedColor(style.color);
-    const stops = props.chromeStops ?? (tint ? chromeStopsFromTint(tint) : undefined);
+    const variant = chromeVariant(chromeVariantIndex(props.seed), props.chromePreset);
+    const stops = props.chromeStops ?? (tint ? chromeStopsFromTint(tint, variant.horizon) : undefined);
     if (!stops) return;
     const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
-    const finish = renderChromeFinish(size() * dpr, dpr, { ...CHROME_PRESETS[props.chromePreset ?? "horizon"], stops, radius: Number.parseFloat(style.borderTopLeftRadius) || 8 });
+    const finish = renderChromeFinish(size() * dpr, dpr, { ...variant.options, stops, radius: Number.parseFloat(style.borderTopLeftRadius) || 8 });
     if (finish) setChrome(finish);
   });
 

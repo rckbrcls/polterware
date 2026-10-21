@@ -1,5 +1,5 @@
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
-import { LayoutDashboard, X } from "@polterware/frontend-design-system";
+import { Button, LayoutDashboard, X } from "@polterware/frontend-design-system";
 import type { PlatformContext } from "@polterware/frontend-platform";
 import { OverviewCards, type OverviewCardModel } from "./overview-cards";
 import { OverviewDetail } from "./overview-detail";
@@ -106,8 +106,8 @@ export function CommanderWindow(props: {
             }}
             trailing={
               <>
-                <button
-                  type="button"
+                <Button
+                  variant="icon"
                   class="commander-action"
                   aria-label="Open Desktop"
                   title="Open Desktop"
@@ -117,9 +117,9 @@ export function CommanderWindow(props: {
                   }}
                 >
                   <LayoutDashboard size={16} aria-hidden />
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="icon"
                   class="commander-action"
                   aria-label="Close"
                   onMouseDown={(event) => {
@@ -128,7 +128,7 @@ export function CommanderWindow(props: {
                   }}
                 >
                   <X size={16} aria-hidden />
-                </button>
+                </Button>
               </>
             }
             belowSearch={

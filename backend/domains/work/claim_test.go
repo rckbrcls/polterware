@@ -7,7 +7,7 @@ func TestScopesOverlap(t *testing.T) {
 		a, b string
 		want bool
 	}{
-		{"backend/*", "backend/domains/ppm/*", true},
+		{"backend/*", "backend/domains/canon/*", true},
 		{"docs/*", "backend/*", false},
 		{"backend/import/*", "backend/import/*", true},
 		{"backend/import/*.go", "backend/import/git.go", true},

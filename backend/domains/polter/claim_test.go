@@ -13,13 +13,13 @@ func claimSnapshot() work.Snapshot {
 			ID: "c1", Slug: "git-import", Title: "Git import", Stage: work.StageBuild, Status: work.CardActive,
 			Tasks: []work.Task{
 				{ID: "t1", CardID: "c1", Number: 1, Title: "Evidence", State: work.TaskOpen, Scope: "backend/import/*"},
-				{ID: "t2", CardID: "c1", Number: 2, Title: "Stamp", State: work.TaskOpen, Scope: "backend/domains/ppm/*"},
+				{ID: "t2", CardID: "c1", Number: 2, Title: "Stamp", State: work.TaskOpen, Scope: "backend/domains/canon/*"},
 				{ID: "t3", CardID: "c1", Number: 3, Title: "Docs", State: work.TaskOpen},
 				{ID: "t4", CardID: "c1", Number: 4, Title: "Old", State: work.TaskDone, Scope: "docs/*"},
 			},
 		},
 		{
-			ID: "c2", Slug: "ppm-core", Title: "PPM core", Stage: work.StageBuild, Status: work.CardActive,
+			ID: "c2", Slug: "canon-core", Title: "Canon core", Stage: work.StageBuild, Status: work.CardActive,
 			Tasks: []work.Task{
 				{ID: "u1", CardID: "c2", Number: 1, Title: "Core", State: work.TaskOpen, Scope: "backend/*",
 					Claim: &work.Claim{ID: "k1", ProjectID: "p1", TaskID: "u1", Holder: "claude", Scope: "backend/*"}},
@@ -63,7 +63,7 @@ func TestClaimPlan(t *testing.T) {
 
 	// backend/import/* overlaps claude's backend/* on another card.
 	_, diags = PlanAs(coordDoc(t, "## git-import\nclaim: T1\n"), snapshot, "codex")
-	if !HasErrors(diags) || !strings.Contains(diags[0].Message, "ppm-core T1 held by claude (backend/*)") {
+	if !HasErrors(diags) || !strings.Contains(diags[0].Message, "canon-core T1 held by claude (backend/*)") {
 		t.Fatalf("overlap: %+v", diags)
 	}
 	// The same holder may hold overlapping scopes.
@@ -72,10 +72,10 @@ func TestClaimPlan(t *testing.T) {
 	}
 
 	// Re-claim by the holder is a no-op; by another agent an error.
-	if ops, diags = PlanAs(coordDoc(t, "## ppm-core\nclaim: T1\n"), snapshot, "claude"); HasErrors(diags) || len(ops) != 0 {
+	if ops, diags = PlanAs(coordDoc(t, "## canon-core\nclaim: T1\n"), snapshot, "claude"); HasErrors(diags) || len(ops) != 0 {
 		t.Fatalf("re-claim: ops=%+v diags=%+v", ops, diags)
 	}
-	if _, diags = PlanAs(coordDoc(t, "## ppm-core\nclaim: T1\n"), snapshot, "codex"); !HasErrors(diags) || !strings.Contains(diags[0].Message, "claimed by claude") {
+	if _, diags = PlanAs(coordDoc(t, "## canon-core\nclaim: T1\n"), snapshot, "codex"); !HasErrors(diags) || !strings.Contains(diags[0].Message, "claimed by claude") {
 		t.Fatalf("claim held task: %+v", diags)
 	}
 
@@ -88,11 +88,11 @@ func TestClaimPlan(t *testing.T) {
 	}
 
 	// Done by the holder marks the task done and deletes the claim.
-	ops, diags = PlanAs(coordDoc(t, "## ppm-core\ndone: T1\n"), snapshot, "claude")
+	ops, diags = PlanAs(coordDoc(t, "## canon-core\ndone: T1\n"), snapshot, "claude")
 	if HasErrors(diags) || len(ops) != 2 || ops[0].Fields["state"] != work.TaskDone || ops[1].Entity != work.EntityClaim || ops[1].Kind != work.OpRemove {
 		t.Fatalf("done: ops=%+v diags=%+v", ops, diags)
 	}
-	if _, diags = PlanAs(coordDoc(t, "## ppm-core\ndone: T1\n"), snapshot, "codex"); !HasErrors(diags) {
+	if _, diags = PlanAs(coordDoc(t, "## canon-core\ndone: T1\n"), snapshot, "codex"); !HasErrors(diags) {
 		t.Fatalf("done on another agent's claim should fail")
 	}
 	// Done on a free task that is already done is a no-op.
@@ -101,10 +101,10 @@ func TestClaimPlan(t *testing.T) {
 	}
 
 	// Release: holder only; free task is a no-op.
-	if ops, diags = PlanAs(coordDoc(t, "## ppm-core\nrelease: T1\n"), snapshot, "claude"); HasErrors(diags) || len(ops) != 1 || ops[0].Kind != work.OpRemove {
+	if ops, diags = PlanAs(coordDoc(t, "## canon-core\nrelease: T1\n"), snapshot, "claude"); HasErrors(diags) || len(ops) != 1 || ops[0].Kind != work.OpRemove {
 		t.Fatalf("release: ops=%+v diags=%+v", ops, diags)
 	}
-	if _, diags = PlanAs(coordDoc(t, "## ppm-core\nrelease: T1\n"), snapshot, "codex"); !HasErrors(diags) {
+	if _, diags = PlanAs(coordDoc(t, "## canon-core\nrelease: T1\n"), snapshot, "codex"); !HasErrors(diags) {
 		t.Fatalf("release another agent's claim should fail")
 	}
 	if ops, diags = PlanAs(coordDoc(t, "## git-import\nrelease: T3\n"), snapshot, "codex"); HasErrors(diags) || len(ops) != 0 {
@@ -113,11 +113,11 @@ func TestClaimPlan(t *testing.T) {
 
 	// A nested scope overlaps a wider claim on another card.
 	if _, diags = PlanAs(coordDoc(t, "## git-import\nclaim: T2\n"), snapshot, "codex"); !HasErrors(diags) {
-		t.Fatalf("backend/domains/ppm/* overlaps backend/*: %+v", diags)
+		t.Fatalf("backend/domains/canon/* overlaps backend/*: %+v", diags)
 	}
 
 	// A checkbox that closes a claimed task releases it.
-	ops, diags = PlanAs(coordDoc(t, "## ppm-core\n- [x] T1 Core\n"), snapshot, "")
+	ops, diags = PlanAs(coordDoc(t, "## canon-core\n- [x] T1 Core\n"), snapshot, "")
 	if HasErrors(diags) || len(ops) != 2 || ops[1].Entity != work.EntityClaim || ops[1].Kind != work.OpRemove {
 		t.Fatalf("checkbox done: ops=%+v diags=%+v", ops, diags)
 	}
@@ -147,7 +147,7 @@ func TestClaimStatusLines(t *testing.T) {
 	snapshot := claimSnapshot()
 	snapshot.Cards[0].Tasks[2].Claim = &work.Claim{Holder: "codex"}
 	status := EncodeStatusClaims("git-import", snapshot)
-	want := "claim: T3 codex\nclaimed: ppm-core T1 claude (backend/*)\n"
+	want := "claim: T3 codex\nclaimed: canon-core T1 claude (backend/*)\n"
 	if status != want {
 		t.Fatalf("status claims = %q, want %q", status, want)
 	}

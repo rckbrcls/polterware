@@ -12,7 +12,7 @@ rationale: Facts should cite the commit that backs them
 ---
 
 ## git-import: Git metadata import
-stage: build · owner: erick · decisions: ADR-0007
+stage: build · owner: erick · decisions: Verdict-0007
 
 - [x] T1 Upsert commit evidence \`backend/import/*\`
 - [ ] T2 Stamp revision on facts

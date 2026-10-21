@@ -19,7 +19,7 @@ import (
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
 )
 
-// lifecycle tracks what keeps the daemon alive (ADR 0007): recent requests
+// lifecycle tracks what keeps the daemon alive (Verdict 0007): recent requests
 // (MCP calls included) and open change streams. The MCP bridge re-initializes
 // transparently when an idle core exited, so MCP sessions do not pin it.
 type lifecycle struct {

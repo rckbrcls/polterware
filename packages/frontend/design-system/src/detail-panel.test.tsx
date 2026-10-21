@@ -593,7 +593,9 @@ describe("lateral DetailPanel", () => {
     expect(actions.indexOf('label="Add source"')).toBeLessThan(actions.indexOf("label={createLabel()}"));
     const atlas = readFileSync(repoPath("packages/features/architecture/src/index.tsx"), "utf8");
     const atlasActions = atlas.slice(atlas.indexOf("<PageToolbar.Actions>"), atlas.indexOf("</PageToolbar.Actions>"));
-    expect(atlasActions.indexOf('label="Auto layout"')).toBeLessThan(atlasActions.indexOf('label="Add component"'));
+    // Auto layout lives on the canvas (bottom-left), not in the toolbar.
+    expect(atlasActions).not.toContain("Auto layout");
+    expect(atlas).toContain('aria-label="Auto layout"');
   });
   it("registers callback-owned sibling confirmations", async () => {
     const [confirm, setConfirm] = createSignal(false);
@@ -718,9 +720,8 @@ describe("lateral DetailPanel", () => {
     expect(body.querySelector("[data-testid='meta']")?.textContent).toBe("Active");
     (header.querySelector("[aria-label='Expand details']") as HTMLButtonElement).click();
     expect(panel.expanded()).toBe(true);
-    (header.querySelector("[aria-label='Restore details']") as HTMLButtonElement).click();
+    (header.querySelector("[aria-label='Back']") as HTMLButtonElement).click();
     expect(panel.expanded()).toBe(false);
-    expect(source()).toContain('createShortcutLabel("shell.maximize_detail")');
     panel.dispose();
   });
   it("keeps retained entity surfaces on the shared DetailPanel", () => {

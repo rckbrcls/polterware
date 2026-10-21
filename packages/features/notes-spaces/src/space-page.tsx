@@ -98,7 +98,7 @@ export function SpacePage() {
     moveTargetOptions(nodes(), selectedId()).map((option) => {
       if (option.value === "") return { ...option, value: ROOT_VALUE, icon: <House size={16} /> };
       const node = nodes().find((space) => space.id === option.value);
-      return node ? { ...option, icon: <SpaceMark color={node.color} icon={node.icon} size={20} /> } : option;
+      return node ? { ...option, icon: <SpaceMark color={node.color} icon={node.icon} size={20} seed={node.id} /> } : option;
     }),
   );
 
@@ -194,15 +194,29 @@ export function SpacePage() {
     }
   };
 
+  // Tab edge pixel `inset` (0 = rim, 1-4 = card rings), as a 1px stroke that lines up with the body's
+  // border and inset rings on rows 28-32 and runs down to y=33, where the body's own edges take over.
+  const folderTabEdge = (inset: number) => {
+    const edge = 0.5 + inset;
+    const convex = 14 - inset;
+    const concave = 14 + inset;
+    return `M${edge} 33V14.5A${convex} ${convex} 0 0 1 14.5 ${edge}H92.5A${convex} ${convex} 0 0 1 ${106.5 - inset} 14.5A${concave} ${concave} 0 0 0 120.5 ${28 + edge}`;
+  };
   const toFolderItems = (list: ReturnType<typeof children>) => list.map((child) => ({
     id: child.id,
     sortOrder: child.sortOrder,
     render: (state: { dropTarget: boolean; noteCount: number }) => (
       <Card class="notes-space-card notes-space-folder !p-0">
-        <svg class="notes-space-folder__tab" width="132" height="29" viewBox="0 0 132 29" aria-hidden="true">
-          <path class="notes-space-folder__tab-fill" d="M0.5 28V14.5A14 14 0 0 1 14.5 0.5H92.5A14 14 0 0 1 106.5 14.5A14 14 0 0 0 120.5 28.5H132V29H1V28Z" />
-          <rect class="notes-space-folder__tab-fill" x="1" y="28" width="131" height="1" />
-          <path class="notes-space-folder__tab-line" d="M0.5 28V14.5A14 14 0 0 1 14.5 0.5H92.5A14 14 0 0 1 106.5 14.5A14 14 0 0 0 120.5 28.5H132" fill="none" />
+        <svg class="notes-space-folder__tab" width="121" height="33" viewBox="0 0 121 33" aria-hidden="true">
+          <path class="notes-space-folder__tab-fill" d="M0 33V14.5A14.5 14.5 0 0 1 14.5 0H92.5A14.5 14.5 0 0 1 107 14.5A13.5 13.5 0 0 0 120.5 28V33Z" />
+          <g fill="none">
+            <path class="notes-space-folder__tab-halo" d="M-0.5 27V14.5A15 15 0 0 1 14.5 -0.5H92.5A15 15 0 0 1 107.5 14.5A13 13 0 0 0 116.93 27" />
+            <path class="notes-space-folder__tab-rim" d={folderTabEdge(0)} />
+            <path class="notes-space-folder__tab-ring--1" d={folderTabEdge(1)} />
+            <path class="notes-space-folder__tab-ring--2" d={folderTabEdge(2)} />
+            <path class="notes-space-folder__tab-ring--3" d={folderTabEdge(3)} />
+            <path class="notes-space-folder__tab-ring--4" d={folderTabEdge(4)} />
+          </g>
         </svg>
         <div
           data-space-card=""
@@ -214,7 +228,7 @@ export function SpacePage() {
           onClick={() => shell.navigate(`/space/${encodeURIComponent(child.id)}`)}
         >
           <div class="flex items-start justify-between gap-2">
-            <SpaceMark color={child.color} icon={child.icon} size={36} aurora={auroraForId(child.id)} />
+            <SpaceMark color={child.color} icon={child.icon} size={36} aurora={auroraForId(child.id)} seed={child.id} />
             <span aria-label={`${state.noteCount} notes`} class="text-[16px] font-medium leading-none tabular-nums text-[var(--color-text-muted)]">{String(state.noteCount).padStart(2, "0")}</span>
           </div>
           <p class="m-0 line-clamp-1 break-words text-[15px] font-semibold leading-snug text-[var(--color-text-primary)]">{child.name}</p>
@@ -323,7 +337,7 @@ export function SpacePage() {
                             {(space) => (
                               <Button variant="ghost" class="notes-space-tile" onClick={() => shell.navigate(`/space/${encodeURIComponent(space.id)}`)}>
                                 <Card class="flex min-h-[224px] flex-col justify-between !p-5">
-                                  <SpaceMark color={space.color} icon={space.icon} size={36} aurora={auroraForId(space.id)} />
+                                  <SpaceMark color={space.color} icon={space.icon} size={36} aurora={auroraForId(space.id)} seed={space.id} />
                                   <p class="mt-2 break-words text-sm font-medium text-[var(--color-text-primary)]">{space.name}</p>
                                 </Card>
                               </Button>
@@ -351,10 +365,10 @@ export function SpacePage() {
                       <Dynamic component={collection()} spaceId={space().id} onCreateSpace={() => openCreate(space().id)} folderItems={folderItems()} onReorderFolders={reorderFolders} canDropInto={canDropInto} onDropInto={dropInto}
                         leading={<nav aria-label="Space path" class="flex min-w-0 items-center gap-0.5">
                           <For each={ancestors()}>{(ancestor) => <>
-                            <Button variant="ghost" data-space-id={ancestor.id} aria-label={`Open Space ${ancestor.name}`} class="min-w-0 !gap-2 data-[drop-target=true]:bg-[var(--color-surface-hover)] data-[drop-target=true]:text-[var(--color-text-primary)]" onClick={() => shell.navigate(`/space/${encodeURIComponent(ancestor.id)}`)}><SpaceMark color={ancestor.color} icon={ancestor.icon} size={20} /><span class="truncate text-[13px] font-medium text-[var(--color-text-secondary)]">{ancestor.name}</span></Button>
+                            <Button variant="ghost" data-space-id={ancestor.id} aria-label={`Open Space ${ancestor.name}`} class="min-w-0 !gap-2 data-[drop-target=true]:bg-[var(--color-surface-hover)] data-[drop-target=true]:text-[var(--color-text-primary)]" onClick={() => shell.navigate(`/space/${encodeURIComponent(ancestor.id)}`)}><SpaceMark color={ancestor.color} icon={ancestor.icon} size={20} seed={ancestor.id} /><span class="truncate text-[13px] font-medium text-[var(--color-text-secondary)]">{ancestor.name}</span></Button>
                             <ChevronRight size={12} aria-hidden="true" class="shrink-0 text-[var(--color-text-muted)]" />
                           </>}</For>
-                          <Button variant="ghost" aria-label={`Edit Space ${space().name}`} class="min-w-0 !gap-2" onClick={() => setEditOpen(true)}><SpaceMark color={space().color} icon={space().icon} size={20} /><span class="truncate text-[13px] font-medium text-[var(--color-text-secondary)]">{space().name}</span></Button>
+                          <Button variant="ghost" aria-label={`Edit Space ${space().name}`} class="min-w-0 !gap-2" onClick={() => setEditOpen(true)}><SpaceMark color={space().color} icon={space().icon} size={20} seed={space().id} /><span class="truncate text-[13px] font-medium text-[var(--color-text-secondary)]">{space().name}</span></Button>
                         </nav>} />
                     </section>
                   }</Show>
@@ -394,6 +408,7 @@ export function SpacePage() {
           <FormStack>
             <IconNameField
               label="Name"
+              seed={selected()?.id}
               name={name()}
               onNameInput={setName}
               icon={icon()}

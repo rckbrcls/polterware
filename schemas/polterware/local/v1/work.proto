@@ -4,7 +4,7 @@ option go_package = "github.com/polterware/polterware/backend/platform/gen/polte
 
 import "polterware/local/v1/agentrun.proto";
 
-// Work model (ADR 0006): cards with tasks, questions, and invariants.
+// Work model (Verdict 0006): cards with tasks, questions, and invariants.
 message WorkTask {
   string id = 1;
   int32 number = 2;
@@ -59,7 +59,14 @@ message PolterDiagnostic {
 
 // ListWorkCards returns active cards with their tasks, open or answered
 // questions, and active invariants, ordered by position.
-message ListWorkCardsRequest { string project_id = 1; }
+// Scope fields on a request narrow the read to one Atlas node (id or path),
+// its descendants and, unless scope_exact, its ancestors. Empty is the whole
+// project. Unscoped entities stay visible under any scope.
+message ListWorkCardsRequest {
+  string project_id = 1;
+  string scope_node = 2;
+  bool scope_exact = 3;
+}
 message ListWorkCardsResponse { repeated WorkCard cards = 1; }
 
 // ApplyPolter plans Polter format text against the store and, unless dry_run,
@@ -101,6 +108,8 @@ message LintPolterResponse { repeated PolterDiagnostic diagnostics = 1; }
 message QueryPolterRequest {
   string project_id = 1;
   string query = 2;
+  string scope_node = 3;
+  bool scope_exact = 4;
 }
 message QueryPolterResponse { string text = 1; }
 
@@ -147,6 +156,8 @@ message InboxItem {
   // actions are the item's action ids, primary first: decide, delegate,
   // defer, fix_code, update_intent, ignore, verify, reject.
   repeated string actions = 10;
+  // scope_node_id is the item's own scope; empty when it follows its source.
+  string scope_node_id = 11;
 }
 
 // RoutedInboxItem is an item a person handed to agents (delegate, fix_code,
@@ -158,7 +169,22 @@ message RoutedInboxItem {
 
 // ListInbox derives the project's Inbox: open items (blocking first), then
 // deferred ones. Reading it writes nothing.
-message ListInboxRequest { string project_id = 1; }
+message ListInboxRequest {
+  string project_id = 1;
+  string scope_node = 2;
+  bool scope_exact = 3;
+}
+
+// SetScope assigns an entity to an Atlas node, or clears it when node is empty.
+// kind is "decision", "fact", "evidence", or "item" (a derived Drift/Inbox item,
+// identified by its item key). node is an Atlas node id or path.
+message SetScopeRequest {
+  string project_id = 1;
+  string kind = 2;
+  string id = 3;
+  string node = 4;
+}
+message SetScopeResponse {}
 message ListInboxResponse {
   repeated InboxItem items = 1;
   repeated RoutedInboxItem routed = 2;
@@ -281,7 +307,7 @@ message ListAgentSessionsResponse {
 message ListAtlasHistoryRequest { string project_id = 1; }
 message ListAtlasHistoryResponse { repeated AtlasHistoryEntry entries = 1; }
 
-// ExportProjections writes ADR files into docs/adr/ of each governing checkout
+// ExportProjections writes Verdict files into docs/verdict/ of each governing checkout
 // and the generated AGENTS.md block of every checkout. The store stays the
 // source of truth; nothing is read back from the files.
 message ExportProjectionsRequest {
@@ -311,7 +337,7 @@ message FeatureTouch {
 }
 
 // from is "card" or the node path that cites the decision; status is empty
-// when no ADR matches the reference.
+// when no Verdict matches the reference.
 message FeatureDecision {
   string ref = 1;
   string id = 2;
@@ -426,6 +452,7 @@ service WorkService {
   rpc EndSession(EndSessionRequest) returns (EndSessionResponse);
   rpc ListInbox(ListInboxRequest) returns (ListInboxResponse);
   rpc ResolveInboxItem(ResolveInboxItemRequest) returns (ResolveInboxItemResponse);
+  rpc SetScope(SetScopeRequest) returns (SetScopeResponse);
   rpc ExportProjections(ExportProjectionsRequest) returns (ExportProjectionsResponse);
   rpc ReviewFeature(ReviewFeatureRequest) returns (ReviewFeatureResponse);
   rpc CreateFeature(CreateFeatureRequest) returns (CreateFeatureResponse);

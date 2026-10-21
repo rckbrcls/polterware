@@ -73,7 +73,7 @@ export type WorkspaceEntityLink = {
   source: string;
 };
 
-export type WorkspacePpmEntity = {
+export type WorkspaceCanonEntity = {
   id: string;
   kind: string;
   refKind: string;
@@ -83,24 +83,7 @@ export type WorkspacePpmEntity = {
   source: string;
 };
 
-export type WorkspaceDocument = {
-  id: string;
-  title: string;
-  summary: string;
-  bodyMarkdown: string;
-  author: string;
-  updatedAt: string;
-  tags: string[];
-  componentIds: string[];
-  componentNames: string[];
-  environment: string;
-  status: "draft" | "published";
-  archived?: boolean;
-  owner: string;
-  entityLinks: WorkspaceEntityLink[];
-};
-
-export type WorkspaceAdr = {
+export type WorkspaceVerdict = {
   id: string;
   title: string;
   summary: string;
@@ -121,43 +104,32 @@ export type WorkspaceAdr = {
   statusReason: string;
   /** Paths of the Atlas nodes that cite this decision. */
   governs: string[];
+  /** Atlas node the decision is scoped to; unset means the whole project. */
+  scopeNodeId?: string;
   owner: string;
+  entityLinks: WorkspaceEntityLink[];
+};
+
+/**
+ * One piece of Evidence: a markdown note, optionally pointing at a project file.
+ * There is no type; a runbook or a document is an item carrying that tag.
+ */
+export type WorkspaceEvidence = {
+  id: string;
+  title: string;
+  summary: string;
+  bodyMarkdown: string;
+  tags: string[];
+  /** Project-relative path of the file this evidence points at; empty for a plain note. */
+  path: string;
+  /** Atlas node the evidence is scoped to; unset means the whole project. */
+  scopeNodeId?: string;
+  owner: string;
+  updatedAt: string;
   entityLinks: WorkspaceEntityLink[];
 };
 
 export type DecisionState = "proposed" | "active" | "challenged" | "superseded";
-
-export type WorkspaceRunbook = {
-  id: string;
-  title: string;
-  objective: string;
-  bodyMarkdown: string;
-  service: string;
-  severity: "low" | "medium" | "high" | "critical";
-  prerequisites: string[];
-  steps: string[];
-  commands: string[];
-  rollback: string;
-  owner: string;
-  lastValidated: string;
-  componentId?: string;
-  componentName?: string;
-  resourceId?: string;
-  resourceName?: string;
-  nodeId?: string;
-  entityLinks: WorkspaceEntityLink[];
-};
-
-export type WorkspaceSource = {
-  id: string;
-  title: string;
-  path: string;
-  summary: string;
-  bodyMarkdown: string;
-  updatedAt: string;
-  owner: string;
-  entityLinks: WorkspaceEntityLink[];
-};
 
 /** Work board column for a card (Grounded SDD lifecycle). */
 export type WorkStage = "shape" | "plan" | "build" | "verify" | "delivered";
@@ -186,7 +158,7 @@ export type WorkspaceWorkInvariant = {
   text: string;
 };
 
-/** Work card from the Work tables (ADR 0006), written through the Polter format. */
+/** Work card from the Work tables (Verdict 0006), written through the Polter format. */
 /** A feature, or an Architecture Change that edits the Atlas structure. */
 export type WorkCardKind = "feature" | "architecture";
 
@@ -221,7 +193,7 @@ export type WorkspaceFeatureReview = {
   /** Component paths suggested for a card without under:. */
   suggested: string[];
   touches: { path: string; level: string; title: string }[];
-  /** from is "card" or the node path citing the decision; status is empty when no ADR matches. */
+  /** from is "card" or the node path citing the decision; status is empty when no Verdict matches. */
   decisions: { ref: string; id: string; title: string; status: string; from: string }[];
   inherited: { text: string; from: string }[];
   questions: {

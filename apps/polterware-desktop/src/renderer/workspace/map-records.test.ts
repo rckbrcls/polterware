@@ -1,20 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
   decisionState,
-  mapAdrs,
+  mapVerdicts,
   mapConnections,
-  mapDocuments,
+  mapEvidence,
   mapEnvironments,
   mapIntegrationResources,
   mapKnowledgeEntityLinks,
-  mapPpmEntities,
+  mapCanonEntities,
   mapProjectRepos,
   mapProjects,
   mapProviders,
-  mapRunbooks,
   mapSettings,
   mapSettingsEnvironments,
-  mapSources,
   mapSyncRuns,
   mapViews,
 } from "./map-records";
@@ -109,8 +107,8 @@ describe("mapProjectRepos", () => {
   });
 });
 
-describe("mapPpmEntities and mapKnowledgeEntityLinks", () => {
-  const entities = mapPpmEntities([
+describe("mapCanonEntities and mapKnowledgeEntityLinks", () => {
+  const entities = mapCanonEntities([
     { id: "e1", kind: "component", refKind: "atlas", refId: "core/import", title: "Import" },
     { id: "e2", kind: "resource", refId: "res-1", title: "DB", truthClass: "observed", source: "aws" },
   ]);
@@ -149,73 +147,57 @@ describe("decisionState", () => {
   });
 });
 
-describe("mapAdrs", () => {
+describe("mapVerdicts", () => {
   const items = [
-    { id: "adr-a", kind: "adr", title: "ADR 0001: Local SQLite", status: "active", extraJson: JSON.stringify({ reviewTrigger: "multi-user" }) },
-    { id: "adr-b", kind: "adr", title: "ADR 0002: Postgres", status: "proposed", extraJson: JSON.stringify({ supersededBy: "adr-c" }) },
-    { id: "adr-c", kind: "adr", title: "ADR 0003: Hosted", status: "accepted", extraJson: JSON.stringify({ statusReason: "scale" }) },
-    { id: "doc-1", kind: "doc", title: "Not an ADR" },
+    { id: "verdict-a", kind: "verdict", title: "Verdict 0001: Local SQLite", status: "active", extraJson: JSON.stringify({ reviewTrigger: "multi-user" }) },
+    { id: "verdict-b", kind: "verdict", title: "Verdict 0002: Postgres", status: "proposed", extraJson: JSON.stringify({ supersededBy: "verdict-c" }) },
+    { id: "verdict-c", kind: "verdict", title: "Verdict 0003: Hosted", status: "accepted", extraJson: JSON.stringify({ statusReason: "scale" }) },
+    { id: "doc-1", kind: "evidence", tags: ["doc"], title: "Not an Verdict" },
   ];
 
-  it("keeps only ADRs and resolves supersession both ways", () => {
-    const adrs = mapAdrs(items);
-    expect(adrs.map((adr) => adr.id)).toEqual(["adr-a", "adr-b", "adr-c"]);
-    expect(adrs[1]?.supersededBy).toBe("ADR 0003: Hosted");
-    expect(adrs[2]?.supersedes).toEqual(["ADR 0002: Postgres"]);
-    expect(adrs[0]).toMatchObject({ reviewTrigger: "multi-user", state: "active" });
-    expect(adrs[2]).toMatchObject({ state: "active", statusReason: "scale" });
+  it("keeps only Verdicts and resolves supersession both ways", () => {
+    const verdicts = mapVerdicts(items);
+    expect(verdicts.map((verdict) => verdict.id)).toEqual(["verdict-a", "verdict-b", "verdict-c"]);
+    expect(verdicts[1]?.supersededBy).toBe("Verdict 0003: Hosted");
+    expect(verdicts[2]?.supersedes).toEqual(["Verdict 0002: Postgres"]);
+    expect(verdicts[0]).toMatchObject({ reviewTrigger: "multi-user", state: "active" });
+    expect(verdicts[2]).toMatchObject({ state: "active", statusReason: "scale" });
   });
 
-  it("lists the live Atlas nodes that cite an ADR by id or by number", () => {
-    const adrs = mapAdrs(items, new Map(), [
-      { path: "core/store", decisions: ["adr-a"] },
-      { path: "core/api", decisions: ["ADR-0001"] },
-      { path: "core/old", decisions: ["ADR 1"], status: "removed" },
-      { path: "core/other", decisions: ["ADR-0009"] },
+  it("lists the live Atlas nodes that cite an Verdict by id or by number", () => {
+    const verdicts = mapVerdicts(items, new Map(), [
+      { path: "core/store", decisions: ["verdict-a"] },
+      { path: "core/api", decisions: ["Verdict-0001"] },
+      { path: "core/old", decisions: ["Verdict 1"], status: "removed" },
+      { path: "core/other", decisions: ["Verdict-0009"] },
     ]);
-    expect(adrs[0]?.governs).toEqual(["core/store", "core/api"]);
-    expect(adrs[1]?.governs).toEqual([]);
+    expect(verdicts[0]?.governs).toEqual(["core/store", "core/api"]);
+    expect(verdicts[1]?.governs).toEqual([]);
   });
 });
 
-describe("mapDocuments, mapRunbooks, mapSources", () => {
+describe("mapEvidence", () => {
   const records = [
-    { id: "d1", kind: "doc", title: "Guide", status: "draft", extraJson: JSON.stringify({ author: "Erick", environment: "prod" }) },
-    { id: "d2", kind: "doc", title: "Public", status: "anything" },
-    { id: "rb", kind: "runbook", title: "Restore", summary: "Bring it back", extraJson: JSON.stringify({ severity: "low", steps: ["a", "b"], service: "db" }) },
-    { id: "s1", kind: "source", title: "README", extraJson: JSON.stringify({ path: "README.md" }) },
+    { id: "d1", kind: "evidence", tags: ["doc"], title: "Guide", summary: "How to" },
+    { id: "rb", kind: "evidence", tags: ["runbook", "ops"], title: "Restore" },
+    { id: "s1", kind: "evidence", tags: ["source"], title: "README", extraJson: JSON.stringify({ path: "README.md" }) },
+    { id: "v1", kind: "verdict", title: "Decision" },
   ];
 
   // The core sends protobuf JSON, which omits empty strings, so defaults apply to absent fields.
-  it("maps documents and treats any non-draft status as published", () => {
-    const docs = mapDocuments(records);
-    expect(docs.map((doc) => doc.id)).toEqual(["d1", "d2"]);
-    expect(docs[0]).toMatchObject({ status: "draft", author: "Erick", environment: "prod", owner: "Platform" });
-    expect(docs[1]).toMatchObject({ status: "published", environment: "All", author: "Project maintainer" });
+  it("maps every evidence item regardless of its tags and skips other kinds", () => {
+    const items = mapEvidence(records);
+    expect(items.map((item) => item.id)).toEqual(["d1", "rb", "s1"]);
+    expect(items[1]).toMatchObject({ tags: ["runbook", "ops"], path: "", owner: "Platform" });
   });
 
-  it("prefers linked components over the values stored in extraJson", () => {
-    const links = new Map([
-      ["d1", [{ id: "l", entityId: "e", entityTitle: "Import", entityKind: "component", entityRefId: "core/import", predicate: "documents", truthClass: "declared", source: "polterware" }]],
-    ]);
-    const [doc] = mapDocuments(records, links);
-    expect(doc?.componentIds).toEqual(["core/import"]);
-    expect(doc?.componentNames).toEqual(["Import"]);
-  });
-
-  it("maps runbooks with a safe severity default", () => {
-    const [runbook] = mapRunbooks(records);
-    expect(runbook).toMatchObject({ id: "rb", objective: "Bring it back", severity: "low", steps: ["a", "b"], service: "db" });
-    expect(mapRunbooks([{ id: "x", kind: "runbook", extraJson: JSON.stringify({ severity: "weird" }) }])[0]?.severity).toBe("high");
-  });
-
-  it("maps sources with their project-relative path", () => {
-    expect(mapSources(records)).toMatchObject([{ id: "s1", title: "README", path: "README.md" }]);
+  it("keeps the project-relative path of a file-backed item", () => {
+    expect(mapEvidence(records)[2]).toMatchObject({ title: "README", path: "README.md" });
   });
 
   it("survives malformed extraJson", () => {
-    const [doc] = mapDocuments([{ id: "bad", kind: "doc", title: "T", extraJson: "{not json" }]);
-    expect(doc).toMatchObject({ id: "bad", environment: "All" });
+    const [item] = mapEvidence([{ id: "bad", kind: "evidence", title: "T", extraJson: "{not json" }]);
+    expect(item).toMatchObject({ id: "bad", path: "" });
   });
 });
 

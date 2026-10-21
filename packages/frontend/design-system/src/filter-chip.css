@@ -1,4 +1,4 @@
-/* Quiet secondary filters — never texture buttons (DESIGN.md) */
+/* Secondary filters: quiet until selected, then the texture face (same as the active tab). */
 
 .pw-filter-chip-group {
   display: flex;
@@ -14,8 +14,8 @@
   justify-content: center;
   margin: 0;
   padding: 5px 10px;
-  border: 0;
-  border-radius: 999px;
+  border: 1px solid transparent;
+  border-radius: 8px;
   background: transparent;
   color: var(--color-text-muted);
   font-family: inherit;
@@ -36,13 +36,15 @@
 }
 
 .pw-filter-chip--selected {
+  border-color: var(--tone-neutral-frame);
   color: var(--color-text-primary);
-  background: var(--color-surface-active);
+  background: linear-gradient(to bottom, var(--tone-neutral-top), var(--tone-neutral-bottom));
+  box-shadow: inset 0 0 0 1px var(--tone-neutral-rim);
 }
 
 .pw-filter-chip--selected:hover {
   color: var(--color-text-primary);
-  background: var(--color-surface-selected);
+  background: linear-gradient(to bottom, #404040, #454545);
 }
 
 .pw-filter-chip:focus {

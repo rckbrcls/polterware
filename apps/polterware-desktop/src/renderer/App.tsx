@@ -1,4 +1,4 @@
-import { Match, Show, Switch, Suspense, createEffect, createSignal, lazy, onCleanup, onMount } from "solid-js";
+import { Match, Show, Switch, Suspense, createEffect, createMemo, createSignal, lazy, onCleanup, onMount } from "solid-js";
 import {
   Shell,
   CliReferencePage,
@@ -14,11 +14,17 @@ import {
   setFilters,
   setSelectedNode,
   setEnvironment,
+  setExpandedDetail,
+  setExpandedDetailTarget,
+  setDetailExpandHandler,
+  openDetail,
   historySnapshot,
   ensureRouteAvailable,
   routesEqual,
   SECTION_TABS,
   type ClientRoute,
+  type ScopeNodeItem,
+  type WorkspaceScope,
   type EnvironmentItem,
   type FeatureFlowStep,
   type ProjectSettingsTabId,
@@ -32,7 +38,7 @@ import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelo
 import { hydrateAppearancePreferences, hydrateShortcutPreferences } from "@polterware/feature-settings/boot";
 import { CommandPalette } from "@polterware/feature-commander";
 import { PageLoading, pushToast, type TabItem } from "@polterware/frontend-design-system";
-import { detailPanelStore, matchesShortcut } from "@polterware/frontend-state";
+import { detailDisplayFor, detailPanelStore, matchesShortcut } from "@polterware/frontend-state";
 import { hideBootSplash } from "./boot-splash";
 import { bootstrapPlatform } from "./platform-bootstrap";
 
@@ -62,6 +68,7 @@ import {
   loadAtlas,
   loadInbox,
   loadWorkspaceExtensions,
+  setActiveScope,
   loadWorkspaceShell,
   pickWorkspaceExtensions,
   type ProjectCatalog,
@@ -81,9 +88,11 @@ import {
   persistIntegrationSync,
   persistImportProjectSources,
   persistKnowledgeBody,
+  persistKnowledgeTags,
+  persistKnowledgeTitle,
   persistKnowledgeCreate,
+  persistKnowledgeScope,
   persistKnowledgeDelete,
-  persistKnowledgeDuplicate,
   persistKnowledgeSourcePath,
   persistLayout,
   persistAddProjectRepo,
@@ -286,7 +295,7 @@ export function App() {
     const unsubscribeExecute = window.polterware.commander.onExecuteCommand((id: string) => {
       handlePaletteCommand(id);
     });
-    // Live sync (ADR 0007): writes from the CLI, MCP agents, or the TUI refresh
+    // Live sync (Verdict 0007): writes from the CLI, MCP agents, or the TUI refresh
     // only the affected slices of the current project.
     const refresher = createChangeRefresher({
       currentProjectId: () => currentProjectId(),
@@ -362,16 +371,33 @@ export function App() {
     });
   }
 
+  // Expanding a detail is a navigation: the route names the entity, so Back/Forward and the
+  // titlebar arrows move between the list and that entity's full-page detail.
+  createEffect(() => setExpandedDetailTarget(route().expandedDetail ?? null));
+  setDetailExpandHandler((expanded) => {
+    if (expanded) {
+      const state = detailPanelStore.getState();
+      const target = state.activeTarget ?? (state.lastTarget?.scopeId === state.activeScope ? state.lastTarget : null);
+      if (target) applyRoute(setExpandedDetail(route(), target));
+      return;
+    }
+    const collapsed = setExpandedDetail(route(), null);
+    const previous = history()[historyIndex() - 1];
+    if (previous && routesEqual(previous, collapsed)) goBack();
+    else applyRoute(collapsed, "replace");
+  });
+  onCleanup(() => setDetailExpandHandler(undefined));
+
   function navigateSection(section: string) {
     applyRoute(goSection(route(), section));
   }
 
-  /** Docs and runbooks open in the Evidence list; ADRs open in the Decisions list. */
+  /** Evidence opens in the Evidence list; Verdicts open in the Decisions list. */
   const libraryScope = () =>
     route().section === "truth" && route().tab === "evidence" ? "knowledge:evidence" : "knowledge:library";
 
   function activateDetail(scopeId: string, entityId: string, entityKind: string) {
-    detailPanelStore.getState().activateTarget({ scopeId, entityId, entityKind });
+    openDetail({ scopeId, entityId, entityKind });
   }
 
   function navigateToDetail(
@@ -380,8 +406,10 @@ export function App() {
     entityId: string,
     entityKind: string,
   ) {
-    detailPanelStore.getState().requestTarget({ scopeId, entityId, entityKind });
-    applyRoute(nextRoute);
+    const target = { scopeId, entityId, entityKind };
+    detailPanelStore.getState().requestTarget(target);
+    // Page-only kinds land on their full page; the others open the lateral panel.
+    applyRoute(detailDisplayFor(entityKind) === "page" ? setExpandedDetail(nextRoute, target) : nextRoute);
   }
 
   function goBack() {
@@ -432,7 +460,40 @@ export function App() {
     }
   }
 
+  /** The global scope: an Atlas node path, or empty for the whole project. */
+  const [scope, setScope] = createSignal<WorkspaceScope>({ node: "", exact: false });
+  const scopeNodes = createMemo<ScopeNodeItem[]>(() =>
+    workspace().atlas.nodes.map((node) => ({
+      id: node.id,
+      parentId: node.parentId,
+      level: node.level,
+      path: node.path,
+      title: node.title,
+    })),
+  );
+
+  async function selectScope(next: WorkspaceScope) {
+    setActiveScope(next);
+    setScope(next);
+    const projectId = currentProjectId();
+    try {
+      const [workCards, inbox, extensions] = await Promise.all([
+        loadWorkCards(projectId),
+        loadInbox(projectId),
+        loadWorkspaceExtensions(projectId, { environments: workspace().environments }),
+      ]);
+      if (currentProjectId() !== projectId || scope() !== next) return;
+      setWorkspace((current) => ({ ...current, ...extensions, workCards, inbox }));
+    } catch (error) {
+      pushToast(error instanceof Error ? error.message : "Could not apply the scope.", "danger");
+    }
+  }
+
   function selectProject(projectId: string) {
+    if (scope().node !== "") {
+      setActiveScope({ node: "", exact: false });
+      setScope({ node: "", exact: false });
+    }
     const environment =
       workspace().environments.find((item) => item.projectId === projectId) ?? workspace().environments[0];
     applyRoute(
@@ -558,43 +619,39 @@ export function App() {
     tabs: TabItem[];
     activeTab?: string;
     tabsLabel: string;
-    libraryKinds?: ("doc" | "adr" | "runbook" | "source")[];
   }) {
     return (
       <KnowledgeView
-        documents={workspace().documents}
-        adrs={workspace().adrs}
-        runbooks={workspace().runbooks}
-        sources={workspace().sources}
+        verdicts={workspace().verdicts}
+        evidence={workspace().evidence}
         workCards={workspace().workCards}
-        entities={workspace().ppmEntities}
+        entities={workspace().canonEntities}
         tab={surface.tab}
         tabs={surface.tabs}
         activeTab={surface.activeTab}
         tabsLabel={surface.tabsLabel}
-        libraryKinds={surface.libraryKinds}
         loading={loading() || !workspace().extensionsReady}
         onTabChange={(tab) => applyRoute(setTab(route(), tab))}
-        onOpenDoc={(id) => activateDetail(libraryScope(), id, "document")}
-        onOpenAdr={(id) => activateDetail(libraryScope(), id, "adr")}
-        onDecisionAction={(adrId, action) => {
-          const adr = workspace().adrs.find((item) => item.id === adrId);
-          if (!adr) return;
+        onOpenEvidence={(id) => activateDetail("knowledge:evidence", id, "evidence")}
+        onOpenVerdict={(id) => activateDetail(libraryScope(), id, "verdict")}
+        onDecisionAction={(verdictId, action) => {
+          const verdict = workspace().verdicts.find((item) => item.id === verdictId);
+          if (!verdict) return;
           const successor = action.kind === "supersede"
-            ? workspace().adrs.find((item) => item.id === action.byId)
+            ? workspace().verdicts.find((item) => item.id === action.byId)
             : undefined;
           const summaries = {
-            activate: `Activate decision: ${adr.title}`,
-            reactivate: `Keep decision active after review: ${adr.title}`,
-            challenge: `Open review of decision: ${adr.title}`,
-            supersede: `Supersede ${adr.title} with ${successor?.title ?? "another decision"}`,
+            activate: `Activate decision: ${verdict.title}`,
+            reactivate: `Keep decision active after review: ${verdict.title}`,
+            challenge: `Open review of decision: ${verdict.title}`,
+            supersede: `Supersede ${verdict.title} with ${successor?.title ?? "another decision"}`,
           } as const;
           void justifyChange({
             title: "Justify decision change",
             defaultSummary: summaries[action.kind],
           }).then((change) => {
             if (!change) return;
-            return persistDecisionAction({ projectId: currentProjectId(), adr, action, change }).then(async () => {
+            return persistDecisionAction({ projectId: currentProjectId(), verdict, action, change }).then(async () => {
               await refreshWorkspace(currentProjectId());
               pushToast("Decision updated.", "success");
             });
@@ -602,8 +659,6 @@ export function App() {
             pushToast(error instanceof Error ? error.message : "Could not update the decision.", "danger");
           });
         }}
-        onOpenRunbook={(id) => activateDetail(libraryScope(), id, "runbook")}
-        onOpenSource={(id) => activateDetail("knowledge:evidence", id, "source")}
         onOpenCard={(slug) => activateDetail(cardScopeId(), slug, "card")}
         onOpenEntity={(_entityId, refId, kind) => {
           if (kind === "component") {
@@ -613,7 +668,7 @@ export function App() {
         }}
         onLinkEntity={(knowledgeId, entityId, kind) => {
           const predicate = kind === "resource" || kind === "component"
-            ? (workspace().runbooks.some((item) => item.id === knowledgeId) ? "OPERATES" : "DOCUMENTS")
+            ? (workspace().evidence.some((item) => item.id === knowledgeId && item.tags.includes("runbook")) ? "OPERATES" : "DOCUMENTS")
             : "RELATED_TO";
           void justifyChange({
             title: "Justify entity link",
@@ -676,6 +731,37 @@ export function App() {
             pushToast(error instanceof Error ? error.message : "Could not save knowledge.", "danger");
           });
         }}
+        onSaveTitle={(id, title) => {
+          void justifyChange({
+            title: "Justify evidence rename",
+            defaultSummary: "Rename evidence",
+          }).then((change) => {
+            if (!change) return;
+            return persistKnowledgeTitle(workspace(), currentProjectId(), id, title, change);
+          }).catch((error: unknown) => {
+            pushToast(error instanceof Error ? error.message : "Could not rename evidence.", "danger");
+          });
+        }}
+        onSaveTags={(id, tags) => {
+          void justifyChange({
+            title: "Justify evidence tags",
+            defaultSummary: "Update evidence tags",
+          }).then((change) => {
+            if (!change) return;
+            return persistKnowledgeTags(workspace(), currentProjectId(), id, tags, change);
+          }).catch((error: unknown) => {
+            pushToast(error instanceof Error ? error.message : "Could not save tags.", "danger");
+          });
+        }}
+        scopeNodes={scopeNodes()}
+        activeScopePath={scope().node}
+        onSetScope={(id, path) => {
+          void persistKnowledgeScope(currentProjectId(), id, path)
+            .then(() => refreshWorkspace(currentProjectId()))
+            .catch((error: unknown) => {
+              pushToast(error instanceof Error ? error.message : "Could not save scope.", "danger");
+            });
+        }}
         onSaveSourcePath={(id, path) => {
           void justifyChange({
             title: "Justify source path",
@@ -687,7 +773,7 @@ export function App() {
             pushToast(error instanceof Error ? error.message : "Could not save source path.", "danger");
           });
         }}
-        onCreate={(kind, title, scope) => {
+        onCreate={(kind, title, scope, scopePath) => {
           void justifyChange({
             title: "Justify create",
             defaultSummary: `Create ${kind}: ${title}`,
@@ -700,41 +786,36 @@ export function App() {
               extraJson: scope === "principle" ? JSON.stringify({ scope: "principle" }) : undefined,
               change,
             }).then(async (id) => {
+              if (scopePath) await persistKnowledgeScope(currentProjectId(), id, scopePath);
               await refreshWorkspace(currentProjectId());
-              if (kind === "runbook") {
-                activateDetail(libraryScope(), id, "runbook");
-                pushToast("Runbook saved locally.", "success");
-              } else if (kind === "adr") {
-                activateDetail(libraryScope(), id, "adr");
-                pushToast("ADR saved locally.", "success");
-              } else {
-                activateDetail(libraryScope(), id, "document");
-                pushToast("Document saved locally.", "success");
-              }
+              activateDetail("knowledge:library", id, "verdict");
+              pushToast("Verdict saved locally.", "success");
             });
           }).catch((error: unknown) => {
             pushToast(error instanceof Error ? error.message : "Could not create knowledge.", "danger");
           });
         }}
-        onCreateSource={({ title, path }) => {
+        onCreateEvidence={({ title, tags, path, scopePath }) => {
           void justifyChange({
-            title: "Justify create source",
-            defaultSummary: `Create source: ${title}`,
+            title: "Justify create evidence",
+            defaultSummary: `Create evidence: ${title}`,
           }).then((change) => {
             if (!change) return;
             return persistKnowledgeCreate({
               projectId: currentProjectId(),
-              kind: "source",
+              kind: "evidence",
               title,
-              extraJson: JSON.stringify({ path }),
+              tags,
+              path,
               change,
             }).then(async (id) => {
+              if (scopePath) await persistKnowledgeScope(currentProjectId(), id, scopePath);
               await refreshWorkspace(currentProjectId());
-              activateDetail("knowledge:evidence", id, "source");
-              pushToast("Source saved locally.", "success");
+              activateDetail("knowledge:evidence", id, "evidence");
+              pushToast("Evidence saved locally.", "success");
             });
           }).catch((error: unknown) => {
-            pushToast(error instanceof Error ? error.message : "Could not create source.", "danger");
+            pushToast(error instanceof Error ? error.message : "Could not create evidence.", "danger");
           });
         }}
         onImportProjectSources={() => {
@@ -759,36 +840,30 @@ export function App() {
             createWorkCard(template.title);
             return;
           }
-          const kind = template.kind;
-          if (kind !== "doc" && kind !== "runbook" && kind !== "adr" && kind !== "source") {
-            return;
-          }
+          const isVerdict = template.kind === "verdict";
+          // Evidence has no type: the template only seeds a tag.
+          const templateTag = template.kind === "doc" ? "documentation" : template.kind;
           void justifyChange({
             title: "Justify create",
-            defaultSummary: `Create ${kind}: ${template.title}`,
+            defaultSummary: `Create ${isVerdict ? "verdict" : "evidence"}: ${template.title}`,
           }).then((change) => {
             if (!change) return;
             return persistKnowledgeCreate({
               projectId: currentProjectId(),
-              kind,
+              kind: isVerdict ? "verdict" : "evidence",
               title: template.title,
               body: template.body,
               extraJson: template.extraJson,
+              tags: isVerdict ? undefined : [templateTag],
               change,
             }).then(async (id) => {
               await refreshWorkspace(currentProjectId());
-              if (kind === "runbook") {
-                activateDetail(libraryScope(), id, "runbook");
-                pushToast("Runbook saved locally.", "success");
-              } else if (kind === "adr") {
-                activateDetail(libraryScope(), id, "adr");
-                pushToast("ADR saved locally.", "success");
-              } else if (kind === "source") {
-                activateDetail("knowledge:evidence", id, "source");
-                pushToast("Source saved locally.", "success");
+              if (isVerdict) {
+                activateDetail("knowledge:library", id, "verdict");
+                pushToast("Verdict saved locally.", "success");
               } else {
-                activateDetail(libraryScope(), id, "document");
-                pushToast("Document saved locally.", "success");
+                activateDetail("knowledge:evidence", id, "evidence");
+                pushToast("Evidence saved locally.", "success");
               }
             });
           }).catch((error: unknown) => {
@@ -841,21 +916,6 @@ export function App() {
             pushToast(error instanceof Error ? error.message : "Could not update card stage.", "danger");
             return false;
           })}
-        onDuplicate={(id) => {
-          void justifyChange({
-            title: "Justify duplicate",
-            defaultSummary: "Duplicate knowledge item",
-          }).then((change) => {
-            if (!change) return;
-            return persistKnowledgeDuplicate(workspace(), currentProjectId(), id, change).then(async (nextId) => {
-              await refreshWorkspace(currentProjectId());
-              if (nextId) activateDetail(libraryScope(), nextId, "runbook");
-              pushToast("Runbook duplicated.", "success");
-            });
-          }).catch((error: unknown) => {
-            pushToast(error instanceof Error ? error.message : "Could not duplicate runbook.", "danger");
-          });
-        }}
         onOpenComponent={(id) =>
           navigateToDetail(
             setTab(goSection(route(), "atlas"), "map"),
@@ -873,6 +933,9 @@ export function App() {
       route={route}
       projects={workspace().projects}
       environments={workspace().environments}
+      scopeNodes={scopeNodes()}
+      scope={scope()}
+      onSelectScope={(next) => void selectScope(next)}
       onNavigate={navigateSection}
       onProjectSelect={selectProject}
       onCreateProject={() => setCreateProjectOpen(true)}
@@ -935,14 +998,13 @@ export function App() {
               knowledge: (() => {
                 const nodeId = route().selectedNodeId;
                 if (!nodeId) return [];
-                const entity = workspace().ppmEntities.find(
+                const entity = workspace().canonEntities.find(
                   (item) => item.kind === "component" && item.refId === nodeId,
                 );
                 if (!entity) return [];
                 const linked = [
-                  ...workspace().documents,
-                  ...workspace().adrs,
-                  ...workspace().runbooks,
+                  ...workspace().evidence,
+                  ...workspace().verdicts,
                 ].flatMap((item) =>
                   item.entityLinks.some((link) => link.entityId === entity.id)
                     ? [{ id: item.id, title: item.title, body: "summary" in item ? item.summary : "" }]
@@ -1121,7 +1183,6 @@ export function App() {
             tabs={[...SECTION_TABS.truth]}
             activeTab={route().tab}
             tabsLabel="Truth"
-            libraryKinds={["adr"]}
           />
         </Match>
 
@@ -1131,7 +1192,6 @@ export function App() {
             tabs={[...SECTION_TABS.truth]}
             activeTab={route().tab}
             tabsLabel="Truth"
-            libraryKinds={["source", "doc", "runbook"]}
           />
         </Match>
 

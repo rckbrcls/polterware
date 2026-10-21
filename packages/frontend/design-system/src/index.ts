@@ -59,6 +59,8 @@ export { Tabs, TabPanel } from "./tabs";
 export type { TabItem, TabTooltip } from "./tabs";
 export { Drawer } from "./drawer";
 export { Popover } from "./popover";
+export { TagPicker } from "./tag-picker";
+export type { TagPickerOption, TagPickerProps } from "./tag-picker";
 export {
   NavigationMenu,
   NavigationMenuList,
@@ -178,6 +180,8 @@ export { ResizableSidebar, ResizableSplit } from "../panels/resizable";
 export type { ResizableSidebarProps } from "../panels/resizable";
 export { A11yDialog, Dialog } from "./dialog";
 export type { A11yDialogProps, DialogSize } from "./dialog";
+export { SettingsDialog, SettingsRow, SettingsSection, searchSettings, settingsSectionId } from "./settings-dialog";
+export type { SettingsDialogProps, SettingsNavItem, SettingsSearchEntry } from "./settings-dialog";
 export { Input, Textarea } from "./input";
 export type { InputProps, TextareaProps, ControlFieldSize } from "./input";
 export { Select } from "./select";
@@ -200,6 +204,12 @@ export { ContextMenu } from "./context-menu";
 export type { ContextMenuRootProps } from "./context-menu";
 export { FilterChip, FilterChipGroup } from "./filter-chip";
 export type { FilterChipItem } from "./filter-chip";
+export { ToggleChip } from "./toggle-chip";
+export type { ToggleChipProps, ToggleChipTone } from "./toggle-chip";
+export { DisclosureButton } from "./disclosure-button";
+export type { DisclosureButtonProps } from "./disclosure-button";
+export { SwitcherTrigger } from "./switcher-trigger";
+export type { SwitcherTriggerProps } from "./switcher-trigger";
 export { ActiveFilterBar } from "./active-filter-bar";
 export type { ActiveFilterPill } from "./active-filter-bar";
 export * from "./hugeicons";
@@ -210,7 +220,7 @@ export type { FloatingWindowDock, FloatingWindowGeometry } from "./floating-wind
 
 export { DesignSystemProvider, useDesignSystem, type DesignSystemProviderProps, type DesignSystemShortcut } from "./provider";
 export { registerIconTileAccents } from "./icon-tile";
-export { CHROME_PRESETS, chromeStopsFromTint, type ChromePreset, type ChromeStop } from "./chrome-finish";
+export { CHROME_PRESETS, CHROME_VARIANTS, chromeStopsFromTint, chromeVariant, chromeVariantIndex, type ChromePreset, type ChromeStop } from "./chrome-finish";
 export { EmptyIllustration } from "./feedback";
 export { Checkbox, type CheckboxProps } from "./checkbox";
 export { SegmentedControl, type SegmentedControlProps, type SegmentOption } from "./segmented-control";

@@ -54,7 +54,7 @@ func TestChangeStepRequiresEnvelope(t *testing.T) {
 	if _, err := NewChangeStep("arun-1", "", "why", nil, time.Time{}); !errors.Is(err, ErrChangeIncomplete) {
 		t.Fatalf("got %v", err)
 	}
-	step, err := NewChangeStep("arun-1", "Add DEPENDS_ON", "Matches ADR", []string{"docs/adr/0004.md"}, time.Time{})
+	step, err := NewChangeStep("arun-1", "Add DEPENDS_ON", "Matches Verdict", []string{"docs/verdict/0004.md"}, time.Time{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,8 +87,8 @@ func TestMatchProject(t *testing.T) {
 
 func TestMutationChangeStepIncludesTool(t *testing.T) {
 	step, err := NewMutationChangeStep(
-		"arun-1", "Add fact", "From ADR", "fact.upsert",
-		[]string{"fact-1"}, []string{"docs/adr/0004.md"}, time.Time{},
+		"arun-1", "Add fact", "From Verdict", "fact.upsert",
+		[]string{"fact-1"}, []string{"docs/verdict/0004.md"}, time.Time{},
 	)
 	if err != nil {
 		t.Fatal(err)

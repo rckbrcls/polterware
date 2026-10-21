@@ -16,6 +16,9 @@ type ContextInput struct {
 	EntityID    string
 	TokenBudget int
 	AgentRunID  string
+	// ScopeNodeID and ScopeExact narrow the package to one Atlas node.
+	ScopeNodeID string
+	ScopeExact  bool
 }
 
 // CompileContext syncs the project model, compiles context, and optionally appends an AgentRun context step.
@@ -33,6 +36,8 @@ func CompileContext(store *storepkg.Store, in ContextInput) (contextpkg.Package,
 		Query:       in.Query,
 		EntityID:    in.EntityID,
 		TokenBudget: budget,
+		ScopeNodeID: in.ScopeNodeID,
+		ScopeExact:  in.ScopeExact,
 	})
 	if err != nil {
 		return contextpkg.Package{}, err

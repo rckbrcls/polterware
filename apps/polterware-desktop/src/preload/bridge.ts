@@ -131,12 +131,13 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         apply: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.applyPolter, payload),
         listInbox: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listInbox, payload),
         resolveInboxItem: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.resolveInboxItem, payload),
+        setScope: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.setScope, payload),
         reviewFeature: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.reviewFeature, payload),
         createFeature: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.createFeature, payload),
         advanceFeature: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.advanceFeature, payload),
       },
-      ppm: {
-        listEntities: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listPpmEntities, payload),
+      canon: {
+        listEntities: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listCanonEntities, payload),
         sync: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.syncProjectModel, payload),
         importSources: (payload: JsonObject) =>
           coreCall(ipc, IPC_CHANNELS.core.importProjectSources, payload),

@@ -2,7 +2,6 @@ import {
   Button,
   ControlButton,
   Delete,
-  IconTile,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -90,10 +89,8 @@ export function HostHome(props: {
     <PageEmpty
       action={
         <div class="vitals-home">
-          <ControlButton class="vitals-home-connect" onClick={() => props.onNew()}>
-            <IconTile size={28} tone="infrastructure">
-              <Server size={16} />
-            </IconTile>
+          <ControlButton tone="secondary" class="vitals-home-connect" onClick={() => props.onNew()}>
+            <Server size={16} />
             Connect a host
           </ControlButton>
           {section("Recents", recents)}

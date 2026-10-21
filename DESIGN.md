@@ -101,13 +101,13 @@ Use only these radius roles, from tightest to most generous:
 
 - controls: `--radius-control` (10px)
 - menu rows: `--radius-item` (10px)
-- menus: `--radius-menu` (16px)
+- menus and popovers: `--radius-menu` (16px)
 - nested cards: `--radius-card` (16px)
-- host surfaces and large popovers: `--radius-surface` (22px)
+- host surfaces: `--radius-surface` (22px)
 - floating windows: `--radius-window` (24px)
 - dialogs: `--radius-dialog` (30px), applied by the shared dialog to every app's dialogs
 - pills, avatars, switches, and dots: `rounded-full`
-- flat buttons (ghost and icon variants, dialog and drawer close buttons): `rounded-full`, so their hover fill is a pill or a circle; textured buttons keep `--radius-control`. A ghost button that sits in a list of rows (for example a sidebar entry) takes the row's `--radius-item`.
+- flat buttons (ghost and icon variants, dialog and drawer close buttons): `rounded-full`, so their hover fill is a pill or a circle; solid buttons are keycaps (a body falling from white to grey with a 1px rim and a solid lip, and a concave face on `::before` whose gradient runs the other way, rounder at the bottom and with more body below it than above; `--keycap-*` tokens) and keep `--radius-control`; icon-size solid buttons are round keys. Pressing drops the key by `--keycap-travel` on `spring.fast`, flattens the lip and sinks and darkens the face; it releases on `spring.moderate`, and hover only tints. A ghost button that sits in a list of rows (for example a sidebar entry) takes the row's `--radius-item`.
 
 Nested radii stay concentric: an inner panel's radius is the outer radius minus the inset between them (for example `calc(var(--radius-dialog) - 0.5rem)` inside an `p-2` dialog).
 

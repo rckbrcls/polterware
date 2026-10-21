@@ -87,7 +87,7 @@ export function Select(props: SelectProps) {
         title={props.title}
         aria-label={props["aria-label"]}
         class={cn(
-          "control-field min-w-0 justify-between gap-2 text-[var(--color-text-primary)] focus-visible:outline-none",
+          "control-field pw-field-control min-w-0 justify-between gap-2 text-[var(--color-text-primary)] focus-visible:outline-none",
           !HAS_WIDTH.test(props.class ?? "") && "w-full",
           size() === "md" ? "control-field-md" : "control-field-sm",
           props.disabled ? "cursor-not-allowed" : "cursor-pointer",

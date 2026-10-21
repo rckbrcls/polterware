@@ -28,7 +28,7 @@ export type CoreClients = {
   architecture: Client<typeof ArchitectureService>;
   knowledge: Client<typeof KnowledgeService>;
   work: Client<typeof WorkService>;
-  ppm: Client<typeof ProjectModelService>;
+  canon: Client<typeof ProjectModelService>;
   context: Client<typeof ContextService>;
   agentRuns: Client<typeof AgentRunService>;
   integrations: Client<typeof IntegrationService>;
@@ -53,7 +53,7 @@ export function createCoreClients(endpoint: string, token: string): CoreClients 
     architecture: createClient(ArchitectureService, transport),
     knowledge: createClient(KnowledgeService, transport),
     work: createClient(WorkService, transport),
-    ppm: createClient(ProjectModelService, transport),
+    canon: createClient(ProjectModelService, transport),
     context: createClient(ContextService, transport),
     agentRuns: createClient(AgentRunService, transport),
     integrations: createClient(IntegrationService, transport),

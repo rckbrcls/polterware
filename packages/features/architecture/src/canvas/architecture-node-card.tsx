@@ -25,6 +25,8 @@ export {
 } from "./connection-handles";
 
 export type ArchitectureNodeCardProps = {
+  /** Node id; seeds the icon tile's finish. */
+  id?: string;
   name: string;
   type: NodeType;
   subtype?: string;
@@ -100,6 +102,7 @@ export function ArchitectureNodeCard(props: ArchitectureNodeCardProps) {
             subtype={props.subtype}
             provider={props.provider}
             compact={props.lodFar}
+            seed={props.id}
             dimmed={props.dimmed}
           />
           <div class="flex min-w-0 flex-1 flex-col gap-0.5">

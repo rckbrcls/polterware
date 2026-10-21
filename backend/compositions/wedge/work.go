@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/polterware/polterware/backend/domains/agentrun"
+	"github.com/polterware/polterware/backend/domains/atlas"
 	"github.com/polterware/polterware/backend/domains/decision"
 	"github.com/polterware/polterware/backend/domains/inbox"
 	"github.com/polterware/polterware/backend/domains/polter"
@@ -73,13 +74,13 @@ func PolterReferences(store *storepkg.Store, projectID string) (*polter.Referenc
 }
 
 func polterReferences(store *storepkg.Store, snapshot work.Snapshot) (*polter.References, error) {
-	adrs, err := store.ListKnowledge(snapshot.ProjectID, "adr")
+	verdicts, err := store.ListKnowledge(snapshot.ProjectID, "verdict")
 	if err != nil {
 		return nil, err
 	}
 	refs := &polter.References{Cards: snapshot.Cards, Nodes: snapshot.Nodes, Repos: snapshot.Repos}
-	for _, adr := range adrs {
-		refs.ADRs = append(refs.ADRs, polter.ADRRef{ID: adr.ID, Title: adr.Title, Status: adr.Status})
+	for _, verdict := range verdicts {
+		refs.Verdicts = append(refs.Verdicts, polter.VerdictRef{ID: verdict.ID, Title: verdict.Title, Status: verdict.Status})
 	}
 	view := ProjectGit(store, snapshot.ProjectID)
 	refs.Git = &view
@@ -188,14 +189,24 @@ func ApplyPolter(store *storepkg.Store, in ApplyInput) (ApplyResult, error) {
 }
 
 // QueryPolter answers a v1 query ("cards", "card <slug>", "status", "inbox",
-// "handoff <slug>", "oracle", "atlas", "decisions [state]", "decision <adr>",
+// "handoff <slug>", "oracle", "atlas", "decisions [state]", "decision <verdict>",
 // "feature <slug>", "verify <target>") in text.
 func QueryPolter(store *storepkg.Store, projectID, text string) (string, error) {
+	return QueryPolterScoped(store, projectID, text, atlas.Scope{})
+}
+
+// QueryPolterScoped answers a query over the cards, Decisions and Inbox items
+// inside scope. An inactive scope is the whole project.
+func QueryPolterScoped(store *storepkg.Store, projectID, text string, scope atlas.Scope) (string, error) {
 	query, err := polter.ParseQuery(text)
 	if err != nil {
 		return "", err
 	}
 	snapshot, err := store.LoadWorkSnapshot(projectID)
+	if err != nil {
+		return "", err
+	}
+	snapshot, err = scopeSnapshot(store, snapshot, scope)
 	if err != nil {
 		return "", err
 	}
@@ -209,9 +220,9 @@ func QueryPolter(store *storepkg.Store, projectID, text string) (string, error) 
 	case polter.QueryHandoff:
 		return queryHandoff(store, snapshot, query.Slug)
 	case polter.QueryStatus:
-		return queryStatus(store, snapshot), nil
+		return queryStatus(store, snapshot, scope), nil
 	case polter.QueryInbox:
-		result, err := listInbox(store, snapshot)
+		result, err := inboxScoped(store, snapshot, scope)
 		if err != nil {
 			return "", err
 		}
@@ -270,11 +281,11 @@ func queryHandoff(store *storepkg.Store, snapshot work.Snapshot, slug string) (s
 	return polter.EncodeHandoff(card, handoff), nil
 }
 
-func queryStatus(store *storepkg.Store, snapshot work.Snapshot) string {
+func queryStatus(store *storepkg.Store, snapshot work.Snapshot, scope atlas.Scope) string {
 	// The Inbox is a best-effort addition: a drift read that fails leaves
 	// status without its inbox lines rather than failing the session start.
 	inboxLines := ""
-	if result, err := listInbox(store, snapshot); err == nil {
+	if result, err := inboxScoped(store, snapshot, scope); err == nil {
 		inboxLines = inbox.StatusLines(result)
 	}
 	view := ProjectGit(store, snapshot.ProjectID)

@@ -156,9 +156,9 @@ const ZOOM_STEP = 1.25;
  * Wheel / pinch zoom gain for exp(-deltaY * gain).
  * Higher = snappier. Pixel-mode trackpad deltas are small; mouse notches ~100.
  */
-const WHEEL_ZOOM_GAIN = 0.0014;
+const WHEEL_ZOOM_GAIN = 0.004;
 /** Cap per wheel event — allow larger jumps so zoom does not feel sticky. */
-const WHEEL_ZOOM_MAX_STEP = 1.18;
+const WHEEL_ZOOM_MAX_STEP = 1.35;
 const GRID_SPACING = 12;
 const GRID_OVERSCAN = GRID_SPACING * MAX_ZOOM;
 const MARQUEE_ACTIVATION_DISTANCE = 3;
@@ -557,7 +557,33 @@ export function ArchitectureCanvasHost(props: {
   let tweenStartVp: Viewport | null = null;
   let tweenTargetVp: Viewport | null = null;
 
+  // Wheel zoom eases toward an accumulated target so notches and pinch feel fluid, not stepped.
+  let zoomRaf = 0;
+  let zoomTarget: number | null = null;
+  let zoomAnchor = { x: 0, y: 0 };
+
+  function stopZoomEase() {
+    if (zoomRaf) cancelAnimationFrame(zoomRaf);
+    zoomRaf = 0;
+    zoomTarget = null;
+  }
+
+  function zoomTick() {
+    zoomRaf = 0;
+    if (zoomTarget === null) return;
+    const current = vp().zoom;
+    const gap = zoomTarget / current;
+    if (Math.abs(Math.log(gap)) < 0.002) {
+      setVp((v) => zoomAt(v, zoomAnchor, zoomTarget!));
+      zoomTarget = null;
+      return;
+    }
+    setVp((v) => zoomAt(v, zoomAnchor, v.zoom * Math.pow(gap, 0.35)));
+    zoomRaf = requestAnimationFrame(zoomTick);
+  }
+
   function cancelTween() {
+    stopZoomEase();
     if (tweenRaf) {
       cancelAnimationFrame(tweenRaf);
       tweenRaf = 0;
@@ -1830,6 +1856,7 @@ export function ArchitectureCanvasHost(props: {
   function onWheel(e: WheelEvent) {
     if (!rootEl) return;
     e.preventDefault();
+    const pendingZoom = zoomTarget;
     cancelTween();
     const screen = clientToLocal(e);
     // Pinch (ctrl/meta) and mouse wheel (line/page deltas) zoom.
@@ -1845,7 +1872,15 @@ export function ArchitectureCanvasHost(props: {
       const min = 1 / WHEEL_ZOOM_MAX_STEP;
       if (factor > max) factor = max;
       if (factor < min) factor = min;
-      setVp((v) => zoomAt(v, screen, v.zoom * factor));
+      const base = pendingZoom ?? vp().zoom;
+      const next = zoomAt({ ...vp(), zoom: base }, screen, base * factor).zoom;
+      if (prefersReducedMotion()) {
+        setVp((v) => zoomAt(v, screen, v.zoom * factor));
+      } else {
+        zoomTarget = next;
+        zoomAnchor = screen;
+        zoomRaf = requestAnimationFrame(zoomTick);
+      }
     } else {
       setVp((v) => panBy(v, -e.deltaX, -e.deltaY));
     }
@@ -2283,6 +2318,7 @@ export function ArchitectureCanvasHost(props: {
                       provider={n().provider}
                       compact
                       tiny
+                      seed={id}
                       dimmed={dim() || concealed(id)}
                     />
                     <span class="atlas-domain-frame__title">{n().name}</span>
@@ -2290,6 +2326,7 @@ export function ArchitectureCanvasHost(props: {
                 </div>
               ) : (
                   <ArchitectureNodeCard
+                    id={id}
                     name={n().name}
                     type={n().type}
                     subtype={n().subtype}
@@ -2794,7 +2831,7 @@ function Minimap(props: {
 
   return (
     <div
-      class="absolute bottom-14 right-3 z-10 overflow-hidden rounded-[var(--radius-item)] border border-[var(--color-border-default)] bg-[var(--color-surface)]"
+      class="absolute bottom-3 right-3 z-10 overflow-hidden rounded-[var(--radius-menu)] border border-[var(--color-border-default)] bg-[var(--color-surface)]"
       style={{ width: `${W}px`, height: `${H}px` }}
       onClick={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();

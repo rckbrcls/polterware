@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/polterware/polterware/backend/domains/inbox"
-	"github.com/polterware/polterware/backend/domains/ppm"
+	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/work"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
@@ -54,7 +54,7 @@ func listInbox(store *storepkg.Store, snapshot work.Snapshot) (inbox.Result, err
 	if err != nil {
 		return inbox.Result{}, err
 	}
-	facts, err := store.ListUnbackedPpmFacts(snapshot.ProjectID)
+	facts, err := store.ListUnbackedCanonFacts(snapshot.ProjectID)
 	if err != nil {
 		return inbox.Result{}, err
 	}
@@ -122,19 +122,19 @@ func ResolveInbox(store *storepkg.Store, in ResolveInboxInput) (ResolveInboxResu
 		return result, err
 	case inbox.ActionVerify:
 		if actor == "" || actor == "system" {
-			return result, ppm.ErrVerifiedRequiresActor
+			return result, canon.ErrVerifiedRequiresActor
 		}
-		fact, err := store.GetPpmFact(item.FactID)
+		fact, err := store.GetCanonFact(item.FactID)
 		if err != nil {
-			return result, ppm.ErrUnknownFact
+			return result, canon.ErrUnknownFact
 		}
-		fact.TruthClass = ppm.TruthVerified
+		fact.TruthClass = canon.TruthVerified
 		fact.Actor = actor
 		fact.UpdatedAt = time.Now().UTC()
-		if err := ppm.ValidateFact(fact); err != nil {
+		if err := canon.ValidateFact(fact); err != nil {
 			return result, err
 		}
-		return result, store.UpsertPpmFact(fact)
+		return result, store.UpsertCanonFact(fact)
 	default:
 		return result, store.InsertInboxDisposition(in.ProjectID, inbox.Disposition{
 			Key: item.Key, Action: in.Action, Actor: actor, CreatedAt: time.Now().UTC(),

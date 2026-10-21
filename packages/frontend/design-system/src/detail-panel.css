@@ -34,12 +34,12 @@
   min-width: 0; min-height: 0;
   flex-direction: column;
   overflow: hidden;
-  background-color: var(--color-surface-raised);
 }
 .pw-detail-panel__frame[data-expanded="true"] { inset: 0; width: 100%; border-radius: 0; }
 .pw-detail-panel__frame[hidden], .pw-detail-panel__resize-handle[hidden] { display: none; }
 .pw-detail-panel__frame[aria-hidden="true"] { pointer-events: none; }
-.pw-detail-panel__header { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; height: 34px; padding: 3px 7px; }
+/* Inside the 1px rim, a 7px inset keeps the 28px round buttons concentric with the panel's --radius-surface (22px) corner. */
+.pw-detail-panel__header { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; height: 35px; padding: 7px 7px 0; }
 .pw-detail-panel__surface, .pw-detail-panel__portal { display: flex; min-width: 0; min-height: 0; flex: 1 1 0; flex-direction: column; overflow: hidden; }
 .pw-detail-panel__resize-handle {
   position: absolute; z-index: 6; top: 8px; bottom: 8px;
@@ -485,3 +485,11 @@
 .pw-detail-panel__section .pw-data-table-row--selected > .pw-data-table-selection-cell::before {
   background: var(--color-surface-selected);
 }
+
+/* Expanded detail is a full page: the list toolbar steps aside, like opening a note. */
+.pw-detail-panel-root[data-expanded="true"] .pw-detail-panel__collection-header { display: none; }
+
+/* The collection is not part of the expanded page; it stays mounted so Back restores it untouched. */
+.pw-detail-panel-root[data-expanded="true"] .pw-detail-panel__collection-panel { visibility: hidden; }
+/* The page card already frames the expanded detail; drop the panel's own rim. */
+.pw-detail-panel-root[data-expanded="true"] .pw-detail-panel__frame { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: var(--color-surface); }

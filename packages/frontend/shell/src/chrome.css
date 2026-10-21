@@ -81,3 +81,20 @@ html[data-shell-chrome="solid"] .pw-shell-main-frame--opaque {
   position: relative;
   isolation: isolate;
 }
+
+/* The lit rim sits on an overlay: an inset box-shadow is painted under children, so the
+   toolbar's opaque fade-edge background would otherwise cover it. */
+.pw-main-surface.surface-panel {
+  background: linear-gradient(to bottom, var(--color-surface), #1c1c1c);
+  box-shadow: none;
+}
+
+.pw-main-surface::after {
+  position: absolute;
+  z-index: 50;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: var(--field-rings);
+  content: "";
+  pointer-events: none;
+}

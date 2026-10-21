@@ -32,7 +32,7 @@ Explain why the session cache reports degraded health in development.
 ? Is the degraded status a real regression or a stale probe?
 
 ## auth-token-rotation: Auth token rotation
-stage: plan · under: services/auth · decisions: ADR-0001 · owner: Platform
+stage: plan · under: services/auth · decisions: Verdict-0001 · owner: Platform
 
 Rotate signing keys without logging users out.
 
@@ -42,13 +42,13 @@ Rotate signing keys without logging users out.
 ! Old keys stay valid for one full session lifetime
 
 ## git-metadata-import: Git metadata import
-stage: build · under: core/import · decisions: ADR-0001, ADR-0002 · owner: Platform
+stage: build · under: core/import · decisions: Verdict-0001, Verdict-0002 · owner: Platform
 
 Import HEAD, branch, and recent commits as evidence for facts.
 
 - [x] T1 Read HEAD and branch from the local checkout  ` + "`backend/providers/git/*`" + `
 - [x] T2 Stamp revision on observed facts
-- [ ] T3 Commit evidence upsert in core  ` + "`backend/domains/ppm/*`" + `
+- [ ] T3 Commit evidence upsert in core  ` + "`backend/domains/canon/*`" + `
 - [ ] T4 Show commit evidence on fact detail  ` + "`packages/features/knowledge/*`" + `
 - [-] T5 Import tags as releases
 ? Include merge commits? [blocking] (yes | no | first-parent)
@@ -64,7 +64,7 @@ next: Wire commit evidence into the fact detail panel
 touched: backend/providers/git/git.go, backend/compositions/wedge/git_import.go
 
 ## drift-panel: Drift panel
-stage: build · under: reality/drift · decisions: ADR-0002
+stage: build · under: reality/drift · decisions: Verdict-0002
 
 List drift findings where declared intent and observed code disagree.
 
@@ -74,7 +74,7 @@ List drift findings where declared intent and observed code disagree.
 ! A finding always names its evidence
 
 ## context-compiler: Context compiler
-stage: verify · under: agents/context · decisions: ADR-0003 · owner: Agents
+stage: verify · under: agents/context · decisions: Verdict-0003 · owner: Agents
 
 Compile a bounded project context for an agent session.
 
@@ -84,7 +84,7 @@ Compile a bounded project context for an agent session.
 ! The compiled context never includes credentials
 
 ## local-sqlite-core: Local SQLite core
-stage: delivered · under: core · decisions: ADR-0001 · owner: Platform
+stage: delivered · under: core · decisions: Verdict-0001 · owner: Platform
 
 One local core process owns the SQLite database; every client attaches to it.
 

@@ -1,8 +1,7 @@
 import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount, on, type Component, type JSX } from "solid-js";
 import type { DetailSectionDef } from "@polterware/feature-notes-shell/feature";
-import { A11yDialog, DateTimePicker, ArrowDown, ArrowUp, Inbox, Scale, XIcon, AuroraCover, CalendarClock, Clock, Delete, FileUp, Gauge, Layers, MapPin, auroraForId, Button, DetailPanel, FileText, FilterChip, IconTile, Input, MarkdownEditor, PageEmpty, PageError, PageLoading, Select, SidebarRightIcon, StatusChip, Switch } from "@polterware/frontend-design-system";
+import { A11yDialog, ChevronLeft, DateTimePicker, ArrowDown, ArrowUp, Inbox, Scale, XIcon, AuroraCover, CalendarClock, Clock, Delete, FileUp, Gauge, Layers, MapPin, auroraForId, Button, DetailPanel, FileText, FilterChip, IconTile, Input, MarkdownEditor, PageEmpty, PageError, PageLoading, Select, SidebarRightIcon, StatusChip, Switch } from "@polterware/frontend-design-system";
 import { TagPicker } from "./tag-picker";
-import "./tag-picker.css";
 import { spaceMark } from "./space-mark";
 import { tryNotesShell } from "./shell-access";
 import { checklistInputs, errorText, joinChecklist, localDate, splitChecklist, type NoteRecord } from "./model";
@@ -88,11 +87,16 @@ function NotePageBody(props: { note: NoteRecord; store: NotesStore; sections: De
   return <DetailPanel.Body class="pw-detail-panel__body--fixed h-full min-h-0">
     <DetailPanel.Main class="flex min-w-0 min-h-0 flex-1 flex-col overflow-y-auto !p-3">
       <div class="relative shrink-0">
-        <AuroraCover palette={auroraForId(id())} class="!h-28 !rounded-[var(--radius-card)]" />
+        <AuroraCover palette={auroraForId(id())} seed={id()} class="!h-28 !rounded-[var(--radius-surface)]" />
         <span class="absolute bottom-3 left-4 inline-flex text-[var(--color-bg)]" aria-hidden="true"><FileText size={32} /></span>
       </div>
       <div class="mx-auto flex min-h-0 w-full max-w-[720px] flex-1 flex-col gap-4 pb-4 pt-4">
-        <div class="flex items-center justify-end gap-3">
+        <div class="flex items-center justify-between gap-3">
+          <Show when={shell?.leaveNote} fallback={<span />}>
+            <Button variant="icon" aria-label="Back" title="Back" onClick={() => { void store.flush(id()); shell?.leaveNote?.(); }}>
+              <ChevronLeft size={14} />
+            </Button>
+          </Show>
           <div class="flex shrink-0 items-center gap-2">
             <span role="status" aria-live="polite" class="text-xs text-[var(--color-text-muted)]">{state() === "live" ? "Saved" : state() === "queued" ? "Changes queued" : state() === "saving" ? "Saving…" : state() === "conflict" ? "Edit conflict" : "Save failed"}</span>
             <Button
@@ -161,7 +165,7 @@ export function NoteProperties(props: NoteDetailProps) {
                   size="sm"
                   class="w-full"
                   aria-label="Space"
-                  options={[{ value: "", label: "Inbox", icon: <Inbox size={14} aria-hidden="true" /> }, ...store.spaces().map(space => ({ value: space.id ?? "", label: space.name ?? "Unnamed Space", icon: spaceMark(space.color, space.icon) }))]}
+                  options={[{ value: "", label: "Inbox", icon: <Inbox size={14} aria-hidden="true" /> }, ...store.spaces().map(space => ({ value: space.id ?? "", label: space.name ?? "Unnamed Space", icon: spaceMark(space.color, space.icon, space.id) }))]}
                   value={live().spaceId}
                   onChange={spaceId => edit(spaceId ? { spaceId, clearSpaceId: false } : { clearSpaceId: true })}
                 />

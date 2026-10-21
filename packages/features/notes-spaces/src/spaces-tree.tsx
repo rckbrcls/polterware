@@ -30,9 +30,9 @@ export function pickerIcon(name: string): PickerIconName {
   return name in PICKER_ICONS ? (name as PickerIconName) : "brain";
 }
 
-export function SpaceMark(props: { color: string; icon: string; size?: 16 | 20 | 24 | 28 | 36; aurora?: AuroraPalette }) {
+export function SpaceMark(props: { color: string; icon: string; size?: 16 | 20 | 24 | 28 | 36; aurora?: AuroraPalette; seed?: string }) {
   return (
-    <IconTile size={props.size ?? 20} tone="knowledge" aurora={props.aurora} accent={props.color || undefined}>
+    <IconTile size={props.size ?? 20} tone="knowledge" aurora={props.aurora} accent={props.color || undefined} seed={props.seed}>
       <Dynamic component={PICKER_ICONS[pickerIcon(props.icon)]} size={Math.max(10, (props.size ?? 20) - ((props.size ?? 20) >= 36 ? 12 : 8))} />
     </IconTile>
   );
@@ -49,7 +49,7 @@ function labeledNodes(nodes: SpaceTreeNode[], notes: Record<string, { id: string
     return {
       id: node.id,
       label: node.name,
-      icon: <SpaceMark color={node.color} icon={node.icon} size={16} />,
+      icon: <SpaceMark color={node.color} icon={node.icon} size={16} seed={node.id} />,
       trailing: (
         <button
           type="button"

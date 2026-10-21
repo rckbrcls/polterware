@@ -8,7 +8,7 @@ import {
   serializeDocument,
   updateNode as docUpdateNode,
 } from "@polterware/frontend-canvas";
-import { Boxes, ChartRelationshipIcon, Layers, Plus, Route, Workflow } from "@polterware/frontend-design-system";
+import { Boxes, Layers, Plus, Route, Workflow, Wrench01Icon } from "@polterware/frontend-design-system";
 import {
   Button,
   FilterPopover,
@@ -846,6 +846,17 @@ export function ArchitectureView(props: {
             />
           </Show>
         </div>
+        <Show when={props.atlasNodes && doc().nodes.length > 0}>
+          <Button
+            variant="texture"
+            size="icon"
+            class="absolute bottom-3 left-3 z-10"
+            aria-label="Auto layout"
+            onClick={() => arrange()}
+          >
+            <Wrench01Icon size={14} />
+          </Button>
+        </Show>
       </Show>
     </div>
   );
@@ -958,15 +969,6 @@ export function ArchitectureView(props: {
                     },
                   ]}
                 />
-                <Show when={props.atlasNodes}>
-                  <ToolbarIconButton
-                    label="Auto layout"
-                    disabled={props.loading || doc().nodes.length === 0}
-                    onClick={() => arrange()}
-                  >
-                    <ChartRelationshipIcon size={14} />
-                  </ToolbarIconButton>
-                </Show>
                 <ToolbarIconButton
                   label="Add component"
                   onClick={() => createNested()}

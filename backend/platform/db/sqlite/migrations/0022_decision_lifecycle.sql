@@ -1,10 +1,10 @@
--- Slice 10: ADR lifecycle (proposed, active, challenged, superseded).
--- Lifecycle data (supersededBy, reviewTrigger, statusReason) lives in the ADR's
+-- Slice 10: Verdict lifecycle (proposed, active, challenged, superseded).
+-- Lifecycle data (supersededBy, reviewTrigger, statusReason) lives in the Verdict's
 -- knowledge_items.extra_json; "accepted" becomes "active".
 -- change_ops is rebuilt so its entity check accepts 'decision'.
 
-UPDATE knowledge_items SET status = 'active' WHERE kind = 'adr' AND lower(status) = 'accepted';
-UPDATE knowledge_items SET status = 'proposed' WHERE kind = 'adr' AND status NOT IN ('proposed', 'active', 'challenged', 'superseded');
+UPDATE knowledge_items SET status = 'active' WHERE kind IN ('verdict', 'adr') AND lower(status) = 'accepted';
+UPDATE knowledge_items SET status = 'proposed' WHERE kind IN ('verdict', 'adr') AND status NOT IN ('proposed', 'active', 'challenged', 'superseded');
 
 CREATE TABLE change_ops_new (
   id TEXT PRIMARY KEY,

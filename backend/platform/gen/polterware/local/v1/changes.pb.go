@@ -21,7 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// ChangeService streams what changed in the local store (ADR 0007). Events are
+// ChangeService streams what changed in the local store (Verdict 0007). Events are
 // derived from committed SQLite transactions, coalesced, and numbered.
 type WatchChangesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -74,7 +74,7 @@ type WatchChangesResponse struct {
 	// project_ids lists the projects touched; empty means not project-scoped
 	// or unknown, so clients refresh the current project.
 	ProjectIds []string `protobuf:"bytes,2,rep,name=project_ids,json=projectIds,proto3" json:"project_ids,omitempty"`
-	// kinds: projects, environments, work, knowledge, ppm, agent_runs,
+	// kinds: projects, environments, work, knowledge, canon, agent_runs,
 	// architecture, integrations, settings.
 	Kinds []string `protobuf:"bytes,3,rep,name=kinds,proto3" json:"kinds,omitempty"`
 	// resync asks the client to reload everything (missed events).

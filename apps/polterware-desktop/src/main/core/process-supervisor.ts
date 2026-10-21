@@ -44,7 +44,7 @@ export function resolveRepositoryRoot(): string {
 }
 
 /**
- * Attaches to the core that owns dbPath, or starts it detached (ADR 0007: the
+ * Attaches to the core that owns dbPath, or starts it detached (Verdict 0007: the
  * core is a daemon with idle exit and outlives the Desktop). A core running an
  * older build than the bundled binary is asked to shut down and replaced.
  */
@@ -79,7 +79,7 @@ export async function ensureCore(options: {
     }
     if (localBuild && isNewerBuild(localBuild, build)) {
       options.log?.(`Replacing older Polterware core (pid ${state.pid}, build ${build || "unknown"}).`);
-      // Cores older than ADR 0007 have no Shutdown RPC: fall back to SIGTERM.
+      // Cores older than Verdict 0007 have no Shutdown RPC: fall back to SIGTERM.
       await clients.maintenance.shutdown({ reason: "outdated" }).catch(() => {
         try {
           process.kill(state.pid, "SIGTERM");

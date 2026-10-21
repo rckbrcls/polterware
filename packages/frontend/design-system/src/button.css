@@ -38,3 +38,129 @@
 .pw-button-flat:active:not(:disabled)::before {
   background-color: var(--color-surface-active);
 }
+
+/*
+ * Texture button: a 1px frame, a 1px lit ring, then a gradient face (outer shell + inner face).
+ * Tones swap the palette through custom properties; every colour is opaque.
+ */
+.pw-texture-button {
+  --tx-frame: #141414;
+  --tx-outer-top: #5c5c5c;
+  --tx-outer-bottom: #3d3d3d;
+  --tx-face-top: #262626;
+  --tx-face-bottom: #3b3b3b;
+  --tx-face-hover-top: #404040;
+  --tx-face-hover-bottom: #454545;
+  --tx-face-active-top: #262626;
+  --tx-face-active-bottom: #404040;
+  --tx-ink: var(--color-text-primary);
+
+  position: relative;
+  isolation: isolate;
+  padding: 1px;
+  border: 1px solid var(--tx-frame);
+  background: linear-gradient(to bottom, var(--tx-outer-top), var(--tx-outer-bottom));
+  color: var(--tx-ink);
+  transition: filter var(--duration-control) var(--ease-standard);
+}
+
+.pw-texture-button[data-texture-tone="brand"] {
+  --tx-frame: #1a1a1a;
+  --tx-outer-top: #ffffff;
+  --tx-outer-bottom: #d4d4d4;
+  --tx-face-top: #e5e5e5;
+  --tx-face-bottom: #fafafa;
+  --tx-face-hover-top: #e7e5e4;
+  --tx-face-hover-bottom: #e5e5e5;
+  --tx-face-active-top: #d6d3d1;
+  --tx-face-active-bottom: #d4d4d4;
+  --tx-ink: #333333;
+}
+
+.pw-texture-button[data-texture-tone="danger"] {
+  --tx-frame: #5e2323;
+  --tx-outer-top: #fca5a5;
+  --tx-outer-bottom: #ef4444;
+  --tx-face-top: #a64545;
+  --tx-face-bottom: #b83c3c;
+  --tx-face-hover-top: #b34e4e;
+  --tx-face-hover-bottom: #c64545;
+  --tx-face-active-top: #c04848;
+  --tx-face-active-bottom: #d04848;
+  --tx-ink: #fff1f1;
+}
+
+.pw-texture-button[data-texture-tone="success"] {
+  --tx-frame: var(--tone-success-frame);
+  --tx-outer-top: var(--tone-success-rim);
+  --tx-outer-bottom: color-mix(in oklab, var(--tone-success-rim), black 22%);
+  --tx-face-top: var(--tone-success-top);
+  --tx-face-bottom: var(--tone-success-bottom);
+  --tx-face-hover-top: color-mix(in oklab, var(--tone-success-top), white 10%);
+  --tx-face-hover-bottom: color-mix(in oklab, var(--tone-success-bottom), white 10%);
+  --tx-face-active-top: var(--tone-success-top);
+  --tx-face-active-bottom: color-mix(in oklab, var(--tone-success-bottom), white 14%);
+  --tx-ink: var(--tone-success-ink);
+}
+
+.pw-texture-button[data-texture-tone="warn"] {
+  --tx-frame: var(--tone-warn-frame);
+  --tx-outer-top: var(--tone-warn-rim);
+  --tx-outer-bottom: color-mix(in oklab, var(--tone-warn-rim), black 22%);
+  --tx-face-top: var(--tone-warn-top);
+  --tx-face-bottom: var(--tone-warn-bottom);
+  --tx-face-hover-top: color-mix(in oklab, var(--tone-warn-top), white 10%);
+  --tx-face-hover-bottom: color-mix(in oklab, var(--tone-warn-bottom), white 10%);
+  --tx-face-active-top: var(--tone-warn-top);
+  --tx-face-active-bottom: color-mix(in oklab, var(--tone-warn-bottom), white 14%);
+  --tx-ink: var(--tone-warn-ink);
+}
+
+.pw-texture-button[data-texture-tone="info"] {
+  --tx-frame: var(--tone-info-frame);
+  --tx-outer-top: var(--tone-info-rim);
+  --tx-outer-bottom: color-mix(in oklab, var(--tone-info-rim), black 22%);
+  --tx-face-top: var(--tone-info-top);
+  --tx-face-bottom: var(--tone-info-bottom);
+  --tx-face-hover-top: color-mix(in oklab, var(--tone-info-top), white 10%);
+  --tx-face-hover-bottom: color-mix(in oklab, var(--tone-info-bottom), white 10%);
+  --tx-face-active-top: var(--tone-info-top);
+  --tx-face-active-bottom: color-mix(in oklab, var(--tone-info-bottom), white 14%);
+  --tx-ink: var(--tone-info-ink);
+}
+
+.pw-texture-button::before {
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: var(--tx-face-radius, 10px);
+  background: linear-gradient(to bottom, var(--tx-face-top), var(--tx-face-bottom));
+  content: "";
+  pointer-events: none;
+  transition: background var(--duration-control) var(--ease-standard);
+}
+
+.pw-texture-button:is(.rounded-full)::before {
+  border-radius: 9999px;
+}
+
+.pw-texture-button:hover:not(:disabled)::before {
+  background: linear-gradient(to bottom, var(--tx-face-hover-top), var(--tx-face-hover-bottom));
+}
+
+.pw-texture-button[data-selected]:not(:disabled)::before,
+.pw-texture-button:active:not(:disabled)::before {
+  background: linear-gradient(to bottom, var(--tx-face-active-top), var(--tx-face-active-bottom));
+}
+
+/* A disabled texture button is flat in every tone: no lit rim, no gradient, muted ink. */
+.pw-texture-button:disabled {
+  border-color: #1c1c1c;
+  background: #242424;
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.pw-texture-button:disabled::before {
+  background: #202020;
+}

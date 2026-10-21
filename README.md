@@ -9,7 +9,7 @@ A local SQLite-backed Desktop (Electron + Solid) over a single Go binary, `polte
 - **Inbox** — items that need a person: open card questions, drift findings, and facts with no evidence
 - **Work** — Board (cards by stage: Shape, Plan, Build, Verify, Delivered) and Specs (the same cards as a table)
 - **Atlas** — Map and Components of the system, domain, and component graph
-- **Truth** — Decisions (ADRs with a state filter, principles pinned), Facts, and Evidence (sources, docs, runbooks), all with provenance
+- **Truth** — Decisions (Verdicts with a state filter, principles pinned), Facts, and Evidence (sources, docs, runbooks), all with provenance
 - **Activity** — the Unified Change History of every justified change, by person or agent
 - **Agents** — Access (MCP setup), Sessions, History, and Context (what an agent sees at a zoom and token budget)
 - **Integrations** — Connected and Catalog (GitHub, GitLab, AWS, Google Cloud, Azure, Vercel, Supabase, Terraform, Docker); evidence and provider login only

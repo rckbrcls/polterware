@@ -13,6 +13,7 @@ import { Popover as ArkPopover } from "@ark-ui/solid/popover";
 import { MenuItem, MenuList, MenuPanel } from "./menu";
 import { createPopupMotion } from "./popup-motion";
 import { createPanelPortalOwnership } from "./panel-interaction";
+import { FluidHoverHighlight, type ItemRect } from "./fluid-hover";
 import "./popover.css";
 import { Editor, Node as TiptapNode } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
@@ -323,7 +324,8 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
   const menuId = createUniqueId();
   const [slash, setSlash] = createSignal<{ from: number; to: number; query: string; rect: AnchorRect; inserted?: boolean }>();
   const [selectionRect, setSelectionRect] = createSignal<AnchorRect>();
-  const [hover, setHover] = createSignal<{ pos: number; top: number }>();
+  /** The block (or list item) under the pointer: its position, handle offset and box in the editor. */
+  const [hover, setHover] = createSignal<{ pos: number; top: number; item: boolean; rect: ItemRect }>();
   const [activeRow, setActiveRow] = createSignal(0);
   let dismissedSlash: number | undefined;
   let selectionDismissed = false;
@@ -346,6 +348,23 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
   const [editor, setEditor] = createSignal<Editor | undefined>();
   /** Bumps so toolbar active states recompute after transactions. */
   const [tick, setTick] = createSignal(0);
+
+  let copiedTimer: ReturnType<typeof setTimeout> | undefined;
+  onCleanup(() => clearTimeout(copiedTimer));
+
+  /** Code blocks draw a "Copy" label in CSS (`pre::after`); a click in that corner copies the block. */
+  function copyCodeBlock(event: MouseEvent) {
+    if (!(event.target instanceof Element) || !host) return;
+    const pre = event.target.closest("pre");
+    if (!pre || !host.contains(pre)) return;
+    const rect = pre.getBoundingClientRect();
+    if (event.clientX < rect.right - 64 || event.clientY > rect.top + 32) return;
+    void navigator.clipboard?.writeText(pre.textContent ?? "").then(() => {
+      host?.setAttribute("data-code-copied", "true");
+      clearTimeout(copiedTimer);
+      copiedTimer = setTimeout(() => host?.removeAttribute("data-code-copied"), 1500);
+    }).catch(() => {});
+  }
 
   const isEditable = () => props.editable !== false;
   const showToolbar = () => isEditable() && props.showToolbar !== false;
@@ -562,6 +581,13 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
     if (!node) return;
     const pos = block.pos + node.nodeSize;
     dismissedSlash = undefined;
+    if (block.item) {
+      // A list item gets an empty sibling right below it; typing continues the list.
+      const attrs = node.type.name === "taskItem" ? { checked: false } : undefined;
+      ed.chain().focus().insertContentAt(pos, { type: node.type.name, attrs, content: [{ type: "paragraph" }] }).setTextSelection(pos + 2).run();
+      setHover(undefined);
+      return;
+    }
     ed.chain().focus().insertContentAt(pos, { type: "paragraph" }).setTextSelection(pos + 1).run();
     const rect = ed.view.coordsAtPos(pos + 1);
     setActiveRow(0);
@@ -570,27 +596,50 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
     setHover(undefined);
   }
 
+  /** Top-level blocks in order, with list items standing in for their list. */
+  function blockTargets(ed: Editor) {
+    const targets: { element: Element; pos: number; item: boolean }[] = [];
+    let pos = 0;
+    for (const child of Array.from(ed.view.dom.children)) {
+      const node = ed.state.doc.nodeAt(pos);
+      if (!node) break;
+      if (["bulletList", "orderedList", "taskList"].includes(node.type.name)) {
+        let itemPos = pos + 1;
+        const items = Array.from(child.children).filter((element) => element.nodeName === "LI");
+        node.forEach((item, _offset, index) => {
+          const element = items[index];
+          if (element) targets.push({ element, pos: itemPos, item: true });
+          itemPos += item.nodeSize;
+        });
+      } else {
+        targets.push({ element: child, pos, item: false });
+      }
+      pos += node.nodeSize;
+    }
+    return targets;
+  }
+
   function trackBlock(event: PointerEvent) {
     const ed = editor();
     if (!ed || !root || !host || !isEditable() || slash()) return;
     if (event.target instanceof Element && event.target.closest(".pw-md-editor__add")) return;
     const bounds = root.getBoundingClientRect();
-    const prose = ed.view.dom;
-    let pos = 0;
-    for (const child of Array.from(prose.children)) {
-      const node = ed.state.doc.nodeAt(pos);
-      if (!node) break;
-      const rect = child.getBoundingClientRect();
-      const next = child.nextElementSibling?.getBoundingClientRect();
+    const targets = blockTargets(ed);
+    for (const [index, target] of targets.entries()) {
+      const rect = target.element.getBoundingClientRect();
+      const next = targets[index + 1]?.element.getBoundingClientRect();
       const bottom = next ? (rect.bottom + next.top) / 2 : rect.bottom + 16;
       if (event.clientY >= rect.top - 12 && event.clientY <= bottom) {
+        if (hover()?.pos === target.pos) return;
         // Center the 28px handle on the block's first line, not on the block's top edge.
-        const style = getComputedStyle(child);
+        const style = getComputedStyle(target.element);
         const line = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.65 || 23;
-        setHover({ pos, top: rect.top - bounds.top + (line - 28) / 2 });
+        const top = rect.top - bounds.top;
+        const left = rect.left - bounds.left - 6;
+        setHover({ pos: target.pos, top: top + (line - 28) / 2, item: target.item,
+          rect: { top: top - 2, left, width: Math.min(rect.width + 12, bounds.width - left), height: rect.height + 4 } });
         return;
       }
-      pos += node.nodeSize;
     }
     setHover(undefined);
   }
@@ -602,10 +651,13 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
       onPointerMove={trackBlock}
       onPointerLeave={() => setHover(undefined)}
     >
-      <div ref={(el) => { host = el; }} class="pw-md-editor__surface" />
+      <Show when={isEditable()}>
+        <FluidHoverHighlight rect={hover()?.rect ?? null} targetKey={hover()?.pos ?? null} class="pw-md-editor__block-hover" />
+      </Show>
+      <div ref={(el) => { host = el; }} class="pw-md-editor__surface" onClick={copyCodeBlock} />
       <Show when={isEditable() && hover()}>{(block) => <>
         <button type="button" class="pw-md-editor__tool pw-md-editor__add"
-          style={{ top: `${block().top}px` }} aria-label="Insert block below"
+          style={{ top: `${block().top}px` }} aria-label={block().item ? "Insert item below" : "Insert block below"}
           onMouseDown={(event) => event.preventDefault()} onClick={insertBlock}><PlusIcon size={14} /></button>
       </>}</Show>
       <Show when={isEditable() && slash()}>{(session) =>

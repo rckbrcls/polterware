@@ -6,7 +6,7 @@ import {
 /** Illustrative data: a code-built picture of Polterware, not a live app. */
 const inbox: Array<{ kind: string; tone: StatusTone; title: string; meta: string }> = [
   { kind: "Decision", tone: "syncing", title: "Keep the session token in the OS keychain?", meta: "Card · Token rotation · asked by codex" },
-  { kind: "Drift", tone: "warn", title: "auth middleware no longer matches ADR-012", meta: "src/middleware/auth.ts · 2 files changed" },
+  { kind: "Drift", tone: "warn", title: "auth middleware no longer matches Verdict-012", meta: "src/middleware/auth.ts · 2 files changed" },
   { kind: "Verify", tone: "muted", title: "“Every write goes through the local core”", meta: "Fact · declared · no evidence yet" },
   { kind: "Drift", tone: "danger", title: "Cache layer contradicts “no shared state”", meta: "Conflict · Principle · 1 component" },
   { kind: "Decision", tone: "syncing", title: "Split the importer by source kind?", meta: "Card · Import pipeline · asked by claude" },

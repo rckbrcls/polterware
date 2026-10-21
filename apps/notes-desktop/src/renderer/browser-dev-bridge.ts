@@ -50,7 +50,7 @@ function seed() {
     base({ id: "mem-4", spaceId: "space-notes", title: "Polish the Polterware Notes shell layout", content: "Sidebar density, list rows, empty states and the detail panel header.", pinned: true, priority: 1, dueAt: at(1, 11), tags: tag("tag-deep") }),
     base({ id: "mem-5", spaceId: "space-notes", title: "Calendar week view overflow", content: "Events overlap when there are more than three in the same hour.", dueAt: at(2, 10), priority: 2 }),
     base({ id: "mem-6", spaceId: "space-notes", title: "Ship onboarding copy", status: "completed", completedAt: ago(26), updatedAt: ago(26) }),
-    base({ id: "mem-7", spaceId: "space-polterware", title: "Review decision lifecycle ADRs", content: "Check Challenged → Superseded transitions.", dueAt: at(-1, 17), priority: 2, tags: tag("tag-waiting") }),
+    base({ id: "mem-7", spaceId: "space-polterware", title: "Review decision lifecycle Verdicts", content: "Check Challenged → Superseded transitions.", dueAt: at(-1, 17), priority: 2, tags: tag("tag-waiting") }),
     base({ id: "mem-8", spaceId: "space-polterware", title: "Release checklist", pinned: true, dueAt: at(3, 9),
       autoCompleteOnChecklist: true, checklist: check("mem-8", [["Bump versions", true], ["Run verify script", true], ["Tag the release", false], ["Publish notes", false]]) }),
     base({ id: "mem-9", spaceId: "space-health", title: "Morning run", content: "5 km, easy pace.",

@@ -11,6 +11,8 @@ export type NotesShellContext = {
   navigate: (path: string) => void;
   selectedNoteId: Accessor<string | null>;
   openNote: (id: string) => void;
+  /** Leave the open note page for the screen it was opened from (Inbox when there is none). */
+  leaveNote?: () => void;
   /** Create an empty note and open its page; untouched ones are discarded when the page is left. */
   newNote?: (options?: { spaceId?: string }) => Promise<void>;
   /** True while a note made by `newNote` has not been left; it can still be cancelled. */

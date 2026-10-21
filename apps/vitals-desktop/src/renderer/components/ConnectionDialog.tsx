@@ -1,4 +1,4 @@
-import { A11yDialog, ControlButton, Field, FormStack, Input, Select, SwitchRow } from "@polterware/frontend-design-system";
+import { A11yDialog, Button, Field, FormStack, Input, Select, SwitchRow } from "@polterware/frontend-design-system";
 import { createSignal, Match, Show, Switch } from "solid-js";
 import type { AuthMode, ConnectPayload, SavedServerPublic } from "../api";
 
@@ -101,12 +101,12 @@ export function ConnectionDialog(props: {
       onClose={close}
       footer={
         <>
-          <ControlButton tone="secondary" onClick={close}>
+          <Button variant="texture" textureTone="danger" onClick={close}>
             Cancel
-          </ControlButton>
-          <ControlButton tone="brand" disabled={!canSubmit()} onClick={submit}>
+          </Button>
+          <Button variant="texture" textureTone="brand" disabled={!canSubmit()} onClick={submit}>
             Connect
-          </ControlButton>
+          </Button>
         </>
       }
     >

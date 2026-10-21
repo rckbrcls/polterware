@@ -20,13 +20,12 @@ html[data-shell-chrome="vibrancy"] #root {
   background: transparent !important;
 }
 
-/* One accent across Vitals: the pastel cyan primary (also the shared brand token) drives success and healthy meters.
- * Warning and danger stay amber and red because they carry status. */
+/* One accent across Vitals: the primary (ice white, dark gray on the light theme; also the shared
+ * brand token) drives success and healthy meters. Warning and danger stay amber and red because they carry status. */
 :root {
   --color-success: var(--color-primary);
   --color-status-success-background: var(--color-primary);
-  /* Fixed dark ink so brand buttons stay legible on cyan in both themes. */
-  --color-status-success-foreground: #0f2726;
+  --color-status-success-foreground: var(--color-primary-foreground);
 }
 
 .vitals-shell {
@@ -116,16 +115,20 @@ html[data-shell-chrome="solid"] .vitals-topbar {
   align-items: center;
   flex-shrink: 0;
   padding: 0 6px 0 0;
-  border: 1px solid var(--color-border-subtle);
   border-radius: 999px;
-  background: var(--color-surface-subtle);
-  box-shadow: 0 1px 2px var(--color-shadow-subtle);
+  border: 1px solid var(--field-frame);
+  background: linear-gradient(to bottom, #262626, #3b3b3b);
+  box-shadow: inset 0 0 0 1px #4c4c4c;
   color: var(--color-text-secondary);
   overflow: hidden;
 }
 
+.vitals-tab-row:hover {
+  background: linear-gradient(to bottom, #404040, #454545);
+}
+
 .vitals-tab-row[data-active="true"] {
-  background: var(--color-surface-selected);
+  background: linear-gradient(to bottom, #262626, #404040);
   color: var(--color-text-primary);
 }
 
@@ -133,12 +136,8 @@ html[data-shell-chrome="solid"] .vitals-topbar {
   height: 24px;
   min-height: 0;
   border-radius: 999px;
-  background: var(--color-surface-subtle);
+  background: transparent;
   color: inherit;
-}
-
-.vitals-tab-row[data-active="true"] .vitals-tab {
-  background: var(--color-surface-selected);
 }
 
 .vitals-tab-row .vitals-tab::before {
@@ -155,14 +154,9 @@ html[data-shell-chrome="solid"] .vitals-topbar {
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: var(--color-surface-subtle);
-  color: var(--color-surface-subtle);
+  background: transparent;
+  color: transparent;
   cursor: pointer;
-}
-
-.vitals-tab-row[data-active="true"] .vitals-tab-close {
-  background: var(--color-surface-selected);
-  color: var(--color-surface-selected);
 }
 
 .vitals-tab-row:hover .vitals-tab-close,
@@ -184,16 +178,21 @@ html[data-shell-chrome="solid"] .vitals-topbar {
   width: 24px;
   height: 24px;
   padding: 0;
-  border: 0;
   border-radius: 999px;
-  background: transparent;
-  color: var(--color-text-muted);
+  border: 1px solid var(--field-frame);
+  background: linear-gradient(to bottom, #262626, #3b3b3b);
+  box-shadow: inset 0 0 0 1px #4c4c4c;
+  color: var(--color-text-secondary);
   cursor: pointer;
 }
 
-.vitals-tab-new:hover,
+.vitals-tab-new:hover {
+  background: linear-gradient(to bottom, #404040, #454545);
+  color: var(--color-text-primary);
+}
+
 .vitals-tab-new[data-active="true"] {
-  background: var(--color-surface-selected);
+  background: linear-gradient(to bottom, #262626, #404040);
   color: var(--color-text-primary);
 }
 
@@ -204,6 +203,13 @@ html[data-shell-chrome="solid"] .vitals-topbar {
 
 main.vitals-main {
   position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The surface clips and carries the rim overlay; this wrapper is what scrolls. */
+.vitals-scroll {
   height: 100%;
   min-height: 0;
   overflow: auto;
@@ -578,8 +584,7 @@ main.vitals-main {
   justify-content: flex-start;
   gap: 10px;
   height: 48px;
-  padding: 0 20px 0 10px;
-  border-radius: var(--radius-card);
+  padding: 0 20px 0 14px;
 }
 
 .vitals-home-section {
@@ -665,16 +670,20 @@ main.vitals-main {
   justify-content: center;
   width: 30px;
   height: 30px;
-  border: 1px solid var(--color-border-subtle);
   border-radius: 999px;
-  background-color: var(--color-surface-subtle);
-  box-shadow: 0 1px 2px var(--color-shadow-subtle);
+  border: 1px solid var(--field-frame);
+  background: linear-gradient(to bottom, #262626, #3b3b3b);
+  box-shadow: inset 0 0 0 1px #4c4c4c;
   color: var(--color-text-secondary);
 }
 
-.vitals-layout-trigger:hover,
+.vitals-layout-trigger:hover {
+  background: linear-gradient(to bottom, #404040, #454545);
+  color: var(--color-text-primary);
+}
+
 .vitals-layout-trigger[data-state="open"] {
-  background-color: var(--color-surface-selected);
+  background: linear-gradient(to bottom, #262626, #404040);
   color: var(--color-text-primary);
 }
 
@@ -742,18 +751,22 @@ main.vitals-main {
   width: 30px;
   height: 30px;
   padding: 0;
-  border: 1px solid var(--color-border-subtle);
   border-radius: 999px;
-  background: var(--color-surface-subtle);
-  box-shadow: 0 1px 2px var(--color-shadow-subtle);
+  border: 1px solid var(--field-frame);
+  background: linear-gradient(to bottom, #262626, #3b3b3b);
+  box-shadow: inset 0 0 0 1px #4c4c4c;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: background var(--duration-control) var(--ease-standard), color var(--duration-control) var(--ease-standard);
+  transition: color var(--duration-control) var(--ease-standard);
 }
 
-.vitals-settings-card:hover,
+.vitals-settings-card:hover {
+  background: linear-gradient(to bottom, #404040, #454545);
+  color: var(--color-text-primary);
+}
+
 .vitals-settings-card[data-active="true"] {
-  background: var(--color-surface-selected);
+  background: linear-gradient(to bottom, #262626, #404040);
   color: var(--color-text-primary);
 }
 
@@ -765,6 +778,8 @@ main.vitals-main {
 /* App-scoped light palette: shared controls continue to consume semantic tokens. */
 :root[data-theme="light"] {
   color-scheme: light;
+  --color-primary: #2e2e2e;
+  --color-primary-foreground: #eef1f3;
   --color-app-background: Canvas;
   --color-shell-background: Canvas;
   --color-sidebar-background: Canvas;

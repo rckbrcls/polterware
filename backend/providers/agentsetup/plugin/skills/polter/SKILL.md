@@ -17,7 +17,7 @@ rationale: Why it changes
 ---
 
 ## git-import: Git metadata import
-stage: plan · owner: erick · under: core/import · decisions: ADR-0007
+stage: plan · owner: erick · under: core/import · decisions: Verdict-0007
 
 Intent paragraph: what we want and why.
 
@@ -36,14 +36,14 @@ next: wire into ImportProjectSources
 touched: backend/import.go, docs/spec.md
 
 ### new: Local SQLite authority
-status: active · trigger: multi-user sync · supersedes: ADR-0003 · reason: why
+status: active · trigger: multi-user sync · supersedes: Verdict-0003 · reason: why
 
-ADR body: context, decision, consequences.
+Verdict body: context, decision, consequences.
 
 Rules:
 - `## slug: Title` is a card; the lowercase-kebab slug is its identity.
 - `# path: Title` is an Atlas node. level: system, domain, or component. under: names the parent path. A card under: names a component path once any component exists. repo: names a checkout from `polterware repo add` (empty is the project root); path: is a folder inside it, not the node path. migrating: old design -> new design marks a node in transition (empty clears it).
-- `### ref: Title` is an ADR lifecycle block. `new` proposes one (a number is assigned); an ADR number or id changes an existing one. States: proposed → active → challenged → active or superseded. `status: challenged` needs a reason:; `trigger:` is the review condition; `supersedes: ADR-0003` on the newer decision marks the older one superseded. Decisions are never removed. The body is plain text: no # lines.
+- `### ref: Title` is an Verdict lifecycle block. `new` proposes one (a number is assigned); an Verdict number or id changes an existing one. States: proposed → active → challenged → active or superseded. `status: challenged` needs a reason:; `trigger:` is the review condition; `supersedes: Verdict-0003` on the newer decision marks the older one superseded. Decisions are never removed. The body is plain text: no # lines.
 - Stages: shape, plan, build, verify, delivered.
 - `kind: architecture` marks a card as an Architecture Change (default feature). Its under: names the node it changes; set `migrating:` on that node while the change is in flight, and clear it when the card is delivered.
 - Tasks: [ ] open, [x] done, [-] dropped; T<n>, `[repo: api]`, and a trailing `scope` glob are optional. A scope may carry its checkout: `api:src/auth/*`.

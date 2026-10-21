@@ -35,14 +35,14 @@ export type ChromeFinishOptions = {
 
 type Rgb = readonly [number, number, number];
 
-/** Horizon ramp tinted toward `tint`: light sky, one sharp dark horizon, lighter ground. */
-export function chromeStopsFromTint(tint: Rgb): ChromeStop[] {
+/** Horizon ramp tinted toward `tint`: light sky, one sharp dark horizon at `horizon`, lighter ground. */
+export function chromeStopsFromTint(tint: Rgb, horizon = 0.5): ChromeStop[] {
   const mix = (a: Rgb, b: Rgb, t: number): Rgb => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
   return [
     { position: 0, color: mix(tint, [1, 1, 1], 0.6) },
-    { position: 0.48, color: mix(tint, [1, 1, 1], 0.15) },
-    { position: 0.5, color: mix(tint, [0, 0, 0], 0.3) },
-    { position: 0.62, color: mix(tint, [0, 0, 0], 0.05) },
+    { position: horizon - 0.02, color: mix(tint, [1, 1, 1], 0.15) },
+    { position: horizon, color: mix(tint, [0, 0, 0], 0.3) },
+    { position: Math.min(horizon + 0.12, 0.98), color: mix(tint, [0, 0, 0], 0.05) },
     { position: 1, color: mix(tint, [1, 1, 1], 0.45) },
   ];
 }
@@ -54,6 +54,50 @@ export const CHROME_PRESETS = {
 } satisfies Record<string, Partial<ChromeFinishOptions>>;
 
 export type ChromePreset = keyof typeof CHROME_PRESETS;
+
+/** Procedural finishes per preset. Seeds fold into this many, so the render cache stays bounded. */
+export const CHROME_VARIANTS = 64;
+
+/** Stable FNV-1a hash over the string's UTF-16 code units. */
+export function hashSeed(seed: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < seed.length; index++) {
+    hash = Math.imul(hash ^ seed.charCodeAt(index), 16777619);
+  }
+  return hash >>> 0;
+}
+
+/** Variant index for a seed; a random one when the seed is omitted. */
+export function chromeVariantIndex(seed?: string): number {
+  return seed === undefined ? Math.floor(Math.random() * CHROME_VARIANTS) : hashSeed(seed) % CHROME_VARIANTS;
+}
+
+/**
+ * One procedural take on a preset: the reflection tilts, bends, and sits at a different height,
+ * and the noise and RGB split shift, so no two neighbouring tiles share a highlight.
+ */
+export function chromeVariant(index: number, preset: ChromePreset = "horizon"): { options: Partial<ChromeFinishOptions>; horizon: number } {
+  // mulberry32: a few well-spread numbers from a small integer.
+  let state = Math.imul((index % CHROME_VARIANTS) + 1, 0x9e3779b9);
+  const next = () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), state | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const base: Partial<ChromeFinishOptions> = CHROME_PRESETS[preset];
+  const between = (min: number, max: number) => min + (max - min) * next();
+  return {
+    options: {
+      ...base,
+      angle: (base.angle ?? -24) + between(-26, 26),
+      warp: (base.warp ?? 0.3) * between(0.5, 1.6),
+      phase: between(-1, 1),
+      split: between(6, 16),
+    },
+    horizon: between(0.38, 0.62),
+  };
+}
 
 /** Parses a computed `rgb` or `color(srgb …)` string into 0–1 channels. */
 export function parseComputedColor(value: string): Rgb | undefined {

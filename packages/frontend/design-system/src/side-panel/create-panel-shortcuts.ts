@@ -15,7 +15,6 @@ type ShortcutPanel = {
   cancelResize: () => void;
   collapse: () => void;
   restoreFocus: () => void;
-  toggleExpanded: () => void;
   close: () => void;
 };
 
@@ -45,9 +44,7 @@ function onKeyDown(event: KeyboardEvent) {
     if (panel.focusInFrame()) { claim(); panel.restoreFocus(); }
     return;
   }
-  if (panel.matchesShortcut("shell.maximize_detail", event)) {
-    claim(); panel.toggleExpanded();
-  } else if (panel.matchesShortcut("shell.toggle_detail", event)) {
+  if (panel.matchesShortcut("shell.toggle_detail", event)) {
     claim(); panel.close();
   }
 }

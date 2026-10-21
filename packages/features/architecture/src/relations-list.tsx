@@ -1,7 +1,7 @@
 import { For, Show, createEffect, createMemo, createSignal, on } from "solid-js";
 import { pointsToRoundedSvgPath } from "@polterware/frontend-canvas";
 import {
-  ChevronRight,
+  DisclosureButton,
   PageContent,
   PageEmpty,
   animateCollapse,
@@ -104,20 +104,12 @@ function RelationsSection(props: {
           <span class="atlas-relations__title">{node().title}</span>
           <span class="atlas-relations__meta">{countLabel(props.row)}</span>
         </button>
-        <button
-          type="button"
+        <DisclosureButton
           class="atlas-relations__toggle"
-          aria-expanded={open()}
+          expanded={open()}
           aria-label={`${open() ? "Collapse" : "Expand"} ${node().title}`}
           onClick={() => setOpen((value) => !value)}
-        >
-          <ChevronRight
-            size={14}
-            aria-hidden
-            class="transition-transform duration-[var(--duration-control)] ease-[var(--ease-enter)] motion-reduce:transition-none"
-            classList={{ "rotate-90": open() }}
-          />
-        </button>
+        />
       </h2>
       <div class="atlas-relations__body" ref={body} data-state="open">
         <RelationsFlow row={props.row} selectedId={props.selectedId} onSelect={props.onSelect} />

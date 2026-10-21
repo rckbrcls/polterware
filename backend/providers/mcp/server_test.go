@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/polterware/polterware/backend/domains/drift"
-	"github.com/polterware/polterware/backend/domains/ppm"
+	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/providers/demoseed"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
@@ -101,7 +101,7 @@ func TestContextGetHappyPath(t *testing.T) {
 
 func TestEntityGetHappyPath(t *testing.T) {
 	server := testServer(t)
-	entities, err := server.Store.ListPpmEntities(demoseed.ProjectID, "")
+	entities, err := server.Store.ListCanonEntities(demoseed.ProjectID, "")
 	if err != nil || len(entities) == 0 {
 		t.Fatalf("need seeded entities: %v len=%d", err, len(entities))
 	}
@@ -116,9 +116,9 @@ func TestEntityGetHappyPath(t *testing.T) {
 
 func TestEvidenceGetHappyPath(t *testing.T) {
 	server := testServer(t)
-	evidence, err := ppm.NewEvidence(
+	evidence, err := canon.NewEvidence(
 		demoseed.ProjectID,
-		ppm.EvidenceKindFile,
+		canon.EvidenceKindFile,
 		"README describes polterware-core",
 		"fs",
 		"README.md",
@@ -127,7 +127,7 @@ func TestEvidenceGetHappyPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := server.Store.UpsertPpmEvidence(evidence); err != nil {
+	if err := server.Store.UpsertCanonEvidence(evidence); err != nil {
 		t.Fatal(err)
 	}
 	text, err := server.callTool(ToolEvidenceGet, map[string]any{"id": evidence.ID})
@@ -162,7 +162,7 @@ func TestDriftCheckNarrow(t *testing.T) {
 		t.Fatal("findings must be a slice, got nil")
 	}
 
-	// Put an inferred DEPENDS_ON involving n-pg (ADR-linked) into the layout so Sync keeps it.
+	// Put an inferred DEPENDS_ON involving n-pg (Verdict-linked) into the layout so Sync keeps it.
 	layout, err := server.Store.GetLayout(demoseed.ProjectID)
 	if err != nil {
 		t.Fatal(err)
@@ -179,7 +179,7 @@ func TestDriftCheckNarrow(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pg, err := server.Store.GetPpmEntityByRef(demoseed.ProjectID, ppm.RefArchitectureNode, "n-pg")
+	pg, err := server.Store.GetCanonEntityByRef(demoseed.ProjectID, canon.RefArchitectureNode, "n-pg")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -249,24 +249,24 @@ func TestAgentRunAuditChain(t *testing.T) {
 		"agent_run_id": runID,
 		"kind":         "change",
 		"summary":      "Document DEPENDS_ON edge",
-		"rationale":    "Matches accepted ADR scope",
-		"paths":        []any{"docs/adr/0004-product-positioning-and-wedge.md"},
+		"rationale":    "Matches accepted Verdict scope",
+		"paths":        []any{"docs/verdict/0004-product-positioning-and-wedge.md"},
 	}); err != nil {
 		t.Fatal(err)
 	}
 
-	evidence, err := ppm.NewEvidence(
+	evidence, err := canon.NewEvidence(
 		demoseed.ProjectID,
-		ppm.EvidenceKindFile,
-		"ADR text",
+		canon.EvidenceKindFile,
+		"Verdict text",
 		"fs",
-		"docs/adr/0004-product-positioning-and-wedge.md",
+		"docs/verdict/0004-product-positioning-and-wedge.md",
 		"system",
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := server.Store.UpsertPpmEvidence(evidence); err != nil {
+	if err := server.Store.UpsertCanonEvidence(evidence); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := server.callTool(ToolAgentRunAppend, map[string]any{
@@ -333,7 +333,7 @@ func TestAuditedWritesRequireEnvelopeAndMutate(t *testing.T) {
 
 	startText, err := server.callTool(ToolAgentRunStart, map[string]any{
 		"project_id": demoseed.ProjectID,
-		"task":       "Record ADR fact",
+		"task":       "Record Verdict fact",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -356,9 +356,9 @@ func TestAuditedWritesRequireEnvelopeAndMutate(t *testing.T) {
 		"project_id":   demoseed.ProjectID,
 		"agent_run_id": runID,
 		"summary":      "Add local store fact",
-		"rationale":    "Matches accepted ADR",
+		"rationale":    "Matches accepted Verdict",
 		"statement":    "SQLite is the local store",
-		"truth_class":  ppm.TruthDeclared,
+		"truth_class":  canon.TruthDeclared,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -376,11 +376,11 @@ func TestAuditedWritesRequireEnvelopeAndMutate(t *testing.T) {
 	evText, err := server.callTool(ToolEvidenceUpsert, map[string]any{
 		"project_id":       demoseed.ProjectID,
 		"agent_run_id":     runID,
-		"summary":          "Attach ADR evidence",
+		"summary":          "Attach Verdict evidence",
 		"rationale":        "File backs the fact",
-		"kind":             ppm.EvidenceKindFile,
-		"evidence_summary": "ADR text",
-		"path":             "docs/adr/0004-product-positioning-and-wedge.md",
+		"kind":             canon.EvidenceKindFile,
+		"evidence_summary": "Verdict text",
+		"path":             "docs/verdict/0004-product-positioning-and-wedge.md",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -405,10 +405,10 @@ func TestAuditedWritesRequireEnvelopeAndMutate(t *testing.T) {
 	knowText, err := server.callTool(ToolKnowledgeUpsert, map[string]any{
 		"project_id":   demoseed.ProjectID,
 		"agent_run_id": runID,
-		"summary":      "Add ADR library item",
+		"summary":      "Add Verdict library item",
 		"rationale":    "Document the decision",
-		"title":        "Local SQLite ADR",
-		"kind":         "adr",
+		"title":        "Local SQLite Verdict",
+		"kind":         "verdict",
 		"body":         "Use SQLite for Desktop.",
 		"tags":         []any{"storage"},
 	})
@@ -424,30 +424,30 @@ func TestAuditedWritesRequireEnvelopeAndMutate(t *testing.T) {
 		t.Fatalf("missing knowledge id: %s", knowText)
 	}
 
-	entities, err := server.Store.ListPpmEntities(demoseed.ProjectID, "")
+	entities, err := server.Store.ListCanonEntities(demoseed.ProjectID, "")
 	if err != nil || len(entities) == 0 {
 		t.Fatalf("need entities: %v", err)
 	}
 	if _, err := server.callTool(ToolKnowledgeLink, map[string]any{
 		"project_id":   demoseed.ProjectID,
 		"agent_run_id": runID,
-		"summary":      "Link ADR to entity",
+		"summary":      "Link Verdict to entity",
 		"rationale":    "Documents the component",
 		"knowledge_id": knowledgeID,
 		"entity_id":    entities[0].ID,
-		"predicate":    ppm.PredDocuments,
+		"predicate":    canon.PredDocuments,
 	}); err != nil {
 		t.Fatal(err)
 	}
 
-	stored, err := server.Store.GetPpmFact(factID)
+	stored, err := server.Store.GetCanonFact(factID)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if stored.Statement != "SQLite is the local store" || stored.Actor != "agent" {
 		t.Fatalf("fact not persisted: %+v", stored)
 	}
-	linked, err := server.Store.ListPpmEvidenceForFact(factID)
+	linked, err := server.Store.ListCanonEvidenceForFact(factID)
 	if err != nil || len(linked) != 1 || linked[0].ID != evidenceID {
 		t.Fatalf("evidence link missing: %v %#v", err, linked)
 	}

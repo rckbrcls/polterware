@@ -1,0 +1,187 @@
+syntax = "proto3";
+package polterware.local.v1;
+option go_package = "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1;localv1";
+
+import "polterware/local/v1/agentrun.proto";
+
+message CanonEntity {
+  string id = 1;
+  string project_id = 2;
+  string kind = 3;
+  string ref_kind = 4;
+  string ref_id = 5;
+  string title = 6;
+  string truth_class = 7;
+  string source = 8;
+  string actor = 9;
+  string observed_at = 10;
+  string created_at = 11;
+  string updated_at = 12;
+}
+
+message CanonRelationship {
+  string id = 1;
+  string project_id = 2;
+  string subject_entity_id = 3;
+  string predicate = 4;
+  string object_entity_id = 5;
+  string truth_class = 6;
+  string source = 7;
+  string actor = 8;
+  string observed_at = 9;
+  string created_at = 10;
+}
+
+message ListEntitiesRequest {
+  string project_id = 1;
+  string kind = 2;
+}
+
+message ListEntitiesResponse {
+  repeated CanonEntity entities = 1;
+}
+
+message ListRelationshipsRequest {
+  string project_id = 1;
+  string entity_id = 2;
+}
+
+message ListRelationshipsResponse {
+  repeated CanonRelationship relationships = 1;
+}
+
+message GetEntityRequest {
+  string id = 1;
+}
+
+message GetEntityResponse {
+  CanonEntity entity = 1;
+}
+
+message SyncProjectModelRequest {
+  string project_id = 1;
+}
+
+message SyncProjectModelResponse {
+  int32 entity_count = 1;
+}
+
+message CanonFact {
+  string id = 1;
+  string project_id = 2;
+  string statement = 3;
+  string truth_class = 4;
+  string source = 5;
+  string actor = 6;
+  string observed_at = 7;
+  string entity_id = 8;
+  string created_at = 9;
+  string updated_at = 10;
+  string scope_node_id = 11;
+}
+
+message CanonEvidence {
+  string id = 1;
+  string project_id = 2;
+  string kind = 3;
+  string summary = 4;
+  string source = 5;
+  string path = 6;
+  string actor = 7;
+  string observed_at = 8;
+  string created_at = 9;
+  string updated_at = 10;
+  string scope_node_id = 11;
+}
+
+message ListFactsRequest {
+  string project_id = 1;
+  string entity_id = 2;
+  string scope_node = 3;
+  bool scope_exact = 4;
+}
+
+message ListFactsResponse {
+  repeated CanonFact facts = 1;
+}
+
+message GetFactRequest {
+  string id = 1;
+}
+
+message GetFactResponse {
+  CanonFact fact = 1;
+  repeated CanonEvidence evidence = 2;
+}
+
+message UpsertFactRequest {
+  CanonFact fact = 1;
+  ChangeEnvelope change = 2;
+}
+
+message UpsertFactResponse {
+  CanonFact fact = 1;
+}
+
+message ListEvidenceRequest {
+  string project_id = 1;
+  string scope_node = 2;
+  bool scope_exact = 3;
+}
+
+message ListEvidenceResponse {
+  repeated CanonEvidence evidence = 1;
+}
+
+message GetEvidenceRequest {
+  string id = 1;
+}
+
+message GetEvidenceResponse {
+  CanonEvidence evidence = 1;
+}
+
+message UpsertEvidenceRequest {
+  CanonEvidence evidence = 1;
+  ChangeEnvelope change = 2;
+}
+
+message UpsertEvidenceResponse {
+  CanonEvidence evidence = 1;
+}
+
+message LinkEvidenceToFactRequest {
+  string project_id = 1;
+  string fact_id = 2;
+  string evidence_id = 3;
+  ChangeEnvelope change = 4;
+}
+
+message LinkEvidenceToFactResponse {}
+
+message ImportProjectSourcesRequest {
+  string project_id = 1;
+}
+
+message ImportProjectSourcesResponse {
+  int32 fact_count = 1;
+  int32 evidence_count = 2;
+  int32 source_count = 3;
+  int32 skipped_count = 4;
+  string message = 5;
+}
+
+service ProjectModelService {
+  rpc ListEntities(ListEntitiesRequest) returns (ListEntitiesResponse);
+  rpc ListRelationships(ListRelationshipsRequest) returns (ListRelationshipsResponse);
+  rpc GetEntity(GetEntityRequest) returns (GetEntityResponse);
+  rpc SyncProjectModel(SyncProjectModelRequest) returns (SyncProjectModelResponse);
+  rpc ListFacts(ListFactsRequest) returns (ListFactsResponse);
+  rpc GetFact(GetFactRequest) returns (GetFactResponse);
+  rpc UpsertFact(UpsertFactRequest) returns (UpsertFactResponse);
+  rpc ListEvidence(ListEvidenceRequest) returns (ListEvidenceResponse);
+  rpc GetEvidence(GetEvidenceRequest) returns (GetEvidenceResponse);
+  rpc UpsertEvidence(UpsertEvidenceRequest) returns (UpsertEvidenceResponse);
+  rpc LinkEvidenceToFact(LinkEvidenceToFactRequest) returns (LinkEvidenceToFactResponse);
+  rpc ImportProjectSources(ImportProjectSourcesRequest) returns (ImportProjectSourcesResponse);
+}

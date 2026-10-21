@@ -281,7 +281,7 @@ func TestGetAgentRunUnknown(t *testing.T) {
 func TestReplaceCommitLinksReplacesAndFilters(t *testing.T) {
 	store := seededStore(t)
 	var evidenceID, taskID string
-	if err := store.DB.QueryRow(`SELECT id FROM ppm_evidence WHERE project_id=? LIMIT 1`, demoseed.ProjectID).Scan(&evidenceID); err != nil {
+	if err := store.DB.QueryRow(`SELECT id FROM canon_evidence WHERE project_id=? LIMIT 1`, demoseed.ProjectID).Scan(&evidenceID); err != nil {
 		t.Skipf("seed has no evidence row: %v", err)
 	}
 	if err := store.DB.QueryRow(`SELECT t.id FROM work_tasks t JOIN work_cards c ON c.id=t.card_id WHERE c.project_id=? LIMIT 1`, demoseed.ProjectID).Scan(&taskID); err != nil {
@@ -317,19 +317,19 @@ func TestReplaceCommitLinksReplacesAndFilters(t *testing.T) {
 
 func TestSaveAndListKnowledge(t *testing.T) {
 	store := seededStore(t)
-	adrs, err := store.ListKnowledge(demoseed.ProjectID, "adr")
+	verdicts, err := store.ListKnowledge(demoseed.ProjectID, "verdict")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(adrs) == 0 {
-		t.Fatal("seed must provide ADRs")
+	if len(verdicts) == 0 {
+		t.Fatal("seed must provide Verdicts")
 	}
-	for _, item := range adrs {
-		if item.Kind != "adr" || item.ProjectID != demoseed.ProjectID {
+	for _, item := range verdicts {
+		if item.Kind != "verdict" || item.ProjectID != demoseed.ProjectID {
 			t.Fatalf("filter leaked %+v", item)
 		}
 	}
-	first := adrs[0]
+	first := verdicts[0]
 	if got, err := store.GetKnowledge(first.ID); err != nil || got.Title != first.Title {
 		t.Fatalf("GetKnowledge = %+v, %v", got, err)
 	}

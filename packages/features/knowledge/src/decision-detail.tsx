@@ -6,11 +6,12 @@ import {
   Select,
   StatusChip,
 } from "@polterware/frontend-design-system";
-import type { WorkspaceAdr } from "@polterware/feature-shell";
-import { KnowledgeDocumentShell } from "./knowledge-document-shell";
+import type { ScopeNodeItem, WorkspaceVerdict } from "@polterware/feature-shell";
+import { KnowledgeDocumentShell, type EvidenceNoteProps } from "./knowledge-document-shell";
 import { decisionStateTone } from "./library-row";
+import { ScopePicker, scopePathOf } from "./scope-picker";
 
-const STATE_LABEL: Record<WorkspaceAdr["state"], string> = {
+const STATE_LABEL: Record<WorkspaceVerdict["state"], string> = {
   proposed: "Proposed",
   active: "Active",
   challenged: "Challenged",
@@ -25,23 +26,33 @@ export type DecisionAction =
   | { kind: "supersede"; byId: string };
 
 export function DecisionDetail(props: {
-  adr: WorkspaceAdr;
-  /** Every ADR in the project; superseding picks among the ones still in force. */
-  allAdrs: WorkspaceAdr[];
+  verdict: WorkspaceVerdict;
+  /** Every Verdict in the project; superseding picks among the ones still in force. */
+  allVerdicts: WorkspaceVerdict[];
   bodyMarkdown: string;
   onBodyChange: (md: string) => void;
   onAction?: (action: DecisionAction) => void;
+  /** Atlas nodes offered by the scope picker. */
+  scopeNodes?: ScopeNodeItem[];
+  /** Writes the Atlas scope as a node path; empty clears it. */
+  onScopeChange?: (path: string) => void;
   links?: JSX.Element;
+  /** Note-style editing: editable title and tags, like Evidence and Notes. */
+  note?: EvidenceNoteProps;
 }) {
   const successors = () =>
-    props.allAdrs.filter((other) => other.id !== props.adr.id && other.state !== "superseded");
+    props.allVerdicts.filter((other) => other.id !== props.verdict.id && other.state !== "superseded");
   const canSupersede = () =>
-    Boolean(props.onAction) && (props.adr.state === "active" || props.adr.state === "challenged") && successors().length > 0;
+    Boolean(props.onAction) && (props.verdict.state === "active" || props.verdict.state === "challenged") && successors().length > 0;
   return (
     <DetailPanel.Content>
       <DetailPanel.Header />
       <KnowledgeDocumentShell
-        title={props.adr.title}
+        title={props.note?.title ?? props.verdict.title}
+        onTitleChange={props.note?.onTitleChange}
+        tags={props.note?.tags}
+        tagSuggestions={props.note?.tagSuggestions}
+        onTagsChange={props.note?.onTagsChange}
         icon={<Book03Icon size={16} />}
         bodyMarkdown={props.bodyMarkdown}
         onBodyChange={props.onBodyChange}
@@ -51,15 +62,15 @@ export function DecisionDetail(props: {
               label="Status"
               value={
                 <div class="flex flex-wrap items-center gap-2">
-                  <StatusChip tone={decisionStateTone(props.adr.state)}>{STATE_LABEL[props.adr.state]}</StatusChip>
+                  <StatusChip tone={decisionStateTone(props.verdict.state)}>{STATE_LABEL[props.verdict.state]}</StatusChip>
                   <Show when={props.onAction}>
-                    <Show when={props.adr.state === "proposed"}>
+                    <Show when={props.verdict.state === "proposed"}>
                       <Button variant="secondary" size="sm" onClick={() => props.onAction?.({ kind: "activate" })}>Activate</Button>
                     </Show>
-                    <Show when={props.adr.state === "active"}>
+                    <Show when={props.verdict.state === "active"}>
                       <Button variant="ghost" size="sm" onClick={() => props.onAction?.({ kind: "challenge" })}>Open review</Button>
                     </Show>
-                    <Show when={props.adr.state === "challenged"}>
+                    <Show when={props.verdict.state === "challenged"}>
                       <Button variant="ghost" size="sm" onClick={() => props.onAction?.({ kind: "reactivate" })}>Keep active</Button>
                     </Show>
                   </Show>
@@ -68,18 +79,30 @@ export function DecisionDetail(props: {
             />
             <DetailPanel.Property
               label="Scope"
-              value={props.adr.scope === "principle" ? "Principle (whole project)" : "Decision"}
+              value={props.verdict.scope === "principle" ? "Principle (whole project)" : "Decision"}
             />
-            <DetailPanel.Property label="Review when" value={props.adr.reviewTrigger || null} />
-            <DetailPanel.Property label="Reason" value={props.adr.statusReason || null} />
-            <DetailPanel.Property label="Superseded by" value={props.adr.supersededBy || null} />
+            <Show when={props.onScopeChange}>
+              <DetailPanel.Property
+                label="Atlas scope"
+                value={
+                  <ScopePicker
+                    nodes={props.scopeNodes ?? []}
+                    value={scopePathOf(props.scopeNodes ?? [], props.verdict.scopeNodeId)}
+                    onChange={(path) => props.onScopeChange?.(path)}
+                  />
+                }
+              />
+            </Show>
+            <DetailPanel.Property label="Review when" value={props.verdict.reviewTrigger || null} />
+            <DetailPanel.Property label="Reason" value={props.verdict.statusReason || null} />
+            <DetailPanel.Property label="Superseded by" value={props.verdict.supersededBy || null} />
             <DetailPanel.Property
               label="Supersedes"
-              value={props.adr.supersedes.length > 0 ? props.adr.supersedes.join(", ") : null}
+              value={props.verdict.supersedes.length > 0 ? props.verdict.supersedes.join(", ") : null}
             />
             <DetailPanel.Property
               label="Governs"
-              value={props.adr.governs.length > 0 ? props.adr.governs.join(", ") : null}
+              value={props.verdict.governs.length > 0 ? props.verdict.governs.join(", ") : null}
               mono
             />
             <Show when={canSupersede()}>

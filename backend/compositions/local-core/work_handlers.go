@@ -25,8 +25,12 @@ func (core *Core) ListWorkCards(_ context.Context, request *connect.Request[loca
 	if err != nil {
 		return nil, internal(err)
 	}
+	resolved, err := wedge.LoadNodeScope(core.Store, request.Msg.ProjectId, request.Msg.ScopeNode, request.Msg.ScopeExact)
+	if err != nil {
+		return nil, invalid(err.Error())
+	}
 	cards := make([]*localv1.WorkCard, 0, len(snapshot.Cards))
-	for _, card := range snapshot.Cards {
+	for _, card := range wedge.FilterCardsByScope(resolved, snapshot.Cards) {
 		if card.Status == work.CardActive {
 			cards = append(cards, workCardProto(card))
 		}
@@ -130,7 +134,11 @@ func (core *Core) QueryPolter(_ context.Context, request *connect.Request[localv
 	if request.Msg.ProjectId == "" {
 		return nil, invalid("project id is required")
 	}
-	text, err := wedge.QueryPolter(core.Store, request.Msg.ProjectId, request.Msg.Query)
+	scope, err := wedge.ResolveScopeRef(core.Store, request.Msg.ProjectId, request.Msg.ScopeNode, request.Msg.ScopeExact)
+	if err != nil {
+		return nil, invalid(err.Error())
+	}
+	text, err := wedge.QueryPolterScoped(core.Store, request.Msg.ProjectId, request.Msg.Query, scope)
 	if err != nil {
 		return nil, invalid(err.Error())
 	}

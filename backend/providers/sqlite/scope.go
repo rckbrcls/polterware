@@ -1,0 +1,132 @@
+package sqlite
+
+import (
+	"database/sql"
+	"fmt"
+	"time"
+
+	"github.com/polterware/polterware/backend/domains/atlas"
+)
+
+// Scope kinds name where an entity's scope is stored.
+const (
+	ScopeDecision = "decision"
+	ScopeFact     = "fact"
+	ScopeEvidence = "evidence"
+	// ScopeKnowledge is any knowledge item, such as the Evidence notes the Desktop lists.
+	ScopeKnowledge = "knowledge"
+	// ScopeItem is a derived Drift finding or Inbox item, keyed by its item key.
+	ScopeItem = "item"
+)
+
+var scopeTables = map[string]string{
+	ScopeDecision:  "knowledge_items",
+	ScopeKnowledge: "knowledge_items",
+	ScopeFact:      "canon_facts",
+	ScopeEvidence:  "canon_evidence",
+}
+
+// SetScope assigns an entity to an Atlas node, or clears the scope when nodeID
+// is empty. A node path in nodeID is not accepted; resolve it first.
+func (s *Store) SetScope(projectID, kind, id, nodeID string) error {
+	if nodeID != "" {
+		var found string
+		err := s.DB.QueryRow(`SELECT id FROM atlas_nodes WHERE id=? AND project_id=? AND status<>'removed'`, nodeID, projectID).Scan(&found)
+		if err != nil {
+			return fmt.Errorf("unknown atlas node %q", nodeID)
+		}
+	}
+	if kind == ScopeItem {
+		if nodeID == "" {
+			_, err := s.DB.Exec(`DELETE FROM scope_assignments WHERE project_id=? AND item_key=?`, projectID, id)
+			return err
+		}
+		_, err := s.DB.Exec(`INSERT INTO scope_assignments(project_id,item_key,node_id,updated_at) VALUES(?,?,?,?)
+			ON CONFLICT(project_id,item_key) DO UPDATE SET node_id=excluded.node_id, updated_at=excluded.updated_at`,
+			projectID, id, nodeID, time.Now().UTC().Format(time.RFC3339))
+		return err
+	}
+	table, ok := scopeTables[kind]
+	if !ok {
+		return fmt.Errorf("unknown scope kind %q", kind)
+	}
+	var value any
+	if nodeID != "" {
+		value = nodeID
+	}
+	res, err := s.DB.Exec(`UPDATE `+table+` SET scope_node_id=? WHERE id=? AND project_id=?`, value, id, projectID)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("%s %q not found", kind, id)
+	}
+	return nil
+}
+
+// ScopeMap returns entity ID (or item key) to node ID for every scoped entity
+// of kind in the project. Unscoped entities are absent.
+func (s *Store) ScopeMap(projectID, kind string) (map[string]string, error) {
+	query := ""
+	if kind == ScopeItem {
+		query = `SELECT item_key,node_id FROM scope_assignments WHERE project_id=?`
+	} else {
+		table, ok := scopeTables[kind]
+		if !ok {
+			return nil, fmt.Errorf("unknown scope kind %q", kind)
+		}
+		query = `SELECT id,scope_node_id FROM ` + table + ` WHERE project_id=? AND scope_node_id IS NOT NULL`
+	}
+	out := map[string]string{}
+	err := s.eachRow(query, projectID, func(rows *sql.Rows) error {
+		var id, node string
+		if err := rows.Scan(&id, &node); err != nil {
+			return err
+		}
+		out[id] = node
+		return nil
+	})
+	return out, err
+}
+
+// NodeScope is the resolved filter for one project: the matching node set and
+// the nodes it was built from, so callers can also match by node path.
+type NodeScope struct {
+	Set   atlas.ScopeSet
+	Nodes []atlas.Node
+}
+
+// Matches reports whether an entity scoped to nodeID is visible.
+func (n NodeScope) Matches(nodeID string) bool { return n.Set.Matches(nodeID) }
+
+// MatchesPath reports whether an entity scoped by node path is visible. An empty
+// path is unscoped and always matches.
+func (n NodeScope) MatchesPath(path string) bool {
+	if n.Set == nil || path == "" {
+		return true
+	}
+	for _, node := range n.Nodes {
+		if node.Path == path {
+			return n.Set[node.ID]
+		}
+	}
+	return false
+}
+
+// LoadScope resolves scope against the project's Atlas. An inactive scope
+// returns a NodeScope whose Set is nil and matches everything.
+func (s *Store) LoadScope(projectID string, scope atlas.Scope) (NodeScope, error) {
+	if !scope.Active() {
+		return NodeScope{}, nil
+	}
+	nodes, err := s.loadAtlasNodes(projectID)
+	if err != nil {
+		return NodeScope{}, err
+	}
+	return NodeScope{Set: atlas.ResolveScope(nodes, scope), Nodes: nodes}, nil
+}
+
+// AtlasNodes returns every Atlas node of the project, removed ones included.
+func (s *Store) AtlasNodes(projectID string) ([]atlas.Node, error) {
+	return s.loadAtlasNodes(projectID)
+}

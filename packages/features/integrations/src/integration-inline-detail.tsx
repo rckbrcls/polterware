@@ -122,7 +122,7 @@ export function IntegrationInlineDetail(props: {
               <DataTable.Body<WorkspaceIntegrationResource>>
                 {(resource) => (
                   <DataTable.Row row={resource} rowId={resource.id}>
-                    <DataTable.PrimaryCell icon={<Plug size={16} />} iconTone="integration" title={resource.name} />
+                    <DataTable.PrimaryCell icon={<Plug size={16} />} iconTone="integration" iconSeed={resource.id} title={resource.name} />
                     <DataTable.Cell>{resource.kind}</DataTable.Cell>
                     <DataTable.Cell>{resource.environment}</DataTable.Cell>
                     <DataTable.Cell><StatusChip tone="healthy" label={resource.status} /></DataTable.Cell>

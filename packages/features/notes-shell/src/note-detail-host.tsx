@@ -6,7 +6,7 @@ import { useNotesShell } from "./context";
 export function NoteDetailHost(props: ParentProps) {
   const shell = useNotesShell();
   const noteProperties = createMemo(() => shell.features.find(feature => feature.noteProperties)?.noteProperties);
-  return <DetailPanel.Root expandable={false} open={!!shell.selectedNoteId() && !!noteProperties() && !!shell.propertiesOpen?.()}
+  return <DetailPanel.Root class="notes-properties-panel" mode="overlay" expandable={false} open={!!shell.selectedNoteId() && !!noteProperties() && !!shell.propertiesOpen?.()}
     expanded={shell.expanded?.() ?? false} activeEntityId={shell.selectedNoteId()} onOpenChange={open => shell.setPropertiesOpen?.(open)}
     onExpandedChange={expanded => shell.setExpanded?.(expanded)} aria-label="Note details">
     <DetailPanel.Collection>{props.children}</DetailPanel.Collection>

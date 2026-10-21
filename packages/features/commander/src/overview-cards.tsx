@@ -37,13 +37,13 @@ export function OverviewCards(props: {
               return (
                 <button
                   type="button"
-                  class="commander-overview-card"
+                  class="commander-overview-card card-texture"
                   onMouseDown={(event) => {
                     event.preventDefault();
                     props.onSelect(card.id);
                   }}
                 >
-                  <IconTile size={24} tone={card.tone ?? "neutral"}>
+                  <IconTile size={24} tone={card.tone ?? "neutral"} seed={card.id}>
                     <Icon size={14} aria-hidden />
                   </IconTile>
                   <div class="commander-overview-card__text">

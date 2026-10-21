@@ -166,7 +166,7 @@ export function MetricsDashboard(props: {
           description={props.message || "The host could not be reached."}
           illustration={
             <EmptyIllustration class="vitals-empty-illustration">
-              <IconTile size={28} dimmed>
+              <IconTile size={28} dimmed seed="host-unreachable">
                 <Server size={16} />
               </IconTile>
             </EmptyIllustration>

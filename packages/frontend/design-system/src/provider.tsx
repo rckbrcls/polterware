@@ -1,7 +1,7 @@
 import { createContext, useContext, type Accessor, type JSX } from "solid-js";
 import { createShortcutLabel, detailPanelStore, matchesShortcut } from "@polterware/frontend-state";
 
-export type DesignSystemShortcut = "shell.toggle_detail" | "shell.maximize_detail" | "shell.toggle_sidebar";
+export type DesignSystemShortcut = "shell.toggle_detail" | "shell.toggle_sidebar";
 export type DesignSystemProviderProps = {
   storagePrefix: string;
   expandDetail?: () => void;

@@ -14,6 +14,14 @@
   pointer-events: none;
 }
 
+/* A tooltip is too small for the card rings: it shares the fill and drops them. */
+.pw-tooltip-content.menu-panel {
+  background: var(--card-fill);
+  box-shadow:
+    0 8px 28px var(--color-shadow),
+    0 0 0 1px var(--color-shadow-outline);
+}
+
 .pw-tooltip-content {
   z-index: var(--z-tooltip, 110);
   width: max-content;

@@ -10,9 +10,9 @@ import { RELEASES_URL, installCommand, products } from "../../data/products";
 function TruthPanel() {
   const decisions: Array<[string, StatusTone, string]> = [
     ["Principle", "ok", "Every write goes through the local core"],
-    ["Active", "ok", "ADR-012 · Bearer session token, no accounts"],
-    ["Challenged", "warn", "ADR-009 · One SQLite database per project"],
-    ["Proposed", "syncing", "ADR-015 · Split the importer by source kind"],
+    ["Active", "ok", "Verdict-012 · Bearer session token, no accounts"],
+    ["Challenged", "warn", "Verdict-009 · One SQLite database per project"],
+    ["Proposed", "syncing", "Verdict-015 · Split the importer by source kind"],
   ];
   return (
     <div class="mk-panel" role="img" aria-label="Decisions with lifecycle states">
@@ -52,9 +52,9 @@ function AtlasPanel() {
 function ActivityPanel() {
   const events: Array<[string, string, string]> = [
     ["claude", "Moved W-41 Import pipeline to Verify", "rationale: tests cover all source kinds"],
-    ["you", "Pinned principle “Local core owns SQLite”", "from Decision ADR-004"],
+    ["you", "Pinned principle “Local core owns SQLite”", "from Decision Verdict-004"],
     ["codex", "Added evidence to Fact F-18", "backend/core/lock.go"],
-    ["you", "Resolved drift on ADR-012", "middleware updated"],
+    ["you", "Resolved drift on Verdict-012", "middleware updated"],
   ];
   return (
     <div class="mk-panel" role="img" aria-label="Unified change history">
@@ -96,7 +96,7 @@ export default function PolterwarePage() {
         points={["Board by stage and a Specs table of the same cards", "Every change carries a summary and a rationale"]}
         visual={<PolterwareAppMockup view="board" />} />
       <Feature index="1.3" eyebrow="TRUTH" title="Decisions with a lifecycle."
-        body="ADRs move between Proposed, Active, Challenged and Superseded. Principles apply to the whole project and stay pinned. Facts list the evidence behind them."
+        body="Verdicts move between Proposed, Active, Challenged and Superseded. Principles apply to the whole project and stay pinned. Facts list the evidence behind them."
         visual={<TruthPanel />} />
       <Feature index="1.4" eyebrow="ATLAS" title="A map of what you are building." reverse
         body="Systems, domains and components, with the Work cards that touch each one. Resources are components, not a separate inventory."

@@ -181,18 +181,10 @@ export function FilterPopover(props: FilterPopoverProps) {
         ref={(element) => {
           triggerRef = element;
         }}
-        variant="icon"
+        variant="texture"
         size={props.triggerLabel ? "sm" : "icon"}
-        class={[
-          "control-field control-field-sm !rounded-full",
-          props.triggerLabel ? "!px-3.5" : "",
-          props.active
-            ? "!border-[var(--color-border-subtle)] !bg-[var(--color-surface-selected)] !text-[var(--color-text-primary)]"
-            : "",
-          props.class ?? "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        selected={props.active}
+        class={props.class}
         aria-label={label()}
         aria-expanded={open()}
         title={props.title ?? label()}

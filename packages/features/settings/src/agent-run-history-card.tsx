@@ -3,7 +3,6 @@ import {
   Bot,
   DataTable,
   DetailPanel,
-  FilterChip,
   PageEmpty,
   Skeleton,
   StatusChip,
@@ -45,11 +44,9 @@ export function AgentRunHistoryCard(props: {
   changes: ProjectChangeRow[];
   selectedStepId: string;
   detail: AgentRunDetail | undefined;
-  actorFilter: ChangeActorFilter;
   busy: boolean;
   onSelect: (stepId: string, agentRunId: string) => void;
   onClear: () => void;
-  onActorFilter: (filter: ChangeActorFilter) => void;
 }) {
   const activeTarget = createDetailPanelSelector((state) => state.activeTarget);
 
@@ -84,17 +81,6 @@ export function AgentRunHistoryCard(props: {
 
   return (
     <div class="flex min-h-0 flex-1 flex-col">
-      <div class="flex flex-wrap items-center gap-2 px-3 py-2">
-        <FilterChip selected={props.actorFilter === "all"} onClick={() => props.onActorFilter("all")}>
-          All
-        </FilterChip>
-        <FilterChip selected={props.actorFilter === "human"} onClick={() => props.onActorFilter("human")}>
-          Human
-        </FilterChip>
-        <FilterChip selected={props.actorFilter === "agent"} onClick={() => props.onActorFilter("agent")}>
-          Agent
-        </FilterChip>
-      </div>
       <div class="min-h-0 flex-1 overflow-auto">
         <DataTable.Root rows={props.changes} getRowId={(change) => change.stepId}>
           <DataTable.Table aria-label="Unified change history">

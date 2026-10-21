@@ -25,6 +25,7 @@ html.commander-surface #root {
   overflow: hidden;
   outline: none;
   /* Full-bleed in frameless window — no outer float halo. */
+  background: var(--color-surface);
   box-shadow: none;
   border-radius: 0;
 }

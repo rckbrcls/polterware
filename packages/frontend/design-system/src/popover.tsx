@@ -93,7 +93,8 @@ export function Popover(props: PopoverProps) {
       onInteractOutside={(event) => {
         // Menus, selects and popovers opened from inside this popover are portalled
         // elsewhere; interacting with them is not an outside dismissal.
-        const target = event.target as Element | null;
+        // The event is dispatched on the layer node; the real target is on the original event.
+        const target = (event.detail?.originalEvent?.target ?? null) as Element | null;
         if (target?.closest?.('.pw-dropdown-positioner, [data-scope="menu"], [data-scope="select"], [data-scope="popover"], [data-scope="date-picker"]')) event.preventDefault();
       }}
       persistentElements={[

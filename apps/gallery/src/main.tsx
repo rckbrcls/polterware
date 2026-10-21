@@ -1,72 +1,121 @@
-import { For, createSignal, onCleanup, type JSX } from "solid-js";
+import { ErrorBoundary, For, Show, createMemo, createSignal, onCleanup, type JSX } from "solid-js";
 import { render } from "solid-js/web";
-import {
-  DesignSystemProvider, Checkbox, SegmentedControl, NumberStepper, Slider, DatePicker, parseDate,
-  TimePicker, ColorSwatchPicker, parseColor, IconPicker, PICKER_ICONS, TreeView, ProgressRing,
-  Heatmap, CalendarGrid, PageEmpty, EmptyIllustration, Button, StatusChip, DataTable, DetailPanel,
-  MarkdownEditor, IconTile, Kbd, Switch, Input, Textarea, Select, Field, FormStack, Card, Surface,
-  PageToolbar, FilterChip, Popover, Dialog, Tabs, Tooltip, type PickerIconName,
-} from "@polterware/frontend-design-system";
+import { Card, DesignSystemProvider, Input, LinkButton, Tabs } from "@polterware/frontend-design-system";
 import "@fontsource-variable/inter/opsz.css";
 import "./styles.css";
+import { GROUP_ORDER, pages, type DocPage } from "./docs-registry";
+import { CodeBlock } from "./code-block";
+import { PropsTable } from "./props-table";
+import { LegacyGallery } from "./legacy-gallery";
 
-function Entry(props: { title: string; children: JSX.Element }) {
-  return <section class="gallery__entry" aria-label={props.title}><h2>{props.title}</h2><div class="gallery__examples">{props.children}</div></section>;
+const LEGACY = "legacy";
+
+/** An empty slug is the home page. */
+function currentSlug() {
+  return window.location.hash.replace(/^#\/?/, "");
 }
-function Gallery() {
-  const [reduced, setReduced] = createSignal(false);
-  // The gallery toggle drives both CSS media rules and the shared JS preference helper.
-  const nativeMatchMedia = window.matchMedia.bind(window);
-  window.matchMedia = query => {
-    const result = nativeMatchMedia(query);
-    if (query === "(prefers-reduced-motion: reduce)") Object.defineProperty(result, "matches", { get: () => reduced() || nativeMatchMedia(query).matches });
-    return result;
-  };
-  onCleanup(() => { window.matchMedia = nativeMatchMedia; });
-  const [checked, setChecked] = createSignal(true);
-  const [segment, setSegment] = createSignal<string | null>("week");
-  const [number, setNumber] = createSignal("25");
-  const [volume, setVolume] = createSignal([40]);
-  const [time, setTime] = createSignal("09:30");
-  const [icon, setIcon] = createSignal<PickerIconName>("brain");
-  const [progress, setProgress] = createSignal(65);
-  const [note, setNote] = createSignal("## Note\n\nA small note with **Markdown**.");
-  const [detail, setDetail] = createSignal(false), [expanded, setExpanded] = createSignal(false);
-  const [dialog, setDialog] = createSignal(false), [popover, setPopover] = createSignal(false);
-  const [tab, setTab] = createSignal("first");
-  let popoverAnchor: HTMLButtonElement | undefined;
-  const options = [{ value: "day", label: "Day" }, { value: "week", label: "Week" }, { value: "month", label: "Month" }];
-  const rows = [{ id: "one", title: "Plan the day", state: "planned" }, { id: "two", title: "Take a walk", state: "armed" }];
-  const days = Array.from({ length: 182 }, (_, index) => ({ date: new Date(Date.UTC(2026, 0, 1 + index)).toISOString().slice(0, 10), value: index % 17 }));
-  return <DesignSystemProvider storagePrefix="gallery" expandDetail={() => setExpanded(true)}>
-    <main class="gallery" data-reduced-motion={reduced() ? "" : undefined}>
-      <style>{reduced() ? "*, *::before, *::after { transition-duration: 0s !important; animation-duration: 0s !important; }" : ""}</style>
-      <header class="gallery__header"><div><h1>Design system</h1><p>Shared Polterware and Polterware Notes primitives · preview data</p></div><Switch checked={reduced()} onCheckedChange={setReduced} aria-label="Reduced motion" /></header>
-      <Entry title="Checkbox"><Checkbox label="Controlled" checked={checked()} onCheckedChange={d => setChecked(d.checked === true)} /><Checkbox label="Round" shape="round" defaultChecked /><Checkbox label="Indeterminate" checked="indeterminate" /><Checkbox label="Disabled" disabled /></Entry>
-      <Entry title="SegmentedControl"><SegmentedControl aria-label="Calendar view" options={options} value={segment()} onValueChange={d => setSegment(d.value)} /><SegmentedControl aria-label="Disabled view" options={options} defaultValue="day" disabled /></Entry>
-      <Entry title="NumberStepper"><NumberStepper label="Minutes" value={number()} min={1} max={60} onValueChange={d => setNumber(d.value)} /><NumberStepper label="Disabled" defaultValue="5" disabled /></Entry>
-      <Entry title="Slider"><div style={{ width: "240px" }}><Slider label="Volume" value={volume()} onValueChange={d => setVolume(d.value)} /></div><div style={{ width: "240px" }}><Slider label="Range" defaultValue={[20, 80]} disabled /></div></Entry>
-      <Entry title="DatePicker"><DatePicker label="Due date" defaultValue={[parseDate("2026-10-04")]} /><DatePicker label="Disabled date" disabled /></Entry>
-      <Entry title="TimePicker"><TimePicker label="Reminder" value={time()} onValueChange={setTime} /><TimePicker label="Disabled" disabled /></Entry>
-      <Entry title="ColorSwatchPicker"><ColorSwatchPicker label="Space color" defaultValue={parseColor("#7EA8F0")} swatches={[{ value: "#7EA8F0", label: "Blue" }, { value: "#6ED9A8", label: "Green" }, { value: "#FFB84D", label: "Amber" }]} /></Entry>
-      <Entry title="IconPicker"><IconPicker label="Space icon" value={icon()} onValueChange={setIcon} /><For each={Object.entries(PICKER_ICONS)}>{([name, Icon]) => <span title={name}><Icon size={16} /></span>}</For></Entry>
-      <Entry title="TreeView"><TreeView label="Spaces" nodes={[{ id: "work", label: "Work", children: [{ id: "ideas", label: "Ideas" }] }, { id: "personal", label: "Personal" }]} defaultExpandedValue={["work"]} /></Entry>
-      <Entry title="ProgressRing"><ProgressRing label="Focus session" value={progress()} /><Button variant="secondary" onClick={() => setProgress(value => (value + 25) % 101)}>Advance</Button><ProgressRing label="Complete" value={100} /></Entry>
-      <Entry title="Heatmap"><Heatmap label="Contribution days" days={days} /></Entry>
-      <Entry title="CalendarGrid"><For each={["day", "week", "month"] as const}>{view => <div class="gallery__wide"><CalendarGrid.Root view={view} label={`${view} calendar`}><CalendarGrid.Days><For each={Array.from({ length: view === "day" ? 1 : 7 }, (_, index) => index)}>{day => <CalendarGrid.Day label={`October ${day + 4}`} today={day === 0}><CalendarGrid.Header>Oct {day + 4}</CalendarGrid.Header><CalendarGrid.AllDay><CalendarGrid.Occurrence>Read a chapter</CalendarGrid.Occurrence></CalendarGrid.AllDay>{view === "month" ? <CalendarGrid.Overflow count={3} /> : <CalendarGrid.HourRow label="09:00"><CalendarGrid.Occurrence overdue>Morning walk</CalendarGrid.Occurrence></CalendarGrid.HourRow>}</CalendarGrid.Day>}</For></CalendarGrid.Days></CalendarGrid.Root></div>}</For></Entry>
-      <Entry title="EmptyIllustration"><PageEmpty title="No notes yet" description="Capture an idea to get started." illustration={<EmptyIllustration><IconTile><span>✦</span></IconTile></EmptyIllustration>} /></Entry>
-      <Entry title="Button"><Button>Primary</Button><Button variant="secondary">Secondary</Button><Button variant="ghost">Ghost</Button><Button disabled>Disabled</Button></Entry>
-      <Entry title="StatusChip"><StatusChip tone="ok">Armed</StatusChip><StatusChip tone="syncing">Planned</StatusChip><StatusChip tone="danger">Permission denied</StatusChip></Entry>
-      <Entry title="IconTile"><IconTile brand="github"><span>G</span></IconTile><IconTile accent="var(--color-brand)"><span>S</span></IconTile></Entry>
-      <Entry title="Kbd"><Kbd>⌘J</Kbd><Kbd>⌘K</Kbd></Entry>
-      <Entry title="DataTable and DetailPanel"><div class="gallery__wide gallery__panel"><DetailPanel.Root open={detail()} expanded={expanded()} onOpenChange={setDetail} onExpandedChange={setExpanded}><DetailPanel.Collection><DataTable.Root rows={rows} getRowId={row => row.id}><DataTable.Table><DataTable.Header><DataTable.ColumnHeader id="title">Note</DataTable.ColumnHeader></DataTable.Header><DataTable.Body>{row => <DataTable.Row row={row} onActivate={() => setDetail(true)}><DataTable.Cell>{row.title}</DataTable.Cell></DataTable.Row>}</DataTable.Body></DataTable.Table></DataTable.Root></DetailPanel.Collection><DetailPanel.Content><DetailPanel.Header /><DetailPanel.Body><DetailPanel.Main><DetailPanel.Title title="Note details" /><p>Double-click a row to expand.</p></DetailPanel.Main></DetailPanel.Body></DetailPanel.Content></DetailPanel.Root></div></Entry>
-      <Entry title="MarkdownEditor"><div class="gallery__wide"><MarkdownEditor value={note()} onChange={setNote} /></div></Entry>
-      <Entry title="Form stack"><FormStack><Field label="Name"><Input placeholder="Name" /></Field><Field label="Description"><Input placeholder="Description" /></Field></FormStack></Entry>
-      <Entry title="Shared controls"><Field label="Title"><Input placeholder="Note title" /></Field><Textarea aria-label="Note" placeholder="Note" /><Select value="one" onChange={() => {}} options={[{ value: "one", label: "Option one" }]} /><Switch checked={checked()} onCheckedChange={setChecked} aria-label="Toggle" /><FilterChip>Pinned</FilterChip></Entry>
-      <Entry title="Shared surfaces"><Card>Card content</Card><Surface>Surface content</Surface><PageToolbar.Root><PageToolbar.Leading><Button variant="ghost">Toolbar action</Button></PageToolbar.Leading></PageToolbar.Root></Entry>
-      <Entry title="Shared overlays"><Button ref={popoverAnchor} onClick={() => setPopover(true)}>Open popover</Button><Popover open={popover()} onClose={() => setPopover(false)} anchorRef={() => popoverAnchor} title="Preview"><div class="pw-picker__body">Popover content</div></Popover><Button onClick={() => setDialog(true)}>Open dialog</Button><Dialog open={dialog()} onClose={() => setDialog(false)} title="Preview">Dialog content</Dialog><Tooltip.Root><Tooltip.Trigger>Tooltip</Tooltip.Trigger><Tooltip.Content>Helpful text</Tooltip.Content></Tooltip.Root></Entry>
-      <Entry title="Tabs"><Tabs items={[{ id: "first", label: "First" }, { id: "second", label: "Second" }]} value={tab()} onChange={setTab} /></Entry>
-    </main>
+
+function PreviewTile(props: { page: DocPage }) {
+  const first = () => props.page.entry.examples[0];
+  return <a class="docs-tile" href={`#/${props.page.slug}`} aria-label={props.page.entry.name}>
+    <Card>
+      <div class="docs-tile__preview" ref={element => { element.inert = true; }}>
+        <ErrorBoundary fallback={<span class="docs-muted">Preview unavailable</span>}>{first()?.render()}</ErrorBoundary>
+      </div>
+      <strong>{props.page.entry.name}</strong>
+      <p class="docs-muted docs-tile__summary">{props.page.entry.summary}</p>
+    </Card>
+  </a>;
+}
+
+function HomePage(props: { pages: DocPage[] }) {
+  const exportCount = () => props.pages.reduce((total, page) => total + page.entry.exports.length, 0);
+  return <div class="docs-page docs-home">
+    <header>
+      <h1>Design system</h1>
+      <p class="docs-summary">{props.pages.length} component pages covering {exportCount()} exports, shared by Polterware, Polterware Notes and Polterware Vitals. Pick a component to see its examples, code and props.</p>
+    </header>
+    <For each={GROUP_ORDER}>{group => <Show when={props.pages.some(page => page.entry.group === group)}>
+      <section class="docs-home__group" aria-label={group}>
+        <h2>{group} <span class="docs-muted">{props.pages.filter(page => page.entry.group === group).length}</span></h2>
+        <div class="docs-tiles"><For each={props.pages.filter(page => page.entry.group === group)}>{page => <PreviewTile page={page} />}</For></div>
+      </section>
+    </Show>}</For>
+    <Show when={!props.pages.length}><p class="docs-muted">No component matches this search.</p></Show>
+  </div>;
+}
+
+function ExampleBlock(props: { page: DocPage; example: DocPage["entry"]["examples"][number] }) {
+  const [view, setView] = createSignal("preview");
+  return <section class="docs-example" aria-label={props.example.title}>
+    <header>
+      <h3>{props.example.title}</h3>
+      <Show when={props.example.description}><p class="docs-muted">{props.example.description}</p></Show>
+    </header>
+    <Tabs aria-label={`${props.example.title} view`} items={[{ id: "preview", label: "Preview" }, { id: "code", label: "Code" }]} value={view()} onChange={setView} />
+    <Show when={view() === "preview"} fallback={<CodeBlock code={props.page.sources[props.example.id] ?? ""} />}>
+      <div class="docs-preview" classList={{ "docs-preview--wide": props.example.wide }}>{props.example.render()}</div>
+    </Show>
+  </section>;
+}
+
+function ComponentPage(props: { page: DocPage }) {
+  return <article class="docs-page">
+    <header>
+      <p class="docs-muted">{props.page.entry.group}</p>
+      <h1>{props.page.entry.name}</h1>
+      <p class="docs-summary">{props.page.entry.summary}</p>
+    </header>
+    <For each={props.page.entry.examples}>{example => <ExampleBlock page={props.page} example={example} />}</For>
+    <section class="docs-api" aria-label="API reference">
+      <h2>API reference</h2>
+      <Show when={props.page.props.length} fallback={<p class="docs-muted">Props are generated by <code class="docs-code-inline">tooling/docs-props.mjs</code> and are not available yet.</p>}>
+        <For each={props.page.props}>{item => <PropsTable exportName={item.exportName} doc={item.doc} />}</For>
+      </Show>
+    </section>
+  </article>;
+}
+
+function Docs() {
+  const [slug, setSlug] = createSignal(currentSlug());
+  const onHash = () => setSlug(currentSlug());
+  window.addEventListener("hashchange", onHash);
+  onCleanup(() => window.removeEventListener("hashchange", onHash));
+  const [query, setQuery] = createSignal("");
+  const visible = createMemo(() => {
+    const needle = query().trim().toLowerCase();
+    return pages.filter(page => !needle || page.entry.name.toLowerCase().includes(needle) || page.entry.exports.some(name => name.toLowerCase().includes(needle)));
+  });
+  const active = createMemo(() => pages.find(page => page.slug === slug()));
+  const link = (href: string, label: JSX.Element, selected: () => boolean) =>
+    <LinkButton variant="ghost" size="sm" href={href} class="docs-nav__link" aria-current={selected() ? "page" : undefined}>{label}</LinkButton>;
+  return <DesignSystemProvider storagePrefix="gallery">
+    <div class="docs">
+      <aside class="docs-sidebar">
+        <div class="docs-sidebar__head"><strong>Design system</strong></div>
+        <Input aria-label="Search components" placeholder="Search components" value={query()} onInput={event => setQuery(event.currentTarget.value)} />
+        <nav class="docs-nav" aria-label="Components">
+          <div class="docs-nav__group">{link("#/", "Overview", () => slug() === "")}</div>
+          <For each={GROUP_ORDER}>{group => <Show when={visible().some(page => page.entry.group === group)}>
+            <div class="docs-nav__group">
+              <span class="docs-muted">{group}</span>
+              <For each={visible().filter(page => page.entry.group === group)}>{page => link(`#/${page.slug}`, page.entry.name, () => slug() === page.slug)}</For>
+            </div>
+          </Show>}</For>
+          <div class="docs-nav__group">
+            <span class="docs-muted">Reference</span>
+            {link(`#/${LEGACY}`, "Legacy overview", () => slug() === LEGACY)}
+          </div>
+        </nav>
+      </aside>
+      <main class="docs-main">
+        <Show when={slug() !== LEGACY} fallback={<LegacyGallery />}>
+          <Show when={slug() !== ""} fallback={<HomePage pages={visible()} />}>
+            <Show when={active()} fallback={<p class="docs-muted">No component matches this address.</p>}>{page => <ComponentPage page={page()} />}</Show>
+          </Show>
+        </Show>
+      </main>
+    </div>
   </DesignSystemProvider>;
 }
-render(() => <Gallery />, document.getElementById("root")!);
+render(() => <Docs />, document.getElementById("root")!);

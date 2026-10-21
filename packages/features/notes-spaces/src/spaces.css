@@ -47,9 +47,9 @@ ul[aria-label="Notes"] > li {
 }
 
 /* Space cards read as folders: a tab on the left, a back panel peeking out behind the body on the right.
-   Translucent border tokens never stack: the tab's opaque fill (plus a 1px strip on row 28, which the
-   concave curve alone leaves partly uncovered) hides the body's top border under the tab, so the tab
-   stroke alone draws the top line up to x=132 and the body border draws the rest. */
+   The tab is one opaque card-fill shape drawn over the body's top-left 5 rows (border + four inset rings),
+   with the same five edges as 1px strokes: rim, then the four card rings. They meet the body's edges at
+   y=33 on the left and tangentially at x=120.5 on the right, so the material runs on without a seam. */
 .notes-space-folder.card-panel {
   position: relative;
   display: flow-root;
@@ -63,14 +63,22 @@ ul[aria-label="Notes"] > li {
   z-index: 2;
   top: 0;
   left: 0;
+  overflow: visible;
   pointer-events: none;
 }
 
-.notes-space-folder__tab-fill { fill: var(--color-surface-hover); }
-.notes-space-folder__tab-line { stroke: var(--color-border-default); stroke-width: 1; }
+.notes-space-folder__tab-fill { fill: var(--card-fill-top); }
+.notes-space-folder__tab path:not(.notes-space-folder__tab-fill) { stroke-width: 1; }
+/* The body's 1px outer shadow ring, stopped on row 27 where the body's own ring takes over. */
+.notes-space-folder__tab-halo { stroke: var(--color-shadow-subtle); }
+.notes-space-folder__tab-rim { stroke: var(--edge-light-surface-rim); }
+.notes-space-folder__tab-ring--1 { stroke: var(--card-ring-dark-outer); }
+.notes-space-folder__tab-ring--2 { stroke: var(--card-ring-light); }
+.notes-space-folder__tab-ring--3 { stroke: var(--card-ring-dark-inner); }
+.notes-space-folder__tab-ring--4 { stroke: var(--card-ring-light-inner); }
 
-/* Back panel: darker, sits behind the body's rounded top-right corner and hands its right edge
-   to the body's right border where that corner ends. */
+/* Back panel: the same material one step darker. It fills the concave notch between the tab and the
+   body, and hands its right edge to the body's right border where that rounded corner ends. */
 .notes-space-folder::after {
   position: absolute;
   z-index: 0;
@@ -79,10 +87,11 @@ ul[aria-label="Notes"] > li {
   left: 70px;
   box-sizing: border-box;
   height: calc(16px + var(--radius-card));
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--edge-light-surface-rim);
   border-bottom: 0;
   border-radius: 16px 16px 0 0;
-  background: var(--color-surface);
+  background: var(--color-surface-subtle);
+  box-shadow: var(--card-rings);
   content: "";
 }
 
@@ -92,17 +101,20 @@ ul[aria-label="Notes"] > li {
   box-sizing: border-box;
   margin-top: 28px;
   block-size: 196px;
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--edge-light-surface-rim);
   border-radius: 0 var(--radius-card) var(--radius-card) var(--radius-card);
-  background: var(--color-surface-hover);
-  box-shadow: 0 1px 2px var(--color-shadow-subtle);
+  background: var(--card-fill);
+  box-shadow:
+    var(--card-rings),
+    0 20px 56px var(--color-shadow-float),
+    0 0 0 1px var(--color-shadow-subtle);
 }
 
 .notes-space-folder:has([data-drop-target="true"]) .notes-space-folder__body {
   border-color: var(--color-border-strong);
 }
 
-.notes-space-folder:has([data-drop-target="true"]) .notes-space-folder__tab-line {
+.notes-space-folder:has([data-drop-target="true"]) .notes-space-folder__tab-rim {
   stroke: var(--color-border-strong);
 }
 

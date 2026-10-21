@@ -4,7 +4,7 @@ import {
   animateCollapse,
   Button,
   Check,
-  ChevronRight,
+  DisclosureButton,
   CollapseIcon,
   DetailPanel,
   IconTile,
@@ -373,19 +373,12 @@ function TreeRow(props: {
   return (
     <div class="atlas-tree-row" data-selected={props.selected ? "true" : undefined}>
       <Show when={props.item.hasChildren} fallback={<span class="atlas-tree-chevron__spacer" aria-hidden="true" />}>
-        <button
-          type="button"
-          class="atlas-tree-chevron"
+        <DisclosureButton
+          size="compact"
+          expanded={props.expanded}
           aria-label={`${props.expanded ? "Collapse" : "Expand"} ${title()}`}
           onClick={props.onToggle}
-        >
-          <ChevronRight
-            size={14}
-            aria-hidden
-            class="transition-transform duration-[var(--duration-control)] ease-[var(--ease-enter)] motion-reduce:transition-none"
-            classList={{ "rotate-90": props.expanded }}
-          />
-        </button>
+        />
       </Show>
       <button
         type="button"
@@ -418,7 +411,7 @@ export function AtlasStatusMark(props: { status: AtlasCanvasNode["status"]; note
       <Tooltip.Trigger
         asChild={(triggerProps) => (
           <span {...triggerProps({ class: "atlas-tree-row__status", role: "img", "aria-label": label() })}>
-            <IconTile size={28} tone={tone()}>
+            <IconTile size={28} tone={tone()} seed={`status-${props.status}`}>
               {(() => {
                 const Icon = STATUS_MARK[props.status].icon;
                 return <Icon size={14} aria-hidden />;
@@ -438,7 +431,7 @@ function MigrationMark(props: { label: string }) {
       <Tooltip.Trigger
         asChild={(triggerProps) => (
           <span {...triggerProps({ class: "atlas-tree-row__status", role: "img", "aria-label": props.label })}>
-            <IconTile size={28} tone="knowledge">
+            <IconTile size={28} tone="knowledge" seed="status-refresh">
               <RefreshCw size={14} aria-hidden />
             </IconTile>
           </span>

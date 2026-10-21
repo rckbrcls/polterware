@@ -155,6 +155,8 @@ export function createMainWindow(options: CreateMainWindowOptions = {}): Browser
   if (isDarwin) {
     windowOptions.transparent = true;
     windowOptions.visualEffectState = "active";
+    // Centers the 12px buttons on the 44px title bar, level with the title text.
+    windowOptions.trafficLightPosition = { x: 14, y: 15 };
     if (useVibrancy) {
       windowOptions.vibrancy = "under-window";
     }

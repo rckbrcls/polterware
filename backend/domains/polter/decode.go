@@ -50,9 +50,9 @@ type Document struct {
 	Decisions []DecisionNode
 }
 
-// DecisionNode is one `### ref: Title` block: an ADR lifecycle change. Ref is
-// `new` for a proposal, otherwise an ADR id, number, or title. The body after
-// the metadata is the ADR text.
+// DecisionNode is one `### ref: Title` block: an Verdict lifecycle change. Ref is
+// `new` for a proposal, otherwise an Verdict id, number, or title. The body after
+// the metadata is the Verdict text.
 type DecisionNode struct {
 	Line    int
 	Ref     string
@@ -76,7 +76,7 @@ func (n DecisionNode) MetaValue(key string) (string, bool) {
 // DecisionMetaKeys are the decision metadata keys. supersedes: names the
 // older decision the block's decision replaces; trigger: is the review
 // trigger; reason: explains a challenge or a supersede.
-var DecisionMetaKeys = []string{"status", "supersedes", "trigger", "reason"}
+var DecisionMetaKeys = []string{"status", "supersedes", "trigger", "reason", "scope"}
 
 // DecisionNewRef is the ref that proposes a new decision.
 const DecisionNewRef = "new"
@@ -335,7 +335,7 @@ func (d *decoder) line(n int, raw string) {
 		return
 	case strings.HasPrefix(trimmed, "#"):
 		d.endHandoff()
-		d.errorf(n, `unsupported heading: cards use "## slug: title", decisions "### ADR-0007: title"`)
+		d.errorf(n, `unsupported heading: cards use "## slug: title", decisions "### Verdict-0007: title"`)
 		return
 	}
 
@@ -912,7 +912,7 @@ func (d *decoder) decisionHeading(n int, body string) {
 		title = strings.TrimSpace(body[idx+1:])
 	}
 	if ref == "" {
-		d.errorf(n, `decision needs a reference: write "### ADR-0007: title" or "### new: title"`)
+		d.errorf(n, `decision needs a reference: write "### Verdict-0007: title" or "### new: title"`)
 	}
 	key := strings.ToLower(ref)
 	if prev, dup := d.decRefs[key]; dup && key != DecisionNewRef {
@@ -958,7 +958,7 @@ func (d *decoder) decisionMeta(n int, line string) {
 			if !decision.ValidState(value) {
 				d.errorf(n, "unknown decision status %q: use %s", value, strings.Join(decision.States, "|"))
 			}
-		case "supersedes", "trigger", "reason":
+		case "supersedes", "trigger", "reason", "scope":
 		default:
 			d.errorf(n, "unknown key %q: use %s", key, strings.Join(DecisionMetaKeys, ", "))
 			continue

@@ -81,10 +81,11 @@ export const IPC_CHANNELS = {
     applyPolter: "core:apply-polter",
     listInbox: "core:list-inbox",
     resolveInboxItem: "core:resolve-inbox-item",
+    setScope: "core:set-scope",
     reviewFeature: "core:review-feature",
     createFeature: "core:create-feature",
     advanceFeature: "core:advance-feature",
-    listPpmEntities: "core:list-ppm-entities",
+    listCanonEntities: "core:list-canon-entities",
     syncProjectModel: "core:sync-project-model",
     importProjectSources: "core:import-project-sources",
     listFacts: "core:list-facts",
@@ -131,7 +132,7 @@ export const IPC_EVENTS = {
   },
 } as const;
 
-/** A coalesced store change from the core (ADR 0007). */
+/** A coalesced store change from the core (Verdict 0007). */
 export type CoreChangeEvent = {
   seq: number;
   projectIds: string[];

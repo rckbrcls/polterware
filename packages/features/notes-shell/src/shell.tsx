@@ -1,9 +1,9 @@
 import { createEffect, createMemo, createResource, createSignal, ErrorBoundary, For, on, onCleanup, onMount, Show, type Component } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import {
-  A11yDialog, ResizableSidebar, Activity, Badge, ChevronLeft, ChevronRight, Bell, Bot, Button, CalendarClock, Cog, Cpu, Database, Hammer, Input, Layers, Clock, DesignSystemProvider,
+  ResizableSidebar, Activity, Badge, ChevronLeft, ChevronRight, Bell, Bot, Button, CalendarClock, Cog, Cpu, Database, Hammer, Layers, Clock, DesignSystemProvider,
   Dialog, IconTile, Folder, HelpCircle, Inbox, MapPin, MenuItem, MenuList, PageEmpty, PageError,
-  PageHeader, PageLoading, PageOffline, Popover, Search, Settings, StatusChip, X, ToastRegion, TreeView, pushToast, type TreeViewNode,
+  PageHeader, PageLoading, PageOffline, Popover, Search, Settings, SettingsDialog, StatusChip, ToastRegion, TreeView, pushToast, type TreeViewNode,
 } from "@polterware/frontend-design-system";
 import { MainFrame, MainSurfaceFrame, ShellRoot, SidebarItem } from "@polterware/frontend-shell";
 import type { MessageShape } from "@bufbuild/protobuf";
@@ -68,18 +68,14 @@ export function NotesShell(props: { features: readonly NotesFeature[]; bridge?: 
   const items = createMemo(() => sidebarItems(props.features));
   const settingsPanels = createMemo(() => props.features.flatMap(feature => feature.settingsPanels ?? []));
   const settingsGroups = createMemo(() => [...new Set(settingsPanels().map(panel => panel.group))]);
-  const [settingsQuery, setSettingsQuery] = createSignal("");
-  const settingsSearching = () => settingsQuery().trim().length > 0;
-  const settingsResults = createMemo(() => {
-    const terms = settingsQuery().trim().toLowerCase().split(/\s+/).filter(Boolean);
-    if (terms.length === 0) return [];
-    return settingsPanels().filter(panel => terms.every(term => `${panel.label} ${panel.group} ${panel.id}`.toLowerCase().includes(term)));
-  });
   const settingsIcons: Record<string, Component<{ size?: number; "aria-hidden"?: boolean }>> = {
     general: Cog, notifications: Bell, focus: Clock, calendar: CalendarClock, "settings-map": MapPin, "map-tiles": MapPin,
     search: Search, "agents-access": Bot, "agents-activity": Activity, data: Database, shortcuts: Layers, advanced: Hammer,
   };
   const activeSettings = createMemo(() => settingsPanels().find(panel => panel.id === settingsPanel()) ?? settingsPanels()[0]);
+  const settingsNav = createMemo(() => settingsGroups().flatMap(group => settingsPanels()
+    .filter(panel => panel.group === group)
+    .map(panel => ({ id: panel.id, label: panel.label, group, icon: settingsIcons[panel.id] ?? Cog }))));
   const detailSections = createMemo(() => props.features.flatMap(feature => feature.detailSections ?? []).sort((a, b) => a.order - b.order));
   const noteDetail = createMemo(() => props.features.find(feature => feature.noteDetail)?.noteDetail);
   const noteAttachments = createMemo(() => props.features.find(feature => feature.noteAttachments)?.noteAttachments);
@@ -106,6 +102,7 @@ export function NotesShell(props: { features: readonly NotesFeature[]; bridge?: 
     if (restoredFocus?.isConnected) restoredFocus.focus();
   }
   function openNote(id: string) { navigate(`/note/${encodeURIComponent(id)}`); }
+  function leaveNote() { if (history().index > 0) moveHistory(-1); else navigate(DEFAULT_PATH); }
   /** Notes created through `newNote` that nobody has written to yet; discarded when the page is left. */
   const fresh = new Set<string>();
   async function newNote(options: { spaceId?: string } = {}) {
@@ -133,7 +130,7 @@ export function NotesShell(props: { features: readonly NotesFeature[]; bridge?: 
   function isFreshNote(id: string) { return fresh.has(id); }
   async function cancelNewNote(id: string) {
     if (!fresh.delete(id) || !props.bridge) return;
-    if (history().index > 0) moveHistory(-1); else navigate(DEFAULT_PATH);
+    leaveNote();
     try {
       const { note } = await props.bridge.notes.get({ id, include: { content: true } });
       if (note) await props.bridge.notes.delete({ id, expectedRev: String(note.rev ?? 0) });
@@ -180,7 +177,7 @@ export function NotesShell(props: { features: readonly NotesFeature[]; bridge?: 
   ]);
   const commandSources = createMemo(() => props.features.flatMap(feature => feature.commandSources ?? []));
   const context = {
-    features: props.features, path, params, searchParams, navigate, selectedNoteId: openNoteId, openNote, newNote, isFreshNote, cancelNewNote, propertiesOpen, setPropertiesOpen, expanded, setExpanded, noteAttachments, closeDetail, detailSections, settingsPanels, deepLink,
+    features: props.features, path, params, searchParams, navigate, selectedNoteId: openNoteId, openNote, leaveNote, newNote, isFreshNote, cancelNewNote, propertiesOpen, setPropertiesOpen, expanded, setExpanded, noteAttachments, closeDetail, detailSections, settingsPanels, deepLink,
     registerCollectionShortcuts: (handler: (action: NoteShortcut) => void) => {
       collectionShortcuts = handler;
       return () => { if (collectionShortcuts === handler) collectionShortcuts = undefined; };
@@ -269,7 +266,7 @@ export function NotesShell(props: { features: readonly NotesFeature[]; bridge?: 
     <DesignSystemProvider storagePrefix="pwnotes" expandDetail={() => { if (selectedNoteId()) setExpanded(true); }}
       matchesShortcut={(id, event) => id === "shell.toggle_detail" && shellShortcut(event, false) === "close-detail"}
       createShortcutLabel={id => () => id === "shell.toggle_detail" ? "⌘J" : ""}>
-      <ShellRoot glass={false} class="notes-shell">
+      <ShellRoot class="notes-shell">
         <div class="notes-workspace">
           <ResizableSidebar class="pw-shell-sidebar" defaultWidth={232} minWidth={184} maxWidth={320} collapseThreshold={112}
             storageKey="pwnotes.shell.sidebar.sizes" ariaLabel="Sidebar" sidebar={<div class="notes-sidebar">
@@ -311,7 +308,7 @@ export function NotesShell(props: { features: readonly NotesFeature[]; bridge?: 
               </Popover>
             </div>
           </div>}>
-          <MainFrame as="main" glass={false} class="notes-main" ref={main} tabIndex={-1} aria-label={title()}>
+          <MainFrame as="main" class="notes-main" ref={main} tabIndex={-1} aria-label={title()}>
             <MainSurfaceFrame as="div">
               <Show when={core.state() !== "loading"} fallback={<PageLoading label="Starting Polterware Notes…" />}>
                 <Show when={core.state() === "live"} fallback={<PageOffline title="Core offline" message="Polterware Notes cannot reach the local core. Retry to reconnect." onRetry={() => void core.refresh()} />}>
@@ -331,60 +328,18 @@ export function NotesShell(props: { features: readonly NotesFeature[]; bridge?: 
       </ShellRoot>
       <ToastRegion />
       <Commander open={palette() !== null} mode={palette() ?? "commands"} bridge={props.bridge} commands={commands()} commandSources={commandSources()} live={core.state() === "live"} onClose={() => setPalette(null)} onNote={openNote} />
-      <A11yDialog open={settingsOpen()} title="Settings" size="xl" chrome="flush" bodyClass="p-0" showCloseButton={false} autoFocusField={false}
-        class="!rounded-[var(--radius-dialog)] !bg-[var(--color-app-background)]" onClose={() => setSettingsOpen(false)}>
-        <div class="notes-settings-layout">
-          <nav aria-label="Settings panels" class="flex flex-col gap-1 p-2">
-            <Input size="sm" type="search" class="mb-2 !rounded-full" placeholder="Search settings" aria-label="Search settings"
-              autocomplete="off" spellcheck={false} value={settingsQuery()}
-              onInput={event => setSettingsQuery(event.currentTarget.value)}
-              onKeyDown={event => { if (event.key === "Escape" && settingsQuery()) { event.preventDefault(); event.stopPropagation(); setSettingsQuery(""); } }} />
-            <For each={settingsGroups()}>{(group, index) => <>
-              <p class="m-0 px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]"
-                classList={{ "mt-4": index() > 0, "mt-1": index() === 0 }}>{group}</p>
-              <For each={settingsPanels().filter(panel => panel.group === group)}>{panel => {
-                const active = () => !settingsSearching() && panel.id === activeSettings()?.id;
-                const Icon = settingsIcons[panel.id] ?? Cog;
-                return <button type="button" aria-current={active() ? "page" : undefined}
-                  class="flex h-8 w-full cursor-pointer items-center gap-2 rounded-[var(--radius-control)] border-0 px-2.5 text-left text-[12.5px]"
-                  classList={{
-                    "bg-[var(--color-surface-selected)] text-[var(--color-text-primary)]": active(),
-                    "bg-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]": !active(),
-                  }}
-                  onClick={() => { setSettingsQuery(""); setSettingsPanel(panel.id); }}><Icon size={14} aria-hidden />{panel.label}</button>;
-              }}</For>
-            </>}</For>
-          </nav>
-          <section aria-label="Selected settings panel" class="surface-panel relative">
-            <button type="button" aria-label="Close settings" onClick={() => setSettingsOpen(false)}
-              class="absolute top-5 right-5 z-10 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]">
-              <X size={16} aria-hidden />
-            </button>
-            <div class="notes-settings-content text-[13px] text-[var(--color-text-secondary)]">
-              <h2 class="m-0 mb-6 pr-10 text-[16px] font-semibold text-[var(--color-text-primary)]">{settingsSearching() ? "Search results" : activeSettings()?.label}</h2>
-              <Show when={settingsSearching()}>
-                <Show when={settingsResults().length > 0} fallback={<p class="m-0 px-1 text-[12.5px] text-[var(--color-text-muted)]">No settings match “{settingsQuery().trim()}”.</p>}>
-                  <ul class="m-0 flex list-none flex-col gap-1 p-0">
-                    <For each={settingsResults()}>{panel => <li>
-                      <button type="button" onClick={() => { setSettingsQuery(""); setSettingsPanel(panel.id); }}
-                        class="flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-[var(--radius-control)] border-0 bg-transparent px-2.5 py-2 text-left hover:bg-[var(--color-surface-hover)]">
-                        <span class="text-[12.5px] text-[var(--color-text-primary)]">{panel.label}</span>
-                        <span class="text-[11.5px] text-[var(--color-text-muted)]">{panel.group}</span>
-                      </button></li>}</For>
-                  </ul>
-                </Show>
-              </Show>
-              <Show when={!settingsSearching()}><Show when={activeSettings()} fallback={<PageEmpty title="Settings unavailable" description="Settings panels have not been registered yet." />}>
-                {panel => <Show keyed when={panel().id}>{(_id) => <ErrorBoundary fallback={boundary}><Dynamic component={panel().component} /></ErrorBoundary>}</Show>}
-              </Show></Show>
-            </div>
-          </section>
+      <SettingsDialog open={settingsOpen()} onClose={() => setSettingsOpen(false)}
+        items={settingsNav()} active={activeSettings()?.id ?? ""} onSelect={setSettingsPanel}>
+        <div class="notes-settings-content text-[13px] text-[var(--color-text-secondary)]">
+          <Show when={activeSettings()} fallback={<PageEmpty title="Settings unavailable" description="Settings panels have not been registered yet." />}>
+            {panel => <Show keyed when={panel().id}>{(_id) => <ErrorBoundary fallback={boundary}><Dynamic component={panel().component} /></ErrorBoundary>}</Show>}
+          </Show>
         </div>
-      </A11yDialog>
+      </SettingsDialog>
       <Dialog open={onboardingOpen()} title={["Welcome to Polterware Notes", "Notifications", "Connect an agent"][onboardingStep()]!} onClose={finishOnboarding}
         footer={<><Button variant="ghost" onClick={finishOnboarding}>Skip onboarding</Button><Show when={onboardingStep() > 0}><Button onClick={() => setOnboardingStep(step => step - 1)}>Back</Button></Show>
           <Button onClick={() => onboardingStep() === 2 ? finishOnboarding() : setOnboardingStep(step => step + 1)}>{onboardingStep() === 2 ? "Get started" : "Continue"}</Button></>}>
-        <Show when={onboardingStep() === 0}><IconTile><Inbox size={24} /></IconTile><p>Keep notes, plans, and Spaces together on your Mac. Your data stays in the local core.</p></Show>
+        <Show when={onboardingStep() === 0}><IconTile seed="onboarding"><Inbox size={24} /></IconTile><p>Keep notes, plans, and Spaces together on your Mac. Your data stays in the local core.</p></Show>
         <Show when={onboardingStep() === 1}><p>macOS delivers armed reminders even after Polterware Notes closes. Reminders are refreshed when Polterware Notes runs.</p>
           <StatusChip label={reminderLabel(core.status())} />
           <Show when={canRequestNotifications()} fallback={<p>Notification authorization is unavailable in this build. No reminder is armed by this step.</p>}>

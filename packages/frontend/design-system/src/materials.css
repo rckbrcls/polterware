@@ -11,6 +11,61 @@
   --material-fade-edge-top: linear-gradient(to top, var(--color-surface) 0%, var(--color-surface) 48%, color-mix(in srgb, var(--color-surface) 45%, transparent) 68%, color-mix(in srgb, var(--color-surface) 18%, transparent) 86%, transparent 100%);
   --material-fade-edge-toolbar-trail: linear-gradient(to bottom, var(--color-surface) 0%, color-mix(in srgb, var(--color-surface) 52%, transparent) 30%, color-mix(in srgb, var(--color-surface) 18%, transparent) 65%, transparent 100%);
   --material-fade-edge-top-canvas: linear-gradient(to right, var(--color-surface), transparent 40px), linear-gradient(to left, var(--color-surface), transparent 40px), linear-gradient(to top, var(--color-surface), transparent 52px);
+  /* Card rings: opaque alternating dark/light hairlines stepped inward from the rim (Card texture). */
+  --card-ring-dark-outer: #1d1d1d;
+  --card-ring-light: #323232;
+  --card-ring-dark-inner: #191919;
+  --card-ring-light-inner: #2e2e2e;
+  --field-height-sm: 32px;
+  --field-height-md: 36px;
+  /* Input wells: lighter than the app background so fields read inside cards, popovers and dialogs. */
+  --color-field-background: #1f1f1f;
+  --color-field-background-hover: #252525;
+  --field-frame: #141414;
+  --field-fill-top: #1b1b1b;
+  --field-fill-bottom: #292929;
+  --field-fill-hover-top: #222222;
+  --field-fill-hover-bottom: #303030;
+  --field-rings: inset 0 0 0 1px #383838;
+  /* Texture tones for chips and badges: frame, lit rim, gradient face, ink. Opaque. */
+  --tone-neutral-frame: #141414;
+  --tone-neutral-rim: #4c4c4c;
+  --tone-neutral-top: #262626;
+  --tone-neutral-bottom: #3b3b3b;
+  --tone-neutral-ink: var(--color-text-secondary);
+  --tone-brand-frame: #1a1a1a;
+  --tone-brand-rim: #ffffff;
+  --tone-brand-top: #e5e5e5;
+  --tone-brand-bottom: #fafafa;
+  --tone-brand-ink: #333333;
+  --tone-success-frame: #14301d;
+  --tone-success-rim: #6ee7a0;
+  --tone-success-top: #2f7a4a;
+  --tone-success-bottom: #3a9a5c;
+  --tone-success-ink: #effff4;
+  --tone-warn-frame: #5e3f0e;
+  --tone-warn-rim: #fcd34d;
+  --tone-warn-top: #a8741a;
+  --tone-warn-bottom: #c28a22;
+  --tone-warn-ink: #fff8e6;
+  --tone-danger-frame: #5e2323;
+  --tone-danger-rim: #f87171;
+  --tone-danger-top: #a64545;
+  --tone-danger-bottom: #b83c3c;
+  --tone-danger-ink: #fff1f1;
+  --tone-info-frame: #1c3560;
+  --tone-info-rim: #93c5fd;
+  --tone-info-top: #2f5fa8;
+  --tone-info-bottom: #3b74c4;
+  --tone-info-ink: #eef5ff;
+  --card-fill-top: var(--color-surface-raised);
+  --card-fill-bottom: var(--color-surface-subtle);
+  --card-fill: linear-gradient(to bottom, var(--card-fill-top), var(--card-fill-bottom));
+  --card-rings:
+    inset 0 0 0 1px var(--card-ring-dark-outer),
+    inset 0 0 0 2px var(--card-ring-light),
+    inset 0 0 0 3px var(--card-ring-dark-inner),
+    inset 0 0 0 4px var(--card-ring-light-inner);
 }
 
 /**
@@ -105,10 +160,10 @@
  * = fill + radius + tokenized edge-light surface border.
  */
 .surface-panel {
-  border: 1px solid var(--edge-light-surface-rim);
-  border-top-color: var(--edge-light-surface-highlight);
+  border: 1px solid var(--field-frame);
   border-radius: var(--radius-surface);
   background: var(--color-surface);
+  box-shadow: var(--field-rings);
 }
 
 /**
@@ -119,8 +174,9 @@
   border: 1px solid var(--edge-light-surface-rim);
   border-top-color: var(--edge-light-surface-highlight);
   border-radius: var(--radius-surface);
-  background: var(--color-surface);
+  background: var(--card-fill);
   box-shadow:
+    var(--card-rings),
     0 20px 56px var(--color-shadow-float),
     0 0 0 1px var(--color-shadow-subtle);
 }
@@ -132,8 +188,8 @@
   border: 1px solid var(--edge-light-field-rim);
   border-top-color: var(--edge-light-field-highlight);
   border-radius: var(--radius-control);
-  /* Inset well: darker than the card it sits in, like the OpenCode code/input boxes. */
-  background: var(--color-app-background);
+  /* Inset well, a step darker than the card it sits in. */
+  background: var(--color-field-background);
   color: var(--color-text-primary);
   transition:
     background var(--duration-control) var(--ease-standard),
@@ -151,7 +207,7 @@
 }
 
 .control-field:hover:not(:disabled):not([aria-disabled="true"]) {
-  background: var(--color-surface);
+  background: var(--color-field-background-hover);
 }
 
 .control-field:disabled,
@@ -175,6 +231,25 @@
   line-height: 1.3;
 }
 
+/* Inputs and selects (marked .pw-field-control) are taller than the buttons that share the chrome. */
+/* Same frame and gradient face as the texture button; focus swaps the frame for the primary colour. */
+.pw-field-control {
+  border: 1px solid var(--field-frame);
+  border-radius: 12px;
+  background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
+  box-shadow: var(--field-rings);
+}
+.pw-field-control:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: linear-gradient(to bottom, var(--field-fill-hover-top), var(--field-fill-hover-bottom));
+}
+.pw-field-control:focus,
+.pw-field-control:focus-visible,
+.pw-field-control[data-state="open"] {
+  border-color: var(--color-primary);
+}
+.pw-field-control.control-field-sm { height: var(--field-height-sm); border-radius: 6px; }
+.pw-field-control.control-field-md { height: var(--field-height-md); }
+
 .control-field-area {
   min-height: 4rem;
   padding: 0.5rem 0.625rem;
@@ -185,11 +260,11 @@
 
 .menu-panel {
   border: 1px solid var(--edge-light-surface-rim);
-  border-top-color: var(--edge-light-surface-highlight);
   border-radius: var(--radius-menu);
-  background: var(--color-surface);
+  background: var(--card-fill);
   overflow: hidden;
   box-shadow:
+    var(--card-rings),
     0 8px 28px var(--color-shadow),
     0 0 0 1px var(--color-shadow-outline);
 }
@@ -207,12 +282,19 @@
 }
 
 /** Nested product card — same as base.css .card-panel (design-system Card). */
-.card-panel {
+.card-panel,
+.card-texture {
   border: 1px solid var(--edge-light-surface-rim);
   border-radius: var(--radius-card);
-  background: var(--color-surface-subtle);
-  /* Raised card lift, same stack as OpenCode elevation-raised */
+  background: var(--card-fill);
+  /* Four concentric hairlines inside the border (dark, light, dark, light), then the raised lift (`--card-lift` overrides it). */
   box-shadow:
-    0 2px 4px var(--color-shadow),
-    0 1px 2px var(--color-shadow);
+    var(--card-rings),
+    var(--card-lift, 0 2px 4px var(--color-shadow), 0 1px 2px var(--color-shadow));
+}
+
+/* The four inset rings are 4px deep and paint under children: a cover sits inside them instead of over them. */
+.card-panel > .pw-aurora-cover {
+  margin: 4px 4px 0;
+  border-radius: calc(var(--radius-card) - 5px) calc(var(--radius-card) - 5px) 0 0;
 }

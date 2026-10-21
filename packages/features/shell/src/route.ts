@@ -46,6 +46,8 @@ export type ClientRoute = {
   dialog?: DialogState;
   selectedNodeId?: string | null;
   wizardStep?: number;
+  /** The entity whose detail fills the page; a history entry of its own, like opening a note. */
+  expandedDetail?: { scopeId: string; entityId: string; entityKind: string } | null;
 };
 
 export type ShellStatus = {
@@ -173,7 +175,7 @@ export function resolveRoute(
     if (tab === "sources" || tab === "docs" || tab === "runbooks") {
       section = "truth";
       tab = "evidence";
-    } else if (tab === "library" || tab === "adrs") {
+    } else if (tab === "library" || tab === "verdicts") {
       section = "truth";
       tab = "decisions";
     } else {
@@ -246,6 +248,7 @@ export function enterProject(
     environmentId: options?.environmentId ?? route.environmentId,
     dialog: null,
     selectedNodeId: null,
+    expandedDetail: null,
   };
 }
 
@@ -262,6 +265,7 @@ export function goSection(
     selectedNodeId: null,
     search: undefined,
     filters: undefined,
+    expandedDetail: null,
   };
 }
 
@@ -275,6 +279,7 @@ export function setTab(
     ...resolveRoute(route.section, tab, platform),
     dialog: null,
     selectedNodeId: null,
+    expandedDetail: null,
   };
 }
 
@@ -313,6 +318,10 @@ export function setEnvironment(route: ClientRoute, environmentId: string): Clien
 
 export function setSelectedNode(route: ClientRoute, selectedNodeId: string | null): ClientRoute {
   return { ...route, selectedNodeId };
+}
+
+export function setExpandedDetail(route: ClientRoute, expandedDetail: ClientRoute["expandedDetail"]): ClientRoute {
+  return { ...route, expandedDetail };
 }
 
 export function setWizardStep(route: ClientRoute, wizardStep: number): ClientRoute {

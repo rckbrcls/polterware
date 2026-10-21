@@ -20,9 +20,20 @@
   padding-inline: 32px 8px;
 }
 
+/* The space the hovered block occupies; one fill that glides between blocks. */
+.pw-md-editor__block-hover {
+  border-radius: var(--radius-control);
+}
+
+.pw-md-editor[data-editable="true"] .pw-md-editor__surface {
+  position: relative;
+  z-index: 1;
+}
+
+/* Sits 8px into the margin so a 6px gap separates it from the block hover fill (which starts 6px before the text). */
 .pw-md-editor__add {
   position: absolute;
-  left: 0;
+  left: -8px;
   z-index: 2;
 }
 
@@ -50,6 +61,7 @@
   padding: 3px 4px;
   border-radius: var(--radius-menu);
   overflow: visible;
+  background: var(--card-fill);
   pointer-events: auto;
   /* Whisper lift — card-panel weight, not surface-panel-float */
   box-shadow: 0 1px 2px var(--color-shadow-subtle);
@@ -214,11 +226,36 @@
 }
 
 .pw-md-editor__prose pre {
+  position: relative;
   margin: 0 0 0.75em;
   padding: 12px;
   overflow-x: auto;
   border-radius: var(--radius-card);
   background: var(--color-surface-subtle);
+}
+
+.pw-md-editor__prose pre::after {
+  content: "Copy";
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  padding: 2px 8px;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans, inherit);
+  font-size: 11px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.pw-md-editor__prose pre:hover::after {
+  opacity: 1;
+}
+
+.pw-md-editor__surface[data-code-copied="true"] .pw-md-editor__prose pre:hover::after {
+  content: "Copied";
 }
 
 .pw-md-editor__prose pre code {

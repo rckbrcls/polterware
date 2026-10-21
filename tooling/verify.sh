@@ -5,6 +5,7 @@ export PATH="$PATH:$(go env GOPATH 2>/dev/null)/bin:${HOME}/go/bin"
 cd "$ROOT"
 node --test tooling/check-ui-opacity.test.mjs
 node tooling/check-ui-opacity.mjs
+node tooling/check-docs-coverage.mjs
 bash tooling/check-no-scenic.sh
 bash tooling/check-domain-imports.sh
 bash tooling/check-ts-boundaries.sh

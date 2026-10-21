@@ -35,6 +35,7 @@ type KnowledgeItem struct {
 	ExtraJson     string                 `protobuf:"bytes,10,opt,name=extra_json,json=extraJson,proto3" json:"extra_json,omitempty"`
 	CreatedAt     string                 `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     string                 `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	ScopeNodeId   string                 `protobuf:"bytes,13,opt,name=scope_node_id,json=scopeNodeId,proto3" json:"scope_node_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -149,6 +150,13 @@ func (x *KnowledgeItem) GetCreatedAt() string {
 func (x *KnowledgeItem) GetUpdatedAt() string {
 	if x != nil {
 		return x.UpdatedAt
+	}
+	return ""
+}
+
+func (x *KnowledgeItem) GetScopeNodeId() string {
+	if x != nil {
+		return x.ScopeNodeId
 	}
 	return ""
 }
@@ -446,6 +454,8 @@ type ListKnowledgeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	Kind          string                 `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
+	ScopeNode     string                 `protobuf:"bytes,3,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
+	ScopeExact    bool                   `protobuf:"varint,4,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -492,6 +502,20 @@ func (x *ListKnowledgeRequest) GetKind() string {
 		return x.Kind
 	}
 	return ""
+}
+
+func (x *ListKnowledgeRequest) GetScopeNode() string {
+	if x != nil {
+		return x.ScopeNode
+	}
+	return ""
+}
+
+func (x *ListKnowledgeRequest) GetScopeExact() bool {
+	if x != nil {
+		return x.ScopeExact
+	}
+	return false
 }
 
 type ListKnowledgeResponse struct {
@@ -1030,7 +1054,7 @@ var File_polterware_local_v1_knowledge_proto protoreflect.FileDescriptor
 
 const file_polterware_local_v1_knowledge_proto_rawDesc = "" +
 	"\n" +
-	"#polterware/local/v1/knowledge.proto\x12\x13polterware.local.v1\x1a\"polterware/local/v1/agentrun.proto\"\xb5\x02\n" +
+	"#polterware/local/v1/knowledge.proto\x12\x13polterware.local.v1\x1a\"polterware/local/v1/agentrun.proto\"\xd9\x02\n" +
 	"\rKnowledgeItem\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -1048,7 +1072,8 @@ const file_polterware_local_v1_knowledge_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\v \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\f \x01(\tR\tupdatedAt\"\xb1\x02\n" +
+	"updated_at\x18\f \x01(\tR\tupdatedAt\x12\"\n" +
+	"\rscope_node_id\x18\r \x01(\tR\vscopeNodeId\"\xb1\x02\n" +
 	"\x13KnowledgeEntityLink\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -1076,11 +1101,15 @@ const file_polterware_local_v1_knowledge_proto_rawDesc = "" +
 	"\x04item\x18\x01 \x01(\v2\".polterware.local.v1.KnowledgeItemR\x04item\x12;\n" +
 	"\x06change\x18\x02 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"O\n" +
 	"\x15SaveKnowledgeResponse\x126\n" +
-	"\x04item\x18\x01 \x01(\v2\".polterware.local.v1.KnowledgeItemR\x04item\"I\n" +
+	"\x04item\x18\x01 \x01(\v2\".polterware.local.v1.KnowledgeItemR\x04item\"\x89\x01\n" +
 	"\x14ListKnowledgeRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x12\n" +
-	"\x04kind\x18\x02 \x01(\tR\x04kind\"Q\n" +
+	"\x04kind\x18\x02 \x01(\tR\x04kind\x12\x1d\n" +
+	"\n" +
+	"scope_node\x18\x03 \x01(\tR\tscopeNode\x12\x1f\n" +
+	"\vscope_exact\x18\x04 \x01(\bR\n" +
+	"scopeExact\"Q\n" +
 	"\x15ListKnowledgeResponse\x128\n" +
 	"\x05items\x18\x01 \x03(\v2\".polterware.local.v1.KnowledgeItemR\x05items\"e\n" +
 	"\x16DeleteKnowledgeRequest\x12\x0e\n" +

@@ -61,25 +61,7 @@
 }
 
 .atlas-components__toggle {
-  display: flex;
-  width: 32px;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
   margin-right: 4px;
-  border: 0;
-  border-radius: var(--radius-control);
-  background: transparent;
-  padding: 0;
-  color: var(--color-text-muted);
-  cursor: pointer;
-}
-
-@media (hover: hover) {
-  .atlas-components__toggle:hover {
-    color: var(--color-text-primary);
-  }
 }
 
 .atlas-components__domain:focus-visible,

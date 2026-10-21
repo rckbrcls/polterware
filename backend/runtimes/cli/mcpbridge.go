@@ -21,7 +21,7 @@ import (
 var errSessionLost = errors.New("mcp session lost")
 
 // runMCP bridges MCP stdio (how Claude Code, Codex, and Cursor launch servers)
-// to the core's /mcp endpoint (ADR 0007). It opens no store.
+// to the core's /mcp endpoint (Verdict 0007). It opens no store.
 func runMCP(dbPath string) error {
 	bridge := &mcpBridge{dbPath: dbPath, http: &http.Client{}}
 	defer bridge.close()

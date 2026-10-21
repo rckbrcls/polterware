@@ -24,28 +24,7 @@
 }
 /* Section titles in the toolbar get the same inset and row height as toolbar controls. */
 .notes-main .pw-page-toolbar-leading > h1 { padding-inline: 8px; line-height: var(--control-height-md); }
-.notes-settings-layout { display: grid; grid-template-columns: 208px minmax(0, 1fr); gap: 8px; padding: 8px; min-height: 0; flex: 1; }
-.notes-settings-layout > nav { min-block-size: 0; overflow: auto; }
-.notes-settings-layout > section { min-block-size: 0; min-width: 0; overflow: hidden; border-radius: calc(var(--radius-dialog) - 0.5rem); display: flex; flex-direction: column; }
-.notes-settings-content { flex: 1; min-height: 0; overflow: auto; padding: 24px 32px 32px; }
-@media (max-width: 720px) {
-  .notes-settings-layout { grid-template-columns: 144px minmax(0, 1fr); }
-}
-
-/* Each setting is its own card inside a section. */
-.notes-settings-stack { display: flex; flex-direction: column; gap: 8px; }
-.notes-settings-stack > :is(div, label, table, ul) {
-  box-sizing: border-box;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-card);
-  background: var(--color-surface-subtle);
-  padding: 12px 16px;
-  min-height: 56px;
-  align-items: center;
-}
-.notes-settings-stack > .pw-switch-row { display: flex; justify-content: space-between; }
-.notes-settings-stack > p { margin: 0; padding: 0 4px; }
-.notes-settings-stack > .pw-status-chip { align-self: flex-start; }
+/* Notes settings content: stepper layout and a brand-filled live chip. */
 .notes-settings-content .pw-stepper { display: flex; align-items: center; gap: 12px; }
 .notes-settings-content .pw-status-chip[data-tone="ok"] { background: var(--color-brand); border-color: transparent; color: var(--color-app-background); }
 /* The selected fill already marks the active Space; no focus ring around tree rows. */
@@ -62,11 +41,6 @@
 .notes-sidebar .pw-tree__row { min-width: 0; }
 .notes-workspace .pw-resizable-sidebar__main { display: flex; }
 .notes-workspace .notes-main { height: 100%; }
-
-/* Hovering a Space shades its whole region (row, notes and nested Spaces); the innermost hovered Space wins. */
-.notes-sidebar .pw-tree [data-part="branch"] { border-radius: var(--radius-item); transition: background-color var(--spring-moderate-duration) var(--spring-moderate-ease); }
-.notes-sidebar .pw-tree [data-part="branch"]:hover:not(:has([data-part="branch"]:hover)) { background: var(--color-surface-hover); }
-.notes-sidebar .pw-tree [data-part="branch"]:hover:not(:has([data-part="branch"]:hover)) > .pw-tree__row[data-selected] { background: var(--color-surface-selected); }
 
 /* Long titles truncate at the sidebar edge instead of widening the tree. */
 .notes-sidebar .pw-tree { grid-template-columns: minmax(0, 1fr); width: 100%; }
@@ -85,3 +59,7 @@
 .notes-space-open { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--color-text-muted); cursor: pointer; opacity: 0; }
 .pw-tree__row:hover .notes-space-open, .notes-space-open:focus-visible { opacity: 1; }
 .notes-space-open:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+
+/* Note properties float over the page instead of reserving a column; the lift matches surface-panel-float. */
+.notes-properties-panel .pw-detail-panel__frame { box-shadow: var(--card-rings), 0 20px 56px var(--color-shadow-float), 0 0 0 1px var(--color-shadow-subtle); }
+

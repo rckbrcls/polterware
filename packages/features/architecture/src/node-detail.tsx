@@ -103,6 +103,7 @@ export function ArchitectureNodeDetail(props: {
                               <DataTable.PrimaryCell
                                 icon={<Network size={16} />}
                                 iconTone="architecture"
+                                iconSeed={connection.nodeId}
                                 title={connection.label}
                               />
                               <DataTable.Cell>{connection.relation}</DataTable.Cell>

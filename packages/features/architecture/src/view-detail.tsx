@@ -150,6 +150,7 @@ export function ArchitectureViewDetail(props: {
                                 <DataTable.PrimaryCell
                                   icon={<Package size={16} />}
                                   iconTone="architecture"
+                                  iconSeed={member.id}
                                   title={member.name}
                                 />
                                 <DataTable.Cell>

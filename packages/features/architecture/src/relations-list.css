@@ -66,29 +66,10 @@
 }
 
 .atlas-relations__toggle {
-  display: flex;
-  width: 32px;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
   margin-right: 4px;
-  border: 0;
-  border-radius: var(--radius-control);
-  background: transparent;
-  padding: 0;
-  color: var(--color-text-muted);
-  cursor: pointer;
-}
-
-@media (hover: hover) {
-  .atlas-relations__toggle:hover {
-    color: var(--color-text-primary);
-  }
 }
 
 .atlas-relations__node:focus-visible,
-.atlas-relations__toggle:focus-visible,
 .atlas-relations__card:focus-visible {
   outline: 2px solid var(--color-border-strong);
   outline-offset: -2px;

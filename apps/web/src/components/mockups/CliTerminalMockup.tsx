@@ -26,7 +26,7 @@ export const sessions = {
     { kind: "dim", text: "attached to the local core · stdio" },
     { kind: "out", text: "→ read   compiled context for “auth” · 8k budget" },
     { kind: "out", text: "→ read   3 facts · 2 decisions · 4 evidence" },
-    { kind: "warn", text: "→ drift  1 conflict with ADR-012" },
+    { kind: "warn", text: "→ drift  1 conflict with Verdict-012" },
     { kind: "ok", text: "→ write  W-45 updated · audited" },
   ],
 } satisfies Record<string, Line[]>;

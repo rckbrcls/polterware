@@ -46,7 +46,7 @@ export function Drawer(props: DrawerProps) {
       />
       <ArkDrawer.Positioner class="fixed inset-0 z-[var(--z-dialog,50)] flex justify-end pointer-events-none">
         <ArkDrawer.Content
-          class="pw-drawer-content surface-panel pointer-events-auto relative z-10 flex flex-col border-l border-[var(--color-border-default)] bg-[var(--color-surface)] outline-none"
+          class="pw-drawer-content surface-panel-float pointer-events-auto relative z-10 flex flex-col outline-none"
           style={{
             width: `${width()}px`,
           }}

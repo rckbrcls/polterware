@@ -10,7 +10,7 @@ import (
 )
 
 // ChangeRecorder receives, once per committed transaction, the tables it wrote
-// and the project ids found in the written rows (ADR 0007). It runs inside the
+// and the project ids found in the written rows (Verdict 0007). It runs inside the
 // SQLite commit hook, before the commit is visible to other connections, so it
 // must only record and return.
 type ChangeRecorder func(tables, projectIDs []string)

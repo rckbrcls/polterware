@@ -1,6 +1,6 @@
 import { Show, createContext, createSignal, createUniqueId, onCleanup, onMount, useContext, type Accessor, type JSX } from "solid-js";
 import { Button } from "../button";
-import { CollapseIcon, ExpandIcon, X } from "../hugeicons";
+import { ChevronLeft, ExpandIcon, X } from "../hugeicons";
 import { PanelInteractionContext, registerPanelInteraction, type PanelInteractionOwner } from "../panel-interaction";
 import { useDesignSystem } from "../provider";
 import { createOutsideDismiss } from "./create-outside-dismiss";
@@ -71,7 +71,6 @@ export function DetailPanelRoot(props: DetailPanelRootProps) {
   };
   const expandLabel = () => expanded() ? "Restore details" : "Expand details";
   const closeShortcut = designSystem.createShortcutLabel("shell.toggle_detail");
-  const expandShortcut = designSystem.createShortcutLabel("shell.maximize_detail");
   let root: HTMLDivElement | undefined;
   let frame: HTMLElement | undefined;
   let workspace: HTMLDivElement | undefined;
@@ -102,7 +101,7 @@ export function DetailPanelRoot(props: DetailPanelRootProps) {
   createPanelShortcuts({
     root: () => root, interaction, visible, enabled: () => props.shortcuts !== false, expanded,
     resizing: resize.active, focusInFrame: focus.focusInFrame, matchesShortcut: designSystem.matchesShortcut,
-    cancelResize: resize.cancel, collapse: () => props.onExpandedChange?.(false), restoreFocus: focus.restoreFocus, toggleExpanded, close,
+    cancelResize: resize.cancel, collapse: () => props.onExpandedChange?.(false), restoreFocus: focus.restoreFocus, close,
   });
   onMount(() => {
     const unregister = registerPanelInteraction(interaction);
@@ -119,18 +118,30 @@ export function DetailPanelRoot(props: DetailPanelRootProps) {
       <div ref={setCollectionHeaderHost} class="pw-detail-panel__collection-header" />
       <div ref={workspace} class="pw-detail-panel__workspace">
         <div class="pw-detail-panel__collection-panel">{props.children}</div>
-        <section ref={frame} id={frameId} class="pw-detail-panel__frame surface-panel"
+        <section ref={frame} id={frameId} class="pw-detail-panel__frame surface-panel-float"
           data-expanded={visible() ? expanded() : presence.present() && presence.exitGeometry()?.expanded === true}
           hidden={!presence.present() || !available()} inert={!visible() ? true : undefined} aria-hidden={!visible() ? true : undefined}
           role="region" aria-label={props["aria-label"] ?? "Details"}
           onPointerDown={(event) => event.stopPropagation()} onWheel={(event) => event.stopPropagation()}>
           <header class={`pw-detail-panel__header ${headerClass()}`}>
-            <Button variant="icon" aria-label="Close details" title={`Close details (${closeShortcut()})`} onClick={() => close()}>
-              <X size={14} />
-            </Button>
-            <Show when={props.expandable !== false}>
-              <Button variant="icon" aria-label={expandLabel()} aria-pressed={expanded()} title={`${expandLabel()} (${expandShortcut()})`} onClick={toggleExpanded}>
-                <Show when={expanded()} fallback={<ExpandIcon size={14} />}><CollapseIcon size={14} /></Show>
+            <Show
+              when={expanded()}
+              fallback={
+                <>
+                  <Button variant="icon" aria-label="Close details" title={`Close details (${closeShortcut()})`} onClick={() => close()}>
+                    <X size={14} />
+                  </Button>
+                  <Show when={props.expandable !== false}>
+                    <Button variant="icon" aria-label={expandLabel()} aria-pressed={expanded()} title={expandLabel()} onClick={toggleExpanded}>
+                      <ExpandIcon size={14} />
+                    </Button>
+                  </Show>
+                </>
+              }
+            >
+              {/* The full-page detail is its own history entry; Back returns to the list. */}
+              <Button variant="icon" aria-label="Back" title="Back" onClick={toggleExpanded}>
+                <ChevronLeft size={14} />
               </Button>
             </Show>
           </header>

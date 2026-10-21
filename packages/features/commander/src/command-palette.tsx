@@ -1,4 +1,4 @@
-import { A11yDialog, X } from "@polterware/frontend-design-system";
+import { A11yDialog, Button, X } from "@polterware/frontend-design-system";
 import type { PlatformContext } from "@polterware/frontend-platform";
 import { PaletteBody } from "./palette-body";
 import type { PaletteItem } from "./palette-items";
@@ -28,8 +28,8 @@ export function CommandPalette(props: {
         onCommand={props.onCommand}
         onConsumed={props.onClose}
         trailing={
-          <button
-            type="button"
+          <Button
+            variant="icon"
             class="commander-action"
             aria-label="Close"
             onMouseDown={(event) => {
@@ -38,7 +38,7 @@ export function CommandPalette(props: {
             }}
           >
             <X size={16} aria-hidden />
-          </button>
+          </Button>
         }
       />
     </A11yDialog>

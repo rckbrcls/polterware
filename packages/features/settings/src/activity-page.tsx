@@ -1,9 +1,10 @@
 import { createEffect, createSignal, on, onMount } from "solid-js";
 import { EntityDetailHost } from "@polterware/feature-shell";
 import {
-  Button,
+  ToolbarIconButton,
   PageContent,
   PageToolbar,
+  Tabs,
   RefreshCw,
   pushToast,
 } from "@polterware/frontend-design-system";
@@ -83,14 +84,26 @@ export function ActivityPage(props: { projectId: string }) {
   return (
     <EntityDetailHost>
       <PageToolbar.Root>
-        <PageToolbar.Leading>
-          <span class="pw-page-toolbar-title">Activity</span>
-        </PageToolbar.Leading>
+        <PageToolbar.Tabs>
+          <Tabs
+            items={[
+              { id: "all", label: "All" },
+              { id: "human", label: "Human" },
+              { id: "agent", label: "Agent" },
+            ]}
+            value={actorFilter()}
+            onChange={(value) => {
+              const filter = value as ChangeActorFilter;
+              setActorFilter(filter);
+              void refresh(filter);
+            }}
+            aria-label="Activity actor"
+          />
+        </PageToolbar.Tabs>
         <PageToolbar.Actions>
-          <Button size="sm" variant="ghost" disabled={busy()} onClick={() => void refresh()}>
+          <ToolbarIconButton label="Refresh" disabled={busy()} onClick={() => void refresh()}>
             <RefreshCw size={14} />
-            Refresh
-          </Button>
+          </ToolbarIconButton>
         </PageToolbar.Actions>
       </PageToolbar.Root>
       <PageContent class="flex min-h-0 flex-1 flex-col p-0">
@@ -98,12 +111,7 @@ export function ActivityPage(props: { projectId: string }) {
           changes={changes()}
           selectedStepId={selectedStepId()}
           detail={runDetail()}
-          actorFilter={actorFilter()}
           busy={busy()}
-          onActorFilter={(filter) => {
-            setActorFilter(filter);
-            void refresh(filter);
-          }}
           onSelect={(stepId, agentRunId) => {
             setSelectedStepId(stepId);
             void loadRunDetail(agentRunId);

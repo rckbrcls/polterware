@@ -23,7 +23,7 @@ func runScan(dbPath string, args []string) error {
 	if err != nil {
 		return err
 	}
-	res, err := c.PPM.ImportProjectSources(context.Background(), connect.NewRequest(&localv1.ImportProjectSourcesRequest{ProjectId: *projectID}))
+	res, err := c.Canon.ImportProjectSources(context.Background(), connect.NewRequest(&localv1.ImportProjectSourcesRequest{ProjectId: *projectID}))
 	if err != nil {
 		return err
 	}

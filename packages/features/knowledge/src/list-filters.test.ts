@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-  EMPTY_SOURCE_LIST_FILTERS,
+  EMPTY_EVIDENCE_LIST_FILTERS,
   EMPTY_CARD_LIST_FILTERS,
-  distinctSourcePathPrefixes,
-  filterSources,
+  distinctEvidenceTags,
+  filterEvidence,
   filterWorkCards,
-  sourcePathPrefix,
 } from "./list-filters";
-import type { WorkspaceSource, WorkspaceWorkCard } from "@polterware/feature-shell";
+import type { WorkspaceEvidence, WorkspaceWorkCard } from "@polterware/feature-shell";
 
 const card = {
   id: "01J",
@@ -25,21 +24,25 @@ const card = {
   invariants: [],
 } satisfies WorkspaceWorkCard;
 
-const source = {
-  id: "src-1",
+const evidence = {
+  id: "ev-1",
   title: "Contracts",
-  path: "schemas/local/v1/ppm.proto",
+  path: "schemas/local/v1/canon.proto",
   summary: "",
   bodyMarkdown: "",
+  tags: ["source", "contracts"],
   updatedAt: "2026-01-01",
   owner: "Ada",
   entityLinks: [],
-} satisfies WorkspaceSource;
+} satisfies WorkspaceEvidence;
 
 describe("list-filters", () => {
-  it("derives path prefixes", () => {
-    expect(sourcePathPrefix("schemas/local/v1/ppm.proto")).toBe("schemas");
-    expect(distinctSourcePathPrefixes([source])).toEqual(["schemas"]);
+  it("lists the distinct tags in use", () => {
+    expect(distinctEvidenceTags([evidence, { ...evidence, id: "ev-2", tags: ["runbook", "source"] }])).toEqual([
+      "contracts",
+      "runbook",
+      "source",
+    ]);
   });
 
   it("filters cards by stage, open questions, and query", () => {
@@ -50,18 +53,10 @@ describe("list-filters", () => {
     expect(filterWorkCards([card], { ...EMPTY_CARD_LIST_FILTERS, query: "login" })).toHaveLength(1);
   });
 
-  it("filters sources by path prefix and linked", () => {
-    expect(
-      filterSources([source], {
-        ...EMPTY_SOURCE_LIST_FILTERS,
-        pathPrefixes: ["schemas"],
-      }),
-    ).toHaveLength(1);
-    expect(
-      filterSources([source], {
-        ...EMPTY_SOURCE_LIST_FILTERS,
-        linked: "linked",
-      }),
-    ).toHaveLength(0);
+  it("filters evidence by tag, linked, and query", () => {
+    expect(filterEvidence([evidence], { ...EMPTY_EVIDENCE_LIST_FILTERS, tags: ["contracts"] })).toHaveLength(1);
+    expect(filterEvidence([evidence], { ...EMPTY_EVIDENCE_LIST_FILTERS, tags: ["contracts", "runbook"] })).toHaveLength(0);
+    expect(filterEvidence([evidence], { ...EMPTY_EVIDENCE_LIST_FILTERS, linked: "linked" })).toHaveLength(0);
+    expect(filterEvidence([evidence], { ...EMPTY_EVIDENCE_LIST_FILTERS, query: "canon.proto" })).toHaveLength(1);
   });
 });

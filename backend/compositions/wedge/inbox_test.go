@@ -9,7 +9,7 @@ import (
 	"github.com/polterware/polterware/backend/compositions/wedge"
 	"github.com/polterware/polterware/backend/domains/agentrun"
 	"github.com/polterware/polterware/backend/domains/inbox"
-	"github.com/polterware/polterware/backend/domains/ppm"
+	"github.com/polterware/polterware/backend/domains/canon"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
@@ -39,11 +39,11 @@ func TestInboxEndToEnd(t *testing.T) {
 	if _, err := wedge.ApplyPolter(store, wedge.ApplyInput{ProjectID: project.ID, Text: inboxRoadmap, AutoStartLabel: "cli"}); err != nil {
 		t.Fatal(err)
 	}
-	declared, err := ppm.NewFact(project.ID, "Local auth is bearer token", ppm.TruthDeclared, "mcp", "codex", "")
+	declared, err := canon.NewFact(project.ID, "Local auth is bearer token", canon.TruthDeclared, "mcp", "codex", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.UpsertPpmFact(declared); err != nil {
+	if err := store.UpsertCanonFact(declared); err != nil {
 		t.Fatal(err)
 	}
 
@@ -118,14 +118,14 @@ func TestInboxEndToEnd(t *testing.T) {
 	if !ok {
 		t.Fatal("verify item missing")
 	}
-	if _, err := wedge.ResolveInbox(store, wedge.ResolveInboxInput{ProjectID: project.ID, ItemID: fact.ID, Action: inbox.ActionVerify, Actor: "system"}); !errors.Is(err, ppm.ErrVerifiedRequiresActor) {
+	if _, err := wedge.ResolveInbox(store, wedge.ResolveInboxInput{ProjectID: project.ID, ItemID: fact.ID, Action: inbox.ActionVerify, Actor: "system"}); !errors.Is(err, canon.ErrVerifiedRequiresActor) {
 		t.Fatalf("verify as system: %v", err)
 	}
 	if _, err := resolve(fact.ID, inbox.ActionVerify, ""); err != nil {
 		t.Fatal(err)
 	}
-	stored, err := store.GetPpmFact(declared.ID)
-	if err != nil || stored.TruthClass != ppm.TruthVerified || stored.Actor != "desktop" {
+	stored, err := store.GetCanonFact(declared.ID)
+	if err != nil || stored.TruthClass != canon.TruthVerified || stored.Actor != "desktop" {
 		t.Fatalf("fact after verify = %+v err=%v", stored, err)
 	}
 
@@ -154,8 +154,8 @@ func TestInboxRejectAndDefer(t *testing.T) {
 	if _, err := wedge.ApplyPolter(store, wedge.ApplyInput{ProjectID: project.ID, Text: inboxRoadmap, AutoStartLabel: "cli"}); err != nil {
 		t.Fatal(err)
 	}
-	observed, _ := ppm.NewFact(project.ID, "Uses pnpm", ppm.TruthObserved, "agent", "claude", "")
-	if err := store.UpsertPpmFact(observed); err != nil {
+	observed, _ := canon.NewFact(project.ID, "Uses pnpm", canon.TruthObserved, "agent", "claude", "")
+	if err := store.UpsertCanonFact(observed); err != nil {
 		t.Fatal(err)
 	}
 
@@ -178,7 +178,7 @@ func TestInboxRejectAndDefer(t *testing.T) {
 		t.Fatalf("deferred item should be listed last: %+v", listed.Items)
 	}
 	// The rejected fact is hidden but kept as history.
-	if _, err := store.GetPpmFact(observed.ID); err != nil {
+	if _, err := store.GetCanonFact(observed.ID); err != nil {
 		t.Fatalf("rejected fact must stay: %v", err)
 	}
 }

@@ -2,7 +2,7 @@ import type { JSX } from "solid-js";
 import { splitProps } from "solid-js";
 import "./control-button.css";
 
-export type ControlButtonTone = "secondary" | "brand" | "danger";
+export type ControlButtonTone = "secondary" | "brand" | "danger" | "neutral" | "success" | "warn" | "info" | "critical" | "violet" | "teal" | "pink";
 
 export type ControlButtonProps = JSX.ButtonHTMLAttributes<HTMLButtonElement> & {
   tone?: ControlButtonTone;

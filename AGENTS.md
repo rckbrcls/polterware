@@ -15,7 +15,7 @@
 
 ## Product positioning
 
-Polterware's category is **Project Context & Change Intelligence for AI Coding**: every agent and person reads the same evidence-backed project state, and drift from declared intent is flagged. The shipped wedge is PPM facts/evidence, deterministic import, Context Compiler, stable MCP reads, Drift, AgentRun, audited MCP writes, CLI, Unified Change History, the Polter format with Work cards, the Atlas, the Inbox, and the decision lifecycle. Integrations remain as evidence/Connect UI only.
+Polterware's category is **Project Context & Change Intelligence for AI Coding**: every agent and person reads the same evidence-backed project state, and drift from declared intent is flagged. The shipped wedge is Canon facts/evidence, deterministic import, Context Compiler, stable MCP reads, Drift, AgentRun, audited MCP writes, CLI, Unified Change History, the Polter format with Work cards, the Atlas, the Inbox, and the decision lifecycle. Integrations remain as evidence/Connect UI only.
 
 [`docs/future.md`](docs/future.md) is the only planning document and lists what is **not** implemented (Cloud, Jev, enrichment backlog, research). It is direction, not shipped behavior; never present its items as shipped. The code, this file, `polterware --help`, and `polterware format` describe what exists.
 
@@ -27,9 +27,7 @@ The umbrella is an ecosystem, not a list: apps and tools live under Polterware o
 
 The Desktop supports multiple local projects and environments. It has no hosted or shared workspace model. One local core process (`polterware serve`) per database is the only process that opens SQLite (it is a detached daemon guarded by a lock, with a build handshake); Electron Main, the CLI, the TUI, and the MCP bridge attach to it or start it. The renderer reads and writes through `window.polterware` only.
 
-The Desktop may execute on the local machine through the local core only. The renderer never spawns shells or touches Node APIs; it talks through `window.polterware`.
-
-- Integrations: detect CLI binaries, start provider authentication commands in a core-owned PTY, optionally open provider documentation through Main `openExternal`, and probe connection status. Credentials stay in the OS/CLI credential store. **KEEP** as evidence/Connect path (not a provider console). Residual `terminals.*` IPC and `providers/terminal` exist only for that Connect auth PTY path.
+- Integrations: detect CLI binaries, start provider authentication commands in a core-owned PTY, optionally open provider documentation through Main `openExternal`, and probe connection status. Credentials stay in the OS/CLI credential store. **KEEP** as evidence/Connect path (not a provider console).
 
 The integration catalog contains exactly GitHub, GitLab, AWS, Google Cloud, Azure, Vercel, Supabase, Terraform, and Docker. Do not add placeholders or app-owned provider-token fields, and never persist provider credentials in SQLite. Raw PTY output is not guaranteed to be sanitized; do not describe it as redacted.
 
@@ -57,7 +55,7 @@ The monorepo also hosts Polterware Notes, a separate local-first app with its ow
   - Specs is a table of the same cards. The five-document Spec / Plan / Tasks / Clarify / Checklist model and the Constitution document are removed; project-wide principles are pinned Decisions.
 - Atlas: Map, Components (nodes: system, domain, component; a feature is a Work card shown in the node detail)
 - Truth: Decisions, Facts, Evidence
-  - Decisions is one list of ADRs with a lifecycle state filter (Active, Challenged, Proposed, Superseded; Active by default). A Decision has a scope: a Principle applies to the whole project and stays pinned on top (`extra_json.scope = "principle"`).
+  - Decisions is one list of Verdicts with a lifecycle state filter (Active, Challenged, Proposed, Superseded; all states shown by default). A Decision has a scope: a Principle applies to the whole project and stays pinned on top (`extra_json.scope = "principle"`).
   - Facts are statements about the project (declared, observed, inferred, or verified); each lists the evidence that backs it.
   - Evidence is one list of `source`, `doc`, and `runbook` items with a kind filter. Sources are registered project-relative paths (`kind = source`); Import from project root runs `ImportProjectSources` for the MVP file set. Generic filesystem indexing beyond that set is not shipped.
   - Resources are Atlas components; there is no separate Inventory surface.
@@ -67,6 +65,8 @@ The monorepo also hosts Polterware Notes, a separate local-first app with its ow
   - Agents: Access, Sessions, Context
   - Integrations: Connected, Catalog (**KEEP** — evidence + Connect UI)
   - App: Shortcuts, Advanced
+
+Scope is a global filter, not a surface: the title bar scope switcher picks an Atlas node (system, domain, or component) or the whole project. It narrows Work cards (through their component), Decisions, Facts, Evidence, Inbox/Drift, the Context Compiler, `polterware query|status|inbox|oracle --scope <node> [--exact]`, and the MCP `scope` argument. An entity has one optional scope (`scope_node_id`); no scope means the whole project and stays visible under any filter. Decisions take `scope:` in Polter; derived Inbox/Drift items are scoped with `polterware scope item <key> <node>`.
 
 Keep project and environment switchers, Commander, history controls, and Settings. Do not introduce additional product surfaces without an approved decision.
 

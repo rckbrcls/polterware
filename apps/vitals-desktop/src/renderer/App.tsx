@@ -1,7 +1,6 @@
 import {
   A11yDialog,
   Button,
-  ControlButton,
   PageError,
   PageToolbar,
   Plus,
@@ -327,6 +326,7 @@ export function App() {
             </div>
           </div>
           <MainSurfaceFrame class="vitals-main">
+            <div class="vitals-scroll">
             <div class="vitals-surface-head">
               <Show when={active()}>
               {(session) => (
@@ -416,6 +416,7 @@ export function App() {
               />
               </Show>
             </Show>
+            </div>
           </MainSurfaceFrame>
         </MainFrame>
 
@@ -458,12 +459,12 @@ export function App() {
           onClose={() => setKillTarget(null)}
           footer={
             <>
-              <ControlButton tone="secondary" onClick={() => setKillTarget(null)}>
+              <Button variant="texture" onClick={() => setKillTarget(null)}>
                 Cancel
-              </ControlButton>
-              <ControlButton tone="danger" onClick={() => void confirmKill()}>
+              </Button>
+              <Button variant="texture" textureTone="danger" onClick={() => void confirmKill()}>
                 Kill
-              </ControlButton>
+              </Button>
             </>
           }
         >
@@ -478,12 +479,12 @@ export function App() {
           onClose={() => setCloseTarget(null)}
           footer={
             <>
-              <ControlButton tone="secondary" onClick={() => setCloseTarget(null)}>
+              <Button variant="texture" onClick={() => setCloseTarget(null)}>
                 Cancel
-              </ControlButton>
-              <ControlButton tone="danger" onClick={confirmCloseTab}>
+              </Button>
+              <Button variant="texture" textureTone="danger" onClick={confirmCloseTab}>
                 Close session
-              </ControlButton>
+              </Button>
             </>
           }
         >

@@ -4,7 +4,7 @@ import type {
   ProjectGeneralSettings,
   ProtectionLevel,
 } from "@polterware/feature-settings";
-import type { WorkspaceAdr, WorkspaceCatalogProvider, WorkspaceFeatureReview, WorkCardKind, WorkStage } from "@polterware/feature-shell";
+import type { WorkspaceVerdict, WorkspaceCatalogProvider, WorkspaceFeatureReview, WorkCardKind, WorkStage } from "@polterware/feature-shell";
 import type { ChangeEnvelope, DecisionAction, FeatureFlowLine } from "@polterware/feature-knowledge";
 import { asNumber, asObjectArray, asRecord, asString } from "./format";
 import type { WorkspaceSnapshot } from "./load";
@@ -127,6 +127,36 @@ export async function persistKnowledgeBody(
   });
 }
 
+export async function persistKnowledgeTitle(
+  workspace: WorkspaceSnapshot,
+  projectId: string,
+  itemId: string,
+  title: string,
+  change: ChangeEnvelope,
+): Promise<void> {
+  const current = workspace.rawKnowledge.find((item) => asString(item.id) === itemId);
+  if (!current) return;
+  await core().knowledge.save({
+    item: { ...current, projectId, title },
+    change: changePayload(change),
+  });
+}
+
+export async function persistKnowledgeTags(
+  workspace: WorkspaceSnapshot,
+  projectId: string,
+  itemId: string,
+  tags: string[],
+  change: ChangeEnvelope,
+): Promise<void> {
+  const current = workspace.rawKnowledge.find((item) => asString(item.id) === itemId);
+  if (!current) return;
+  await core().knowledge.save({
+    item: { ...current, projectId, tags },
+    change: changePayload(change),
+  });
+}
+
 export async function persistKnowledgeSourcePath(
   workspace: WorkspaceSnapshot,
   projectId: string,
@@ -152,47 +182,27 @@ export async function persistKnowledgeSourcePath(
   });
 }
 
+/**
+ * Create a knowledge item. Evidence has no type: `tags` is all that says what it is, and
+ * `path` points at a project file when the item stands for one. A template's old kind
+ * ("doc", "runbook", "source") only seeds a tag.
+ */
 export async function persistKnowledgeCreate(input: {
   projectId: string;
-  kind: "doc" | "runbook" | "adr" | "source";
+  kind: "evidence" | "verdict";
   title: string;
   body?: string;
   extraJson?: string;
+  tags?: string[];
+  path?: string;
   change: ChangeEnvelope;
 }): Promise<string> {
-  const id = newId(
-    input.kind === "runbook"
-      ? "rb"
-      : input.kind === "adr"
-        ? "adr"
-        : input.kind === "source"
-          ? "src"
-          : "doc",
-  );
-  const defaultBody =
-    input.kind === "adr"
-      ? "## Status\n\nProposed\n\n## Context\n\n\n\n## Decision\n\n\n\n## Consequences\n\n"
-      : input.kind === "source"
-        ? ""
-        : "";
-  const defaultExtraJson =
-    input.kind === "runbook"
-      ? JSON.stringify({
-          service: "Service",
-          severity: "medium",
-          prerequisites: [],
-          steps: [],
-          commands: [],
-          rollback: "",
-        })
-      : input.kind === "source"
-        ? JSON.stringify({ path: "" })
-        : JSON.stringify({
-            author: "Project maintainer",
-            environment: "All",
-            componentIds: [],
-            componentNames: [],
-          });
+  const verdict = input.kind === "verdict";
+  const id = newId(verdict ? "verdict" : "ev");
+  const defaultBody = verdict
+    ? "## Status\n\nProposed\n\n## Context\n\n\n\n## Decision\n\n\n\n## Consequences\n\n"
+    : "";
+  const path = input.path?.trim();
   await core().knowledge.save({
     item: {
       id,
@@ -200,15 +210,20 @@ export async function persistKnowledgeCreate(input: {
       title: input.title,
       body: input.body ?? defaultBody,
       kind: input.kind,
-      tags: input.kind === "adr" ? ["adr"] : input.kind === "source" ? ["source"] : [],
+      tags: verdict ? ["verdict"] : [...new Set(input.tags ?? [])],
       summary: "",
       owner: "human",
-      status: input.kind === "adr" ? "proposed" : input.kind === "source" ? "" : "draft",
-      extraJson: input.extraJson ?? defaultExtraJson,
+      status: verdict ? "proposed" : "",
+      extraJson: input.extraJson ?? (path ? JSON.stringify({ path }) : "{}"),
     },
     change: changePayload(input.change),
   });
   return id;
+}
+
+/** Scopes a knowledge item (Decision or Evidence) to an Atlas node path; an empty path clears it. */
+export async function persistKnowledgeScope(projectId: string, id: string, path: string): Promise<void> {
+  await core().work.setScope({ projectId, kind: "knowledge", id, node: path });
 }
 
 export async function persistKnowledgeDelete(
@@ -285,12 +300,12 @@ function polterValue(value: string): string {
 }
 
 /**
- * Move an ADR through its lifecycle as a Polter decision block. The core
+ * Move an Verdict through its lifecycle as a Polter decision block. The core
  * enforces the legal transitions; a refusal comes back as the error message.
  */
 export async function persistDecisionAction(input: {
   projectId: string;
-  adr: WorkspaceAdr;
+  verdict: WorkspaceVerdict;
   action: DecisionAction;
   change: ChangeEnvelope;
 }): Promise<void> {
@@ -299,13 +314,13 @@ export async function persistDecisionAction(input: {
   switch (input.action.kind) {
     case "activate":
     case "reactivate":
-      block = `### ${input.adr.id}\nstatus: active`;
+      block = `### ${input.verdict.id}\nstatus: active`;
       break;
     case "challenge":
-      block = `### ${input.adr.id}\nstatus: challenged · reason: ${reason}`;
+      block = `### ${input.verdict.id}\nstatus: challenged · reason: ${reason}`;
       break;
     case "supersede":
-      block = `### ${input.action.byId}\nsupersedes: ${input.adr.id} · reason: ${reason}`;
+      block = `### ${input.action.byId}\nsupersedes: ${input.verdict.id} · reason: ${reason}`;
       break;
   }
   await applyPolter(input.projectId, `---\npolter: 1\n---\n\n${block}\n`, input.change);
@@ -430,7 +445,7 @@ export async function persistKnowledgeDuplicate(
 ): Promise<string | undefined> {
   const current = workspace.rawKnowledge.find((item) => asString(item.id) === itemId);
   if (!current) return undefined;
-  const id = newId(asString(current.kind) === "runbook" ? "rb" : "doc");
+  const id = newId(asString(current.kind) === "verdict" ? "verdict" : "ev");
   const title = `${asString(current.title)} (copy)`;
   await core().knowledge.save({
     item: {
@@ -636,7 +651,7 @@ export async function persistImportProjectSources(input: {
   message: string;
 }> {
   const response = asRecord(
-    await core().ppm.importSources({ projectId: input.projectId }),
+    await core().canon.importSources({ projectId: input.projectId }),
   );
   return {
     factCount: asNumber(response.factCount, 0),
@@ -647,7 +662,7 @@ export async function persistImportProjectSources(input: {
   };
 }
 
-export async function persistPpmFact(input: {
+export async function persistCanonFact(input: {
   fact: {
     id?: string;
     projectId: string;
@@ -657,7 +672,7 @@ export async function persistPpmFact(input: {
   };
   change: ChangeEnvelope;
 }): Promise<void> {
-  await core().ppm.upsertFact({
+  await core().canon.upsertFact({
     fact: {
       id: input.fact.id ?? "",
       projectId: input.fact.projectId,
@@ -674,7 +689,7 @@ export async function persistPpmFact(input: {
   });
 }
 
-export async function persistPpmEvidence(input: {
+export async function persistCanonEvidence(input: {
   evidence: {
     id?: string;
     projectId: string;
@@ -685,7 +700,7 @@ export async function persistPpmEvidence(input: {
   change: ChangeEnvelope;
 }): Promise<{ id: string }> {
   const id = input.evidence.id?.trim() || newId("ev");
-  await core().ppm.upsertEvidence({
+  await core().canon.upsertEvidence({
     evidence: {
       id,
       projectId: input.evidence.projectId,
@@ -709,7 +724,7 @@ export async function persistLinkEvidenceToFact(input: {
   evidenceId: string;
   change: ChangeEnvelope;
 }): Promise<void> {
-  await core().ppm.linkEvidenceToFact({
+  await core().canon.linkEvidenceToFact({
     projectId: input.projectId,
     factId: input.factId,
     evidenceId: input.evidenceId,

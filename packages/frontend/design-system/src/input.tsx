@@ -8,7 +8,7 @@ function cn(...parts: Array<string | false | null | undefined>) {
 }
 
 const fieldBase =
-  "control-field w-full min-w-0 outline-none text-[var(--color-text-primary)]";
+  "control-field pw-field-control w-full min-w-0 outline-none text-[var(--color-text-primary)]";
 
 /**
  * Product text input — control-field edge-light chrome (same family as Card/Surface).
@@ -59,7 +59,7 @@ export function Textarea(props: TextareaProps) {
       spellcheck={local.spellcheck ?? false}
       autocomplete={local.autocomplete ?? "off"}
       {...rest}
-      class={cn(fieldBase, "control-field-area", local.class)}
+      class={cn(fieldBase, "pw-field-control control-field-area", local.class)}
       classList={local.classList}
     />
   );

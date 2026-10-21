@@ -7,6 +7,8 @@ import { errorText, filterRows, todayGroup, DEFAULT_FILTER, type NoteRow } from 
 import { spaceMark } from "./space-mark";
 import { tryNotesShell } from "./shell-access";
 import { notesStore, type NotesStore } from "./store";
+
+const newCardClass = "!h-[224px] !w-full !flex-col !gap-3 !rounded-[var(--radius-card)] !border-dashed !border-[var(--color-border-strong)]";
 import { UndoNotice } from "./undo-notice";
 
 export type NoteCollectionProps = { spaceId?: string; mode?: "today" | "inbox" | "space" | "spaces"; store?: NotesStore; onOpen?: (id: string) => void; virtualized?: boolean; leading?: JSX.Element; trailing?: JSX.Element; onCreateSpace?: () => void; folderItems?: FolderItem[]; onReorderFolders?: (updates: { id: string; sortOrder: number }[]) => Promise<void> | void; canDropInto?: (held: HeldItem, spaceId: string) => boolean; onDropInto?: (held: HeldItem, spaceId: string) => Promise<void> | void };
@@ -209,22 +211,25 @@ export function NoteCollection(props: NoteCollectionProps) {
               data-lifted={reorder.liftedId() === key ? "true" : "false"}
               onPointerDown={event => { if (reorderable()) reorder.onPointerDown(key, event); }}>
               <Show when={item()?.folder} fallback={<Show when={item()?.row} keyed>{row => <Card class="group relative flex h-[224px] cursor-pointer overflow-hidden flex-col !p-0 transition-colors hover:bg-[var(--color-surface-hover)]">
-                <AuroraCover palette={auroraForId(row.id)} class="!h-2" />
+                <AuroraCover palette={auroraForId(row.id)} seed={row.id} class="!h-2" />
                 <div role="button" tabindex="0" data-row-id={row.id} draggable={!reorderable()} onDragStart={event => { event.dataTransfer?.setData("application/x-notes-item", JSON.stringify({ kind: "note", id: row.id })); if (event.dataTransfer) event.dataTransfer.effectAllowed = "move"; }} aria-label={row.title} class="flex min-h-0 flex-1 flex-col gap-3 p-4 outline-none" onFocus={() => setActiveId(row.id)}
                   onClick={() => open(row.id)}
                   onKeyDown={event => { if (event.key === "Enter" && event.target === event.currentTarget) open(row.id); }}
                   onContextMenu={event => { event.preventDefault(); setMenu({ row, x: event.clientX, y: event.clientY }); }}>
-                  <div class="flex shrink-0 items-start gap-2">
+                  <div class="flex shrink-0 items-center gap-2">
                     <span class="line-clamp-1 min-w-0 flex-1 break-words text-[15px] font-semibold leading-snug text-[var(--color-text-primary)]">{row.title}</span>
-                    <span data-no-drag="" class="shrink-0" onClick={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()}>
-                      <Checkbox shape="round" aria-label={`Select ${row.title}`} checked={selection().has(row.id)}
-                        onCheckedChange={details => { const next = new Set(selection()); if (details.checked === true) next.add(row.id); else next.delete(row.id); setSelection(next); }} />
-                    </span>
-                    <Button variant="ghost" size="icon" data-no-drag="" aria-label={`Actions for ${row.title}`} aria-haspopup="menu" class="!-mr-1 !-mt-1 !h-7 !min-h-0 !w-7 !min-w-0 !shrink-0" onClick={event => {
-                      event.stopPropagation();
-                      const bounds = event.currentTarget.getBoundingClientRect();
-                      setMenu({ row, x: bounds.right, y: bounds.bottom });
-                    }} onKeyDown={event => event.stopPropagation()}><MoreHorizontal size={16} aria-hidden="true" /></Button>
+                    {/* Selection and actions sit as one pair, centered on the title. */}
+                    <div class="-my-1 -mr-1 flex shrink-0 items-center gap-1">
+                      <span data-no-drag="" class="flex shrink-0" onClick={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()}>
+                        <Checkbox shape="round" aria-label={`Select ${row.title}`} checked={selection().has(row.id)}
+                          onCheckedChange={details => { const next = new Set(selection()); if (details.checked === true) next.add(row.id); else next.delete(row.id); setSelection(next); }} />
+                      </span>
+                      <Button variant="ghost" size="icon" data-no-drag="" aria-label={`Actions for ${row.title}`} aria-haspopup="menu" class="!h-7 !min-h-0 !w-7 !min-w-0 !shrink-0" onClick={event => {
+                        event.stopPropagation();
+                        const bounds = event.currentTarget.getBoundingClientRect();
+                        setMenu({ row, x: bounds.right, y: bounds.bottom });
+                      }} onKeyDown={event => event.stopPropagation()}><MoreHorizontal size={16} aria-hidden="true" /></Button>
+                    </div>
                   </div>
                   <Show when={row.content}><p class="m-0 line-clamp-4 text-[13px] leading-relaxed text-[var(--color-text-secondary)]">{markdownPreview(row.content)}</p></Show>
                   <div class="mt-auto flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[var(--color-text-muted)]">
@@ -270,7 +275,7 @@ export function NoteCollection(props: NoteCollectionProps) {
               <span class="text-[13px] text-[var(--color-text-secondary)]">{selection().size} selected</span>
               <Button variant="secondary" disabled={busy()} onClick={() => void bulk("complete")}>Complete</Button>
               <Button variant="secondary" disabled={busy()} onClick={() => void bulk("pin")}>Pin</Button>
-              <div class="w-40"><Select aria-label="Move selected notes to Space" value={bulkSpace()} onChange={setBulkSpace} options={[{ value: "", label: "Inbox", icon: <Inbox size={14} aria-hidden="true" /> }, ...store.spaces().map(space => ({ value: space.id ?? "", label: space.name ?? "Unnamed Space", icon: spaceMark(space.color, space.icon) }))]} /></div>
+              <div class="w-40"><Select aria-label="Move selected notes to Space" value={bulkSpace()} onChange={setBulkSpace} options={[{ value: "", label: "Inbox", icon: <Inbox size={14} aria-hidden="true" /> }, ...store.spaces().map(space => ({ value: space.id ?? "", label: space.name ?? "Unnamed Space", icon: spaceMark(space.color, space.icon, space.id) }))]} /></div>
               <Button variant="secondary" disabled={busy()} onClick={() => void bulk("move")}>Move</Button>
               <Button variant="danger" disabled={busy()} onClick={() => setDeleteIds([...selection()])}>Delete</Button>
             </div>
@@ -283,11 +288,9 @@ export function NoteCollection(props: NoteCollectionProps) {
                 {cards(spaceKeys)}
                 <Show when={props.onCreateSpace}>
                   <li style={{ order: 100000 }}>
-                    <Card class="flex h-[224px] !border-dashed !p-0">
-                      <Button variant="ghost" class="!h-full !w-full !flex-col !gap-3 !rounded-[var(--radius-card)]" onClick={() => props.onCreateSpace?.()}>
-                        <Plus size={24} aria-hidden="true" /><span>New Space</span>
-                      </Button>
-                    </Card>
+                    <Button variant="ghost" class={newCardClass} onClick={() => props.onCreateSpace?.()}>
+                      <Plus size={24} aria-hidden="true" /><span>New Space</span>
+                    </Button>
                   </li>
                 </Show>
               </ul>
@@ -296,11 +299,9 @@ export function NoteCollection(props: NoteCollectionProps) {
               <ul class="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(min(100%,240px),1fr))] gap-3 p-0" aria-label="Notes">
                 {cards(noteKeys)}
                 <li style={{ order: 100000 }}>
-                  <Card class="flex h-[224px] !border-dashed !p-0">
-                    <Button variant="ghost" class="!h-full !w-full !flex-col !gap-3 !rounded-[var(--radius-card)]" disabled={busy()} onClick={newNote}>
-                      <Plus size={24} aria-hidden="true" /><span>New note</span>
-                    </Button>
-                  </Card>
+                  <Button variant="ghost" class={newCardClass} disabled={busy()} onClick={newNote}>
+                    <Plus size={24} aria-hidden="true" /><span>New note</span>
+                  </Button>
                 </li>
               </ul>
             </CollapsibleSection>

@@ -4,14 +4,12 @@ import type {
   EnvironmentItem,
   ProjectSwitcherItem,
   WorkspaceCatalogProvider,
-  WorkspaceDocument,
-  WorkspaceAdr,
-  WorkspacePpmEntity,
+  WorkspaceEvidence,
+  WorkspaceVerdict,
+  WorkspaceCanonEntity,
   WorkspaceIntegration,
   WorkspaceIntegrationResource,
   WorkspaceIntegrationSyncRun,
-  WorkspaceRunbook,
-  WorkspaceSource,
   WorkspaceInbox,
   WorkspaceAtlas,
   WorkspaceAtlasHistoryEntry,
@@ -19,21 +17,19 @@ import type {
 } from "@polterware/feature-shell";
 import { asNumber, asObjectArray, asRecord, asString } from "./format";
 import {
-  mapAdrs,
+  mapVerdicts,
   mapAtlasHistory,
   mapConnections,
-  mapDocuments,
+  mapEvidence,
   mapEnvironments,
   mapIntegrationResources,
   mapKnowledgeEntityLinks,
-  mapPpmEntities,
+  mapCanonEntities,
   mapProjects,
   mapProviders,
-  mapRunbooks,
   mapProjectRepos,
   mapSettings,
   mapSettingsEnvironments,
-  mapSources,
   mapSyncRuns,
   mapInbox,
   mapAtlas,
@@ -51,14 +47,12 @@ export type WorkspaceSnapshot = {
   settingsEnvironments: ProjectEnvironment[];
   settings: ProjectGeneralSettings;
   repositories: ProjectRepository[];
-  documents: WorkspaceDocument[];
-  adrs: WorkspaceAdr[];
-  runbooks: WorkspaceRunbook[];
-  sources: WorkspaceSource[];
+  evidence: WorkspaceEvidence[];
+  verdicts: WorkspaceVerdict[];
   workCards: WorkspaceWorkCard[];
   atlas: WorkspaceAtlas;
   inbox: WorkspaceInbox;
-  ppmEntities: WorkspacePpmEntity[];
+  canonEntities: WorkspaceCanonEntity[];
   providers: WorkspaceCatalogProvider[];
   integrations: WorkspaceIntegration[];
   integrationResources: WorkspaceIntegrationResource[];
@@ -72,14 +66,12 @@ export type WorkspaceSnapshot = {
 /** Extension-domain fields merged after the Architecture shell paints. */
 export type WorkspaceExtensions = Pick<
   WorkspaceSnapshot,
-  | "documents"
-  | "adrs"
-  | "runbooks"
-  | "sources"
+  | "evidence"
+  | "verdicts"
   | "workCards"
   | "atlas"
   | "inbox"
-  | "ppmEntities"
+  | "canonEntities"
   | "providers"
   | "integrations"
   | "integrationResources"
@@ -108,14 +100,12 @@ const emptySettings: ProjectGeneralSettings = {
 
 export function emptyWorkspaceExtensions(): WorkspaceExtensions {
   return {
-    documents: [],
-    adrs: [],
-    runbooks: [],
-    sources: [],
+    evidence: [],
+    verdicts: [],
     workCards: [],
     atlas: emptyAtlas(),
     inbox: emptyInbox(),
-    ppmEntities: [],
+    canonEntities: [],
     providers: [],
     integrations: [],
     integrationResources: [],
@@ -154,9 +144,23 @@ export function emptyAtlas(): WorkspaceAtlas {
   return { nodes: [], driftSlugs: [], historical: false };
 }
 
+/**
+ * The global scope the Desktop reads under: an Atlas node path, or empty for the
+ * whole project. Loaders read it so every refresh path stays scoped.
+ */
+let activeScope: { node: string; exact: boolean } = { node: "", exact: false };
+
+export function setActiveScope(scope: { node: string; exact: boolean }): void {
+  activeScope = { node: scope.node, exact: scope.exact };
+}
+
+function scopeArgs(): { scopeNode?: string; scopeExact?: boolean } {
+  return activeScope.node ? { scopeNode: activeScope.node, scopeExact: activeScope.exact } : {};
+}
+
 /** Work cards only — the slice a Work change event refreshes. */
 export async function loadWorkCards(projectId: string): Promise<WorkspaceWorkCard[]> {
-  return mapWorkCards(asObjectArray(asRecord(await core().work.listCards({ projectId })).cards));
+  return mapWorkCards(asObjectArray(asRecord(await core().work.listCards({ projectId, ...scopeArgs() })).cards));
 }
 
 /** Atlas nodes for the canvas. A failed read keeps the page usable with no nodes. */
@@ -182,7 +186,7 @@ export async function loadAtlasHistory(projectId: string, api = core()): Promise
 /** The derived Inbox. A failed read keeps the page usable with no items. */
 export async function loadInbox(projectId: string, api = core()): Promise<WorkspaceInbox> {
   try {
-    return mapInbox(asRecord(await api.work.listInbox({ projectId })));
+    return mapInbox(asRecord(await api.work.listInbox({ projectId, ...scopeArgs() })));
   } catch (error) {
     console.warn("Inbox read failed.", error);
     return emptyInbox();
@@ -217,7 +221,7 @@ export async function loadProjects(currentProjectId?: string): Promise<ProjectCa
 
 /**
  * Architecture + project shell — enough for the first workspace paint.
- * Extension domains (Knowledge / PPM / Integrations) load separately.
+ * Extension domains (Knowledge / Canon / Integrations) load separately.
  */
 export async function loadWorkspaceShell(
   projectId: string,
@@ -274,11 +278,11 @@ export async function loadWorkspaceExtensions(
     ? Promise.resolve(options.environments)
     : loadProjectMetadata(api).then((metadata) => metadata.environments);
   const settled = await Promise.all([
-    api.knowledge.list({ projectId }),
-    api.work.listCards({ projectId }),
+    api.knowledge.list({ projectId, ...scopeArgs() }),
+    api.work.listCards({ projectId, ...scopeArgs() }),
     loadInbox(projectId, api),
     loadAtlas(projectId, "", api),
-    api.ppm.listEntities({ projectId }).catch(() => ({ entities: [] })),
+    api.canon.listEntities({ projectId }).catch(() => ({ entities: [] })),
     api.knowledge.listLinks({ projectId }).catch(() => ({ links: [] })),
     api.integrations.listProviders(),
     api.integrations.listConnections({ projectId }),
@@ -305,12 +309,10 @@ export async function loadWorkspaceExtensions(
   await Promise.resolve();
 
   const knowledgeItems = asObjectArray(asRecord(knowledgeRes).items);
-  const ppmEntities = mapPpmEntities(asObjectArray(asRecord(entitiesRes).entities));
-  const linksByKnowledge = mapKnowledgeEntityLinks(asObjectArray(asRecord(linksRes).links), ppmEntities);
-  const documents = mapDocuments(knowledgeItems, linksByKnowledge);
-  const adrs = mapAdrs(knowledgeItems, linksByKnowledge, atlas.nodes);
-  const runbooks = mapRunbooks(knowledgeItems, linksByKnowledge);
-  const sources = mapSources(knowledgeItems, linksByKnowledge);
+  const canonEntities = mapCanonEntities(asObjectArray(asRecord(entitiesRes).entities));
+  const linksByKnowledge = mapKnowledgeEntityLinks(asObjectArray(asRecord(linksRes).links), canonEntities);
+  const evidence = mapEvidence(knowledgeItems, linksByKnowledge);
+  const verdicts = mapVerdicts(knowledgeItems, linksByKnowledge, atlas.nodes);
   const workCards = mapWorkCards(asObjectArray(asRecord(workRes).cards));
 
   await Promise.resolve();
@@ -330,14 +332,12 @@ export async function loadWorkspaceExtensions(
   const syncRuns = mapSyncRuns(asObjectArray(asRecord(syncRunsRes).runs));
 
   return {
-    documents,
-    adrs,
-    runbooks,
-    sources,
+    evidence,
+    verdicts,
     workCards,
     atlas,
     inbox,
-    ppmEntities,
+    canonEntities,
     providers,
     integrations,
     integrationResources,

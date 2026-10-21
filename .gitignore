@@ -63,3 +63,6 @@ apps/web/.output/
 apps/web/.solid/
 apps/web/.nitro/
 apps/web/.solid-start/
+
+# Generated gallery props (tooling/docs-props.mjs)
+apps/gallery/src/generated/

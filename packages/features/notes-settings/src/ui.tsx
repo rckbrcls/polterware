@@ -1,36 +1,20 @@
 import { Show, type JSX } from "solid-js";
-import { PageError, PageLoading, PageOffline, StatusChip } from "@polterware/frontend-design-system";
+import {
+  PageError,
+  PageLoading,
+  PageOffline,
+  SettingsRow,
+  SettingsSection as SharedSettingsSection,
+  StatusChip,
+} from "@polterware/frontend-design-system";
 import type { Honesty } from "./model";
 
+/** Notes settings give each row its own card. */
 export function SettingsSection(props: { title: string; description?: string; children: JSX.Element }) {
-  return (
-    <section class="flex flex-col gap-2">
-      <div class="px-1">
-        <h3 class="m-0 text-[12px] font-medium text-[var(--color-text-muted)]">{props.title}</h3>
-        <Show when={props.description}>
-          <p class="m-0 mt-0.5 text-[11.5px] text-[var(--color-text-muted)]">{props.description}</p>
-        </Show>
-      </div>
-      <div class="notes-settings-stack">{props.children}</div>
-    </section>
-  );
+  return <SharedSettingsSection variant="stack" {...props} />;
 }
 
-export function SettingsRow(props: { label: JSX.Element; description?: JSX.Element; for?: string; children?: JSX.Element }) {
-  return (
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <div class="min-w-40 flex-1">
-        <label for={props.for} class="block text-[12.5px] text-[var(--color-text-primary)]">{props.label}</label>
-        <Show when={props.description}>
-          <p class="m-0 mt-0.5 text-[11.5px] text-[var(--color-text-muted)]">{props.description}</p>
-        </Show>
-      </div>
-      <Show when={props.children}>
-        <div class="flex min-w-0 max-w-full flex-wrap items-center gap-2">{props.children}</div>
-      </Show>
-    </div>
-  );
-}
+export { SettingsRow };
 
 export function HonestyLine(props: { state: Honesty; error?: string; idle?: string }) {
   const tone = () => props.state === "failed" || props.state === "unavailable" ? "danger" : props.state === "queued" ? "syncing" : "ok";

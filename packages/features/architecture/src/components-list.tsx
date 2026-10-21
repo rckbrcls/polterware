@@ -1,6 +1,6 @@
 import { For, Show, createEffect, createMemo, createSignal, on } from "solid-js";
 import {
-  ChevronRight,
+  DisclosureButton,
   PageContent,
   PageEmpty,
   animateCollapse,
@@ -120,20 +120,12 @@ function ComponentsSection(props: {
             </button>
           )}
         </Show>
-        <button
-          type="button"
+        <DisclosureButton
           class="atlas-components__toggle"
-          aria-expanded={open()}
+          expanded={open()}
           aria-label={`${open() ? "Collapse" : "Expand"} ${props.title}`}
           onClick={() => setOpen((value) => !value)}
-        >
-          <ChevronRight
-            size={14}
-            aria-hidden
-            class="transition-transform duration-[var(--duration-control)] ease-[var(--ease-enter)] motion-reduce:transition-none"
-            classList={{ "rotate-90": open() }}
-          />
-        </button>
+        />
       </h2>
       <ul class="atlas-components__list" ref={list} data-state="open">
         <For each={props.components}>

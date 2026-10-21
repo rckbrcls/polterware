@@ -44,6 +44,8 @@
     "lint": "oxlint . && (turbo run lint --continue || true)",
     "format:check": "echo 'format:check ok (prettier optional until packages wired)'",
     "design:lint": "node tooling/check-ui-opacity.mjs",
+    "docs:props": "node tooling/docs-props.mjs",
+    "docs:coverage": "node tooling/check-docs-coverage.mjs",
     "generate": "bash tooling/generate.sh",
     "verify": "bash tooling/verify.sh",
     "verify:notes": "bash tooling/verify-notes.sh"
@@ -52,6 +54,7 @@
     "@oxlint/plugins": "1.85.0",
     "oxlint": "1.85.0",
     "turbo": "^2.11.3",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "typescript-classic": "npm:typescript@5.9.3"
   }
 }

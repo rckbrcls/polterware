@@ -1,7 +1,7 @@
 import { For, Show, createEffect, createSignal, type JSX } from "solid-js";
 import { A11yDialog, Button, Field, Input, Select, StatusChip, Textarea } from "@polterware/frontend-design-system";
 import type { FeatureFlowStep, WorkspaceFeatureReview } from "@polterware/feature-shell";
-import { adrStatusTone } from "./knowledge-document-helpers";
+import { verdictStatusTone } from "./knowledge-document-helpers";
 import "./new-feature-flow.css";
 
 /** One line the flow adds to a card, or its under: value. */
@@ -338,8 +338,8 @@ export function NewFeatureFlow(props: {
                         <li class="pw-feature-flow__row">
                           <span>{decision.title || decision.ref}</span>
                           <StatusChip
-                            tone={decision.id ? adrStatusTone(decision.status) : "warn"}
-                            label={decision.id ? decision.status || "unknown" : "no ADR"}
+                            tone={decision.id ? verdictStatusTone(decision.status) : "warn"}
+                            label={decision.id ? decision.status || "unknown" : "no Verdict"}
                           />
                           <Show when={decision.from !== "card"}>
                             <span class="pw-feature-flow__muted">via {decision.from}</span>

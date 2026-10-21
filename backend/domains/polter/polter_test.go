@@ -16,11 +16,11 @@ rationale: Slice 5 needs cards
 # Roadmap
 
 ## git-metadata-import: Git metadata import
-stage: plan · owner: erick · decisions: ADR-0007
+stage: plan · owner: erick · decisions: Verdict-0007
 
 Import HEAD, branch and recent commits as evidence.
 
-- [ ] T1 Commit evidence upsert ` + "`backend/domains/ppm/*`" + `
+- [ ] T1 Commit evidence upsert ` + "`backend/domains/canon/*`" + `
 - [X] Stamp revision on observed facts
 ? Include merge commits? [blocking] (yes | no | first-parent)
 ! No network calls during scan
@@ -44,7 +44,7 @@ func TestDecodeSample(t *testing.T) {
 	if card.Intent != "Import HEAD, branch and recent commits as evidence." {
 		t.Fatalf("intent = %q", card.Intent)
 	}
-	if len(card.Tasks) != 2 || card.Tasks[0].Number != 1 || card.Tasks[0].Scope != "backend/domains/ppm/*" {
+	if len(card.Tasks) != 2 || card.Tasks[0].Number != 1 || card.Tasks[0].Scope != "backend/domains/canon/*" {
 		t.Fatalf("tasks = %+v", card.Tasks)
 	}
 	if card.Tasks[1].State != work.TaskDone {
@@ -159,9 +159,9 @@ func TestPlanUnknownReferences(t *testing.T) {
 }
 
 func TestLintReferences(t *testing.T) {
-	_, diags := Lint(sample, &References{ADRs: []ADRRef{{ID: "adr-x", Title: "ADR 0007: Deterministic import"}}})
+	_, diags := Lint(sample, &References{Verdicts: []VerdictRef{{ID: "verdict-x", Title: "Verdict 0007: Deterministic import"}}})
 	if HasErrors(diags) {
-		t.Fatalf("ADR-0007 should resolve: %+v", diags)
+		t.Fatalf("Verdict-0007 should resolve: %+v", diags)
 	}
 	_, diags = Lint(sample, &References{})
 	if !hasDiag(diags, 10, "unknown decision") {
