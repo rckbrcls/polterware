@@ -31,7 +31,7 @@ export function SiteHeader() {
 
   return (
     <div class="site-header-bar">
-      <header class="site-header site-container">
+      <header class="site-header site-container card-texture">
         <a class="wordmark" href="/" aria-label="Polterware home"><img src="/polter-ghost.png" alt="" width="20" height="24" />polterware</a>
         <NavigationMenu aria-label="Main" viewportAlign="center" class="site-nav">
           <NavigationMenuList>
@@ -66,8 +66,8 @@ export function SiteHeader() {
           </NavigationMenuList>
         </NavigationMenu>
         <div class="site-header-actions">
-          <LinkButton variant="ghost" size="sm" href={REPO_URL} target="_blank" rel="noopener noreferrer" class="hide-mobile">GitHub</LinkButton>
-          <LinkButton variant="primary" size="sm" href="/polterware#install" class="header-cta">Download</LinkButton>
+          <LinkButton variant="texture" size="sm" href={REPO_URL} target="_blank" rel="noopener noreferrer" class="hide-mobile">GitHub</LinkButton>
+          <LinkButton variant="texture" textureTone="brand" size="sm" href="/polterware#install">Download</LinkButton>
           <Button variant="icon" class="show-mobile" aria-label="Open menu" onClick={() => setOpen(true)}><Menu01Icon size={18} /></Button>
         </div>
       </header>

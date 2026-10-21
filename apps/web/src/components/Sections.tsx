@@ -114,7 +114,7 @@ export function ClosingCta(props: { title: string; body: string; actions: JSX.El
 
 export function NextLink(props: { href: string; label: string; detail: string }) {
   return (
-    <a class="next-link" href={props.href}>
+    <a class="next-link card-texture" href={props.href}>
       <span class="mono">{props.detail}</span>
       <strong>{props.label}<ArrowRight02Icon size={18} /></strong>
     </a>

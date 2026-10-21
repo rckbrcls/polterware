@@ -13,13 +13,12 @@ p { line-height: 1.6; }
 .show-mobile { display: none !important; }
 
 /* Header */
-.site-header-bar { position: sticky; top: 0; z-index: var(--z-sticky); background: var(--color-app-background); border-bottom: 1px solid var(--color-border-subtle); }
-.site-header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 64px; gap: 16px; }
+.site-header-bar { position: sticky; top: 12px; z-index: var(--z-sticky); margin-top: 12px; pointer-events: none; }
+.site-header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 56px; gap: 16px; padding-inline: 20px; pointer-events: auto; }
 .wordmark { display: inline-flex; align-items: center; gap: 10px; color: var(--color-text-primary); font-size: 17px; font-weight: 600; letter-spacing: -0.03em; }
 .wordmark img { width: 18px; height: auto; }
 .site-nav { justify-self: center; }
 .site-header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
-.header-cta { border-radius: 999px !important; }
 .nav-footer-link { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-secondary); }
 .nav-footer-link:hover { color: var(--color-text-primary); }
 .pw-navmenu-preview-footer strong { color: var(--color-text-primary); font-weight: 500; margin-right: 6px; }
@@ -85,8 +84,7 @@ p { line-height: 1.6; }
 
 /* Next links */
 .next-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; padding-block: 48px; border-top: 1px solid var(--color-border-subtle); }
-.next-link { display: flex; flex-direction: column; gap: 24px; padding: 22px 24px; border-radius: var(--radius-card); background: var(--color-surface); border: 1px solid var(--color-border-subtle); transition: background var(--duration-control) var(--ease-standard), border-color var(--duration-control) var(--ease-standard); }
-.next-link:hover { background: var(--color-surface-hover); border-color: var(--color-border-default); }
+.next-link { display: flex; flex-direction: column; gap: 24px; padding: 22px 24px; }
 .next-link span { font-size: 11px; color: var(--color-text-muted); text-transform: uppercase; }
 .next-link strong { display: flex; align-items: center; justify-content: space-between; color: var(--color-text-primary); font-size: 20px; font-weight: 520; letter-spacing: -0.02em; }
 

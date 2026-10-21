@@ -90,6 +90,7 @@ export function Button(props: ButtonProps) {
 export type LinkButtonProps = JSX.AnchorHTMLAttributes<HTMLAnchorElement> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  textureTone?: ButtonTextureTone;
 };
 
 function buttonClassName(variant: ButtonVariant = "secondary", size?: ButtonSize, className?: string) {
@@ -103,6 +104,6 @@ function buttonClassName(variant: ButtonVariant = "secondary", size?: ButtonSize
 }
 
 export function LinkButton(props: LinkButtonProps) {
-  const [local, rest] = splitProps(props, ["variant", "size", "class", "classList"]);
-  return <a {...rest} data-tone={toneOf(local.variant)} class={buttonClassName(local.variant, local.size, local.class)} classList={local.classList} />;
+  const [local, rest] = splitProps(props, ["variant", "size", "textureTone", "class", "classList"]);
+  return <a {...rest} data-tone={toneOf(local.variant)} data-texture-tone={local.variant === "texture" ? (local.textureTone ?? "neutral") : undefined} class={buttonClassName(local.variant, local.size, local.class)} classList={local.classList} />;
 }
