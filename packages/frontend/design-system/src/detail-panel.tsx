@@ -4,6 +4,7 @@ import { animate, type AnimationPlaybackControls } from "motion";
 import { prefersReducedMotion } from "./reduced-motion";
 import { spring } from "./springs";
 import { ChevronDown } from "./hugeicons";
+import { FloatingSurfaceProvider } from "./floating-surface";
 import { PanelInteractionContext } from "./panel-interaction";
 import { DetailPanelLinkedEntities } from "./detail-panel-linked-entities";
 import { DetailPanelMenuItem } from "./detail-panel-menu";
@@ -30,6 +31,8 @@ export type DetailPanelBodyProps = {
 };
 
 export type DetailPanelHeaderProps = {
+  /** Optional fixed title above the scrollable body. */
+  title?: JSX.Element;
   class?: string;
 };
 
@@ -47,7 +50,7 @@ export type DetailPanelSectionProps = {
   aside?: JSX.Element;
   /** Renders the section as a card whose body folds behind its title. */
   collapsible?: boolean;
-  /** Leading icon of a collapsible section. */
+  /** Decorative leading icon for the section heading. */
   icon?: JSX.Element;
   /** Initial state of a collapsible section (default open). */
   defaultOpen?: boolean;
@@ -72,22 +75,39 @@ function DetailPanelHeader(props: DetailPanelHeaderProps) {
   const context = useDetailPanel("Header");
   createEffect(() => context.setHeaderClass(props.class ?? ""));
   onCleanup(() => context.setHeaderClass(""));
-  return null;
+  return <Show when={context.headerHost()}>{(host) =>
+    <Show when={props.title}><Portal mount={host()}><h2 class="pw-detail-panel__title">{props.title}</h2></Portal></Show>
+  }</Show>;
 }
 
-/** Entity identity belongs inside the scrollable detail content. */
+export type DetailPanelFooterProps = {
+  children: JSX.Element;
+  class?: string;
+  "aria-label"?: string;
+};
+
+/** Fixed action area outside the detail body's scroll viewport. */
+function DetailPanelFooter(props: DetailPanelFooterProps) {
+  useDetailPanel("Footer");
+  return <footer class={`pw-detail-panel__footer ${props.class ?? ""}`} aria-label={props["aria-label"]}>{props.children}</footer>;
+}
+
+/** Entity identity uses the fixed header; metadata stays in the scrollable content. */
 function DetailPanelTitle(props: DetailPanelTitleProps) {
-  return (
-    <div class="pw-detail-panel__identity">
-      <Show when={props.icon}>
-        <span class="pw-detail-panel__header-icon" aria-hidden>{props.icon}</span>
-      </Show>
-      <h2 class="pw-detail-panel__title">{props.title}</h2>
-      <Show when={props.meta}>
-        <div class="pw-detail-panel__meta">{props.meta}</div>
-      </Show>
-    </div>
-  );
+  const context = useDetailPanel("Title");
+  return <>
+    <Show when={context.headerHost()}>{host =>
+      <Portal mount={host()}>
+        <div class="pw-detail-panel__identity">
+          <Show when={props.icon}>
+            <span class="pw-detail-panel__header-icon" aria-hidden>{props.icon}</span>
+          </Show>
+          <h2 class="pw-detail-panel__title">{props.title}</h2>
+        </div>
+      </Portal>
+    }</Show>
+    <Show when={props.meta}><div class="pw-detail-panel__meta pw-detail-panel__identity-meta">{props.meta}</div></Show>
+  </>;
 }
 
 function DetailPanelBody(props: DetailPanelBodyProps) {
@@ -135,21 +155,24 @@ function DetailPanelSection(props: DetailPanelSectionProps) {
   return (
     <Show when={props.collapsible} fallback={
       <section
-        class={`pw-detail-panel__section ${props.class ?? ""}`}
+        class={`pw-detail-panel__section surface-panel surface-panel--nested ${props.class ?? ""}`}
         aria-labelledby={props.title ? titleId : undefined}
       >
         <Show when={props.title || props.aside}>
           <div class="pw-detail-panel__section-heading">
-            <h3 id={titleId} class="pw-detail-panel__section-title">
-              {props.title}
-            </h3>
+            <div class="pw-detail-panel__section-label">
+              <Show when={props.title && props.icon}><span class="pw-detail-panel__section-icon" aria-hidden>{props.icon}</span></Show>
+              <h3 id={titleId} class="pw-detail-panel__section-title">
+                {props.title}
+              </h3>
+            </div>
             <Show when={props.aside}>{props.aside}</Show>
           </div>
         </Show>
         {props.children}
       </section>
     }>
-      <section class={`pw-detail-panel__section pw-detail-panel__section--card ${props.class ?? ""}`} aria-labelledby={titleId} data-open={open()}>
+      <section class={`pw-detail-panel__section pw-detail-panel__section--card surface-panel surface-panel--nested ${props.class ?? ""}`} aria-labelledby={titleId} data-open={open()}>
         <div class="pw-detail-panel__section-heading">
           <button type="button" class="pw-detail-panel__section-toggle" aria-expanded={open()} aria-controls={bodyId} onClick={() => setOpen(value => !value)}>
             <Show when={props.icon}><span class="pw-detail-panel__section-icon" aria-hidden>{props.icon}</span></Show>
@@ -235,7 +258,9 @@ function DetailPanelContent(props: { children: JSX.Element; class?: string }) {
           ref={(container) => container.classList.add("pw-detail-panel__portal")}
         >
           <PanelInteractionContext.Provider value={context.interaction}>
-            <div class={`pw-detail-panel__content ${props.class ?? ""}`}>{props.children}</div>
+            <FloatingSurfaceProvider>
+              <div class={`pw-detail-panel__content ${props.class ?? ""}`}>{props.children}</div>
+            </FloatingSurfaceProvider>
           </PanelInteractionContext.Provider>
         </Portal>
       )}
@@ -248,6 +273,7 @@ export const DetailPanel = {
   Collection: DetailPanelCollection,
   CollectionHeader: DetailPanelCollectionHeader,
   Header: DetailPanelHeader,
+  Footer: DetailPanelFooter,
   Title: DetailPanelTitle,
   PrimaryAction: DetailPanelPrimaryAction,
   MenuItem: DetailPanelMenuItem,

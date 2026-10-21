@@ -20,7 +20,7 @@ html[data-shell-chrome="vibrancy"] #root {
   background: transparent !important;
 }
 
-/* One accent across Vitals: the primary (ice white, dark gray on the light theme; also the shared
+/* One accent across Vitals: the primary (ice white; also the shared
  * brand token) drives success and healthy meters. Warning and danger stay amber and red because they carry status. */
 :root {
   --color-success: var(--color-primary);
@@ -221,7 +221,6 @@ main.vitals-main {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--color-surface);
 }
 
 .vitals-stack {
@@ -773,34 +772,6 @@ main.vitals-main {
 .vitals-settings-card:focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
-}
-
-/* App-scoped light palette: shared controls continue to consume semantic tokens. */
-:root[data-theme="light"] {
-  color-scheme: light;
-  --color-primary: #2e2e2e;
-  --color-primary-foreground: #eef1f3;
-  --color-app-background: Canvas;
-  --color-shell-background: Canvas;
-  --color-sidebar-background: Canvas;
-  --color-shell-glass: Canvas;
-  --color-surface: color-mix(in srgb, Canvas 98%, CanvasText);
-  --color-surface-subtle: color-mix(in srgb, Canvas 96%, CanvasText);
-  --color-surface-raised: Canvas;
-  --color-surface-hover: color-mix(in srgb, Canvas 92%, CanvasText);
-  --color-surface-active: color-mix(in srgb, Canvas 88%, CanvasText);
-  --color-surface-selected: color-mix(in srgb, Canvas 85%, CanvasText);
-  --color-text-primary: CanvasText;
-  --color-text-secondary: color-mix(in srgb, CanvasText 72%, Canvas);
-  --color-text-muted: color-mix(in srgb, CanvasText 60%, Canvas);
-  --color-text-disabled: color-mix(in srgb, CanvasText 35%, Canvas);
-  --color-border-subtle: color-mix(in srgb, CanvasText 8%, transparent);
-  --color-border-default: color-mix(in srgb, CanvasText 14%, transparent);
-  --color-border-strong: color-mix(in srgb, CanvasText 22%, transparent);
-  --edge-light-field-highlight: var(--color-border-default);
-  --edge-light-field-rim: var(--color-border-subtle);
-  --edge-light-surface-highlight: var(--color-border-default);
-  --edge-light-surface-rim: var(--color-border-subtle);
 }
 
 /* Card visibility menu: room for "Temperature / GPU" beside its switch. */

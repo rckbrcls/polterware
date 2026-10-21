@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, protocol, session, shell, systemPreferences } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, protocol, session, shell, systemPreferences, nativeTheme } from "electron";
 import { dirname, isAbsolute, join } from "node:path";
 import { readFileSync, writeFileSync } from "node:fs";
 import { createCoreClients, type CoreClients } from "./core/client.js";
@@ -20,6 +20,9 @@ import { mcpProbePublicResult, probeMcpConnection } from "./mcp-probe.js";
 import { APP_METHODS, EVENTS, type DeepLink } from "../shared/bridge.js";
 import { updateStatus } from "./updater.js";
 import { installReminders, runNotifyInspect } from "./reminders/index.js";
+
+// Keep native controls and windows dark regardless of the system appearance.
+nativeTheme.themeSource = "dark";
 
 const e2eEnv = process.argv.find(arg => arg.startsWith("--notes-e2e-env="))?.slice("--notes-e2e-env=".length);
 if (e2eEnv) {

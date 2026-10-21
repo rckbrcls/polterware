@@ -25,6 +25,16 @@ describe("settings store", () => {
     expect(store.settings().calendarWeekStart).toBe("sun");
   });
 
+  it.each(["light", "system"])("keeps legacy %s preferences dark without changing other settings", async (appearanceTheme) => {
+    const { store, settings } = setup({ appearanceTheme, focusWorkMin: 45 });
+    await store.refresh();
+    expect(store.settings().appearanceTheme).toBe("dark");
+    await store.set("appearance.theme", appearanceTheme);
+    expect(store.settings().appearanceTheme).toBe("dark");
+    expect(settings.appearanceTheme).toBe("dark");
+    expect(store.settings().focusWorkMin).toBe(45);
+  });
+
   it("shows the core validation error text and does not keep an invalid value", async () => {
     const { store, settings } = setup();
     await store.refresh();

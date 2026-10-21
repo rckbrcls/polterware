@@ -65,6 +65,8 @@ export default function Home() {
       <section class="next-row site-container">
         <NextLink href={products.polterware.href} detail="Desktop" label="Polterware" />
         <NextLink href={products.cli.href} detail="Terminal" label="Polterware CLI" />
+        <NextLink href={products.notes.href} detail="Notes" label="Polterware Notes" />
+        <NextLink href={products.dispatch.href} detail="Delegation" label="Dispatch" />
         <NextLink href={products.vitals.href} detail="Companion" label="Polterware Vitals" />
       </section>
 

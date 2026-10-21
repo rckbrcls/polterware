@@ -45,11 +45,11 @@ export default {
       title: "Default, selected, and disabled",
       render: () => (
         // #region states
-        <>
+        <FilterChipGroup aria-label="Card status">
           <FilterChip>All</FilterChip>
           <FilterChip selected count={5} countAriaLabel="5 active cards">Active</FilterChip>
           <FilterChip disabled>Archived</FilterChip>
-        </>
+        </FilterChipGroup>
         // #endregion
       ),
     },

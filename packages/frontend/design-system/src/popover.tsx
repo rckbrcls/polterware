@@ -13,6 +13,7 @@ import { Portal } from "solid-js/web";
 import { Popover as ArkPopover } from "@ark-ui/solid/popover";
 import { createPopupMotion } from "./popup-motion";
 import "./popover.css";
+import { FloatingSurfaceProvider } from "./floating-surface";
 
 export type PopoverProps = {
   open: boolean;
@@ -158,7 +159,7 @@ function PopoverSurface(props: { class: string; style: JSX.CSSProperties; childr
   const motion = createPopupMotion();
   return (
     <div ref={motion.ref} class={props.class} style={props.style}>
-      {props.children}
+      <FloatingSurfaceProvider>{props.children}</FloatingSurfaceProvider>
     </div>
   );
 }

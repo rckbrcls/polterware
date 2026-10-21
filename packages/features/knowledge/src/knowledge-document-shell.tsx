@@ -53,14 +53,8 @@ export function KnowledgeDocumentShell(props: {
               <div class="pw-knowledge-doc__tabs">{props.tabs}</div>
             </Show>
             <header class="pw-knowledge-doc__header">
-              <div class="flex items-center gap-2">
-                <Show when={props.icon}>
-                  <span class="shrink-0 text-[var(--color-text-secondary)]" aria-hidden>{props.icon}</span>
-                </Show>
-                <Show
-                  when={props.onTitleChange}
-                  fallback={<h2 class="pw-knowledge-doc__title">{props.title}</h2>}
-                >
+              <DetailPanel.Title icon={props.icon} title={
+                <Show when={props.onTitleChange} fallback={props.title}>
                   <Input
                     aria-label="Title"
                     placeholder="Untitled"
@@ -69,7 +63,7 @@ export function KnowledgeDocumentShell(props: {
                     onInput={(event) => props.onTitleChange?.(event.currentTarget.value)}
                   />
                 </Show>
-              </div>
+              } />
               <Show when={props.onTagsChange}>
                 <TagPicker
                   tags={tagOptions()}
@@ -117,7 +111,7 @@ export function KnowledgeDocumentNotFound(props: {
         <div class="pw-knowledge-doc">
           <div class="pw-knowledge-doc__body">
             <div class="pw-knowledge-doc__column">
-              <h2 class="pw-knowledge-doc__title">{title()}</h2>
+              <DetailPanel.Title title={title()} />
               <p class="m-0 text-[12.5px] text-[var(--color-text-muted)]">
                 This {props.kindLabel.toLowerCase()} is not available in the current project knowledge
                 set. It may have been archived or the link is stale.

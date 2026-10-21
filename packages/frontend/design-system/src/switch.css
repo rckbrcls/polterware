@@ -35,9 +35,10 @@
   border-radius: 6px;
 }
 
+/* Lit track: a mid-grey gradient, not the white primary, so it stays quiet next to the dark thumb. */
 .pw-switch__control[data-state="checked"] {
-  background: var(--color-primary);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-primary), black 22%);
+  background: linear-gradient(to bottom, #a3a3a3, #787878);
+  box-shadow: inset 0 0 0 1px var(--field-frame);
 }
 
 @media (hover: hover) {
@@ -48,7 +49,7 @@
 
   :where(.pw-switch, .pw-switch-row):not([data-disabled]):hover
     .pw-switch__control[data-state="checked"] {
-    background: color-mix(in oklab, var(--color-primary), black 10%);
+    background: linear-gradient(to bottom, #b0b0b0, #828282);
   }
 }
 
@@ -67,7 +68,7 @@
   top: 0;
   left: 0;
   display: block;
-  border-radius: 5px;
+  border-radius: 4px;
   /* Texture face: lit 1px rim, glossy gradient, dark frame (same palette as the texture button). */
   background: linear-gradient(to bottom, #5a5a5a, #3d3d3d);
   box-shadow: 0 0 0 1px var(--field-frame), inset 0 0 0 1px #6b6b6b, 0 1px 2px var(--color-shadow);
@@ -76,12 +77,13 @@
 }
 
 .pw-switch__control[data-size="sm"] .pw-switch__thumb {
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 .pw-switch__thumb[data-state="checked"] {
   background: linear-gradient(to bottom, #3b3b3b, #262626);
-  box-shadow: inset 0 0 0 1px #5c5c5c, 0 1px 2px var(--color-shadow);
+  /* Same dark frame as the resting thumb, so the face reads as raised on the grey track. */
+  box-shadow: 0 0 0 1px var(--field-frame), inset 0 0 0 1px #5c5c5c, 0 1px 2px var(--color-shadow);
 }
 
 .pw-switch__control[data-disabled] .pw-switch__thumb {

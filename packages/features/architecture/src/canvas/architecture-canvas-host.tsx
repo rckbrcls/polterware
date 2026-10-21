@@ -1997,10 +1997,6 @@ export function ArchitectureCanvasHost(props: {
             transform: `translate3d(${gridPhase(vp().x)}px, ${gridPhase(vp().y)}px, 0)`,
           }}
         />
-        <div
-          class="architecture-canvas-edge-fade pointer-events-none absolute inset-0"
-          aria-hidden
-        />
 
         <div ref={worldEl} style={worldStyle()}>
           <Show when={!props.nested}>

@@ -108,3 +108,11 @@
 .pw-knowledge-doc__meta:not(:has(> :not(:empty))) {
   display: none;
 }
+
+/* Header titles retain editing while matching the shared compact identity. */
+.pw-detail-panel__header-title .pw-knowledge-doc__title-input.pw-knowledge-doc__title-input {
+  width: 100%;
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: inherit;
+}

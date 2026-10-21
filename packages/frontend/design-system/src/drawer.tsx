@@ -6,6 +6,7 @@ import { Show } from "solid-js";
  */
 import { Drawer as ArkDrawer } from "@ark-ui/solid/drawer";
 import "./drawer.css";
+import { FloatingSurfaceProvider } from "./floating-surface";
 
 export type DrawerProps = {
   open: boolean;
@@ -69,12 +70,14 @@ export function Drawer(props: DrawerProps) {
               ×
             </ArkDrawer.CloseTrigger>
           </header>
-          <div class={bodyClass()}>{props.children}</div>
-          <Show when={props.footer}>
-            <footer class="shrink-0 border-t border-[var(--color-border-subtle)] px-4 py-3">
-              {props.footer}
-            </footer>
-          </Show>
+          <FloatingSurfaceProvider>
+            <div class={bodyClass()}>{props.children}</div>
+            <Show when={props.footer}>
+              <footer class="shrink-0 border-t border-[var(--color-border-subtle)] px-4 py-3">
+                {props.footer}
+              </footer>
+            </Show>
+          </FloatingSurfaceProvider>
         </ArkDrawer.Content>
       </ArkDrawer.Positioner>
     </ArkDrawer.Root>

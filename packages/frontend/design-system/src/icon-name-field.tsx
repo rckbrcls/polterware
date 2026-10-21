@@ -37,7 +37,7 @@ export function IconNameField(props: IconNameFieldProps) {
         <button
           ref={trigger}
           type="button"
-          class="pw-icon-name-field__trigger control-field"
+          class="pw-icon-name-field__trigger control-field pw-field-control"
           aria-label={`${props.label} icon and color`}
           aria-haspopup="dialog"
           aria-expanded={open()}

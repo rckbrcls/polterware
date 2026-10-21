@@ -25,7 +25,7 @@ jobs:
   build:
     # .icon (Icon Composer) app icons need actool from Xcode 26.
     runs-on: macos-26
-    if: github.repository == 'polterware/polterware'
+    if: github.repository == 'rckbrcls/polterware'
     outputs:
       product: ${{ steps.meta.outputs.product }}
       version: ${{ steps.meta.outputs.version }}
@@ -99,7 +99,7 @@ jobs:
       - name: Attach artifacts to a draft in the same repository
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: polterware/polterware
+          GH_REPO: ${{ github.repository }}
           APP: ${{ inputs.app }}
           RELEASE_TAG: ${{ inputs.tag }}
           PRODUCT: ${{ needs.build.outputs.product }}
@@ -115,7 +115,7 @@ jobs:
             cat > release-notes.txt <<NOTES
           $PRODUCT $VERSION for macOS on Apple Silicon (arm64). Ad-hoc signed; not notarized.
           Gatekeeper rejection is expected. First run: right-click the extracted $PRODUCT.app and choose Open, or remove quarantine from that trusted app with xattr -dr com.apple.quarantine /path/to/$PRODUCT.app.
-          Install or update from a terminal (run it again to update): curl -fsSL https://raw.githubusercontent.com/polterware/polterware/main/scripts/install-desktop.sh | APP=$APP bash
+          Install or update from a terminal (run it again to update): curl -fsSL https://raw.githubusercontent.com/$GH_REPO/$RELEASE_TAG/scripts/install-desktop.sh | APP=$APP bash
           NOTES
             gh release create "$RELEASE_TAG" --verify-tag --draft "${prerelease[@]}" --title "$PRODUCT $VERSION" --notes-file release-notes.txt
           fi

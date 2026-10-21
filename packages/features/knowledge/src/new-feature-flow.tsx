@@ -113,7 +113,7 @@ export function NewFeatureFlow(props: {
       case "intent":
         return (
           <>
-            <Button size="sm" variant="ghost" onClick={() => props.onClose()}>
+            <Button size="sm" variant="texture" onClick={() => props.onClose()}>
               Cancel
             </Button>
             <Button

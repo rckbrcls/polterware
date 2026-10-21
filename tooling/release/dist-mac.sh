@@ -73,7 +73,7 @@ const report = { app: key, version, arch: 'arm64', electron, sourceDateEpoch: pr
   lockSha256: hash(path.join(root, 'pnpm-lock.yaml')),
   ...(fs.existsSync(nativeLock) ? { nativeLockSha256: hash(nativeLock) } : {}),
   payloadSha256: Object.fromEntries([...release.binaries.map(binary => binary.path), 'app.asar'].map(file => [file, hash(path.join(resources, file))])),
-  artifacts: ['dmg', 'zip'].map(ext => { const file = `${release.product}-${version}-arm64.${ext}`; return { file, bytes: fs.statSync(path.join(directory, file)).size }; }) };
+  artifacts: ['dmg', 'zip'].map(ext => { const file = `${release.product.replace(/ /g, '-')}-${version}-arm64.${ext}`; return { file, bytes: fs.statSync(path.join(directory, file)).size }; }) };
 fs.writeFileSync(path.join(directory, 'build-report.json'), JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));
 JS

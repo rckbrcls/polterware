@@ -68,7 +68,7 @@
  * Filled service-mark logos are unchanged (no stroke paint).
  */
 .pw-icon-tile-mark :is(path, circle, rect, line, polyline, polygon) {
-  stroke-width: var(--pw-icon-tile-stroke-width, 2);
+  stroke-width: var(--pw-icon-tile-stroke-width, 2.5);
 }
 
 .pw-icon-tile--dimmed .pw-icon-tile-mark {

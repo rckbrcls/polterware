@@ -44,7 +44,6 @@ export function FilterOptionsHeader(props: {
         <Button
           size="sm"
           variant="ghost"
-          class="!h-auto !px-1.5 !py-1 text-[11px]"
           onClick={() => props.onClear?.()}
         >
           {props.clearLabel ?? "Clear"}

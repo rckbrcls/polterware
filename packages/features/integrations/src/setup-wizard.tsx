@@ -265,7 +265,7 @@ export function SetupWizard(props: {
             title={`Connect ${current().name}`}
             subtitle="Local CLI authentication"
             actions={
-              <Button size="sm" variant="ghost" onClick={() => void handleBack()}>
+              <Button size="sm" variant="texture" onClick={() => void handleBack()}>
                 Cancel
               </Button>
             }

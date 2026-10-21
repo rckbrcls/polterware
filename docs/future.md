@@ -18,6 +18,8 @@ Category: **Project Context & Change Intelligence for AI Coding.** Polterware ke
 
 ## Explicitly not now
 
+- Light themes and theme selection across the ecosystem. All apps currently use dark mode exclusively.
+
 - A rigid state machine for agents (UNDERSTAND → PLAN → …).
 - LLM calls or user LLM keys inside the Desktop or the local binary.
 - A sidebar for skills, plugins, or hooks as a product pillar (setup lives in Agents › Access).

@@ -7,6 +7,8 @@ import {
   Skeleton,
   StatusChip,
   pushToast,
+  History,
+  Link,
 } from "@polterware/frontend-design-system";
 import { openDetail } from "@polterware/feature-shell";
 import { detailPanelStore } from "@polterware/frontend-state";
@@ -452,7 +454,7 @@ export function CanonFactsPanel(props: {
                     Link evidence
                   </Button>
                 </div>
-                <DetailPanel.Section title="Linked evidence">
+                <DetailPanel.Section title="Linked evidence" icon={<Link size={14} />}>
                   <Show
                     when={current().evidence.length > 0}
                     fallback={<p class="m-0 text-[var(--color-text-muted)]">No evidence linked to this fact.</p>}
@@ -475,7 +477,7 @@ export function CanonFactsPanel(props: {
                     </ul>
                   </Show>
                 </DetailPanel.Section>
-                <DetailPanel.Section title="Provenance">
+                <DetailPanel.Section title="Provenance" icon={<History size={14} />}>
                   <DetailPanel.Properties>
                     <DetailPanel.Property label="Id" value={current().fact.id} mono />
                     <DetailPanel.Property label="Entity" value={current().fact.entityId || null} mono />

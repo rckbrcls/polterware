@@ -1,5 +1,5 @@
 import { For, Show, createMemo, createSignal, onCleanup } from "solid-js";
-import { Plus } from "@polterware/frontend-design-system";
+import { Box, Folder, IconTile, Layers, Plus } from "@polterware/frontend-design-system";
 import {
   MenuItem,
   MenuList,
@@ -27,25 +27,6 @@ export type WorkspaceContext = {
 type MenuId = "project" | "env" | "scope" | null;
 
 export const WHOLE_PROJECT_SCOPE: WorkspaceScope = { node: "", exact: false };
-
-/** Atlas nodes in tree order (parents before children), with their depth. */
-function scopeTree(nodes: ScopeNodeItem[]): { node: ScopeNodeItem; depth: number }[] {
-  const children = new Map<string, ScopeNodeItem[]>();
-  const ids = new Set(nodes.map((node) => node.id));
-  for (const node of nodes) {
-    const key = ids.has(node.parentId) ? node.parentId : "";
-    children.set(key, [...(children.get(key) ?? []), node]);
-  }
-  const out: { node: ScopeNodeItem; depth: number }[] = [];
-  const walk = (parent: string, depth: number) => {
-    for (const node of children.get(parent) ?? []) {
-      out.push({ node, depth });
-      walk(node.id, depth + 1);
-    }
-  };
-  walk("", 0);
-  return out;
-}
 
 function kindLabel(kind: EnvironmentKind): string {
   return kind.toUpperCase();
@@ -107,12 +88,12 @@ export function WorkspaceContextBar(props: {
   const scope = () => props.scope ?? WHOLE_PROJECT_SCOPE;
   const scopeNodes = () => props.scopeNodes ?? [];
   const currentScopeNode = createMemo(() => scopeNodes().find((node) => node.path === scope().node));
-  const filteredScopeTree = createMemo(() => {
+  const filteredDomains = createMemo(() => {
     const normalized = query().trim().toLowerCase();
-    const tree = scopeTree(scopeNodes());
-    if (!normalized) return tree;
-    return tree.filter(
-      ({ node }) =>
+    const domains = scopeNodes().filter((node) => node.level === "domain");
+    if (!normalized) return domains;
+    return domains.filter(
+      (node) =>
         node.title.toLowerCase().includes(normalized) || node.path.toLowerCase().includes(normalized),
     );
   });
@@ -171,11 +152,11 @@ export function WorkspaceContextBar(props: {
           ref={(element) => {
             scopeTrigger = element;
           }}
-          aria-label={`Filter by scope: ${currentScopeNode()?.title ?? "Whole project"}`}
+          aria-label={`Filter by scope: ${currentScopeNode()?.title ?? "All"}`}
           aria-expanded={openMenu() === "scope"}
           onClick={() => setOpenMenu((current) => (current === "scope" ? null : "scope"))}
         >
-          <span class="truncate">{currentScopeNode()?.title ?? "Whole project"}</span>
+          <span class="truncate">{currentScopeNode()?.title ?? "All"}</span>
           <Show when={currentScopeNode() && scope().exact}>
             <StatusChip appearance="filled" tone="muted" label="EXACT" />
           </Show>
@@ -191,41 +172,43 @@ export function WorkspaceContextBar(props: {
         anchorRef={() => scopeTrigger}
       >
         <PopoverSearchField
-          placeholder="Find component, domain, system…"
+          placeholder="Find domain…"
           value={query()}
           onInput={setQuery}
           autofocus
         />
         <MenuList class="min-h-0 flex-1 overflow-auto p-2">
           <MenuItem
-            class="justify-between py-2 text-[13.5px]"
+            class="gap-2 py-2 text-[13.5px]"
             selected={scope().node === ""}
             onClick={() => {
               props.onSelectScope?.(WHOLE_PROJECT_SCOPE);
               closeAfterAcknowledge();
             }}
           >
-            <span class="truncate text-[var(--color-text-primary)]">Whole project</span>
+            <IconTile size={20} tone="neutral" seed="scope-all">
+              <Layers size={12} />
+            </IconTile>
+            <span class="min-w-0 flex-1 truncate text-[var(--color-text-primary)]">All</span>
             <SelectionCheck checked={scope().node === ""} size={15} />
           </MenuItem>
-          <For each={filteredScopeTree()}>
-            {(entry) => (
+          <For each={filteredDomains()}>
+            {(node) => (
               <MenuItem
-                class="justify-between py-2 text-[13.5px]"
-                selected={entry.node.path === scope().node}
+                class="gap-2 py-2 text-[13.5px]"
+                selected={node.path === scope().node}
                 onClick={() => {
-                  props.onSelectScope?.({ node: entry.node.path, exact: scope().exact });
+                  props.onSelectScope?.({ node: node.path, exact: scope().exact });
                   closeAfterAcknowledge();
                 }}
               >
-                <span
-                  class="min-w-0 flex-1 truncate text-[var(--color-text-primary)]"
-                  style={{ "padding-left": `${entry.depth * 12}px` }}
-                >
-                  {entry.node.title}
+                <IconTile size={20} tone="architecture" seed={node.id}>
+                  <Box size={12} />
+                </IconTile>
+                <span class="min-w-0 flex-1 truncate text-[var(--color-text-primary)]">
+                  {node.title}
                 </span>
-                <span class="shrink-0 text-[11px] text-[var(--color-text-muted)]">{entry.node.level}</span>
-                <SelectionCheck checked={entry.node.path === scope().node} size={15} />
+                <SelectionCheck checked={node.path === scope().node} size={15} />
               </MenuItem>
             )}
           </For>
@@ -262,14 +245,17 @@ export function WorkspaceContextBar(props: {
           <For each={filteredProjects()}>
             {(project) => (
               <MenuItem
-                class="justify-between py-2 text-[13.5px]"
+                class="gap-2 py-2 text-[13.5px]"
                 selected={project.projectId === props.context.projectId}
                 onClick={() => {
                   props.onSelectProject?.(project.projectId);
                   closeAfterAcknowledge();
                 }}
               >
-                <span class="truncate text-[var(--color-text-primary)]">{project.name}</span>
+                <IconTile size={20} tone="architecture" seed={project.projectId}>
+                  <Folder size={12} />
+                </IconTile>
+                <span class="min-w-0 flex-1 truncate text-[var(--color-text-primary)]">{project.name}</span>
                 <SelectionCheck checked={project.projectId === props.context.projectId} size={15} />
               </MenuItem>
             )}

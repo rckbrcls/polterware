@@ -1,7 +1,7 @@
 import { For, createSignal } from "solid-js";
 import { useLocation } from "@solidjs/router";
 import {
-  Activity, ArrowRight02Icon, BookOpen, Button, Drawer, GitBranch, LinkButton, Menu01Icon, NavigationMenu,
+  Activity, ArrowRight02Icon, BookOpen, Route, StickyNote, Button, Drawer, GitBranch, LinkButton, Menu01Icon, NavigationMenu,
   NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuPreviewPanel,
   NavigationMenuTrigger, ScrollText, SquareTerminal, Download, navigationMenuTriggerClass,
   type NavigationMenuPreviewItem,
@@ -10,10 +10,14 @@ import { RELEASES_URL, REPO_URL, products } from "../data/products";
 import { PolterwareAppMockup } from "./mockups/PolterwareAppMockup";
 import { CliTerminalMockup } from "./mockups/CliTerminalMockup";
 import { VitalsMockup } from "./mockups/VitalsMockup";
+import { NotesMockup } from "./mockups/NotesMockup";
+import { DispatchMockup } from "./mockups/DispatchMockup";
 
 const productItems: NavigationMenuPreviewItem[] = [
   { id: "polterware", title: "Polterware", description: "Project context and drift for people and coding agents.", href: products.polterware.href, icon: BookOpen, preview: () => <PolterwareAppMockup compact /> },
   { id: "cli", title: "Polterware CLI", description: "A TUI, scripted reads and writes, and an MCP bridge.", href: products.cli.href, icon: SquareTerminal, preview: () => <CliTerminalMockup compact session="agents" /> },
+  { id: "notes", title: "Polterware Notes", description: "Local-first notes and reminders shared with your agents.", href: products.notes.href, icon: StickyNote, preview: () => <NotesMockup compact /> },
+  { id: "dispatch", title: "Dispatch", description: "Delegate tasks to coding-agent CLIs by difficulty.", href: products.dispatch.href, icon: Route, preview: () => <DispatchMockup compact /> },
   { id: "vitals", title: "Polterware Vitals", description: "Remote machines over SSH: metrics, processes, terminal.", href: products.vitals.href, icon: Activity, preview: () => <VitalsMockup compact /> },
 ];
 
@@ -32,7 +36,7 @@ export function SiteHeader() {
   return (
     <div class="site-header-bar">
       <header class="site-header site-container card-texture">
-        <a class="wordmark" href="/" aria-label="Polterware home"><img src="/polter-ghost.png" alt="" width="20" height="24" />polterware</a>
+        <a class="wordmark" href="/" aria-label="Polterware home"><img src="/polter-ghost.png" alt="" width="20" height="24" /></a>
         <NavigationMenu aria-label="Main" viewportAlign="center" class="site-nav">
           <NavigationMenuList>
             <NavigationMenuItem value="products">

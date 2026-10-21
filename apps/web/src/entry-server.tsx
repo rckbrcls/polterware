@@ -5,6 +5,7 @@ const handler: StartHandler = createHandler(() => <StartServer document={props =
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta name="google" content="notranslate" />
+      <meta name="color-scheme" content="dark" />
       <meta name="theme-color" content="#131313" />
       <link rel="icon" href="/favicon.ico" />
       {props.assets}

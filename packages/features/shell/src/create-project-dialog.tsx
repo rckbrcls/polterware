@@ -88,7 +88,7 @@ export function CreateProjectDialog(props: {
       footer={
         <>
           <Show when={canCancel()}>
-            <Button size="sm" variant="ghost" onClick={close}>
+            <Button size="sm" variant="texture" onClick={close}>
               Cancel
             </Button>
           </Show>

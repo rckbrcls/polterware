@@ -166,7 +166,6 @@ export function FilterPopover(props: FilterPopoverProps) {
         <Button
           size="sm"
           variant="ghost"
-          class="!h-auto !px-1.5 !py-1"
           onClick={() => props.onClear?.()}
         >
           Clear filters

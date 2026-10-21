@@ -850,7 +850,7 @@ export function ArchitectureView(props: {
           <Button
             variant="texture"
             size="icon"
-            class="absolute bottom-3 left-3 z-10"
+            class="!absolute bottom-3 left-3 z-10"
             aria-label="Auto layout"
             onClick={() => arrange()}
           >
@@ -862,7 +862,7 @@ export function ArchitectureView(props: {
   );
 
   return (
-    <EntityDetailHost>
+    <EntityDetailHost mode="overlay">
       <>
         <div class="flex h-full min-h-0 flex-col">
           <PageToolbar.Root>

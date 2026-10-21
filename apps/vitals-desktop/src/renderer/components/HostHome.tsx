@@ -1,6 +1,5 @@
 import {
   Button,
-  ControlButton,
   Delete,
   DropdownMenu,
   DropdownMenuContent,
@@ -89,10 +88,10 @@ export function HostHome(props: {
     <PageEmpty
       action={
         <div class="vitals-home">
-          <ControlButton tone="secondary" class="vitals-home-connect" onClick={() => props.onNew()}>
+          <Button variant="texture" class="vitals-home-connect w-full" onClick={() => props.onNew()}>
             <Server size={16} />
             Connect a host
-          </ControlButton>
+          </Button>
           {section("Recents", recents)}
           {section("Saved", others)}
         </div>

@@ -1,6 +1,7 @@
 import { For, Show, createMemo, createSignal, createUniqueId } from "solid-js";
 import { PlusIcon, XIcon } from "./hugeicons";
 import { Popover } from "./popover";
+import "./button.css";
 import "./tag-picker.css";
 
 /** A tag the picker can show; Notes tags carry more fields, which the picker ignores. */
@@ -43,17 +44,17 @@ export function TagPicker(props: TagPickerProps) {
   };
   return <div class="flex min-w-0 flex-wrap items-center gap-1.5" data-note-tags>
     <For each={selected()}>{tag => (
-      <span class="pw-tag-badge">
+      <span class="pw-tag-badge pw-texture-button rounded-full">
         <span class="min-w-0 truncate">{tag.name}</span>
         <button type="button" class="pw-tag-badge__remove" aria-label={`Remove tag ${tag.name}`} onClick={() => remove(tag.id!)}><XIcon size={10} /></button>
       </span>
     )}</For>
     <Show when={open()} fallback={
-      <button type="button" class="pw-tag-badge pw-tag-badge--add" onClick={() => setOpen(true)}>
+      <button type="button" class="pw-tag-badge pw-tag-badge--add pw-texture-button rounded-full" onClick={() => setOpen(true)}>
         <PlusIcon size={10} /> Add tag
       </button>
     }>
-      <span ref={setAnchor} class="pw-tag-badge pw-tag-badge--editing">
+      <span ref={setAnchor} class="pw-tag-badge pw-tag-badge--editing pw-texture-button rounded-full">
         <PlusIcon size={10} />
         <input ref={element => queueMicrotask(() => element.focus())} class="pw-tag-badge__input" aria-label="Search or create tag"
           placeholder="Add tag" role="combobox" aria-expanded="true" aria-controls={listId}

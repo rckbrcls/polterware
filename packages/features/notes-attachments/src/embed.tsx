@@ -70,7 +70,7 @@ function LinkDialog() {
     if (store.state() !== "failed") finish(ids);
   }
   return <A11yDialog open={Boolean(linkAsk())} title="Add link" size="sm" onClose={() => finish([])}
-    footer={<><Button variant="ghost" onClick={() => finish([])}>Cancel</Button><Button onClick={() => void save()}>Add link</Button></>}>
+    footer={<><Button variant="texture" onClick={() => finish([])}>Cancel</Button><Button onClick={() => void save()}>Add link</Button></>}>
     <div class="flex flex-col gap-3">
       <Field label="URL" for="embed-link-url">
         <Input id="embed-link-url" value={url()} onInput={event => setUrl(event.currentTarget.value)} placeholder="https://" />
@@ -115,7 +115,7 @@ function RecordDialog() {
     finish([]);
   }
   return <A11yDialog open={Boolean(recordAsk())} title="Record audio" size="sm" onClose={cancel}
-    footer={<Button variant="ghost" onClick={cancel}>Cancel</Button>}>
+    footer={<Button variant="texture" onClick={cancel}>Cancel</Button>}>
     <div class="flex flex-col gap-3">
       <Show when={store.recording()} fallback={<Button disabled={busy()} onClick={() => void start()}>{busy() ? "Saving…" : "Start recording"}</Button>}>
         <Button variant="danger" onClick={stop}><Stop size={14} /> Stop and insert</Button>

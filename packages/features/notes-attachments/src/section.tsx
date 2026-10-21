@@ -159,7 +159,7 @@ export function AttachmentsSection() {
         <p class="text-[12px] text-[var(--color-text-muted)]">No attachments yet. Add a photo, recording, link, or file.</p>
       </Show>
       <A11yDialog open={linkOpen()} title="Add link" size="sm" onClose={() => setLinkOpen(false)}
-        footer={<><Button variant="ghost" onClick={() => setLinkOpen(false)}>Cancel</Button><Button onClick={() => void saveLink()}>Add link</Button></>}>
+        footer={<><Button variant="texture" onClick={() => setLinkOpen(false)}>Cancel</Button><Button onClick={() => void saveLink()}>Add link</Button></>}>
         <div class="flex flex-col gap-3">
           <Field label="URL" for="attachment-link-url">
             <Input id="attachment-link-url" value={linkUrl()} onInput={event => setLinkUrl(event.currentTarget.value)} placeholder="https://" />
@@ -170,7 +170,7 @@ export function AttachmentsSection() {
         </div>
       </A11yDialog>
       <A11yDialog open={Boolean(deleteId())} title="Delete attachment?" size="sm" onClose={() => setDeleteId(undefined)}
-        footer={<><Button variant="ghost" onClick={() => setDeleteId(undefined)}>Cancel</Button><Button variant="danger" onClick={() => void confirmDelete()}>Delete</Button></>}>
+        footer={<><Button variant="texture" onClick={() => setDeleteId(undefined)}>Cancel</Button><Button variant="danger" onClick={() => void confirmDelete()}>Delete</Button></>}>
         <p>This removes the attachment from the note. Files are deleted from Polterware Notes storage.</p>
       </A11yDialog>
       <A11yDialog open={viewerOpen()} title={viewerItem()?.name ?? "Photo"} size="lg" onClose={() => setViewerOpen(false)}

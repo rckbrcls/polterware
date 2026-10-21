@@ -127,6 +127,8 @@ func (s *service) Get(ctx context.Context) (Settings, error) {
 			return out, e
 		}
 	}
+	// Keep legacy values readable without restoring a theme choice.
+	out.AppearanceTheme = ThemeDark
 	return out, nil
 }
 func (s *service) Set(ctx context.Context, a actor.Actor, keys []string, next Settings) (out Settings, err error) {
@@ -140,6 +142,9 @@ func (s *service) Set(ctx context.Context, a actor.Actor, keys []string, next Se
 			seen[key] = true
 			if e := validate(next, key); e != nil {
 				return e
+			}
+			if key == KeyAppearanceTheme {
+				next.AppearanceTheme = ThemeDark
 			}
 			raw, e := json.Marshal(p)
 			if e != nil {

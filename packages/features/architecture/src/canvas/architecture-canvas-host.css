@@ -1,7 +1,3 @@
-.architecture-canvas-edge-fade {
-  background: var(--material-fade-edge-top-canvas);
-}
-
 .architecture-node-card {
   display: flex;
   width: 100%;
@@ -309,4 +305,25 @@
 .architecture-canvas-rel-control:focus-visible {
   outline: 2px solid var(--color-border-strong);
   outline-offset: 2px;
+}
+
+/* Float controls over the map, keeping entity details below their measured height. */
+.pw-detail-panel-root:has([aria-label="Architecture canvas"]) > .pw-detail-panel__collection-header {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.pw-detail-panel-root:has([aria-label="Architecture canvas"]) > .pw-detail-panel__collection-header .pw-page-toolbar :is(.pw-page-toolbar-tabs, .pw-page-toolbar-leading, .pw-page-toolbar-actions) > * {
+  pointer-events: auto;
+}
+
+.pw-detail-panel-root:has([aria-label="Architecture canvas"]) > .pw-detail-panel__workspace > .pw-detail-panel__frame,
+.pw-detail-panel-root:has([aria-label="Architecture canvas"]) > .pw-detail-panel__workspace > .pw-detail-panel__resize-handle {
+  top: calc(var(--detail-panel-collection-header-height, 0px) + 8px);
+}
+
+.pw-detail-panel-root:has([aria-label="Architecture canvas"]) > .pw-detail-panel__workspace > .pw-detail-panel__frame[data-expanded="true"] {
+  top: var(--detail-panel-collection-header-height, 0px);
 }

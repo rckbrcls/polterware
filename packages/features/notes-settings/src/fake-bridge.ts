@@ -37,7 +37,7 @@ function snippetsFor(port: number, token: string) {
 }
 
 export function fakeSettingsBridge(seed: Partial<SettingsJSON> = {}) {
-  const settings: SettingsJSON = { ...DEFAULT_SETTINGS, ...seed };
+  const settings: SettingsJSON = { ...DEFAULT_SETTINGS, ...seed, appearanceTheme: "dark" };
   const valid = new Set<string>(["live-token"]);
   let token = "live-token";
   let tokenPresent = true;
@@ -80,7 +80,7 @@ export function fakeSettingsBridge(seed: Partial<SettingsJSON> = {}) {
           const next = { ...settings, ...input?.settings };
           const reason = validate(key, next);
           if (reason) throw Object.assign(new Error(reason), { details: [{ field: key, reason }] });
-          Object.assign(settings, input?.settings);
+          Object.assign(settings, input?.settings, { appearanceTheme: "dark" });
         }
         emit("settings", keys[0] ?? "settings");
         return { settings: { ...settings } };

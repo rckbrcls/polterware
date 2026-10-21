@@ -6,9 +6,6 @@ import {
   Copy,
   Globe,
   HardDrive,
-  Moon,
-  Monitor,
-  Sun,
   Pause,
   CalendarClock,
   DataTable,
@@ -431,15 +428,7 @@ export function AdvancedPanel() {
   const store = usePanel();
   return (
     <PanelFrame state={store.loadState()} error={store.loadError()} onRetry={() => void store.refresh()}>
-      <SettingsSection title="Appearance" description="Appearance preferences for Polterware Notes.">
-        <SettingsRow label="Theme">
-          <Select
-            aria-label="Theme"
-            value={store.settings().appearanceTheme ?? "dark"}
-            options={[{ value: "dark", label: "Dark", icon: <Moon size={14} aria-hidden="true" /> }, { value: "system", label: "System", icon: <Monitor size={14} aria-hidden="true" /> }, { value: "light", label: "Light", icon: <Sun size={14} aria-hidden="true" /> }]}
-            onChange={value => void store.set("appearance.theme", value)}
-          />
-        </SettingsRow>
+      <SettingsSection title="Links" description="Link preferences for Polterware Notes.">
         <SwitchRow
           label="Fetch link titles (unavailable in this build)"
           checked={store.settings().linksFetchTitles ?? false}

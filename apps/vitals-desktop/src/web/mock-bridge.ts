@@ -497,8 +497,7 @@ export function installVitalsMock(): void {
       publish(session);
     },
     async getTheme() {
-      const theme = readSettings().theme;
-      return theme === "system" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : theme;
+      return "dark";
     },
     async setTheme(theme) {
       await api.updateSettings({ theme });

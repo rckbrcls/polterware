@@ -6,9 +6,7 @@ import { installSpringCssProperties } from "./spring-css";
 if (typeof document !== "undefined") installSpringCssProperties();
 
 export { Button, LinkButton } from "./button";
-export type { ButtonProps, ButtonVariant, ButtonSize, LinkButtonProps } from "./button";
-export { ControlButton } from "./control-button";
-export type { ControlButtonProps, ControlButtonTone } from "./control-button";
+export type { ButtonProps, ButtonVariant, ButtonSize, ButtonTone, LinkButtonProps } from "./button";
 export { Badge } from "./badge";
 export { FloatingCountBadge } from "./floating-count-badge";
 export type {
@@ -154,6 +152,7 @@ export {
 export type {
   DetailPanelBodyProps,
   DetailPanelHeaderProps,
+  DetailPanelFooterProps,
   DetailPanelMainProps,
   DetailPanelRailProps,
   DetailPanelTitleProps,
@@ -214,6 +213,7 @@ export { ActiveFilterBar } from "./active-filter-bar";
 export type { ActiveFilterPill } from "./active-filter-bar";
 export * from "./hugeicons";
 
+export { FloatingSurfaceProvider, useInFloatingSurface } from "./floating-surface";
 export { FloatingWindow } from "./floating-window";
 export type { FloatingWindowRootProps, FloatingWindowHeaderProps } from "./floating-window";
 export type { FloatingWindowDock, FloatingWindowGeometry } from "./floating-window-geometry";
@@ -233,6 +233,7 @@ export { TimePicker, parseTime, type TimePickerProps } from "./time-picker";
 export { ColorSwatchPicker, parseColor, type ColorSwatchPickerProps, type ColorSwatchOption } from "./color-swatch-picker";
 export { IconPicker, PICKER_ICONS, type IconPickerProps, type PickerIconName } from "./icon-picker";
 export { TreeView, type TreeViewProps, type TreeViewNode } from "./tree-view";
+export { SegmentDisplay, type SegmentDisplayProps } from "./segment-display";
 export { ProgressRing, type ProgressRingProps } from "./progress-ring";
 export { Heatmap, heatmapLevel, type HeatmapProps, type HeatmapDay } from "./heatmap";
 export { CalendarGrid, type CalendarGridProps } from "./calendar-grid";

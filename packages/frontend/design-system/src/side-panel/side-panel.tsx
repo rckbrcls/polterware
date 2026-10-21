@@ -1,4 +1,4 @@
-import { Show, createContext, createSignal, createUniqueId, onCleanup, onMount, useContext, type Accessor, type JSX } from "solid-js";
+import { Show, createContext, createEffect, createSignal, createUniqueId, onCleanup, onMount, useContext, type Accessor, type JSX } from "solid-js";
 import { Button } from "../button";
 import { ChevronLeft, ExpandIcon, X } from "../hugeicons";
 import { PanelInteractionContext, registerPanelInteraction, type PanelInteractionOwner } from "../panel-interaction";
@@ -42,6 +42,7 @@ type DetailPanelContextValue = {
   activeEntityId: Accessor<string | null>;
   detailHost: Accessor<HTMLElement | undefined>;
   setHeaderClass: (value: string) => void;
+  headerHost: Accessor<HTMLElement | undefined>;
   collectionHeaderHost: Accessor<HTMLElement | undefined>;
   interaction: PanelInteractionOwner;
 };
@@ -58,6 +59,7 @@ export function DetailPanelRoot(props: DetailPanelRootProps) {
   const storageKey = () => props.storageKey ?? designSystem.storageKey("shell.detail.sidebar.width");
   const [detailHost, setDetailHost] = createSignal<HTMLElement>();
   const [headerClass, setHeaderClass] = createSignal("");
+  const [headerHost, setHeaderHost] = createSignal<HTMLElement>();
   const [collectionHeaderHost, setCollectionHeaderHost] = createSignal<HTMLElement>();
   const [preferredWidth, setPreferredWidth] = createSignal(readStoredWidth(storageKey(), props.legacyStorageKey));
   const available = () => props.available !== false;
@@ -75,6 +77,18 @@ export function DetailPanelRoot(props: DetailPanelRootProps) {
   let frame: HTMLElement | undefined;
   let workspace: HTMLDivElement | undefined;
   let divider: HTMLDivElement | undefined;
+
+  // Floating collection controls still reserve their measured height above details.
+  createEffect(() => {
+    const header = collectionHeaderHost();
+    if (!header) return;
+    const measure = () => root?.style.setProperty("--detail-panel-collection-header-height", `${header.getBoundingClientRect().height}px`);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(header);
+    onCleanup(() => observer.disconnect());
+  });
 
   function persistWidth(width: number) {
     setPreferredWidth(width);
@@ -109,7 +123,7 @@ export function DetailPanelRoot(props: DetailPanelRootProps) {
     if (divider) interaction.elements.add(divider);
     onCleanup(unregister);
   });
-  const context: DetailPanelContextValue = { expanded, open: visible, available, activeEntityId, detailHost, setHeaderClass, collectionHeaderHost, interaction };
+  const context: DetailPanelContextValue = { expanded, open: visible, available, activeEntityId, detailHost, setHeaderClass, headerHost, collectionHeaderHost, interaction };
   return <DetailPanelContext.Provider value={context}>
     <div ref={root} tabIndex={-1} class={`pw-detail-panel-root ${props.class ?? ""}`}
       data-mode={props.mode ?? "reserve"}
@@ -123,19 +137,20 @@ export function DetailPanelRoot(props: DetailPanelRootProps) {
           hidden={!presence.present() || !available()} inert={!visible() ? true : undefined} aria-hidden={!visible() ? true : undefined}
           role="region" aria-label={props["aria-label"] ?? "Details"}
           onPointerDown={(event) => event.stopPropagation()} onWheel={(event) => event.stopPropagation()}>
-          <header class={`pw-detail-panel__header ${headerClass()}`}>
+          <header class={`pw-detail-panel__header ${headerClass()}`} data-expandable={props.expandable !== false}>
+            <div ref={setHeaderHost} class="pw-detail-panel__header-title" />
             <Show
               when={expanded()}
               fallback={
                 <>
-                  <Button variant="icon" aria-label="Close details" title={`Close details (${closeShortcut()})`} onClick={() => close()}>
-                    <X size={14} />
-                  </Button>
                   <Show when={props.expandable !== false}>
                     <Button variant="icon" aria-label={expandLabel()} aria-pressed={expanded()} title={expandLabel()} onClick={toggleExpanded}>
                       <ExpandIcon size={14} />
                     </Button>
                   </Show>
+                  <Button variant="icon" aria-label="Close details" title={`Close details (${closeShortcut()})`} onClick={() => close()}>
+                    <X size={14} />
+                  </Button>
                 </>
               }
             >

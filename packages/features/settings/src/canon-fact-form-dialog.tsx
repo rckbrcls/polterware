@@ -47,7 +47,7 @@ export function CanonFactFormDialog(props: {
       onClose={() => props.onClose()}
       footer={
         <>
-          <Button size="sm" variant="ghost" onClick={() => props.onClose()}>
+          <Button size="sm" variant="texture" onClick={() => props.onClose()}>
             Cancel
           </Button>
           <Button size="sm" variant="primary" disabled={!canSubmit()} onClick={submit}>

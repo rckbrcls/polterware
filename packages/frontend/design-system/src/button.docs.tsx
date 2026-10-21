@@ -6,7 +6,7 @@ export default {
   name: "Button",
   group: "Buttons",
   summary:
-    "Product button. Solid variants share the opaque ControlButton chrome; ghost and icon stay flat. The default is secondary; use primary only for a page header call to action.",
+    "Product button. Solid variants share the opaque keycap chrome (with an optional `tone` palette); ghost and icon stay flat. The default is secondary; use primary only for a page header call to action.",
   exports: ["Button", "LinkButton"],
   examples: [
     {
@@ -20,6 +20,25 @@ export default {
           <Button variant="brand">Brand</Button>
           <Button variant="danger">Danger</Button>
           <Button variant="ghost">Ghost</Button>
+        </>
+        // #endregion
+      ),
+    },
+    {
+      id: "tones",
+      title: "Tones",
+      description: "`tone` swaps the palette of a solid variant.",
+      render: () => (
+        // #region tones
+        <>
+          <Button tone="neutral">Neutral</Button>
+          <Button tone="success">Success</Button>
+          <Button tone="warn">Warn</Button>
+          <Button tone="info">Info</Button>
+          <Button tone="critical">Critical</Button>
+          <Button tone="violet">Violet</Button>
+          <Button tone="teal">Teal</Button>
+          <Button tone="pink">Pink</Button>
         </>
         // #endregion
       ),

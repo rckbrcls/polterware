@@ -120,7 +120,7 @@ function occurrencesBetween(note: Row, from: number, to: number): number[] {
 function createHandlers(emit: (changes: { entity: string; id: string; op: string }[]) => void): Record<string, Handler> {
   const db = seed();
   const settings: Row = {
-    appearanceTheme: "system", notificationsSound: "glass", notificationsAllDayTime: "09:00", notificationsSnoozeMinutes: 10,
+    appearanceTheme: "dark", notificationsSound: "glass", notificationsAllDayTime: "09:00", notificationsSnoozeMinutes: 10,
     focusWorkMin: 25, focusShortBreakMin: 5, focusLongBreakMin: 15, focusCycles: 4, focusAutoContinue: false, focusSounds: true,
     focusNotifications: true, mapOnline: false, mapProvider: "osm", agentsMcpPort: 47321, agentsMcpEnabled: true,
     agentsAllowFileAttach: false, appKeepRunningInBackground: true, linksFetchTitles: false, calendarWeekStart: "monday", mapGeocoding: false,
@@ -384,7 +384,7 @@ function createHandlers(emit: (changes: { entity: string; id: string; op: string
     "reminders.snooze": input => ({ oneOffId: nextId("one"), fireAt: new Date(Date.now() + (input.minutes || 10) * 60_000).toISOString() }),
     "activity.list": () => ({ events: activity, nextCursor: "" }),
     "settings.get": () => ({ settings }),
-    "settings.set": input => { Object.assign(settings, input.settings ?? {}); return { settings }; },
+    "settings.set": input => { Object.assign(settings, input.settings ?? {}, { appearanceTheme: "dark" }); return { settings }; },
     "agents.getInfo": () => ({ mcpPort: settings.agentsMcpPort, tokenPresent: true, token: "notes_preview_token", enabled: settings.agentsMcpEnabled,
       allowFileAttach: settings.agentsAllowFileAttach, claudeStdio: "claude mcp add pwnotes -- pwnotes mcp", claudeHttp: "claude mcp add --transport http pwnotes http://127.0.0.1:47321/mcp",
       cursorStdioJson: "{\n  \"mcpServers\": { \"pwnotes\": { \"command\": \"pwnotes\", \"args\": [\"mcp\"] } }\n}", cursorHttpJson: "{\n  \"mcpServers\": { \"pwnotes\": { \"url\": \"http://127.0.0.1:47321/mcp\" } }\n}" }),

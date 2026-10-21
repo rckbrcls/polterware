@@ -5,10 +5,10 @@ export const REPO_URL = "https://github.com/polterware/polterware";
 export const RELEASES_URL = `${REPO_URL}/releases`;
 export const INSTALL_SCRIPT = "https://raw.githubusercontent.com/polterware/polterware/main/scripts/install-desktop.sh";
 
-export const installCommand = (app?: "polterware" | "vitals") =>
-  `curl -fsSL ${INSTALL_SCRIPT} | ${app === "polterware" ? "APP=polterware " : ""}bash`;
+export const installCommand = (app?: "polterware" | "vitals" | "notes") =>
+  `curl -fsSL ${INSTALL_SCRIPT} | ${app === "polterware" || app === "notes" ? `APP=${app} ` : ""}bash`;
 
-export type ProductId = "polterware" | "cli" | "vitals";
+export type ProductId = "polterware" | "cli" | "notes" | "dispatch" | "vitals";
 
 export type Product = {
   id: ProductId;
@@ -34,6 +34,20 @@ export const products: Record<ProductId, Product> = {
     summary: "Polterware from your terminal: a TUI, scripted reads and writes, and an MCP bridge.",
     status: "Bundled with Polterware · builds from source",
   },
+  notes: {
+    id: "notes",
+    name: "Polterware Notes",
+    href: "/notes",
+    summary: "Local-first notes and reminders that people and coding agents share.",
+    status: "Alpha · macOS on Apple Silicon",
+  },
+  dispatch: {
+    id: "dispatch",
+    name: "Dispatch",
+    href: "/dispatch",
+    summary: "Hand a task to the right coding-agent CLI by difficulty, and get a compact result back.",
+    status: "In development · CLI",
+  },
   vitals: {
     id: "vitals",
     name: "Polterware Vitals",
@@ -43,4 +57,4 @@ export const products: Record<ProductId, Product> = {
   },
 };
 
-export const productList: Product[] = [products.polterware, products.cli, products.vitals];
+export const productList: Product[] = [products.polterware, products.cli, products.notes, products.dispatch, products.vitals];

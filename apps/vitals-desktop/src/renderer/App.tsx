@@ -193,16 +193,8 @@ export function App() {
     });
   });
 
-  const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
-  const applyTheme = () => {
-    const preference = settings().theme;
-    const resolved = preference === "system" ? (colorScheme.matches ? "dark" : "light") : preference;
-    document.documentElement.dataset.theme = resolved;
-    document.documentElement.style.colorScheme = resolved;
-  };
-  createEffect(applyTheme);
-  colorScheme.addEventListener("change", applyTheme);
-  onCleanup(() => colorScheme.removeEventListener("change", applyTheme));
+  document.documentElement.dataset.theme = "dark";
+  document.documentElement.style.colorScheme = "dark";
 
   // Cmd+, (Ctrl+, off macOS) opens Settings, the platform's preferences chord.
   const isMac = navigator.userAgent.includes("Mac");

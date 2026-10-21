@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { app, BrowserWindow, dialog, globalShortcut, shell, Menu } from "electron";
+import { app, BrowserWindow, dialog, globalShortcut, shell, Menu, nativeTheme } from "electron";
 import log from "electron-log/main";
 import { getElectronAppIconController } from "./electron-app-icons.js";
 import { registerGlobalCommanderShortcut } from "./global-shortcuts.js";
@@ -27,6 +27,9 @@ import { createAppearancePreferencesController } from "./appearance-preferences.
 import { createQuitPreferencesController, type QuitPreferencesController } from "./quit-preferences.js";
 import { createMcpSupervisor } from "./mcp-supervisor.js";
 import { installApplicationMenu } from "./application-menu.js";
+
+// Keep native controls and windows dark regardless of the system appearance.
+nativeTheme.themeSource = "dark";
 
 // Keep userData where it was before the app was named Polterware: <appData>/polterware, the directory shared with the
 // CLI database. Deriving it from the app name would move preferences and split them from the core's directory.

@@ -1,4 +1,4 @@
-import { Activity, ArrowDataTransferVertical, ControlButton, Cpu, DataTable, IconTile, EmptyIllustration, Gauge, HardDrive, ListOrdered, MemoryStick, PageEmpty, RefreshCw, Server, StatusChip, Zap } from "@polterware/frontend-design-system";
+import { Activity, ArrowDataTransferVertical, Button, Cpu, DataTable, IconTile, EmptyIllustration, Gauge, HardDrive, ListOrdered, MemoryStick, PageEmpty, RefreshCw, Server, StatusChip, Zap } from "@polterware/frontend-design-system";
 import { For, Show, createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import { connectionPresentation, type ConnectionMetricsMode, type ConnectionStatus, type DiskIoStats, type DiskPartition, type MetricsSnapshot, type NetworkInterface, type SessionHistory } from "../api";
 import { formatBytesPerSec, formatNetworkRate, formatKb, formatPercent, formatUptime } from "../utils/format";
@@ -173,13 +173,13 @@ export function MetricsDashboard(props: {
           }
           action={
             <div class="vitals-error-actions">
-              <ControlButton tone="secondary" onClick={() => props.onClose()}>
+              <Button onClick={() => props.onClose()}>
                 Close
-              </ControlButton>
-              <ControlButton tone="brand" onClick={() => props.onRetry()}>
+              </Button>
+              <Button variant="brand" onClick={() => props.onRetry()}>
                 <RefreshCw size={14} />
                 Retry
-              </ControlButton>
+              </Button>
             </div>
           }
         />

@@ -8,6 +8,10 @@ import {
   Square,
   StatusChip,
   X,
+  FileText,
+  HelpCircle,
+  Settings,
+  ShieldCheck,
 } from "@polterware/frontend-design-system";
 import type { WorkStage, WorkspaceWorkCard, WorkspaceWorkTask } from "@polterware/feature-shell";
 import { KnowledgeDocumentNotFound } from "./knowledge-document-shell";
@@ -50,7 +54,7 @@ export function WorkCardDetail(props: {
                   icon={<ListChecks size={16} />}
                   title={card().title}
                 />
-                <DetailPanel.Section title="Intent" aside={
+                <DetailPanel.Section title="Intent" icon={<FileText size={14} />} aside={
                   <Show when={continuable()}>
                     <Button variant="secondary" size="sm" onClick={() => props.onContinueFlow?.()}>
                       {card().stage === "shape" ? "Continue shaping" : "Continue planning"}
@@ -66,7 +70,7 @@ export function WorkCardDetail(props: {
                 </DetailPanel.Section>
 
                 <DetailPanel.Section
-                  title="Tasks"
+                  title="Tasks" icon={<ListChecks size={14} />}
                   aside={
                     progress().total > 0 ? (
                       <StatusChip
@@ -117,7 +121,7 @@ export function WorkCardDetail(props: {
                 </DetailPanel.Section>
 
                 <Show when={card().questions.length > 0}>
-                  <DetailPanel.Section title="Questions">
+                  <DetailPanel.Section title="Questions" icon={<HelpCircle size={14} />}>
                     <ul class="m-0 grid list-none gap-2 p-0" aria-label="Questions">
                       <For each={card().questions}>
                         {(question) => (
@@ -147,7 +151,7 @@ export function WorkCardDetail(props: {
                 </Show>
 
                 <Show when={card().invariants.length > 0}>
-                  <DetailPanel.Section title="Invariants">
+                  <DetailPanel.Section title="Invariants" icon={<ShieldCheck size={14} />}>
                     <ul
                       class="m-0 list-disc space-y-1 pl-4 text-[12.5px] text-[var(--color-text-secondary)]"
                       aria-label="Invariants"
@@ -159,7 +163,7 @@ export function WorkCardDetail(props: {
               </DetailPanel.Main>
 
               <DetailPanel.Rail>
-                <DetailPanel.Section title="Properties">
+                <DetailPanel.Section title="Properties" icon={<Settings size={14} />}>
                   <DetailPanel.Properties>
                     <DetailPanel.Property
                       label="Stage"

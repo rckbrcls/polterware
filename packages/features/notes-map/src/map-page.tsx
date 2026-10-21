@@ -55,7 +55,7 @@ export function MapPage(props: { store?: MapStore }) {
               </section>
             </DetailPanel.Collection>
             <DetailPanel.Content>
-              <DetailPanel.Header />
+              <DetailPanel.Header title="Places" />
               <DetailPanel.Body layout="document">
                 <DetailPanel.Main class="!px-4 !pb-4 !pt-0">
                   <CollapsibleSection title="Places" icon={<MapPin size={14} />}>

@@ -71,7 +71,7 @@ export function AddEvidenceDialog(props: {
               Import from project root
             </Button>
           </Show>
-          <Button size="sm" variant="ghost" onClick={close}>
+          <Button size="sm" variant="texture" onClick={close}>
             Cancel
           </Button>
           <Button size="sm" variant="primary" disabled={!canSubmit()} onClick={submit}>

@@ -1,6 +1,6 @@
 import {
   Activity,
-  ControlButton,
+  Button,
   Cog,
   DataTable,
   Hammer,
@@ -28,7 +28,6 @@ const SECTIONS: { id: SectionId; label: string; icon: Component<{ size?: number;
 ];
 
 const SEARCH_ENTRIES: SettingsSearchEntry[] = [
-  { item: "general", section: "Appearance", label: "Theme", description: "System, dark or light.", keywords: "dark light mode color" },
   { item: "general", section: "Appearance", label: "Reduce transparency", description: "Solid window chrome instead of the frosted glass.", keywords: "glass vibrancy blur translucent opaque" },
   { item: "general", section: "Units", label: "Network unit", description: "Bytes or bits per second.", keywords: "bandwidth rate bits bytes" },
   { item: "monitoring", section: "Charts", label: "History window", description: "How much history the charts keep.", keywords: "samples minutes graph" },
@@ -76,11 +75,6 @@ export function SettingsDialog(props: {
       onSelect={(id) => setSection(id as SectionId)} searchEntries={SEARCH_ENTRIES}>
       <Show when={section() === "general"}>
         <SettingsSection title="Appearance">
-          <SettingsRow label="Theme" description="Follow the system or pin a theme." for="settings-theme">
-            <Select id="settings-theme" size="md" class="w-48" value={props.settings.theme} options={[
-              { value: "system", label: "System" }, { value: "dark", label: "Dark" }, { value: "light", label: "Light" },
-            ]} onChange={(theme) => props.onChange({ theme: theme as VitalsSettings["theme"] })} />
-          </SettingsRow>
           <SettingsRow label="Reduce transparency" description="Use solid window chrome instead of the frosted glass.">
             <Switch aria-label="Reduce transparency" checked={props.settings.reduceTransparency}
               onCheckedChange={(reduceTransparency) => props.onChange({ reduceTransparency })} />
@@ -158,7 +152,7 @@ export function SettingsDialog(props: {
                   <DataTable.Cell>{row.key}</DataTable.Cell>
                   <DataTable.Cell><span class="font-mono text-[11.5px] break-all text-[var(--color-text-secondary)]">{row.fingerprint}</span></DataTable.Cell>
                   <DataTable.Cell>
-                    <ControlButton tone="danger" class="vitals-kill" aria-label={`Remove ${row.key}`} onClick={() => void removeHost(row.key)}>Remove</ControlButton>
+                    <Button variant="danger" class="vitals-kill" aria-label={`Remove ${row.key}`} onClick={() => void removeHost(row.key)}>Remove</Button>
                   </DataTable.Cell>
                 </DataTable.Row>
               )}</DataTable.Body>
@@ -170,12 +164,12 @@ export function SettingsDialog(props: {
       <Show when={section() === "advanced"}>
         <SettingsSection title="Layout">
           <SettingsRow label="Reset card layout" description="Restore the default order and positions of dashboard cards.">
-            <ControlButton onClick={() => { props.onResetLayout(); pushToast("Card layout reset.", "success"); }}>Reset</ControlButton>
+            <Button onClick={() => { props.onResetLayout(); pushToast("Card layout reset.", "success"); }}>Reset</Button>
           </SettingsRow>
         </SettingsSection>
         <SettingsSection title="History">
           <SettingsRow label="Clear recent hosts" description="Saved servers are kept.">
-            <ControlButton onClick={() => { props.onClearRecents(); pushToast("Recent hosts cleared.", "success"); }}>Clear</ControlButton>
+            <Button onClick={() => { props.onClearRecents(); pushToast("Recent hosts cleared.", "success"); }}>Clear</Button>
           </SettingsRow>
         </SettingsSection>
       </Show>

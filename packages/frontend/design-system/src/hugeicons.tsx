@@ -6,8 +6,6 @@ import {
   AddTeamIcon as AddTeamDefinition,
   Archive as ArchiveDefinition,
   ArrowDataTransferVerticalIcon as ArrowDataTransferVerticalDefinition,
-  ArrowDown as ArrowDownDefinition,
-  ArrowUp as ArrowUpDefinition,
   BellIcon as BellDefinition,
   BlocksIcon as BlocksDefinition,
   Book03Icon as Book03IconDefinition,
@@ -22,14 +20,11 @@ import {
   CalendarClockIcon as CalendarClockDefinition,
   ChartRelationshipIcon as ChartRelationshipIconDefinition,
   CheckIcon as CheckDefinition,
-  ChevronDown as ChevronDownDefinition,
-  ChevronLeftIcon as ChevronLeftDefinition,
-  ChevronRightIcon as ChevronRightDefinition,
   Clock as ClockDefinition,
   Cloud as CloudDefinition,
   CloudCogIcon as CloudCogDefinition,
   Cog as CogDefinition,
-  CollapseIcon as CollapseIconDefinition,
+  ArrowShrink01Icon as CollapseIconDefinition,
   ConnectIcon as ConnectIconDefinition,
   Copy02Icon as CopyDefinition,
   Cpu as CpuDefinition,
@@ -39,7 +34,7 @@ import {
   Download as DownloadDefinition,
   ExternalLinkIcon as ExternalLinkDefinition,
   Eye as EyeDefinition,
-  ExpandIcon as ExpandIconDefinition,
+  ArrowExpand01Icon as ExpandIconDefinition,
   File as FileDefinition,
   FileDiffIcon as FileDiffDefinition,
   FileTextIcon as FileTextDefinition,
@@ -106,6 +101,7 @@ import {
   Sun as SunDefinition,
   Moon as MoonDefinition,
   StopIcon as StopDefinition,
+  Tag01Icon as TagDefinition,
   Terminal as TerminalDefinition,
   ThumbsDownIcon as ThumbsDownIconDefinition,
   ThumbsUpIcon as ThumbsUpIconDefinition,
@@ -229,14 +225,23 @@ function createHugeicon(
   return (props) => <HugeiconsIcon {...props} icon={definition} />;
 }
 
+/** Straight, symmetric chevron: the library's own chevrons round their apex into a curve that looks off at 14px. */
+function chevron(d: string): HugeIconDefinition {
+  return [["path", { d, stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "0" }]];
+}
+const ChevronDownShape = chevron("M6 9L12 15L18 9");
+const ChevronUpShape = chevron("M6 15L12 9L18 15");
+const ChevronLeftShape = chevron("M15 6L9 12L15 18");
+const ChevronRightShape = chevron("M9 6L15 12L9 18");
+
 const iconDefinitions = {
   Activity: ActivityDefinition,
   Activity03Icon: Activity03IconDefinition,
   AddTeam: AddTeamDefinition,
   Archive: ArchiveDefinition,
   ArrowDataTransferVertical: ArrowDataTransferVerticalDefinition,
-  ArrowDown: ArrowDownDefinition,
-  ArrowUp: ArrowUpDefinition,
+  ArrowDown: ChevronDownShape,
+  ArrowUp: ChevronUpShape,
   Bell: BellDefinition,
   Blocks: BlocksDefinition,
   Book03Icon: Book03IconDefinition,
@@ -252,9 +257,9 @@ const iconDefinitions = {
   ChartRelationshipIcon: ChartRelationshipIconDefinition,
   XIcon: XDefinition,
   Check: CheckDefinition,
-  ChevronDown: ChevronDownDefinition,
-  ChevronLeft: ChevronLeftDefinition,
-  ChevronRight: ChevronRightDefinition,
+  ChevronDown: ChevronDownShape,
+  ChevronLeft: ChevronLeftShape,
+  ChevronRight: ChevronRightShape,
   Clock: ClockDefinition,
   Cloud: CloudDefinition,
   CloudCog: CloudCogDefinition,
@@ -336,6 +341,7 @@ const iconDefinitions = {
   Sun: SunDefinition,
   Moon: MoonDefinition,
   Stop: StopDefinition,
+  Tag: TagDefinition,
   Terminal: TerminalDefinition,
   ThumbsDownIcon: ThumbsDownIconDefinition,
   ThumbsUpIcon: ThumbsUpIconDefinition,
@@ -479,6 +485,7 @@ export const {
   Sun,
   Moon,
   Stop,
+  Tag,
   Terminal,
   ThumbsDownIcon,
   ThumbsUpIcon,

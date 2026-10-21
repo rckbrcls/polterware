@@ -1,4 +1,4 @@
-import { A11yDialog, Button, Field, FormStack, Input, Select, SwitchRow } from "@polterware/frontend-design-system";
+import { A11yDialog, Button, Field, FormStack, Input, Select, SettingsRow, Switch as ToggleSwitch } from "@polterware/frontend-design-system";
 import { createSignal, Match, Show, Switch } from "solid-js";
 import type { AuthMode, ConnectPayload, SavedServerPublic } from "../api";
 
@@ -168,11 +168,13 @@ export function ConnectionDialog(props: {
           </Match>
         </Switch>
         <Show when={!editingId()}>
-          <SwitchRow
-            checked={save()}
-            onCheckedChange={setSave}
-            label="Save server"
-          />
+          <SettingsRow label="Save server">
+            <ToggleSwitch
+              checked={save()}
+              onCheckedChange={setSave}
+              aria-label="Save server"
+            />
+          </SettingsRow>
         </Show>
       </FormStack>
     </A11yDialog>

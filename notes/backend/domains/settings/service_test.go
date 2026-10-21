@@ -20,12 +20,13 @@ func TestTypedSettings(t *testing.T) {
 	keys := []string{settings.KeyAppearanceTheme, settings.KeyNotificationsSound, settings.KeyNotificationsAllDayTime, settings.KeyNotificationsSnoozeMinutes, settings.KeyFocusWork, settings.KeyFocusShortBreak, settings.KeyFocusLongBreak, settings.KeyFocusCycles, settings.KeyFocusAutoContinue, settings.KeyFocusSounds, settings.KeyFocusNotifications, settings.KeyMapOnline, settings.KeyMapProvider, settings.KeyAgentsMCPPort, settings.KeyAgentsMCPEnabled, settings.KeyAgentsAllowFileAttach, settings.KeyAppKeepRunningInBackground, settings.KeyLinksFetchTitles, settings.KeyCalendarWeekStart, settings.KeyMapGeocoding}
 	got, e = f.SS.Set(f.Ctx, actor.CLI(), keys, next)
 	check(t, e)
+	next.AppearanceTheme = settings.ThemeDark
 	if got != next {
 		t.Fatal(got)
 	}
 	got, e = f.SS.Set(f.Ctx, actor.UI(), []string{settings.KeyAppearanceTheme}, settings.Settings{AppearanceTheme: settings.ThemeLight})
 	check(t, e)
-	if got.AppearanceTheme != settings.ThemeLight || got.FocusWorkMin != 60 {
+	if got.AppearanceTheme != settings.ThemeDark || got.FocusWorkMin != 60 {
 		t.Fatal(got)
 	}
 	for _, tc := range []struct {
@@ -41,6 +42,31 @@ func TestTypedSettings(t *testing.T) {
 	}
 	_, e = f.SS.Set(f.Ctx, actor.UI(), []string{settings.KeyMapOnline, settings.KeyMapOnline}, next)
 	code(t, e, fault.CodeInvalid)
+}
+
+func TestLegacyThemesUseDark(t *testing.T) {
+	for _, theme := range []string{settings.ThemeLight, settings.ThemeSystem, settings.ThemeDark} {
+		t.Run(theme, func(t *testing.T) {
+			f := setup()
+			check(t, f.Settings.Set(f.Ctx, settings.KeyAppearanceTheme, `"`+theme+`"`))
+			check(t, f.Settings.Set(f.Ctx, settings.KeyFocusWork, "45"))
+			got, e := f.SS.Get(f.Ctx)
+			check(t, e)
+			if got.AppearanceTheme != settings.ThemeDark || got.FocusWorkMin != 45 {
+				t.Fatal(got)
+			}
+			got, e = f.SS.Set(f.Ctx, actor.UI(), []string{settings.KeyAppearanceTheme}, settings.Settings{AppearanceTheme: theme})
+			check(t, e)
+			if got.AppearanceTheme != settings.ThemeDark || got.FocusWorkMin != 45 {
+				t.Fatal(got)
+			}
+			raw, ok, e := f.Settings.Get(f.Ctx, settings.KeyAppearanceTheme)
+			check(t, e)
+			if !ok || raw != `"dark"` {
+				t.Fatal(raw, ok)
+			}
+		})
+	}
 }
 
 type brokenSettings struct {

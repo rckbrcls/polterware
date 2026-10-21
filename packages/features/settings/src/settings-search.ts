@@ -104,7 +104,7 @@ export const SETTINGS_SEARCH_ENTRIES: SettingsSearchEntry[] = [
     section: "Appearance",
     label: "Reduce transparency",
     description: "Use a solid fill instead of the macOS frosted title bar and sidebar.",
-    keywords: "appearance glass vibrancy theme",
+    keywords: "appearance glass vibrancy",
   },
   {
     id: "core-status",

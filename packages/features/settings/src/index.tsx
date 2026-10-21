@@ -245,7 +245,7 @@ export function SettingsView(props: {
             <div class="flex justify-end gap-2">
               <Button
                 size="sm"
-                variant="ghost"
+                variant="texture"
                 onClick={() => {
                   setName(general()?.name ?? "");
                   setDescription(general()?.description ?? "");
@@ -394,7 +394,7 @@ export function SettingsView(props: {
         onClose={() => setArchiveOpen(false)}
         footer={
           <>
-            <Button size="sm" variant="ghost" onClick={() => setArchiveOpen(false)}>
+            <Button size="sm" variant="texture" onClick={() => setArchiveOpen(false)}>
               Cancel
             </Button>
             <Button size="sm" variant="danger" onClick={handleArchiveConfirm}>
@@ -414,7 +414,7 @@ export function SettingsView(props: {
         onClose={() => setResetOpen(false)}
         footer={
           <>
-            <Button size="sm" variant="ghost" onClick={() => setResetOpen(false)}>
+            <Button size="sm" variant="texture" onClick={() => setResetOpen(false)}>
               Cancel
             </Button>
             <Button

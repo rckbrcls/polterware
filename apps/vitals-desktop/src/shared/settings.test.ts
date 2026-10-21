@@ -6,7 +6,11 @@ describe("settings normalization", () => {
   it("recovers from invalid files and preserves valid fields independently", () => {
     for (const raw of [null, [], "broken", 42]) expect(normalizeSettings(raw)).toEqual(DEFAULT_SETTINGS);
     expect(normalizeSettings({ theme: "light", autoReconnect: false, historyWindowMinutes: 7, unknown: 1 }))
-      .toEqual({ ...DEFAULT_SETTINGS, theme: "light", autoReconnect: false });
+      .toEqual({ ...DEFAULT_SETTINGS, autoReconnect: false });
+  });
+  it.each(["light", "system", "dark"])("normalizes %s to dark without changing other preferences", (theme) => {
+    expect(normalizeSettings({ theme, networkUnit: "bits", reduceTransparency: true }))
+      .toEqual({ ...DEFAULT_SETTINGS, networkUnit: "bits", reduceTransparency: true });
   });
   it("accepts all preferences and rejects unsafe delays", () => {
     const settings = { theme: "dark", reduceTransparency: true, networkUnit: "bits", historyWindowMinutes: 10, confirmBeforeKill: false,

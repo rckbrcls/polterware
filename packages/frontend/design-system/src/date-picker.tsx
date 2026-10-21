@@ -3,6 +3,7 @@ import { splitProps } from "solid-js";
 import { Portal } from "solid-js/web";
 import { CalendarBody } from "./calendar";
 import { CalendarClock } from "./hugeicons";
+import "./button.css";
 import "./calendar.css";
 import { createPopupMotion } from "./popup-motion";
 import { createPanelPortalOwnership } from "./panel-interaction";
@@ -16,9 +17,9 @@ export function DatePicker(props: DatePickerProps) {
   return <ArkDatePicker.Root {...rest} class={`pw-date-picker ${local.class ?? ""}`} lazyMount unmountOnExit>
     <ArkDatePicker.Label>{local.label}</ArkDatePicker.Label>
     <ArkDatePicker.Control class="pw-picker__control">
-      <ArkDatePicker.Input class="control-field control-field-sm" />
-      <ArkDatePicker.Trigger class="pw-primitive-button" aria-label="Choose date"><CalendarClock size={14} /></ArkDatePicker.Trigger>
-      <ArkDatePicker.ClearTrigger class="pw-primitive-button" aria-label="Clear date">Clear</ArkDatePicker.ClearTrigger>
+      <ArkDatePicker.Input class="control-field pw-field-control control-field-sm" />
+      <ArkDatePicker.Trigger class="pw-primitive-button pw-texture-button" aria-label="Choose date"><CalendarClock size={14} /></ArkDatePicker.Trigger>
+      <ArkDatePicker.ClearTrigger class="pw-primitive-button pw-texture-button" aria-label="Clear date">Clear</ArkDatePicker.ClearTrigger>
     </ArkDatePicker.Control>
     <Portal><ArkDatePicker.Positioner class="pw-popover-positioner">
       <ArkDatePicker.Content ref={ownPortal} class="pw-popover-presence">

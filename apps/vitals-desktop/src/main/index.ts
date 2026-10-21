@@ -1,10 +1,13 @@
 import { join } from "node:path";
-import { app, BrowserWindow, ipcMain, nativeImage } from "electron";
+import { app, BrowserWindow, ipcMain, nativeImage, nativeTheme } from "electron";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { createWindow } from "./window.js";
 import { SessionManager } from "./session-manager.js";
 import { registerVitalsIpcHandlers } from "./ipc.js";
 import { getSettings } from "./settings.js";
+
+// Keep native controls and windows dark regardless of the system appearance.
+nativeTheme.themeSource = "dark";
 
 // Keep userData where it was before the app was named Polterware Vitals: <appData>/Vitals. Deriving it from the
 // product name would move saved servers, known hosts and settings to a new directory.

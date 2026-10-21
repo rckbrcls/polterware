@@ -14,6 +14,7 @@ import {
   type JSX,
 } from "solid-js";
 import { Portal, isServer } from "solid-js/web";
+import { FloatingSurfaceProvider } from "./floating-surface";
 import { animate, motionValue, type AnimationPlaybackControls } from "motion";
 import { createDragMotion } from "./drag-motion";
 import { prefersReducedMotion } from "./reduced-motion";
@@ -600,7 +601,9 @@ function FloatingWindowContent(props: { children: JSX.Element; class?: string })
           ref={(container) => container.classList.add("pw-floating-window__portal")}
         >
           <PanelInteractionContext.Provider value={context.interaction}>
-            <div class={`pw-floating-window__content ${props.class ?? ""}`}>{props.children}</div>
+            <FloatingSurfaceProvider>
+              <div class={`pw-floating-window__content ${props.class ?? ""}`}>{props.children}</div>
+            </FloatingSurfaceProvider>
           </PanelInteractionContext.Provider>
         </Portal>
       )}

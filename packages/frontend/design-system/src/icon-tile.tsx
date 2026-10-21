@@ -59,7 +59,7 @@ export function AuroraCover(props: AuroraCoverProps) {
     const style = getComputedStyle(cover);
     const tint = parseComputedColor(style.color);
     const variant = chromeVariant(chromeVariantIndex(props.seed), props.chromePreset);
-    const stops = props.chromeStops ?? (tint ? chromeStopsFromTint(tint, variant.horizon) : undefined);
+    const stops = props.chromeStops ?? (tint ? chromeStopsFromTint(tint, variant.horizon, variant.smooth) : undefined);
     if (!stops) return;
     const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
     const finish = renderChromeFinish(
@@ -108,7 +108,7 @@ export type IconTileProps = {
   aurora?: AuroraPalette;
   /** Chrome gradient stops; derived from the accent when omitted. */
   chromeStops?: readonly ChromeStop[];
-  /** Chrome reflection preset; `horizon` by default. */
+  /** Pin a reflection family; otherwise the seed selects one procedurally. */
   chromePreset?: ChromePreset;
   /** Seeds the procedural finish (for example an entity id); the same seed draws the same reflection. Random when omitted. */
   seed?: string;
@@ -261,7 +261,7 @@ export function IconTile(props: IconTileProps) {
     const style = getComputedStyle(tile);
     const tint = parseComputedColor(style.color);
     const variant = chromeVariant(chromeVariantIndex(props.seed), props.chromePreset);
-    const stops = props.chromeStops ?? (tint ? chromeStopsFromTint(tint, variant.horizon) : undefined);
+    const stops = props.chromeStops ?? (tint ? chromeStopsFromTint(tint, variant.horizon, variant.smooth) : undefined);
     if (!stops) return;
     const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
     const finish = renderChromeFinish(size() * dpr, dpr, { ...variant.options, stops, radius: Number.parseFloat(style.borderTopLeftRadius) || 8 });

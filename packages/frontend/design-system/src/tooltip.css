@@ -14,12 +14,15 @@
   pointer-events: none;
 }
 
-/* A tooltip is too small for the card rings: it shares the fill and drops them. */
-.pw-tooltip-content.menu-panel {
-  background: var(--card-fill);
-  box-shadow:
-    0 8px 28px var(--color-shadow),
-    0 0 0 1px var(--color-shadow-outline);
+/* Texture balloon: materials.css supplies the frame, lit ring and gradient face. The padding sits
+ * on the face; a tooltip is too small for the card rings, so it keeps only the drop shadow. */
+.pw-tooltip-content.menu-panel.pw-texture-button {
+  padding: 7px 9px;
+  border: 1px solid var(--tx-frame);
+  border-radius: 10px;
+  background: linear-gradient(to bottom, var(--tx-outer-top), var(--tx-outer-bottom));
+  --tx-face-radius: 9px;
+  box-shadow: 0 8px 28px var(--color-shadow);
 }
 
 .pw-tooltip-content {
@@ -39,11 +42,12 @@
 
 .pw-tooltip-content.pw-tooltip-content--rich {
   max-width: min(288px, calc(100vw - 16px));
-  padding: 8px 10px;
   font-weight: 400;
   text-align: left;
   white-space: normal;
 }
+
+.pw-tooltip-content.menu-panel.pw-texture-button.pw-tooltip-content--rich { padding: 9px 11px; }
 
 .pw-tab-tooltip {
   display: flex;

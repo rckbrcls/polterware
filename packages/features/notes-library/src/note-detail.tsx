@@ -153,10 +153,11 @@ export function NoteProperties(props: NoteDetailProps) {
     try { await store.queueDelete(props.noteId); setConfirmDelete(false); } catch { setConfirmDelete(false); }
   }
   return <Show when={note()}>{live => <DetailPanel.Body layout="document"><DetailPanel.Main class="!px-4 !pb-4 !pt-4">
+    <DetailPanel.Title title={live().title || "Untitled"} />
     <Show when={shell?.isFreshNote?.(props.noteId)}>
           <Button variant="secondary" size="sm" onClick={() => { void store.flush(props.noteId).then(() => shell?.cancelNewNote?.(props.noteId)); }}>Cancel</Button>
         </Show>
-        <DetailPanel.Section class="!-mx-4 !px-4" title="Organize" icon={<Layers size={14} />} collapsible>
+        <DetailPanel.Section title="Organize" icon={<Layers size={14} />} collapsible>
           <DetailPanel.Properties>
             <DetailPanel.Property
               label="Space"
@@ -215,7 +216,7 @@ export function NoteProperties(props: NoteDetailProps) {
             <p role="status" class="text-xs text-[var(--color-danger)]">Space, tags or activity unavailable: {store.metadataError()}</p>
           </Show>
         </DetailPanel.Section>
-        <DetailPanel.Section class="!-mx-4 !px-4" title="Schedule" icon={<CalendarClock size={14} />} collapsible>
+        <DetailPanel.Section title="Schedule" icon={<CalendarClock size={14} />} collapsible>
           <For each={sections().filter(section => section.id === "schedule")}>{section => <SectionContribution section={section} noteId={props.noteId} onAllDayChange={dueAllDay => edit({ dueAllDay })}>
             <DetailPanel.Property
               label="Ends"
@@ -247,11 +248,11 @@ export function NoteProperties(props: NoteDetailProps) {
           </SectionContribution>}</For>
         </DetailPanel.Section>
         <For each={sections().filter(section => section.id !== "schedule" && section.id !== "focus-recipe")}>{section => (
-          <DetailPanel.Section class="!-mx-4 !px-4" title={sectionTitle(section.id)} icon={sectionIcon(section.id)} collapsible>
+          <DetailPanel.Section title={sectionTitle(section.id)} icon={sectionIcon(section.id)} collapsible>
             <SectionContribution section={section} noteId={props.noteId} />
           </DetailPanel.Section>
         )}</For>
-        <DetailPanel.Section class="!-mx-4 !px-4" title="Danger zone" icon={<Delete size={14} />} collapsible defaultOpen={false}>
+        <DetailPanel.Section title="Danger zone" icon={<Delete size={14} />} collapsible defaultOpen={false}>
           <Button variant="danger" size="sm" disabled={store.deleting().has(props.noteId)} onClick={() => setConfirmDelete(true)}>Delete note</Button>
         </DetailPanel.Section>
     <A11yDialog open={confirmDelete()} title="Delete note?" size="sm" onClose={() => setConfirmDelete(false)} footer={<><Button variant="secondary" onClick={() => setConfirmDelete(false)}>Cancel</Button><Button variant="danger" onClick={() => void remove()}>Delete</Button></>}>

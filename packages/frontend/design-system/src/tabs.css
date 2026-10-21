@@ -16,23 +16,6 @@
   border-bottom: none;
 }
 
-.pw-page-toolbar--fade-edge {
-  position: relative;
-  z-index: 1;
-  background: transparent;
-}
-
-.pw-page-toolbar--fade-edge::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  right: 0;
-  left: 0;
-  height: 32px;
-  pointer-events: none;
-  background: var(--material-fade-edge-toolbar-trail);
-}
-
 .pw-page-toolbar-tabs,
 .pw-page-toolbar-leading {
   display: flex;
@@ -64,6 +47,11 @@
   flex-shrink: 0;
   align-items: center;
   gap: 8px;
+}
+
+/* Keys here read a touch low next to the tab track; seat them 1px higher (position only). */
+.pw-page-toolbar-actions > .pw-control-button {
+  margin-bottom: 2px;
 }
 
 /* Standalone tablist (inside PageToolbar or alone): a recessed texture track, like the switch,

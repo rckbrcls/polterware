@@ -2,6 +2,7 @@ import { createSignal } from "solid-js";
 import { render } from "solid-js/web";
 import { afterEach, describe, expect, it } from "vitest";
 import { Button, LinkButton, type ButtonVariant } from "./button";
+import { FloatingSurfaceProvider } from "./floating-surface";
 
 const cleanups: Array<() => void> = [];
 afterEach(() => { cleanups.splice(0).forEach(dispose => dispose()); document.body.replaceChildren(); });
@@ -48,5 +49,35 @@ describe("Button navigation", () => {
     expect(buttons[0]!.type).toBe("button");
     expect(buttons[0]!.disabled).toBe(true);
     expect(buttons[1]!.type).toBe("submit");
+  });
+});
+
+describe("Button inside a floating surface", () => {
+  it("renders text buttons with the texture face and mapped tone", () => {
+    const host = mount(() => <FloatingSurfaceProvider>
+      <Button variant="primary">Save</Button>
+      <Button variant="danger">Delete</Button>
+      <Button variant="ghost">Cancel</Button>
+      <Button>Back</Button>
+    </FloatingSurfaceProvider>);
+    const [primary, danger, ghost, secondary] = Array.from(host.querySelectorAll("button"));
+    for (const button of [primary, danger, ghost, secondary]) {
+      expect(button!.classList.contains("pw-texture-button")).toBe(true);
+      expect(button!.classList.contains("pw-control-button")).toBe(false);
+    }
+    expect(primary!.dataset.textureTone).toBe("brand");
+    expect(danger!.dataset.textureTone).toBe("danger");
+    expect(ghost!.dataset.textureTone).toBe("neutral");
+    expect(secondary!.dataset.textureTone).toBe("neutral");
+  });
+
+  it("keeps icon-only buttons flat and honours keepVariant", () => {
+    const host = mount(() => <FloatingSurfaceProvider>
+      <Button variant="icon" aria-label="Close">x</Button>
+      <Button variant="ghost" keepVariant>Chip</Button>
+    </FloatingSurfaceProvider>);
+    const [icon, kept] = Array.from(host.querySelectorAll("button"));
+    expect(icon!.classList.contains("pw-texture-button")).toBe(false);
+    expect(kept!.classList.contains("pw-button-flat")).toBe(true);
   });
 });

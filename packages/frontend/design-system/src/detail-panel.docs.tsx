@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { Button } from "./button";
 import { DetailPanel, DetailPanelCollectionHeader } from "./detail-panel";
-import { FileText } from "./hugeicons";
+import { FileText, ListChecks, ListFilter, Settings } from "./hugeicons";
 import { MarkdownEditor } from "./markdown-editor";
 import { StatusChip } from "./status";
 import type { DocEntry } from "./docs/types";
@@ -31,25 +31,36 @@ function RecordPanel() {
           </div>
         </DetailPanel.Collection>
         <DetailPanel.Content>
-          <DetailPanel.Header />
+          <DetailPanel.Header title="Source import" />
           <DetailPanel.Body>
             <DetailPanel.Main>
-              <DetailPanel.Title title="Source import" icon={<FileText size={16} />} meta={<StatusChip tone="syncing">Build</StatusChip>} />
-              <DetailPanel.Section title="Description">
+              <div class="mb-3"><StatusChip tone="syncing">Build</StatusChip></div>
+              <DetailPanel.Section title="Description" icon={<FileText size={14} />}>
                 <p>Register project sources as evidence for verified facts.</p>
               </DetailPanel.Section>
-              <DetailPanel.Section title="Acceptance criteria" collapsible defaultOpen={false} icon={<FileText size={14} />}>
+              <DetailPanel.Section title="Options" icon={<ListFilter size={14} />}>
+                <ol class="m-0 grid list-none gap-2 p-0" role="list" aria-label="Options">
+                  <li class="flex min-w-0 items-start gap-2"><span class="shrink-0 tabular-nums text-[var(--color-text-muted)]" aria-hidden="true">01</span><span class="min-w-0 [overflow-wrap:anywhere]">Import registered project sources.</span></li>
+                  <li class="flex min-w-0 items-start gap-2"><span class="shrink-0 tabular-nums text-[var(--color-text-muted)]" aria-hidden="true">02</span><span class="min-w-0 [overflow-wrap:anywhere]">Review the evidence before importing additional sources.</span></li>
+                </ol>
+              </DetailPanel.Section>
+              <DetailPanel.Section title="Acceptance criteria" collapsible defaultOpen={false} icon={<ListChecks size={14} />}>
                 <p>Every imported source retains its project-relative path.</p>
               </DetailPanel.Section>
             </DetailPanel.Main>
             <DetailPanel.Rail aria-label="Work properties">
-              <DetailPanel.Properties>
-                <DetailPanel.Property label="Stage" value="Build" />
-                <DetailPanel.Property label="Component" value="Local core" />
-                <DetailPanel.Property label="ID" value="source-import" mono />
-              </DetailPanel.Properties>
+              <DetailPanel.Section title="Properties" icon={<Settings size={14} />}>
+                <DetailPanel.Properties>
+                  <DetailPanel.Property label="Stage" value="Build" />
+                  <DetailPanel.Property label="Component" value="Local core" />
+                  <DetailPanel.Property label="ID" value="source-import" mono />
+                </DetailPanel.Properties>
+              </DetailPanel.Section>
             </DetailPanel.Rail>
           </DetailPanel.Body>
+          <DetailPanel.Footer aria-label="Source actions">
+            <Button size="sm" onClick={() => setOpen(false)}><FileText size={14} />Review sources</Button>
+          </DetailPanel.Footer>
         </DetailPanel.Content>
       </DetailPanel.Root>
     </div>
@@ -99,10 +110,10 @@ export default {
   name: "DetailPanel",
   group: "Data",
   summary:
-    "Compound entity panel with record and document body layouts, keeping identity inside the scrollable content. Collection headers stay above the divided workspace and render inline on standalone pages.",
+    "Compound entity panel with decorative heading icons and main-surface section cards in record layouts and an unchanged Markdown writing surface in document layouts, keeping identity in the fixed header: centered for expandable details and left-aligned for close-only details. Collection headers stay above the divided workspace and render inline on standalone pages.",
   exports: ["DetailPanel", "DetailPanelCollectionHeader"],
   examples: [
-    { id: "record", title: "Record with properties, resizing, and expansion", wide: true, render: () => <RecordPanel /> },
+    { id: "record", title: "Main-surface sections with properties, resizing, and expansion", wide: true, render: () => <RecordPanel /> },
     { id: "document", title: "Document in a fixed overlay panel", wide: true, render: () => <DocumentPanel /> },
     {
       id: "standalone-header",

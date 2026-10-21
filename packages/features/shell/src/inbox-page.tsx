@@ -312,7 +312,7 @@ export function InboxPage(props: {
         onClose={() => setDeciding(null)}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setDeciding(null)}>
+            <Button variant="texture" onClick={() => setDeciding(null)}>
               Cancel
             </Button>
             <Button

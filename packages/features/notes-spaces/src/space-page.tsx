@@ -396,7 +396,7 @@ export function SpacePage() {
               <Button variant="danger" class="mr-auto" onClick={() => void requestDelete()}>
                 Delete Space
               </Button>
-              <Button variant="ghost" onClick={() => setEditOpen(false)}>
+              <Button variant="texture" onClick={() => setEditOpen(false)}>
                 Cancel
               </Button>
               <Button variant="primary" onClick={() => void saveSpace()}>
@@ -434,7 +434,7 @@ export function SpacePage() {
           onClose={() => setCreateOpen(false)}
           footer={
             <>
-              <Button variant="ghost" onClick={() => setCreateOpen(false)}>
+              <Button variant="texture" onClick={() => setCreateOpen(false)}>
                 Cancel
               </Button>
               <Button variant="primary" onClick={() => void createSpace()}>
@@ -463,7 +463,7 @@ export function SpacePage() {
           onClose={() => setDeletePreview(undefined)}
           footer={
             <>
-              <Button variant="ghost" onClick={() => setDeletePreview(undefined)}>
+              <Button variant="texture" onClick={() => setDeletePreview(undefined)}>
                 Cancel
               </Button>
               <Button variant="danger" onClick={() => void confirmDelete()}>

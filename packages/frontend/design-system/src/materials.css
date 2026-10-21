@@ -10,7 +10,6 @@
   --material-fade-edge-bottom: linear-gradient(to bottom, var(--color-surface) 0%, var(--color-surface) 48%, color-mix(in srgb, var(--color-surface) 45%, transparent) 68%, color-mix(in srgb, var(--color-surface) 18%, transparent) 86%, transparent 100%);
   --material-fade-edge-top: linear-gradient(to top, var(--color-surface) 0%, var(--color-surface) 48%, color-mix(in srgb, var(--color-surface) 45%, transparent) 68%, color-mix(in srgb, var(--color-surface) 18%, transparent) 86%, transparent 100%);
   --material-fade-edge-toolbar-trail: linear-gradient(to bottom, var(--color-surface) 0%, color-mix(in srgb, var(--color-surface) 52%, transparent) 30%, color-mix(in srgb, var(--color-surface) 18%, transparent) 65%, transparent 100%);
-  --material-fade-edge-top-canvas: linear-gradient(to right, var(--color-surface), transparent 40px), linear-gradient(to left, var(--color-surface), transparent 40px), linear-gradient(to top, var(--color-surface), transparent 52px);
   /* Card rings: opaque alternating dark/light hairlines stepped inward from the rim (Card texture). */
   --card-ring-dark-outer: #1d1d1d;
   --card-ring-light: #323232;
@@ -166,6 +165,13 @@
   box-shadow: var(--field-rings);
 }
 
+/* Content groups retain the main surface frame with a smaller radius and lighter fill. */
+.surface-panel.surface-panel--nested {
+  border-radius: var(--radius-card);
+  background: var(--color-surface-subtle);
+}
+
+
 /**
  * Floating overlays (dialogs, command palette, large popovers).
  * Same edge-light as MainSurface + quiet outer lift over the shell.
@@ -279,6 +285,52 @@
 
 .pw-dropdown-panel {
   z-index: var(--z-dropdown, 105);
+}
+
+/* Shared framed texture: buttons add interaction states; cards keep a stable face. */
+.pw-texture-button,
+.card-texture-framed {
+  --tx-frame: #141414;
+  --tx-outer-top: #5c5c5c;
+  --tx-outer-bottom: #3d3d3d;
+  --tx-face-top: #262626;
+  --tx-face-bottom: #3b3b3b;
+  --tx-face-hover-top: #404040;
+  --tx-face-hover-bottom: #454545;
+  --tx-face-active-top: #262626;
+  --tx-face-active-bottom: #404040;
+  --tx-ink: var(--color-text-primary);
+
+  position: relative;
+  isolation: isolate;
+  border: 1px solid var(--tx-frame);
+  background: linear-gradient(to bottom, var(--tx-outer-top), var(--tx-outer-bottom));
+  color: var(--tx-ink);
+  transition: filter var(--duration-control) var(--ease-standard);
+}
+
+.pw-button.pw-texture-button::before,
+.pw-texture-button::before,
+.card-texture-framed::before {
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: var(--tx-face-radius, 10px);
+  background: linear-gradient(to bottom, var(--tx-face-top), var(--tx-face-bottom));
+  content: "";
+  pointer-events: none;
+  transition: background var(--duration-control) var(--ease-standard);
+}
+
+.card-texture-framed {
+  /* Large content surfaces use a quieter palette than compact texture buttons. */
+  --tx-frame: var(--field-frame);
+  --tx-outer-top: var(--card-ring-light);
+  --tx-outer-bottom: var(--card-ring-light-inner);
+  --tx-face-top: var(--color-surface);
+  --tx-face-bottom: color-mix(in srgb, var(--color-surface) 85%, var(--color-surface-subtle));
+  --tx-face-radius: calc(var(--radius-card) - 2px);
+  border-radius: var(--radius-card);
 }
 
 /** Nested product card — same as base.css .card-panel (design-system Card). */

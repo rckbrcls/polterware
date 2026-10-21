@@ -78,7 +78,24 @@ function ComponentPage(props: { page: DocPage }) {
 
 function Docs() {
   const [slug, setSlug] = createSignal(currentSlug());
-  const onHash = () => setSlug(currentSlug());
+  // Hash navigation keeps the previous scroll offset. A fresh navigation starts at the top;
+  // back/forward lands on an entry we tagged earlier and restores the offset it was left at.
+  history.scrollRestoration = "manual";
+  const offsets = new Map<number, number>();
+  let entry = 0;
+  let nextEntry = Date.now();
+  const tag = () => {
+    if (typeof history.state?.entry === "number") entry = history.state.entry;
+    else { entry = nextEntry++; history.replaceState({ entry }, ""); }
+  };
+  tag();
+  const onHash = () => {
+    offsets.set(entry, window.scrollY);
+    const target = typeof history.state?.entry === "number" ? history.state.entry as number : undefined;
+    setSlug(currentSlug());
+    window.scrollTo(0, target === undefined ? 0 : offsets.get(target) ?? 0);
+    tag();
+  };
   window.addEventListener("hashchange", onHash);
   onCleanup(() => window.removeEventListener("hashchange", onHash));
   const [query, setQuery] = createSignal("");

@@ -85,7 +85,7 @@ describe("IconTile", () => {
   });
 
   it("uses a bolder stroke on identity-tile marks than the global 1.5 default", () => {
-    expect(styles).toContain("stroke-width: var(--pw-icon-tile-stroke-width, 2)");
+    expect(styles).toContain("stroke-width: var(--pw-icon-tile-stroke-width, 2.5)");
   });
 
   it("keeps brand accents light pastels for dark-mark contrast", () => {

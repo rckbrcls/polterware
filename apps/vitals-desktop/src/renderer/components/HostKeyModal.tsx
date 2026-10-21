@@ -1,4 +1,4 @@
-import { A11yDialog, ControlButton } from "@polterware/frontend-design-system";
+import { A11yDialog, Button } from "@polterware/frontend-design-system";
 
 export function HostKeyModal(props: {
   host: string;
@@ -16,12 +16,12 @@ export function HostKeyModal(props: {
       onClose={props.onReject}
       footer={
         <>
-          <ControlButton tone="secondary" onClick={props.onReject}>
+          <Button onClick={props.onReject}>
             Reject
-          </ControlButton>
-          <ControlButton tone="brand" onClick={props.onAccept}>
+          </Button>
+          <Button variant="brand" onClick={props.onAccept}>
             Trust and connect
-          </ControlButton>
+          </Button>
         </>
       }
     >

@@ -1,10 +1,16 @@
 /* Secondary filters: quiet until selected, then the texture face (same as the active tab). */
 
+/* The group is a recessed track like .pw-tabs; the selected chip is the raised face inside it. */
 .pw-filter-chip-group {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--field-frame);
+  border-radius: 14px;
+  background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
+  box-shadow: var(--field-rings);
 }
 
 .pw-filter-chip {
@@ -13,9 +19,10 @@
   align-items: center;
   justify-content: center;
   margin: 0;
-  padding: 5px 10px;
+  min-height: calc(var(--control-height-md) - 6px);
+  padding: 2px 12px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 11px;
   background: transparent;
   color: var(--color-text-muted);
   font-family: inherit;
@@ -36,15 +43,15 @@
 }
 
 .pw-filter-chip--selected {
-  border-color: var(--tone-neutral-frame);
+  border-color: var(--field-frame);
   color: var(--color-text-primary);
-  background: linear-gradient(to bottom, var(--tone-neutral-top), var(--tone-neutral-bottom));
-  box-shadow: inset 0 0 0 1px var(--tone-neutral-rim);
+  background: linear-gradient(to bottom, #5a5a5a, #3d3d3d);
+  box-shadow: inset 0 0 0 1px #6a6a6a, 0 1px 2px var(--color-shadow);
 }
 
 .pw-filter-chip--selected:hover {
   color: var(--color-text-primary);
-  background: linear-gradient(to bottom, #404040, #454545);
+  background: linear-gradient(to bottom, #666666, #484848);
 }
 
 .pw-filter-chip:focus {

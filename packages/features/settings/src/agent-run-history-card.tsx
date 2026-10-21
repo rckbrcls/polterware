@@ -7,6 +7,9 @@ import {
   Skeleton,
   StatusChip,
   User,
+  FileText,
+  History,
+  Settings,
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
 import type {
@@ -199,7 +202,7 @@ function ChangeDetail(props: {
             icon={<ActorIcon actorKind={props.change.actorKind} size={16} />}
             title={envelope().summary || props.change.summary || "Change"}
           />
-          <DetailPanel.Section title="Rationale">
+          <DetailPanel.Section title="Rationale" icon={<FileText size={14} />}>
             <Show
               when={envelope().rationale.trim()}
               fallback={
@@ -211,7 +214,7 @@ function ChangeDetail(props: {
               <p class="pw-detail-panel__text whitespace-pre-wrap">{envelope().rationale}</p>
             </Show>
           </DetailPanel.Section>
-          <DetailPanel.Section title="Audit chain">
+          <DetailPanel.Section title="Audit chain" icon={<History size={14} />}>
             <Show
               when={detail()}
               fallback={
@@ -277,7 +280,7 @@ function ChangeDetail(props: {
           </DetailPanel.Section>
         </DetailPanel.Main>
         <DetailPanel.Rail>
-          <DetailPanel.Section title="Properties">
+          <DetailPanel.Section title="Properties" icon={<Settings size={14} />}>
             <DetailPanel.Properties>
               <DetailPanel.Property
                 label="Actor"

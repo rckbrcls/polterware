@@ -12,7 +12,7 @@ export interface VitalsSettings {
 }
 
 export const DEFAULT_SETTINGS: Readonly<VitalsSettings> = Object.freeze({
-  theme: "system", reduceTransparency: false, networkUnit: "bytes", historyWindowMinutes: 2,
+  theme: "dark", reduceTransparency: false, networkUnit: "bytes", historyWindowMinutes: 2,
   confirmBeforeKill: true, confirmBeforeCloseSession: true, defaultKillSignal: "TERM", autoReconnect: true,
   reconnectDelaySeconds: 3,
 });
@@ -21,7 +21,7 @@ export function normalizeSettings(raw: unknown): VitalsSettings {
   const result = { ...DEFAULT_SETTINGS };
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return result;
   const value = raw as Record<string, unknown>;
-  if (value.theme === "system" || value.theme === "dark" || value.theme === "light") result.theme = value.theme;
+  // Legacy theme preferences remain readable, but every session uses dark mode.
   if (typeof value.reduceTransparency === "boolean") result.reduceTransparency = value.reduceTransparency;
   if (value.networkUnit === "bytes" || value.networkUnit === "bits") result.networkUnit = value.networkUnit;
   if (value.historyWindowMinutes === 2 || value.historyWindowMinutes === 5 || value.historyWindowMinutes === 10) result.historyWindowMinutes = value.historyWindowMinutes;

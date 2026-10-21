@@ -21,7 +21,7 @@ export default {
     ) },
     { id: "sizes", title: "Sizes", render: () => (
       // #region sizes
-      <><ProgressRing label="Small progress" value={35} min={0} max={100} size={40} thickness={3} /><ProgressRing label="Large progress" value={82} min={0} max={100} size={80} thickness={6} /></>
+      <><ProgressRing label="Small progress" value={35} min={0} max={100} size={40} thickness={4} /><ProgressRing label="Large progress" value={82} min={0} max={100} size={80} thickness={6} /></>
       // #endregion
     ) },
     { id: "controlled", title: "Controlled", render: () => <Controlled /> },
