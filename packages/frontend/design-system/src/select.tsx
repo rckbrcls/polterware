@@ -113,7 +113,7 @@ export function Select(props: SelectProps) {
       </DropdownMenuTrigger>
       {/* At least the trigger's width, wider when an option's label needs it. */}
       <DropdownMenuContent
-        class="max-h-[min(320px,calc(100vh-24px))] min-w-[var(--reference-width)] max-w-[calc(100vw-24px)] !overflow-y-auto overscroll-contain px-1"
+        class="max-h-[min(320px,calc(100vh-24px))] min-w-[var(--reference-width)] max-w-[calc(100vw-24px)] !overflow-y-auto overscroll-contain"
       >
         <Index each={props.options}>
           {(option) => (
