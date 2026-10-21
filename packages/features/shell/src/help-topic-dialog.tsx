@@ -50,7 +50,7 @@ export function HelpTopicDialog(props: {
           const Icon = topic()?.icon;
           if (!Icon) return undefined;
           return (
-            <IconTile size={24} tone="neutral">
+            <IconTile size={24} tone="neutral" seed={props.topicId ?? undefined}>
               <Icon size={14} aria-hidden />
             </IconTile>
           );

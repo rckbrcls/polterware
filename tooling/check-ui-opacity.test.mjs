@@ -4,7 +4,7 @@ import { inspectSource } from "./check-ui-opacity.mjs";
 
 const PRODUCT_FILE = "packages/features/example/src/example.tsx";
 const BUTTON_FILE = "packages/frontend/design-system/src/button.css";
-const WINDOW_FILE = "apps/lore-desktop/src/main/window.ts";
+const WINDOW_FILE = "apps/polterware-desktop/src/main/window.ts";
 const CANVAS_FILE =
   "packages/features/architecture/src/canvas/architecture-canvas-host.tsx";
 const BASE_TOKENS_FILE = "packages/configuration/tailwind/base.css";

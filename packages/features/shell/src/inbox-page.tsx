@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Field,
+  FilterPopover,
   Input,
   MoreHorizontal,
   PageContent,
@@ -15,6 +16,8 @@ import {
   PageLoading,
   PageToolbar,
   Select,
+  SearchBar,
+  StatusDot,
   Bot,
   Check,
   Clock,
@@ -26,9 +29,12 @@ import {
   StatusChip,
   Scale,
   ThumbsDownIcon,
-  Tabs,
+  type FilterPopoverGroup,
 } from "@polterware/frontend-design-system";
-import { detailPanelStore } from "@polterware/frontend-state";
+import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
+import { EntityDetailHost } from "./entity-detail-host";
+import { openDetail } from "./detail-expansion";
+import { InboxItemDetail } from "./inbox-item-detail";
 import type {
   WorkspaceInbox,
   WorkspaceInboxAction,
@@ -39,10 +45,7 @@ import "./inbox-page.css";
 
 const INBOX_SCOPE = "inbox:items";
 
-type InboxFilter = "all" | WorkspaceInboxKind;
-
-const FILTERS: { id: InboxFilter; label: string }[] = [
-  { id: "all", label: "All" },
+const TYPE_FILTERS: { id: WorkspaceInboxKind; label: string }[] = [
   { id: "decision", label: "Decisions" },
   { id: "drift", label: "Drift" },
   { id: "verify", label: "Verify" },
@@ -90,32 +93,81 @@ export function InboxPage(props: {
   loading?: boolean;
   onResolve?: (item: WorkspaceInboxItem, action: WorkspaceInboxAction, answer?: string) => Promise<void>;
 }) {
-  const [filter, setFilter] = createSignal<InboxFilter>("all");
+  const [kinds, setKinds] = createSignal<string[]>([]);
   const [pending, setPending] = createSignal("");
   const [deciding, setDeciding] = createSignal<WorkspaceInboxItem | null>(null);
   const [answer, setAnswer] = createSignal("");
-
-  // The Inbox has no entity detail: it clears another surface's selection and turns the
-  // shared sidebar (and its toggle) off while it is active.
-  createEffect(() => {
-    detailPanelStore.getState().registerCollection({
-      scopeId: INBOX_SCOPE,
-      status: "ready",
-      targets: [],
-      details: false,
-    });
-    onCleanup(() => detailPanelStore.getState().unregisterCollection(INBOX_SCOPE));
-  });
+  const [query, setQuery] = createSignal("");
+  const [statuses, setStatuses] = createSignal<string[]>([]);
 
   const items = () => props.inbox?.items ?? [];
-  const countOf = (kind: InboxFilter) =>
-    items().filter((item) => item.state === "open" && (kind === "all" || item.kind === kind)).length;
-  const visible = createMemo(() =>
-    items().filter((item) => filter() === "all" || item.kind === filter()),
-  );
+  const countOf = (kind: WorkspaceInboxKind) =>
+    items().filter((item) => item.state === "open" && item.kind === kind).length;
+  const itemStatus = (item: WorkspaceInboxItem) =>
+    item.state === "deferred" ? "deferred" : item.blocking ? "blocking" : "open";
+  const visible = createMemo(() => {
+    const needle = query().trim().toLowerCase();
+    return items().filter(
+      (item) =>
+        (kinds().length === 0 || kinds().includes(item.kind)) &&
+        (statuses().length === 0 || statuses().includes(itemStatus(item))) &&
+        (!needle || [item.title, item.where, item.source].some((value) => (value ?? "").toLowerCase().includes(needle))),
+    );
+  });
+  const toggle = (setter: (update: (current: string[]) => string[]) => void, id: string, checked: boolean) =>
+    setter((current) => (checked ? [...current.filter((value) => value !== id), id] : current.filter((value) => value !== id)));
+  const filterGroups = (): FilterPopoverGroup[] => [
+    {
+      id: "type",
+      label: "Type",
+      leading: <Scale size={14} aria-hidden />,
+      options: TYPE_FILTERS.map((option) => {
+        const Icon = KIND_ICON[option.id];
+        return {
+          id: option.id,
+          label: `${option.label} (${countOf(option.id)})`,
+          leading: <Icon size={14} aria-hidden />,
+          checked: kinds().includes(option.id),
+          onCheckedChange: (checked: boolean) => toggle(setKinds, option.id, checked),
+        };
+      }),
+    },
+    {
+      id: "status",
+      label: "Status",
+      leading: <StatusDot tone="ok" showLabel={false} />,
+      options: [
+        { id: "blocking", label: "Blocking", tone: "danger" as const },
+        { id: "open", label: "Open", tone: "ok" as const },
+        { id: "deferred", label: "Deferred", tone: "muted" as const },
+      ].map((option) => ({
+        id: option.id,
+        label: option.label,
+        leading: <StatusDot tone={option.tone} showLabel={false} />,
+        checked: statuses().includes(option.id),
+        onCheckedChange: (checked: boolean) => toggle(setStatuses, option.id, checked),
+      })),
+    },
+  ];
   const open = () => visible().filter((item) => item.state === "open");
   const deferred = () => visible().filter((item) => item.state === "deferred");
   const rows = createMemo(() => [...open(), ...deferred()]);
+
+  const activeTarget = createDetailPanelSelector((state) => state.activeTarget);
+  const selectedItem = createMemo(() => {
+    const target = activeTarget();
+    return target?.scopeId === INBOX_SCOPE ? rows().find((item) => item.id === target.entityId) : undefined;
+  });
+
+  createEffect(() => {
+    detailPanelStore.getState().registerCollection({
+      scopeId: INBOX_SCOPE,
+      status: props.loading ? "loading" : "ready",
+      targets: rows().map((item) => ({ scopeId: INBOX_SCOPE, entityId: item.id, entityKind: "inbox-item" })),
+      selectFirst: false,
+    });
+  });
+  onCleanup(() => detailPanelStore.getState().unregisterCollection(INBOX_SCOPE));
 
   async function run(item: WorkspaceInboxItem, action: WorkspaceInboxAction, value?: string) {
     if (action === "decide" && value === undefined) {
@@ -137,13 +189,20 @@ export function InboxPage(props: {
   function Row(rowProps: { item: WorkspaceInboxItem }) {
     const item = () => rowProps.item;
     return (
-      <DataTable.Row row={item()} rowId={item().id} aria-label={statusLabel(item())} class={item().state === "deferred" ? "pw-inbox-row--deferred" : undefined}>
+      <DataTable.Row
+        row={item()}
+        rowId={item().id}
+        aria-label={statusLabel(item())}
+        class={[item().state === "deferred" ? "pw-inbox-row--deferred" : "", selectedItem()?.id === item().id ? "pw-data-table-row--active" : ""].filter(Boolean).join(" ") || undefined}
+        onActivate={() => openDetail({ scopeId: INBOX_SCOPE, entityId: item().id, entityKind: "inbox-item" })}
+      >
         <DataTable.PrimaryCell
           icon={(() => {
             const Icon = KIND_ICON[item().kind];
             return <Icon size={14} aria-hidden />;
           })()}
           iconTone={item().blocking && item().state === "open" ? "security" : "neutral"}
+          iconSeed={item().id}
           title={item().title}
         />
         <DataTable.Cell>{KIND_LABEL[item().kind]}</DataTable.Cell>
@@ -154,7 +213,7 @@ export function InboxPage(props: {
         </DataTable.Cell>
         <DataTable.Cell class="pw-inbox-context">{item().where || "—"}</DataTable.Cell>
         <DataTable.Cell class="pw-inbox-source">{item().source || "—"}</DataTable.Cell>
-        <DataTable.Cell align="right" class="pw-inbox-actions">
+        <DataTable.Cell align="right" class="pw-inbox-actions" onClick={(event: MouseEvent) => event.stopPropagation()}>
           <DropdownMenu positioning={{ placement: "bottom-end" }}>
             <DropdownMenuTrigger
               aria-label={`Actions for ${item().title}`}
@@ -183,24 +242,21 @@ export function InboxPage(props: {
   }
 
   return (
-    <div class="flex h-full min-h-0 flex-col">
+    <EntityDetailHost>
       <PageToolbar.Root>
-        <PageToolbar.Tabs>
-          <Tabs
-            items={FILTERS.map((entry) => ({
-              id: entry.id,
-              label: entry.label,
-              count: countOf(entry.id) || undefined,
-            }))}
-            value={filter()}
-            onChange={(value) => setFilter(value as InboxFilter)}
-            aria-label="Inbox"
-          />
-        </PageToolbar.Tabs>
+        <PageToolbar.Leading>{null}</PageToolbar.Leading>
         <PageToolbar.Actions>
-          <Show when={(props.inbox?.blockingCount ?? 0) > 0}>
-            <StatusChip tone="danger">{props.inbox?.blockingCount} blocking</StatusChip>
-          </Show>
+          <SearchBar placeholder="Search inbox" value={query()} onInput={setQuery} aria-label="Search inbox" />
+          <FilterPopover
+            ariaLabel="Inbox filters"
+            title="Filter inbox"
+            active={statuses().length > 0 || kinds().length > 0}
+            onClear={() => {
+              setStatuses([]);
+              setKinds([]);
+            }}
+            groups={filterGroups()}
+          />
         </PageToolbar.Actions>
       </PageToolbar.Root>
       <PageContent class="p-0">
@@ -238,6 +294,16 @@ export function InboxPage(props: {
         </Show>
       </PageContent>
 
+      <Show when={selectedItem()}>
+        {(item) => (
+          <InboxItemDetail
+            item={item()}
+            disabled={pending() !== "" || !props.onResolve}
+            onAction={(action) => void run(item(), action)}
+          />
+        )}
+      </Show>
+
       <Dialog
         open={deciding() !== null}
         title="Decide"
@@ -246,7 +312,7 @@ export function InboxPage(props: {
         onClose={() => setDeciding(null)}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setDeciding(null)}>
+            <Button variant="texture" onClick={() => setDeciding(null)}>
               Cancel
             </Button>
             <Button
@@ -280,6 +346,6 @@ export function InboxPage(props: {
           </Field>
         </Show>
       </Dialog>
-    </div>
+    </EntityDetailHost>
   );
 }

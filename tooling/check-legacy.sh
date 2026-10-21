@@ -9,16 +9,16 @@ die() {
 }
 
 # Forbidden legacy trees / packages on disk
-for p in legacy packages/core packages/ui apps/lore-desktop/src/renderer-solid; do
+for p in legacy packages/core packages/ui apps/polterware-desktop/src/renderer-solid; do
   if [[ -e "$ROOT/$p" ]]; then
     die "forbidden path still present: $p"
   fi
 done
 
 # Product desktop must not depend on React
-if [[ -f "$ROOT/apps/lore-desktop/package.json" ]]; then
+if [[ -f "$ROOT/apps/polterware-desktop/package.json" ]]; then
   if node -e "
-    const p=require('$ROOT/apps/lore-desktop/package.json');
+    const p=require('$ROOT/apps/polterware-desktop/package.json');
     const d={...p.dependencies||{},...p.devDependencies||{}};
     if (d.react || d['react-dom']) process.exit(2);
   "; then
@@ -26,28 +26,28 @@ if [[ -f "$ROOT/apps/lore-desktop/package.json" ]]; then
   else
     code=$?
     if [[ $code -eq 2 ]]; then
-      die "apps/lore-desktop must not depend on react/react-dom"
+      die "apps/polterware-desktop must not depend on react/react-dom"
     else
-      die "could not parse apps/lore-desktop/package.json"
+      die "could not parse apps/polterware-desktop/package.json"
     fi
   fi
 fi
 
 # Official Solid entry only
-if [[ ! -f "$ROOT/apps/lore-desktop/src/renderer/main.tsx" ]]; then
-  die "missing apps/lore-desktop/src/renderer/main.tsx"
+if [[ ! -f "$ROOT/apps/polterware-desktop/src/renderer/main.tsx" ]]; then
+  die "missing apps/polterware-desktop/src/renderer/main.tsx"
 fi
-if ! rg -q 'src/renderer' "$ROOT/apps/lore-desktop/electron.vite.config.ts" 2>/dev/null; then
+if ! rg -q 'src/renderer' "$ROOT/apps/polterware-desktop/electron.vite.config.ts" 2>/dev/null; then
   die "electron.vite.config.ts must point at src/renderer"
 fi
-if rg -q 'renderer-solid' "$ROOT/apps/lore-desktop/electron.vite.config.ts" 2>/dev/null; then
+if rg -q 'renderer-solid' "$ROOT/apps/polterware-desktop/electron.vite.config.ts" 2>/dev/null; then
   die "electron.vite.config.ts still references renderer-solid"
 fi
 
 # No mock workbench in product graph
 if rg -n 'createMockWorkbenchAdapter' \
-  "$ROOT/apps/lore-desktop/src/renderer" \
-  "$ROOT/apps/lore-desktop/src/main" \
+  "$ROOT/apps/polterware-desktop/src/renderer" \
+  "$ROOT/apps/polterware-desktop/src/main" \
   2>/dev/null | rg -q .; then
   die "mock workbench in product graph"
 fi

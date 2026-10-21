@@ -1,4 +1,4 @@
-// Package decision is the ADR lifecycle: states, legal transitions, and the
+// Package decision is the Verdict lifecycle: states, legal transitions, and the
 // supersede chain. It is pure (no store); the codec and the store share it.
 package decision
 
@@ -20,7 +20,7 @@ const (
 // States lists the lifecycle states in display order.
 var States = []string{StateActive, StateChallenged, StateProposed, StateSuperseded}
 
-// Normalize maps a stored ADR status to a lifecycle state. Older rows use
+// Normalize maps a stored Verdict status to a lifecycle state. Older rows use
 // "accepted" for what is now active; anything unknown reads as proposed.
 func Normalize(status string) string {
 	switch s := strings.ToLower(strings.TrimSpace(status)); s {
@@ -106,20 +106,23 @@ func MergeMeta(extraJSON string, meta Meta) string {
 	return string(body)
 }
 
-// Decision is one ADR as the lifecycle sees it.
+// Decision is one Verdict as the lifecycle sees it.
 type Decision struct {
 	ID     string
 	Title  string
 	Status string
 	Body   string
+	// Scope is the path of the Atlas node the decision applies to; empty is the
+	// whole project.
+	Scope string
 	Meta
 }
 
-var adrNumber = regexp.MustCompile(`(?i)\badr[\s\-_]*0*(\d+)\b`)
+var verdictNumber = regexp.MustCompile(`(?i)\b(?:adr|verdict)[\s\-_]*0*(\d+)\b`)
 
-// Number reads the ADR number from a title or reference ("ADR 0008", "ADR-8").
+// Number reads the Verdict number from a title or reference ("Verdict 0008", "Verdict-8").
 func Number(value string) (int, bool) {
-	m := adrNumber.FindStringSubmatch(value)
+	m := verdictNumber.FindStringSubmatch(value)
 	if m == nil {
 		return 0, false
 	}
@@ -127,7 +130,7 @@ func Number(value string) (int, bool) {
 	return n, err == nil
 }
 
-// Find returns the decision that ref names by id, exact title, or ADR number.
+// Find returns the decision that ref names by id, exact title, or Verdict number.
 func Find(decisions []Decision, ref string) (Decision, bool) {
 	ref = strings.TrimSpace(ref)
 	if ref == "" {
@@ -148,7 +151,7 @@ func Find(decisions []Decision, ref string) (Decision, bool) {
 	return Decision{}, false
 }
 
-// NextNumber returns the next free ADR number.
+// NextNumber returns the next free Verdict number.
 func NextNumber(decisions []Decision) int {
 	next := 1
 	for _, d := range decisions {
@@ -159,9 +162,9 @@ func NextNumber(decisions []Decision) int {
 	return next
 }
 
-// TitleFor renders a numbered ADR title: "ADR 0010: Title".
+// TitleFor renders a numbered Verdict title: "Verdict 0010: Title".
 func TitleFor(number int, title string) string {
-	return fmt.Sprintf("ADR %04d: %s", number, strings.TrimSpace(title))
+	return fmt.Sprintf("Verdict %04d: %s", number, strings.TrimSpace(title))
 }
 
 // CheckSupersede validates that by may supersede target: distinct, both known

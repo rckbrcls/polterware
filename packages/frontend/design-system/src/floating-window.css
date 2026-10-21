@@ -74,9 +74,10 @@
 .pw-floating-window__shell {
   position: absolute;
   inset: 0;
-  background-color: var(--color-surface-raised);
+  background: var(--card-fill);
   transform-origin: top left;
   box-shadow:
+    var(--card-rings),
     inset 0 1px 0 var(--edge-light-surface-highlight),
     inset 0 0 0 1px var(--edge-light-surface-rim),
     0 8px 24px -12px var(--color-shadow-outline);

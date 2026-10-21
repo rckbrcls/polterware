@@ -17,6 +17,7 @@ message KnowledgeItem {
   string extra_json = 10;
   string created_at = 11;
   string updated_at = 12;
+  string scope_node_id = 13;
 }
 
 message KnowledgeEntityLink {
@@ -46,7 +47,12 @@ message SaveKnowledgeRequest {
   ChangeEnvelope change = 2;
 }
 message SaveKnowledgeResponse { KnowledgeItem item = 1; }
-message ListKnowledgeRequest { string project_id = 1; string kind = 2; }
+message ListKnowledgeRequest {
+  string project_id = 1;
+  string kind = 2;
+  string scope_node = 3;
+  bool scope_exact = 4;
+}
 message ListKnowledgeResponse { repeated KnowledgeItem items = 1; }
 message DeleteKnowledgeRequest {
   string id = 1;

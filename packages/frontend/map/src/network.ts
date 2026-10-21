@@ -17,14 +17,14 @@ export function isMapNetworkUrl(url: string): boolean {
   }
 }
 
-/** True only when the app is allowed to talk to tile or geocoding hosts. */
+/** True only for the online MapLibre provider. */
 export function shouldLoadMapTiles(online: boolean, provider: "maplibre" | "pmtiles" = "maplibre"): boolean {
-  return online && provider === "maplibre";
+  void online;
+  return provider === "maplibre";
 }
 
 /**
- * Rejects tile/geocode fetches while map.online is false.
- * Callers that never mount MapLibre still pass because they never fetch.
+ * Rejects tile/geocode fetches while the caller has disabled network access.
  */
 export function installMapNetworkGuard(shouldAllow: () => boolean): () => void {
   const originalFetch = globalThis.fetch.bind(globalThis);

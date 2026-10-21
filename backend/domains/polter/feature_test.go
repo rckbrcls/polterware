@@ -13,7 +13,7 @@ func featureSnapshot(card work.Card) work.Snapshot {
 		ProjectID: "p1",
 		Nodes: []atlas.Node{
 			{ID: "n-core", Level: atlas.LevelDomain, Path: "core", Title: "Core", Status: atlas.NodeActive,
-				Decisions:  []string{"ADR 0007"},
+				Decisions:  []string{"Verdict 0007"},
 				Invariants: []atlas.Invariant{{Text: "No network calls during scan", State: work.InvariantActive}}},
 			{ID: "n-import", ParentID: "n-core", Level: atlas.LevelComponent, Path: "core/import", Title: "Import",
 				Intent: "Deterministic import of project files and git metadata", Status: atlas.NodeActive},
@@ -24,15 +24,15 @@ func featureSnapshot(card work.Card) work.Snapshot {
 	}
 }
 
-var featureADRs = []ADRRef{
-	{ID: "adr-7", Title: "ADR 0007: Deterministic import only", Status: "accepted"},
-	{ID: "adr-9", Title: "ADR 0009: Checkouts", Status: "proposed"},
+var featureVerdicts = []VerdictRef{
+	{ID: "verdict-7", Title: "Verdict 0007: Deterministic import only", Status: "accepted"},
+	{ID: "verdict-9", Title: "Verdict 0009: Checkouts", Status: "proposed"},
 }
 
 func TestReviewFeatureImpact(t *testing.T) {
 	card := work.Card{
 		Slug: "git-import", Title: "Git metadata import", Stage: work.StageShape, Status: work.CardActive,
-		Intent: "Import git commits and branch as evidence", Under: "core/import", Decisions: []string{"ADR-0009"},
+		Intent: "Import git commits and branch as evidence", Under: "core/import", Decisions: []string{"Verdict-0009"},
 		Questions: []work.Question{
 			{ID: "q1", Text: "Include merge commits?", Blocking: true, State: work.QuestionOpen},
 			{ID: "q2", Text: "How many commits?", State: work.QuestionOpen},
@@ -40,7 +40,7 @@ func TestReviewFeatureImpact(t *testing.T) {
 		},
 		Invariants: []work.Invariant{{Text: "No network calls during the scan", State: work.InvariantActive}},
 	}
-	review, err := ReviewFeature(featureSnapshot(card), "git-import", featureADRs, map[string]string{"q2": RouteDelegated})
+	review, err := ReviewFeature(featureSnapshot(card), "git-import", featureVerdicts, map[string]string{"q2": RouteDelegated})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +54,7 @@ func TestReviewFeatureImpact(t *testing.T) {
 	if strings.Join(touches, ",") != "core,core/import" {
 		t.Fatalf("touches = %v", touches)
 	}
-	if len(review.Decisions) != 2 || review.Decisions[0].ID != "adr-9" || review.Decisions[1].From != "core" {
+	if len(review.Decisions) != 2 || review.Decisions[0].ID != "verdict-9" || review.Decisions[1].From != "core" {
 		t.Fatalf("decisions = %+v", review.Decisions)
 	}
 	if len(review.Inherited) != 1 || review.Inherited[0].From != "core" {

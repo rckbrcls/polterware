@@ -15,7 +15,7 @@ import (
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
 )
 
-const inboxUsage = `usage: polterware inbox [--project <id>]
+const inboxUsage = `usage: polterware inbox [--scope <node>] [--exact] [--project <id>]
        polterware inbox <id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore | verify | reject [--agent name] [--project <id>]`
 
 // runInbox lists the project's Inbox, or applies one action to one item.
@@ -24,6 +24,7 @@ func runInbox(dbPath string, args []string) error {
 	flags.SetOutput(os.Stderr)
 	projectID := flags.String("project", "", "project id (default: project containing the cwd)")
 	agent := flags.String("agent", "", "agent label acting on the item (default: $"+envAgentLabel+")")
+	scope := addScopeFlags(flags)
 	positional, err := parseInterspersed(flags, args)
 	if err != nil {
 		return err
@@ -49,7 +50,7 @@ func runInbox(dbPath string, args []string) error {
 		return err
 	}
 	if len(positional) == 0 {
-		res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{ProjectId: project.Id, Query: polter.QueryInbox}))
+		res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{ProjectId: project.Id, Query: polter.QueryInbox, ScopeNode: *scope.node, ScopeExact: *scope.exact}))
 		if err != nil {
 			return err
 		}

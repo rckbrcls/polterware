@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 # Builds the ad-hoc signed macOS arm64 DMG and ZIP of one desktop app:
-#   bash tooling/release/dist-mac.sh lore|sparky|vitals
+#   bash tooling/release/dist-mac.sh polterware|notes|vitals
 # RELEASE_VERSION overrides the package.json version; the release workflow
 # passes the version from the <app>-v<version> tag.
 set -euo pipefail
-APP_KEY="${1:?usage: dist-mac.sh lore|sparky|vitals}"
+APP_KEY="${1:?usage: dist-mac.sh polterware|notes|vitals}"
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 RELEASE="$ROOT/tooling/release"
 meta() { node "$RELEASE/apps.cjs" "$APP_KEY" "$1"; }
 PRODUCT="$(meta product)"
+# Release artifacts use hyphens where the product name has spaces.
+ARTIFACT="${PRODUCT// /-}"
 DESKTOP="$ROOT/$(meta desktop)"
 ELECTRON="$(node -p 'require(process.argv[1]).electron' "$RELEASE/apps.cjs")"
 
@@ -33,10 +35,10 @@ build_core() {
 }
 
 case "$APP_KEY" in
-  lore) build_core "$ROOT/backend" polterware ;;
-  sparky)
-    build_core "$ROOT/sparky/backend" sparky
-    SPARKY_NATIVE_ARCH=arm64 bash "$DESKTOP/native/scripts/build.sh"
+  polterware) build_core "$ROOT/backend" polterware ;;
+  notes)
+    build_core "$ROOT/notes/backend" pwnotes
+    PWNOTES_NATIVE_ARCH=arm64 bash "$DESKTOP/native/scripts/build.sh"
     ;;
   vitals) bash "$DESKTOP/agent/build.sh" ;;
 esac
@@ -54,7 +56,7 @@ ASSESSMENT=$?
 set -e
 printf '\nspctl exit: %s (ad-hoc rejection expected)\n' "$ASSESSMENT" >> "$OUTPUT/gatekeeper.txt"
 cat "$OUTPUT/gatekeeper.txt"
-(cd "$OUTPUT" && shasum -a 256 "$PRODUCT-$VERSION-arm64.dmg" "$PRODUCT-$VERSION-arm64.zip" > SHA256SUMS)
+(cd "$OUTPUT" && shasum -a 256 "$ARTIFACT-$VERSION-arm64.dmg" "$ARTIFACT-$VERSION-arm64.zip" > SHA256SUMS)
 node - "$APP_KEY" "$OUTPUT" "$VERSION" "$ROOT" <<'JS'
 const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
@@ -71,7 +73,7 @@ const report = { app: key, version, arch: 'arm64', electron, sourceDateEpoch: pr
   lockSha256: hash(path.join(root, 'pnpm-lock.yaml')),
   ...(fs.existsSync(nativeLock) ? { nativeLockSha256: hash(nativeLock) } : {}),
   payloadSha256: Object.fromEntries([...release.binaries.map(binary => binary.path), 'app.asar'].map(file => [file, hash(path.join(resources, file))])),
-  artifacts: ['dmg', 'zip'].map(ext => { const file = `${release.product}-${version}-arm64.${ext}`; return { file, bytes: fs.statSync(path.join(directory, file)).size }; }) };
+  artifacts: ['dmg', 'zip'].map(ext => { const file = `${release.product.replace(/ /g, '-')}-${version}-arm64.${ext}`; return { file, bytes: fs.statSync(path.join(directory, file)).size }; }) };
 fs.writeFileSync(path.join(directory, 'build-report.json'), JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));
 JS

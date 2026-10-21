@@ -42,7 +42,7 @@ type Core struct {
 	Build string
 	// DBDir is the database directory; agent setup keeps its local marketplace there.
 	DBDir string
-	// Bus turns committed SQLite writes into change events (ADR 0007).
+	// Bus turns committed SQLite writes into change events (Verdict 0007).
 	Bus *events.Bus
 	// MCP serves MCP sessions over HTTP at /mcp.
 	MCP *mcp.Sessions
@@ -280,9 +280,22 @@ func (core *Core) ListKnowledge(_ context.Context, request *connect.Request[loca
 	if err != nil {
 		return nil, internal(err)
 	}
+	resolved, err := wedge.LoadNodeScope(core.Store, request.Msg.ProjectId, request.Msg.ScopeNode, request.Msg.ScopeExact)
+	if err != nil {
+		return nil, invalid(err.Error())
+	}
+	scopes, err := core.Store.ScopeMap(request.Msg.ProjectId, storepkg.ScopeDecision)
+	if err != nil {
+		return nil, internal(err)
+	}
 	result := make([]*localv1.KnowledgeItem, 0, len(items))
 	for _, item := range items {
-		result = append(result, knowledgeProto(item))
+		if !resolved.Matches(scopes[item.ID]) {
+			continue
+		}
+		msg := knowledgeProto(item)
+		msg.ScopeNodeId = scopes[item.ID]
+		result = append(result, msg)
 	}
 	return connect.NewResponse(&localv1.ListKnowledgeResponse{Items: result}), nil
 }

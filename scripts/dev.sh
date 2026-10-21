@@ -15,4 +15,4 @@ if [[ $# -gt 0 ]]; then
   exit 1
 fi
 
-exec pnpm dev:lore
+exec pnpm dev:polterware

@@ -8,7 +8,7 @@
 
 /*
  * Tab chrome: opaque through mid-tabs, then a real trail fade over the list
- * (same idea as .pw-page-toolbar--fade-edge). List tucks under the trail so
+ *. List tucks under the trail so
  * icons/text show through the transparent end — otherwise surface-on-surface
  * looks like a hard cut.
  */

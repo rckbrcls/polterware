@@ -168,12 +168,14 @@
   display: block;
   appearance: none;
   box-sizing: border-box;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   margin: 0 auto;
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-control);
-  background: var(--color-surface-subtle);
+  /* Same texture as .pw-checkbox__control: a recessed well that raises when checked. */
+  border: 1px solid var(--field-frame);
+  border-radius: 5px;
+  background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
+  box-shadow: var(--field-rings);
   clip-path: inset(50%);
   cursor: pointer;
 }
@@ -182,8 +184,8 @@
   display: block;
   width: 8px;
   height: 8px;
-  margin: 3px;
-  background: var(--color-primary-foreground);
+  margin: 4px;
+  background: var(--color-text-primary);
   clip-path: polygon(0 48%, 18% 30%, 40% 52%, 82% 8%, 100% 26%, 40% 88%);
   content: "";
   transform: scale(0);
@@ -191,8 +193,8 @@
 
 .pw-data-table-selection-input:checked,
 .pw-data-table-selection-input:indeterminate {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
+  background: linear-gradient(to bottom, #5a5a5a, #3d3d3d);
+  box-shadow: inset 0 0 0 1px #6a6a6a, 0 1px 2px var(--color-shadow);
 }
 
 .pw-data-table-selection-input:checked::before {
@@ -201,7 +203,7 @@
 
 .pw-data-table-selection-input:indeterminate::before {
   height: 2px;
-  margin-block: 6px;
+  margin-block: 7px;
   clip-path: none;
   transform: scale(1);
 }
@@ -408,15 +410,12 @@
   height: 18px;
   flex: 0 0 auto;
   margin: 0;
-  border-radius: 9999px;
   clip-path: none;
 }
 
-.pw-data-table-checkbox::before {
-  margin: 4px;
-}
-
 .pw-data-table-checkbox:disabled {
+  background: #242424;
+  box-shadow: none;
   cursor: not-allowed;
 }
 

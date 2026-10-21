@@ -8,7 +8,7 @@ export * from "./gen/polterware/local/v1/health_pb.js";
 export * from "./gen/polterware/local/v1/integration_pb.js";
 export * from "./gen/polterware/local/v1/knowledge_pb.js";
 export * from "./gen/polterware/local/v1/maintenance_pb.js";
-export * from "./gen/polterware/local/v1/ppm_pb.js";
+export * from "./gen/polterware/local/v1/canon_pb.js";
 export * from "./gen/polterware/local/v1/project_pb.js";
 export * from "./gen/polterware/local/v1/terminal_pb.js";
 export * from "./gen/polterware/local/v1/work_pb.js";

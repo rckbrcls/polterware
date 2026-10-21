@@ -1,19 +1,17 @@
 import { createEffect, createSignal, onCleanup, untrack } from "solid-js";
 import { createMapEngine, type MapEngineHandle } from "./engine";
-import { shouldLoadMapTiles } from "./network";
 import type { MapViewProps } from "./types";
 import "./map-view.css";
 
 /**
- * Shared map primitive. Online tiles load only when `online` is true and the
- * provider is MapLibre + OpenFreeMap. Otherwise this component makes no map request.
+ * Shared map primitive. OpenFreeMap tiles load whenever the MapLibre provider is used.
  */
 export function MapView(props: MapViewProps) {
   let container: HTMLDivElement | undefined;
   const [engine, setEngine] = createSignal<MapEngineHandle | null>(null);
   let generation = 0;
 
-  const live = () => shouldLoadMapTiles(props.online, props.provider ?? "maplibre");
+  const live = () => (props.provider ?? "maplibre") === "maplibre";
 
   createEffect(() => {
     const online = live();
@@ -30,6 +28,7 @@ export function MapView(props: MapViewProps) {
     void createMapEngine(container, {
       provider,
       pickEnabled,
+      controlsPosition: untrack(() => props.controlsPosition),
       onSelect,
       onPick,
       onBoundsChange,
@@ -44,7 +43,8 @@ export function MapView(props: MapViewProps) {
       }
       local = next;
       setEngine(next);
-    }).catch(() => {
+    }).catch(error => {
+      console.error("Map view initialization failed.", error);
       if (current === generation) setEngine(null);
     });
     onCleanup(() => {
@@ -55,7 +55,9 @@ export function MapView(props: MapViewProps) {
   });
 
   createEffect(() => {
-    engine()?.setCenter(props.center, props.zoom);
+    // Zoom follows the user; only a new center (selection, first fit) moves the camera.
+    const center = props.center;
+    engine()?.setCenter(center, untrack(() => props.zoom));
   });
 
   createEffect(() => {

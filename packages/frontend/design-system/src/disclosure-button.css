@@ -1,0 +1,40 @@
+.pw-disclosure-button {
+  display: flex;
+  width: 32px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.pw-disclosure-button[data-size="compact"] {
+  width: 24px;
+}
+
+.pw-disclosure-button__icon {
+  transition: transform var(--duration-control) var(--ease-enter);
+}
+
+@media (hover: hover) {
+  .pw-disclosure-button:hover {
+    color: var(--color-text-primary);
+  }
+}
+
+.pw-disclosure-button:focus-visible {
+  outline: 2px solid var(--color-border-strong);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pw-disclosure-button__icon {
+    transition: none;
+  }
+}

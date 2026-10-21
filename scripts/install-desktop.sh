@@ -1,17 +1,17 @@
 #!/bin/bash
-# Installs or updates a Polterware desktop app (Vitals, Lore, Sparky) on macOS
+# Installs or updates a Polterware desktop app (Polterware, Polterware Vitals, Polterware Notes) on macOS
 # from the newest <app>-v<version> GitHub release. Run it again to update.
 #
-#   curl -fsSL https://raw.githubusercontent.com/polterware/polterware/main/scripts/install-desktop.sh | bash
-#   curl -fsSL https://raw.githubusercontent.com/polterware/polterware/main/scripts/install-desktop.sh | APP=lore bash
+#   curl -fsSL https://raw.githubusercontent.com/rckbrcls/polterware/main/scripts/install-desktop.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/rckbrcls/polterware/main/scripts/install-desktop.sh | APP=polterware bash
 set -euo pipefail
 
-REPO="polterware/polterware"
+REPO="rckbrcls/polterware"
 GITHUB_API="https://api.github.com/repos/${REPO}/releases"
 
 usage() {
   cat << EOF
-Usage: install-desktop.sh [--app vitals|lore|sparky] [--version <version>] [--force]
+Usage: install-desktop.sh [--app vitals|polterware|notes] [--version <version>] [--force]
 
 Installs the newest release of the app, or updates an installed copy.
 
@@ -53,11 +53,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$APP" in
-  vitals) PRODUCT="Vitals" ;;
-  lore) PRODUCT="Lore" ;;
-  sparky) PRODUCT="Sparky" ;;
+  vitals) PRODUCT="Polterware Vitals" ;;
+  polterware) PRODUCT="Polterware" ;;
+  notes) PRODUCT="Polterware Notes" ;;
   *)
-    echo "Unknown app: $APP (expected vitals, lore or sparky)"
+    echo "Unknown app: $APP (expected vitals, polterware or notes)"
     exit 1
     ;;
 esac
@@ -129,7 +129,7 @@ rel = json.load(sys.stdin)
 tag = rel["tag_name"]
 version = tag[len(app) + 2:]
 assets = {a["name"]: a["browser_download_url"] for a in rel.get("assets", [])}
-zip_name = f"{product}-{version}-arm64.zip"
+zip_name = f"{product.replace(' ', '-')}-{version}-arm64.zip"
 if zip_name not in assets or "SHA256SUMS" not in assets:
     print(f"Release {tag} is missing {zip_name} or SHA256SUMS.", file=sys.stderr)
     sys.exit(3)
@@ -178,14 +178,14 @@ if [ ! -d "$APP_PATH" ]; then
   exit 1
 fi
 
-if pgrep -xq "$PRODUCT"; then
+if pgrep -qf "/$PRODUCT.app/Contents/MacOS/"; then
   echo "Quitting $PRODUCT..."
   osascript -e "quit app \"$PRODUCT\"" >/dev/null 2>&1 || true
   for _ in $(seq 1 20); do
-    pgrep -xq "$PRODUCT" || break
+    pgrep -qf "/$PRODUCT.app/Contents/MacOS/" || break
     sleep 0.5
   done
-  if pgrep -xq "$PRODUCT"; then
+  if pgrep -qf "/$PRODUCT.app/Contents/MacOS/"; then
     echo "$PRODUCT is still running; quit it and run the installer again."
     exit 1
   fi

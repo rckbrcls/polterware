@@ -1,4 +1,5 @@
 import { For } from "solid-js";
+import { ToggleChip } from "@polterware/frontend-design-system";
 import "./environment-kind-chips.css";
 
 export type CreateProjectEnvironmentKind = "development" | "staging" | "production";
@@ -48,16 +49,13 @@ export function EnvironmentKindChips(props: {
         {(option) => {
           const isOn = () => selected().has(option.id);
           return (
-            <button
-              type="button"
-              class="pw-environment-kind-chip"
-              data-selected={isOn() ? "true" : "false"}
-              data-tone={option.tone}
-              aria-pressed={isOn()}
+            <ToggleChip
+              tone={option.tone}
+              selected={isOn()}
               onClick={() => toggle(option.id)}
             >
               {option.label}
-            </button>
+            </ToggleChip>
           );
         }}
       </For>

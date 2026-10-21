@@ -1,0 +1,5 @@
+# Claude Code (stdio)
+claude mcp add pwnotes -- pwnotes mcp
+
+# Claude Code (HTTP)
+claude mcp add --transport http pwnotes http://127.0.0.1:PORT/mcp --header "Authorization: Bearer TOKEN"

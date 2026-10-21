@@ -1,6 +1,6 @@
 import type { IconTileTone } from "@polterware/frontend-design-system";
 
-export type KnowledgeTemplateKind = "doc" | "runbook" | "adr" | "card" | "source";
+export type KnowledgeTemplateKind = "doc" | "runbook" | "verdict" | "card" | "source";
 
 export type KnowledgeCreateTemplate = {
   id: string;
@@ -121,10 +121,10 @@ What happened in one or two sentences.
   },
 ];
 
-const ADR_TEMPLATES: KnowledgeCreateTemplate[] = [
+const VERDICT_TEMPLATES: KnowledgeCreateTemplate[] = [
   {
-    id: "adr-adopt-technology",
-    kind: "adr",
+    id: "verdict-adopt-technology",
+    kind: "verdict",
     title: "Adopt a core technology",
     description: "Decide to introduce a library, service, or platform.",
     tone: "architecture",
@@ -162,8 +162,8 @@ Follow-ups:
 `,
   },
   {
-    id: "adr-reject-shared-db",
-    kind: "adr",
+    id: "verdict-reject-shared-db",
+    kind: "verdict",
     title: "Reject shared database coupling",
     description: "Keep services from sharing a mutable store.",
     tone: "data",
@@ -197,8 +197,8 @@ Follow-ups:
 `,
   },
   {
-    id: "adr-local-first-execution",
-    kind: "adr",
+    id: "verdict-local-first-execution",
+    kind: "verdict",
     title: "Keep execution local-first",
     description: "Prefer Desktop + core over hosted runners for v1.",
     tone: "execution",
@@ -317,7 +317,7 @@ A database, cache, or upstream service is unavailable and a standby exists.
         "Update local config or environment to the standby",
         "Restart dependent processes",
         "Verify reads and writes against the standby",
-        "Record the change in an ADR or incident note",
+        "Record the change in an Verdict or incident note",
       ],
       commands: ["<health-check-command>", "<restart-command>"],
       rollback: "Point config back to the primary once it is healthy and verified.",
@@ -381,7 +381,7 @@ const SOURCE_TEMPLATES: KnowledgeCreateTemplate[] = [
 
 export const KNOWLEDGE_CREATE_TEMPLATES: KnowledgeCreateTemplate[] = [
   ...DOC_TEMPLATES,
-  ...ADR_TEMPLATES,
+  ...VERDICT_TEMPLATES,
   ...RUNBOOK_TEMPLATES,
   ...CARD_TEMPLATES,
   ...SOURCE_TEMPLATES,
@@ -389,6 +389,13 @@ export const KNOWLEDGE_CREATE_TEMPLATES: KnowledgeCreateTemplate[] = [
 
 export function knowledgeTemplatesForKind(kind: KnowledgeTemplateKind): KnowledgeCreateTemplate[] {
   return KNOWLEDGE_CREATE_TEMPLATES.filter((template) => template.kind === kind);
+}
+
+/** Evidence has no type, so its starters are the document, runbook, and source templates together. */
+export function evidenceTemplates(): KnowledgeCreateTemplate[] {
+  return KNOWLEDGE_CREATE_TEMPLATES.filter(
+    (template) => template.kind === "doc" || template.kind === "runbook" || template.kind === "source",
+  );
 }
 
 export function knowledgeTemplateById(id: string): KnowledgeCreateTemplate | undefined {

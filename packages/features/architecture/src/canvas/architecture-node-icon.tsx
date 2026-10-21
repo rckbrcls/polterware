@@ -31,6 +31,8 @@ export function ArchitectureNodeIcon(props: {
   dimmed: boolean;
   /** Smaller than compact, for inline labels such as the domain pill. */
   tiny?: boolean;
+  /** Seeds the tile's finish; pass the node or type id so the tile keeps its look. */
+  seed?: string;
 }) {
   const iconSize = () => (props.tiny ? 10 : props.compact ? 12 : 16);
 
@@ -41,6 +43,7 @@ export function ArchitectureNodeIcon(props: {
         tone="architecture"
         brand={[props.name, props.subtype ?? "", props.provider ?? ""]}
         dimmed={props.dimmed}
+        seed={props.seed}
       >
         <NodeIcon
           name={props.name}

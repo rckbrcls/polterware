@@ -73,7 +73,7 @@ describe("shared shell chrome", () => {
     expect(host.querySelector(".pw-shell-main-frame--opaque")).toBeNull();
   });
 
-  it("keeps Sparky gutters unglassed when requested", () => {
+  it("keeps Polterware Notes gutters unglassed when requested", () => {
     const host = mount(() => (
       <MainFrame as="main" glass={false} aria-label="Today">
         <MainSurfaceFrame as="div">Body</MainSurfaceFrame>

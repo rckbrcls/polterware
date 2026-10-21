@@ -20,16 +20,75 @@
   padding-inline: 32px 8px;
 }
 
+/* The space the hovered block occupies; one fill that glides between blocks. */
+.pw-md-editor__block-hover {
+  border-radius: var(--radius-control);
+}
+
+.pw-md-editor[data-editable="true"] .pw-md-editor__surface {
+  position: relative;
+  z-index: 1;
+}
+
+/* Sits 8px into the margin so a 6px gap separates it from the block hover fill (which starts 6px before the text). */
 .pw-md-editor__add {
   position: absolute;
-  left: 0;
+  left: -8px;
   z-index: 2;
 }
 
 .pw-md-editor__slash {
-  width: 220px;
-  max-height: min(440px, calc(100vh - 64px));
+  display: flex;
+  width: 240px;
+  /* The positioner publishes the room left on the resolved side, so a menu near the viewport edge shrinks instead of spilling. */
+  max-height: min(300px, var(--available-height, calc(100vh - 64px)));
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Only the list scrolls; the close row stays pinned below it. */
+.pw-md-editor__slash-list {
+  min-height: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pw-md-editor__slash-section + .pw-md-editor__slash-section {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.pw-md-editor__slash-label {
+  padding: 4px 10px 6px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.pw-md-editor__slash-close {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  /* Bleeds to the panel edges so the divider spans the full width. */
+  margin: 0 -6px -6px;
+  padding: 12px 16px;
+  border: 0;
+  border-top: 1px solid var(--color-border-subtle);
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pw-md-editor__slash-close:hover {
+  color: var(--color-text-primary);
+}
+
+.pw-md-editor__slash-key {
+  color: var(--color-text-muted);
 }
 
 .pw-md-editor__no-results {
@@ -50,6 +109,7 @@
   padding: 3px 4px;
   border-radius: var(--radius-menu);
   overflow: visible;
+  background: var(--card-fill);
   pointer-events: auto;
   /* Whisper lift — card-panel weight, not surface-panel-float */
   box-shadow: 0 1px 2px var(--color-shadow-subtle);
@@ -214,11 +274,36 @@
 }
 
 .pw-md-editor__prose pre {
+  position: relative;
   margin: 0 0 0.75em;
   padding: 12px;
   overflow-x: auto;
   border-radius: var(--radius-card);
   background: var(--color-surface-subtle);
+}
+
+.pw-md-editor__prose pre::after {
+  content: "Copy";
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  padding: 2px 8px;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans, inherit);
+  font-size: 11px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.pw-md-editor__prose pre:hover::after {
+  opacity: 1;
+}
+
+.pw-md-editor__surface[data-code-copied="true"] .pw-md-editor__prose pre:hover::after {
+  content: "Copied";
 }
 
 .pw-md-editor__prose pre code {
@@ -252,39 +337,84 @@
   min-height: 0;
 }
 
-/* Task lists: round checkbox + text, no bullet marker */
+/* Task lists: shared-checkbox treatment with the label and text on one row. */
 .pw-md-editor__prose ul[data-type="taskList"] {
   padding-left: 0;
   list-style: none;
 }
 
-.pw-md-editor__prose li[data-type="taskItem"] {
+.pw-md-editor__prose ul[data-type="taskList"] ul[data-type="taskList"] {
+  margin: 0.2em 0 0;
+  padding-left: 1.5em;
+}
+
+.pw-md-editor__prose ul[data-type="taskList"] > li {
   display: flex;
   align-items: flex-start;
   gap: 8px;
 }
 
-.pw-md-editor__prose li[data-type="taskItem"] > label {
+.pw-md-editor__prose ul[data-type="taskList"] > li > label {
+  position: relative;
   display: flex;
+  width: 18px;
+  height: 18px;
   flex: none;
-  padding-top: 0.3em;
+  margin-top: calc((1.65em - 18px) / 2);
   user-select: none;
 }
 
-.pw-md-editor__prose li[data-type="taskItem"] > label input {
-  width: 15px;
-  height: 15px;
+.pw-md-editor__prose ul[data-type="taskList"] > li > label input {
+  appearance: none;
+  width: 18px;
+  height: 18px;
   margin: 0;
-  accent-color: var(--color-brand);
+  box-sizing: border-box;
+  border: 1px solid var(--field-frame);
+  border-radius: 5px;
+  background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
+  box-shadow: var(--field-rings);
   cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
-.pw-md-editor__prose li[data-type="taskItem"] > div {
+.pw-md-editor__prose ul[data-type="taskList"] > li > label input:not(:checked):hover {
+  background: linear-gradient(to bottom, var(--field-fill-bottom), var(--field-fill-bottom));
+}
+
+.pw-md-editor__prose ul[data-type="taskList"] > li > label input:checked {
+  background: linear-gradient(to bottom, #5a5a5a, #3d3d3d);
+  box-shadow: inset 0 0 0 1px #6a6a6a, 0 1px 2px var(--color-shadow);
+}
+
+.pw-md-editor__prose ul[data-type="taskList"] > li > label:has(input:checked)::after {
+  position: absolute;
+  top: 3.5px;
+  left: 6px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--color-text-primary);
+  border-width: 0 2px 2px 0;
+  content: "";
+  pointer-events: none;
+  transform: rotate(45deg);
+}
+
+.pw-md-editor__prose ul[data-type="taskList"] > li > label input:focus-visible {
+  outline: 2px solid var(--color-border-strong);
+  outline-offset: 2px;
+}
+
+.pw-md-editor__prose ul[data-type="taskList"] > li > div {
   min-width: 0;
   flex: 1 1 auto;
 }
 
-.pw-md-editor__prose li[data-type="taskItem"][data-checked="true"] > div {
+.pw-md-editor__prose ul[data-type="taskList"] > li > div > p {
+  margin: 0;
+}
+
+.pw-md-editor__prose ul[data-type="taskList"] > li[data-checked="true"] > div {
   color: var(--color-text-muted);
   text-decoration: line-through;
 }
@@ -319,3 +449,22 @@
 
 .pw-md-editor__attachment { margin: 8px 0; border-radius: var(--radius-card); }
 .pw-md-editor__attachment.ProseMirror-selectednode { outline: 2px solid var(--color-border-strong); outline-offset: 2px; }
+
+/* Marks the slash query in the text (CSS Custom Highlight API), and the empty block waiting for content. */
+::highlight(pw-md-slash) {
+  background-color: var(--color-surface-selected);
+  color: var(--color-text-primary);
+}
+
+.pw-md-editor__slash-ghost {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: var(--color-surface-selected);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  white-space: nowrap;
+}

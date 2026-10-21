@@ -1,5 +1,6 @@
 import { createSignal, getOwner, onCleanup, type Accessor } from "solid-js";
 import { createStore } from "zustand/vanilla";
+import { canExpandDetail } from "./detail-display";
 
 export function createSelectionStore() {
   const [systemId, setSystemId] = createSignal<string | null>("sys-local");
@@ -196,8 +197,10 @@ export const detailPanelStore = createStore<DetailPanelState>()(
       expand: () => {
         if (get().activeScope === null) return;
         const state = get();
-        set({ open: true, expanded: true, activeTarget: state.activeTarget
-          ?? (state.lastTarget?.scopeId === state.activeScope ? state.lastTarget : null) });
+        const target = state.activeTarget
+          ?? (state.lastTarget?.scopeId === state.activeScope ? state.lastTarget : null);
+        if (target && !canExpandDetail(target.entityKind)) return;
+        set({ open: true, expanded: true, activeTarget: target });
       },
 
       restore: () => set({ expanded: false }),
@@ -232,4 +235,5 @@ export function createDetailPanelSelector<T>(
   return selected;
 }
 
+export * from "./detail-display";
 export * from "./shortcuts";

@@ -1,0 +1,65 @@
+.notes-shell { min-width: 0; }
+.notes-workspace { display: flex; flex: 1; min-height: 0; -webkit-app-region: drag; }
+.notes-sidebar { display: flex; flex-direction: column; gap: 8px; width: 100%; height: 100%; min-width: 0; overflow: hidden; padding: var(--titlebar-height, 44px) 8px 8px; -webkit-app-region: drag; }
+.notes-sidebar .pw-menu-rows { display: flex; flex-direction: column; gap: 4px; }
+.notes-sidebar { position: relative; }
+.notes-history-nav { position: absolute; top: 10px; right: 8px; display: flex; align-items: center; gap: 2px; -webkit-app-region: no-drag; }
+.notes-history-nav > button { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--color-text-secondary); cursor: pointer; }
+.notes-history-nav > button:hover:not(:disabled) { background: var(--color-surface-hover); color: var(--color-text-primary); }
+.notes-history-nav > button:disabled { color: var(--color-text-disabled); cursor: default; }
+.notes-sidebar-footer { display: flex; align-items: center; gap: 4px; margin-top: auto; padding-top: 16px; }
+.notes-sidebar-footer > button { -webkit-app-region: no-drag; }
+.notes-sidebar :is(button, a, input, [role="tree"]) { -webkit-app-region: no-drag; }
+.notes-main.pw-shell-main-frame { display: flex; flex: 1; min-width: 0; min-height: 0; outline: none; padding: 8px 8px 8px 0; }
+.notes-main.pw-shell-main-frame { padding-left: 0; }
+.pw-resizable-sidebar[data-collapsed] ~ * .notes-main, .pw-resizable-sidebar-layout:has(> .pw-resizable-sidebar[data-collapsed]) .notes-main.pw-shell-main-frame { padding-left: 8px; }
+.notes-main .pw-main-surface { -webkit-app-region: no-drag; }
+.notes-main .pw-detail-panel__collection-header,
+.notes-main .pw-page-header {
+  -webkit-app-region: drag;
+}
+.notes-main .pw-detail-panel__collection-header :is(button, a, input, textarea, select, label, [role="tab"], [role="button"], [role="switch"], [role="checkbox"], [role="combobox"]),
+.notes-main .pw-page-header :is(button, a, input, textarea, select, label, [role="tab"], [role="button"], [role="switch"], [role="checkbox"], [role="combobox"]) {
+  -webkit-app-region: no-drag;
+}
+/* Section titles in the toolbar get the same inset and row height as toolbar controls. */
+.notes-main .pw-page-toolbar-leading > h1 { padding-inline: 8px; line-height: var(--control-height-md); }
+/* Notes settings content: stepper layout and a brand-filled live chip. */
+.notes-settings-content .pw-stepper { display: flex; align-items: center; gap: 12px; }
+.notes-settings-content .pw-status-chip[data-tone="ok"] { background: var(--color-brand); border-color: transparent; color: var(--color-app-background); }
+/* The selected fill already marks the active Space; no focus ring around tree rows. */
+.notes-sidebar .pw-tree__row[data-focus],
+.notes-sidebar .pw-tree__row[data-focus]:focus-within,
+.notes-sidebar .pw-tree__row:focus-visible,
+.notes-sidebar [role="treeitem"]:focus-visible { outline: none; }
+/* Spaces tree: no visible title, just a divider above it. The label stays for assistive tech. */
+/* The divider belongs to the fixed navigation so it stays put while the Spaces tree scrolls. */
+.notes-sidebar > nav { padding-bottom: 12px; border-bottom: 1px solid var(--color-border-subtle); }
+.notes-sidebar .pw-tree { margin-top: 0; padding-top: 4px; }
+.notes-sidebar .pw-tree > h3 { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.notes-sidebar .pw-tree { min-width: 0; }
+.notes-sidebar .pw-tree__row { min-width: 0; }
+.notes-workspace .pw-resizable-sidebar__main { display: flex; }
+.notes-workspace .notes-main { height: 100%; }
+
+/* Long titles truncate at the sidebar edge instead of widening the tree. */
+.notes-sidebar .pw-tree { grid-template-columns: minmax(0, 1fr); width: 100%; }
+.notes-sidebar .pw-tree [data-part="tree"], .notes-sidebar .pw-tree [data-part="branch"], .notes-sidebar .pw-tree__children { min-width: 0; max-width: 100%; }
+
+/* The Spaces tree scrolls on its own; the footer stays put and the list fades out above it. */
+.notes-sidebar-tree { flex: 1 1 0; min-height: 0; overflow-x: hidden; overflow-y: auto; padding-bottom: 24px; -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); scrollbar-width: none; }
+.notes-sidebar-tree::-webkit-scrollbar { display: none; }
+.notes-sidebar-footer { flex: none; padding-top: 8px; }
+.notes-sidebar-tree[data-scrolled] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to bottom, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
+.notes-sidebar-tree[data-at-end] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 28px); mask-image: linear-gradient(to bottom, transparent, #000 28px); }
+.notes-sidebar-tree:not([data-scrolled])[data-at-end] { -webkit-mask-image: none; mask-image: none; }
+.notes-sidebar .pw-tree__row > :not(.pw-tree__text, .pw-tree__trailing) { flex: none; }
+
+/* Per-Space open button: shown on hover or keyboard focus, at the row's right edge. */
+.notes-space-open { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--color-text-muted); cursor: pointer; opacity: 0; }
+.pw-tree__row:hover .notes-space-open, .notes-space-open:focus-visible { opacity: 1; }
+.notes-space-open:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+
+/* Note properties float over the page instead of reserving a column; the lift matches surface-panel-float. */
+.notes-properties-panel .pw-detail-panel__frame { box-shadow: var(--card-rings), 0 20px 56px var(--color-shadow-float), 0 0 0 1px var(--color-shadow-subtle); }
+

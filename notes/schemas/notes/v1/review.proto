@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package notes.v1;
+
+option go_package = "github.com/polterware/polterware/notes/backend/platform/gen/notes/v1;notesv1";
+
+import "google/protobuf/timestamp.proto";
+
+// ReviewDay counts completions in one civil date of the requested zone.
+// Periods are morning 06–12, afternoon 12–18, evening 18–22, and night otherwise.
+message ReviewDay {
+  string date = 1;
+  int32 completed = 2;
+  int32 morning = 3;
+  int32 afternoon = 4;
+  int32 evening = 5;
+  int32 night = 6;
+  int32 focus_minutes = 7;
+}
+
+message GetReviewRequest {
+  google.protobuf.Timestamp from = 1;
+  google.protobuf.Timestamp to = 2;
+  string tz = 3;
+}
+
+message GetReviewResponse {
+  google.protobuf.Timestamp from = 1;
+  google.protobuf.Timestamp to = 2;
+  string tz = 3;
+  int32 streak = 4;
+  int32 completed_total = 5;
+  int32 focus_minutes = 6;
+  string streak_mood = 7;
+  string completed_mood = 8;
+  repeated ReviewDay days = 9;
+  repeated ReviewDay contribution = 10;
+}
+
+service ReviewService {
+  rpc Get(GetReviewRequest) returns (GetReviewResponse);
+}

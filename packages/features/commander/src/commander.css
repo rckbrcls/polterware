@@ -32,23 +32,7 @@
 }
 
 .commander-action {
-  display: inline-flex;
-  height: 2rem;
-  width: 2rem;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  border: 0;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--color-text-muted);
-  cursor: pointer;
   -webkit-app-region: no-drag;
-}
-
-.commander-action:hover {
-  background: var(--color-surface-hover);
-  color: var(--color-text-primary);
 }
 
 /* The results' one gliding highlight (fluid hover); rows carry no hover fill. */

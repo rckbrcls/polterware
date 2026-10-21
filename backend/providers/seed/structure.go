@@ -21,24 +21,24 @@ Project Context and Change Intelligence for AI Coding: one local project model t
 ! Never persist provider credentials in SQLite
 
 # polterware/desktop: Desktop
-level: domain · under: polterware · decisions: ADR-0002 · path: apps/lore-desktop
+level: domain · under: polterware · decisions: Verdict-0002 · path: apps/polterware-desktop
 
 Electron Main, a typed preload bridge, and a Solid renderer over the local core.
 
-! The renderer reads and writes only through window.lore
+! The renderer reads and writes only through window.polterware
 
 # polterware/desktop/main: Electron Main
-level: component · under: polterware/desktop · path: apps/lore-desktop/src/main · uses: polterware/core/server, polterware/contracts/generated
+level: component · under: polterware/desktop · path: apps/polterware-desktop/src/main · uses: polterware/core/server, polterware/contracts/generated
 
 Thin process: window security, IPC, core supervision, updater.
 
 # polterware/desktop/preload: Preload bridge
-level: component · under: polterware/desktop · path: apps/lore-desktop/src/preload · uses: polterware/desktop/main, polterware/contracts/generated
+level: component · under: polterware/desktop · path: apps/polterware-desktop/src/preload · uses: polterware/desktop/main, polterware/contracts/generated
 
-The typed window.lore surface.
+The typed window.polterware surface.
 
 # polterware/desktop/renderer: Solid renderer
-level: component · under: polterware/desktop · path: apps/lore-desktop/src/renderer · uses: polterware/desktop/preload, polterware/frontend/features, polterware/frontend/design-system, polterware/contracts/generated
+level: component · under: polterware/desktop · path: apps/polterware-desktop/src/renderer · uses: polterware/desktop/preload, polterware/frontend/features, polterware/frontend/design-system, polterware/contracts/generated
 
 Product surfaces built from the shared design system and feature packages.
 
@@ -80,76 +80,76 @@ level: component · under: polterware/contracts · path: schemas
 Protobuf schemas, generated Go in backend/platform/gen and TypeScript in packages/contracts.
 
 # polterware/core: Local core
-level: domain · under: polterware · decisions: ADR-0007 · path: backend
+level: domain · under: polterware · decisions: Verdict-0007 · path: backend
 
 The polterware serve process. It owns SQLite and serves Connect RPC and MCP.
 
 ! Only the core opens SQLite
 
 # polterware/core/server: Core server
-level: component · under: polterware/core · decisions: ADR-0007 · path: backend/compositions/local-core · uses: polterware/core/services, polterware/core/store, polterware/core/mcp, polterware/core/events, polterware/core/integrations, polterware/core/inbox, polterware/core/atlas, polterware/agents/runs, polterware/agents/access, polterware/agents/setup, polterware/contracts/generated
+level: component · under: polterware/core · decisions: Verdict-0007 · path: backend/compositions/local-core · uses: polterware/core/services, polterware/core/store, polterware/core/mcp, polterware/core/events, polterware/core/integrations, polterware/core/inbox, polterware/core/atlas, polterware/agents/runs, polterware/agents/access, polterware/agents/setup, polterware/contracts/generated
 
 The Connect RPC and MCP HTTP server, the process lock, and the build handshake.
 
 ! One core per database
 
 # polterware/core/services: Project services
-level: component · under: polterware/core · decisions: ADR-0004 · path: backend/compositions/wedge · uses: polterware/core/work, polterware/core/import, polterware/core/drift, polterware/core/context, polterware/core/decisions, polterware/core/atlas, polterware/core/inbox, polterware/core/git, polterware/core/facts, polterware/core/store, polterware/agents/runs
+level: component · under: polterware/core · decisions: Verdict-0004 · path: backend/compositions/wedge · uses: polterware/core/work, polterware/core/import, polterware/core/drift, polterware/core/context, polterware/core/decisions, polterware/core/atlas, polterware/core/inbox, polterware/core/git, polterware/core/facts, polterware/core/store, polterware/agents/runs
 
 Composes the domains into project init, scan, Polter apply, and project model sync.
 
 # polterware/core/store: SQLite store
-level: component · under: polterware/core · decisions: ADR-0007 · path: backend/providers/sqlite
+level: component · under: polterware/core · decisions: Verdict-0007 · path: backend/providers/sqlite
 
 One clean baseline schema and the commit hooks that emit change events.
 
 # polterware/core/work: Work model and Polter codec
-level: component · under: polterware/core · decisions: ADR-0006, ADR-0010 · path: backend/domains/polter · uses: polterware/core/atlas, polterware/core/decisions, polterware/core/context
+level: component · under: polterware/core · decisions: Verdict-0006, Verdict-0010 · path: backend/domains/polter · uses: polterware/core/atlas, polterware/core/decisions, polterware/core/context
 
 Work cards, tasks, questions, invariants, decisions, claims, and the Polter grammar.
 
 ! Polter text is never stored as a blob
 
 # polterware/core/facts: Facts and evidence
-level: component · under: polterware/core · decisions: ADR-0004 · path: backend/domains/ppm
+level: component · under: polterware/core · decisions: Verdict-0004 · path: backend/domains/canon
 
 Project facts, their evidence, and the truth class each one carries.
 
 # polterware/core/import: Deterministic import
-level: component · under: polterware/core · decisions: ADR-0004, ADR-0005 · path: backend/providers/importer · uses: polterware/core/facts, polterware/core/git
+level: component · under: polterware/core · decisions: Verdict-0004, Verdict-0005 · path: backend/providers/importer · uses: polterware/core/facts, polterware/core/git
 
 Reads a fixed set of project files and Git metadata into facts and evidence.
 
 ! No network calls during scan
 
 # polterware/core/git: Git evidence
-level: component · under: polterware/core · decisions: ADR-0005 · path: backend/providers/git
+level: component · under: polterware/core · decisions: Verdict-0005 · path: backend/providers/git
 
 HEAD, branch, and recent commits read from the registered checkouts.
 
 # polterware/core/drift: Drift checker
-level: component · under: polterware/core · decisions: ADR-0004 · path: backend/domains/drift · uses: polterware/core/facts
+level: component · under: polterware/core · decisions: Verdict-0004 · path: backend/domains/drift · uses: polterware/core/facts
 
 Reports where declared intent and observed code disagree.
 
 ! A finding always names its evidence
 
 # polterware/core/context: Context compiler and Oracle
-level: component · under: polterware/core · decisions: ADR-0004, ADR-0008 · path: backend/domains/context
+level: component · under: polterware/core · decisions: Verdict-0004, Verdict-0008 · path: backend/domains/context
 
 Packs the project graph into a budgeted context for an agent session.
 
 ! The compiled context never includes credentials
 
 # polterware/core/atlas: Atlas model
-level: component · under: polterware/core · decisions: ADR-0008, ADR-0009 · path: backend/domains/atlas
+level: component · under: polterware/core · decisions: Verdict-0008, Verdict-0009 · path: backend/domains/atlas
 
 System, domain, and component nodes, their uses edges, derived status, and history.
 
 # polterware/core/decisions: Decision lifecycle
-level: component · under: polterware/core · decisions: ADR-0010 · path: backend/domains/decision
+level: component · under: polterware/core · decisions: Verdict-0010 · path: backend/domains/decision
 
-ADR states and the supersede chain.
+Verdict states and the supersede chain.
 
 ! A challenge is never automatic
 
@@ -171,14 +171,14 @@ Detects provider CLIs and probes connection status; credentials stay in the OS o
 ! Never persist provider credentials in SQLite
 
 # polterware/core/mcp: MCP server and bridge
-level: component · under: polterware/core · decisions: ADR-0007 · path: backend/providers/mcp · uses: polterware/core/services, polterware/core/store, polterware/core/work, polterware/core/context, polterware/core/drift, polterware/core/facts, polterware/agents/runs, polterware/agents/access
+level: component · under: polterware/core · decisions: Verdict-0007 · path: backend/providers/mcp · uses: polterware/core/services, polterware/core/store, polterware/core/work, polterware/core/context, polterware/core/drift, polterware/core/facts, polterware/agents/runs, polterware/agents/access
 
 Audited MCP reads and writes inside the core; polterware mcp is a stdio bridge.
 
 ! Every MCP write carries a summary and a rationale
 
 # polterware/cli: CLI and TUI
-level: domain · under: polterware · decisions: ADR-0007 · path: backend/runtimes/cli
+level: domain · under: polterware · decisions: Verdict-0007 · path: backend/runtimes/cli
 
 The single polterware binary: commands, status TUI, serve, and mcp.
 
@@ -193,7 +193,7 @@ level: component · under: polterware/cli · path: backend/platform/coreclient �
 Finds or starts the local core and attaches to it.
 
 # polterware/agents: Agent integration
-level: domain · under: polterware · decisions: ADR-0006 · path: backend/providers/agentsetup
+level: domain · under: polterware · decisions: Verdict-0006 · path: backend/providers/agentsetup
 
 How Claude Code, Codex, and Cursor reach Polterware, and what a session leaves behind.
 
@@ -205,7 +205,7 @@ Embedded Claude Code plugin, per-hook switches, Codex skill and AGENTS.md line, 
 ! The core never edits an agent's own files except through its CLI
 
 # polterware/agents/runs: AgentRun audit
-level: component · under: polterware/agents · decisions: ADR-0004 · path: backend/domains/agentrun · uses: polterware/core/context, polterware/core/drift
+level: component · under: polterware/agents · decisions: Verdict-0004 · path: backend/domains/agentrun · uses: polterware/core/context, polterware/core/drift
 
 One audited run per session, with steps, tool calls, and change batches.
 
@@ -215,26 +215,26 @@ level: component · under: polterware/agents · path: backend/domains/agentacces
 Which agents may read and write a project.
 
 # polterware/web: Website and Web App
-level: domain · under: polterware · decisions: ADR-0003{web}
+level: domain · under: polterware · decisions: Verdict-0003{web}
 
 The public Polterware Website. The authenticated Web App is not built yet.
 
 # polterware/web/site: Website
-level: component · under: polterware/web · decisions: ADR-0003{web}
+level: component · under: polterware/web · decisions: Verdict-0003{web}
 
 Next.js site owned by polterware-web.
 
 ! Public or shared frontend code never grants hosted authorization
 
 # polterware/cloud: Cloud
-level: domain · under: polterware · decisions: ADR-0001, ADR-0005{cloud}
+level: domain · under: polterware · decisions: Verdict-0001, Verdict-0005{cloud}
 
 Hosted identity, sync, and enrichment. Design documents only; nothing here ships yet.
 
 ! Cloud never unlocks local Desktop features
 
 # polterware/cloud/docs: Cloud design
-level: component · under: polterware/cloud · decisions: ADR-0005{cloud}
+level: component · under: polterware/cloud · decisions: Verdict-0005{cloud}
 
 Architecture drafts for sync, hosted MCP, and the Judge.
 
@@ -248,7 +248,7 @@ Sidebar surfaces Inbox, Atlas, Work, Decisions, Reality, Agents, Integrations, w
 - [x] Commander and docs updated
 
 ## work-board: Work board
-stage: delivered · under: polterware/desktop/renderer · decisions: ADR-0006
+stage: delivered · under: polterware/desktop/renderer · decisions: Verdict-0006
 
 Five stage columns (Shape, Plan, Build, Verify, Delivered) read from the Work tables.
 
@@ -257,7 +257,7 @@ Five stage columns (Shape, Plan, Build, Verify, Delivered) read from the Work ta
 - [x] Specs table over the same cards
 
 ## polter-work-model: Polter format and Work model
-stage: delivered · under: polterware/core/work · decisions: ADR-0006
+stage: delivered · under: polterware/core/work · decisions: Verdict-0006
 
 Agents create a roadmap with one apply call; the store, not the text, is the truth.
 
@@ -267,7 +267,7 @@ Agents create a roadmap with one apply call; the store, not the text, is the tru
 ! Removal is explicit and rows are never deleted
 
 ## agent-channels: Agent channels
-stage: delivered · under: polterware/agents/setup · decisions: ADR-0006
+stage: delivered · under: polterware/agents/setup · decisions: Verdict-0006
 
 The same Polter grammar reaches agents through MCP, the Claude Code plugin, and AGENTS.md.
 
@@ -284,7 +284,7 @@ Non-blocking hints for similar cards, questions, and invariants, by normalizatio
 - [x] Suggest under: for new cards
 
 ## single-local-core: Single local core with live sync
-stage: delivered · under: polterware/core/store · decisions: ADR-0007
+stage: delivered · under: polterware/core/store · decisions: Verdict-0007
 
 One core owns SQLite; every client attaches to it and sees changes without a reload.
 
@@ -305,7 +305,7 @@ Switch between Codex and Claude on Polterware's own development without re-expla
 ? Did the next agent start from the right point without help?
 
 ## git-metadata-import: Git metadata import
-stage: verify · under: polterware/core/import · decisions: ADR-0004, ADR-0005
+stage: verify · under: polterware/core/import · decisions: Verdict-0004, Verdict-0005
 
 Import HEAD, branch, and recent commits as evidence for facts.
 
@@ -336,7 +336,7 @@ Decision, Drift, and Verify items derived on every read.
 ! The Inbox has only Decision, Drift, and Verify items
 
 ## atlas-hierarchy-oracle: Atlas hierarchy and Oracle
-stage: verify · under: polterware/core/context · decisions: ADR-0008, ADR-0009
+stage: verify · under: polterware/core/context · decisions: Verdict-0008, Verdict-0009
 
 System, domain, and component nodes above Work cards, plus a budgeted Oracle.
 
@@ -356,17 +356,17 @@ A stepper from Intent through Shape and Contract to Plan, with gates.
 - [x] Oracle impact shown at Shape
 
 ## decision-lifecycle: Decision lifecycle
-stage: verify · under: polterware/core/work · decisions: ADR-0010
+stage: verify · under: polterware/core/work · decisions: Verdict-0010
 
 Proposed, active, challenged, superseded, with history kept.
 
 - [x] Lifecycle states and supersede chain §backend/domains/decision/*§
-- [x] Decisions tabs and ADR detail actions
+- [x] Decisions tabs and Verdict detail actions
 - [x] polterware decision commands
 ! A challenge is never automatic
 
 ## architecture-evolution: Architecture evolution
-stage: verify · under: polterware/core/work · decisions: ADR-0008
+stage: verify · under: polterware/core/work · decisions: Verdict-0008
 
 Architecture Change cards, node migration state, and the Atlas timeline.
 
@@ -393,7 +393,7 @@ The operator chooses what Polterware installs into each agent.
 ! Nothing requires hooks
 
 ## local-build-dogfood: Manage Polterware with its own build
-stage: build · under: polterware/cli/commands · decisions: ADR-0007
+stage: build · under: polterware/cli/commands · decisions: Verdict-0007
 
 Run Polterware on its own repository from a local build, and judge every seeded item.
 
@@ -403,7 +403,7 @@ Run Polterware on its own repository from a local build, and judge every seeded 
 - [ ] Open the packaged app and confirm it starts and attaches to the core
 - [ ] Connect Cursor, Claude Code, and Codex to the built CLI
 - [ ] Sign and notarize the macOS build
-? Which seeded cards and ADR statuses are wrong?
+? Which seeded cards and Verdict statuses are wrong?
 
 handoff:
 branch: feat/atlas-grounded-sdd
@@ -438,7 +438,7 @@ stage: plan · under: polterware/desktop/renderer
 
 Cover request payload shapes and partial failure in the workspace loader and persister.
 
-- [ ] persist.ts payload shapes with a mocked core client §apps/lore-desktop/src/renderer/workspace/*§
+- [ ] persist.ts payload shapes with a mocked core client §apps/polterware-desktop/src/renderer/workspace/*§
 - [ ] load.ts partial-failure behavior
 - [ ] Smoke test that the contracts exports the Desktop uses exist §packages/contracts/*§
 
@@ -450,7 +450,7 @@ Atlas Views and some toasts still say Architecture.
 - [ ] Rename Architecture strings in Atlas Views and toasts §packages/features/architecture/*§
 
 ## atlas-upper-levels: Creating the upper Atlas levels
-stage: shape · under: polterware/core/work · decisions: ADR-0008
+stage: shape · under: polterware/core/work · decisions: Verdict-0008
 
 Decide who creates System and Domain nodes.
 
@@ -471,7 +471,7 @@ The default route is Inbox today; docs/future.md asks whether Work should be the
 ? Should the default route flip from Inbox to Work?
 
 ## pretooluse-enforcement: Light enforcement with PreToolUse
-stage: shape · under: polterware/agents/setup · decisions: ADR-0010
+stage: shape · under: polterware/agents/setup · decisions: Verdict-0010
 
 Tell an agent that a file is governed by a decision, before it edits.
 
@@ -485,7 +485,7 @@ Packs that generate questions for the Inbox, never rules.
 ! A pack adds questions, not rules
 
 ## retrieval-measurement: Retrieval measurement
-stage: shape · under: polterware/core/context · decisions: ADR-0005
+stage: shape · under: polterware/core/context · decisions: Verdict-0005
 
 Measure duplicate and commit-link misses on real use before adding local embeddings.
 
@@ -493,22 +493,22 @@ Measure duplicate and commit-link misses on real use before adding local embeddi
 ! Embeddings are never the source of truth
 
 ## cloud-judge: Cloud Judge
-stage: shape · under: polterware/cloud/docs · decisions: ADR-0005
+stage: shape · under: polterware/cloud/docs · decisions: Verdict-0005
 
 Jev as a Cloud-only Judge: decision detector, invariant guard, handoff verification.
 
-! Never in the Desktop or the local binary without a new ADR
+! Never in the Desktop or the local binary without a new Verdict
 ? Which first check headlines the Guard plan?
 
 ## cloud-sync: Cloud sync
-stage: shape · under: polterware/cloud/docs · decisions: ADR-0005
+stage: shape · under: polterware/cloud/docs · decisions: Verdict-0005
 
 Project sync across machines, managed backup, and hosted MCP on the same project model.
 
 ? For a teammate on Cloud, does delivered mean on main or in production?
 
 ## web-app: Polterware Web App
-stage: shape · under: polterware/web/site · decisions: ADR-0003
+stage: shape · under: polterware/web/site · decisions: Verdict-0003
 
 The authenticated hosted surface. The Website exists; the Web App does not.
 

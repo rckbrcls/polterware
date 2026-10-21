@@ -3,11 +3,13 @@ import {
   Bot,
   DataTable,
   DetailPanel,
-  FilterChip,
   PageEmpty,
   Skeleton,
   StatusChip,
   User,
+  FileText,
+  History,
+  Settings,
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
 import type {
@@ -40,16 +42,14 @@ function ActorIcon(props: { actorKind: string; size?: number }) {
   );
 }
 
-/** Unified Change History feed (B9): human + agent justified mutations, detail in the shared panel. */
+/** Unified Change History feed (B9): human + agent justified mutations, detail in the page panel. */
 export function AgentRunHistoryCard(props: {
   changes: ProjectChangeRow[];
   selectedStepId: string;
   detail: AgentRunDetail | undefined;
-  actorFilter: ChangeActorFilter;
   busy: boolean;
   onSelect: (stepId: string, agentRunId: string) => void;
   onClear: () => void;
-  onActorFilter: (filter: ChangeActorFilter) => void;
 }) {
   const activeTarget = createDetailPanelSelector((state) => state.activeTarget);
 
@@ -68,7 +68,7 @@ export function AgentRunHistoryCard(props: {
   });
   onCleanup(() => detailPanelStore.getState().unregisterCollection(HISTORY_SCOPE));
 
-  // The shared panel owns selection; mirror it into the page so it loads the run.
+  // The panel store owns selection; mirror it into the page so it loads the run.
   createEffect(() => {
     const target = activeTarget();
     const stepId = target?.scopeId === HISTORY_SCOPE ? target.entityId : "";
@@ -84,17 +84,6 @@ export function AgentRunHistoryCard(props: {
 
   return (
     <div class="flex min-h-0 flex-1 flex-col">
-      <div class="flex flex-wrap items-center gap-2 px-3 py-2">
-        <FilterChip selected={props.actorFilter === "all"} onClick={() => props.onActorFilter("all")}>
-          All
-        </FilterChip>
-        <FilterChip selected={props.actorFilter === "human"} onClick={() => props.onActorFilter("human")}>
-          Human
-        </FilterChip>
-        <FilterChip selected={props.actorFilter === "agent"} onClick={() => props.onActorFilter("agent")}>
-          Agent
-        </FilterChip>
-      </div>
       <div class="min-h-0 flex-1 overflow-auto">
         <DataTable.Root rows={props.changes} getRowId={(change) => change.stepId}>
           <DataTable.Table aria-label="Unified change history">
@@ -213,7 +202,7 @@ function ChangeDetail(props: {
             icon={<ActorIcon actorKind={props.change.actorKind} size={16} />}
             title={envelope().summary || props.change.summary || "Change"}
           />
-          <DetailPanel.Section title="Rationale">
+          <DetailPanel.Section title="Rationale" icon={<FileText size={14} />}>
             <Show
               when={envelope().rationale.trim()}
               fallback={
@@ -225,7 +214,7 @@ function ChangeDetail(props: {
               <p class="pw-detail-panel__text whitespace-pre-wrap">{envelope().rationale}</p>
             </Show>
           </DetailPanel.Section>
-          <DetailPanel.Section title="Audit chain">
+          <DetailPanel.Section title="Audit chain" icon={<History size={14} />}>
             <Show
               when={detail()}
               fallback={
@@ -291,7 +280,7 @@ function ChangeDetail(props: {
           </DetailPanel.Section>
         </DetailPanel.Main>
         <DetailPanel.Rail>
-          <DetailPanel.Section title="Properties">
+          <DetailPanel.Section title="Properties" icon={<Settings size={14} />}>
             <DetailPanel.Properties>
               <DetailPanel.Property
                 label="Actor"

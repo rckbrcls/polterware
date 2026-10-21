@@ -1,7 +1,0 @@
-{
-  "name": "sparky-native-notify-build",
-  "private": true,
-  "version": "0.1.0",
-  "description": "Pinned build-only dependencies for the macOS Main notification addon",
-  "dependencies": { "node-addon-api": "8.5.0" }
-}

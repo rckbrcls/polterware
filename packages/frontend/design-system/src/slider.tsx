@@ -4,7 +4,7 @@ import "./form-primitives.css";
 export type SliderProps = Omit<SliderRootProps, "children"> & { label?: string };
 export function Slider(props: SliderProps) {
   const [local, rest] = splitProps(props, ["label", "class"]);
-  return <ArkSlider.Root {...rest} class={`pw-slider ${local.class ?? ""}`}>
+  return <ArkSlider.Root thumbAlignment="contain" thumbSize={{ width: 20, height: 20 }} {...rest} class={`pw-slider ${local.class ?? ""}`}>
     <Show when={local.label}><ArkSlider.Label>{local.label}</ArkSlider.Label></Show>
     <ArkSlider.Control class="pw-slider__control">
       <ArkSlider.Track class="pw-slider__track"><ArkSlider.Range class="pw-slider__range" /></ArkSlider.Track>

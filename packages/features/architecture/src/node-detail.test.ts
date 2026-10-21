@@ -68,7 +68,7 @@ describe("ArchitectureNodeDetail composition contract", () => {
     expect(detailSource).toContain("DetailPanel.Rail");
     expect(detailSource).toContain("DetailPanel.Property");
     expect(detailSource).not.toContain("DetailPanel.Metric");
-    expect(detailSource).toContain("actions={");
+    expect(detailSource).not.toContain("actions={");
     expect(detailSource).not.toMatch(/DetailPanel\.Action\b/);
     expect(detailSource).toContain("StatusChip");
     expect(detailSource).toContain("architectureLifecycleLabel");
@@ -86,8 +86,8 @@ describe("ArchitectureNodeDetail composition contract", () => {
 
   it("preserves header domain icon and Open on canvas / Link resource actions", () => {
     expect(detailSource).toContain("NodeIcon");
-    expect(detailSource).toContain('label="Open on canvas"');
-    expect(detailSource).toContain('label="Link resource"');
+    expect(detailSource).toMatch(/aside=\{[\s\S]*?>Open on canvas<\/Button>/);
+    expect(detailSource).toContain(">Link resource</Button>");
     expect(detailSource).toContain("canLinkResource");
     expect(detailSource).toContain("onOpenOnCanvas");
     expect(detailSource).toContain("onLinkResource");
@@ -107,12 +107,11 @@ describe("ArchitectureNodeDetail composition contract", () => {
 });
 
 describe("Architecture host wiring (Canvas + Views)", () => {
-  it("still mounts ArchitectureNodeDetail and ArchitectureViewDetail", () => {
-    expect(indexSource).toContain("ArchitectureNodeDetail");
-    expect(indexSource).toContain("ArchitectureViewDetail");
+  it("mounts ArchitectureNodeDetail and keeps ArchitectureViewDetail exported", () => {
+    expect(indexSource).toContain("<ArchitectureNodeDetail");
+    expect(indexSource).toContain('export { ArchitectureViewDetail } from "./view-detail"');
     expect(indexSource).not.toContain("architecture:components");
     expect(indexSource).toContain("architecture:canvas");
-    expect(indexSource).toContain("architecture:views");
     expect(indexSource).toContain('entityKind: "arch-node"');
     expect(indexSource).toContain("onOpenOnCanvas");
     expect(indexSource).toContain("onLinkResource");

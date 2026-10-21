@@ -80,12 +80,12 @@ export type PageToolbarSlotProps = {
 };
 
 /**
- * First row inside MainSurface. Solid fill with a soft fade trail under the bar.
+ * First row inside MainSurface. Plain bar, no fade.
  */
 function PageToolbarRoot(props: PageToolbarRootProps) {
   return (
     <DetailPanelCollectionHeader>
-      <div class={`pw-page-toolbar pw-page-toolbar--fade-edge ${props.class ?? ""}`}>
+      <div class={`pw-page-toolbar ${props.class ?? ""}`}>
         {props.children}
       </div>
     </DetailPanelCollectionHeader>

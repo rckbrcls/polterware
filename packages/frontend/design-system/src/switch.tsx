@@ -39,8 +39,8 @@ const DRAG_DEAD_ZONE = 2;
  * thumb by `hoverExtend`; press stretches it by `pressExtend` and squashes it by `squash`.
  */
 const METRICS = {
-  default: { track: 34, thumb: 16, offset: 2, hoverExtend: 2, pressExtend: 4, squash: 4 },
-  sm: { track: 28, thumb: 12, offset: 2, hoverExtend: 2, pressExtend: 3, squash: 3 },
+  default: { track: 38, thumb: 16, offset: 3, hoverExtend: 2, pressExtend: 4, squash: 4 },
+  sm: { track: 30, thumb: 12, offset: 3, hoverExtend: 2, pressExtend: 3, squash: 3 },
 } as const;
 
 /**

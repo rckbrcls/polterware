@@ -6,9 +6,7 @@ import { installSpringCssProperties } from "./spring-css";
 if (typeof document !== "undefined") installSpringCssProperties();
 
 export { Button, LinkButton } from "./button";
-export type { ButtonProps, ButtonVariant, ButtonSize, LinkButtonProps } from "./button";
-export { ControlButton } from "./control-button";
-export type { ControlButtonProps, ControlButtonTone } from "./control-button";
+export type { ButtonProps, ButtonVariant, ButtonSize, ButtonTone, LinkButtonProps } from "./button";
 export { Badge } from "./badge";
 export { FloatingCountBadge } from "./floating-count-badge";
 export type {
@@ -59,6 +57,8 @@ export { Tabs, TabPanel } from "./tabs";
 export type { TabItem, TabTooltip } from "./tabs";
 export { Drawer } from "./drawer";
 export { Popover } from "./popover";
+export { TagPicker } from "./tag-picker";
+export type { TagPickerOption, TagPickerProps } from "./tag-picker";
 export {
   NavigationMenu,
   NavigationMenuList,
@@ -91,6 +91,8 @@ export { prefersReducedMotion } from "./reduced-motion";
 export { animateCollapse } from "./collapse";
 export { createDragMotion } from "./drag-motion";
 export type { DragMotion } from "./drag-motion";
+export { createPanMotion } from "./pan-motion";
+export type { PanMotion } from "./pan-motion";
 export { createPlacementMotion } from "./placement-motion";
 export type { Placement, PlacementMotion } from "./placement-motion";
 export { IconSwap } from "./icon-swap";
@@ -141,13 +143,16 @@ export {
   DETAIL_PANEL_MIN_WIDTH,
   DETAIL_PANEL_SIDEBAR_ID,
   DetailPanel,
+  SidePanel,
   DetailPanelCollectionHeader,
   CollapsibleSection,
   clampDetailPanelWidth,
+  readDetailPanelWidth,
 } from "./detail-panel";
 export type {
   DetailPanelBodyProps,
   DetailPanelHeaderProps,
+  DetailPanelFooterProps,
   DetailPanelMainProps,
   DetailPanelRailProps,
   DetailPanelTitleProps,
@@ -174,6 +179,8 @@ export { ResizableSidebar, ResizableSplit } from "../panels/resizable";
 export type { ResizableSidebarProps } from "../panels/resizable";
 export { A11yDialog, Dialog } from "./dialog";
 export type { A11yDialogProps, DialogSize } from "./dialog";
+export { SettingsDialog, SettingsRow, SettingsSection, searchSettings, settingsSectionId } from "./settings-dialog";
+export type { SettingsDialogProps, SettingsNavItem, SettingsSearchEntry } from "./settings-dialog";
 export { Input, Textarea } from "./input";
 export type { InputProps, TextareaProps, ControlFieldSize } from "./input";
 export { Select } from "./select";
@@ -196,17 +203,24 @@ export { ContextMenu } from "./context-menu";
 export type { ContextMenuRootProps } from "./context-menu";
 export { FilterChip, FilterChipGroup } from "./filter-chip";
 export type { FilterChipItem } from "./filter-chip";
+export { ToggleChip } from "./toggle-chip";
+export type { ToggleChipProps, ToggleChipTone } from "./toggle-chip";
+export { DisclosureButton } from "./disclosure-button";
+export type { DisclosureButtonProps } from "./disclosure-button";
+export { SwitcherTrigger } from "./switcher-trigger";
+export type { SwitcherTriggerProps } from "./switcher-trigger";
 export { ActiveFilterBar } from "./active-filter-bar";
 export type { ActiveFilterPill } from "./active-filter-bar";
 export * from "./hugeicons";
 
+export { FloatingSurfaceProvider, useInFloatingSurface } from "./floating-surface";
 export { FloatingWindow } from "./floating-window";
 export type { FloatingWindowRootProps, FloatingWindowHeaderProps } from "./floating-window";
 export type { FloatingWindowDock, FloatingWindowGeometry } from "./floating-window-geometry";
 
 export { DesignSystemProvider, useDesignSystem, type DesignSystemProviderProps, type DesignSystemShortcut } from "./provider";
 export { registerIconTileAccents } from "./icon-tile";
-export { CHROME_PRESETS, chromeStopsFromTint, type ChromePreset, type ChromeStop } from "./chrome-finish";
+export { CHROME_PRESETS, CHROME_VARIANTS, chromeStopsFromTint, chromeVariant, chromeVariantIndex, type ChromePreset, type ChromeStop } from "./chrome-finish";
 export { EmptyIllustration } from "./feedback";
 export { Checkbox, type CheckboxProps } from "./checkbox";
 export { SegmentedControl, type SegmentedControlProps, type SegmentOption } from "./segmented-control";
@@ -219,6 +233,7 @@ export { TimePicker, parseTime, type TimePickerProps } from "./time-picker";
 export { ColorSwatchPicker, parseColor, type ColorSwatchPickerProps, type ColorSwatchOption } from "./color-swatch-picker";
 export { IconPicker, PICKER_ICONS, type IconPickerProps, type PickerIconName } from "./icon-picker";
 export { TreeView, type TreeViewProps, type TreeViewNode } from "./tree-view";
+export { SegmentDisplay, type SegmentDisplayProps } from "./segment-display";
 export { ProgressRing, type ProgressRingProps } from "./progress-ring";
 export { Heatmap, heatmapLevel, type HeatmapProps, type HeatmapDay } from "./heatmap";
 export { CalendarGrid, type CalendarGridProps } from "./calendar-grid";

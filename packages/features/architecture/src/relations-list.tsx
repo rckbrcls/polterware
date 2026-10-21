@@ -1,7 +1,7 @@
-import { For, Show, createEffect, createMemo, createSignal, on } from "solid-js";
+import { For, Show, createEffect, createMemo, createSignal, createUniqueId, on } from "solid-js";
 import { pointsToRoundedSvgPath } from "@polterware/frontend-canvas";
 import {
-  ChevronRight,
+  ChevronDown,
   PageContent,
   PageEmpty,
   animateCollapse,
@@ -74,6 +74,7 @@ function RelationsSection(props: {
   onSelect: (id: string) => void;
 }) {
   const [open, setOpen] = createSignal(true);
+  const bodyId = `atlas-relations-${createUniqueId()}`;
   let body: HTMLDivElement | undefined;
   let running: CollapseControls | undefined;
 
@@ -90,36 +91,22 @@ function RelationsSection(props: {
   const node = () => props.row.node;
 
   return (
-    <section class="atlas-relations__section" aria-label={node().title}>
-      <h2 class="atlas-relations__heading" data-selected={props.selectedId === node().id ? "true" : undefined}>
+    <section class="atlas-relations__section card-texture-framed" aria-label={node().title}>
+      <h2 class="atlas-relations__heading">
         <button
           type="button"
           class="atlas-relations__node"
-          aria-current={props.selectedId === node().id ? "true" : undefined}
-          data-detail-opener
-          data-detail-target-id={node().id}
-          onClick={() => props.onSelect(node().id)}
+          aria-expanded={open()}
+          aria-controls={bodyId}
+          onClick={() => setOpen((value) => !value)}
         >
           <AtlasStatusMark status={node().status} />
           <span class="atlas-relations__title">{node().title}</span>
           <span class="atlas-relations__meta">{countLabel(props.row)}</span>
-        </button>
-        <button
-          type="button"
-          class="atlas-relations__toggle"
-          aria-expanded={open()}
-          aria-label={`${open() ? "Collapse" : "Expand"} ${node().title}`}
-          onClick={() => setOpen((value) => !value)}
-        >
-          <ChevronRight
-            size={14}
-            aria-hidden
-            class="transition-transform duration-[var(--duration-control)] ease-[var(--ease-enter)] motion-reduce:transition-none"
-            classList={{ "rotate-90": open() }}
-          />
+          <ChevronDown size={14} class="atlas-relations__toggle" data-expanded={open()} aria-hidden />
         </button>
       </h2>
-      <div class="atlas-relations__body" ref={body} data-state="open">
+      <div id={bodyId} class="atlas-relations__body" ref={body} data-state="open">
         <RelationsFlow row={props.row} selectedId={props.selectedId} onSelect={props.onSelect} />
       </div>
     </section>
@@ -210,7 +197,6 @@ function RelationsFlow(props: {
           node={props.row.node}
           x={COL_STEP}
           y={geometry().centerY}
-          focus
           selectedId={props.selectedId}
           onSelect={props.onSelect}
         />
@@ -244,15 +230,13 @@ function RelationCard(props: {
   node: AtlasCanvasNode;
   x: number;
   y: number;
-  focus?: boolean;
   selectedId?: string | null;
   onSelect: (id: string) => void;
 }) {
   return (
     <button
       type="button"
-      class="atlas-relations__card"
-      data-focus={props.focus ? "true" : undefined}
+      class="atlas-relations__card card-texture-framed"
       data-selected={props.selectedId === props.node.id ? "true" : undefined}
       style={{ transform: `translate(${props.x}px, ${props.y}px)`, width: `${CARD_W}px`, height: `${CARD_H}px` }}
       data-detail-opener

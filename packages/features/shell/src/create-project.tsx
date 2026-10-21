@@ -86,7 +86,7 @@ export function CreateProjectPage(props: {
           }`}
         >
           <Show when={canCancel()}>
-            <Button size="md" variant="ghost" onClick={() => props.onCancel?.()}>
+            <Button size="md" variant="texture" onClick={() => props.onCancel?.()}>
               Cancel
             </Button>
           </Show>

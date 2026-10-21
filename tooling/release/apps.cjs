@@ -1,13 +1,13 @@
 // Release metadata for the macOS desktop apps. dist-mac.sh, sign-mac.cjs,
-// verify-bundle.cjs and the desktop-release workflow read it so Lore, Sparky
+// verify-bundle.cjs and the desktop-release workflow read it so Polterware, Polterware Notes
 // and Vitals package, sign and publish the same way.
 const electron = '44.4.5';
 
 const apps = {
-  lore: {
-    product: 'Lore',
-    appId: 'com.polterware.lore',
-    desktop: 'apps/lore-desktop',
+  polterware: {
+    product: 'Polterware',
+    appId: 'com.polterware.polterware',
+    desktop: 'apps/polterware-desktop',
     goMod: 'backend/go.mod',
     // Mach-O files under Contents/Resources, signed before the app itself.
     binaries: [{ path: 'polterware', arch: 'arm64' }],
@@ -15,24 +15,24 @@ const apps = {
     plistKeys: [],
     unpackedRenderer: false,
   },
-  sparky: {
-    product: 'Sparky',
-    appId: 'com.polterware.sparky',
-    desktop: 'apps/sparky-desktop',
-    goMod: 'sparky/backend/go.mod',
+  notes: {
+    product: 'Polterware Notes',
+    appId: 'com.polterware.notes',
+    desktop: 'apps/notes-desktop',
+    goMod: 'notes/backend/go.mod',
     binaries: [
-      { path: 'sparky', arch: 'arm64' },
+      { path: 'pwnotes', arch: 'arm64' },
       { path: 'native/notify.node', arch: 'arm64' },
     ],
-    urlSchemes: ['sparky'],
+    urlSchemes: ['pwnotes'],
     plistKeys: ['NSMicrophoneUsageDescription'],
     unpackedRenderer: true,
   },
   vitals: {
-    product: 'Vitals',
+    product: 'Polterware Vitals',
     appId: 'com.polterware.vitals',
-    desktop: 'apps/vitals',
-    goMod: 'apps/vitals/agent/go.mod',
+    desktop: 'apps/vitals-desktop',
+    goMod: 'apps/vitals-desktop/agent/go.mod',
     // Agents uploaded to remote macOS hosts, so both architectures ship.
     binaries: [
       { path: 'agent/vitals-agent-darwin-arm64', arch: 'arm64' },

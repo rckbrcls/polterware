@@ -1,0 +1,29 @@
+{
+  "name": "@polterware/feature-notes-library",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.tsx",
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --config vitest.config.ts"
+  },
+  "peerDependencies": {
+    "solid-js": "^1.9.15"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.15.0",
+    "@polterware/frontend-design-system": "workspace:*",
+    "@polterware/notes-contracts": "workspace:*",
+    "@polterware/feature-notes-shell": "workspace:*"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.1",
+    "vite-plugin-solid": "^2.11.14",
+    "solid-js": "^1.9.15",
+    "vitest": "^5.0.1"
+  }
+}

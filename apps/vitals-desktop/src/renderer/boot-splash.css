@@ -1,0 +1,90 @@
+/*
+ * Boot splash — linked from index.html so it paints before the JS bundle and
+ * design tokens load. Mirrors apps/polterware-desktop/src/renderer/boot-splash.css.
+ * Token fallbacks mirror packages/configuration/tailwind/base.css.
+ */
+#boot-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    opacity var(--duration-enter, 200ms) var(--ease-standard, cubic-bezier(0.2, 0, 0, 1)),
+    transform var(--duration-enter, 200ms) var(--ease-standard, cubic-bezier(0.2, 0, 0, 1));
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+html[data-shell-chrome="solid"] #boot-splash {
+  background: var(--color-app-background, #131313);
+}
+
+#boot-splash[data-leaving="true"] {
+  opacity: 0;
+  transform: scale(1.02);
+  pointer-events: none;
+}
+
+/* Keep the shell hidden until the splash leaves, then cross-fade it in. */
+#root {
+  transition: opacity var(--duration-enter, 200ms) var(--ease-standard, cubic-bezier(0.2, 0, 0, 1));
+}
+
+#boot-splash:not([data-leaving="true"]) ~ #root {
+  opacity: 0;
+}
+
+/*
+ * Echo ring: 5x5 dot matrix, diamond rings by Manhattan distance (--r) with a
+ * softer echo pulse. Static HTML/CSS so it paints before the JS bundle; the
+ * renderer reuses it for connection progress (EchoRing).
+ */
+.echo-ring {
+  --echo-dot: 4px;
+  --echo-dot-rest: color-mix(in srgb, var(--color-text-muted, #6f6f6f) 45%, var(--color-surface-selected, #232323));
+  display: grid;
+  grid-template-columns: repeat(5, var(--echo-dot));
+  grid-auto-rows: var(--echo-dot);
+  gap: var(--echo-dot);
+}
+
+/* Negative delays start the ripple mid-cycle so the first painted frame already shows it. */
+.echo-ring > i {
+  display: block;
+  background-color: var(--echo-dot-rest);
+  animation: echo-pulse 1500ms ease-in-out infinite;
+  animation-delay: calc((var(--r) * 0.14 + var(--p) * 0.03 - 1) * 1500ms);
+}
+
+@keyframes echo-pulse {
+  0%,
+  100% {
+    background-color: var(--echo-dot-rest);
+  }
+  28% {
+    background-color: var(--echo-peak, var(--color-text-primary, #ececec));
+  }
+  56% {
+    background-color: var(--color-text-muted, #6f6f6f);
+  }
+  78% {
+    background-color: color-mix(
+      in srgb,
+      var(--echo-peak, var(--color-text-primary, #ececec)) 60%,
+      var(--color-text-muted, #6f6f6f)
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .echo-ring > i {
+    animation: none;
+    background-color: color-mix(
+      in srgb,
+      var(--color-text-muted, #6f6f6f) calc(100% - var(--r) * 22%),
+      var(--color-surface-selected, #232323)
+    );
+  }
+}

@@ -1,73 +1,38 @@
 import { Show, createEffect, createSignal } from "solid-js";
 import { A11yDialog, Button, Field, Input, Select } from "@polterware/frontend-design-system";
+import type { ScopeNodeItem } from "@polterware/feature-shell";
+import { ScopePicker } from "./scope-picker";
 import type { KnowledgeCreateTemplate } from "./create-templates";
 import { KnowledgeTemplateGrid } from "./knowledge-template-grid";
 
-export type CreateKnowledgeKind = "doc" | "runbook" | "card" | "adr";
-
-const LIBRARY_KIND_OPTIONS = [
-  { value: "doc", label: "Document" },
-  { value: "adr", label: "ADR" },
-  { value: "runbook", label: "Runbook" },
-] as const;
-
-function isLibraryKind(kind: CreateKnowledgeKind): kind is "doc" | "adr" | "runbook" {
-  return kind === "doc" || kind === "adr" || kind === "runbook";
-}
+export type CreateKnowledgeKind = "card" | "verdict";
 
 export function CreateKnowledgeDialog(props: {
   open: boolean;
   kind: CreateKnowledgeKind;
-  /** When true, show a category select for doc / ADR / runbook. */
-  pickLibraryKind?: boolean;
-  /** Limits the category select; sources are created through their own dialog. */
-  libraryKinds?: readonly string[];
   onClose: () => void;
-  onSubmit: (title: string, kind: CreateKnowledgeKind, scope?: "principle" | "decision") => void;
+  onSubmit: (title: string, kind: CreateKnowledgeKind, scope?: "principle" | "decision", scopePath?: string) => void;
+  scopeNodes?: ScopeNodeItem[];
+  /** Atlas node path preselected for a new Verdict; empty is the whole project. */
+  defaultScopePath?: string;
   onCreateFromTemplate?: (template: KnowledgeCreateTemplate) => void;
 }) {
   const [title, setTitle] = createSignal("");
-  const [pickedKind, setPickedKind] = createSignal<"doc" | "adr" | "runbook">("doc");
   const [scope, setScope] = createSignal<"principle" | "decision">("decision");
+  const [scopePath, setScopePath] = createSignal("");
 
   createEffect(() => {
     if (!props.open) return;
     setScope("decision");
-    if (isLibraryKind(props.kind)) setPickedKind(props.kind);
-    else setPickedKind("doc");
+    setScopePath(props.defaultScopePath ?? "");
   });
 
-  const activeKind = (): CreateKnowledgeKind => {
-    if (props.kind === "card") return "card";
-    if (props.pickLibraryKind) return pickedKind();
-    return props.kind;
-  };
+  const activeKind = (): CreateKnowledgeKind => props.kind;
 
-  const copy = () => {
-    const kind = activeKind();
-    if (kind === "runbook") {
-      return {
-        title: "New runbook",
-        placeholder: "Runbook title",
-      };
-    }
-    if (kind === "card") {
-      return {
-        title: "New card",
-        placeholder: "Card title",
-      };
-    }
-    if (kind === "adr") {
-      return {
-        title: "New ADR",
-        placeholder: "ADR title",
-      };
-    }
-    return {
-      title: props.pickLibraryKind ? "New library item" : "New document",
-      placeholder: "Document title",
-    };
-  };
+  const copy = () =>
+    activeKind() === "card"
+      ? { title: "New card", placeholder: "Card title" }
+      : { title: "New Verdict", placeholder: "Verdict title" };
   const canSubmit = () => title().trim().length > 0;
 
   function close() {
@@ -78,7 +43,7 @@ export function CreateKnowledgeDialog(props: {
   function submit() {
     const next = title().trim();
     if (!next) return;
-    props.onSubmit(next, activeKind(), activeKind() === "adr" ? scope() : undefined);
+    props.onSubmit(next, activeKind(), activeKind() === "verdict" ? scope() : undefined, activeKind() === "verdict" && scope() === "decision" && scopePath() ? scopePath() : undefined);
     setTitle("");
   }
 
@@ -95,7 +60,7 @@ export function CreateKnowledgeDialog(props: {
       onClose={close}
       footer={
         <>
-          <Button size="sm" variant="ghost" onClick={close}>
+          <Button size="sm" variant="texture" onClick={close}>
             Cancel
           </Button>
           <Button size="sm" variant="primary" disabled={!canSubmit()} onClick={submit}>
@@ -105,23 +70,7 @@ export function CreateKnowledgeDialog(props: {
       }
     >
       <div class="grid gap-4">
-        <Show when={props.pickLibraryKind}>
-          <Field label="Category">
-            <Select
-              size="sm"
-              value={pickedKind()}
-              options={LIBRARY_KIND_OPTIONS.filter(
-                (option) => !props.libraryKinds?.length || props.libraryKinds.includes(option.value),
-              )}
-              onChange={(value) => {
-                if (value === "doc" || value === "adr" || value === "runbook") {
-                  setPickedKind(value);
-                }
-              }}
-            />
-          </Field>
-        </Show>
-        <Show when={activeKind() === "adr"}>
+        <Show when={activeKind() === "verdict"}>
           <Field label="Scope">
             <Select
               size="sm"
@@ -135,6 +84,11 @@ export function CreateKnowledgeDialog(props: {
               }}
             />
           </Field>
+          <Show when={scope() === "decision" && (props.scopeNodes?.length ?? 0) > 0}>
+            <Field label="Atlas scope" hint="Optional. Leave on Whole project to show it under every filter">
+              <ScopePicker nodes={props.scopeNodes ?? []} value={scopePath()} onChange={setScopePath} class="w-full" />
+            </Field>
+          </Show>
         </Show>
         <Field label="Title">
           <Input

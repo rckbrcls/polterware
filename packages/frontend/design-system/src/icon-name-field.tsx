@@ -10,6 +10,8 @@ import "./icon-name-field.css";
 
 export type IconNameFieldProps = {
   label: string;
+  /** Seeds the icon tile's finish, so it matches the entity's other tiles. */
+  seed?: string;
   name: string;
   onNameInput: (value: string) => void;
   icon: PickerIconName;
@@ -35,13 +37,13 @@ export function IconNameField(props: IconNameFieldProps) {
         <button
           ref={trigger}
           type="button"
-          class="pw-icon-name-field__trigger control-field"
+          class="pw-icon-name-field__trigger control-field pw-field-control"
           aria-label={`${props.label} icon and color`}
           aria-haspopup="dialog"
           aria-expanded={open()}
           onClick={(event) => { event.preventDefault(); setOpen(!open()); }}
         >
-          <IconTile size={28} tone="knowledge" accent={props.color || undefined}>
+          <IconTile size={28} tone="knowledge" accent={props.color || undefined} seed={props.seed}>
             <Dynamic component={PICKER_ICONS[props.icon] ?? PICKER_ICONS.brain} size={16} />
           </IconTile>
         </button>

@@ -38,7 +38,7 @@ func TestExecuteAuditedWriteHumanAutoRun(t *testing.T) {
 		agentrun.ActorKindHuman,
 		"desktop.knowledge.save",
 		func(run agentrun.Run) ([]string, any, error) {
-			item, err := knowledge.NewItem("kn-1", project.ID, "Local-first truth", "# Rules", "adr", nil)
+			item, err := knowledge.NewItem("kn-1", project.ID, "Local-first truth", "# Rules", "verdict", nil)
 			if err != nil {
 				return nil, nil, err
 			}

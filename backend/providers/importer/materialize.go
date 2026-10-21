@@ -4,22 +4,22 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/ppm"
+	"github.com/polterware/polterware/backend/domains/canon"
 )
 
 // Materialize converts a FileResult into domain facts and evidence with stable IDs.
-func Materialize(projectID string, file FileResult, now time.Time) (ppm.Evidence, []ppm.Fact, error) {
+func Materialize(projectID string, file FileResult, now time.Time) (canon.Evidence, []canon.Fact, error) {
 	if file.Skipped {
-		return ppm.Evidence{}, nil, fmt.Errorf("skipped: %s", file.Reason)
+		return canon.Evidence{}, nil, fmt.Errorf("skipped: %s", file.Reason)
 	}
 	if now.IsZero() {
 		now = time.Now().UTC()
 	}
 	evidenceID := StableEvidenceID(projectID, file.Path)
-	evidence := ppm.Evidence{
+	evidence := canon.Evidence{
 		ID:         evidenceID,
 		ProjectID:  projectID,
-		Kind:       ppm.EvidenceKindFile,
+		Kind:       canon.EvidenceKindFile,
 		Summary:    file.Evidence.Summary,
 		Source:     file.Evidence.Source,
 		Path:       file.Path,
@@ -28,24 +28,24 @@ func Materialize(projectID string, file FileResult, now time.Time) (ppm.Evidence
 		CreatedAt:  now,
 		UpdatedAt:  now,
 	}
-	if err := ppm.ValidateEvidence(evidence); err != nil {
-		return ppm.Evidence{}, nil, err
+	if err := canon.ValidateEvidence(evidence); err != nil {
+		return canon.Evidence{}, nil, err
 	}
-	facts := make([]ppm.Fact, 0, len(file.Facts))
+	facts := make([]canon.Fact, 0, len(file.Facts))
 	for _, draft := range file.Facts {
-		fact := ppm.Fact{
+		fact := canon.Fact{
 			ID:         StableFactID(projectID, file.Path, draft.Key),
 			ProjectID:  projectID,
 			Statement:  draft.Statement,
-			TruthClass: ppm.TruthObserved,
+			TruthClass: canon.TruthObserved,
 			Source:     draft.Source,
 			Actor:      "system",
 			ObservedAt: now,
 			CreatedAt:  now,
 			UpdatedAt:  now,
 		}
-		if err := ppm.ValidateFact(fact); err != nil {
-			return ppm.Evidence{}, nil, err
+		if err := canon.ValidateFact(fact); err != nil {
+			return canon.Evidence{}, nil, err
 		}
 		facts = append(facts, fact)
 	}

@@ -1,20 +1,19 @@
 /*
- * StatusChip — filled only.
- * Opaque semantic fill + dark shade of the same tone for text + edge-light border.
- * No leading status dot (StatusDot is the compact indicator primitive).
+ * StatusChip — filled only. Texture tones (--tone-* in materials): dark frame, lit rim,
+ * gradient face and light ink. No leading status dot (StatusDot is the compact indicator).
  */
 
 .pw-status-chip {
-  --pw-status-background: var(--color-status-muted-background);
-  --pw-status-foreground: var(--color-status-muted-foreground);
+  --pw-status-background: var(--tone-neutral-top);
+  --pw-status-foreground: var(--tone-neutral-ink);
 
   display: inline-flex;
   align-items: center;
   gap: 0;
-  border: 1px solid var(--edge-light-surface-rim);
-  border-top-color: var(--edge-light-surface-highlight);
-  border-radius: 9999px;
-  background: var(--pw-status-background);
+  border: 1px solid var(--tone-neutral-frame);
+  border-radius: 6px;
+  background: linear-gradient(to bottom, var(--tone-neutral-top), var(--tone-neutral-bottom));
+  box-shadow: inset 0 0 0 1px var(--tone-neutral-rim);
   padding: 3px 9px;
   color: var(--pw-status-foreground);
   font-size: 11px;
@@ -25,29 +24,49 @@
 
 .pw-status-chip[data-tone="healthy"],
 .pw-status-chip[data-tone="ok"] {
-  --pw-status-background: var(--color-status-success-background);
-  --pw-status-foreground: var(--color-status-success-foreground);
+  border-color: var(--tone-success-frame);
+  --pw-status-background: var(--tone-success-top);
+  --pw-status-foreground: var(--tone-success-ink);
+  background: linear-gradient(to bottom, var(--tone-success-top), var(--tone-success-bottom));
+  box-shadow: inset 0 0 0 1px var(--tone-success-rim);
+  color: var(--pw-status-foreground);
 }
 
 .pw-status-chip[data-tone="degraded"],
 .pw-status-chip[data-tone="warn"] {
-  --pw-status-background: var(--color-status-warning-background);
-  --pw-status-foreground: var(--color-status-warning-foreground);
+  border-color: var(--tone-warn-frame);
+  --pw-status-background: var(--tone-warn-top);
+  --pw-status-foreground: var(--tone-warn-ink);
+  background: linear-gradient(to bottom, var(--tone-warn-top), var(--tone-warn-bottom));
+  box-shadow: inset 0 0 0 1px var(--tone-warn-rim);
+  color: var(--pw-status-foreground);
 }
 
 .pw-status-chip[data-tone="down"],
 .pw-status-chip[data-tone="danger"] {
-  --pw-status-background: var(--color-status-danger-background);
-  --pw-status-foreground: var(--color-status-danger-foreground);
+  border-color: var(--tone-danger-frame);
+  --pw-status-background: var(--tone-danger-top);
+  --pw-status-foreground: var(--tone-danger-ink);
+  background: linear-gradient(to bottom, var(--tone-danger-top), var(--tone-danger-bottom));
+  box-shadow: inset 0 0 0 1px var(--tone-danger-rim);
+  color: var(--pw-status-foreground);
 }
 
 .pw-status-chip[data-tone="syncing"] {
-  --pw-status-background: var(--color-status-info-background);
-  --pw-status-foreground: var(--color-status-info-foreground);
+  border-color: var(--tone-info-frame);
+  --pw-status-background: var(--tone-info-top);
+  --pw-status-foreground: var(--tone-info-ink);
+  background: linear-gradient(to bottom, var(--tone-info-top), var(--tone-info-bottom));
+  box-shadow: inset 0 0 0 1px var(--tone-info-rim);
+  color: var(--pw-status-foreground);
 }
 
 .pw-status-chip[data-tone="unknown"],
 .pw-status-chip[data-tone="muted"] {
-  --pw-status-background: var(--color-status-muted-background);
-  --pw-status-foreground: var(--color-status-muted-foreground);
+  border-color: var(--tone-neutral-frame);
+  --pw-status-background: var(--tone-neutral-top);
+  --pw-status-foreground: var(--tone-neutral-ink);
+  background: linear-gradient(to bottom, var(--tone-neutral-top), var(--tone-neutral-bottom));
+  box-shadow: inset 0 0 0 1px var(--tone-neutral-rim);
+  color: var(--pw-status-foreground);
 }

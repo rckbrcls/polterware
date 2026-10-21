@@ -42,12 +42,12 @@ func (s *Store) ListInboxDispositions(projectID string) ([]inbox.Disposition, er
 	return out, rows.Err()
 }
 
-// ListUnbackedPpmFacts returns declared and observed facts with no linked
+// ListUnbackedCanonFacts returns declared and observed facts with no linked
 // evidence, in one query.
-func (s *Store) ListUnbackedPpmFacts(projectID string) ([]inbox.Fact, error) {
-	rows, err := s.DB.Query(`SELECT f.id,f.statement,f.truth_class,f.source,f.actor FROM ppm_facts f
+func (s *Store) ListUnbackedCanonFacts(projectID string) ([]inbox.Fact, error) {
+	rows, err := s.DB.Query(`SELECT f.id,f.statement,f.truth_class,f.source,f.actor FROM canon_facts f
 		WHERE f.project_id=? AND f.truth_class IN ('declared','observed')
-		AND NOT EXISTS (SELECT 1 FROM ppm_fact_evidence fe WHERE fe.fact_id=f.id)
+		AND NOT EXISTS (SELECT 1 FROM canon_fact_evidence fe WHERE fe.fact_id=f.id)
 		ORDER BY f.created_at, f.id`, projectID)
 	if err != nil {
 		return nil, err

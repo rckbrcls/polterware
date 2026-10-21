@@ -21,12 +21,12 @@ export const sessions = {
   ],
   agents: [
     { kind: "cmd", text: `${CLI} setup claude` },
-    { kind: "ok", text: "installed  Lore plugin for Claude Code" },
+    { kind: "ok", text: "installed  Polterware plugin for Claude Code" },
     { kind: "cmd", text: `${CLI} mcp` },
     { kind: "dim", text: "attached to the local core · stdio" },
     { kind: "out", text: "→ read   compiled context for “auth” · 8k budget" },
     { kind: "out", text: "→ read   3 facts · 2 decisions · 4 evidence" },
-    { kind: "warn", text: "→ drift  1 conflict with ADR-012" },
+    { kind: "warn", text: "→ drift  1 conflict with Verdict-012" },
     { kind: "ok", text: "→ write  W-45 updated · audited" },
   ],
 } satisfies Record<string, Line[]>;
@@ -54,7 +54,7 @@ export function CliTerminalMockup(props: { session?: keyof typeof sessions; comp
   });
 
   return (
-    <div class="mk-terminal" classList={{ "mk-compact": props.compact }} role="img" aria-label="Lore CLI session in a terminal">
+    <div class="mk-terminal" classList={{ "mk-compact": props.compact }} role="img" aria-label="Polterware CLI session in a terminal">
       <div class="mk-titlebar"><span class="mk-dots"><i /><i /><i /></span><span class="mk-title">{props.title ?? "~/code/polterware"}</span></div>
       <div class="mk-terminal-body">
         <For each={lines().slice(0, Math.min(shown(), lines().length))}>{(line) => (

@@ -1,7 +1,7 @@
 import { For } from "solid-js";
 import { Cpu, HardDrive, MemoryStick, Network, Server, StatusDot } from "@polterware/frontend-design-system";
 
-/** Illustrative data: a code-built picture of Vitals, not a live host. */
+/** Illustrative data: a code-built picture of Polterware Vitals, not a live host. */
 const hosts = [
   { name: "build-01", tone: "healthy" as const },
   { name: "db-primary", tone: "healthy" as const },
@@ -28,8 +28,8 @@ export function VitalsMockup(props: { compact?: boolean }) {
     return cpu.map((v, i) => `${i === 0 ? "M" : "L"}${(i * step).toFixed(2)},${(100 - v).toFixed(2)}`).join(" ");
   };
   return (
-    <div class="mk-window" classList={{ "mk-compact": props.compact }} role="img" aria-label="Vitals desktop app showing metrics for a remote host">
-      <div class="mk-titlebar"><span class="mk-dots"><i /><i /><i /></span><span class="mk-title">Vitals · build-01</span></div>
+    <div class="mk-window" classList={{ "mk-compact": props.compact }} role="img" aria-label="Polterware Vitals desktop app showing metrics for a remote host">
+      <div class="mk-titlebar"><span class="mk-dots"><i /><i /><i /></span><span class="mk-title">Polterware Vitals · build-01</span></div>
       <div class="mk-body">
         <aside class="mk-sidebar">
           <For each={hosts}>{(host, i) => (

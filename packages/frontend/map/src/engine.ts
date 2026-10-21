@@ -1,9 +1,10 @@
 /// <reference path="./supercluster.d.ts" />
+/// <reference path="./worker-url.d.ts" />
 import Supercluster from "supercluster";
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import type { GeoJSONSource, Map as MapLibreMap, Marker } from "maplibre-gl";
 import { OPENFREEMAP_DARK_STYLE } from "./style";
 import { mapTokenColors, type MapTokenColors } from "./tokens";
-import { shouldLoadMapTiles } from "./network";
 import type { MapBounds, MapCenter, MapMarker, MapPick, MapProviderId } from "./types";
 
 export type MapEngineHandle = {
@@ -19,6 +20,7 @@ type EngineOptions = {
   markers: MapMarker[];
   selectedId?: string;
   pickEnabled?: boolean;
+  controlsPosition?: "top-left" | "top-right";
   provider?: MapProviderId;
   onSelect?: (id: string) => void;
   onPick?: (pick: MapPick) => void;
@@ -33,8 +35,10 @@ function boundsOf(map: MapLibreMap): MapBounds {
 }
 
 export async function createMapEngine(container: HTMLElement, options: EngineOptions): Promise<MapEngineHandle | null> {
-  if (!shouldLoadMapTiles(true, options.provider ?? "maplibre")) return null;
+  if ((options.provider ?? "maplibre") !== "maplibre") return null;
   const maplibre = await import("maplibre-gl");
+  // MapLibre resolves its worker from import.meta.url, which breaks once Vite pre-bundles or packages it.
+  maplibre.setWorkerUrl(maplibreWorkerUrl);
   await import("maplibre-gl/dist/maplibre-gl.css");
   const colors: MapTokenColors = mapTokenColors(container);
   const clusterIndex = new Supercluster<PointProps>({ radius: 50, maxZoom: 16 });
@@ -44,6 +48,12 @@ export async function createMapEngine(container: HTMLElement, options: EngineOpt
   let pickMarker: Marker | null = null;
   let radiusIds: string[] = [];
   let destroyed = false;
+  let styleReady = false;
+  let interactionsBound = false;
+
+  const reportEngineError = (operation: string, error: unknown) => {
+    console.error(`Map engine ${operation} failed.`, error);
+  };
 
   const loadIndex = () => {
     clusterIndex.load(markers.map(marker => ({
@@ -54,49 +64,83 @@ export async function createMapEngine(container: HTMLElement, options: EngineOpt
   };
 
   const syncClusters = () => {
-    if (!map) return;
-    loadIndex();
-    const box = map.getBounds();
-    const zoom = Math.max(0, Math.floor(map.getZoom()));
-    const clusters = clusterIndex.getClusters([box.getWest(), box.getSouth(), box.getEast(), box.getNorth()], zoom);
-    const source = map.getSource("markers") as GeoJSONSource | undefined;
-    source?.setData({
-      type: "FeatureCollection",
-      features: clusters.map(feature => ({
-        type: "Feature" as const,
-        properties: feature.properties,
-        geometry: feature.geometry,
-      })),
-    });
-    for (const id of radiusIds) {
-      if (map.getLayer(id)) map.removeLayer(id);
-      if (map.getSource(id)) map.removeSource(id);
-    }
-    radiusIds = [];
-    for (const marker of markers) {
-      if (!marker.radius) continue;
-      const id = `radius-${marker.id}`;
-      radiusIds.push(id);
-      map.addSource(id, {
-        type: "geojson",
-        data: { type: "Feature", geometry: { type: "Point", coordinates: [marker.lng, marker.lat] }, properties: {} },
+    if (!map || !styleReady || !map.isStyleLoaded()) return;
+    try {
+      loadIndex();
+      const box = map.getBounds();
+      const zoom = Math.max(0, Math.floor(map.getZoom()));
+      const clusters = clusterIndex.getClusters([box.getWest(), box.getSouth(), box.getEast(), box.getNorth()], zoom);
+      const source = map.getSource("markers") as GeoJSONSource | undefined;
+      source?.setData({
+        type: "FeatureCollection",
+        features: clusters.map(feature => ({
+          type: "Feature" as const,
+          properties: feature.properties,
+          geometry: feature.geometry,
+        })),
       });
-      map.addLayer({
-        id,
-        type: "circle",
-        source: id,
-        paint: {
-          "circle-radius": ["interpolate", ["exponential", 2], ["zoom"], 0, 0, 20, marker.radius / 0.075],
-          "circle-color": colors.brand,
-          "circle-opacity": 0.14,
-          "circle-stroke-color": colors.brand,
-          "circle-stroke-width": 1,
-          "circle-stroke-opacity": 0.7,
-        },
-      }, "clusters");
+      for (const id of radiusIds) {
+        if (map.getLayer(id)) map.removeLayer(id);
+        if (map.getSource(id)) map.removeSource(id);
+      }
+      radiusIds = [];
+      for (const marker of markers) {
+        if (!marker.radius) continue;
+        const id = `radius-${marker.id}`;
+        radiusIds.push(id);
+        map.addSource(id, {
+          type: "geojson",
+          data: { type: "Feature", geometry: { type: "Point", coordinates: [marker.lng, marker.lat] }, properties: {} },
+        });
+        map.addLayer({
+          id,
+          type: "circle",
+          source: id,
+          paint: {
+            "circle-radius": ["interpolate", ["exponential", 2], ["zoom"], 0, 0, 20, marker.radius / 0.075],
+            "circle-color": colors.brand,
+            "circle-opacity": 0.14,
+            "circle-stroke-color": colors.brand,
+            "circle-stroke-width": 1,
+            "circle-stroke-opacity": 0.7,
+          },
+        }, "clusters");
+      }
+      const selected = selectedId ? markers.find(item => item.id === selectedId) : undefined;
+      if (selected && pickMarker) pickMarker.setLngLat([selected.lng, selected.lat]);
+    } catch (error) {
+      reportEngineError("cluster sync", error);
     }
-    const selected = selectedId ? markers.find(item => item.id === selectedId) : undefined;
-    if (selected && pickMarker) pickMarker.setLngLat([selected.lng, selected.lat]);
+  };
+
+  const ensureStyle = () => {
+    if (!map || destroyed || !map.isStyleLoaded()) return false;
+    try {
+      if (!map.getSource("markers")) {
+        map.addSource("markers", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      }
+      if (!map.getLayer("clusters")) {
+        map.addLayer({ id: "clusters", type: "circle", source: "markers", filter: ["has", "point_count"], paint: {
+          "circle-color": colors.brand, "circle-radius": ["step", ["get", "point_count"], 16, 10, 20, 50, 26],
+        } });
+      }
+      if (!map.getLayer("cluster-count")) {
+        map.addLayer({ id: "cluster-count", type: "symbol", source: "markers", filter: ["has", "point_count"],
+          layout: { "text-field": "{point_count_abbreviated}", "text-size": 11 }, paint: { "text-color": colors.canvas } });
+      }
+      if (!map.getLayer("unclustered")) {
+        map.addLayer({ id: "unclustered", type: "circle", source: "markers", filter: ["!", ["has", "point_count"]], paint: {
+          "circle-color": colors.brand, "circle-radius": ["case", ["==", ["get", "id"], selectedId ?? ""], 10, 7],
+          "circle-stroke-color": colors.canvas, "circle-stroke-width": 2,
+        } });
+      }
+      styleReady = true;
+      return true;
+    } catch (error) {
+      styleReady = false;
+      reportEngineError("style setup", error);
+      return false;
+    }
   };
 
   loadIndex();
@@ -107,41 +151,11 @@ export async function createMapEngine(container: HTMLElement, options: EngineOpt
     zoom: options.zoom,
     attributionControl: { compact: true, customAttribution: "Map tiles from OpenFreeMap · © OpenMapTiles · © OpenStreetMap" },
   });
-  map.addControl(new maplibre.NavigationControl({ showCompass: false }), "top-right");
+  map.addControl(new maplibre.NavigationControl({ showCompass: false }), options.controlsPosition ?? "top-right");
 
   map.on("load", () => {
     if (!map || destroyed) return;
-    map.addSource("markers", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-    map.addLayer({
-      id: "clusters",
-      type: "circle",
-      source: "markers",
-      filter: ["has", "point_count"],
-      paint: {
-        "circle-color": colors.brand,
-        "circle-radius": ["step", ["get", "point_count"], 16, 10, 20, 50, 26],
-      },
-    });
-    map.addLayer({
-      id: "cluster-count",
-      type: "symbol",
-      source: "markers",
-      filter: ["has", "point_count"],
-      layout: { "text-field": "{point_count_abbreviated}", "text-size": 11 },
-      paint: { "text-color": colors.canvas },
-    });
-    map.addLayer({
-      id: "unclustered",
-      type: "circle",
-      source: "markers",
-      filter: ["!", ["has", "point_count"]],
-      paint: {
-        "circle-color": colors.brand,
-        "circle-radius": ["case", ["==", ["get", "id"], selectedId ?? ""], 10, 7],
-        "circle-stroke-color": colors.canvas,
-        "circle-stroke-width": 2,
-      },
-    });
+    if (!ensureStyle()) return;
     if (options.pickEnabled) {
       const start = selectedId ? markers.find(item => item.id === selectedId) : undefined;
       pickMarker = new maplibre.Marker({ color: colors.brand, draggable: true })
@@ -152,6 +166,8 @@ export async function createMapEngine(container: HTMLElement, options: EngineOpt
         if (lngLat) options.onPick?.({ lat: lngLat.lat, lng: lngLat.lng });
       });
     }
+    if (interactionsBound) return;
+    interactionsBound = true;
     map.on("click", "clusters", event => {
       const feature = event.features?.[0];
       if (!feature || !map) return;
@@ -177,23 +193,33 @@ export async function createMapEngine(container: HTMLElement, options: EngineOpt
     syncClusters();
     options.onBoundsChange?.(boundsOf(map), map.getZoom());
   });
+  map.on("styledataloading", () => { styleReady = false; });
+  map.on("styledata", () => {
+    if (ensureStyle()) syncClusters();
+  });
 
   return {
     destroy: () => {
       destroyed = true;
       pickMarker?.remove();
       pickMarker = null;
-      map?.remove();
+      // A map whose GPU context never initialized can throw while tearing down.
+      try { map?.remove(); } catch (error) { reportEngineError("teardown", error); }
       map = null;
     },
     setCenter: (center, zoom) => {
-      map?.easeTo({ center: [center.lng, center.lat], zoom });
+      try { map?.easeTo({ center: [center.lng, center.lat], zoom }); }
+      catch (error) { reportEngineError("center update", error); }
     },
     setMarkers: (next, nextSelected) => {
       markers = next;
       selectedId = nextSelected;
-      if (map?.getLayer("unclustered")) {
-        map.setPaintProperty("unclustered", "circle-radius", ["case", ["==", ["get", "id"], selectedId ?? ""], 10, 7]);
+      try {
+        if (styleReady && map?.isStyleLoaded() && map.getLayer("unclustered")) {
+          map.setPaintProperty("unclustered", "circle-radius", ["case", ["==", ["get", "id"], selectedId ?? ""], 10, 7]);
+        }
+      } catch (error) {
+        reportEngineError("marker update", error);
       }
       syncClusters();
     },

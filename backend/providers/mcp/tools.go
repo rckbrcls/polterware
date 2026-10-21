@@ -22,7 +22,7 @@ const (
 	ToolEvidenceLink     = "evidence.link"
 	ToolKnowledgeUpsert  = "knowledge.upsert"
 	ToolKnowledgeLink    = "knowledge.link"
-	// Polter channel (ADR 0006): Work cards in Polter format.
+	// Polter channel (Verdict 0006): Work cards in Polter format.
 	ToolPolterApply  = "polter.apply"
 	ToolPolterQuery  = "polter.query"
 	ToolPolterFormat = "polter.format"
@@ -61,7 +61,9 @@ func toolDefinitions() []map[string]any {
 				"type": "object",
 				"properties": map[string]any{
 					"project_id": map[string]any{"type": "string"},
-					"query":      map[string]any{"type": "string", "description": "\"cards\" (default), \"card <slug>\", \"status\", \"inbox\", \"handoff <slug>\", \"decisions [state]\", \"decision <adr>\", \"feature <slug> [shape|contract|plan]\", or \"verify <slug|slug#T2>\""},
+					"query":      map[string]any{"type": "string", "description": "\"cards\" (default), \"card <slug>\", \"status\", \"inbox\", \"handoff <slug>\", \"decisions [state]\", \"decision <verdict>\", \"feature <slug> [shape|contract|plan]\", or \"verify <slug|slug#T2>\""},
+					"scope":        map[string]any{"type": "string", "description": "Atlas node path, slug, or id: narrow the read to that node, its descendants and ancestors. Omit for the whole project."},
+					"scope_exact":  map[string]any{"type": "boolean", "description": "With scope, leave out the node's ancestors."},
 				},
 				"required": []string{"project_id"},
 			},
@@ -93,13 +95,15 @@ func toolDefinitions() []map[string]any {
 					"entity_id":    map[string]any{"type": "string"},
 					"token_budget": map[string]any{"type": "integer"},
 					"agent_run_id": map[string]any{"type": "string"},
+					"scope":        map[string]any{"type": "string", "description": "Atlas node path, slug, or id: narrow the read to that node, its descendants and ancestors. Omit for the whole project."},
+					"scope_exact":  map[string]any{"type": "boolean", "description": "With scope, leave out the node's ancestors."},
 				},
 				"required": []string{"project_id"},
 			},
 		},
 		{
 			"name":        ToolEntityGet,
-			"description": "Fetch one PPM entity by id.",
+			"description": "Fetch one Canon entity by id.",
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": map[string]any{
@@ -110,7 +114,7 @@ func toolDefinitions() []map[string]any {
 		},
 		{
 			"name":        ToolEvidenceGet,
-			"description": "Fetch one PPM evidence record by id.",
+			"description": "Fetch one Canon evidence record by id.",
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": map[string]any{
@@ -121,7 +125,7 @@ func toolDefinitions() []map[string]any {
 		},
 		{
 			"name":        ToolDriftCheck,
-			"description": "Run the narrow Drift Checker: import dependency diffs, edges under accepted ADRs without evidence, and declared-versus-observed fact conflicts. Pass agent_run_id to append a drift step on an open AgentRun.",
+			"description": "Run the narrow Drift Checker: import dependency diffs, edges under accepted Verdicts without evidence, and declared-versus-observed fact conflicts. Pass agent_run_id to append a drift step on an open AgentRun.",
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": map[string]any{
@@ -147,7 +151,7 @@ func toolDefinitions() []map[string]any {
 		},
 		{
 			"name":        ToolAgentRunAppend,
-			"description": "Append a declared-only change or evidence step to an open AgentRun. Change requires summary and rationale but does not mutate the PPM. Prefer fact.upsert / evidence.* / knowledge.* for real mutations.",
+			"description": "Append a declared-only change or evidence step to an open AgentRun. Change requires summary and rationale but does not mutate the Canon. Prefer fact.upsert / evidence.* / knowledge.* for real mutations.",
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": map[string]any{
@@ -198,7 +202,7 @@ func toolDefinitions() []map[string]any {
 		},
 		{
 			"name":        ToolFactUpsert,
-			"description": "Audited write: upsert a PPM fact. Requires summary, rationale, and an open agent_run_id. Actor is always agent/mcp.",
+			"description": "Audited write: upsert a Canon fact. Requires summary, rationale, and an open agent_run_id. Actor is always agent/mcp.",
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": auditedWriteProperties(map[string]any{
@@ -212,7 +216,7 @@ func toolDefinitions() []map[string]any {
 		},
 		{
 			"name":        ToolEvidenceUpsert,
-			"description": "Audited write: upsert PPM evidence. Requires summary, rationale, and an open agent_run_id. Use evidence_summary for the evidence body (envelope summary is the change title).",
+			"description": "Audited write: upsert Canon evidence. Requires summary, rationale, and an open agent_run_id. Use evidence_summary for the evidence body (envelope summary is the change title).",
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": auditedWriteProperties(map[string]any{
@@ -256,7 +260,7 @@ func toolDefinitions() []map[string]any {
 		},
 		{
 			"name":        ToolKnowledgeLink,
-			"description": "Audited write: link a knowledge item to a PPM entity. Requires summary, rationale, and an open agent_run_id.",
+			"description": "Audited write: link a knowledge item to a Canon entity. Requires summary, rationale, and an open agent_run_id.",
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": auditedWriteProperties(map[string]any{

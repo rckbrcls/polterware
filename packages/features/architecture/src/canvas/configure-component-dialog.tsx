@@ -112,7 +112,7 @@ export function ConfigureComponentDialog(props: {
       onClose={() => props.onClose()}
       footer={
         <>
-          <Button type="button" variant="ghost" size="sm" onClick={() => props.onClose()}>
+          <Button type="button" variant="texture" size="sm" onClick={() => props.onClose()}>
             Cancel
           </Button>
           <Button type="button" variant="secondary" size="sm" onClick={() => submit()}>

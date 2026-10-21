@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "pwnotes": {
+      "url": "http://127.0.0.1:47600/mcp",
+      "headers": {
+        "Authorization": "Bearer \u003cmcp-token\u003e"
+      }
+    }
+  }
+}

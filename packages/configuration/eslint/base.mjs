@@ -18,7 +18,7 @@ export default [
           paths: [
             {
               name: "electron",
-              message: "Only apps/lore-desktop may import electron.",
+              message: "Only apps/polterware-desktop may import electron.",
             },
           ],
           patterns: [

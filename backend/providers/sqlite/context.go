@@ -3,8 +3,9 @@ package sqlite
 import (
 	"strings"
 
+	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/canon"
 	contextpkg "github.com/polterware/polterware/backend/domains/context"
-	"github.com/polterware/polterware/backend/domains/ppm"
 )
 
 const (
@@ -16,12 +17,12 @@ func (s *Store) CompileContext(req contextpkg.Request) (contextpkg.Package, erro
 	candidates := make([]contextpkg.Item, 0, 32)
 
 	if req.EntityID != "" {
-		entity, err := s.GetPpmEntity(req.EntityID)
+		entity, err := s.GetCanonEntity(req.EntityID)
 		if err == nil {
 			candidates = append(candidates, contextpkg.Item{
 				Kind: "entity", ID: entity.ID, Title: entity.Title,
 				Excerpt:    entity.Kind + " · " + entity.RefKind + "/" + entity.RefID,
-				TruthClass: entity.TruthClass, Source: entity.Source, Path: ppm.FormatPath(entity),
+				TruthClass: entity.TruthClass, Source: entity.Source, Path: canon.FormatPath(entity),
 				Reasons: []string{contextpkg.ReasonExactEntity},
 			})
 			links, err := s.ListKnowledgeLinks(req.ProjectID, "", entity.ID)
@@ -41,7 +42,7 @@ func (s *Store) CompileContext(req contextpkg.Request) (contextpkg.Package, erro
 					Reasons: []string{contextpkg.ReasonKnowledgeLink},
 				})
 			}
-			rels, err := s.ListPpmRelationships(req.ProjectID, entity.ID)
+			rels, err := s.ListCanonRelationships(req.ProjectID, entity.ID)
 			if err != nil {
 				return contextpkg.Package{}, err
 			}
@@ -50,14 +51,14 @@ func (s *Store) CompileContext(req contextpkg.Request) (contextpkg.Package, erro
 				if otherID == entity.ID {
 					otherID = rel.SubjectEntityID
 				}
-				other, err := s.GetPpmEntity(otherID)
+				other, err := s.GetCanonEntity(otherID)
 				if err != nil {
 					continue
 				}
 				candidates = append(candidates, contextpkg.Item{
 					Kind: "entity", ID: other.ID, Title: other.Title,
 					Excerpt:    rel.Predicate + " · " + other.Kind,
-					TruthClass: rel.TruthClass, Source: rel.Source, Path: ppm.FormatPath(other),
+					TruthClass: rel.TruthClass, Source: rel.Source, Path: canon.FormatPath(other),
 					Reasons: []string{contextpkg.ReasonRelationshipHop},
 				})
 			}
@@ -83,7 +84,7 @@ func (s *Store) CompileContext(req contextpkg.Request) (contextpkg.Package, erro
 				Reasons: []string{contextpkg.ReasonFTSHit},
 			})
 		}
-		entities, err := s.ListPpmEntities(req.ProjectID, "")
+		entities, err := s.ListCanonEntities(req.ProjectID, "")
 		if err != nil {
 			return contextpkg.Package{}, err
 		}
@@ -96,7 +97,7 @@ func (s *Store) CompileContext(req contextpkg.Request) (contextpkg.Package, erro
 			candidates = append(candidates, contextpkg.Item{
 				Kind: "entity", ID: entity.ID, Title: entity.Title,
 				Excerpt:    entity.Kind + " · " + entity.RefID,
-				TruthClass: entity.TruthClass, Source: entity.Source, Path: ppm.FormatPath(entity),
+				TruthClass: entity.TruthClass, Source: entity.Source, Path: canon.FormatPath(entity),
 				Reasons: []string{contextpkg.ReasonTitleMatch},
 			})
 		}
@@ -108,7 +109,7 @@ func (s *Store) CompileContext(req contextpkg.Request) (contextpkg.Package, erro
 	}
 
 	if len(candidates) == 0 && req.EntityID == "" && strings.TrimSpace(req.Query) == "" {
-		entities, err := s.ListPpmEntities(req.ProjectID, "")
+		entities, err := s.ListCanonEntities(req.ProjectID, "")
 		if err != nil {
 			return contextpkg.Package{}, err
 		}
@@ -119,7 +120,7 @@ func (s *Store) CompileContext(req contextpkg.Request) (contextpkg.Package, erro
 			candidates = append(candidates, contextpkg.Item{
 				Kind: "entity", ID: entity.ID, Title: entity.Title,
 				Excerpt:    entity.Kind + " · " + entity.RefID,
-				TruthClass: entity.TruthClass, Source: entity.Source, Path: ppm.FormatPath(entity),
+				TruthClass: entity.TruthClass, Source: entity.Source, Path: canon.FormatPath(entity),
 				Reasons: []string{contextpkg.ReasonProjectSample},
 			})
 		}
@@ -130,11 +131,51 @@ func (s *Store) CompileContext(req contextpkg.Request) (contextpkg.Package, erro
 		candidates = append(candidates, factItems...)
 	}
 
+	candidates, err := s.scopeContextItems(req, candidates)
+	if err != nil {
+		return contextpkg.Package{}, err
+	}
 	return contextpkg.Compile(req, dedupeContextItems(candidates)), nil
 }
 
+// scopeContextItems drops knowledge and fact candidates scoped outside the
+// request's node. Entities and unscoped items stay.
+func (s *Store) scopeContextItems(req contextpkg.Request, items []contextpkg.Item) ([]contextpkg.Item, error) {
+	if req.ScopeNodeID == "" {
+		return items, nil
+	}
+	resolved, err := s.LoadScope(req.ProjectID, atlas.Scope{NodeID: req.ScopeNodeID, Exact: req.ScopeExact})
+	if err != nil {
+		return nil, err
+	}
+	maps := map[string]map[string]string{}
+	for _, kind := range []string{ScopeDecision, ScopeFact, ScopeEvidence} {
+		m, err := s.ScopeMap(req.ProjectID, kind)
+		if err != nil {
+			return nil, err
+		}
+		maps[kind] = m
+	}
+	out := make([]contextpkg.Item, 0, len(items))
+	for _, item := range items {
+		var node string
+		switch item.Kind {
+		case "fact":
+			node = maps[ScopeFact][item.ID]
+		case "verdict":
+			node = maps[ScopeDecision][item.ID]
+		case "evidence":
+			node = maps[ScopeDecision][item.ID]
+		}
+		if resolved.Matches(node) {
+			out = append(out, item)
+		}
+	}
+	return out, nil
+}
+
 func (s *Store) factContextItems(projectID, entityID, query, reason string, limit int) ([]contextpkg.Item, error) {
-	facts, err := s.ListPpmFacts(projectID, entityID)
+	facts, err := s.ListCanonFacts(projectID, entityID)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +189,7 @@ func (s *Store) factContextItems(projectID, entityID, query, reason string, limi
 		if itemReason == contextpkg.ReasonImportedFact || itemReason == "" {
 			itemReason = factSampleReason(fact)
 		}
-		evidence, err := s.ListPpmEvidenceForFact(fact.ID)
+		evidence, err := s.ListCanonEvidenceForFact(fact.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -162,7 +203,7 @@ func (s *Store) factContextItems(projectID, entityID, query, reason string, limi
 			Kind: "fact", ID: fact.ID, Title: contextpkg.Excerpt(fact.Statement, 120),
 			Excerpt:    contextpkg.Excerpt(fact.Statement, 280),
 			TruthClass: fact.TruthClass, Source: fact.Source,
-			Path: "ppm/fact/" + fact.ID, Reasons: []string{itemReason}, Evidence: refs,
+			Path: "canon/fact/" + fact.ID, Reasons: []string{itemReason}, Evidence: refs,
 		})
 		if limit > 0 && len(out) >= limit {
 			break
@@ -171,8 +212,8 @@ func (s *Store) factContextItems(projectID, entityID, query, reason string, limi
 	return out, nil
 }
 
-func factSampleReason(fact ppm.Fact) string {
-	if fact.TruthClass == ppm.TruthObserved || strings.HasPrefix(fact.Source, "import:") {
+func factSampleReason(fact canon.Fact) string {
+	if fact.TruthClass == canon.TruthObserved || strings.HasPrefix(fact.Source, "import:") {
 		return contextpkg.ReasonImportedFact
 	}
 	return contextpkg.ReasonProjectSample

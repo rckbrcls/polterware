@@ -3,7 +3,7 @@ package drift
 import (
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/ppm"
+	"github.com/polterware/polterware/backend/domains/canon"
 )
 
 func checkDeclaredObserved(facts []FactRef) []Finding {
@@ -20,9 +20,9 @@ func checkDeclaredObserved(facts []FactRef) []Finding {
 		var declared, observed []FactRef
 		for _, fact := range group {
 			switch fact.TruthClass {
-			case ppm.TruthDeclared:
+			case canon.TruthDeclared:
 				declared = append(declared, fact)
-			case ppm.TruthObserved:
+			case canon.TruthObserved:
 				observed = append(observed, fact)
 			}
 		}

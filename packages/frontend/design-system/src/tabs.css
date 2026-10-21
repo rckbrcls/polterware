@@ -16,23 +16,6 @@
   border-bottom: none;
 }
 
-.pw-page-toolbar--fade-edge {
-  position: relative;
-  z-index: 1;
-  background: var(--color-surface);
-}
-
-.pw-page-toolbar--fade-edge::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  right: 0;
-  left: 0;
-  height: 32px;
-  pointer-events: none;
-  background: var(--material-fade-edge-toolbar-trail);
-}
-
 .pw-page-toolbar-tabs,
 .pw-page-toolbar-leading {
   display: flex;
@@ -46,9 +29,9 @@
   display: inline-flex;
   align-items: center;
   min-height: 28px;
-  /* Match .pw-tab horizontal inset so the label isn’t flush to the edge. */
-  padding: 5px 14px;
-  margin-inline-start: 4px;
+  /* Small inset so the label isn’t flush to the edge. */
+  padding: 5px 6px;
+  margin-inline-start: 0;
   color: var(--color-text-primary);
   font-family: inherit;
   font-size: 12.5px;
@@ -66,37 +49,27 @@
   gap: 8px;
 }
 
-/* Standalone tablist (inside PageToolbar or alone). Positioned: it is the coordinate
+/* Keys here read a touch low next to the tab track; seat them 1px higher (position only). */
+.pw-page-toolbar-actions > .pw-control-button {
+  margin-bottom: 2px;
+}
+
+/* Standalone tablist (inside PageToolbar or alone): a recessed texture track, like the switch,
+ * with the active tab as a raised face gliding inside. Positioned: it is the coordinate
  * space of the gliding pills (tabs.tsx, fluid-hover.tsx). */
 .pw-tabs {
   position: relative;
   isolation: isolate;
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   flex-shrink: 0;
-  /* When nested in PageToolbar, parent owns padding/border */
-  padding: 0;
-  border-bottom: none;
-}
-
-/* Tabs used without PageToolbar (legacy / rare) — still no divider rule */
-.pw-tabs:not(.pw-page-toolbar-tabs .pw-tabs):not(.pw-tabs--flush) {
-  padding: 8px 16px 4px;
-  border-bottom: none;
-}
-
-/** Soft handoff into full-bleed content — owned by PageToolbar, not standalone tabs. */
-.pw-tabs.pw-tabs--fade-edge {
-  border-bottom: none;
-  padding-bottom: 8px;
-}
-
-/** Inside flush dialogs / toolbars that own their own spacing — no rule, no padding. */
-.pw-tabs.pw-tabs--flush {
-  padding: 0;
-  border-bottom: none;
+  padding: 2px;
+  border: 1px solid var(--field-frame);
+  border-radius: 14px;
+  background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
+  box-shadow: var(--field-rings);
 }
 
 .pw-tab {
@@ -105,16 +78,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 28px;
-  padding: 5px 14px;
+  min-height: calc(var(--control-height-md) - 6px);
+  padding: 2px 12px;
   margin: 0;
-  border-radius: 999px;
+  border-radius: 11px;
   /* Transparent rim keeps the tab the same size as the active pill that sits behind it. */
   border: 1px solid transparent;
   background: transparent;
   color: var(--color-text-muted);
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 12px;
   letter-spacing: -0.01em;
   line-height: 1.2;
   white-space: nowrap;
@@ -132,15 +105,16 @@
 
 /* The one active pill: glides between tabs on spring.moderate. */
 .pw-fluid-hover-highlight.pw-tab-indicator {
-  border: 1px solid var(--edge-light-surface-rim);
-  border-top-color: var(--edge-light-surface-highlight);
-  border-radius: 999px;
-  background: var(--color-surface-active);
+  /* Texture face: same frame, lit rim and gradient as the neutral texture button. */
+  border: 1px solid var(--field-frame);
+  border-radius: 11px;
+  background: linear-gradient(to bottom, #5a5a5a, #3d3d3d);
+  box-shadow: inset 0 0 0 1px #6a6a6a, 0 1px 2px var(--color-shadow);
 }
 
 /* The one hover pill: born at the active pill, follows pointer and keyboard focus. */
 .pw-fluid-hover-highlight.pw-tab-hover {
-  border-radius: 999px;
+  border-radius: 11px;
   background: var(--color-surface-hover);
 }
 
@@ -215,9 +189,9 @@
 
 /* Icon-only tabs (e.g. Grid / Table view switch) */
 .pw-tab--icon {
-  min-width: 28px;
-  min-height: 28px;
-  padding: 5px;
+  min-width: calc(var(--control-height-md) - 6px);
+  min-height: calc(var(--control-height-md) - 6px);
+  padding: 3px;
   gap: 0;
 }
 

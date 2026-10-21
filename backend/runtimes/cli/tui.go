@@ -39,7 +39,7 @@ var (
 	colorText    = lipgloss.AdaptiveColor{Dark: "#ececec", Light: "#1f1f1f"}
 	colorSubtle  = lipgloss.AdaptiveColor{Dark: "#a4a4a4", Light: "#555555"}
 	colorMuted   = lipgloss.AdaptiveColor{Dark: "#6f6f6f", Light: "#8a8a8a"}
-	colorAccent  = lipgloss.AdaptiveColor{Dark: "#8eccc9", Light: "#2f7f7b"}
+	colorAccent  = lipgloss.AdaptiveColor{Dark: "#eef1f3", Light: "#2e2e2e"}
 	colorSuccess = lipgloss.AdaptiveColor{Dark: "#01dd96", Light: "#0a8f63"}
 	colorWarning = lipgloss.AdaptiveColor{Dark: "#d8a85d", Light: "#9a6a1c"}
 	colorDanger  = lipgloss.AdaptiveColor{Dark: "#e46666", Light: "#b83a3a"}
@@ -144,7 +144,7 @@ type tuiModel struct {
 func runTUI(dbPath string) error {
 	cwd, _ := os.Getwd()
 	coreBin, coreErr := coreclient.Executable()
-	// The TUI reads through the core (ADR 0007); start it once on launch. Later
+	// The TUI reads through the core (Verdict 0007); start it once on launch. Later
 	// refreshes never restart it, so stopping the core from the TUI sticks.
 	if coreErr == nil {
 		_, _ = coreclient.Ensure(dbPath)
@@ -418,7 +418,7 @@ func (m *tuiModel) runAction(action string) tea.Cmd {
 				return actionMsg{err: err}
 			}
 			project := initRes.Msg.Project
-			scanRes, err := c.PPM.ImportProjectSources(ctx, connect.NewRequest(&localv1.ImportProjectSourcesRequest{ProjectId: project.Id}))
+			scanRes, err := c.Canon.ImportProjectSources(ctx, connect.NewRequest(&localv1.ImportProjectSourcesRequest{ProjectId: project.Id}))
 			if err != nil {
 				return actionMsg{err: err, projectID: project.Id}
 			}

@@ -64,7 +64,7 @@ export function CreateEnvironmentDialog(props: {
       onClose={close}
       footer={
         <>
-          <Button size="sm" variant="ghost" onClick={close}>
+          <Button size="sm" variant="texture" onClick={close}>
             Cancel
           </Button>
           <Button size="sm" variant="primary" disabled={!canSubmit()} onClick={submit}>

@@ -1,6 +1,8 @@
-import { For, Show, createEffect, createMemo, createSignal, on } from "solid-js";
+import { For, Show, createEffect, createMemo, createSignal, createUniqueId, on } from "solid-js";
 import {
-  ChevronRight,
+  Button,
+  ChevronDown,
+  Eye,
   PageContent,
   PageEmpty,
   animateCollapse,
@@ -79,6 +81,7 @@ function ComponentsSection(props: {
   onSelect: (id: string) => void;
 }) {
   const [open, setOpen] = createSignal(true);
+  const listId = `atlas-components-${createUniqueId()}`;
   let list: HTMLUListElement | undefined;
   let running: CollapseControls | undefined;
 
@@ -93,49 +96,34 @@ function ComponentsSection(props: {
   );
 
   return (
-    <section class="atlas-components__section" aria-label={props.title}>
-      <h2
-        class="atlas-components__heading"
-        data-selected={props.domain && props.selectedId === props.domain.id ? "true" : undefined}
-      >
-        <Show
-          when={props.domain}
-          fallback={
-            <span class="atlas-components__domain" data-static>
-              <span class="atlas-components__domain-title">{props.title}</span>
-            </span>
-          }
-        >
-          {(domain) => (
-            <button
-              type="button"
-              class="atlas-components__domain"
-              aria-current={props.selectedId === domain().id ? "true" : undefined}
-              data-detail-opener
-              data-detail-target-id={domain().id}
-              onClick={() => props.onSelect(domain().id)}
-            >
-              <AtlasStatusMark status={domain().status} />
-              <span class="atlas-components__domain-title">{props.title}</span>
-            </button>
-          )}
-        </Show>
+    <section class="atlas-components__section card-texture-framed" aria-label={props.title}>
+      <h2 class="atlas-components__heading">
         <button
           type="button"
-          class="atlas-components__toggle"
+          class="atlas-components__domain"
           aria-expanded={open()}
-          aria-label={`${open() ? "Collapse" : "Expand"} ${props.title}`}
-          onClick={() => setOpen((value) => !value)}
+          aria-controls={listId}
+          onClick={() => setOpen(value => !value)}
         >
-          <ChevronRight
-            size={14}
-            aria-hidden
-            class="transition-transform duration-[var(--duration-control)] ease-[var(--ease-enter)] motion-reduce:transition-none"
-            classList={{ "rotate-90": open() }}
-          />
+          <Show when={props.domain}>{domain => <AtlasStatusMark status={domain().status} />}</Show>
+          <span class="atlas-components__domain-title">{props.title}</span>
+          <ChevronDown size={14} class="atlas-components__toggle" data-expanded={open()} aria-hidden />
         </button>
+        <Show when={props.domain}>{domain => (
+          <Button
+            variant="icon"
+            class="atlas-components__details"
+            aria-label={`Open ${props.title} details`}
+            title={`Open ${props.title} details`}
+            data-detail-opener
+            data-detail-target-id={domain().id}
+            onClick={() => props.onSelect(domain().id)}
+          >
+            <Eye size={14} />
+          </Button>
+        )}</Show>
       </h2>
-      <ul class="atlas-components__list" ref={list} data-state="open">
+      <ul id={listId} class="atlas-components__list" ref={list} data-state="open">
         <For each={props.components}>
           {(node) => (
             <li>

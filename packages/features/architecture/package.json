@@ -13,6 +13,7 @@
     "test": "vitest run --passWithNoTests --config vitest.config.ts"
   },
   "dependencies": {
+    "@polterware/feature-shell": "workspace:*",
     "@polterware/frontend-canvas": "workspace:*",
     "@polterware/frontend-design-system": "workspace:*",
     "@polterware/frontend-state": "workspace:*",

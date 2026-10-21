@@ -58,7 +58,11 @@ func (s *Server) polterQuery(args map[string]any) (string, error) {
 	if query == "" {
 		query = polter.QueryCards
 	}
-	return wedge.QueryPolter(s.Store, projectID, query)
+	scope, err := wedge.ResolveScopeRef(s.Store, projectID, stringFrom(args["scope"]), boolFrom(args["scope_exact"]))
+	if err != nil {
+		return "", err
+	}
+	return wedge.QueryPolterScoped(s.Store, projectID, query, scope)
 }
 
 // polterError turns invalid text into one line per diagnostic, each with its fix.

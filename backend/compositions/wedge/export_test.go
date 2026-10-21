@@ -19,12 +19,12 @@ summary: Shop graph
 rationale: Export test
 ---
 # shop: Shop
-level: system · decisions: ADR 0001
+level: system · decisions: Verdict 0001
 
 ! Money is integer cents
 
 # shop/auth: Auth
-level: domain · repo: api · path: src/auth · decisions: ADR 0002
+level: domain · repo: api · path: src/auth · decisions: Verdict 0002
 
 ! Tokens expire in 15 minutes
 `
@@ -45,11 +45,11 @@ func TestExportProjections(t *testing.T) {
 	}
 	now := time.Now().UTC()
 	for _, item := range []knowledge.Item{
-		{ID: "adr-cents", Title: "ADR 0001: Integer cents", Body: "## Decision\n\nStore cents.", Status: "accepted"},
-		{ID: "adr-tokens", Title: "ADR 0002: Short tokens", Body: "## Decision\n\nShort tokens."},
-		{ID: "adr-hand", Title: "ADR 0003: Hand written", Body: "From the store."},
+		{ID: "verdict-cents", Title: "Verdict 0001: Integer cents", Body: "## Decision\n\nStore cents.", Status: "accepted"},
+		{ID: "verdict-tokens", Title: "Verdict 0002: Short tokens", Body: "## Decision\n\nShort tokens."},
+		{ID: "verdict-hand", Title: "Verdict 0003: Hand written", Body: "From the store."},
 	} {
-		item.ProjectID, item.Kind, item.CreatedAt, item.UpdatedAt = project.ID, "adr", now, now
+		item.ProjectID, item.Kind, item.CreatedAt, item.UpdatedAt = project.ID, "verdict", now, now
 		if err := store.SaveKnowledge(item); err != nil {
 			t.Fatal(err)
 		}
@@ -58,9 +58,9 @@ func TestExportProjections(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// A hand-written ADR with the same number and surrounding AGENTS.md text stay.
-	handADR := filepath.Join(root, "docs", "adr", "0003-hand-written.md")
-	writeFile(t, handADR, "# ADR 0003: Hand written\n\nOriginal.\n")
+	// A hand-written Verdict with the same number and surrounding AGENTS.md text stay.
+	handVerdict := filepath.Join(root, "docs", "verdict", "0003-hand-written.md")
+	writeFile(t, handVerdict, "# Verdict 0003: Hand written\n\nOriginal.\n")
 	agents := filepath.Join(root, "AGENTS.md")
 	writeFile(t, agents, "# Agents\n\n"+projection.BlockBegin+"\nstale\n"+projection.BlockEnd+"\n\n## Tail\nKeep me.\n")
 
@@ -76,20 +76,20 @@ func TestExportProjections(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := readFile(t, handADR); got != "# ADR 0003: Hand written\n\nOriginal.\n" {
-		t.Fatalf("hand-written ADR changed: %q", got)
+	if got := readFile(t, handVerdict); got != "# Verdict 0003: Hand written\n\nOriginal.\n" {
+		t.Fatalf("hand-written Verdict changed: %q", got)
 	}
-	if !hasProjection(files, "", "docs/adr/0003-hand-written.md", wedge.ProjectionSkip) {
-		t.Fatalf("hand-written ADR should be skipped: %+v", files)
+	if !hasProjection(files, "", "docs/verdict/0003-hand-written.md", wedge.ProjectionSkip) {
+		t.Fatalf("hand-written Verdict should be skipped: %+v", files)
 	}
-	if !strings.Contains(readFile(t, filepath.Join(root, "docs", "adr", "0001-integer-cents.md")), "Store cents.") {
-		t.Fatalf("root ADR missing")
+	if !strings.Contains(readFile(t, filepath.Join(root, "docs", "verdict", "0001-integer-cents.md")), "Store cents.") {
+		t.Fatalf("root Verdict missing")
 	}
-	if !strings.Contains(readFile(t, filepath.Join(apiDir, "docs", "adr", "0002-short-tokens.md")), "Short tokens.") {
-		t.Fatalf("api ADR missing")
+	if !strings.Contains(readFile(t, filepath.Join(apiDir, "docs", "verdict", "0002-short-tokens.md")), "Short tokens.") {
+		t.Fatalf("api Verdict missing")
 	}
-	if fileExists(filepath.Join(root, "docs", "adr", "0002-short-tokens.md")) {
-		t.Fatalf("ADR 0002 governs api only")
+	if fileExists(filepath.Join(root, "docs", "verdict", "0002-short-tokens.md")) {
+		t.Fatalf("Verdict 0002 governs api only")
 	}
 
 	rootAgents := readFile(t, agents)
@@ -104,7 +104,7 @@ func TestExportProjections(t *testing.T) {
 
 	// Edits in the checkout do not flow back; re-export replaces them.
 	writeFile(t, agents, strings.Replace(rootAgents, "Money is integer cents", "Money is floats", 1))
-	projected := filepath.Join(root, "docs", "adr", "0001-integer-cents.md")
+	projected := filepath.Join(root, "docs", "verdict", "0001-integer-cents.md")
 	writeFile(t, projected, readFile(t, projected)+"\nLocal edit.\n")
 	if _, err := wedge.ExportProjections(store, project.ID, false); err != nil {
 		t.Fatal(err)

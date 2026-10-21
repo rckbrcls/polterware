@@ -3,7 +3,7 @@ package drift
 import (
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/ppm"
+	"github.com/polterware/polterware/backend/domains/canon"
 )
 
 // Check runs the narrow drift rules and returns a stable result.
@@ -12,7 +12,7 @@ func Check(input Input) Result {
 	if input.ImportReady {
 		findings = append(findings, checkImportDeps(input.StoredFacts, input.ParsedDeps)...)
 	}
-	findings = append(findings, checkEdgeDecisions(input.Relationships, input.AcceptedADRs)...)
+	findings = append(findings, checkEdgeDecisions(input.Relationships, input.AcceptedVerdicts)...)
 	findings = append(findings, checkDeclaredObserved(input.StoredFacts)...)
 	if input.GitDeliveryReady {
 		findings = append(findings, checkCommitTasks(input.DoneTasks, input.TaskCommits, input.WindowCommits)...)
@@ -77,5 +77,5 @@ func isImportSource(source string) bool {
 }
 
 func isDependencyEdge(predicate string) bool {
-	return ppm.IsDependencyPredicate(predicate)
+	return canon.IsDependencyPredicate(predicate)
 }

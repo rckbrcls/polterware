@@ -1,7 +1,3 @@
-.architecture-canvas-edge-fade {
-  background: var(--material-fade-edge-top-canvas);
-}
-
 .architecture-node-card {
   display: flex;
   width: 100%;
@@ -9,9 +5,9 @@
   flex-direction: column;
   overflow: hidden;
   border-radius: var(--radius-card);
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--field-frame);
   background: var(--color-surface-raised);
-  box-shadow: 0 1px 2px var(--color-shadow-subtle);
+  box-shadow: var(--field-rings);
   color: var(--color-text-primary);
   box-sizing: border-box;
   user-select: none;
@@ -78,11 +74,12 @@
   position: absolute;
   inset: 0;
   box-sizing: border-box;
-  border: 1px solid transparent;
+  border: 1px solid var(--field-frame);
+  box-shadow: var(--field-rings);
   /* One step above the surface radius. */
   border-radius: calc(var(--radius-surface) + 4px);
-  /* Lighter than the cards it holds, so they read as set into it: halfway to the hover step. */
-  background: color-mix(in srgb, var(--color-surface-raised), var(--color-surface-hover));
+  /* Halfway between the surface and subtle steps: a quiet well the cards sit in. */
+  background: color-mix(in srgb, var(--color-surface), var(--color-surface-subtle));
   pointer-events: none;
 }
 
@@ -102,10 +99,10 @@
   align-items: center;
   gap: 8px;
   padding: 0 12px 0 5px;
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--field-frame);
   border-radius: 9999px;
   background: var(--color-surface-raised);
-  box-shadow: 0 1px 2px var(--color-shadow-subtle);
+  box-shadow: var(--field-rings);
   font-size: 13px;
   line-height: 16px;
   font-weight: 500;
@@ -308,4 +305,25 @@
 .architecture-canvas-rel-control:focus-visible {
   outline: 2px solid var(--color-border-strong);
   outline-offset: 2px;
+}
+
+/* Float controls over the map, keeping entity details below their measured height. */
+.pw-detail-panel-root:has([aria-label="Architecture canvas"]) > .pw-detail-panel__collection-header {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.pw-detail-panel-root:has([aria-label="Architecture canvas"]) > .pw-detail-panel__collection-header .pw-page-toolbar :is(.pw-page-toolbar-tabs, .pw-page-toolbar-leading, .pw-page-toolbar-actions) > * {
+  pointer-events: auto;
+}
+
+.pw-detail-panel-root:has([aria-label="Architecture canvas"]) > .pw-detail-panel__workspace > .pw-detail-panel__frame,
+.pw-detail-panel-root:has([aria-label="Architecture canvas"]) > .pw-detail-panel__workspace > .pw-detail-panel__resize-handle {
+  top: calc(var(--detail-panel-collection-header-height, 0px) + 8px);
+}
+
+.pw-detail-panel-root:has([aria-label="Architecture canvas"]) > .pw-detail-panel__workspace > .pw-detail-panel__frame[data-expanded="true"] {
+  top: var(--detail-panel-collection-header-height, 0px);
 }

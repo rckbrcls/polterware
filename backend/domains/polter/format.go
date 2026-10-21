@@ -19,7 +19,7 @@ const Spec = "Polter format v1: markdown that writes Polterware Work cards.\n" +
 	"---\n" +
 	"\n" +
 	"## git-import: Git metadata import\n" +
-	"stage: plan · owner: erick · under: core/import · decisions: ADR-0007\n" +
+	"stage: plan · owner: erick · under: core/import · decisions: Verdict-0007\n" +
 	"\n" +
 	"Intent paragraph: what we want and why.\n" +
 	"\n" +
@@ -38,14 +38,14 @@ const Spec = "Polter format v1: markdown that writes Polterware Work cards.\n" +
 	"touched: backend/import.go, docs/spec.md\n" +
 	"\n" +
 	"### new: Local SQLite authority\n" +
-	"status: active · trigger: multi-user sync · supersedes: ADR-0003 · reason: why\n" +
+	"status: active · trigger: multi-user sync · supersedes: Verdict-0003 · reason: why\n" +
 	"\n" +
-	"ADR body: context, decision, consequences.\n" +
+	"Verdict body: context, decision, consequences.\n" +
 	"\n" +
 	"Rules:\n" +
 	"- `## slug: Title` is a card; the lowercase-kebab slug is its identity.\n" +
 	"- `# path: Title` is an Atlas node. level: system, domain, or component. under: names the parent path. A component may also sit directly under its system (outside any domain). A different under: on an existing node moves it and rewrites descendant paths. uses: lists the node paths it depends on (comma separated; empty clears); the map draws them as edges. A card under: names a component path once any component exists. repo: names a checkout from `polterware repo add` (empty is the project root); path: is a folder inside it, not the node path. migrating: old design -> new design marks a node in transition (empty clears it).\n" +
-	"- `### ref: Title` is an ADR lifecycle block. `new` proposes one (a number is assigned); an ADR number or id changes an existing one. States: proposed → active → challenged → active or superseded. `status: challenged` needs a reason:; `trigger:` is the review condition; `supersedes: ADR-0003` on the newer decision marks the older one superseded. Decisions are never removed. The body is plain text: no # lines.\n" +
+	"- `### ref: Title` is an Verdict lifecycle block. `new` proposes one (a number is assigned); an Verdict number or id changes an existing one. States: proposed → active → challenged → active or superseded. `status: challenged` needs a reason:; `trigger:` is the review condition; `scope:` is the Atlas node path the decision applies to (omit for the whole project); `supersedes: Verdict-0003` on the newer decision marks the older one superseded. Decisions are never removed. The body is plain text: no # lines.\n" +
 	"- Stages: shape, plan, build, verify, delivered.\n" +
 	"- `kind: architecture` marks a card as an Architecture Change (default feature). Its under: names the node it changes; set `migrating:` on that node while the change is in flight, and clear it when the card is delivered.\n" +
 	"- Tasks: [ ] open, [x] done, [-] dropped; T<n>, `[repo: api]`, and a trailing `scope` glob are optional. A scope may carry its checkout: `api:src/auth/*`.\n" +
@@ -86,7 +86,7 @@ const (
 	QueryDecision  = "decision"
 )
 
-const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "oracle <path>", "atlas [<path>] [at <point>]", "atlas history", "decisions [proposed|active|challenged|superseded]", "decision <adr>", "feature <slug> [shape|contract|plan]", or "verify <slug|slug#T2>"`
+const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "oracle <path>", "atlas [<path>] [at <point>]", "atlas history", "decisions [proposed|active|challenged|superseded]", "decision <verdict>", "feature <slug> [shape|contract|plan]", or "verify <slug|slug#T2>"`
 
 // ParseQuery parses the v1 query language.
 func ParseQuery(text string) (Query, error) {
@@ -117,7 +117,7 @@ func ParseQuery(text string) (Query, error) {
 		}
 	case QueryDecision:
 		if len(fields) < 2 {
-			return Query{}, fmt.Errorf(`unknown query %q: use "decision <adr>"`, strings.TrimSpace(text))
+			return Query{}, fmt.Errorf(`unknown query %q: use "decision <verdict>"`, strings.TrimSpace(text))
 		}
 		return Query{Kind: QueryDecision, Slug: strings.Join(fields[1:], " ")}, nil
 	case QueryVerify:

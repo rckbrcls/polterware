@@ -48,11 +48,12 @@ export function FilterChip(
   );
 }
 
-/** Row of exclusive filter chips. */
+/** Recessed track of filter chips: exclusive `items`, or any `children` chips you manage yourself. */
 export function FilterChipGroup(props: {
-  items: FilterChipItem[];
-  value: string;
-  onChange: (id: string) => void;
+  items?: FilterChipItem[];
+  value?: string;
+  onChange?: (id: string) => void;
+  children?: JSX.Element;
   class?: string;
   "aria-label"?: string;
 }) {
@@ -62,18 +63,19 @@ export function FilterChipGroup(props: {
       role="group"
       aria-label={props["aria-label"] ?? "Filters"}
     >
-      <For each={props.items}>
+      <For each={props.items ?? []}>
         {(item) => (
           <FilterChip
             selected={props.value === item.id}
             count={item.count}
             countAriaLabel={item.countAriaLabel}
-            onClick={() => props.onChange(item.id)}
+            onClick={() => props.onChange?.(item.id)}
           >
             {item.label}
           </FilterChip>
         )}
       </For>
+      {props.children}
     </div>
   );
 }

@@ -39,7 +39,7 @@ function TimeField(props: { label: string; value: number; max: number; onCommit:
     if (raw.trim() !== "" && Number.isFinite(number)) props.onCommit(Math.max(0, Math.min(props.max, Math.trunc(number))));
   };
   return <input
-    class="pw-date-time-picker__time-field control-field control-field-sm"
+    class="pw-date-time-picker__time-field control-field pw-field-control control-field-sm"
     inputmode="numeric"
     maxlength={2}
     aria-label={props.label}
@@ -74,7 +74,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
       aria-label={props["aria-label"] ?? "Choose date"}
       aria-haspopup="dialog"
       aria-expanded={open()}
-      class={`pw-date-time-picker control-field control-field-${props.size ?? "sm"} ${props.class ?? ""}`}
+      class={`pw-date-time-picker control-field pw-field-control control-field-${props.size ?? "sm"} ${props.class ?? ""}`}
       onClick={() => setOpen(value => !value)}
     >
       <span class="pw-date-time-picker__value" data-empty={text() ? undefined : ""}>{text() || props.placeholder || "Set date"}</span>

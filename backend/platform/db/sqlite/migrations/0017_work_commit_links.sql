@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS work_commit_links (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  evidence_id TEXT NOT NULL REFERENCES ppm_evidence(id) ON DELETE CASCADE,
+  evidence_id TEXT NOT NULL REFERENCES canon_evidence(id) ON DELETE CASCADE,
   task_id TEXT NOT NULL REFERENCES work_tasks(id) ON DELETE CASCADE,
   method TEXT NOT NULL CHECK (method IN ('explicit', 'suggested')),
   created_at TEXT NOT NULL,

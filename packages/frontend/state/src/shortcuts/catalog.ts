@@ -36,12 +36,6 @@ export const SHORTCUT_CATALOG: readonly ShortcutCommand[] = [
     defaultChord: chord({ key: "j", mod: true }),
   },
   {
-    id: "shell.maximize_detail",
-    label: "Expand or restore details",
-    group: "shell",
-    defaultChord: chord({ key: "j", mod: true, shift: true }),
-  },
-  {
     id: "architecture.tool_select",
     label: "Select tool",
     group: "architecture",

@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package notes.v1;
+
+option go_package = "github.com/polterware/polterware/notes/backend/platform/gen/notes/v1;notesv1";
+
+import "google/protobuf/timestamp.proto";
+
+message Attachment {
+  string id = 1;
+  string note_id = 2;
+  string kind = 3;
+  optional string name = 4;
+  optional string mime = 5;
+  optional int64 size_bytes = 6;
+  optional string sha256 = 7;
+  optional string rel_path = 8;
+  optional string url = 9;
+  optional string title = 10;
+  int32 sort_order = 11;
+  google.protobuf.Timestamp created_at = 12;
+}
+
+message ImportAttachmentRequest {
+  string note_id = 1;
+  string source_path = 2;
+  string name = 3;
+  optional int64 expected_rev = 4;
+}
+
+message ImportAttachmentResponse {
+  Attachment attachment = 1;
+}
+
+message AddLinkRequest {
+  string note_id = 1;
+  string url = 2;
+  string title = 3;
+  optional int64 expected_rev = 4;
+}
+
+message AddLinkResponse {
+  Attachment attachment = 1;
+}
+
+message ListAttachmentsRequest {
+  string note_id = 1;
+}
+
+message ListAttachmentsResponse {
+  repeated Attachment attachments = 1;
+}
+
+message DeleteAttachmentRequest {
+  string id = 1;
+}
+
+message DeleteAttachmentResponse {}
+
+message ReorderAttachmentsRequest {
+  string note_id = 1;
+  repeated string ordered_ids = 2;
+}
+
+message ReorderAttachmentsResponse {
+  repeated Attachment attachments = 1;
+}
+
+message OpenAttachmentInfoRequest {
+  string id = 1;
+}
+
+message OpenAttachmentInfoResponse {
+  string id = 1;
+  string absolute_path = 2;
+  string mime = 3;
+  string name = 4;
+  string kind = 5;
+}
+
+service AttachmentService {
+  rpc ImportFromPath(ImportAttachmentRequest) returns (ImportAttachmentResponse);
+  rpc AddLink(AddLinkRequest) returns (AddLinkResponse);
+  rpc List(ListAttachmentsRequest) returns (ListAttachmentsResponse);
+  rpc Delete(DeleteAttachmentRequest) returns (DeleteAttachmentResponse);
+  rpc Reorder(ReorderAttachmentsRequest) returns (ReorderAttachmentsResponse);
+  rpc OpenInfo(OpenAttachmentInfoRequest) returns (OpenAttachmentInfoResponse);
+}

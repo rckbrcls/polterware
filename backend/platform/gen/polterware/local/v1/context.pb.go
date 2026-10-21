@@ -212,6 +212,8 @@ type CompileContextRequest struct {
 	EntityId      string                 `protobuf:"bytes,3,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
 	TokenBudget   int32                  `protobuf:"varint,4,opt,name=token_budget,json=tokenBudget,proto3" json:"token_budget,omitempty"`
 	AgentRunId    string                 `protobuf:"bytes,5,opt,name=agent_run_id,json=agentRunId,proto3" json:"agent_run_id,omitempty"`
+	ScopeNode     string                 `protobuf:"bytes,6,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
+	ScopeExact    bool                   `protobuf:"varint,7,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -279,6 +281,20 @@ func (x *CompileContextRequest) GetAgentRunId() string {
 		return x.AgentRunId
 	}
 	return ""
+}
+
+func (x *CompileContextRequest) GetScopeNode() string {
+	if x != nil {
+		return x.ScopeNode
+	}
+	return ""
+}
+
+func (x *CompileContextRequest) GetScopeExact() bool {
+	if x != nil {
+		return x.ScopeExact
+	}
+	return false
 }
 
 type CompileContextResponse struct {
@@ -802,7 +818,7 @@ const file_polterware_local_v1_context_proto_rawDesc = "" +
 	"\x06source\x18\x06 \x01(\tR\x06source\x12\x12\n" +
 	"\x04path\x18\a \x01(\tR\x04path\x12\x18\n" +
 	"\areasons\x18\b \x03(\tR\areasons\x12C\n" +
-	"\bevidence\x18\t \x03(\v2'.polterware.local.v1.ContextEvidenceRefR\bevidence\"\xae\x01\n" +
+	"\bevidence\x18\t \x03(\v2'.polterware.local.v1.ContextEvidenceRefR\bevidence\"\xee\x01\n" +
 	"\x15CompileContextRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x14\n" +
@@ -810,7 +826,11 @@ const file_polterware_local_v1_context_proto_rawDesc = "" +
 	"\tentity_id\x18\x03 \x01(\tR\bentityId\x12!\n" +
 	"\ftoken_budget\x18\x04 \x01(\x05R\vtokenBudget\x12 \n" +
 	"\fagent_run_id\x18\x05 \x01(\tR\n" +
-	"agentRunId\"\x84\x02\n" +
+	"agentRunId\x12\x1d\n" +
+	"\n" +
+	"scope_node\x18\x06 \x01(\tR\tscopeNode\x12\x1f\n" +
+	"\vscope_exact\x18\a \x01(\bR\n" +
+	"scopeExact\"\x84\x02\n" +
 	"\x16CompileContextResponse\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x14\n" +

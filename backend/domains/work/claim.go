@@ -45,7 +45,7 @@ func SplitScope(scope string) (repo, glob string) {
 // in different checkouts never overlap. Inside one checkout, segments are
 // split on "/"; "*" and "?" stay inside one segment and "**" matches any
 // number of segments. A pattern also covers everything below a path it
-// matches, so "backend/*" overlaps "backend/domains/ppm/*". Character classes
+// matches, so "backend/*" overlaps "backend/domains/canon/*". Character classes
 // are treated as any single character, which can only over-report overlap.
 // An empty pattern overlaps nothing.
 func ScopesOverlap(a, b string) bool {

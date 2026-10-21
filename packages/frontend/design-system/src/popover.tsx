@@ -13,6 +13,7 @@ import { Portal } from "solid-js/web";
 import { Popover as ArkPopover } from "@ark-ui/solid/popover";
 import { createPopupMotion } from "./popup-motion";
 import "./popover.css";
+import { FloatingSurfaceProvider } from "./floating-surface";
 
 export type PopoverProps = {
   open: boolean;
@@ -93,7 +94,8 @@ export function Popover(props: PopoverProps) {
       onInteractOutside={(event) => {
         // Menus, selects and popovers opened from inside this popover are portalled
         // elsewhere; interacting with them is not an outside dismissal.
-        const target = event.target as Element | null;
+        // The event is dispatched on the layer node; the real target is on the original event.
+        const target = (event.detail?.originalEvent?.target ?? null) as Element | null;
         if (target?.closest?.('.pw-dropdown-positioner, [data-scope="menu"], [data-scope="select"], [data-scope="popover"], [data-scope="date-picker"]')) event.preventDefault();
       }}
       persistentElements={[
@@ -157,7 +159,7 @@ function PopoverSurface(props: { class: string; style: JSX.CSSProperties; childr
   const motion = createPopupMotion();
   return (
     <div ref={motion.ref} class={props.class} style={props.style}>
-      {props.children}
+      <FloatingSurfaceProvider>{props.children}</FloatingSurfaceProvider>
     </div>
   );
 }

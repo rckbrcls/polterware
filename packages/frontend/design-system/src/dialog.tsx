@@ -9,6 +9,7 @@ import { X } from "./hugeicons";
  */
 import { Dialog as ArkDialog } from "@ark-ui/solid/dialog";
 import "./dialog.css";
+import { FloatingSurfaceProvider } from "./floating-surface";
 
 /**
  * Product dialog size:
@@ -152,6 +153,7 @@ export function A11yDialog(props: A11yDialogProps) {
             </header>
           </Show>
 
+          <FloatingSurfaceProvider>
           <div
             class={[
               "flex min-h-0 flex-1 flex-col overflow-auto text-[13px] text-[var(--color-text-secondary)]",
@@ -166,6 +168,7 @@ export function A11yDialog(props: A11yDialogProps) {
               {props.footer}
             </footer>
           </Show>
+          </FloatingSurfaceProvider>
           </ArkDialog.Content>
         </ArkDialog.Positioner>
       </Portal>

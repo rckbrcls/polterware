@@ -198,6 +198,7 @@ export function WorkBoard(props: {
               <span class="pw-work-column__label text-[12px] font-medium">
                 <IconTile
                   size={20}
+                  seed={`stage-${column().id}`}
                   tone={STAGE_TILE[column().id].tone}
                   class={STAGE_TILE[column().id].class}
                 >

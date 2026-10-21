@@ -169,7 +169,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     name: "polterware export",
     synopsis: "polterware export [--dry-run] [--json] [--project <id>]",
     summary:
-      "Write ADR files and the generated AGENTS.md block into every checkout of the project.",
+      "Write Verdict files and the generated AGENTS.md block into every checkout of the project.",
     flags: [
       { name: "--dry-run", description: "Print what would change without writing." },
       PROJECT_FLAG,
@@ -239,7 +239,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "query",
     name: "polterware query",
     synopsis:
-      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "atlas [<path>] [at <point>]" | "atlas history" | "decisions [state]" | "decision <adr>" | "feature <slug> [step]" | "verify <slug>" [--project <id>]',
+      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "atlas [<path>] [at <point>]" | "atlas history" | "decisions [state]" | "decision <verdict>" | "feature <slug> [step]" | "verify <slug>" [--project <id>]',
     summary:
       "Read project state in Polter format: cards, one card, status, inbox, handoffs, Atlas, decisions, feature steps, or verification.",
     flags: [
@@ -293,13 +293,13 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "decision",
     name: "polterware decision",
     synopsis:
-      'polterware decision list [state] | show <adr> | propose "<title>" | activate <adr> | challenge <adr> --reason "..." | supersede <adr> (--by <adr> | --title "...") | trigger <adr> "..."',
-    summary: "Read and move Decisions (ADRs) through their lifecycle.",
+      'polterware decision list [state] | show <verdict> | propose "<title>" | activate <verdict> | challenge <verdict> --reason "..." | supersede <verdict> (--by <verdict> | --title "...") | trigger <verdict> "..."',
+    summary: "Read and move Decisions (Verdicts) through their lifecycle.",
     flags: [
       { name: "--reason", value: "text", description: "challenge: why the decision moves." },
       { name: "--trigger", value: "text", description: "Review trigger." },
-      { name: "--body", value: "text", description: "ADR text, plain (no # headings)." },
-      { name: "--by", value: "adr", description: "supersede: the decision that supersedes." },
+      { name: "--body", value: "text", description: "Verdict text, plain (no # headings)." },
+      { name: "--by", value: "verdict", description: "supersede: the decision that supersedes." },
       { name: "--title", value: "text", description: "supersede: title of a new superseding decision." },
       AGENT_FLAG,
       PROJECT_FLAG,

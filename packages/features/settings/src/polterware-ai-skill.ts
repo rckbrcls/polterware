@@ -1,14 +1,14 @@
 /** English skill body that teaches an AI how to use Polterware MCP tools and the local CLI. */
 export const POLTERWARE_AI_SKILL_MARKDOWN = `# Polterware local project context
 
-Use this skill when the operator asks about a Polterware project’s architecture, resources, knowledge, or bounded context. Polterware keeps a local SQLite project model (PPM) and knowledge store. Reach them through the stable Polterware MCP tools or the local \`polterware\` CLI — not by inventing cloud APIs.
+Use this skill when the operator asks about a Polterware project’s architecture, resources, knowledge, or bounded context. Polterware keeps a local SQLite project model (Canon) and knowledge store. Reach them through the stable Polterware MCP tools or the local \`polterware\` CLI — not by inventing cloud APIs.
 
 ## When to use
 
-- Explain components, resources, environments, or linked library items (docs, ADRs, runbooks) for the active local project.
+- Explain components, resources, environments, or linked library items (docs, Verdicts, runbooks) for the active local project.
 - Gather a bounded context package before proposing a change.
-- Look up a PPM entity or evidence record by id after a context hit.
-- Check drift findings for the project (import dependency diffs, edges under accepted ADRs without evidence, declared-versus-observed conflicts).
+- Look up a Canon entity or evidence record by id after a context hit.
+- Check drift findings for the project (import dependency diffs, edges under accepted Verdicts without evidence, declared-versus-observed conflicts).
 - Record a minimal AgentRun audit trail: context → task → change → evidence → drift. Justified changes (human and agent) appear in Agents → History.
 - Mutate facts, evidence, or knowledge through audited write tools (required change envelope: \`summary\`, \`rationale\`, open \`agent_run_id\`). Humans on Desktop use the same envelope.
 - Create or update Work cards (roadmap items, tasks, open questions, invariants) in Polter format with \`polter.apply\` or \`polterware apply\`.
@@ -29,8 +29,8 @@ Use this skill when the operator asks about a Polterware project’s architectur
 | Tool | Purpose |
 | --- | --- |
 | \`context.get\` | Bounded context package for optional \`query\` / \`entity_id\` under \`token_budget\`. Items include provenance (\`truth_class\`, \`source\`, \`path\`), machine \`reasons\` (why included), and \`evidence\` refs for facts. Pass optional \`agent_run_id\` to append a context step. |
-| \`entity.get\` | Fetch one PPM entity by \`id\`. |
-| \`evidence.get\` | Fetch one PPM evidence record by \`id\`. |
+| \`entity.get\` | Fetch one Canon entity by \`id\`. |
+| \`evidence.get\` | Fetch one Canon evidence record by \`id\`. |
 | \`drift.check\` | Narrow Drift Checker for a \`project_id\` (optional \`entity_id\`). Returns \`checker: "narrow"\` and typed \`findings\`. Pass optional \`agent_run_id\` to append a drift step. |
 
 ### AgentRun audit
@@ -38,7 +38,7 @@ Use this skill when the operator asks about a Polterware project’s architectur
 | Tool | Purpose |
 | --- | --- |
 | \`agent_run.start\` | Start an open run with \`project_id\` + \`task\` (optional \`agent_label\`). |
-| \`agent_run.append\` | Append declared-only \`kind: "change"\` (\`summary\` + \`rationale\` required, optional \`paths\`) or \`kind: "evidence"\` (\`evidence_ids\`). Does not mutate the PPM. |
+| \`agent_run.append\` | Append declared-only \`kind: "change"\` (\`summary\` + \`rationale\` required, optional \`paths\`) or \`kind: "evidence"\` (\`evidence_ids\`). Does not mutate the Canon. |
 | \`agent_run.complete\` | Mark the run completed. |
 | \`agent_run.get\` | Reconstruct the ordered audit chain for one run. |
 | \`agent_run.list\` | List runs for a project. |
@@ -49,11 +49,11 @@ Every write requires \`project_id\`, \`agent_run_id\` (open run), \`summary\`, a
 
 | Tool | Purpose |
 | --- | --- |
-| \`fact.upsert\` | Upsert a PPM fact (\`statement\`; optional \`id\`, \`truth_class\`, \`entity_id\`). |
-| \`evidence.upsert\` | Upsert PPM evidence (\`kind\`; optional \`id\`, \`evidence_summary\`, \`path\`). |
+| \`fact.upsert\` | Upsert a Canon fact (\`statement\`; optional \`id\`, \`truth_class\`, \`entity_id\`). |
+| \`evidence.upsert\` | Upsert Canon evidence (\`kind\`; optional \`id\`, \`evidence_summary\`, \`path\`). |
 | \`evidence.link\` | Link evidence to a fact (\`fact_id\`, \`evidence_id\`). |
 | \`knowledge.upsert\` | Upsert a knowledge item (\`title\`, \`kind\`; optional \`id\`, \`body\`, \`tags\`). |
-| \`knowledge.link\` | Link knowledge to a PPM entity (\`knowledge_id\`, \`entity_id\`, \`predicate\`). |
+| \`knowledge.link\` | Link knowledge to a Canon entity (\`knowledge_id\`, \`entity_id\`, \`predicate\`). |
 
 Always pass the operator’s current \`project_id\` when the tool accepts it.
 
@@ -95,7 +95,7 @@ For facts, evidence, and knowledge:
 5. Do not invent Spec Kit CLI, \`.specify/\`, embeddings, GraphRAG, or fixed PCTX serialization.
 6. Credentials and provider tokens are never in SQLite; do not ask Polterware MCP for secrets.
 7. Drift findings are advisory — never overwrite project truth from a finding alone.
-8. Prefer audited write tools to mutate the model; \`agent_run.append\` change steps are declared envelopes only and do not mutate the PPM.
+8. Prefer audited write tools to mutate the model; \`agent_run.append\` change steps are declared envelopes only and do not mutate the Canon.
 9. Never omit \`summary\`, \`rationale\`, or \`agent_run_id\` on write tools — the core rejects incomplete envelopes.
 
 ## Cursor MCP config

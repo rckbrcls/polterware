@@ -995,7 +995,7 @@ function DataTableBody<T = any>(props: {
     get overscan() { return context.overscan(); },
     get getItemKey() {
       const rows = context.rows();
-      return (index: number) => rows[index]!.id;
+      return (index: number) => rows[index]?.id ?? index;
     },
   });
   const virtualItems = () => virtualizer.getVirtualItems();
@@ -1003,7 +1003,11 @@ function DataTableBody<T = any>(props: {
   // A range update must not recreate overlapping rows or their focused controls.
   const rowsById = createMemo(() => new Map(context.rows().map(entry => [entry.id, entry])));
   const rowIndices = createMemo(() => new Map(context.rows().map((entry, index) => [entry.id, index])));
-  const virtualRowIds = createMemo(() => virtualItems().map(item => context.rows()[item.index]!.id));
+  // The virtualizer can briefly report indices past a shrunken row list (e.g. after a filter change).
+  const virtualRowIds = createMemo(() => virtualItems().flatMap(item => {
+    const entry = context.rows()[item.index];
+    return entry ? [entry.id] : [];
+  }));
   const topSpacer = () => virtualItems()[0]?.start ?? 0;
   const bottomSpacer = () => {
     const last = virtualItems().at(-1);
@@ -1178,6 +1182,8 @@ export type DataTablePrimaryCellProps = {
   title: JSX.Element;
   trailing?: JSX.Element;
   class?: string;
+  /** Seeds the icon tile's finish; pass the row's id so the tile keeps its look. */
+  iconSeed?: string;
 } & (
   | {
       icon: JSX.Element;
@@ -1199,7 +1205,7 @@ function DataTablePrimaryCell(props: DataTablePrimaryCellProps) {
   const leading = createMemo(() => {
     const icon = props.icon;
     return icon ? (
-      <IconTile size={24} tone={props.iconTone} brand={props.iconBrand}>
+      <IconTile size={24} tone={props.iconTone} brand={props.iconBrand} seed={props.iconSeed}>
         {icon}
       </IconTile>
     ) : props.leading;

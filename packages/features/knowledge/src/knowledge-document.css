@@ -51,6 +51,26 @@
   letter-spacing: -0.01em;
 }
 
+/* Note-style title: same borderless field as the Polterware Notes page. */
+.pw-knowledge-doc__title-input.pw-knowledge-doc__title-input {
+  height: auto;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-text-primary);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.pw-knowledge-doc__title-input.pw-knowledge-doc__title-input:focus,
+.pw-knowledge-doc__title-input.pw-knowledge-doc__title-input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
 .pw-knowledge-path {
   max-width: 100%;
   overflow: hidden;
@@ -87,4 +107,12 @@
 /* Every property may be hidden when empty; drop the divider with them. */
 .pw-knowledge-doc__meta:not(:has(> :not(:empty))) {
   display: none;
+}
+
+/* Header titles retain editing while matching the shared compact identity. */
+.pw-detail-panel__header-title .pw-knowledge-doc__title-input.pw-knowledge-doc__title-input {
+  width: 100%;
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: inherit;
 }

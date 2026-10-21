@@ -1,4 +1,4 @@
-import { onCleanup, onMount } from "solid-js";
+import { onCleanup } from "solid-js";
 /**
  * Spring presence for Ark popup surfaces (menus, popovers, tooltips), after
  * fluid-functionalism's popups: the surface enters on `spring.fast` with a fade, a 4px
@@ -77,36 +77,44 @@ export function createPopupMotion(options: { scale?: boolean } = {}) {
     animate(scale, to.scale, travel);
   };
 
-  onMount(() => {
+  // Runs from `ref`, not onMount: lazy-mounted popups (tooltips) render their surface after
+  // the owner has mounted, so `surface` is still unset at onMount time.
+  const setup = () => {
     if (!surface) return;
-    const stateHost = surface.hasAttribute("data-state")
-      ? surface
-      : surface.parentElement?.closest<HTMLElement>("[data-state]");
+    const element = surface;
     const stops = values.map((value) => value.on("change", paint));
-    const read = () => stateHost?.getAttribute("data-state") === "open";
-    let open = read();
-    // Wait one frame so the positioner has resolved the side before the slide starts.
-    const frame = requestAnimationFrame(() => apply(open, stateHost?.dataset.placement, true));
-    const observer = new MutationObserver(() => {
-      const next = read();
-      if (next === open) return;
-      open = next;
-      apply(open, stateHost?.dataset.placement, false);
+    let observer: MutationObserver | undefined;
+    // The ref runs before the surface is attached, so resolve the state host one frame later,
+    // which also lets the positioner settle the side before the slide starts.
+    const frame = requestAnimationFrame(() => {
+      const stateHost = element.hasAttribute("data-state")
+        ? element
+        : element.parentElement?.closest<HTMLElement>("[data-state]");
+      const read = () => stateHost?.getAttribute("data-state") === "open";
+      let open = read();
+      apply(open, stateHost?.dataset.placement, true);
+      observer = new MutationObserver(() => {
+        const next = read();
+        if (next === open) return;
+        open = next;
+        apply(open, stateHost?.dataset.placement, false);
+      });
+      if (stateHost) observer.observe(stateHost, { attributes: true, attributeFilter: ["data-state"] });
     });
-    if (stateHost) observer.observe(stateHost, { attributes: true, attributeFilter: ["data-state"] });
     onCleanup(() => {
       cancelAnimationFrame(frame);
-      observer.disconnect();
+      observer?.disconnect();
       for (const stop of stops) stop();
       for (const value of values) value.stop();
     });
-  });
+  };
 
   return {
     ref: (element: HTMLElement) => {
       surface = element;
       // Hidden until the first frame, so the surface never flashes at full size.
       element.style.opacity = "0";
+      setup();
     },
   };
 }

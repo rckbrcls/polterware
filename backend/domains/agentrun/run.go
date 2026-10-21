@@ -135,7 +135,7 @@ func ValidateChange(summary, rationale string) error {
 	return nil
 }
 
-// ValidateAuditedWrite requires the B7 mutation envelope before any PPM/Knowledge write.
+// ValidateAuditedWrite requires the B7 mutation envelope before any Canon/Knowledge write.
 func ValidateAuditedWrite(summary, rationale, agentRunID string) error {
 	if strings.TrimSpace(agentRunID) == "" {
 		return ErrMissingAgentRunID

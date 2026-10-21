@@ -28,7 +28,7 @@ function Menu(props: { value?: string }) {
           <NavigationMenuTrigger>Products</NavigationMenuTrigger>
           <NavigationMenuContent>
             <NavigationMenuPreviewPanel items={[
-              { id: "lore", title: "Lore", description: "Context", href: "/lore", preview: () => <p>Lore preview</p> },
+              { id: "polterware", title: "Polterware", description: "Context", href: "/polterware", preview: () => <p>Polterware preview</p> },
               { id: "vitals", title: "Vitals", description: "Hosts", href: "/vitals", preview: () => <p>Vitals preview</p> },
             ]} />
           </NavigationMenuContent>
@@ -59,7 +59,7 @@ describe("NavigationMenu", () => {
     const trigger = host.querySelector("button.pw-navmenu-trigger")!;
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
     const rows = document.querySelectorAll<HTMLAnchorElement>(".pw-navmenu-preview-row");
-    expect([...rows].map((row) => row.getAttribute("href"))).toEqual(["/lore", "/vitals"]);
-    expect(document.querySelector(".pw-navmenu-preview-pane")?.textContent).toContain("Lore preview");
+    expect([...rows].map((row) => row.getAttribute("href"))).toEqual(["/polterware", "/vitals"]);
+    expect(document.querySelector(".pw-navmenu-preview-pane")?.textContent).toContain("Polterware preview");
   });
 });

@@ -34,10 +34,10 @@ type checkout struct {
 	dir  string
 }
 
-// ExportProjections writes ADR files into docs/adr/ of each governing
+// ExportProjections writes Verdict files into docs/verdict/ of each governing
 // checkout and the generated AGENTS.md block of every checkout. The store is
 // the source of truth: files are replaced, never read back into SQLite. A
-// file under docs/adr/ that Polterware did not write is never overwritten.
+// file under docs/verdict/ that Polterware did not write is never overwritten.
 func ExportProjections(store *storepkg.Store, projectID string, dryRun bool) ([]ProjectionFile, error) {
 	project, err := store.GetProject(projectID)
 	if err != nil {
@@ -47,19 +47,19 @@ func ExportProjections(store *storepkg.Store, projectID string, dryRun bool) ([]
 	if err != nil {
 		return nil, err
 	}
-	items, err := store.ListKnowledge(projectID, "adr")
+	items, err := store.ListKnowledge(projectID, "verdict")
 	if err != nil {
 		return nil, err
 	}
-	// Every ADR is projected as a file (history stays readable); superseded
+	// Every Verdict is projected as a file (history stays readable); superseded
 	// ones are left out of the AGENTS.md block, which agents follow.
-	adrs := make([]projection.ADR, 0, len(items))
-	binding := make([]projection.ADR, 0, len(items))
+	verdicts := make([]projection.Verdict, 0, len(items))
+	binding := make([]projection.Verdict, 0, len(items))
 	for _, item := range items {
-		adr := projection.ADR{ID: item.ID, Title: item.Title, Body: item.Body, Status: decision.Normalize(item.Status)}
-		adrs = append(adrs, adr)
-		if adr.Status != decision.StateSuperseded {
-			binding = append(binding, adr)
+		verdict := projection.Verdict{ID: item.ID, Title: item.Title, Body: item.Body, Status: decision.Normalize(item.Status)}
+		verdicts = append(verdicts, verdict)
+		if verdict.Status != decision.StateSuperseded {
+			binding = append(binding, verdict)
 		}
 	}
 	repos, err := store.ListProjectRepos(projectID)
@@ -71,7 +71,7 @@ func ExportProjections(store *storepkg.Store, projectID string, dryRun bool) ([]
 		checkouts = append(checkouts, checkout{name: repo.Name, dir: ExpandRootPath(repo.Path)})
 	}
 
-	governed := projection.Govern(snapshot.Nodes, adrs)
+	governed := projection.Govern(snapshot.Nodes, verdicts)
 	governedBinding := projection.Govern(snapshot.Nodes, binding)
 	var out []ProjectionFile
 	for _, co := range checkouts {
@@ -79,7 +79,7 @@ func ExportProjections(store *storepkg.Store, projectID string, dryRun bool) ([]
 			out = append(out, ProjectionFile{Repo: co.name, Path: ".", Action: ProjectionSkip, Reason: "checkout directory not found"})
 			continue
 		}
-		files, err := exportADRs(co, governed[co.name], dryRun)
+		files, err := exportVerdicts(co, governed[co.name], dryRun)
 		if err != nil {
 			return out, err
 		}
@@ -94,9 +94,9 @@ func ExportProjections(store *storepkg.Store, projectID string, dryRun bool) ([]
 	return out, nil
 }
 
-func exportADRs(co checkout, adrs []projection.ADR, dryRun bool) ([]ProjectionFile, error) {
-	dir := filepath.Join(co.dir, filepath.FromSlash(projection.ADRDir))
-	// Existing files: ours by ADR id, hand-written ones by number.
+func exportVerdicts(co checkout, verdicts []projection.Verdict, dryRun bool) ([]ProjectionFile, error) {
+	dir := filepath.Join(co.dir, filepath.FromSlash(projection.VerdictDir))
+	// Existing files: ours by Verdict id, hand-written ones by number.
 	ours := map[string]string{}
 	handWritten := map[string]string{}
 	entries, err := os.ReadDir(dir)
@@ -104,7 +104,7 @@ func exportADRs(co checkout, adrs []projection.ADR, dryRun bool) ([]ProjectionFi
 		return nil, err
 	}
 	for _, entry := range entries {
-		number, ok := projection.ADRFileNumber(entry.Name())
+		number, ok := projection.VerdictFileNumber(entry.Name())
 		if entry.IsDir() || !ok {
 			continue
 		}
@@ -112,31 +112,31 @@ func exportADRs(co checkout, adrs []projection.ADR, dryRun bool) ([]ProjectionFi
 		if err != nil {
 			return nil, err
 		}
-		if id, ok := projection.ADRMarker(string(body)); ok {
+		if id, ok := projection.VerdictMarker(string(body)); ok {
 			ours[id] = entry.Name()
 			continue
 		}
 		handWritten[number] = entry.Name()
 	}
 
-	rel := func(name string) string { return projection.ADRDir + "/" + name }
+	rel := func(name string) string { return projection.VerdictDir + "/" + name }
 	var out []ProjectionFile
 	exported := map[string]bool{}
-	for _, adr := range adrs {
-		name, content, ok := projection.ADRFile(adr)
+	for _, verdict := range verdicts {
+		name, content, ok := projection.VerdictFile(verdict)
 		if !ok {
-			out = append(out, ProjectionFile{Repo: co.name, Path: projection.ADRDir, Action: ProjectionSkip,
-				Reason: fmt.Sprintf("%q has no ADR number in its title", adr.Title)})
+			out = append(out, ProjectionFile{Repo: co.name, Path: projection.VerdictDir, Action: ProjectionSkip,
+				Reason: fmt.Sprintf("%q has no Verdict number in its title", verdict.Title)})
 			continue
 		}
-		number, _ := projection.ADRFileNumber(name)
+		number, _ := projection.VerdictFileNumber(name)
 		if existing, ok := handWritten[number]; ok {
 			out = append(out, ProjectionFile{Repo: co.name, Path: rel(existing), Action: ProjectionSkip,
 				Reason: "not written by polterware export; left as is"})
 			continue
 		}
-		exported[adr.ID] = true
-		if previous, ok := ours[adr.ID]; ok && previous != name {
+		exported[verdict.ID] = true
+		if previous, ok := ours[verdict.ID]; ok && previous != name {
 			if !dryRun {
 				if err := os.Remove(filepath.Join(dir, previous)); err != nil {
 					return out, err
@@ -151,7 +151,7 @@ func exportADRs(co checkout, adrs []projection.ADR, dryRun bool) ([]ProjectionFi
 		out = append(out, file)
 	}
 
-	// A projection whose ADR no longer governs this checkout is removed.
+	// A projection whose Verdict no longer governs this checkout is removed.
 	stale := make([]string, 0, len(ours))
 	for id := range ours {
 		if !exported[id] {

@@ -45,7 +45,7 @@ export function createNominatimGeocoder(options: {
       const url = `https://${NOMINATIM_HOST}/search?format=jsonv2&limit=5&q=${encodeURIComponent(trimmed)}`;
       if (!isMapNetworkUrl(url)) return [];
       const response = await send(url, {
-        headers: { Accept: "application/json", "User-Agent": options.userAgent ?? "Sparky/1.0 (local desktop map search)" },
+        headers: { Accept: "application/json", "User-Agent": options.userAgent ?? "PolterwareNotes/1.0 (local desktop map search)" },
       });
       if (!response.ok) throw new Error("Address search failed.");
       const rows = await response.json() as { display_name?: string; lat?: string; lon?: string }[];

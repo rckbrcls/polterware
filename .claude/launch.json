@@ -2,11 +2,11 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "sparky",
+      "name": "notes",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": [
         "--filter",
-        "@polterware/sparky-desktop",
+        "@polterware/notes-desktop",
         "run",
         "dev:web"
       ],
@@ -14,11 +14,11 @@
       "url": "http://127.0.0.1:5180"
     },
     {
-      "name": "lore-desktop",
+      "name": "polterware",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": [
         "--filter",
-        "@polterware/lore-desktop",
+        "@polterware/polterware-desktop",
         "run",
         "dev"
       ],
@@ -30,7 +30,7 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": [
         "--filter",
-        "@polterware/vitals",
+        "@polterware/vitals-desktop",
         "run",
         "dev"
       ],
