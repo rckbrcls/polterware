@@ -2,12 +2,12 @@ import { For, Show, children, createSignal, type JSX } from "solid-js";
 import { Button, Check, Copy } from "@polterware/frontend-design-system";
 import { heroExit, reveal, settle } from "./scroll-motion";
 
-export function Hero(props: { title: JSX.Element; lead: JSX.Element; actions?: JSX.Element }) {
+export function Hero(props: { icon?: JSX.Element; title: JSX.Element; lead: JSX.Element; actions?: JSX.Element }) {
   // Resolve JSX props once: reading them in both `when` and the body would render twice.
   const actions = children(() => props.actions);
   return (
     <section class="hero site-container" aria-labelledby="hero-title" ref={heroExit()}>
-      <h1 id="hero-title">{props.title}</h1>
+      <div class="hero-title">{props.icon}<h1 id="hero-title">{props.title}</h1></div>
       <p class="hero-lead">{props.lead}</p>
       <Show when={actions()}><div class="hero-actions">{actions()}</div></Show>
     </section>
@@ -54,5 +54,17 @@ export function InstallCommand(props: { command: string; label?: string }) {
         <Show when={copied()} fallback={<Copy size={16} />}><Check size={16} /></Show>
       </Button>
     </div>
+  );
+}
+
+export function Cooking() {
+  return (
+    <section class="cooking-section site-container" aria-labelledby="cooking-title">
+      <img class="cooking-art" src="/cooking.png" alt="" width="503" height="488" ref={reveal()} />
+      <div ref={reveal({ stagger: true })}>
+        <h2 id="cooking-title">Something new is cooking</h2>
+        <p>We're working on the next Polterware apps. Watch the releases to see what comes out of the kitchen.</p>
+      </div>
+    </section>
   );
 }

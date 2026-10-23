@@ -1,7 +1,7 @@
 import { LinkButton, ArrowUpRight01Icon } from "@polterware/frontend-design-system";
 import { reveal } from "../components/scroll-motion";
 import { Seo } from "../components/Seo";
-import { Feature, Hero, InstallCommand, Showcase } from "../components/Sections";
+import { Cooking, Feature, Hero, InstallCommand, Showcase } from "../components/Sections";
 import { VitalsMockup } from "../components/mockups/VitalsMockup";
 import { RELEASES_URL, installCommand, vitals } from "../data/products";
 
@@ -10,8 +10,9 @@ export default function Home() {
     <main id="main" tabindex="-1">
       <Seo title="polterware" description={vitals.summary} path="/" />
       <Hero
+        icon={<img class="hero-icon" src="/vitals-icon.png" alt="" width="128" height="128" />}
         title={<>Your machines,<br />at a glance</>}
-        lead="A small local-first companion. Connect to a host over SSH and see CPU, memory, disks, network and processes, then open a terminal without leaving the app."
+        lead="Polterware Vitals is a small local-first companion for your servers. Connect to a host over SSH and see CPU, memory, disks, network and processes, then open a terminal without leaving the app."
         actions={<>
           <LinkButton variant="primary" href="#install">Download for macOS</LinkButton>
           <LinkButton variant="ghost" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">Releases<ArrowUpRight01Icon size={16} /></LinkButton>
@@ -35,6 +36,7 @@ export default function Home() {
         </div>
       </section>
 
+      <Cooking />
     </main>
   );
 }

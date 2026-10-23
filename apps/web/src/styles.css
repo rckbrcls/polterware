@@ -23,8 +23,12 @@ p { line-height: 1.6; }
 
 /* Hero */
 .hero { padding-block: 48px 24px; text-align: center; }
-.hero h1 { font-size: clamp(44px, 7vw, 76px); line-height: 1.02; letter-spacing: -0.045em; margin: 0 auto 28px; max-width: 980px; }
+.hero h1 { font-size: clamp(44px, 7vw, 76px); line-height: 1.02; letter-spacing: -0.045em; max-width: 980px; }
 .hero-lead { font-size: 18px; line-height: 1.55; margin: 0 auto; max-width: 560px; color: var(--color-text-secondary); }
+/* The app icon sits above the headline so the page reads as Vitals, not the umbrella brand. */
+.hero-title { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; margin-bottom: 24px; }
+.hero-title h1 { margin: 0; }
+.hero-icon { width: clamp(88px, 11vw, 128px); height: auto; flex-shrink: 0; }
 .hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 28px; }
 
 /* Showcase */
@@ -33,13 +37,19 @@ p { line-height: 1.6; }
 /* The frame is cut at the point where the fade turns solid, so the hidden part of the prototype takes no room. */
 .showcase-frame { position: relative; transform-origin: 50% 0; max-height: 580px; overflow: hidden; border-radius: calc(var(--radius-surface) + 8px) calc(var(--radius-surface) + 8px) 0 0; }
 /* The picture fades into the page at its own lower edge, so it moves with the prototype. */
+/* Start at `settle()`'s first keyframe so the server-rendered paint does not snap when the script takes over. */
+@media (prefers-reduced-motion: no-preference) { .showcase-frame { transform: scale(0.92) rotateX(14deg); } }
 .showcase-frame::after { content: ""; position: absolute; inset: auto 0 0; height: 45%; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--color-site-background) 70%); }
 .feature-visual .mk-vitals { box-shadow: 0 24px 64px var(--color-shadow); }
 
-/* Feature */
-.feature { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 64px; align-items: center; padding-block: 88px; border-top: 1px solid var(--color-border-subtle); }
+/* Section dividers run the full page width, past the centred container. */
+.feature, .install-section, .cooking-section { position: relative; }
+.feature::before, .install-section::before, .cooking-section::before { content: ""; position: absolute; top: 0; left: 50%; width: 100vw; transform: translateX(-50%); border-top: 1px solid var(--color-border-subtle); pointer-events: none; }
 /* The showcase fade already separates the first feature, so a rule there reads as a stray line. */
-.showcase + .feature { border-top: 0; }
+.showcase + .feature::before { display: none; }
+
+/* Feature */
+.feature { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 64px; align-items: center; padding-block: 88px; }
 .feature-copy h2 { font-size: clamp(28px, 3vw, 40px); line-height: 1.1; letter-spacing: -0.035em; margin: 0 0 18px; }
 .feature-copy > p { font-size: 16px; margin: 0; max-width: 460px; }
 .feature-points { list-style: none; padding: 0; margin: 28px 0 0; display: grid; gap: 12px; font-size: 15px; }
@@ -48,7 +58,7 @@ p { line-height: 1.6; }
 .feature-visual { min-width: 0; }
 
 /* Install */
-.install-section { padding-block: 96px; border-top: 1px solid var(--color-border-subtle); text-align: center; }
+.install-section { padding-block: 240px; text-align: center; }
 /* Centered like the hero: heading, command and releases link sit on one axis. */
 .install-section > div { display: flex; flex-direction: column; align-items: center; }
 .install-section h2 { font-size: clamp(28px, 3vw, 40px); margin: 0 0 12px; letter-spacing: -0.035em; }
@@ -59,6 +69,12 @@ p { line-height: 1.6; }
 .install code .mk-prompt { margin-right: 10px; }
 .text-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 20px; font-size: 14px; color: var(--color-text-secondary); }
 .text-link:hover { color: var(--color-text-primary); }
+
+/* Cooking: closing teaser after the install section */
+.cooking-section { display: flex; flex-direction: column; align-items: center; padding-block: 96px; text-align: center; }
+.cooking-section h2 { font-size: clamp(28px, 3vw, 40px); margin: 0 0 12px; letter-spacing: -0.035em; }
+.cooking-section p { margin: 0; max-width: 520px; }
+.cooking-art { display: block; width: clamp(160px, 22vw, 220px); height: auto; margin-bottom: 32px; }
 
 /* Footer */
 .site-footer { border-top: 1px solid var(--color-border-subtle); padding-block: 56px 72px; font-size: 14px; }
@@ -159,8 +175,9 @@ a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; 
   .site-container { width: calc(100% - 32px); }
   .hero { padding-block: 40px 40px; }
   .hero-lead { font-size: 16px; }
+  .hero-title { flex-direction: column; gap: 20px; }
   .showcase { padding-bottom: 32px; }
-  .feature, .install-section { padding-block: 64px; }
+  .feature, .install-section, .cooking-section { padding-block: 64px; }
   .mk-app { height: 560px; }
   .showcase-frame { max-height: 480px; }
   .site-footer-grid { grid-template-columns: 1fr 1fr; }
