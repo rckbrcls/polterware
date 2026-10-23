@@ -9,7 +9,6 @@ export default function Home() {
     <main id="main" tabindex="-1">
       <Seo title="polterware" description={vitals.summary} path="/" />
       <Hero
-        eyebrow={vitals.name}
         title={<>Your machines,<br />at a glance</>}
         lead="A small local-first companion. Connect to a host over SSH and see CPU, memory, disks, network and processes, then open a terminal without leaving the app."
         actions={<>
