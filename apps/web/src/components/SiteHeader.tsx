@@ -1,4 +1,4 @@
-import { ExternalLink, LinkButton } from "@polterware/frontend-design-system";
+import { ArrowUpRight01Icon, LinkButton } from "@polterware/frontend-design-system";
 import { RELEASES_URL, REPO_URL } from "../data/products";
 
 export function SiteHeader() {
@@ -7,8 +7,8 @@ export function SiteHeader() {
       <header class="site-header site-container card-texture">
         <a class="wordmark" href="/" aria-label="Polterware home"><img src="/polter-ghost.png" alt="" width="20" height="24" /></a>
         <div class="site-header-actions">
-          <LinkButton variant="texture" size="sm" href={RELEASES_URL} target="_blank" rel="noopener noreferrer" class="hide-mobile">Releases<ExternalLink size={14} /></LinkButton>
-          <LinkButton variant="texture" size="sm" href={REPO_URL} target="_blank" rel="noopener noreferrer" class="hide-mobile">GitHub<ExternalLink size={14} /></LinkButton>
+          <LinkButton variant="texture" size="sm" href={RELEASES_URL} target="_blank" rel="noopener noreferrer" class="hide-mobile">Releases<ArrowUpRight01Icon size={14} /></LinkButton>
+          <LinkButton variant="texture" size="sm" href={REPO_URL} target="_blank" rel="noopener noreferrer" class="hide-mobile">GitHub<ArrowUpRight01Icon size={14} /></LinkButton>
           <LinkButton variant="texture" textureTone="brand" size="sm" href="/#install">Download</LinkButton>
         </div>
       </header>
