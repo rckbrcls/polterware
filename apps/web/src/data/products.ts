@@ -8,5 +8,4 @@ export const installCommand = () => `curl -fsSL ${INSTALL_SCRIPT} | APP=vitals b
 export const vitals = {
   name: "Polterware Vitals",
   summary: "Watch remote machines over SSH: metrics, processes and a terminal.",
-  status: "Alpha · macOS on Apple Silicon",
 };

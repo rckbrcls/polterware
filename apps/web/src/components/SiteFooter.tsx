@@ -26,7 +26,7 @@ export function SiteFooter() {
       <div class="site-container site-footer-grid">
         <div class="site-footer-brand">
           <a class="wordmark" href="/"><img src="/polter-ghost.png" alt="" width="20" height="24" />polterware</a>
-          <p>Local-first tools for building software with agents.</p>
+          <p>Tools for building software.</p>
         </div>
         <For each={columns}>{(column) => (
           <nav aria-label={column.title}>

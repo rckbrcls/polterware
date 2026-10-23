@@ -1,5 +1,5 @@
 import { LinkButton, ArrowUpRight01Icon } from "@polterware/frontend-design-system";
-import { parallax } from "../components/parallax";
+import { reveal } from "../components/scroll-motion";
 import { Seo } from "../components/Seo";
 import { Feature, Hero, InstallCommand, Showcase } from "../components/Sections";
 import { VitalsMockup } from "../components/mockups/VitalsMockup";
@@ -25,10 +25,14 @@ export default function Home() {
         visual={<VitalsMockup compact />} />
 
       <section id="install" class="install-section site-container" aria-labelledby="install-title">
-        <h2 id="install-title" ref={parallax(60)}>Install Polterware Vitals</h2>
-        <p>Alpha builds for macOS on Apple Silicon. Run the same command again to update.</p>
-        <div ref={parallax(110, { reveal: true })}><InstallCommand command={installCommand()} /></div>
-        <a class="text-link" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">All releases<ArrowUpRight01Icon size={14} /></a>
+        <div ref={reveal({ stagger: true })}>
+          <h2 id="install-title">Install Polterware Vitals</h2>
+          <p>Alpha builds for macOS on Apple Silicon. Run the same command again to update.</p>
+        </div>
+        <div ref={reveal()}>
+          <InstallCommand command={installCommand()} />
+          <a class="text-link" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">All releases<ArrowUpRight01Icon size={14} /></a>
+        </div>
       </section>
 
     </main>

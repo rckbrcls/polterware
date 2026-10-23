@@ -67,6 +67,8 @@ const MOTION_VALUE_PATHS = new Set([
   "packages/frontend/design-system/src/icon-swap.tsx",
   "packages/frontend/design-system/src/placement-motion.ts",
   "packages/features/architecture/src/canvas/atlas-card-frame.tsx",
+  // Marketing page sections fade in once on scroll and the hero fades out as the page moves on.
+  "apps/web/src/components/scroll-motion.ts",
 ]);
 const OPAQUE_GRID_PATTERN =
   "radial-gradient(circle, var(--color-border-default) 1px, transparent 1px)";
