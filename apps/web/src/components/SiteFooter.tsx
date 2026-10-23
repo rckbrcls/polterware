@@ -1,9 +1,8 @@
 import { For, Show } from "solid-js";
 import { ExternalLink } from "@polterware/frontend-design-system";
-import { RELEASES_URL, REPO_URL, vitals } from "../data/products";
+import { RELEASES_URL, REPO_URL } from "../data/products";
 
 const columns = [
-  { title: "Products", links: [{ label: vitals.name, href: "/" }] },
   {
     title: "Resources",
     links: [
