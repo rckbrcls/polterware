@@ -226,6 +226,5 @@ a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; 
   .site-footer-grid { grid-template-columns: 1fr 1fr; }
   .site-footer-brand { grid-column: 1 / -1; }
 }
-/* Fades whatever crosses the bottom edge of the first viewport into the page background. */
-main { position: relative; }
-main::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 100vh; z-index: 1; pointer-events: none; background: linear-gradient(to bottom, transparent 72%, var(--color-app-background) 100%); }
+/* Fades content into the page background at the bottom edge of the viewport. */
+body::after { content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 28vh; z-index: 1; pointer-events: none; background: linear-gradient(to bottom, transparent 0%, var(--color-app-background) 100%); }
