@@ -1,6 +1,6 @@
 # Polterware Web
 
-The public product site at `polterware.com`, maintained as `@polterware/web` in this monorepo. It presents Polterware (the main product), the Polterware CLI and Polterware Vitals, with one landing page per product.
+The public product site at `polterware.com`, maintained as `@polterware/web` in this monorepo. Today it is a single landing page for Polterware Vitals (alpha); the earlier multi-product site lives on the `backup/web-full` branch.
 
 ## Development
 
@@ -14,15 +14,15 @@ pnpm build:web
 pnpm preview:web
 ```
 
-Development uses port 5175; preview uses port 4175. Builds emit static files in `apps/web/.output/public`.
+Development uses port 5178; preview uses port 4178. Builds emit static files in `apps/web/.output/public`.
 
 ## Structure
 
-- `src/routes` — home (`/`), product landings (`/polterware`, `/polterware/cli`, `/vitals`) and the not-found page
-- `src/data/products.ts` — product names, summaries, status, install command and the `CLI` command name used in examples
-- `src/components` — site header (shared `NavigationMenu`), footer, page sections, line-art figures and metadata
-- `src/components/mockups` — code-built product illustrations, also used by the header preview panel
-- `src/assets` and `public` — local artwork and brand assets
+- `src/routes` — home (`/`, the Polterware Vitals landing) and the not-found page; `/vitals` redirects to `/`
+- `src/data/products.ts` — repository and release links, the install command and the Vitals summary
+- `src/components` — site header, footer, page sections, scroll parallax (`parallax.ts`, built on `motion`) and metadata
+- `src/components/mockups` — the code-built Polterware Vitals illustration
+- `public` — brand assets and the install script
 
 SolidStart 2 uses Solid, Vite 8, TypeScript and Tailwind 4. The app imports `@polterware/frontend-design-system` directly and uses the monorepo's shared Tailwind tokens. Desktop tooling remains on its existing Vite version.
 

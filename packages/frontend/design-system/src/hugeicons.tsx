@@ -126,6 +126,7 @@ import {
   DragDropVerticalIcon as DragDropVerticalIconDefinition,
   Menu01Icon as Menu01IconDefinition,
   ArrowRight02Icon as ArrowRight02IconDefinition,
+  ArrowUpRight01Icon as ArrowUpRight01IconDefinition,
 } from "@hugeicons/core-free-icons";
 
 type HugeIconNodeAttributes = Readonly<Record<string, string | number>>;
@@ -366,6 +367,7 @@ const iconDefinitions = {
   DragDropVerticalIcon: DragDropVerticalIconDefinition,
   Menu01Icon: Menu01IconDefinition,
   ArrowRight02Icon: ArrowRight02IconDefinition,
+  ArrowUpRight01Icon: ArrowUpRight01IconDefinition,
 } satisfies Record<string, HugeIconDefinition>;
 
 type PolterIconName = keyof typeof iconDefinitions;
@@ -510,6 +512,7 @@ export const {
   DragDropVerticalIcon,
   Menu01Icon,
   ArrowRight02Icon,
+  ArrowUpRight01Icon,
 } = iconComponents;
 
 export const PlusIcon = Plus;

@@ -10,7 +10,7 @@ function tokenColor(name: string): string {
 }
 
 function terminalTheme(): ITheme {
-  const background = tokenColor("--color-surface-subtle");
+  const background = tokenColor("--color-surface");
   const foreground = tokenColor("--color-text-primary");
   return {
     background,
@@ -112,7 +112,7 @@ export function TerminalView(props: { sessionId: string; connected: boolean; vis
     <div
       ref={host}
       class="vitals-terminal"
-      style={{ height: "100%", width: "100%", "background-color": "var(--color-surface-subtle)" }}
+      style={{ height: "100%", width: "100%", "background-color": "var(--color-surface)" }}
     />
   );
 }

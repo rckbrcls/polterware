@@ -16,6 +16,8 @@
   --color-app-background: #161616;
   --color-shell-background: #161616;
   --color-sidebar-background: #161616;
+  /* Marketing site canvas, one step below the ladder so app mockups read as raised windows */
+  --color-site-background: #0f0f0f;
   --color-surface: #1b1b1b;
   --color-surface-subtle: #242424;
   --color-surface-raised: #292929;
