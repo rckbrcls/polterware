@@ -7,7 +7,8 @@ const handler: StartHandler = createHandler(() => <StartServer document={props =
       <meta name="google" content="notranslate" />
       <meta name="color-scheme" content="dark" />
       <meta name="theme-color" content="#131313" />
-      <link rel="icon" href="/favicon.ico" />
+      <link rel="icon" href="/favicon.ico" sizes="any" />
+      <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       {props.assets}
     </head>
     <body translate="no"><div id="app">{props.children}</div>{props.scripts}</body>
