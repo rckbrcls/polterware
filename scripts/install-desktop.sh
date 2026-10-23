@@ -129,7 +129,7 @@ rel = json.load(sys.stdin)
 tag = rel["tag_name"]
 version = tag[len(app) + 2:]
 assets = {a["name"]: a["browser_download_url"] for a in rel.get("assets", [])}
-zip_name = f"{product.replace(' ', '-')}-{version}-arm64.zip"
+zip_name = product.replace(" ", "-") + "-" + version + "-arm64.zip"
 if zip_name not in assets or "SHA256SUMS" not in assets:
     print(f"Release {tag} is missing {zip_name} or SHA256SUMS.", file=sys.stderr)
     sys.exit(3)
