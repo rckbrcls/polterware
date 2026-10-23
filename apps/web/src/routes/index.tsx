@@ -18,13 +18,12 @@ export default function Home() {
       />
       <Showcase><VitalsMockup /></Showcase>
 
-      <Feature index="1.0" eyebrow="CONNECT" title="SSH in, with host keys approved."
+      <Feature title="SSH in, with host keys approved."
         body="Add a host with your existing SSH setup. Polterware Vitals asks you to approve the host key and manages a small metrics agent on the remote machine."
         points={["Host key approval on first connect", "A remote metrics agent managed by the app", "An integrated terminal for connected hosts"]}
         visual={<VitalsMockup compact />} />
 
       <section id="install" class="install-section site-container" aria-labelledby="install-title">
-        <p class="eyebrow mono">INSTALL</p>
         <h2 id="install-title">Install Polterware Vitals</h2>
         <p>Alpha builds for macOS on Apple Silicon. Run the same command again to update.</p>
         <InstallCommand command={installCommand()} />

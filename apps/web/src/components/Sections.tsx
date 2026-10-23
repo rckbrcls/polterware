@@ -57,7 +57,7 @@ export function FigureRow(props: { items: Array<{ figure: JSX.Element; title: st
 export function Feature(props: {
   id?: string;
   index?: string;
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   body: string;
   points?: string[];
@@ -67,7 +67,7 @@ export function Feature(props: {
   return (
     <section id={props.id} class="feature site-container" classList={{ "feature-reverse": props.reverse }}>
       <div class="feature-copy">
-        <p class="eyebrow mono">{props.index ? `${props.index} ` : ""}{props.eyebrow}</p>
+        <Show when={props.eyebrow}><p class="eyebrow mono">{props.index ? `${props.index} ` : ""}{props.eyebrow}</p></Show>
         <h2>{props.title}</h2>
         <p>{props.body}</p>
         <Show when={props.points}>
