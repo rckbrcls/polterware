@@ -1,12 +1,12 @@
 import { For } from "solid-js";
-import { RELEASES_URL, REPO_URL, productList } from "../data/products";
+import { RELEASES_URL, REPO_URL, upcoming, vitals } from "../data/products";
 
 const columns = [
-  { title: "Products", links: productList.map((product) => ({ label: product.name, href: product.href })) },
+  { title: "Products", links: [{ label: vitals.name, href: "/" }, ...upcoming.map((item) => ({ label: `${item.name} (soon)`, href: "/#upcoming-title" }))] },
   {
     title: "Resources",
     links: [
-      { label: "Install", href: "/polterware#install" },
+      { label: "Install", href: "/#install" },
       { label: "Releases", href: RELEASES_URL, external: true },
       { label: "Getting started", href: `${REPO_URL}#readme`, external: true },
     ],

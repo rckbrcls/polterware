@@ -18,7 +18,7 @@ Development uses port 5175; preview uses port 4175. Builds emit static files in 
 
 ## Structure
 
-- `src/routes` — home (`/`), product landings (`/polterware`, `/polterware/cli`, `/vitals`) and the not-found page
+- `src/routes` — home (`/`, the Polterware Vitals landing) and the not-found page
 - `src/data/products.ts` — product names, summaries, status, install command and the `CLI` command name used in examples
 - `src/components` — site header (shared `NavigationMenu`), footer, page sections, line-art figures and metadata
 - `src/components/mockups` — code-built product illustrations, also used by the header preview panel

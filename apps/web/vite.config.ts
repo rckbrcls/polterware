@@ -11,7 +11,7 @@ export default defineConfig({
         if (route.route === "/404") route.fileName = "404.html";
       },
     },
-    prerender: { routes: ["/", "/polterware", "/polterware/cli", "/vitals", "/404"], crawlLinks: true, failOnError: true },
+    prerender: { routes: ["/", "/404"], crawlLinks: true, failOnError: true },
   })],
   resolve: { dedupe: ["solid-js"] },
 });
