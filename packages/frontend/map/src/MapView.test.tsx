@@ -13,12 +13,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("MapView network isolation", () => {
-  it("does not fetch the OpenFreeMap style or tiles while online is false", async () => {
-    const fetch = vi.fn(async (input: RequestInfo | URL) => {
-      throw new Error(`unexpected fetch ${String(input)}`);
-    });
-    vi.stubGlobal("fetch", fetch);
+describe("MapView provider selection", () => {
+  it("keeps OpenFreeMap available even when callers pass the retired online flag", async () => {
     const host = document.createElement("div");
     document.body.append(host);
     dispose = render(() => (
@@ -30,10 +26,7 @@ describe("MapView network isolation", () => {
       />
     ), host);
     await new Promise(resolve => setTimeout(resolve, 50));
-    const mapCalls = fetch.mock.calls.filter(call => isMapNetworkUrl(String(call.at(0) ?? "")));
-    expect(mapCalls).toEqual([]);
-    expect(fetch).not.toHaveBeenCalled();
-    expect(host.querySelector("[data-map-online='false']")).not.toBeNull();
+    expect(host.querySelector("[data-map-online='true']")).not.toBeNull();
     expect(OPENFREEMAP_DARK_STYLE).toContain("openfreemap.org");
   });
 

@@ -1,14 +1,14 @@
-/** The command the site shows for the Lore CLI. One place to change if the binary is renamed. */
-export const CLI = "lore";
+/** The command the site shows for the Polterware CLI. One place to change if the binary is renamed. */
+export const CLI = "polterware";
 
-export const REPO_URL = "https://github.com/polterware/polterware";
+export const REPO_URL = "https://github.com/rckbrcls/polterware";
 export const RELEASES_URL = `${REPO_URL}/releases`;
-export const INSTALL_SCRIPT = "https://raw.githubusercontent.com/polterware/polterware/main/scripts/install-desktop.sh";
+export const INSTALL_SCRIPT = "https://polterware.com/install.sh";
 
-export const installCommand = (app?: "lore" | "vitals") =>
-  `curl -fsSL ${INSTALL_SCRIPT} | ${app === "lore" ? "APP=lore " : ""}bash`;
+export const installCommand = (app?: "polterware" | "vitals" | "notes") =>
+  `curl -fsSL ${INSTALL_SCRIPT} | APP=${app ?? "vitals"} bash`;
 
-export type ProductId = "lore" | "cli" | "vitals";
+export type ProductId = "polterware" | "cli" | "notes" | "dispatch" | "vitals";
 
 export type Product = {
   id: ProductId;
@@ -20,27 +20,41 @@ export type Product = {
 };
 
 export const products: Record<ProductId, Product> = {
-  lore: {
-    id: "lore",
-    name: "Lore",
-    href: "/lore",
+  polterware: {
+    id: "polterware",
+    name: "Polterware",
+    href: "/polterware",
     summary: "Shared, evidence-backed project context for people and coding agents.",
     status: "Alpha · macOS on Apple Silicon",
   },
   cli: {
     id: "cli",
-    name: "Lore CLI",
-    href: "/lore/cli",
-    summary: "Lore from your terminal: a TUI, scripted reads and writes, and an MCP bridge.",
-    status: "Bundled with Lore · builds from source",
+    name: "Polterware CLI",
+    href: "/polterware/cli",
+    summary: "Polterware from your terminal: a TUI, scripted reads and writes, and an MCP bridge.",
+    status: "Bundled with Polterware · builds from source",
+  },
+  notes: {
+    id: "notes",
+    name: "Polterware Notes",
+    href: "/notes",
+    summary: "Local-first notes and reminders that people and coding agents share.",
+    status: "Alpha · macOS on Apple Silicon",
+  },
+  dispatch: {
+    id: "dispatch",
+    name: "Dispatch",
+    href: "/dispatch",
+    summary: "Hand a task to the right coding-agent CLI by difficulty, and get a compact result back.",
+    status: "In development · CLI",
   },
   vitals: {
     id: "vitals",
-    name: "Vitals",
+    name: "Polterware Vitals",
     href: "/vitals",
     summary: "Watch remote machines over SSH: metrics, processes and a terminal.",
     status: "Alpha · macOS on Apple Silicon",
   },
 };
 
-export const productList: Product[] = [products.lore, products.cli, products.vitals];
+export const productList: Product[] = [products.polterware, products.cli, products.notes, products.dispatch, products.vitals];

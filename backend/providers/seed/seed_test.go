@@ -59,20 +59,20 @@ func TestPolterwareContentIsReal(t *testing.T) {
 			t.Errorf("no card in stage %q", stage)
 		}
 	}
-	// ADR-0001..0005 and the five principles are seeded as active.
-	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='adr'`, seed.ProjectID); n != 15 {
-		t.Errorf("want 15 ADRs, got %d", n)
+	// Verdict-0001..0005 and the five principles are seeded as active.
+	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='verdict'`, seed.ProjectID); n != 15 {
+		t.Errorf("want 15 Verdicts, got %d", n)
 	}
-	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='adr' AND status='active'`, seed.ProjectID); n != 10 {
-		t.Errorf("want 10 active ADRs, got %d", n)
+	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='verdict' AND status='active'`, seed.ProjectID); n != 10 {
+		t.Errorf("want 10 active Verdicts, got %d", n)
 	}
-	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='adr' AND extra_json LIKE '%"scope":"principle"%'`, seed.ProjectID); n != 5 {
+	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='verdict' AND extra_json LIKE '%"scope":"principle"%'`, seed.ProjectID); n != 5 {
 		t.Errorf("want 5 principles, got %d", n)
 	}
 	if n := count(t, store, `SELECT COUNT(*) FROM atlas_nodes WHERE project_id=?`, seed.ProjectID); n < 10 {
 		t.Errorf("want an Atlas of Polterware, got %d nodes", n)
 	}
-	if n := count(t, store, `SELECT COUNT(*) FROM ppm_facts WHERE project_id=?`, seed.ProjectID); n == 0 {
+	if n := count(t, store, `SELECT COUNT(*) FROM canon_facts WHERE project_id=?`, seed.ProjectID); n == 0 {
 		t.Error("want facts")
 	}
 	if n := count(t, store, `SELECT COUNT(*) FROM work_invariants wi JOIN work_cards wc ON wc.id=wi.card_id WHERE wc.project_id=?`, seed.ProjectID); n == 0 {
@@ -100,7 +100,7 @@ func TestNoMockContentRemains(t *testing.T) {
 
 func TestDefaultsIsIdempotent(t *testing.T) {
 	store := newSeeded(t)
-	tables := []string{"projects", "environments", "knowledge_items", "work_cards", "work_tasks", "atlas_nodes", "ppm_facts"}
+	tables := []string{"projects", "environments", "knowledge_items", "work_cards", "work_tasks", "atlas_nodes", "canon_facts"}
 	before := map[string]int{}
 	for _, table := range tables {
 		before[table] = count(t, store, `SELECT COUNT(*) FROM `+table)

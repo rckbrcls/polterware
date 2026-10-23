@@ -1,0 +1,136 @@
+.notes-space-tile { inline-size: 100%; block-size: auto; white-space: normal; text-align: start; padding: 0; }
+.notes-space-tile > .card-panel { inline-size: 100%; }
+
+.notes-space-card:has([data-drop-target="true"]) {
+  border-color: var(--color-border-strong, var(--color-text-muted));
+}
+
+/* A held Space card floats above its siblings; they glide aside underneath (Vitals card feel). */
+li[data-lifted="true"] {
+  touch-action: none;
+  position: relative;
+  z-index: 3;
+}
+
+li[data-lifted="true"] > * {
+  box-shadow:
+    0 20px 56px var(--color-shadow-float),
+    0 0 0 1px var(--color-shadow-subtle);
+}
+
+li[data-dragging="true"] * {
+  cursor: grabbing;
+}
+
+li[data-dragging] > * {
+  transition: box-shadow var(--spring-moderate-duration, var(--duration-enter)) var(--spring-moderate-ease, var(--ease-enter));
+}
+
+/* The held card is lifted into the top layer so no surface clips it; its cell stays as a quiet slot. */
+ul[aria-label="Notes"] > li > :popover-open {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  overflow: visible;
+  color: inherit;
+}
+
+ul[aria-label="Notes"] > li[data-dragging="true"] {
+  border-radius: var(--radius-card);
+  background: var(--color-surface-subtle);
+}
+
+/* Dragging a card must not select its text or start a native drag. */
+ul[aria-label="Notes"] > li {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Space cards read as folders: a tab on the left, a back panel peeking out behind the body on the right.
+   The tab is one opaque card-fill shape drawn over the body's top-left 5 rows (border + four inset rings),
+   with the same five edges as 1px strokes: rim, then the four card rings. They meet the body's edges at
+   y=33 on the left and tangentially at x=120.5 on the right, so the material runs on without a seam. */
+.notes-space-folder.card-panel {
+  position: relative;
+  display: flow-root;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.notes-space-folder__tab {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.notes-space-folder__tab-fill { fill: var(--card-fill-top); }
+.notes-space-folder__tab path:not(.notes-space-folder__tab-fill) { stroke-width: 1; }
+/* The body's 1px outer shadow ring, stopped on row 27 where the body's own ring takes over. */
+.notes-space-folder__tab-halo { stroke: var(--color-shadow-subtle); }
+.notes-space-folder__tab-rim { stroke: var(--edge-light-surface-rim); }
+.notes-space-folder__tab-ring--1 { stroke: var(--card-ring-dark-outer); }
+.notes-space-folder__tab-ring--2 { stroke: var(--card-ring-light); }
+.notes-space-folder__tab-ring--3 { stroke: var(--card-ring-dark-inner); }
+.notes-space-folder__tab-ring--4 { stroke: var(--card-ring-light-inner); }
+
+/* Back panel: the same material one step darker. It fills the concave notch between the tab and the
+   body, and hands its right edge to the body's right border where that rounded corner ends. */
+.notes-space-folder::after {
+  position: absolute;
+  z-index: 0;
+  top: 12px;
+  right: 0;
+  left: 70px;
+  box-sizing: border-box;
+  height: calc(16px + var(--radius-card));
+  border: 1px solid var(--edge-light-surface-rim);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  background: var(--color-surface-subtle);
+  box-shadow: var(--card-rings);
+  content: "";
+}
+
+.notes-space-folder__body {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  margin-top: 28px;
+  block-size: 196px;
+  border: 1px solid var(--edge-light-surface-rim);
+  border-radius: 0 var(--radius-card) var(--radius-card) var(--radius-card);
+  background: var(--card-fill);
+  box-shadow:
+    var(--card-rings),
+    0 20px 56px var(--color-shadow-float),
+    0 0 0 1px var(--color-shadow-subtle);
+}
+
+.notes-space-folder:has([data-drop-target="true"]) .notes-space-folder__body {
+  border-color: var(--color-border-strong);
+}
+
+.notes-space-folder:has([data-drop-target="true"]) .notes-space-folder__tab-rim {
+  stroke: var(--color-border-strong);
+}
+
+/* Sidebar tree drag: the held row rides above the rows being pushed aside and the "inside" target is marked. */
+.notes-sidebar-tree [data-tree-held] {
+  position: relative;
+  z-index: 2;
+  border-radius: var(--radius-control, 8px);
+  background: var(--color-surface-subtle);
+  box-shadow: 0 8px 24px var(--color-shadow-float), 0 0 0 1px var(--color-shadow-subtle);
+  cursor: grabbing;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.notes-sidebar-tree [data-part="item"][data-drop-target="true"],
+.notes-sidebar-tree [data-part="branch-control"][data-drop-target="true"] {
+  background: var(--color-surface-subtle);
+  box-shadow: inset 0 0 0 1px var(--color-shadow-subtle);
+}

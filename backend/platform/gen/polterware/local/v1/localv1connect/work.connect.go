@@ -60,6 +60,8 @@ const (
 	// WorkServiceResolveInboxItemProcedure is the fully-qualified name of the WorkService's
 	// ResolveInboxItem RPC.
 	WorkServiceResolveInboxItemProcedure = "/polterware.local.v1.WorkService/ResolveInboxItem"
+	// WorkServiceSetScopeProcedure is the fully-qualified name of the WorkService's SetScope RPC.
+	WorkServiceSetScopeProcedure = "/polterware.local.v1.WorkService/SetScope"
 	// WorkServiceExportProjectionsProcedure is the fully-qualified name of the WorkService's
 	// ExportProjections RPC.
 	WorkServiceExportProjectionsProcedure = "/polterware.local.v1.WorkService/ExportProjections"
@@ -90,6 +92,7 @@ type WorkServiceClient interface {
 	EndSession(context.Context, *connect.Request[v1.EndSessionRequest]) (*connect.Response[v1.EndSessionResponse], error)
 	ListInbox(context.Context, *connect.Request[v1.ListInboxRequest]) (*connect.Response[v1.ListInboxResponse], error)
 	ResolveInboxItem(context.Context, *connect.Request[v1.ResolveInboxItemRequest]) (*connect.Response[v1.ResolveInboxItemResponse], error)
+	SetScope(context.Context, *connect.Request[v1.SetScopeRequest]) (*connect.Response[v1.SetScopeResponse], error)
 	ExportProjections(context.Context, *connect.Request[v1.ExportProjectionsRequest]) (*connect.Response[v1.ExportProjectionsResponse], error)
 	ReviewFeature(context.Context, *connect.Request[v1.ReviewFeatureRequest]) (*connect.Response[v1.ReviewFeatureResponse], error)
 	CreateFeature(context.Context, *connect.Request[v1.CreateFeatureRequest]) (*connect.Response[v1.CreateFeatureResponse], error)
@@ -174,6 +177,12 @@ func NewWorkServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(workServiceMethods.ByName("ResolveInboxItem")),
 			connect.WithClientOptions(opts...),
 		),
+		setScope: connect.NewClient[v1.SetScopeRequest, v1.SetScopeResponse](
+			httpClient,
+			baseURL+WorkServiceSetScopeProcedure,
+			connect.WithSchema(workServiceMethods.ByName("SetScope")),
+			connect.WithClientOptions(opts...),
+		),
 		exportProjections: connect.NewClient[v1.ExportProjectionsRequest, v1.ExportProjectionsResponse](
 			httpClient,
 			baseURL+WorkServiceExportProjectionsProcedure,
@@ -220,6 +229,7 @@ type workServiceClient struct {
 	endSession        *connect.Client[v1.EndSessionRequest, v1.EndSessionResponse]
 	listInbox         *connect.Client[v1.ListInboxRequest, v1.ListInboxResponse]
 	resolveInboxItem  *connect.Client[v1.ResolveInboxItemRequest, v1.ResolveInboxItemResponse]
+	setScope          *connect.Client[v1.SetScopeRequest, v1.SetScopeResponse]
 	exportProjections *connect.Client[v1.ExportProjectionsRequest, v1.ExportProjectionsResponse]
 	reviewFeature     *connect.Client[v1.ReviewFeatureRequest, v1.ReviewFeatureResponse]
 	createFeature     *connect.Client[v1.CreateFeatureRequest, v1.CreateFeatureResponse]
@@ -282,6 +292,11 @@ func (c *workServiceClient) ResolveInboxItem(ctx context.Context, req *connect.R
 	return c.resolveInboxItem.CallUnary(ctx, req)
 }
 
+// SetScope calls polterware.local.v1.WorkService.SetScope.
+func (c *workServiceClient) SetScope(ctx context.Context, req *connect.Request[v1.SetScopeRequest]) (*connect.Response[v1.SetScopeResponse], error) {
+	return c.setScope.CallUnary(ctx, req)
+}
+
 // ExportProjections calls polterware.local.v1.WorkService.ExportProjections.
 func (c *workServiceClient) ExportProjections(ctx context.Context, req *connect.Request[v1.ExportProjectionsRequest]) (*connect.Response[v1.ExportProjectionsResponse], error) {
 	return c.exportProjections.CallUnary(ctx, req)
@@ -320,6 +335,7 @@ type WorkServiceHandler interface {
 	EndSession(context.Context, *connect.Request[v1.EndSessionRequest]) (*connect.Response[v1.EndSessionResponse], error)
 	ListInbox(context.Context, *connect.Request[v1.ListInboxRequest]) (*connect.Response[v1.ListInboxResponse], error)
 	ResolveInboxItem(context.Context, *connect.Request[v1.ResolveInboxItemRequest]) (*connect.Response[v1.ResolveInboxItemResponse], error)
+	SetScope(context.Context, *connect.Request[v1.SetScopeRequest]) (*connect.Response[v1.SetScopeResponse], error)
 	ExportProjections(context.Context, *connect.Request[v1.ExportProjectionsRequest]) (*connect.Response[v1.ExportProjectionsResponse], error)
 	ReviewFeature(context.Context, *connect.Request[v1.ReviewFeatureRequest]) (*connect.Response[v1.ReviewFeatureResponse], error)
 	CreateFeature(context.Context, *connect.Request[v1.CreateFeatureRequest]) (*connect.Response[v1.CreateFeatureResponse], error)
@@ -400,6 +416,12 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(workServiceMethods.ByName("ResolveInboxItem")),
 		connect.WithHandlerOptions(opts...),
 	)
+	workServiceSetScopeHandler := connect.NewUnaryHandler(
+		WorkServiceSetScopeProcedure,
+		svc.SetScope,
+		connect.WithSchema(workServiceMethods.ByName("SetScope")),
+		connect.WithHandlerOptions(opts...),
+	)
 	workServiceExportProjectionsHandler := connect.NewUnaryHandler(
 		WorkServiceExportProjectionsProcedure,
 		svc.ExportProjections,
@@ -454,6 +476,8 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 			workServiceListInboxHandler.ServeHTTP(w, r)
 		case WorkServiceResolveInboxItemProcedure:
 			workServiceResolveInboxItemHandler.ServeHTTP(w, r)
+		case WorkServiceSetScopeProcedure:
+			workServiceSetScopeHandler.ServeHTTP(w, r)
 		case WorkServiceExportProjectionsProcedure:
 			workServiceExportProjectionsHandler.ServeHTTP(w, r)
 		case WorkServiceReviewFeatureProcedure:
@@ -515,6 +539,10 @@ func (UnimplementedWorkServiceHandler) ListInbox(context.Context, *connect.Reque
 
 func (UnimplementedWorkServiceHandler) ResolveInboxItem(context.Context, *connect.Request[v1.ResolveInboxItemRequest]) (*connect.Response[v1.ResolveInboxItemResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ResolveInboxItem is not implemented"))
+}
+
+func (UnimplementedWorkServiceHandler) SetScope(context.Context, *connect.Request[v1.SetScopeRequest]) (*connect.Response[v1.SetScopeResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.SetScope is not implemented"))
 }
 
 func (UnimplementedWorkServiceHandler) ExportProjections(context.Context, *connect.Request[v1.ExportProjectionsRequest]) (*connect.Response[v1.ExportProjectionsResponse], error) {

@@ -7,7 +7,7 @@ func (s *Server) entityGet(args map[string]any) (string, error) {
 	if id == "" {
 		return "", fmt.Errorf("id is required")
 	}
-	entity, err := s.Store.GetPpmEntity(id)
+	entity, err := s.Store.GetCanonEntity(id)
 	if err != nil {
 		return "", err
 	}

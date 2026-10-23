@@ -9,17 +9,22 @@ import (
 
 	"github.com/polterware/polterware/backend/compositions/wedge"
 	"github.com/polterware/polterware/backend/domains/agentrun"
+	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/inbox"
 	"github.com/polterware/polterware/backend/domains/polter"
-	"github.com/polterware/polterware/backend/domains/ppm"
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
+	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
 func (core *Core) ListInbox(_ context.Context, request *connect.Request[localv1.ListInboxRequest]) (*connect.Response[localv1.ListInboxResponse], error) {
 	if request.Msg.ProjectId == "" {
 		return nil, invalid("project id is required")
 	}
-	result, err := wedge.ListInbox(core.Store, request.Msg.ProjectId)
+	scope, err := wedge.ResolveScopeRef(core.Store, request.Msg.ProjectId, request.Msg.ScopeNode, request.Msg.ScopeExact)
+	if err != nil {
+		return nil, invalid(err.Error())
+	}
+	result, err := wedge.ListInboxScoped(core.Store, request.Msg.ProjectId, scope)
 	if err != nil {
 		return nil, internal(err)
 	}
@@ -27,11 +32,20 @@ func (core *Core) ListInbox(_ context.Context, request *connect.Request[localv1.
 		OpenCount:     int32(result.Open()),
 		BlockingCount: int32(result.Blocking()),
 	}
+	assigned, err := core.Store.ScopeMap(request.Msg.ProjectId, storepkg.ScopeItem)
+	if err != nil {
+		return nil, internal(err)
+	}
+	withScope := func(item inbox.Item) *localv1.InboxItem {
+		msg := inboxItemProto(item)
+		msg.ScopeNodeId = assigned[item.Key]
+		return msg
+	}
 	for _, item := range result.Items {
-		out.Items = append(out.Items, inboxItemProto(item))
+		out.Items = append(out.Items, withScope(item))
 	}
 	for _, routed := range result.Routed {
-		out.Routed = append(out.Routed, &localv1.RoutedInboxItem{Item: inboxItemProto(routed.Item), Action: routed.Action})
+		out.Routed = append(out.Routed, &localv1.RoutedInboxItem{Item: withScope(routed.Item), Action: routed.Action})
 	}
 	return connect.NewResponse(out), nil
 }
@@ -71,7 +85,7 @@ func (core *Core) ResolveInboxItem(_ context.Context, request *connect.Request[l
 	case err == nil:
 	case errors.Is(err, wedge.ErrUnknownInboxItem):
 		return nil, connect.NewError(connect.CodeNotFound, err)
-	case errors.As(err, &inputErr), errors.Is(err, ppm.ErrVerifiedRequiresActor), errors.Is(err, ppm.ErrUnknownFact):
+	case errors.As(err, &inputErr), errors.Is(err, canon.ErrVerifiedRequiresActor), errors.Is(err, canon.ErrUnknownFact):
 		return nil, invalid(err.Error())
 	case errors.Is(err, wedge.ErrPolterInvalid) && result.Apply != nil:
 		return nil, invalidPolter(result.Apply.Diagnostics)

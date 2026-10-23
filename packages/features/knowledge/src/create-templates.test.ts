@@ -3,6 +3,7 @@ import {
   KNOWLEDGE_CREATE_TEMPLATES,
   knowledgeTemplateById,
   knowledgeTemplatesForKind,
+  evidenceTemplates,
 } from "./create-templates";
 
 describe("knowledge create templates", () => {
@@ -13,10 +14,14 @@ describe("knowledge create templates", () => {
 
   it("groups templates by kind", () => {
     expect(knowledgeTemplatesForKind("doc")).toHaveLength(3);
-    expect(knowledgeTemplatesForKind("adr")).toHaveLength(3);
+    expect(knowledgeTemplatesForKind("verdict")).toHaveLength(3);
     expect(knowledgeTemplatesForKind("runbook")).toHaveLength(3);
     expect(knowledgeTemplatesForKind("card")).toHaveLength(3);
     expect(knowledgeTemplatesForKind("source")).toHaveLength(3);
+  });
+
+  it("offers every document, runbook, and source template as evidence starters", () => {
+    expect(evidenceTemplates()).toHaveLength(9);
   });
 
   it("resolves a template by id", () => {

@@ -33,6 +33,11 @@
   will-change: transform;
 }
 
+/* Popovers sit at menu radius; the larger surface radius stays for dialogs and host panels. */
+.pw-popover-surface.surface-panel-float {
+  border-radius: var(--radius-menu);
+}
+
 /* base.css collapses animations under reduced motion; keep the clock so the fade runs. */
 @media (prefers-reduced-motion: reduce) {
   .pw-popover-presence {

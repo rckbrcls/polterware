@@ -1,16 +1,18 @@
 import type { JSX } from "solid-js";
 
 /**
- * Quiet nested card — hairline + whisper outer lift (`.card-panel`).
+ * Nested card with concentric rings by default, or a framed gradient texture.
  * Prefer this over ad-hoc border + bg cards in features.
  */
 export function Card(props: {
   children: JSX.Element;
   class?: string;
+  /** `rings` preserves the nested card finish; `texture` shares the button frame and face. */
+  variant?: "rings" | "texture";
   ref?: HTMLDivElement | ((element: HTMLDivElement) => void);
 }) {
   return (
-    <div ref={props.ref} class={`card-panel p-3 ${props.class ?? ""}`}>
+    <div ref={props.ref} class={`${props.variant === "texture" ? "card-texture-framed" : "card-panel"} p-3 ${props.class ?? ""}`}>
       {props.children}
     </div>
   );

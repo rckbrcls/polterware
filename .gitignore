@@ -9,10 +9,10 @@ build/
 coverage/
 .turbo/
 *.tsbuildinfo
-apps/lore-desktop/dist/
-apps/lore-desktop/dist-electron/
-apps/lore-desktop/out/
-apps/lore-desktop/release/
+apps/polterware-desktop/dist/
+apps/polterware-desktop/dist-electron/
+apps/polterware-desktop/out/
+apps/polterware-desktop/release/
 packages/*/dist/
 
 # Environment files
@@ -51,11 +51,11 @@ dist/polter-*
 Thumbs.db
 .vscode/
 .idea/
-apps/sparky-desktop/out/
-apps/vitals/out/
-apps/sparky-desktop/release/
-apps/vitals/release/
-apps/sparky-desktop/test-results/
+apps/notes-desktop/out/
+apps/vitals-desktop/out/
+apps/notes-desktop/release/
+apps/vitals-desktop/release/
+apps/notes-desktop/test-results/
 .playwright-mcp/
 
 # SolidStart web output
@@ -63,3 +63,10 @@ apps/web/.output/
 apps/web/.solid/
 apps/web/.nitro/
 apps/web/.solid-start/
+
+# Generated gallery props (tooling/docs-props.mjs)
+apps/gallery/src/generated/
+
+# Downloaded Sparkle distribution, headers, and compiled native bridge
+tooling/updater/vendor/
+tooling/updater/build/

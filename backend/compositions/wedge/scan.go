@@ -81,7 +81,7 @@ func ScanProject(store *storepkg.Store, projectID string) (ScanResult, error) {
 		}
 	}
 
-	existingSources, err := store.ListKnowledge(projectID, "source")
+	existingSources, err := store.ListKnowledge(projectID, knowledge.KindEvidence)
 	if err != nil {
 		return ScanResult{}, err
 	}
@@ -101,25 +101,25 @@ func ScanProject(store *storepkg.Store, projectID string) (ScanResult, error) {
 			skipped++
 			continue
 		}
-		if existing, err := store.GetPpmEvidence(evidence.ID); err == nil {
+		if existing, err := store.GetCanonEvidence(evidence.ID); err == nil {
 			evidence.CreatedAt = existing.CreatedAt
 		}
-		if err := store.UpsertPpmEvidence(evidence); err != nil {
+		if err := store.UpsertCanonEvidence(evidence); err != nil {
 			return ScanResult{}, err
 		}
 		evidenceCount++
 		for _, fact := range facts {
-			if existing, err := store.GetPpmFact(fact.ID); err == nil {
+			if existing, err := store.GetCanonFact(fact.ID); err == nil {
 				fact.CreatedAt = existing.CreatedAt
 			}
-			if err := store.UpsertPpmFact(fact); err != nil {
+			if err := store.UpsertCanonFact(fact); err != nil {
 				return ScanResult{}, err
 			}
-			if err := store.LinkPpmEvidenceToFact(projectID, fact.ID, evidence.ID); err != nil {
+			if err := store.LinkCanonEvidenceToFact(projectID, fact.ID, evidence.ID); err != nil {
 				return ScanResult{}, err
 			}
 			if headID != "" {
-				if err := store.LinkPpmEvidenceToFact(projectID, fact.ID, headID); err != nil {
+				if err := store.LinkCanonEvidenceToFact(projectID, fact.ID, headID); err != nil {
 					return ScanResult{}, err
 				}
 			}
@@ -164,7 +164,7 @@ func upsertImportedKnowledgeSource(store *storepkg.Store, projectID string, file
 		}
 		return store.SaveKnowledge(existing)
 	}
-	item, err := knowledge.NewItem(importer.StableSourceID(projectID, path), projectID, title, "", "source", nil)
+	item, err := knowledge.NewItem(importer.StableSourceID(projectID, path), projectID, title, "", "source", []string{"source"})
 	if err != nil {
 		return err
 	}

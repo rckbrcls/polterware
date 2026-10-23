@@ -1,29 +1,60 @@
 import { createSignal } from "solid-js";
+import { EntityDetailHost } from "@polterware/feature-shell";
 import {
-  Button,
+  FilterPopover,
   PageContent,
   PageToolbar,
-  RefreshCw,
+  Plus,
+  SearchBar,
+  StatusDot,
   Tabs,
+  ToolbarIconButton,
+  type FilterPopoverGroup,
   type TabItem,
 } from "@polterware/frontend-design-system";
-import { PpmFactsPanel, type PpmJustifyChange } from "./ppm-facts-panel";
+import { CanonFactsPanel, type CanonJustifyChange } from "./canon-facts-panel";
 
-/** Truth → Facts: PPM facts and their evidence. */
+const TRUTH_CLASSES = [
+  { id: "declared", label: "Declared", tone: "syncing" },
+  { id: "observed", label: "Observed", tone: "ok" },
+  { id: "inferred", label: "Inferred", tone: "warn" },
+  { id: "verified", label: "Verified", tone: "ok" },
+] as const;
+
+/** Truth → Facts: Canon facts and their evidence. */
 export function TruthFactsPage(props: {
   projectId: string;
   tab: string;
   tabs: TabItem[];
   tabsLabel: string;
   onTabChange?: (tab: string) => void;
-  justifyChange: PpmJustifyChange;
+  justifyChange: CanonJustifyChange;
 }) {
-  const [entityId, setEntityId] = createSignal("");
+  const [query, setQuery] = createSignal("");
+  const [truthClasses, setTruthClasses] = createSignal<string[]>([]);
   const [busy, setBusy] = createSignal(false);
-  const [refreshToken, setRefreshToken] = createSignal(0);
+  const [createToken, setCreateToken] = createSignal(0);
+
+  const groups = (): FilterPopoverGroup[] => [
+    {
+      id: "truth",
+      label: "Truth",
+      leading: <StatusDot tone="ok" showLabel={false} />,
+      options: TRUTH_CLASSES.map((option) => ({
+        id: option.id,
+        label: option.label,
+        leading: <StatusDot tone={option.tone} showLabel={false} />,
+        checked: truthClasses().includes(option.id),
+        onCheckedChange: (checked: boolean) =>
+          setTruthClasses((current) =>
+            checked ? [...current.filter((id) => id !== option.id), option.id] : current.filter((id) => id !== option.id),
+          ),
+      })),
+    },
+  ];
 
   return (
-    <div class="flex h-full min-h-0 flex-col">
+    <EntityDetailHost>
       <PageToolbar.Root>
         <PageToolbar.Tabs>
           <Tabs
@@ -34,28 +65,39 @@ export function TruthFactsPage(props: {
           />
         </PageToolbar.Tabs>
         <PageToolbar.Actions>
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={busy()}
-            onClick={() => setRefreshToken((value) => value + 1)}
+          <SearchBar
+            placeholder="Search facts"
+            value={query()}
+            onInput={setQuery}
+            aria-label="Search facts"
+          />
+          <FilterPopover
+            ariaLabel="Fact filters"
+            title="Filter facts"
+            active={truthClasses().length > 0}
+            onClear={() => setTruthClasses([])}
+            groups={groups()}
+          />
+          <ToolbarIconButton
+            label="New fact"
+            disabled={busy() || !props.projectId.trim()}
+            onClick={() => setCreateToken((value) => value + 1)}
           >
-            <RefreshCw size={14} />
-            Refresh
-          </Button>
+            <Plus size={14} />
+          </ToolbarIconButton>
         </PageToolbar.Actions>
       </PageToolbar.Root>
       <PageContent class="flex min-h-0 flex-1 flex-col p-0">
-        <PpmFactsPanel
+        <CanonFactsPanel
           projectId={props.projectId}
-          entityFilter={entityId()}
+          query={query()}
+          truthClasses={truthClasses()}
+          createToken={createToken()}
           busy={busy()}
-          refreshToken={refreshToken()}
           justifyChange={props.justifyChange}
-          onEntityFilterChange={setEntityId}
           onBusyChange={setBusy}
         />
       </PageContent>
-    </div>
+    </EntityDetailHost>
   );
 }

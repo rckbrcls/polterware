@@ -12,6 +12,7 @@ import {
 } from "solid-js";
 import { Portal } from "solid-js/web";
 import { createPopupMotion } from "./popup-motion";
+import "./button.css";
 import "./tooltip.css";
 
 const DEFAULT_TOOLTIP_OPEN_DELAY = 400;
@@ -168,7 +169,7 @@ function TooltipContent(props: TooltipContentProps) {
       <ArkTooltip.Positioner class="pw-tooltip-positioner">
         <ArkTooltip.Content
           ref={motion.ref}
-          class={`pw-tooltip-content menu-panel ${props.class ?? ""}`}
+          class={`pw-tooltip-content menu-panel pw-texture-button ${props.class ?? ""}`}
         >
           {props.children}
         </ArkTooltip.Content>

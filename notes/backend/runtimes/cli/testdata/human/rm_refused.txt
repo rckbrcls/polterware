@@ -1,0 +1,1 @@
+pwnotes: refusing to delete note ID without --yes

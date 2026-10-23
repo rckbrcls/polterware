@@ -15,34 +15,34 @@
 
 ## Product positioning
 
-Polterware's category is **Project Context & Change Intelligence for AI Coding**: every agent and person reads the same evidence-backed project state, and drift from declared intent is flagged. The shipped wedge is PPM facts/evidence, deterministic import, Context Compiler, stable MCP reads, Drift, AgentRun, audited MCP writes, CLI, Unified Change History, the Polter format with Work cards, the Atlas, the Inbox, and the decision lifecycle. Operations, Terminal-as-product, and Nodes/remote execution were removed. Integrations remain as evidence/Connect UI only.
+Polterware's category is **Project Context & Change Intelligence for AI Coding**: every agent and person reads the same evidence-backed project state, and drift from declared intent is flagged. The shipped wedge is Canon facts/evidence, deterministic import, Context Compiler, stable MCP reads, Drift, AgentRun, audited MCP writes, CLI, Unified Change History, the Polter format with Work cards, the Atlas, the Inbox, and the decision lifecycle. Integrations remain as evidence/Connect UI only.
 
 [`docs/future.md`](docs/future.md) is the only planning document and lists what is **not** implemented (Cloud, Jev, enrichment backlog, research). It is direction, not shipped behavior; never present its items as shipped. The code, this file, `polterware --help`, and `polterware format` describe what exists.
 
 ## Current product boundary
 
-Polterware is the umbrella for the local-first apps Lore (this product, `apps/lore-desktop`), Sparky, and Vitals. Lore's first version is a local SQLite-backed Desktop with project surfaces Inbox, Work, Atlas, Truth, and Activity. Settings is fixed in the sidebar footer and holds Agents and Integrations. Inbox is the default route.
+Polterware is both the umbrella and the main local-first app (`apps/polterware-desktop`), alongside Polterware Notes and Polterware Vitals. Polterware's first version is a local SQLite-backed Desktop with project surfaces Inbox, Work, Atlas, Truth, and Activity. Settings is fixed in the sidebar footer and holds Agents and Integrations. Inbox is the default route.
 
-The Desktop supports multiple local projects and environments. It has no hosted or shared workspace model. One local core process (`polterware serve`) per database is the only process that opens SQLite (it is a detached daemon guarded by a lock, with a build handshake); Electron Main, the CLI, the TUI, and the MCP bridge attach to it or start it. The renderer reads and writes through `window.lore` only.
+The umbrella is an ecosystem, not a list: apps and tools live under Polterware only when they can integrate with the others. See [`docs/ecosystem.md`](docs/ecosystem.md) for the admission criteria and the current roster.
 
-The Desktop may execute on the local machine through the local core only. The renderer never spawns shells or touches Node APIs; it talks through `window.lore`.
+The Desktop supports multiple local projects and environments. It has no hosted or shared workspace model. One local core process (`polterware serve`) per database is the only process that opens SQLite (it is a detached daemon guarded by a lock, with a build handshake); Electron Main, the CLI, the TUI, and the MCP bridge attach to it or start it. The renderer reads and writes through `window.polterware` only.
 
-- Integrations: detect CLI binaries, start provider authentication commands in a core-owned PTY, optionally open provider documentation through Main `openExternal`, and probe connection status. Credentials stay in the OS/CLI credential store. **KEEP** as evidence/Connect path (not a provider console). Residual `terminals.*` IPC and `providers/terminal` exist only for that Connect auth PTY path.
+- Integrations: detect CLI binaries, start provider authentication commands in a core-owned PTY, optionally open provider documentation through Main `openExternal`, and probe connection status. Credentials stay in the OS/CLI credential store. **KEEP** as evidence/Connect path (not a provider console).
 
 The integration catalog contains exactly GitHub, GitLab, AWS, Google Cloud, Azure, Vercel, Supabase, Terraform, and Docker. Do not add placeholders or app-owned provider-token fields, and never persist provider credentials in SQLite. Raw PTY output is not guaranteed to be sanitized; do not describe it as redacted.
 
-## Sparky (second app)
+## Polterware Notes (second app)
 
-The monorepo also hosts Sparky, a separate local-first app with its own core (`sparky/backend`), contracts (`sparky/schemas`), desktop (`apps/sparky-desktop`) and feature packages (`packages/features/sparky-*`). Sparky shares `packages/frontend` and the UI law above but not Polterware's product surfaces, store or core: do not mix their data models, and keep the Polterware product boundary above unchanged. Sparky checks run through `bash tooling/verify-sparky.sh`; its renderer talks only through `window.sparky`.
+The monorepo also hosts Polterware Notes, a separate local-first app with its own core (`notes/backend`), contracts (`notes/schemas`), desktop (`apps/notes-desktop`) and feature packages (`packages/features/notes-*`). Polterware Notes shares `packages/frontend` and the UI law above but not Polterware's product surfaces, store or core: do not mix their data models, and keep the Polterware product boundary above unchanged. Polterware Notes checks run through `bash tooling/verify-notes.sh`; its renderer talks only through `window.pwnotes`.
 
 ## Architecture boundaries
 
 - Go local authority: the single `polterware` binary (`backend/runtimes/cli`: TUI, commands, `serve`, `mcp`) and retained domains only.
-- Desktop: Lore, `apps/lore-desktop`, with thin Electron Main, typed preload bridge, and Solid renderer.
+- Desktop: Polterware, `apps/polterware-desktop`, with thin Electron Main, typed preload bridge, and Solid renderer.
 - Features: `packages/features/<feature>`.
 - Shared frontend: `packages/frontend`.
 - Contracts: `schemas` to generated Go code in `backend/platform/gen` and TypeScript in `packages/contracts`.
-- Renderer access: `window.lore` only; no raw Electron or Node.js.
+- Renderer access: `window.polterware` only; no raw Electron or Node.js.
 - The core uses a technical bearer session token without an account directory.
 - There is one clean SQLite baseline and no compatibility requirement for earlier databases.
 
@@ -55,7 +55,7 @@ The monorepo also hosts Sparky, a separate local-first app with its own core (`s
   - Specs is a table of the same cards. The five-document Spec / Plan / Tasks / Clarify / Checklist model and the Constitution document are removed; project-wide principles are pinned Decisions.
 - Atlas: Map, Components (nodes: system, domain, component; a feature is a Work card shown in the node detail)
 - Truth: Decisions, Facts, Evidence
-  - Decisions is one list of ADRs with a lifecycle state filter (Active, Challenged, Proposed, Superseded; Active by default). A Decision has a scope: a Principle applies to the whole project and stays pinned on top (`extra_json.scope = "principle"`).
+  - Decisions is one list of Verdicts with a lifecycle state filter (Active, Challenged, Proposed, Superseded; all states shown by default). A Decision has a scope: a Principle applies to the whole project and stays pinned on top (`extra_json.scope = "principle"`).
   - Facts are statements about the project (declared, observed, inferred, or verified); each lists the evidence that backs it.
   - Evidence is one list of `source`, `doc`, and `runbook` items with a kind filter. Sources are registered project-relative paths (`kind = source`); Import from project root runs `ImportProjectSources` for the MVP file set. Generic filesystem indexing beyond that set is not shipped.
   - Resources are Atlas components; there is no separate Inventory surface.
@@ -66,7 +66,9 @@ The monorepo also hosts Sparky, a separate local-first app with its own core (`s
   - Integrations: Connected, Catalog (**KEEP** — evidence + Connect UI)
   - App: Shortcuts, Advanced
 
-Keep project and environment switchers, Commander, history controls, and Settings. Do not introduce additional product surfaces without an approved decision. Do not reintroduce removed Ops/Terminal/Nodes surfaces.
+Scope is a global filter, not a surface: the title bar scope switcher picks an Atlas node (system, domain, or component) or the whole project. It narrows Work cards (through their component), Decisions, Facts, Evidence, Inbox/Drift, the Context Compiler, `polterware query|status|inbox|oracle --scope <node> [--exact]`, and the MCP `scope` argument. An entity has one optional scope (`scope_node_id`); no scope means the whole project and stays visible under any filter. Decisions take `scope:` in Polter; derived Inbox/Drift items are scoped with `polterware scope item <key> <node>`.
+
+Keep project and environment switchers, Commander, history controls, and Settings. Do not introduce additional product surfaces without an approved decision.
 
 ## UI law
 

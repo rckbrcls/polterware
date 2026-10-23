@@ -56,6 +56,19 @@ for (const name of entries) {
     else assert.ok(!entry.name.endsWith('.map'), `Physical source map shipped: ${path}`);
   }
 })(resources);
-assert.ok(!existsSync(join(resources, 'app-update.yml')), 'Automatic update feed must stay disabled');
+const updater = require('../updater/config.cjs');
+assert.equal(plist.SUFeedURL, updater.feedUrl(process.argv[2]));
+assert.equal(plist.SUPublicEDKey, updater.publicKey);
+assert.equal(plist.SUEnableAutomaticChecks, true);
+assert.equal(plist.SUScheduledCheckInterval, 86400);
+assert.match(plist.CFBundleVersion, /^\d+$/);
+const addon = join(resources, 'updater/updater.node');
+assert.ok(existsSync(addon), 'Sparkle bridge missing');
+assert.equal(execFileSync('lipo', ['-archs', addon], { encoding: 'utf8' }).trim(), 'arm64');
+execFileSync('codesign', ['--verify', '--strict', addon]);
+const framework = join(app, 'Contents/Frameworks/Sparkle.framework');
+assert.ok(existsSync(framework), 'Sparkle framework missing');
+execFileSync('codesign', ['--verify', '--deep', '--strict', framework]);
+assert.ok(!existsSync(join(resources, 'app-update.yml')), 'Do not mix Squirrel feeds with Sparkle');
 
-console.log(`PASS ${release.product}: ad-hoc signature, strict deep verification, hardened runtime off, nested binaries (${release.binaries.map((b) => `${b.path}:${b.arch}`).join(', ')}), bundle id, no source maps, dev-only dependencies or update feed`);
+console.log(`PASS ${release.product}: ad-hoc signature, strict deep verification, hardened runtime off, nested binaries (${release.binaries.map((b) => `${b.path}:${b.arch}`).join(', ')}), bundle id, no source maps, dev-only dependencies, Sparkle feed and bridge verified`);

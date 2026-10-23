@@ -3,7 +3,7 @@ package demoseed
 import (
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/ppm"
+	"github.com/polterware/polterware/backend/domains/canon"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
@@ -11,29 +11,29 @@ import (
 // lists as unbacked.
 func seedFacts(store *storepkg.Store) error {
 	observed := time.Date(2026, 9, 18, 10, 30, 0, 0, time.UTC)
-	evidence := []ppm.Evidence{
-		{ID: "ev-package-json", Kind: ppm.EvidenceKindFile, Summary: "Workspace manifest declares pnpm and Electron.", Source: "import", Path: "package.json"},
-		{ID: "ev-go-mod", Kind: ppm.EvidenceKindFile, Summary: "Go module requires modernc.org/sqlite.", Source: "import", Path: "go.mod"},
-		{ID: "ev-commit-core", Kind: ppm.EvidenceKindCommit, Summary: "a1f3c9e Add a single local core with live sync.", Source: "git"},
-		{ID: "ev-test-drift", Kind: ppm.EvidenceKindTest, Summary: "Drift check suite passed on the last run.", Source: "go test", Path: "backend/domains/drift/check_test.go"},
+	evidence := []canon.Evidence{
+		{ID: "ev-package-json", Kind: canon.EvidenceKindFile, Summary: "Workspace manifest declares pnpm and Electron.", Source: "import", Path: "package.json"},
+		{ID: "ev-go-mod", Kind: canon.EvidenceKindFile, Summary: "Go module requires modernc.org/sqlite.", Source: "import", Path: "go.mod"},
+		{ID: "ev-commit-core", Kind: canon.EvidenceKindCommit, Summary: "a1f3c9e Add a single local core with live sync.", Source: "git"},
+		{ID: "ev-test-drift", Kind: canon.EvidenceKindTest, Summary: "Drift check suite passed on the last run.", Source: "go test", Path: "backend/domains/drift/check_test.go"},
 	}
 	for _, item := range evidence {
 		item.ProjectID, item.Actor, item.ObservedAt, item.CreatedAt, item.UpdatedAt = ProjectID, "system", observed, observed, observed
-		if err := store.UpsertPpmEvidence(item); err != nil {
+		if err := store.UpsertCanonEvidence(item); err != nil {
 			return err
 		}
 	}
 	facts := []struct {
-		fact     ppm.Fact
+		fact     canon.Fact
 		evidence []string
 	}{
-		{ppm.Fact{ID: "fact-pnpm", Statement: "The workspace uses pnpm.", TruthClass: ppm.TruthObserved, Source: "package.json"}, []string{"ev-package-json"}},
-		{ppm.Fact{ID: "fact-electron", Statement: "The Desktop is an Electron app.", TruthClass: ppm.TruthObserved, Source: "package.json"}, []string{"ev-package-json"}},
-		{ppm.Fact{ID: "fact-sqlite", Statement: "Project state lives in a local SQLite database.", TruthClass: ppm.TruthObserved, Source: "go.mod"}, []string{"ev-go-mod", "ev-commit-core"}},
-		{ppm.Fact{ID: "fact-drift-check", Statement: "Drift findings are computed from declared facts.", TruthClass: ppm.TruthVerified, Source: "go test", Actor: "claude-code"}, []string{"ev-test-drift"}},
-		{ppm.Fact{ID: "fact-no-network", Statement: "Imports never call the network.", TruthClass: ppm.TruthDeclared, Source: "ADR 0002"}, nil},
-		{ppm.Fact{ID: "fact-redis-sessions", Statement: "Sessions are cached in Redis.", TruthClass: ppm.TruthDeclared, Source: "doc-architecture"}, nil},
-		{ppm.Fact{ID: "fact-webhook-queue", Statement: "Webhook retries will probably run through the event queue.", TruthClass: ppm.TruthInferred, Source: "billing-webhooks"}, nil},
+		{canon.Fact{ID: "fact-pnpm", Statement: "The workspace uses pnpm.", TruthClass: canon.TruthObserved, Source: "package.json"}, []string{"ev-package-json"}},
+		{canon.Fact{ID: "fact-electron", Statement: "The Desktop is an Electron app.", TruthClass: canon.TruthObserved, Source: "package.json"}, []string{"ev-package-json"}},
+		{canon.Fact{ID: "fact-sqlite", Statement: "Project state lives in a local SQLite database.", TruthClass: canon.TruthObserved, Source: "go.mod"}, []string{"ev-go-mod", "ev-commit-core"}},
+		{canon.Fact{ID: "fact-drift-check", Statement: "Drift findings are computed from declared facts.", TruthClass: canon.TruthVerified, Source: "go test", Actor: "claude-code"}, []string{"ev-test-drift"}},
+		{canon.Fact{ID: "fact-no-network", Statement: "Imports never call the network.", TruthClass: canon.TruthDeclared, Source: "Verdict 0002"}, nil},
+		{canon.Fact{ID: "fact-redis-sessions", Statement: "Sessions are cached in Redis.", TruthClass: canon.TruthDeclared, Source: "doc-architecture"}, nil},
+		{canon.Fact{ID: "fact-webhook-queue", Statement: "Webhook retries will probably run through the event queue.", TruthClass: canon.TruthInferred, Source: "billing-webhooks"}, nil},
 	}
 	for i, item := range facts {
 		fact := item.fact
@@ -42,11 +42,11 @@ func seedFacts(store *storepkg.Store) error {
 		if fact.Actor == "" {
 			fact.Actor = "system"
 		}
-		if err := store.UpsertPpmFact(fact); err != nil {
+		if err := store.UpsertCanonFact(fact); err != nil {
 			return err
 		}
 		for _, evidenceID := range item.evidence {
-			if err := store.LinkPpmEvidenceToFact(ProjectID, fact.ID, evidenceID); err != nil {
+			if err := store.LinkCanonEvidenceToFact(ProjectID, fact.ID, evidenceID); err != nil {
 				return err
 			}
 		}

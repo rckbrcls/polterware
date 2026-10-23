@@ -28,6 +28,8 @@ message CompileContextRequest {
   string entity_id = 3;
   int32 token_budget = 4;
   string agent_run_id = 5;
+  string scope_node = 6;
+  bool scope_exact = 7;
 }
 
 message CompileContextResponse {

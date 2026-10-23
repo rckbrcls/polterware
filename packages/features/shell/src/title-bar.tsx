@@ -1,7 +1,7 @@
 import {
+  Button,
   ChevronLeft,
   ChevronRight,
-  ControlButton,
   Search,
 } from "@polterware/frontend-design-system";
 import { createShortcutLabel } from "@polterware/frontend-state";
@@ -12,7 +12,7 @@ import {
 } from "./context-switchers";
 import { CoreStatusMenu, type CoreStatusMenuProps } from "./core-status-menu";
 import { TitleBarFrame } from "@polterware/frontend-shell";
-import type { EnvironmentItem, ProjectSwitcherItem } from "./types";
+import type { EnvironmentItem, ProjectSwitcherItem, ScopeNodeItem, WorkspaceScope } from "./types";
 
 export type TitleBarProps = {
   canGoBack: boolean;
@@ -25,6 +25,9 @@ export type TitleBarProps = {
   onSelectProject?: (projectId: string) => void;
   onSelectEnvironment?: (environmentId: string) => void;
   onCreateProject?: () => void;
+  scopeNodes?: ScopeNodeItem[];
+  scope?: WorkspaceScope;
+  onSelectScope?: (scope: WorkspaceScope) => void;
   onOpenCommander?: () => void;
   coreStatus?: CoreStatusMenuProps;
 };
@@ -35,24 +38,22 @@ export function TitleBar(props: TitleBarProps) {
   return (
     <TitleBarFrame>
         <div class="flex shrink-0 items-center [-webkit-app-region:no-drag]">
-          <button
-            type="button"
+          <Button
+            variant="icon"
             aria-label="Go back"
             disabled={!props.canGoBack}
             onClick={props.onBack}
-            style={navButtonStyle(!props.canGoBack)}
           >
             <ChevronLeft size={13} />
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="icon"
             aria-label="Go forward"
             disabled={!props.canGoForward}
             onClick={props.onForward}
-            style={navButtonStyle(!props.canGoForward)}
           >
             <ChevronRight size={13} />
-          </button>
+          </Button>
         </div>
 
         <div class="flex min-w-0 shrink items-center [-webkit-app-region:no-drag]">
@@ -63,39 +64,27 @@ export function TitleBar(props: TitleBarProps) {
             onSelectProject={props.onSelectProject}
             onSelectEnvironment={props.onSelectEnvironment}
             onCreateProject={props.onCreateProject}
+            scopeNodes={props.scopeNodes}
+            scope={props.scope}
+            onSelectScope={props.onSelectScope}
           />
         </div>
 
         <div class="min-w-3 flex-1" aria-hidden />
 
         <div class="flex shrink-0 items-center gap-1 [-webkit-app-region:no-drag]">
-          <ControlButton
-            icon
-            tone="secondary"
+          <Button
+            variant="texture"
+            size="icon"
+            class="!h-[var(--control-height-md)] !w-[var(--control-height-md)]"
             aria-label="Search or run a command"
             title={`Commander (${commanderShortcut()})`}
             onClick={() => props.onOpenCommander?.()}
           >
             <Search size={14} />
-          </ControlButton>
+          </Button>
           <Show when={props.coreStatus}>{(coreStatus) => <CoreStatusMenu {...coreStatus()} />}</Show>
         </div>
     </TitleBarFrame>
   );
-}
-
-function navButtonStyle(disabled: boolean) {
-  return {
-    display: "inline-flex",
-    "align-items": "center",
-    "justify-content": "center",
-    width: "24px",
-    height: "24px",
-    padding: "0",
-    border: "none",
-    "border-radius": "var(--radius-control)",
-    background: "transparent",
-    color: disabled ? "var(--color-text-disabled)" : "var(--color-text-secondary)",
-    cursor: disabled ? "default" : "pointer",
-  };
 }

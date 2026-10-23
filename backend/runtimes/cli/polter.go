@@ -134,12 +134,13 @@ func runQuery(dbPath string, args []string) error {
 	flags := flag.NewFlagSet("query", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	projectID := flags.String("project", "", "project id (default: project containing the cwd)")
+	scope := addScopeFlags(flags)
 	positional, err := parseInterspersed(flags, args)
 	if err != nil {
 		return err
 	}
 	if len(positional) == 0 {
-		return errors.New(`usage: polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "atlas" | "decisions [state]" | "decision <adr>" | "feature <slug> [step]" | "verify <slug>"`)
+		return errors.New(`usage: polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "atlas" | "decisions [state]" | "decision <verdict>" | "feature <slug> [step]" | "verify <slug>"`)
 	}
 	c, err := dial(dbPath)
 	if err != nil {
@@ -149,7 +150,7 @@ func runQuery(dbPath string, args []string) error {
 	if err != nil {
 		return err
 	}
-	res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{ProjectId: project.Id, Query: strings.Join(positional, " ")}))
+	res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{ProjectId: project.Id, Query: strings.Join(positional, " "), ScopeNode: *scope.node, ScopeExact: *scope.exact}))
 	if err != nil {
 		return err
 	}
@@ -161,6 +162,7 @@ func runStatus(dbPath string, args []string) error {
 	flags := flag.NewFlagSet("status", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	projectID := flags.String("project", "", "project id (default: project containing the cwd)")
+	scope := addScopeFlags(flags)
 	if _, err := parseInterspersed(flags, args); err != nil {
 		return err
 	}
@@ -172,7 +174,7 @@ func runStatus(dbPath string, args []string) error {
 	if err != nil {
 		return err
 	}
-	res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{ProjectId: project.Id, Query: polter.QueryStatus}))
+	res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{ProjectId: project.Id, Query: polter.QueryStatus, ScopeNode: *scope.node, ScopeExact: *scope.exact}))
 	if err != nil {
 		return err
 	}

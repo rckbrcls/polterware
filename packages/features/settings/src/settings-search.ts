@@ -11,9 +11,7 @@ export type SettingsSearchEntry = {
   keywords?: string;
 };
 
-export function settingsSectionId(section: string): string {
-  return `settings-section-${section.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
-}
+export { searchSettings, settingsSectionId } from "@polterware/frontend-design-system";
 
 export const SETTINGS_SEARCH_ENTRIES: SettingsSearchEntry[] = [
   { id: "project-name", tab: "general", section: "Project", label: "Name" },
@@ -106,7 +104,7 @@ export const SETTINGS_SEARCH_ENTRIES: SettingsSearchEntry[] = [
     section: "Appearance",
     label: "Reduce transparency",
     description: "Use a solid fill instead of the macOS frosted title bar and sidebar.",
-    keywords: "appearance glass vibrancy theme",
+    keywords: "appearance glass vibrancy",
   },
   {
     id: "core-status",
@@ -153,20 +151,4 @@ export function dynamicSettingsEntries(environments: readonly ProjectEnvironment
     keywords: `${env.kind} ${env.protection}`,
   }));
   return [...envs, ...shortcuts];
-}
-
-/** Case-insensitive substring match over label, description, section, and keywords. */
-export function searchSettings(
-  entries: readonly SettingsSearchEntry[],
-  query: string,
-): SettingsSearchEntry[] {
-  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  if (terms.length === 0) return [];
-  return entries.filter((entry) => {
-    const haystack = [entry.label, entry.description, entry.section, entry.keywords]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-    return terms.every((term) => haystack.includes(term));
-  });
 }

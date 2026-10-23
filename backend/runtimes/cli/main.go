@@ -31,7 +31,7 @@ func main() {
 	command := args[0]
 	rest := args[1:]
 
-	// Only `serve` opens the store (ADR 0007); every other command is a client
+	// Only `serve` opens the store (Verdict 0007); every other command is a client
 	// of the core and starts it when none is running.
 	var err error
 	switch command {
@@ -77,6 +77,8 @@ func main() {
 		err = runVerify(*dbPath, rest)
 	case "inbox":
 		err = runInbox(*dbPath, rest)
+	case "scope":
+		err = runScope(*dbPath, rest)
 	case "setup":
 		err = runSetup(*dbPath, rest)
 	case "hooks":

@@ -24,7 +24,7 @@ func TestCompilePreservesReasonsAndEvidence(t *testing.T) {
 	items := []Item{
 		{
 			Kind: "fact", ID: "f1", Title: "Uses Go modules", Excerpt: "module example",
-			TruthClass: "observed", Source: "import:go.mod", Path: "ppm/fact/f1",
+			TruthClass: "observed", Source: "import:go.mod", Path: "canon/fact/f1",
 			Reasons: []string{ReasonImportedFact},
 			Evidence: []EvidenceRef{{ID: "ev1", Kind: "file", Summary: "go.mod", Path: "go.mod", Source: "import:go.mod"}},
 		},

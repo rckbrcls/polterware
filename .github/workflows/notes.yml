@@ -1,0 +1,53 @@
+name: Polterware Notes
+
+on:
+  push:
+    branches:
+      - notes-next
+      - "notes/**"
+  pull_request:
+    paths:
+      - "apps/notes-desktop/**"
+      - "apps/notes-notifier/**"
+      - "packages/features/notes-*/**"
+      - "packages/notes-contracts/**"
+      - "packages/frontend/map/**"
+      - "notes/**"
+      - "tooling/verify-notes.sh"
+      - "tooling/check-notes-boundaries.sh"
+      - ".github/workflows/notes.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: notes/backend/go.mod
+          cache-dependency-path: notes/backend/go.sum
+
+      - name: Install buf
+        run: go install github.com/bufbuild/buf/cmd/buf@latest
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Polterware Notes contracts
+        run: |
+          cd notes/schemas
+          buf generate
+
+      - name: verify-notes
+        run: bash tooling/verify-notes.sh

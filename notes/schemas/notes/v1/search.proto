@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package notes.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/polterware/polterware/notes/backend/platform/gen/notes/v1;notesv1";
+
+message SearchHit {
+  string note_id = 1;
+  string title = 2;
+  double score = 3;
+  string snippet = 4;
+  repeated string matched_in = 5;
+}
+
+message SearchNotesRequest {
+  string query = 1;
+  reserved 2;
+  string space_id = 3;
+  bool include_descendants = 4;
+  repeated string tag_ids = 5;
+  string status = 6;
+  int32 limit = 7;
+  google.protobuf.Timestamp due_from = 8;
+  google.protobuf.Timestamp due_to = 9;
+  google.protobuf.Timestamp updated_from = 10;
+  google.protobuf.Timestamp updated_to = 11;
+}
+
+message SearchNotesResponse {
+  repeated SearchHit hits = 1;
+  reserved 2;
+  string notice = 3;
+}
+
+message SearchStatusRequest {}
+
+message SearchStatusResponse {
+  int32 fts_documents = 1;
+  reserved 2 to 7;
+}
+
+message ReindexRequest {}
+
+message ReindexResponse {
+  int32 notes = 1;
+}
+
+service SearchService {
+  rpc Search(SearchNotesRequest) returns (SearchNotesResponse);
+  rpc Status(SearchStatusRequest) returns (SearchStatusResponse);
+  rpc Reindex(ReindexRequest) returns (ReindexResponse);
+}

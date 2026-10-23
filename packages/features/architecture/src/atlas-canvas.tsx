@@ -1,9 +1,10 @@
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, untrack } from "solid-js";
+import { EntityDetailHost } from "@polterware/feature-shell";
 import {
   animateCollapse,
   Button,
   Check,
-  ChevronRight,
+  DisclosureButton,
   CollapseIcon,
   DetailPanel,
   IconTile,
@@ -25,6 +26,10 @@ import {
   Tabs,
   type CollapseControls,
   type IconTileTone,
+  Eye,
+  FileText,
+  Scale,
+  ShieldCheck,
 } from "@polterware/frontend-design-system";
 import { detailPanelStore, createDetailPanelSelector } from "@polterware/frontend-state";
 import "./atlas-tree.css";
@@ -184,7 +189,7 @@ export function AtlasCanvas(props: {
   const tab = () => normalizeArchitectureTab(props.tab);
 
   return (
-    <>
+    <EntityDetailHost mode="overlay">
       <div class="flex h-full min-h-0 flex-col">
         <PageToolbar.Root>
           <PageToolbar.Tabs>
@@ -277,7 +282,7 @@ export function AtlasCanvas(props: {
         cards={props.cards}
         historical={props.historical ?? false}
       />
-    </>
+    </EntityDetailHost>
   );
 }
 
@@ -372,19 +377,12 @@ function TreeRow(props: {
   return (
     <div class="atlas-tree-row" data-selected={props.selected ? "true" : undefined}>
       <Show when={props.item.hasChildren} fallback={<span class="atlas-tree-chevron__spacer" aria-hidden="true" />}>
-        <button
-          type="button"
-          class="atlas-tree-chevron"
+        <DisclosureButton
+          size="compact"
+          expanded={props.expanded}
           aria-label={`${props.expanded ? "Collapse" : "Expand"} ${title()}`}
           onClick={props.onToggle}
-        >
-          <ChevronRight
-            size={14}
-            aria-hidden
-            class="transition-transform duration-[var(--duration-control)] ease-[var(--ease-enter)] motion-reduce:transition-none"
-            classList={{ "rotate-90": props.expanded }}
-          />
-        </button>
+        />
       </Show>
       <button
         type="button"
@@ -417,7 +415,7 @@ export function AtlasStatusMark(props: { status: AtlasCanvasNode["status"]; note
       <Tooltip.Trigger
         asChild={(triggerProps) => (
           <span {...triggerProps({ class: "atlas-tree-row__status", role: "img", "aria-label": label() })}>
-            <IconTile size={28} tone={tone()}>
+            <IconTile size={28} tone={tone()} seed={`status-${props.status}`}>
               {(() => {
                 const Icon = STATUS_MARK[props.status].icon;
                 return <Icon size={14} aria-hidden />;
@@ -437,7 +435,7 @@ function MigrationMark(props: { label: string }) {
       <Tooltip.Trigger
         asChild={(triggerProps) => (
           <span {...triggerProps({ class: "atlas-tree-row__status", role: "img", "aria-label": props.label })}>
-            <IconTile size={28} tone="knowledge">
+            <IconTile size={28} tone="knowledge" seed="status-refresh">
               <RefreshCw size={14} aria-hidden />
             </IconTile>
           </span>
@@ -512,7 +510,7 @@ function NodePanel(props: { node: AtlasCanvasNode; cards: readonly AtlasCanvasCa
               </div>
             }
           />
-          <DetailPanel.Section title="Intent">
+          <DetailPanel.Section title="Intent" icon={<FileText size={14} />}>
             <Show
               when={props.node.intent}
               fallback={<p class="pw-detail-panel__text" data-empty>No intent yet.</p>}
@@ -520,7 +518,7 @@ function NodePanel(props: { node: AtlasCanvasNode; cards: readonly AtlasCanvasCa
               <p class="pw-detail-panel__text whitespace-pre-wrap">{props.node.intent}</p>
             </Show>
           </DetailPanel.Section>
-          <DetailPanel.Section title="Contract">
+          <DetailPanel.Section title="Contract" icon={<ShieldCheck size={14} />}>
             <TextList items={props.node.invariants.map((item) => item.text)} empty="No invariants yet." />
             <Show when={migration()}>
               <p class="pw-detail-panel__text">
@@ -529,10 +527,10 @@ function NodePanel(props: { node: AtlasCanvasNode; cards: readonly AtlasCanvasCa
               </p>
             </Show>
           </DetailPanel.Section>
-          <DetailPanel.Section title="Decisions">
+          <DetailPanel.Section title="Decisions" icon={<Scale size={14} />}>
             <TextList items={props.node.decisions} empty="No decisions yet." />
           </DetailPanel.Section>
-          <DetailPanel.Section title="Reality">
+          <DetailPanel.Section title="Reality" icon={<Eye size={14} />}>
             <p class="pw-detail-panel__text">
               {props.node.featureCount} features · {props.node.openQuestions} open questions
             </p>
@@ -543,7 +541,7 @@ function NodePanel(props: { node: AtlasCanvasNode; cards: readonly AtlasCanvasCa
               </p>
             </Show>
           </DetailPanel.Section>
-          <DetailPanel.Section title="Work">
+          <DetailPanel.Section title="Work" icon={<ListChecks size={14} />}>
             <TextList
               items={work().map((card) => `${card.title} (${card.stage})`)}
               empty="No feature cards under this node."
@@ -573,7 +571,7 @@ function CardPanel(props: { card: AtlasCanvasCard; driftSlugs: string[] }) {
               </div>
             }
           />
-          <DetailPanel.Section title="Intent">
+          <DetailPanel.Section title="Intent" icon={<FileText size={14} />}>
             <Show
               when={props.card.intent}
               fallback={<p class="pw-detail-panel__text" data-empty>No intent yet.</p>}
@@ -581,16 +579,16 @@ function CardPanel(props: { card: AtlasCanvasCard; driftSlugs: string[] }) {
               <p class="pw-detail-panel__text whitespace-pre-wrap">{props.card.intent}</p>
             </Show>
           </DetailPanel.Section>
-          <DetailPanel.Section title="Contract">
+          <DetailPanel.Section title="Contract" icon={<ShieldCheck size={14} />}>
             <TextList items={props.card.invariants.map((item) => item.text)} empty="No invariants yet." />
           </DetailPanel.Section>
-          <DetailPanel.Section title="Decisions">
+          <DetailPanel.Section title="Decisions" icon={<Scale size={14} />}>
             <TextList items={props.card.decisions} empty="No decisions yet." />
           </DetailPanel.Section>
-          <DetailPanel.Section title="Reality">
+          <DetailPanel.Section title="Reality" icon={<Eye size={14} />}>
             <p class="pw-detail-panel__text">Stage {props.card.stage}</p>
           </DetailPanel.Section>
-          <DetailPanel.Section title="Work">
+          <DetailPanel.Section title="Work" icon={<ListChecks size={14} />}>
             <TextList
               items={openTasks().map((task) => task.title)}
               empty="No open tasks."

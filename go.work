@@ -4,6 +4,6 @@ toolchain go1.27.1
 
 use (
 	./backend
-	./sparky/backend
-	./apps/vitals/agent
+	./notes/backend
+	./apps/vitals-desktop/agent
 )

@@ -1,20 +1,9 @@
 import { Show } from "solid-js";
-import {
-  Book03Icon,
-  BookOpen02Icon,
-  DataTable,
-  FileText,
-  Scale,
-  StatusChip,
-} from "@polterware/frontend-design-system";
+import { DataTable, FileText, Scale, StatusChip } from "@polterware/frontend-design-system";
 import type { LibraryRow } from "./library-row";
 
 function categoryIcon(row: LibraryRow) {
-  if (row.category === "runbook") return <BookOpen02Icon size={16} />;
-  if (row.category === "source") return <FileText size={16} />;
-  if (row.pinned) return <Scale size={16} />;
-  if (row.category === "adr") return <FileText size={16} />;
-  return <Book03Icon size={16} />;
+  return row.pinned ? <Scale size={16} /> : <FileText size={16} />;
 }
 
 export function LibraryTable(props: {
@@ -49,6 +38,7 @@ export function LibraryTable(props: {
               <DataTable.PrimaryCell
                 icon={categoryIcon(item)}
                 iconTone="knowledge"
+                iconSeed={item.id}
                 title={item.title}
               />
               <DataTable.Cell>{item.categoryLabel}</DataTable.Cell>

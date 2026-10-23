@@ -30,3 +30,19 @@ export type ProjectSwitcherItem = {
   /** Secondary id under project name in table view. */
   refId?: string;
 };
+
+/** The global scope filter: one Atlas node path, or empty for the whole project. */
+export type WorkspaceScope = {
+  node: string;
+  /** Leave out the node's ancestors. */
+  exact: boolean;
+};
+
+/** One Atlas node offered by the scope switcher. */
+export type ScopeNodeItem = {
+  id: string;
+  parentId: string;
+  level: "system" | "domain" | "component";
+  path: string;
+  title: string;
+};

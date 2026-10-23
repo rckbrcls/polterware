@@ -133,6 +133,7 @@ export function IntegrationsView(props: {
                             icon={<NodeIcon name={providerIconKey(integration)} size={16} brand={false} />}
                             iconTone="integration"
                             iconBrand={[integration.name, providerIconKey(integration)]}
+                            iconSeed={integration.id}
                             title={integration.name}
                           />
                           <DataTable.Cell><StatusChip tone={integrationTone(status())} label={status()} /></DataTable.Cell>
@@ -185,6 +186,7 @@ export function IntegrationsView(props: {
                           icon={<NodeIcon name={providerIconKey(provider)} size={16} brand={false} />}
                           iconTone="integration"
                           iconBrand={[provider.name, providerIconKey(provider)]}
+                          iconSeed={provider.id}
                           title={provider.name}
                         />
                         <DataTable.Cell>{provider.category}</DataTable.Cell>

@@ -1,0 +1,28 @@
+name: Polterware release
+
+on:
+  push:
+    tags:
+      - polterware-v*
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing polterware-v<version> tag to build as a draft
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: polterware-release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    uses: ./.github/workflows/desktop-release.yml
+    secrets:
+      POLTERWARE_SPARKLE_PRIVATE_KEY: ${{ secrets.POLTERWARE_SPARKLE_PRIVATE_KEY }}
+    with:
+      app: polterware
+      tag: ${{ inputs.tag || github.ref_name }}

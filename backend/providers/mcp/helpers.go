@@ -15,6 +15,11 @@ func stringFrom(value any) string {
 	return text
 }
 
+func boolFrom(value any) bool {
+	flag, _ := value.(bool)
+	return flag
+}
+
 func intFrom(value any, fallback int) int {
 	switch typed := value.(type) {
 	case float64:

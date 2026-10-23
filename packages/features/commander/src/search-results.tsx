@@ -24,11 +24,11 @@ export const SEARCH_HITS: SearchHit[] = [
   { id: "h2", category: "Atlas", title: "Payment flow", subtitle: "System map", section: "atlas", tab: "map" },
   { id: "h3", category: "Atlas", title: "payment-service", subtitle: "Component · AWS · Healthy", section: "atlas", tab: "map", entityKind: "resource", entityId: "payment-service" },
   { id: "h5", category: "Work", title: "Payment flow", subtitle: "card · Build", section: "work", tab: "board", entityKind: "card", entityId: "payment-flow" },
-  { id: "h6", category: "Truth", title: "ADR 0004", subtitle: "adr · Product positioning", section: "truth", tab: "decisions", entityKind: "adr", entityId: "adr-0004" },
+  { id: "h6", category: "Truth", title: "Verdict 0004", subtitle: "verdict · Product positioning", section: "truth", tab: "decisions", entityKind: "verdict", entityId: "verdict-0004" },
 ];
 
 export function knowledgeHitsFromSearch(hits: Array<{
-  item?: { id?: string; title?: string; kind?: string; summary?: string };
+  item?: { id?: string; title?: string; kind?: string; tags?: string[]; summary?: string };
   snippet?: string;
   source?: string;
 }>): SearchHit[] {
@@ -36,22 +36,17 @@ export function knowledgeHitsFromSearch(hits: Array<{
     const id = hit.item?.id;
     const title = hit.item?.title;
     if (!id || !title) return [];
-    const kind = hit.item?.kind ?? "doc";
-    const { section, tab, category } = kind === "adr"
+    const tags = hit.item?.tags ?? [];
+    const kind = hit.item?.kind === "verdict" ? "verdict" : "evidence";
+    const { section, tab, category } = kind === "verdict"
       ? { section: "truth", tab: "decisions", category: "Truth" }
       : { section: "truth", tab: "evidence", category: "Truth" };
-    const entityKind = kind === "runbook"
-      ? "runbook"
-      : kind === "adr"
-        ? "adr"
-        : kind === "source"
-          ? "source"
-          : "document";
+    const entityKind = kind;
     return [{
       id: `knowledge-${id}`,
       category,
       title,
-      subtitle: `${kind} · ${hit.snippet || hit.item?.summary || hit.source || "knowledge"}`,
+      subtitle: `${[kind, ...tags].join(" · ")} · ${hit.snippet || hit.item?.summary || hit.source || "knowledge"}`,
       section,
       tab,
       entityKind,

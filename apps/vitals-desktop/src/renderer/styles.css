@@ -1,0 +1,780 @@
+@import "../../../../packages/configuration/tailwind/base.css";
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: var(--color-app-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* macOS vibrancy: clear the page so the frosted window shows through the shell glass wash.
+ * !important — Electron can lock the first opaque WebContents background. */
+html[data-shell-chrome="vibrancy"],
+html[data-shell-chrome="vibrancy"] body,
+html[data-shell-chrome="vibrancy"] #root {
+  background: transparent !important;
+}
+
+/* One accent across Vitals: the primary (ice white; also the shared
+ * brand token) drives success and healthy meters. Warning and danger stay amber and red because they carry status. */
+:root {
+  --color-success: var(--color-primary);
+  --color-status-success-background: var(--color-primary);
+  --color-status-success-foreground: var(--color-primary-foreground);
+}
+
+.vitals-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.vitals-topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 8px 16px;
+  background: var(--color-shell-glass) !important;
+}
+
+html[data-shell-chrome="solid"] .vitals-topbar {
+  background: var(--color-app-background) !important;
+}
+
+/* Quiet global scrollbar — transparent rail, compact thumb, stronger only on interaction. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-selected) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  min-width: 32px;
+  min-height: 32px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface-selected);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-disabled);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background-color: var(--color-text-muted);
+}
+
+/* The tab strip is the window title bar: it drags the window and clears the traffic lights. */
+.vitals-tabs {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: var(--titlebar-height, 44px);
+  overflow-x: auto;
+  /* The frame already pads 8px, so subtract it to keep the traffic-light inset measured from the window edge. */
+  padding: 0 4px 0 calc(var(--titlebar-traffic-inset, 78px) - 8px);
+  -webkit-app-region: drag;
+}
+
+/* Sits 20px past the traffic lights (x 14 to 66) and splits them from the tabs. */
+.vitals-tabs > .vitals-titlebar-divider {
+  flex-shrink: 0;
+  align-self: center;
+  height: 16px;
+  margin-right: 4px;
+  margin-left: 8px;
+  background-color: var(--color-border-strong);
+}
+
+.vitals-tab-row,
+.vitals-tab-new {
+  -webkit-app-region: no-drag;
+}
+
+.vitals-tab-row {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0 6px 0 0;
+  border-radius: 999px;
+  border: 1px solid var(--field-frame);
+  background: linear-gradient(to bottom, #262626, #3b3b3b);
+  box-shadow: inset 0 0 0 1px #4c4c4c;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+}
+
+.vitals-tab-row:hover {
+  background: linear-gradient(to bottom, #404040, #454545);
+}
+
+.vitals-tab-row[data-active="true"] {
+  background: linear-gradient(to bottom, #262626, #404040);
+  color: var(--color-text-primary);
+}
+
+.vitals-tab-row .vitals-tab {
+  height: 24px;
+  min-height: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+}
+
+.vitals-tab-row .vitals-tab::before {
+  content: none;
+}
+
+.vitals-tab-close {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+}
+
+.vitals-tab-row:hover .vitals-tab-close,
+.vitals-tab-row:focus-within .vitals-tab-close {
+  color: var(--color-text-muted);
+}
+
+.vitals-tab-close:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.vitals-tab-new {
+  appearance: none;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--field-frame);
+  background: linear-gradient(to bottom, #262626, #3b3b3b);
+  box-shadow: inset 0 0 0 1px #4c4c4c;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.vitals-tab-new:hover {
+  background: linear-gradient(to bottom, #404040, #454545);
+  color: var(--color-text-primary);
+}
+
+.vitals-tab-new[data-active="true"] {
+  background: linear-gradient(to bottom, #262626, #404040);
+  color: var(--color-text-primary);
+}
+
+/* No sidebar on the left, so the surface gets the same gutter the shell frame gives it on the right. */
+.pw-shell-main-frame.vitals-main-frame {
+  padding-left: 8px;
+}
+
+main.vitals-main {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The surface clips and carries the rim overlay; this wrapper is what scrolls. */
+.vitals-scroll {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  /* Cards shifting during a drag must not move the scroll. */
+  overflow-anchor: none;
+}
+
+.vitals-surface-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.vitals-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vitals-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vitals-metrics {
+  display: grid;
+  grid-template-columns: repeat(var(--vitals-cols, 2), minmax(0, 1fr));
+  grid-auto-rows: var(--vitals-row-h, 64px);
+  gap: var(--vitals-gap, 12px);
+  padding: 12px;
+}
+
+/* Free cells while a card is held: quiet card-shaped wells that read as places the card can go. */
+.vitals-drop-slot {
+  border-radius: var(--radius-card);
+  background: var(--color-surface-subtle);
+  pointer-events: none;
+}
+
+.vitals-section {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 16px 16px;
+  transition: box-shadow var(--spring-moderate-duration, var(--duration-enter)) var(--spring-moderate-ease, var(--ease-enter));
+}
+
+/* While held it lives in the top layer, pinned to its cell box (set inline); undo the popover defaults. */
+.vitals-section:popover-open {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  overflow: visible;
+  color: inherit;
+}
+
+/* Held (and still landing): the card floats above the surface, the others stay put underneath. */
+.vitals-section[data-lifted="true"] {
+  z-index: 3;
+  box-shadow:
+    0 20px 56px var(--color-shadow-float),
+    0 0 0 1px var(--color-shadow-subtle);
+}
+
+.vitals-section[data-dragging="true"] .vitals-card-head {
+  cursor: grabbing;
+}
+
+.vitals-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.vitals-section > .vitals-card-head {
+  flex-shrink: 0;
+  min-height: 44px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.vitals-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vitals-card-grip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: grab;
+}
+
+.vitals-card-grip:hover,
+.vitals-card-grip:focus-visible {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+/* Blocks spread over the card's full height; a lone list or grid stretches and spreads its rows. */
+.vitals-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.vitals-card-body > .vitals-stack:only-child {
+  flex: 1;
+  justify-content: space-between;
+}
+
+.vitals-card-body > .vitals-sensors:only-child {
+  flex: 1;
+  align-content: space-between;
+}
+
+/* Overall usage bar under a headline number. */
+.vitals-stat-bar {
+  margin-top: 4px;
+}
+
+/* A headline number with its caption directly under it. */
+.vitals-stat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vitals-network {
+  gap: 12px;
+}
+
+/* A chart with its caption directly above it. */
+.vitals-chart-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Temperature / GPU: one tile per reading, filling the card in an even grid. */
+.vitals-sensors {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 12px 10px;
+}
+
+.vitals-sensor {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.vitals-sensors-pair {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vitals-sensor-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.vitals-sensor-unit {
+  margin-left: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.vitals-sensor-label {
+  overflow: hidden;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vitals-sensor .vitals-bar {
+  height: 4px;
+  margin-top: 2px;
+}
+
+.vitals-card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.vitals-stat {
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.vitals-sub {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.vitals-cores {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.vitals-core {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 6px;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.vitals-core .vitals-bar {
+  grid-column: 1 / -1;
+}
+
+.vitals-ifaces {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Interface rows double as the picker for the charts below. */
+.vitals-iface {
+  appearance: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  width: 100%;
+  white-space: nowrap;
+  align-items: center;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.vitals-iface > :first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vitals-iface:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.vitals-iface:focus-visible {
+  outline: 2px solid var(--color-border-strong);
+  outline-offset: -2px;
+}
+
+.vitals-iface[data-active="true"] {
+  background: var(--color-surface-selected);
+  color: var(--color-text-primary);
+}
+
+.vitals-bar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-active);
+}
+
+.vitals-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-control);
+  background: var(--color-chart-cyan);
+}
+
+.vitals-bar > span[data-level="warn"] {
+  background: var(--color-chart-amber);
+}
+
+.vitals-bar > span[data-level="hot"] {
+  background: var(--color-chart-red);
+}
+
+.vitals-chart {
+  flex-shrink: 0;
+}
+
+.vitals-fingerprint {
+  margin: 0;
+  padding: 8px;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-active);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.vitals-terminal-pane {
+  box-sizing: border-box;
+  height: calc(100% - 48px);
+  min-height: 240px;
+  padding: 20px 16px 12px;
+  background: var(--color-surface-subtle);
+}
+
+.vitals-terminal-pane[hidden] {
+  display: none;
+}
+
+.vitals-empty-illustration {
+  display: flex;
+  padding: 14px 0;
+  margin-bottom: 12px;
+}
+
+.vitals-empty-illustration .pw-icon-tile {
+  transform: scale(2);
+}
+
+.vitals-home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 320px;
+  margin-top: 12px;
+}
+
+.vitals-home-connect.pw-control-button {
+  align-self: stretch;
+  justify-content: flex-start;
+  gap: 10px;
+  height: 48px;
+  padding: 0 20px 0 14px;
+}
+
+.vitals-home-section {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 2px;
+}
+
+.vitals-home-section-label {
+  padding: 0 8px 4px;
+  font-size: 12px;
+  text-align: left;
+  color: var(--color-text-muted);
+}
+
+.vitals-home-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* The row's hover fill spans the actions trigger, which sits inside the open button. */
+.vitals-home-open {
+  flex: 1;
+  justify-content: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding-right: 36px;
+}
+
+.vitals-home-row:hover .vitals-home-open:not(:disabled)::before,
+.vitals-home-row:has([data-state="open"]) .vitals-home-open::before {
+  background-color: var(--color-surface-hover);
+}
+
+.vitals-home-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+}
+
+.vitals-home-host {
+  overflow: hidden;
+  margin-left: auto;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.vitals-home-more {
+  position: absolute;
+  right: 4px;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--color-text-muted);
+  visibility: hidden;
+}
+
+.vitals-home-row:hover .vitals-home-more,
+.vitals-home-row:focus-within .vitals-home-more,
+.vitals-home-more[data-state="open"] {
+  visibility: visible;
+}
+
+.vitals-home-more:hover,
+.vitals-home-more[data-state="open"] {
+  color: var(--color-text-primary);
+}
+
+/* Card pill, same chrome as the settings entry in the tab strip. */
+.vitals-layout-trigger {
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--field-frame);
+  background: linear-gradient(to bottom, #262626, #3b3b3b);
+  box-shadow: inset 0 0 0 1px #4c4c4c;
+  color: var(--color-text-secondary);
+}
+
+.vitals-layout-trigger:hover {
+  background: linear-gradient(to bottom, #404040, #454545);
+  color: var(--color-text-primary);
+}
+
+.vitals-layout-trigger[data-state="open"] {
+  background: linear-gradient(to bottom, #262626, #404040);
+  color: var(--color-text-primary);
+}
+
+.vitals-error-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.vitals-status-head {
+  justify-content: flex-start;
+  padding: 12px 12px 0;
+}
+
+.vitals-connecting {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 32px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.vitals-connecting-echo {
+  --echo-dot: 3px;
+  --echo-peak: var(--color-text-muted);
+  --echo-dot-rest: var(--color-surface-selected);
+  margin-bottom: 12px;
+}
+
+.vitals-connecting-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+/* Layout-transparent host for the process table's delegated context menu. */
+.vitals-process-table {
+  display: contents;
+}
+
+/* Rows only open a context menu (no click activation), so they hover on the shared cell surface layer;
+   the row a menu acts on keeps that fill while the menu is open. */
+.vitals-process-table .pw-data-table-row:hover > .pw-data-table-cell::before,
+.vitals-process-row--menu > .pw-data-table-cell::before {
+  background: var(--color-surface-hover);
+}
+
+.vitals-settings-button {
+  margin-left: auto;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+/* Same card chrome as a tab pill, so the settings entry reads as part of the strip. */
+.vitals-settings-card {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--field-frame);
+  background: linear-gradient(to bottom, #262626, #3b3b3b);
+  box-shadow: inset 0 0 0 1px #4c4c4c;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color var(--duration-control) var(--ease-standard);
+}
+
+.vitals-settings-card:hover {
+  background: linear-gradient(to bottom, #404040, #454545);
+  color: var(--color-text-primary);
+}
+
+.vitals-settings-card[data-active="true"] {
+  background: linear-gradient(to bottom, #262626, #404040);
+  color: var(--color-text-primary);
+}
+
+.vitals-settings-card:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Card visibility menu: room for "Temperature / GPU" beside its switch. */
+.vitals-card-menu {
+  min-width: 260px;
+}

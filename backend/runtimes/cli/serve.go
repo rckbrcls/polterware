@@ -19,7 +19,7 @@ import (
 
 // defaultIdle is how long the core waits without requests or open change
 // streams before it exits. Zero keeps the core running until it is stopped
-// (ADR 0007); --idle or POLTERWARE_CORE_IDLE opt in to idle exit.
+// (Verdict 0007); --idle or POLTERWARE_CORE_IDLE opt in to idle exit.
 const defaultIdle time.Duration = 0
 
 // runServe runs the core: the only process that opens the store. The Desktop,

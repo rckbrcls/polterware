@@ -1,10 +1,10 @@
 import { createMemo } from "solid-js";
 import { DetailPanel } from "@polterware/frontend-design-system";
-import type { WorkspaceEntityLink, WorkspacePpmEntity } from "@polterware/feature-shell";
+import type { WorkspaceEntityLink, WorkspaceCanonEntity } from "@polterware/feature-shell";
 
 export function EntityLinks(props: {
   links: WorkspaceEntityLink[];
-  entities?: WorkspacePpmEntity[];
+  entities?: WorkspaceCanonEntity[];
   onOpenEntity?: (entityId: string, refId: string, kind: string) => void;
   onLinkEntity?: (entityId: string) => void;
   onUnlink?: (linkId: string) => void;

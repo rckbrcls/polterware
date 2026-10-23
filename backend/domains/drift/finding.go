@@ -53,7 +53,7 @@ type Input struct {
 	StoredFacts   []FactRef
 	ParsedDeps    []ParsedDep
 	Relationships []RelationshipRef
-	AcceptedADRs  []AcceptedADR
+	AcceptedVerdicts  []AcceptedVerdict
 	// GitDeliveryReady is true when at least one checkout has local main or master.
 	// The commit-task findings are skipped when it is false.
 	GitDeliveryReady bool
@@ -62,7 +62,7 @@ type Input struct {
 	WindowCommits    []WindowCommit
 }
 
-// FactRef is a stored PPM fact used for drift comparison.
+// FactRef is a stored Canon fact used for drift comparison.
 type FactRef struct {
 	ID          string
 	Statement   string
@@ -81,7 +81,7 @@ type ParsedDep struct {
 	Path      string
 }
 
-// RelationshipRef is a projected PPM relationship.
+// RelationshipRef is a projected Canon relationship.
 type RelationshipRef struct {
 	ID              string
 	SubjectEntityID string
@@ -91,8 +91,8 @@ type RelationshipRef struct {
 	Source          string
 }
 
-// AcceptedADR is an accepted architecture decision linked to entities.
-type AcceptedADR struct {
+// AcceptedVerdict is an accepted architecture decision linked to entities.
+type AcceptedVerdict struct {
 	ID        string
 	Title     string
 	EntityIDs []string

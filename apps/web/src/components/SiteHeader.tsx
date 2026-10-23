@@ -1,24 +1,28 @@
 import { For, createSignal } from "solid-js";
 import { useLocation } from "@solidjs/router";
 import {
-  Activity, ArrowRight02Icon, BookOpen, Button, Drawer, GitBranch, LinkButton, Menu01Icon, NavigationMenu,
+  Activity, ArrowRight02Icon, BookOpen, Route, StickyNote, Button, Drawer, GitBranch, LinkButton, Menu01Icon, NavigationMenu,
   NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuPreviewPanel,
   NavigationMenuTrigger, ScrollText, SquareTerminal, Download, navigationMenuTriggerClass,
   type NavigationMenuPreviewItem,
 } from "@polterware/frontend-design-system";
 import { RELEASES_URL, REPO_URL, products } from "../data/products";
-import { LoreAppMockup } from "./mockups/LoreAppMockup";
+import { PolterwareAppMockup } from "./mockups/PolterwareAppMockup";
 import { CliTerminalMockup } from "./mockups/CliTerminalMockup";
 import { VitalsMockup } from "./mockups/VitalsMockup";
+import { NotesMockup } from "./mockups/NotesMockup";
+import { DispatchMockup } from "./mockups/DispatchMockup";
 
 const productItems: NavigationMenuPreviewItem[] = [
-  { id: "lore", title: "Lore", description: "Project context and drift for people and coding agents.", href: products.lore.href, icon: BookOpen, preview: () => <LoreAppMockup compact /> },
-  { id: "cli", title: "Lore CLI", description: "A TUI, scripted reads and writes, and an MCP bridge.", href: products.cli.href, icon: SquareTerminal, preview: () => <CliTerminalMockup compact session="agents" /> },
-  { id: "vitals", title: "Vitals", description: "Remote machines over SSH: metrics, processes, terminal.", href: products.vitals.href, icon: Activity, preview: () => <VitalsMockup compact /> },
+  { id: "polterware", title: "Polterware", description: "Project context and drift for people and coding agents.", href: products.polterware.href, icon: BookOpen, preview: () => <PolterwareAppMockup compact /> },
+  { id: "cli", title: "Polterware CLI", description: "A TUI, scripted reads and writes, and an MCP bridge.", href: products.cli.href, icon: SquareTerminal, preview: () => <CliTerminalMockup compact session="agents" /> },
+  { id: "notes", title: "Polterware Notes", description: "Local-first notes and reminders shared with your agents.", href: products.notes.href, icon: StickyNote, preview: () => <NotesMockup compact /> },
+  { id: "dispatch", title: "Dispatch", description: "Delegate tasks to coding-agent CLIs by difficulty.", href: products.dispatch.href, icon: Route, preview: () => <DispatchMockup compact /> },
+  { id: "vitals", title: "Polterware Vitals", description: "Remote machines over SSH: metrics, processes, terminal.", href: products.vitals.href, icon: Activity, preview: () => <VitalsMockup compact /> },
 ];
 
 const resources = [
-  { title: "Install", description: "One command for the macOS alpha builds", href: "/lore#install" },
+  { title: "Install", description: "One command for the macOS alpha builds", href: "/polterware#install" },
   { title: "Source", description: "The monorepo on GitHub", href: REPO_URL, external: true },
   { title: "Releases", description: "Desktop builds and release notes", href: RELEASES_URL, external: true },
   { title: "Getting started", description: "README: build, run, set up agents", href: `${REPO_URL}#readme`, external: true },
@@ -31,8 +35,8 @@ export function SiteHeader() {
 
   return (
     <div class="site-header-bar">
-      <header class="site-header site-container">
-        <a class="wordmark" href="/" aria-label="Polterware home"><img src="/polter-ghost.png" alt="" width="20" height="24" />polterware</a>
+      <header class="site-header site-container card-texture">
+        <a class="wordmark" href="/" aria-label="Polterware home"><img src="/polter-ghost.png" alt="" width="20" height="24" /></a>
         <NavigationMenu aria-label="Main" viewportAlign="center" class="site-nav">
           <NavigationMenuList>
             <NavigationMenuItem value="products">
@@ -41,7 +45,7 @@ export function SiteHeader() {
                 <NavigationMenuPreviewPanel
                   items={productItems}
                   footer={<><span><strong>Alpha</strong> macOS on Apple Silicon</span>
-                    <NavigationMenuLink href="/lore#install" class="nav-footer-link">Install Lore <ArrowRight02Icon size={14} /></NavigationMenuLink></>}
+                    <NavigationMenuLink href="/polterware#install" class="nav-footer-link">Install Polterware <ArrowRight02Icon size={14} /></NavigationMenuLink></>}
                 />
               </NavigationMenuContent>
             </NavigationMenuItem>
@@ -58,7 +62,7 @@ export function SiteHeader() {
               </NavigationMenuContent>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink href={products.cli.href} class={navigationMenuTriggerClass} active={inProduct("/lore/cli")}>CLI</NavigationMenuLink>
+              <NavigationMenuLink href={products.cli.href} class={navigationMenuTriggerClass} active={inProduct("/polterware/cli")}>CLI</NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <NavigationMenuLink href={RELEASES_URL} class={navigationMenuTriggerClass} target="_blank" rel="noopener noreferrer">Changelog</NavigationMenuLink>
@@ -66,8 +70,8 @@ export function SiteHeader() {
           </NavigationMenuList>
         </NavigationMenu>
         <div class="site-header-actions">
-          <LinkButton variant="ghost" size="sm" href={REPO_URL} target="_blank" rel="noopener noreferrer" class="hide-mobile">GitHub</LinkButton>
-          <LinkButton variant="primary" size="sm" href="/lore#install" class="header-cta">Download</LinkButton>
+          <LinkButton variant="texture" size="sm" href={REPO_URL} target="_blank" rel="noopener noreferrer" class="hide-mobile">GitHub</LinkButton>
+          <LinkButton variant="texture" textureTone="brand" size="sm" href="/polterware#install">Download</LinkButton>
           <Button variant="icon" class="show-mobile" aria-label="Open menu" onClick={() => setOpen(true)}><Menu01Icon size={18} /></Button>
         </div>
       </header>

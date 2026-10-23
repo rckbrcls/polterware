@@ -54,12 +54,12 @@ export function ToastRegion() {
       <For each={toasts()}>
         {(t) => (
           <div
-            class={`pw-toast-item pointer-events-auto rounded-[var(--radius-item)] border px-3 py-2 text-[13px] shadow-[0_8px_28px_var(--color-shadow)] ${
+            class={`pw-toast-item menu-panel pointer-events-auto px-3 py-2 text-[13px] ${
               t.tone === "danger"
-                ? "border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-danger)]"
+                ? "text-[var(--color-danger)]"
                 : t.tone === "success"
-                  ? "border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-text-primary)]"
-                  : "border-[var(--color-border-default)] bg-[var(--color-surface-raised)] text-[var(--color-text-primary)]"
+                  ? "text-[var(--color-text-primary)]"
+                  : "text-[var(--color-text-primary)]"
             }`}
             data-exiting={t.phase() === "exiting" ? "" : undefined}
             onTransitionEnd={(event) => {

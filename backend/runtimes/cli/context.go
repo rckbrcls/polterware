@@ -18,6 +18,7 @@ func runOracle(dbPath string, args []string) error {
 	projectID := fs.String("project", "", "project id (default: project containing the cwd)")
 	zoom := fs.String("zoom", "task", "task, component, domain, or system")
 	budget := fs.Int("budget", 1200, "token budget")
+	scope := addScopeFlags(fs)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -35,7 +36,7 @@ func runOracle(dbPath string, args []string) error {
 	}
 	query := fmt.Sprintf("oracle %s zoom:%s budget:%d", question, *zoom, *budget)
 	res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{
-		ProjectId: project.Id, Query: query,
+		ProjectId: project.Id, Query: query, ScopeNode: *scope.node, ScopeExact: *scope.exact,
 	}))
 	if err != nil {
 		return err
@@ -44,7 +45,7 @@ func runOracle(dbPath string, args []string) error {
 	return nil
 }
 
-// runContext is polterware oracle. The PPM context.get compiler stays on its RPC.
+// runContext is polterware oracle. The Canon context.get compiler stays on its RPC.
 func runContext(dbPath string, args []string) error {
 	return runOracle(dbPath, args)
 }

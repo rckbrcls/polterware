@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/ppm"
+	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/projects"
 	"github.com/polterware/polterware/backend/providers/importer"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
@@ -54,15 +54,15 @@ func TestImportProjectSourcesIdempotent(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := store.UpsertPpmEvidence(ev); err != nil {
+			if err := store.UpsertCanonEvidence(ev); err != nil {
 				t.Fatal(err)
 			}
 			evidence++
 			for _, fact := range factList {
-				if err := store.UpsertPpmFact(fact); err != nil {
+				if err := store.UpsertCanonFact(fact); err != nil {
 					t.Fatal(err)
 				}
-				if err := store.LinkPpmEvidenceToFact(projectID, fact.ID, ev.ID); err != nil {
+				if err := store.LinkCanonEvidenceToFact(projectID, fact.ID, ev.ID); err != nil {
 					t.Fatal(err)
 				}
 				facts++
@@ -81,7 +81,7 @@ func TestImportProjectSourcesIdempotent(t *testing.T) {
 		t.Fatalf("second import counts drifted: first=%d/%d/%d second=%d/%d/%d", f1, e1, s1, f2, e2, s2)
 	}
 
-	storedFacts, err := store.ListPpmFacts(projectID, "")
+	storedFacts, err := store.ListCanonFacts(projectID, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,14 +89,14 @@ func TestImportProjectSourcesIdempotent(t *testing.T) {
 		t.Fatalf("expected %d stored facts, got %d", f1, len(storedFacts))
 	}
 	for _, fact := range storedFacts {
-		if fact.TruthClass != ppm.TruthObserved {
+		if fact.TruthClass != canon.TruthObserved {
 			t.Fatalf("expected observed fact, got %+v", fact)
 		}
 		if fact.Actor != "system" {
 			t.Fatalf("expected system actor, got %+v", fact)
 		}
 	}
-	storedEvidence, err := store.ListPpmEvidence(projectID)
+	storedEvidence, err := store.ListCanonEvidence(projectID)
 	if err != nil {
 		t.Fatal(err)
 	}

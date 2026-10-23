@@ -69,6 +69,7 @@ function Occurrence(props: ButtonProps & { overdue?: boolean; completed?: boolea
     <Button
       {...rest}
       variant="ghost"
+      keepVariant
       class={`pw-calendar__occurrence ${local.class ?? ""}`}
       data-overdue={local.overdue ? "" : undefined}
       data-completed={local.completed ? "" : undefined}
@@ -78,7 +79,7 @@ function Occurrence(props: ButtonProps & { overdue?: boolean; completed?: boolea
 
 function Overflow(props: { count: number; onClick?: () => void; label?: string }) {
   return (
-    <Button variant="ghost" size="sm" onClick={props.onClick} aria-label={props.label ?? `${props.count} more occurrences`}>
+    <Button variant="ghost" size="sm" keepVariant onClick={props.onClick} aria-label={props.label ?? `${props.count} more occurrences`}>
       +{props.count}
     </Button>
   );

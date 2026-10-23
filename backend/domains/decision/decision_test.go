@@ -40,9 +40,9 @@ func TestMetaRoundTrip(t *testing.T) {
 
 func TestSupersedeChecks(t *testing.T) {
 	ds := []Decision{
-		{ID: "a", Title: "ADR 0001: A", Status: "superseded", Meta: Meta{SupersededBy: "b"}},
-		{ID: "b", Title: "ADR 0002: B", Status: "active"},
-		{ID: "c", Title: "ADR 0003: C", Status: "active"},
+		{ID: "a", Title: "Verdict 0001: A", Status: "superseded", Meta: Meta{SupersededBy: "b"}},
+		{ID: "b", Title: "Verdict 0002: B", Status: "active"},
+		{ID: "c", Title: "Verdict 0003: C", Status: "active"},
 	}
 	if err := CheckSupersede(ds, "b", "b"); err == nil {
 		t.Error("self supersede must fail")
@@ -56,7 +56,7 @@ func TestSupersedeChecks(t *testing.T) {
 	if got := Chain(ds, "a"); len(got) != 2 || got[1] != "b" {
 		t.Errorf("chain = %v", got)
 	}
-	if d, ok := Find(ds, "ADR-2"); !ok || d.ID != "b" {
+	if d, ok := Find(ds, "Verdict-2"); !ok || d.ID != "b" {
 		t.Errorf("Find by number = %v %v", d, ok)
 	}
 	if NextNumber(ds) != 4 {

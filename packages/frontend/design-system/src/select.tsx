@@ -87,7 +87,7 @@ export function Select(props: SelectProps) {
         title={props.title}
         aria-label={props["aria-label"]}
         class={cn(
-          "control-field min-w-0 justify-between gap-2 text-[var(--color-text-primary)] focus-visible:outline-none",
+          "control-field pw-field-control min-w-0 justify-between gap-2 text-[var(--color-text-primary)] focus-visible:outline-none",
           !HAS_WIDTH.test(props.class ?? "") && "w-full",
           size() === "md" ? "control-field-md" : "control-field-sm",
           props.disabled ? "cursor-not-allowed" : "cursor-pointer",
@@ -113,7 +113,7 @@ export function Select(props: SelectProps) {
       </DropdownMenuTrigger>
       {/* At least the trigger's width, wider when an option's label needs it. */}
       <DropdownMenuContent
-        class="max-h-[min(320px,calc(100vh-24px))] min-w-[var(--reference-width)] max-w-[calc(100vw-24px)] !overflow-y-auto overscroll-contain px-1"
+        class="max-h-[min(320px,calc(100vh-24px))] min-w-[var(--reference-width)] max-w-[calc(100vw-24px)] !overflow-y-auto overscroll-contain"
       >
         <Index each={props.options}>
           {(option) => (

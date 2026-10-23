@@ -69,7 +69,7 @@ export function ViewsTable(props: {
                     onActivate={() => props.onActivate?.(view.id)}
                     aria-label={`Open ${view.name}`}
                   >
-                    <DataTable.PrimaryCell icon={<Eye size={16} />} iconTone="architecture" title={view.name} />
+                    <DataTable.PrimaryCell icon={<Eye size={16} />} iconTone="architecture" iconSeed={view.id} title={view.name} />
                     <DataTable.Cell>{view.nodeCount}</DataTable.Cell>
                     <DataTable.Cell class="text-[var(--color-text-muted)]">{view.updated}</DataTable.Cell>
                   </DataTable.Row>

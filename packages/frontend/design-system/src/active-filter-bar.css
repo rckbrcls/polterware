@@ -1,10 +1,16 @@
+/* The whole bar is a recessed track like .pw-tabs, so it needs no divider: the pills are raised
+ * faces sitting inside it and Clear all closes the row. */
 .pw-active-filter-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid var(--color-border-subtle);
-  padding: 8px 16px;
+  gap: 2px;
+  margin: 8px;
+  padding: 2px;
+  border: 1px solid var(--field-frame);
+  border-radius: 14px;
+  background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
+  box-shadow: var(--field-rings);
 }
 
 .pw-active-filter-bar__pills {
@@ -13,17 +19,24 @@
   flex: 1;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
+.pw-active-filter-bar__pills + * {
+  margin-right: 2px;
+}
+
+/* Texture pill: button.css supplies the frame, lit ring and gradient face. */
 .pw-active-filter-pill {
   display: inline-flex;
   max-width: 100%;
   align-items: center;
   gap: 2px;
-  padding: 3px 4px 3px 10px;
-  border-radius: 999px;
-  background: var(--color-surface-active);
+  padding: 4px 5px 4px 11px;
+  border: 1px solid var(--tx-frame);
+  border-radius: 11px;
+  background: linear-gradient(to bottom, var(--tx-outer-top), var(--tx-outer-bottom));
+  --tx-face-radius: 10px;
   color: var(--color-text-primary);
   font-size: 12px;
   font-weight: 500;

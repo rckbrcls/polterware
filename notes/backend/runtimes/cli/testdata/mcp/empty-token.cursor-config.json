@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "pwnotes": {
+      "command": "pwnotes",
+      "args": [
+        "mcp"
+      ]
+    }
+  }
+}

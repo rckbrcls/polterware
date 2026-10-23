@@ -31,29 +31,89 @@ export type ChromeFinishOptions = {
   warp?: number;
   /** Film grain strength (0–1). */
   grain?: number;
+  /** Reflection geometry; non-horizon families use a continuous metal ramp. */
+  reflection?: "horizon" | "satin" | "radial" | "liquid" | "folded";
 };
 
 type Rgb = readonly [number, number, number];
 
-/** Horizon ramp tinted toward `tint`: light sky, one sharp dark horizon, lighter ground. */
-export function chromeStopsFromTint(tint: Rgb): ChromeStop[] {
+/** Accent-tinted metal ramp: a sharp environment horizon, or broad continuous highlights when smooth. */
+export function chromeStopsFromTint(tint: Rgb, horizon = 0.5, smooth = false): ChromeStop[] {
   const mix = (a: Rgb, b: Rgb, t: number): Rgb => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  if (smooth) return [
+    { position: 0, color: mix(tint, [1, 1, 1], 0.65) },
+    { position: 0.3, color: mix(tint, [0, 0, 0], 0.2) },
+    { position: 0.64, color: mix(tint, [1, 1, 1], 0.72) },
+    { position: 1, color: mix(tint, [1, 1, 1], 0.65) },
+  ];
   return [
     { position: 0, color: mix(tint, [1, 1, 1], 0.6) },
-    { position: 0.48, color: mix(tint, [1, 1, 1], 0.15) },
-    { position: 0.5, color: mix(tint, [0, 0, 0], 0.3) },
-    { position: 0.62, color: mix(tint, [0, 0, 0], 0.05) },
+    { position: horizon - 0.02, color: mix(tint, [1, 1, 1], 0.15) },
+    { position: horizon, color: mix(tint, [0, 0, 0], 0.3) },
+    { position: Math.min(horizon + 0.12, 0.98), color: mix(tint, [0, 0, 0], 0.05) },
     { position: 1, color: mix(tint, [1, 1, 1], 0.45) },
   ];
 }
 
-/** Named reflections: `horizon` is the default, `subtle` is a flatter, steeper line. */
+/** Named reflections. Only horizon and subtle retain the sharp environment seam. */
 export const CHROME_PRESETS = {
-  horizon: { repeats: 1, warp: 0.3 },
-  subtle: { repeats: 1, warp: 0.15, angle: -35 },
+  horizon: { reflection: "horizon", repeats: 1, warp: 0.3 },
+  subtle: { reflection: "horizon", repeats: 1, warp: 0.15, angle: -35 },
+  satin: { reflection: "satin", repeats: 1, warp: 0.12, grain: 0.045 },
+  radial: { reflection: "radial", repeats: 1, warp: 0.2, grain: 0.05 },
+  liquid: { reflection: "liquid", repeats: 1, warp: 0.65, grain: 0.055 },
+  folded: { reflection: "folded", repeats: 1, warp: 0.25, grain: 0.045 },
 } satisfies Record<string, Partial<ChromeFinishOptions>>;
 
 export type ChromePreset = keyof typeof CHROME_PRESETS;
+
+const PROCEDURAL_PRESETS = ["horizon", "satin", "radial", "liquid", "folded"] as const;
+const REFLECTION_MODES = { horizon: 0, satin: 1, radial: 2, liquid: 3, folded: 4 } as const;
+
+/** Procedural finishes per preset. Seeds fold into this many, so the render cache stays bounded. */
+export const CHROME_VARIANTS = 64;
+
+/** Stable FNV-1a hash over the string's UTF-16 code units. */
+export function hashSeed(seed: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < seed.length; index++) {
+    hash = Math.imul(hash ^ seed.charCodeAt(index), 16777619);
+  }
+  return hash >>> 0;
+}
+
+/** Variant index for a seed; a random one when the seed is omitted. */
+export function chromeVariantIndex(seed?: string): number {
+  return seed === undefined ? Math.floor(Math.random() * CHROME_VARIANTS) : hashSeed(seed) % CHROME_VARIANTS;
+}
+
+/**
+ * Seeds choose both the reflection family and its lighting. An explicit preset pins the family.
+ */
+export function chromeVariant(index: number, preset?: ChromePreset): { options: Partial<ChromeFinishOptions>; horizon: number; smooth: boolean } {
+  const variantIndex = ((Math.trunc(index) % CHROME_VARIANTS) + CHROME_VARIANTS) % CHROME_VARIANTS;
+  // mulberry32: a few well-spread numbers from a small integer.
+  let state = Math.imul(variantIndex + 1, 0x9e3779b9);
+  const next = () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), state | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const base: Partial<ChromeFinishOptions> = CHROME_PRESETS[preset ?? PROCEDURAL_PRESETS[variantIndex % PROCEDURAL_PRESETS.length]!];
+  const between = (min: number, max: number) => min + (max - min) * next();
+  return {
+    options: {
+      ...base,
+      angle: (base.angle ?? -24) + between(-26, 26),
+      warp: (base.warp ?? 0.3) * between(0.5, 1.6),
+      phase: between(-1, 1),
+      split: between(6, 16),
+    },
+    horizon: between(0.38, 0.62),
+    smooth: base.reflection !== "horizon",
+  };
+}
 
 /** Parses a computed `rgb` or `color(srgb …)` string into 0–1 channels. */
 export function parseComputedColor(value: string): Rgb | undefined {
@@ -87,6 +147,7 @@ uniform float uPhase;
 uniform float uLinear;
 uniform float uWarp;
 uniform float uGrain;
+uniform int uReflection;
 
 const float TILE_PERIOD = 8.0;
 const float NOISE_SCALE = 0.5;
@@ -98,7 +159,11 @@ vec4 ramp(float t) {
   if (t >= uPos[last]) return uColors[last];
   for (int i = 0; i < 7; i++) {
     if (i >= last) break;
-    if (t <= uPos[i + 1]) return mix(uColors[i], uColors[i + 1], (t - uPos[i]) / max(uPos[i + 1] - uPos[i], 1e-5));
+    if (t <= uPos[i + 1]) {
+      float blend = (t - uPos[i]) / max(uPos[i + 1] - uPos[i], 1e-5);
+      if (uReflection != 0) blend = smoothstep(0.0, 1.0, blend);
+      return mix(uColors[i], uColors[i + 1], blend);
+    }
   }
   return uColors[last];
 }
@@ -129,13 +194,32 @@ float noise3(vec3 p) {
     s.z);
 }
 
-float heightAt(vec3 np, float em, float eps, float band) {
+float heightAt(vec3 np, float em, float eps, vec2 p) {
   float n = noise3(np);
+  float rim = (1.0 - em) * 0.12 * uDepth;
+  // Continuous reflection fields: no dark horizon seam in these families.
+  if (uReflection == 1) {
+    return 0.5 + 0.38 * sin((p.y + uPhase * 0.3) * 4.2 + (n - 0.5) * uWarp) + rim;
+  }
+  if (uReflection == 2) {
+    vec2 center = vec2(0.5 + uPhase * 0.3, 0.42 - uPhase * 0.2);
+    float d = length((p - center) * vec2(1.0, 1.35));
+    return 0.12 + 0.76 * exp(-d * d * 3.8) + (n - 0.5) * uWarp + rim;
+  }
+  if (uReflection == 3) {
+    float wave = sin(p.x * 5.0 + uPhase * 2.0 + n * uWarp * 5.0)
+      + cos(p.y * 4.0 - p.x * 2.5 + n * uWarp * 4.0);
+    return 0.5 + wave * 0.21 + rim;
+  }
+  if (uReflection == 4) {
+    float fold = p.y * 7.0 + sin(p.x * 4.5 + uPhase * 2.0) * (0.7 + uWarp);
+    return 0.5 + 0.36 * cos(fold) + (n - 0.5) * 0.08 + rim;
+  }
   float dx = noise3(np + vec3(eps, 0.0, 0.0)) - noise3(np - vec3(eps, 0.0, 0.0));
   float dy = noise3(np + vec3(0.0, eps, 0.0)) - noise3(np - vec3(0.0, eps, 0.0));
   float organic = mix(0.5, n * em, uDepth) + (dx + dy) * 0.5 * uDepth * 0.3;
   // Horizon reflection: a straight ramp across the rotated tile, bent by the noise and lifted at the rim.
-  float horizon = band + (n - 0.5) * uWarp + (1.0 - em) * 0.12 * uDepth;
+  float horizon = p.y + (n - 0.5) * uWarp + rim;
   return mix(organic, horizon, uLinear);
 }
 
@@ -157,9 +241,9 @@ void main() {
   float nx = noise3(base + vec3(eps, 0.0, 0.0)) - noise3(base - vec3(eps, 0.0, 0.0));
   float ny = noise3(base + vec3(0.0, eps, 0.0)) - noise3(base - vec3(0.0, eps, 0.0));
   vec2 shift = normalize(vec2(nx, ny) + 1e-6) * uSplit;
-  float hR = clamp(heightAt(base + vec3(shift, 0.0), em, eps, r.y + shift.y * 0.5), 0.0, 1.0);
-  float hG = clamp(heightAt(base, em, eps, r.y), 0.0, 1.0);
-  float hB = clamp(heightAt(base - vec3(shift, 0.0), em, eps, r.y - shift.y * 0.5), 0.0, 1.0);
+  float hR = clamp(heightAt(base + vec3(shift, 0.0), em, eps, r + shift * 0.5), 0.0, 1.0);
+  float hG = clamp(heightAt(base, em, eps, r), 0.0, 1.0);
+  float hB = clamp(heightAt(base - vec3(shift, 0.0), em, eps, r - shift * 0.5), 0.0, 1.0);
   float dR = fwidth(hR) * uRepeats, dG = fwidth(hG) * uRepeats, dB = fwidth(hB) * uRepeats;
   vec3 acc = vec3(0.0);
   for (int s = 0; s < 4; s++) {
@@ -211,7 +295,7 @@ function getRenderer(): Renderer | null {
   gl.enableVertexAttribArray(position);
   gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
   const uniforms = new Map<string, WebGLUniformLocation | null>();
-  for (const name of ["uSize", "uRadius", "uSigma", "uColors", "uPos", "uCount", "uDepth", "uSplit", "uAngle", "uRepeats", "uPhase", "uLinear", "uWarp", "uGrain"]) {
+  for (const name of ["uSize", "uRadius", "uSigma", "uColors", "uPos", "uCount", "uDepth", "uSplit", "uAngle", "uRepeats", "uPhase", "uLinear", "uWarp", "uGrain", "uReflection"]) {
     uniforms.set(name, gl.getUniformLocation(program, name));
   }
   renderer = { canvas, gl, program, uniforms };
@@ -241,6 +325,7 @@ export function renderChromeFinish(
     linear: options.linear ?? 1,
     warp: options.warp ?? 0.3,
     grain: options.grain ?? 0.09,
+    reflection: REFLECTION_MODES[options.reflection ?? "horizon"],
   };
   const key = JSON.stringify([pixelWidth, pixelHeight, stops, params]);
   const cached = cache.get(key);
@@ -271,6 +356,7 @@ export function renderChromeFinish(
   gl.uniform1f(uniforms.get("uLinear")!, params.linear);
   gl.uniform1f(uniforms.get("uWarp")!, params.warp);
   gl.uniform1f(uniforms.get("uGrain")!, params.grain);
+  gl.uniform1i(uniforms.get("uReflection")!, params.reflection);
   gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 6);

@@ -8,72 +8,72 @@ import (
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
-func testGraph() ([]atlas.Node, []ADR) {
+func testGraph() ([]atlas.Node, []Verdict) {
 	nodes := []atlas.Node{
 		{ID: "s", Path: "shop", Level: atlas.LevelSystem, Title: "Shop", Status: atlas.NodeActive,
-			Decisions:  []string{"ADR 0001"},
+			Decisions:  []string{"Verdict 0001"},
 			Invariants: []atlas.Invariant{{Text: "Money is integer cents", State: work.InvariantActive}}},
 		{ID: "d", ParentID: "s", Path: "shop/auth", Level: atlas.LevelDomain, Title: "Auth", Status: atlas.NodeActive,
-			Repo: "api", Folder: "src/auth", Decisions: []string{"adr-tokens"},
+			Repo: "api", Folder: "src/auth", Decisions: []string{"verdict-tokens"},
 			Invariants: []atlas.Invariant{
 				{Text: "Tokens expire in 15 minutes", State: work.InvariantActive},
 				{Text: "Old rule", State: work.InvariantRemoved},
 			}},
 	}
-	adrs := []ADR{
-		{ID: "adr-cents", Title: "ADR 0001: Integer cents", Body: "## Decision\n\nStore cents.", Status: "accepted"},
-		{ID: "adr-tokens", Title: "ADR 0002: Short tokens", Body: "## Decision\n\nShort tokens."},
-		{ID: "adr-free", Title: "ADR 0003: Free standing", Body: "Body."},
+	verdicts := []Verdict{
+		{ID: "verdict-cents", Title: "Verdict 0001: Integer cents", Body: "## Decision\n\nStore cents.", Status: "accepted"},
+		{ID: "verdict-tokens", Title: "Verdict 0002: Short tokens", Body: "## Decision\n\nShort tokens."},
+		{ID: "verdict-free", Title: "Verdict 0003: Free standing", Body: "Body."},
 	}
-	return nodes, adrs
+	return nodes, verdicts
 }
 
 func TestGovernByCitingNodeRepo(t *testing.T) {
-	nodes, adrs := testGraph()
-	governed := Govern(nodes, adrs)
-	ids := func(list []ADR) string {
+	nodes, verdicts := testGraph()
+	governed := Govern(nodes, verdicts)
+	ids := func(list []Verdict) string {
 		var out []string
-		for _, adr := range list {
-			out = append(out, adr.ID)
+		for _, verdict := range list {
+			out = append(out, verdict.ID)
 		}
 		return strings.Join(out, ",")
 	}
-	if got := ids(governed[""]); got != "adr-cents,adr-free" {
+	if got := ids(governed[""]); got != "verdict-cents,verdict-free" {
 		t.Fatalf("root = %s", got)
 	}
-	if got := ids(governed["api"]); got != "adr-tokens" {
+	if got := ids(governed["api"]); got != "verdict-tokens" {
 		t.Fatalf("api = %s", got)
 	}
 }
 
-func TestADRFile(t *testing.T) {
-	_, adrs := testGraph()
-	name, content, ok := ADRFile(adrs[0])
+func TestVerdictFile(t *testing.T) {
+	_, verdicts := testGraph()
+	name, content, ok := VerdictFile(verdicts[0])
 	if !ok || name != "0001-integer-cents.md" {
 		t.Fatalf("name = %q ok=%v", name, ok)
 	}
-	if id, ok := ADRMarker(content); !ok || id != "adr-cents" {
+	if id, ok := VerdictMarker(content); !ok || id != "verdict-cents" {
 		t.Fatalf("marker = %q %v\n%s", id, ok, content)
 	}
-	if !strings.Contains(content, "# ADR 0001: Integer cents\n\nLifecycle status: accepted\n\n## Decision") {
+	if !strings.Contains(content, "# Verdict 0001: Integer cents\n\nLifecycle status: accepted\n\n## Decision") {
 		t.Fatalf("content = %s", content)
 	}
-	if _, _, ok := ADRFile(ADR{ID: "x", Title: "Untitled decision"}); ok {
+	if _, _, ok := VerdictFile(Verdict{ID: "x", Title: "Untitled decision"}); ok {
 		t.Fatalf("an unnumbered title has no file")
 	}
-	if _, ok := ADRMarker("# ADR 0001: Hand-written\n"); ok {
+	if _, ok := VerdictMarker("# Verdict 0001: Hand-written\n"); ok {
 		t.Fatalf("hand-written files carry no marker")
 	}
 }
 
 func TestBlockInheritsAncestors(t *testing.T) {
-	nodes, adrs := testGraph()
-	governed := Govern(nodes, adrs)
-	api := Block("api", nodes, governed["api"], adrs)
+	nodes, verdicts := testGraph()
+	governed := Govern(nodes, verdicts)
+	api := Block("api", nodes, governed["api"], verdicts)
 	for _, want := range []string{
 		"- shop/auth (domain) Auth · path: src/auth",
-		"- ADR 0001: Integer cents (accepted)",
-		"- ADR 0002: Short tokens",
+		"- Verdict 0001: Integer cents (accepted)",
+		"- Verdict 0002: Short tokens",
 		"- Money is integer cents (from shop)",
 		"- Tokens expire in 15 minutes (from shop/auth)",
 	} {
@@ -81,11 +81,11 @@ func TestBlockInheritsAncestors(t *testing.T) {
 			t.Fatalf("api block missing %q:\n%s", want, api)
 		}
 	}
-	if strings.Contains(api, "Old rule") || strings.Contains(api, "ADR 0003") || strings.Contains(api, "- shop (system)") {
+	if strings.Contains(api, "Old rule") || strings.Contains(api, "Verdict 0003") || strings.Contains(api, "- shop (system)") {
 		t.Fatalf("api block has foreign lines:\n%s", api)
 	}
-	root := Block("", nodes, governed[""], adrs)
-	if strings.Contains(root, "Tokens expire") || !strings.Contains(root, "ADR 0003: Free standing") {
+	root := Block("", nodes, governed[""], verdicts)
+	if strings.Contains(root, "Tokens expire") || !strings.Contains(root, "Verdict 0003: Free standing") {
 		t.Fatalf("root block:\n%s", root)
 	}
 	if !strings.HasPrefix(api, BlockBegin+"\n") || !strings.HasSuffix(api, BlockEnd+"\n") {

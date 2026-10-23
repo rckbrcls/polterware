@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/polterware/polterware/backend/domains/polter"
-	"github.com/polterware/polterware/backend/domains/ppm"
+	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/work"
 	gitpkg "github.com/polterware/polterware/backend/providers/git"
 	"github.com/polterware/polterware/backend/providers/importer"
@@ -135,11 +135,11 @@ func suggestCommitTask(store *storepkg.Store, projectID, subject string, snapsho
 	return work.Task{}, false, nil
 }
 
-func newCommitEvidence(projectID, id, source, summary, sha string, now time.Time) (ppm.Evidence, error) {
-	evidence := ppm.Evidence{
+func newCommitEvidence(projectID, id, source, summary, sha string, now time.Time) (canon.Evidence, error) {
+	evidence := canon.Evidence{
 		ID:         id,
 		ProjectID:  projectID,
-		Kind:       ppm.EvidenceKindCommit,
+		Kind:       canon.EvidenceKindCommit,
 		Summary:    summary,
 		Source:     source,
 		Path:       sha,
@@ -148,15 +148,15 @@ func newCommitEvidence(projectID, id, source, summary, sha string, now time.Time
 		CreatedAt:  now,
 		UpdatedAt:  now,
 	}
-	if err := ppm.ValidateEvidence(evidence); err != nil {
-		return ppm.Evidence{}, err
+	if err := canon.ValidateEvidence(evidence); err != nil {
+		return canon.Evidence{}, err
 	}
 	return evidence, nil
 }
 
-func upsertImportEvidence(store *storepkg.Store, evidence ppm.Evidence) error {
-	if existing, err := store.GetPpmEvidence(evidence.ID); err == nil {
+func upsertImportEvidence(store *storepkg.Store, evidence canon.Evidence) error {
+	if existing, err := store.GetCanonEvidence(evidence.ID); err == nil {
 		evidence.CreatedAt = existing.CreatedAt
 	}
-	return store.UpsertPpmEvidence(evidence)
+	return store.UpsertCanonEvidence(evidence)
 }

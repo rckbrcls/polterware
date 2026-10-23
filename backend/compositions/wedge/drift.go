@@ -61,13 +61,13 @@ func assembleDriftInput(store *storepkg.Store, projectID, entityID string) (drif
 		return drift.Input{}, fmt.Errorf("unknown project")
 	}
 
-	facts, err := store.ListPpmFacts(in.ProjectID, "")
+	facts, err := store.ListCanonFacts(in.ProjectID, "")
 	if err != nil {
 		return drift.Input{}, err
 	}
 	factRefs := make([]drift.FactRef, 0, len(facts))
 	for _, fact := range facts {
-		evidence, err := store.ListPpmEvidenceForFact(fact.ID)
+		evidence, err := store.ListCanonEvidenceForFact(fact.ID)
 		if err != nil {
 			return drift.Input{}, err
 		}
@@ -85,7 +85,7 @@ func assembleDriftInput(store *storepkg.Store, projectID, entityID string) (drif
 		})
 	}
 
-	rels, err := store.ListPpmRelationships(in.ProjectID, in.EntityID)
+	rels, err := store.ListCanonRelationships(in.ProjectID, in.EntityID)
 	if err != nil {
 		return drift.Input{}, err
 	}
@@ -101,12 +101,12 @@ func assembleDriftInput(store *storepkg.Store, projectID, entityID string) (drif
 		})
 	}
 
-	adrs, err := store.ListKnowledge(in.ProjectID, "adr")
+	verdicts, err := store.ListKnowledge(in.ProjectID, "verdict")
 	if err != nil {
 		return drift.Input{}, err
 	}
-	accepted := make([]drift.AcceptedADR, 0)
-	for _, item := range adrs {
+	accepted := make([]drift.AcceptedVerdict, 0)
+	for _, item := range verdicts {
 		if decision.Normalize(item.Status) != decision.StateActive {
 			continue
 		}
@@ -118,7 +118,7 @@ func assembleDriftInput(store *storepkg.Store, projectID, entityID string) (drif
 		for _, link := range links {
 			entityIDs = append(entityIDs, link.EntityID)
 		}
-		accepted = append(accepted, drift.AcceptedADR{
+		accepted = append(accepted, drift.AcceptedVerdict{
 			ID:        item.ID,
 			Title:     item.Title,
 			EntityIDs: entityIDs,
@@ -130,7 +130,7 @@ func assembleDriftInput(store *storepkg.Store, projectID, entityID string) (drif
 		EntityID:      in.EntityID,
 		StoredFacts:   factRefs,
 		Relationships: relRefs,
-		AcceptedADRs:  accepted,
+		AcceptedVerdicts:  accepted,
 	}
 
 	rootPath := ExpandRootPath(project.RootPath)

@@ -10,7 +10,7 @@ import { MainSurface } from "./main-surface";
 import { TitleBar } from "./title-bar";
 import type { CoreStatusMenuProps } from "./core-status-menu";
 import type { WorkspaceContext } from "./context-switchers";
-import type { EnvironmentItem, ProjectSwitcherItem } from "./types";
+import type { EnvironmentItem, ProjectSwitcherItem, ScopeNodeItem, WorkspaceScope } from "./types";
 import { ENVIRONMENT_FIXTURES } from "./fixtures";
 
 export type {
@@ -26,6 +26,8 @@ export type {
 } from "./route";
 export type {
   ProjectSwitcherItem,
+  ScopeNodeItem,
+  WorkspaceScope,
   EnvironmentItem,
   EnvironmentKind,
   DataSource,
@@ -46,6 +48,7 @@ export {
   setFilters,
   setEnvironment,
   setSelectedNode,
+  setExpandedDetail,
   setWizardStep,
   routesEqual,
   historySnapshot,
@@ -61,6 +64,8 @@ export {
   sectionAvailable,
 } from "./route";
 export { MainSurface, PageHeader, PageContent } from "./main-surface";
+export { EntityDetailHost, type EntityDetailHostProps } from "./entity-detail-host";
+export { expandedDetail, openDetail, requestDetailExpanded, setDetailExpandHandler, setExpandedDetailTarget } from "./detail-expansion";
 export { SidebarNav, SidebarSettingsItem } from "./sidebar";
 export type { SidebarCount } from "./sidebar";
 export { TitleBar } from "./title-bar";
@@ -83,8 +88,6 @@ export {
   INTEGRATION_RESOURCE_MOCKS,
   INTEGRATION_SYNC_RUN_MOCKS,
   CATALOG_PROVIDER_MOCKS,
-  DOCUMENT_MOCKS,
-  RUNBOOK_MOCKS,
 } from "./workspace-mocks";
 
 export const DEFAULT_NAV: NavItem[] = [
@@ -124,6 +127,10 @@ export function Shell(props: {
   workspace?: WorkspaceContext;
   projects?: ProjectSwitcherItem[];
   environments?: EnvironmentItem[];
+  /** Atlas nodes offered by the global scope filter. */
+  scopeNodes?: ScopeNodeItem[];
+  scope?: WorkspaceScope;
+  onSelectScope?: (scope: WorkspaceScope) => void;
   status?: ShellStatus;
   navItems?: NavItem[];
   navCounts?: Partial<Record<string, SidebarCount>>;
@@ -177,6 +184,9 @@ export function Shell(props: {
         onSelectProject={selectProject}
         onSelectEnvironment={selectEnvironment}
         onCreateProject={() => props.onCreateProject?.()}
+        scopeNodes={props.scopeNodes}
+        scope={props.scope}
+        onSelectScope={props.onSelectScope}
         onOpenCommander={() => props.onOpenCommander?.()}
         coreStatus={props.coreStatus}
       />

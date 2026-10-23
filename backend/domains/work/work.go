@@ -204,7 +204,7 @@ type Snapshot struct {
 	// Repos names the project's extra checkouts (project_repos). The
 	// project root is the unnamed default and is not listed.
 	Repos []string
-	// Decisions are the project's ADRs with their lifecycle state.
+	// Decisions are the project's Verdicts with their lifecycle state.
 	Decisions []decision.Decision
 }
 

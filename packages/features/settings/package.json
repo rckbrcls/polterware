@@ -16,6 +16,7 @@
     "solid-js": "^1.9.15"
   },
   "dependencies": {
+    "@polterware/feature-shell": "workspace:*",
     "@polterware/frontend-design-system": "workspace:*",
     "@polterware/frontend-state": "workspace:*"
   },

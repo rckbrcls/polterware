@@ -1,0 +1,17 @@
+# Cursor stdio JSON
+{"command":"pwnotes","args":["mcp"]}
+
+# Cursor HTTP JSON
+{"url":"http://127.0.0.1:PORT/mcp","headers":{"Authorization":"Bearer TOKEN"}}
+
+# Cursor mcp.json
+{
+  "mcpServers": {
+    "pwnotes": {
+      "command": "pwnotes",
+      "args": [
+        "mcp"
+      ]
+    }
+  }
+}

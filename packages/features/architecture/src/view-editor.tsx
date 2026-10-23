@@ -51,7 +51,7 @@ export function ViewEditor(props: {
         title={props.viewId ? `Edit view: ${name() || "Untitled"}` : "Create view"}
         actions={
           <>
-            <Button size="sm" variant="ghost" onClick={() => props.onClose?.()}>
+            <Button size="sm" variant="texture" onClick={() => props.onClose?.()}>
               Cancel
             </Button>
             <Button size="sm" variant="primary" disabled={!canSave()} onClick={handleSave}>

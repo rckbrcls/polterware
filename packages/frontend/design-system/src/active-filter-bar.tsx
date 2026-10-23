@@ -3,6 +3,7 @@ import { For, Show } from "solid-js";
 import { DetailPanelCollectionHeader } from "./detail-panel";
 import { Button } from "./button";
 import { X } from "./hugeicons";
+import "./button.css";
 import "./active-filter-bar.css";
 
 export type ActiveFilterPill = {
@@ -33,7 +34,7 @@ export function ActiveFilterBar(props: {
           <div class="pw-active-filter-bar__pills">
             <For each={props.items}>
               {(item) => (
-                <span class="pw-active-filter-pill">
+                <span class="pw-active-filter-pill pw-texture-button">
                   <span class="pw-active-filter-pill__label">{item.label}</span>
                   <button
                     type="button"
@@ -50,8 +51,8 @@ export function ActiveFilterBar(props: {
           <Show when={props.onClear}>
             <Button
               size="sm"
-              variant="ghost"
-              class="!h-auto shrink-0 !px-1.5 !py-1 text-[11px]"
+              variant="texture"
+              class="!h-auto shrink-0 !px-2.5 !py-1 text-[11px] rounded-full"
               onClick={() => props.onClear?.()}
             >
               {props.clearLabel ?? "Clear"}

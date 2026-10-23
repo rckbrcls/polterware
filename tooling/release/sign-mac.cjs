@@ -11,6 +11,8 @@ module.exports = async ({ appOutDir, electronPlatformName, packager }) => {
   const release = releaseAppById(packager.appInfo.id);
   const app = join(appOutDir, `${release.product}.app`);
   const resources = join(app, 'Contents', 'Resources');
+  const appKey = Object.keys(require('./apps.cjs').apps).find(key => require('./apps.cjs').apps[key].appId === release.appId);
+  require('../updater/package.cjs')(app, appKey);
   const binaries = release.binaries.map((binary) => join(resources, binary.path));
   const times = binaries.map((binary) => statSync(binary));
   for (const binary of binaries) {

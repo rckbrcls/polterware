@@ -6,7 +6,7 @@ import (
 
 	"github.com/polterware/polterware/backend/domains/agentrun"
 	"github.com/polterware/polterware/backend/domains/knowledge"
-	"github.com/polterware/polterware/backend/domains/ppm"
+	"github.com/polterware/polterware/backend/domains/canon"
 )
 
 func (s *Server) factUpsert(args map[string]any) (string, error) {
@@ -23,15 +23,15 @@ func (s *Server) factUpsert(args map[string]any) (string, error) {
 		id := stringFrom(args["id"])
 		truthClass := stringFrom(args["truth_class"])
 		entityID := stringFrom(args["entity_id"])
-		var fact ppm.Fact
+		var fact canon.Fact
 		if id == "" {
-			fact, err = ppm.NewFact(env.ProjectID, statement, truthClass, agentrun.SourceMCP, agentrun.ActorAgent, entityID)
+			fact, err = canon.NewFact(env.ProjectID, statement, truthClass, agentrun.SourceMCP, agentrun.ActorAgent, entityID)
 			if err != nil {
 				return nil, nil, err
 			}
 		} else {
 			now := time.Now().UTC()
-			fact = ppm.Fact{
+			fact = canon.Fact{
 				ID:         id,
 				ProjectID:  env.ProjectID,
 				Statement:  statement,
@@ -44,24 +44,24 @@ func (s *Server) factUpsert(args map[string]any) (string, error) {
 				UpdatedAt:  now,
 			}
 			if fact.TruthClass == "" {
-				fact.TruthClass = ppm.TruthDeclared
+				fact.TruthClass = canon.TruthDeclared
 			}
-			if existing, getErr := s.Store.GetPpmFact(id); getErr == nil {
+			if existing, getErr := s.Store.GetCanonFact(id); getErr == nil {
 				fact.CreatedAt = existing.CreatedAt
 				if existing.ProjectID != env.ProjectID {
-					return nil, nil, ppm.ErrUnknownFact
+					return nil, nil, canon.ErrUnknownFact
 				}
 			}
-			if err := ppm.ValidateFact(fact); err != nil {
+			if err := canon.ValidateFact(fact); err != nil {
 				return nil, nil, err
 			}
 		}
 		if fact.EntityID != "" {
-			if _, err := s.Store.GetPpmEntity(fact.EntityID); err != nil {
+			if _, err := s.Store.GetCanonEntity(fact.EntityID); err != nil {
 				return nil, nil, fmt.Errorf("entity not found")
 			}
 		}
-		if err := s.Store.UpsertPpmFact(fact); err != nil {
+		if err := s.Store.UpsertCanonFact(fact); err != nil {
 			return nil, nil, err
 		}
 		return []string{fact.ID}, factJSON(fact), nil
@@ -85,15 +85,15 @@ func (s *Server) evidenceUpsert(args map[string]any) (string, error) {
 			summary = env.Summary
 		}
 		path := stringFrom(args["path"])
-		var evidence ppm.Evidence
+		var evidence canon.Evidence
 		if id == "" {
-			evidence, err = ppm.NewEvidence(env.ProjectID, kind, summary, agentrun.SourceMCP, path, agentrun.ActorAgent)
+			evidence, err = canon.NewEvidence(env.ProjectID, kind, summary, agentrun.SourceMCP, path, agentrun.ActorAgent)
 			if err != nil {
 				return nil, nil, err
 			}
 		} else {
 			now := time.Now().UTC()
-			evidence = ppm.Evidence{
+			evidence = canon.Evidence{
 				ID:         id,
 				ProjectID:  env.ProjectID,
 				Kind:       kind,
@@ -105,17 +105,17 @@ func (s *Server) evidenceUpsert(args map[string]any) (string, error) {
 				CreatedAt:  now,
 				UpdatedAt:  now,
 			}
-			if existing, getErr := s.Store.GetPpmEvidence(id); getErr == nil {
+			if existing, getErr := s.Store.GetCanonEvidence(id); getErr == nil {
 				evidence.CreatedAt = existing.CreatedAt
 				if existing.ProjectID != env.ProjectID {
-					return nil, nil, ppm.ErrUnknownEvidence
+					return nil, nil, canon.ErrUnknownEvidence
 				}
 			}
-			if err := ppm.ValidateEvidence(evidence); err != nil {
+			if err := canon.ValidateEvidence(evidence); err != nil {
 				return nil, nil, err
 			}
 		}
-		if err := s.Store.UpsertPpmEvidence(evidence); err != nil {
+		if err := s.Store.UpsertCanonEvidence(evidence); err != nil {
 			return nil, nil, err
 		}
 		return []string{evidence.ID}, evidenceJSON(evidence), nil
@@ -134,7 +134,7 @@ func (s *Server) evidenceLink(args map[string]any) (string, error) {
 	}
 	return s.withAuditedWrite(env, ToolEvidenceLink, func(run agentrun.Run) ([]string, any, error) {
 		_ = run
-		if err := s.Store.LinkPpmEvidenceToFact(env.ProjectID, factID, evidenceID); err != nil {
+		if err := s.Store.LinkCanonEvidenceToFact(env.ProjectID, factID, evidenceID); err != nil {
 			return nil, nil, err
 		}
 		return []string{factID, evidenceID}, map[string]any{
@@ -189,7 +189,7 @@ func (s *Server) knowledgeLink(args map[string]any) (string, error) {
 	if knowledgeID == "" || entityID == "" || predicate == "" {
 		return "", fmt.Errorf("knowledge_id, entity_id, and predicate are required")
 	}
-	if !ppm.ValidPredicate(predicate) {
+	if !canon.ValidPredicate(predicate) {
 		return "", fmt.Errorf("invalid predicate")
 	}
 	return s.withAuditedWrite(env, ToolKnowledgeLink, func(run agentrun.Run) ([]string, any, error) {
@@ -206,7 +206,7 @@ func (s *Server) knowledgeLink(args map[string]any) (string, error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		if _, err := s.Store.GetPpmEntity(link.EntityID); err != nil {
+		if _, err := s.Store.GetCanonEntity(link.EntityID); err != nil {
 			return nil, nil, fmt.Errorf("entity not found")
 		}
 		if err := s.Store.SaveKnowledgeLink(link); err != nil {
@@ -216,7 +216,7 @@ func (s *Server) knowledgeLink(args map[string]any) (string, error) {
 	})
 }
 
-func factJSON(fact ppm.Fact) map[string]any {
+func factJSON(fact canon.Fact) map[string]any {
 	out := map[string]any{
 		"id":          fact.ID,
 		"project_id":  fact.ProjectID,
@@ -234,7 +234,7 @@ func factJSON(fact ppm.Fact) map[string]any {
 	return out
 }
 
-func evidenceJSON(evidence ppm.Evidence) map[string]any {
+func evidenceJSON(evidence canon.Evidence) map[string]any {
 	return map[string]any{
 		"id":          evidence.ID,
 		"project_id":  evidence.ProjectID,

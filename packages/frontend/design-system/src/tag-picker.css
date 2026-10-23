@@ -1,0 +1,31 @@
+.pw-tag-badge {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 9999px;
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+/* Texture pill: button.css supplies the frame, lit ring and gradient face. */
+.pw-tag-badge.pw-texture-button { padding: 1px 9px; border: 1px solid var(--tx-frame); background: linear-gradient(to bottom, var(--tx-outer-top), var(--tx-outer-bottom)); color: var(--tx-ink); }
+.pw-tag-badge.pw-tag-badge--add { cursor: pointer; }
+.pw-tag-badge__remove { display: inline-flex; align-items: center; color: var(--color-text-muted); cursor: pointer; }
+.pw-tag-badge__remove:hover { color: var(--color-text-primary); }
+.pw-tag-badge--editing.pw-texture-button { --tx-frame: var(--color-primary); }
+.pw-tag-badge__input { min-width: 0; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; }
+.pw-tag-badge__input::placeholder { color: var(--color-text-muted); }
+.pw-tag-badge__input, .pw-tag-badge__input:focus, .pw-tag-badge__input:focus-visible { outline: none !important; box-shadow: none !important; }
+.pw-tag-options { display: flex; max-height: 200px; flex-direction: column; gap: 2px; overflow-y: auto; padding: 6px; }
+.pw-tag-option {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 32px; padding: 0 10px;
+  border-radius: var(--radius-item); color: var(--color-text-secondary); font-size: 13px; text-align: left; cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.pw-tag-option[data-active="true"] { background: var(--color-surface-hover); color: var(--color-text-primary); }
+.pw-tag-options__empty { padding: 8px 10px; color: var(--color-text-muted); font-size: 12px; }

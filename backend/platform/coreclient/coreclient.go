@@ -1,4 +1,4 @@
-// Package coreclient finds, starts, and talks to the local core (ADR 0007).
+// Package coreclient finds, starts, and talks to the local core (Verdict 0007).
 // The core (`polterware serve`) is the only process that opens the SQLite
 // store; the CLI, the TUI, and the MCP bridge reach it through these helpers.
 package coreclient
@@ -168,7 +168,7 @@ type Clients struct {
 	Projects    localv1connect.ProjectServiceClient
 	Work        localv1connect.WorkServiceClient
 	Context     localv1connect.ContextServiceClient
-	PPM         localv1connect.ProjectModelServiceClient
+	Canon         localv1connect.ProjectModelServiceClient
 	AgentRuns   localv1connect.AgentRunServiceClient
 	Changes     localv1connect.ChangeServiceClient
 }
@@ -184,7 +184,7 @@ func New(core runstate.Core, client string) Clients {
 		Projects:    localv1connect.NewProjectServiceClient(httpClient, base, options),
 		Work:        localv1connect.NewWorkServiceClient(httpClient, base, options),
 		Context:     localv1connect.NewContextServiceClient(httpClient, base, options),
-		PPM:         localv1connect.NewProjectModelServiceClient(httpClient, base, options),
+		Canon:         localv1connect.NewProjectModelServiceClient(httpClient, base, options),
 		AgentRuns:   localv1connect.NewAgentRunServiceClient(httpClient, base, options),
 		Changes:     localv1connect.NewChangeServiceClient(httpClient, base, options),
 	}

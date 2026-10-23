@@ -1,0 +1,1 @@
+claude mcp add pwnotes -- '/Applications/Polterware Notes.app/Contents/Resources/pwnotes' mcp

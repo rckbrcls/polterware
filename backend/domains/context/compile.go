@@ -26,9 +26,13 @@ type Request struct {
 	Query       string
 	EntityID    string
 	TokenBudget int
+	// ScopeNodeID narrows candidates to one Atlas node, its descendants and,
+	// unless ScopeExact, its ancestors. Empty is the whole project.
+	ScopeNodeID string
+	ScopeExact  bool
 }
 
-// EvidenceRef is a compact pointer to PPM evidence supporting a context item.
+// EvidenceRef is a compact pointer to Canon evidence supporting a context item.
 type EvidenceRef struct {
 	ID      string
 	Kind    string
@@ -173,12 +177,10 @@ func rankScore(item Item) int {
 		score += 50
 	case "fact":
 		score += 45
-	case "adr":
+	case "verdict":
 		score += 35
-	case "doc":
+	case "evidence":
 		score += 30
-	case "runbook":
-		score += 28
 	}
 	return score
 }

@@ -5,7 +5,7 @@ The active Protobuf contracts describe the reduced local core:
 - Project and Environment
 - Architecture
 - Knowledge
-- Project Model (PPM), Context, and AgentRun
+- Project Model (Canon), Context, and AgentRun
 - Integrations
 - Terminal (Connect auth PTY only)
 - Health and Maintenance

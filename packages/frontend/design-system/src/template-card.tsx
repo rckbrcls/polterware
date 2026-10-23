@@ -10,6 +10,8 @@ export type TemplateCardProps = {
   brand?: string | readonly string[];
   index?: number;
   class?: string;
+  /** Seeds the icon tile's finish; defaults to the title. */
+  seed?: string;
   onSelect: () => void;
 };
 
@@ -19,11 +21,11 @@ export function TemplateCard(props: TemplateCardProps) {
   return (
     <button
       type="button"
-      class={`pw-template-card ${props.class ?? ""}`}
+      class={`pw-template-card card-texture ${props.class ?? ""}`}
       style={{ "animation-delay": `${delayMs()}ms` }}
       onClick={() => props.onSelect()}
     >
-      <IconTile size={28} tone={props.tone ?? "neutral"} brand={props.brand}>
+      <IconTile size={28} tone={props.tone ?? "neutral"} brand={props.brand} seed={props.seed ?? props.title}>
         {props.icon}
       </IconTile>
       <div class="grid gap-1">
@@ -63,6 +65,7 @@ export function TemplateCardGrid(props: TemplateCardGridProps) {
             tone={item.tone}
             brand={item.brand}
             index={index()}
+            seed={item.id}
             onSelect={item.onSelect}
           />
         )}

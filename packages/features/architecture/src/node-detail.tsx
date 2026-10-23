@@ -6,6 +6,8 @@ import {
   PageError,
   PageLoading,
   StatusChip,
+  Link,
+  Settings,
 } from "@polterware/frontend-design-system";
 import { FileText, Network } from "@polterware/frontend-design-system";
 import { NodeIcon } from "./domain/node-icon";
@@ -63,7 +65,7 @@ export function ArchitectureNodeDetail(props: {
                     icon={<NodeIcon type={n().kind} name={n().kind} size={16} />}
                     title={n().label}
                   />
-                  <DetailPanel.Section title="Connected architecture" aside={
+                  <DetailPanel.Section title="Connected architecture" icon={<Network size={14} />} aside={
                     <Show when={props.onOpenOnCanvas}>
                       <Button variant="ghost" size="sm" onClick={() => props.onOpenOnCanvas?.(n().id)}>Open on canvas</Button>
                     </Show>
@@ -103,6 +105,7 @@ export function ArchitectureNodeDetail(props: {
                               <DataTable.PrimaryCell
                                 icon={<Network size={16} />}
                                 iconTone="architecture"
+                                iconSeed={connection.nodeId}
                                 title={connection.label}
                               />
                               <DataTable.Cell>{connection.relation}</DataTable.Cell>
@@ -121,12 +124,12 @@ export function ArchitectureNodeDetail(props: {
                   </DetailPanel.Section>
 
                   <Show when={n().notes}>
-                    <DetailPanel.Section title="Notes">
+                    <DetailPanel.Section title="Notes" icon={<FileText size={14} />}>
                       <p class="pw-detail-panel__text">{n().notes}</p>
                     </DetailPanel.Section>
                   </Show>
                   <Show when={n().docs.length > 0}>
-                    <DetailPanel.Section title="Linked docs">
+                    <DetailPanel.Section title="Linked docs" icon={<Link size={14} />}>
                       <DetailPanel.LinkedEntities
                         items={n().docs.map((doc) => ({
                           id: doc.id,
@@ -149,7 +152,7 @@ export function ArchitectureNodeDetail(props: {
                   }
                 >
                   <DetailPanel.Rail>
-                    <DetailPanel.Section title="Properties">
+                    <DetailPanel.Section title="Properties" icon={<Settings size={14} />}>
                       <DetailPanel.Properties>
                         <DetailPanel.Property
                           label="Lifecycle"

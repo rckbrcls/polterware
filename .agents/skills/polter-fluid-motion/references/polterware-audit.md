@@ -68,15 +68,15 @@ only ensure reduced-motion), Terminal/Ops surfaces (removed), Corvu resizable dr
 
 ```bash
 # per-row hover fills that could become one highlight
-rg -n "hover:bg|:hover" packages apps/lore-desktop/src -g '*.tsx' -g '*.css' | rg -i "row|item|card|result|action"
+rg -n "hover:bg|:hover" packages apps/polterware-desktop/src -g '*.tsx' -g '*.css' | rg -i "row|item|card|result|action"
 # off-token timings
-rg -nE "[0-9]+ms|cubic-bezier\(|transition: all" packages apps/lore-desktop/src -g '*.css' | rg -v "var\(--(duration|ease)"
+rg -nE "[0-9]+ms|cubic-bezier\(|transition: all" packages apps/polterware-desktop/src -g '*.css' | rg -v "var\(--(duration|ease)"
 # layout-property transitions
 rg -nE "transition[^;]*(width|height|top|left|margin|padding)" packages -g '*.css'
 # animated rows inside For
 rg -n "<For each" packages -g '*.tsx'
 # keyframes without a reduced-motion guard
-rg -l "@keyframes" packages apps/lore-desktop/src -g '*.css' | xargs rg -L "prefers-reduced-motion"
+rg -l "@keyframes" packages apps/polterware-desktop/src -g '*.css' | xargs rg -L "prefers-reduced-motion"
 ```
 
 ## Proposal format (Audit mode)

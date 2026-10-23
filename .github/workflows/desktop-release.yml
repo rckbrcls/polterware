@@ -1,6 +1,6 @@
 name: Desktop release
 
-# Shared by lore-release.yml, sparky-release.yml and vitals-release.yml. Builds
+# Shared by polterware-release.yml, notes-release.yml and vitals-release.yml. Builds
 # the ad-hoc signed macOS arm64 DMG and ZIP for one app from its <app>-v<version>
 # tag and attaches them to a draft GitHub release. It never publishes: a person
 # reviews and publishes the draft. Versions with a suffix (0.1.0-alpha.1) are
@@ -10,13 +10,16 @@ on:
   workflow_call:
     inputs:
       app:
-        description: lore, sparky or vitals
+        description: polterware, notes or vitals
         required: true
         type: string
       tag:
         description: Existing <app>-v<version> tag
         required: true
         type: string
+    secrets:
+      POLTERWARE_SPARKLE_PRIVATE_KEY:
+        required: true
 
 permissions:
   contents: read
@@ -25,7 +28,7 @@ jobs:
   build:
     # .icon (Icon Composer) app icons need actool from Xcode 26.
     runs-on: macos-26
-    if: github.repository == 'polterware/polterware'
+    if: github.repository == 'rckbrcls/polterware'
     outputs:
       product: ${{ steps.meta.outputs.product }}
       version: ${{ steps.meta.outputs.version }}
@@ -35,7 +38,7 @@ jobs:
           APP: ${{ inputs.app }}
           RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          [[ "$APP" =~ ^(lore|sparky|vitals)$ ]] || { echo "Unknown app: $APP" >&2; exit 1; }
+          [[ "$APP" =~ ^(polterware|notes|vitals)$ ]] || { echo "Unknown app: $APP" >&2; exit 1; }
           [[ "$RELEASE_TAG" =~ ^${APP}-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || { echo "Invalid tag for $APP: $RELEASE_TAG" >&2; exit 1; }
       - uses: actions/checkout@v4
         with:
@@ -70,6 +73,7 @@ jobs:
           APP: ${{ inputs.app }}
           DESKTOP: ${{ steps.meta.outputs.desktop }}
           RELEASE_VERSION: ${{ steps.meta.outputs.version }}
+          POLTERWARE_SPARKLE_PRIVATE_KEY: ${{ secrets.POLTERWARE_SPARKLE_PRIVATE_KEY }}
         run: |
           bash tooling/release/dist-mac.sh "$APP"
           cat "$DESKTOP/release/$RELEASE_VERSION/gatekeeper.txt" >> "$GITHUB_STEP_SUMMARY"
@@ -82,6 +86,7 @@ jobs:
             ${{ steps.meta.outputs.desktop }}/release/*/*.dmg
             ${{ steps.meta.outputs.desktop }}/release/*/*.zip
             ${{ steps.meta.outputs.desktop }}/release/*/SHA256SUMS
+            ${{ steps.meta.outputs.desktop }}/release/*/appcast.xml
             ${{ steps.meta.outputs.desktop }}/release/*/bundle-verification.txt
             ${{ steps.meta.outputs.desktop }}/release/*/gatekeeper.txt
             ${{ steps.meta.outputs.desktop }}/release/*/build-report.json
@@ -99,7 +104,7 @@ jobs:
       - name: Attach artifacts to a draft in the same repository
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: polterware/polterware
+          GH_REPO: ${{ github.repository }}
           APP: ${{ inputs.app }}
           RELEASE_TAG: ${{ inputs.tag }}
           PRODUCT: ${{ needs.build.outputs.product }}
@@ -115,10 +120,10 @@ jobs:
             cat > release-notes.txt <<NOTES
           $PRODUCT $VERSION for macOS on Apple Silicon (arm64). Ad-hoc signed; not notarized.
           Gatekeeper rejection is expected. First run: right-click the extracted $PRODUCT.app and choose Open, or remove quarantine from that trusted app with xattr -dr com.apple.quarantine /path/to/$PRODUCT.app.
-          Install or update from a terminal (run it again to update): curl -fsSL https://raw.githubusercontent.com/polterware/polterware/main/scripts/install-desktop.sh | APP=$APP bash
+          Install or update from a terminal (run it again to update): curl -fsSL https://polterware.com/install.sh | APP=$APP bash
           NOTES
             gh release create "$RELEASE_TAG" --verify-tag --draft "${prerelease[@]}" --title "$PRODUCT $VERSION" --notes-file release-notes.txt
           fi
-          mapfile -t assets < <(find artifacts -type f \( -name '*.dmg' -o -name '*.zip' -o -name SHA256SUMS \))
-          [[ "${#assets[@]}" == 3 ]] || { echo 'Expected exactly DMG, ZIP and SHA256SUMS.' >&2; exit 1; }
+          mapfile -t assets < <(find artifacts -type f \( -name '*.dmg' -o -name '*.zip' -o -name SHA256SUMS -o -name appcast.xml \))
+          [[ "${#assets[@]}" == 4 ]] || { echo 'Expected DMG, ZIP, SHA256SUMS and signed appcast.' >&2; exit 1; }
           gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber

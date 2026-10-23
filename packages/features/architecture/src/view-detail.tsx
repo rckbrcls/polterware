@@ -7,6 +7,12 @@ import {
   Package,
   PageError,
   PageLoading,
+  FileText,
+  Layers,
+  ListFilter,
+  Network,
+  Settings,
+  Tag,
 } from "@polterware/frontend-design-system";
 import type { ArchViewCard } from "./extra-fixtures";
 import {
@@ -85,7 +91,7 @@ export function ArchitectureViewDetail(props: {
                     icon={<Eye size={16} />}
                     title={v().name}
                   />
-                  <DetailPanel.Section title="Overview" aside={
+                  <DetailPanel.Section title="Overview" icon={<FileText size={14} />} aside={
                     <div class="pw-detail-panel__actions">
                       <Button variant="secondary" size="sm" disabled={!props.onOpen} onClick={() => props.onOpen?.(v().id)}>Open</Button>
                       <Show when={props.onEdit}>
@@ -108,7 +114,7 @@ export function ArchitectureViewDetail(props: {
                     </Show>
                   </DetailPanel.Section>
 
-                  <DetailPanel.Section title="Membership">
+                  <DetailPanel.Section title="Membership" icon={<Network size={14} />}>
                     <Show
                       when={membershipKnown() && members().length > 0}
                       fallback={
@@ -150,6 +156,7 @@ export function ArchitectureViewDetail(props: {
                                 <DataTable.PrimaryCell
                                   icon={<Package size={16} />}
                                   iconTone="architecture"
+                                  iconSeed={member.id}
                                   title={member.name}
                                 />
                                 <DataTable.Cell>
@@ -168,20 +175,20 @@ export function ArchitectureViewDetail(props: {
                   </DetailPanel.Section>
 
                   <Show when={v().filterSummary}>
-                    <DetailPanel.Section title="Filters">
+                    <DetailPanel.Section title="Filters" icon={<ListFilter size={14} />}>
                       <p class="pw-detail-panel__text">{v().filterSummary}</p>
                     </DetailPanel.Section>
                   </Show>
 
                   <Show when={v().notes}>
-                    <DetailPanel.Section title="Notes">
+                    <DetailPanel.Section title="Notes" icon={<FileText size={14} />}>
                       <p class="pw-detail-panel__text">{v().notes}</p>
                     </DetailPanel.Section>
                   </Show>
                 </DetailPanel.Main>
 
                 <DetailPanel.Rail>
-                  <DetailPanel.Section title="Properties">
+                  <DetailPanel.Section title="Properties" icon={<Settings size={14} />}>
                     <DetailPanel.Properties>
                       <DetailPanel.Property label="Nodes" value={String(v().nodeCount)} />
                       <DetailPanel.Property label="Owner" value={v().owner?.trim()} />
@@ -192,12 +199,12 @@ export function ArchitectureViewDetail(props: {
                     </Show>
                   </DetailPanel.Section>
                   <Show when={hasEnvironments(v())}>
-                    <DetailPanel.Section title="Environments">
+                    <DetailPanel.Section title="Environments" icon={<Layers size={14} />}>
                       <DetailPanel.LinkedEntities items={chips(v().environments)} />
                     </DetailPanel.Section>
                   </Show>
                   <Show when={hasTags(v())}>
-                    <DetailPanel.Section title="Tags">
+                    <DetailPanel.Section title="Tags" icon={<Tag size={14} />}>
                       <DetailPanel.LinkedEntities items={chips(v().tags)} />
                     </DetailPanel.Section>
                   </Show>

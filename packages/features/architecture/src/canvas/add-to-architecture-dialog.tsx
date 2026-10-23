@@ -331,6 +331,7 @@ function TypeRow(props: {
           subtype={props.def.subtype}
           provider={props.def.provider}
           compact={false}
+          seed={props.def.id}
           dimmed={!props.def.placeable}
         />
       </span>

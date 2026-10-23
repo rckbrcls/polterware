@@ -23,7 +23,7 @@ stage: build
 - [ ] T1 Evidence upsert ` + "`backend/import/*`" + `
 - [ ] T2 Docs ` + "`docs/*`" + `
 
-## ppm-core: PPM core
+## canon-core: Canon core
 stage: build
 
 - [ ] T1 Core ` + "`backend/*`" + `
@@ -69,7 +69,7 @@ func TestClaimEndToEnd(t *testing.T) {
 	}
 
 	// backend/* on another card overlaps codex's backend/import/*.
-	refused, err := apply(claimText(t, polter.CoordClaim, "ppm-core T1", "claude"), "claude")
+	refused, err := apply(claimText(t, polter.CoordClaim, "canon-core T1", "claude"), "claude")
 	if !errors.Is(err, wedge.ErrPolterInvalid) || !strings.Contains(refused.Diagnostics[0].Message, "git-import T1 held by codex") {
 		t.Fatalf("overlap: err=%v diags=%+v", err, refused.Diagnostics)
 	}
@@ -98,7 +98,7 @@ func TestClaimEndToEnd(t *testing.T) {
 	if _, err := apply(claimText(t, polter.CoordDone, "git-import#T1", "codex"), "codex"); err != nil {
 		t.Fatalf("done: %v", err)
 	}
-	if _, err := apply(claimText(t, polter.CoordClaim, "ppm-core#T1", "claude"), "claude"); err != nil {
+	if _, err := apply(claimText(t, polter.CoordClaim, "canon-core#T1", "claude"), "claude"); err != nil {
 		t.Fatalf("claim after done: %v", err)
 	}
 	// Release by the holder; a second release is a no-op.

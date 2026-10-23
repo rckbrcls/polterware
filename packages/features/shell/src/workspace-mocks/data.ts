@@ -1,10 +1,8 @@
 import type {
   WorkspaceCatalogProvider,
-  WorkspaceDocument,
   WorkspaceIntegration,
   WorkspaceIntegrationResource,
   WorkspaceIntegrationSyncRun,
-  WorkspaceRunbook,
 } from "./types";
 
 export const CATALOG_PROVIDER_MOCKS: WorkspaceCatalogProvider[] = [
@@ -143,54 +141,4 @@ export const INTEGRATION_SYNC_RUN_MOCKS: WorkspaceIntegrationSyncRun[] = INTEGRA
   imported: integration.resourceCount,
   changed: 0,
   message: "Fixture metadata refreshed in memory.",
-}));
-
-export const DOCUMENT_MOCKS: WorkspaceDocument[] = [
-  {
-    id: "doc-architecture", title: "System architecture",
-    summary: "How the local project components fit together.",
-    bodyMarkdown: "This document describes the local project topology represented on the Architecture canvas.\n\n## Boundaries\n\nComponents, resources, and operational workflows stay scoped to this project.",
-    author: "Project maintainer", updatedAt: "2h ago", tags: ["architecture", "local"],
-    componentIds: ["cmp-api", "cmp-database"], componentNames: ["API", "Database"],
-    environment: "All", status: "published", owner: "Platform", entityLinks: [],
-  },
-  {
-    id: "doc-database", title: "Database conventions",
-    summary: "Naming, migrations, and backup windows.",
-    bodyMarkdown: "Use expand-and-contract migrations and validate backups before maintenance.\n\n## Naming\n\n- Tables: `snake_case` plural\n- Indexes: `idx_<table>_<columns>`",
-    author: "Project maintainer", updatedAt: "4d ago", tags: ["database", "conventions"],
-    componentIds: ["cmp-database"], componentNames: ["Database"],
-    environment: "All", status: "draft", owner: "Platform", entityLinks: [],
-  },
-];
-
-function runbookMarkdown(input: Omit<WorkspaceRunbook, "bodyMarkdown" | "entityLinks">): string {
-  return `## Objective\n\n${input.objective}\n\n## Prerequisites\n\n${input.prerequisites.map((item) => `- ${item}`).join("\n")}\n\n## Steps\n\n${input.steps.map((item, index) => `${index + 1}. ${item}`).join("\n")}\n\n## Commands\n\n\`\`\`bash\n${input.commands.join("\n")}\n\`\`\`\n\n## Rollback\n\n${input.rollback}`;
-}
-
-const RUNBOOK_SEEDS: Omit<WorkspaceRunbook, "bodyMarkdown" | "entityLinks">[] = [
-  {
-    id: "rb-service", title: "Service recovery",
-    objective: "Restore a local service after a failed health check.", service: "API", severity: "high",
-    prerequisites: ["Confirm the affected environment", "Confirm the service component in the Atlas"],
-    steps: ["Inspect the service fixture", "Review the restart command", "Record the expected result"],
-    commands: ["systemctl status example-api", "systemctl restart example-api"],
-    rollback: "Restore the previous service version if the health check remains degraded.",
-    owner: "Platform", lastValidated: "4 days ago", componentId: "cmp-api", componentName: "API",
-  },
-  {
-    id: "rb-database", title: "Database failover",
-    objective: "Review a failover sequence for the primary database.", service: "Database", severity: "critical",
-    prerequisites: ["Verify the standby fixture is healthy", "Pause local writes"],
-    steps: ["Review replication state", "Promote the standby", "Validate application health"],
-    commands: ["pg_isready", "psql -c 'select now();'"],
-    rollback: "Restore the previous primary reference if validation fails.",
-    owner: "Platform", lastValidated: "12 days ago", componentId: "cmp-database", componentName: "Database", resourceId: "res-rds-prod", resourceName: "prod-postgres",
-  },
-];
-
-export const RUNBOOK_MOCKS: WorkspaceRunbook[] = RUNBOOK_SEEDS.map((runbook) => ({
-  ...runbook,
-  entityLinks: [],
-  bodyMarkdown: runbookMarkdown(runbook),
 }));

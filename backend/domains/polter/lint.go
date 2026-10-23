@@ -13,8 +13,8 @@ import (
 // References is what reference-level lint checks against. A nil *References
 // means the project could not be resolved and only syntax is checked.
 type References struct {
-	// ADRs holds each ADR's knowledge id and title.
-	ADRs []ADRRef
+	// Verdicts holds each Verdict's knowledge id and title.
+	Verdicts []VerdictRef
 	// Cards is the project's current Work graph, for similarity hints.
 	Cards []work.Card
 	// Nodes are the project's Atlas nodes. Card under: is checked once any
@@ -28,14 +28,14 @@ type References struct {
 	Git *GitView
 }
 
-type ADRRef struct {
+type VerdictRef struct {
 	ID    string
 	Title string
-	// Status is the ADR knowledge status (proposed, accepted, …).
+	// Status is the Verdict knowledge status (proposed, accepted, …).
 	Status string
 }
 
-var adrNumber = regexp.MustCompile(`(?i)\badr[\s\-_]*0*(\d+)\b`)
+var verdictNumber = regexp.MustCompile(`(?i)\b(?:adr|verdict)[\s\-_]*0*(\d+)\b`)
 
 // Lint decodes text and runs syntax checks, plus reference checks and
 // similarity hints when refs is set. It returns the decoded document so callers can continue to Plan.
@@ -58,20 +58,20 @@ func Lint(text string, refs *References) (Document, []Diagnostic) {
 func checkReferences(doc Document, refs References) []Diagnostic {
 	known := map[string]bool{}
 	numbers := map[int]bool{}
-	for _, adr := range refs.ADRs {
-		known[strings.ToLower(adr.ID)] = true
-		if n, ok := parseADRNumber(adr.Title); ok {
+	for _, verdict := range refs.Verdicts {
+		known[strings.ToLower(verdict.ID)] = true
+		if n, ok := parseVerdictNumber(verdict.Title); ok {
 			numbers[n] = true
 		}
 	}
 	// stale hints at a cited decision that no longer settles the question.
 	stale := func(line int, ref string) []Diagnostic {
-		for _, adr := range refs.ADRs {
-			if !CitesDecision(ref, adr.ID, adr.Title) || decisionBinding(adr.Status) {
+		for _, verdict := range refs.Verdicts {
+			if !CitesDecision(ref, verdict.ID, verdict.Title) || decisionBinding(verdict.Status) {
 				continue
 			}
-			state := decisionState(adr.Status)
-			message := fmt.Sprintf("decision %s is %s", adr.Title, state)
+			state := decisionState(verdict.Status)
+			message := fmt.Sprintf("decision %s is %s", verdict.Title, state)
 			if state == "superseded" {
 				message += ": cite its successor"
 			}
@@ -90,14 +90,14 @@ func checkReferences(doc Document, refs References) []Diagnostic {
 					diags = append(diags, stale(entry.Line, ref)...)
 					continue
 				}
-				if n, ok := parseADRNumber(ref); ok && numbers[n] {
+				if n, ok := parseVerdictNumber(ref); ok && numbers[n] {
 					diags = append(diags, stale(entry.Line, ref)...)
 					continue
 				}
 				diags = append(diags, Diagnostic{
 					Line:     entry.Line,
 					Severity: SeverityError,
-					Message:  fmt.Sprintf("unknown decision %q: no ADR with that number or id in this project", ref),
+					Message:  fmt.Sprintf("unknown decision %q: no Verdict with that number or id in this project", ref),
 				})
 			}
 		}
@@ -136,13 +136,13 @@ func CheckRepos(doc Document, repos []string) []Diagnostic {
 	return diags
 }
 
-// ParseADRNumber reads the number from "ADR 0008", "ADR-8", or a title.
-func ParseADRNumber(value string) (int, bool) {
-	return parseADRNumber(value)
+// ParseVerdictNumber reads the number from "Verdict 0008", "Verdict-8", or a title.
+func ParseVerdictNumber(value string) (int, bool) {
+	return parseVerdictNumber(value)
 }
 
-func parseADRNumber(value string) (int, bool) {
-	m := adrNumber.FindStringSubmatch(value)
+func parseVerdictNumber(value string) (int, bool) {
+	m := verdictNumber.FindStringSubmatch(value)
 	if m == nil {
 		return 0, false
 	}

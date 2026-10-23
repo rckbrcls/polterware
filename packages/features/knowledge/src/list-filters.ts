@@ -1,4 +1,4 @@
-import type { WorkStage, WorkspaceSource, WorkspaceWorkCard } from "@polterware/feature-shell";
+import type { WorkStage, WorkspaceEvidence, WorkspaceWorkCard } from "@polterware/feature-shell";
 import { cardOpenQuestions } from "./work-stage";
 
 export type CardQuestionsFilter = "any" | "open" | "clear";
@@ -10,9 +10,9 @@ export type CardListFilters = {
   query: string;
 };
 
-export type SourceListFilters = {
+export type EvidenceListFilters = {
+  tags: readonly string[];
   linked: LinkedFilter;
-  pathPrefixes: readonly string[];
   query: string;
 };
 
@@ -22,9 +22,9 @@ export const EMPTY_CARD_LIST_FILTERS: CardListFilters = {
   query: "",
 };
 
-export const EMPTY_SOURCE_LIST_FILTERS: SourceListFilters = {
+export const EMPTY_EVIDENCE_LIST_FILTERS: EvidenceListFilters = {
+  tags: [],
   linked: "any",
-  pathPrefixes: [],
   query: "",
 };
 
@@ -32,21 +32,14 @@ export function cardListFiltersActive(filters: CardListFilters): boolean {
   return filters.stages.length > 0 || filters.questions !== "any";
 }
 
-export function sourceListFiltersActive(filters: SourceListFilters): boolean {
-  return filters.linked !== "any" || filters.pathPrefixes.length > 0;
+export function evidenceListFiltersActive(filters: EvidenceListFilters): boolean {
+  return filters.linked !== "any" || filters.tags.length > 0;
 }
 
-export function sourcePathPrefix(path: string): string {
-  const normalized = path.replace(/\\/g, "/").replace(/^\.\//, "");
-  const parts = normalized.split("/").filter(Boolean);
-  return parts[0] ?? (normalized || "/");
-}
-
-export function distinctSourcePathPrefixes(sources: readonly WorkspaceSource[]): string[] {
+/** Every tag in use across the evidence, sorted for the filter list and tag suggestions. */
+export function distinctEvidenceTags(items: readonly WorkspaceEvidence[]): string[] {
   const values = new Set<string>();
-  for (const source of sources) {
-    values.add(sourcePathPrefix(source.path));
-  }
+  for (const item of items) for (const tag of item.tags) values.add(tag);
   return [...values].sort((a, b) => a.localeCompare(b));
 }
 
@@ -66,22 +59,18 @@ export function filterWorkCards(
   });
 }
 
-export function filterSources(
-  sources: readonly WorkspaceSource[],
-  filters: SourceListFilters,
-): WorkspaceSource[] {
+/** An item matches when it carries every selected tag. */
+export function filterEvidence(
+  items: readonly WorkspaceEvidence[],
+  filters: EvidenceListFilters,
+): WorkspaceEvidence[] {
   const needle = filters.query.trim().toLowerCase();
-  return sources.filter((source) => {
-    if (filters.linked === "linked" && source.entityLinks.length === 0) return false;
-    if (filters.linked === "unlinked" && source.entityLinks.length > 0) return false;
-    if (
-      filters.pathPrefixes.length > 0 &&
-      !filters.pathPrefixes.includes(sourcePathPrefix(source.path))
-    ) {
-      return false;
-    }
+  return items.filter((item) => {
+    if (filters.linked === "linked" && item.entityLinks.length === 0) return false;
+    if (filters.linked === "unlinked" && item.entityLinks.length > 0) return false;
+    if (filters.tags.length > 0 && !filters.tags.every((tag) => item.tags.includes(tag))) return false;
     if (!needle) return true;
-    return [source.title, source.path, source.summary, source.owner].some((value) =>
+    return [item.title, item.path, item.summary, item.owner, ...item.tags].some((value) =>
       value.toLowerCase().includes(needle),
     );
   });

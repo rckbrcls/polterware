@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/polterware/polterware/backend/domains/drift"
-	"github.com/polterware/polterware/backend/domains/ppm"
+	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/work"
 	gitpkg "github.com/polterware/polterware/backend/providers/git"
 	"github.com/polterware/polterware/backend/providers/importer"
@@ -46,11 +46,11 @@ func assembleCommitDrift(store *storepkg.Store, projectID, rootPath string) (boo
 		return false, nil, nil, nil, nil
 	}
 
-	evidence, err := store.ListPpmEvidence(projectID)
+	evidence, err := store.ListCanonEvidence(projectID)
 	if err != nil {
 		return false, nil, nil, nil, err
 	}
-	byID := map[string]ppm.Evidence{}
+	byID := map[string]canon.Evidence{}
 	for _, item := range evidence {
 		byID[item.ID] = item
 	}

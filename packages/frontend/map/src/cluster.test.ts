@@ -35,8 +35,8 @@ describe("map network gate", () => {
     expect(isMapNetworkUrl("https://example.com/style.json")).toBe(false);
   });
 
-  it("loads tiles only for MapLibre while map.online is true", () => {
-    expect(shouldLoadMapTiles(false, "maplibre")).toBe(false);
+  it("loads MapLibre tiles without a map.online gate", () => {
+    expect(shouldLoadMapTiles(false, "maplibre")).toBe(true);
     expect(shouldLoadMapTiles(true, "pmtiles")).toBe(false);
     expect(shouldLoadMapTiles(true, "maplibre")).toBe(true);
   });

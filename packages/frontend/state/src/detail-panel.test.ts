@@ -225,6 +225,25 @@ describe("detailPanelStore", () => {
     expect(store()).toMatchObject({ open: true, expanded: false });
   });
 
+  it("never expands a peek-only entity kind", () => {
+    const fact: DetailTarget = { scopeId, entityId: "fact-1", entityKind: "fact" };
+    store().registerCollection({ scopeId, status: "ready", targets: [fact] });
+    store().activateTarget(fact);
+    store().expand();
+    expect(store()).toMatchObject({ open: true, expanded: false });
+  });
+
+  it("expands page-only and both kinds", () => {
+    for (const entityKind of ["document", "card"]) {
+      const target: DetailTarget = { scopeId, entityId: "x", entityKind };
+      store().registerCollection({ scopeId, status: "ready", targets: [target] });
+      store().activateTarget(target);
+      store().expand();
+      expect(store().expanded).toBe(true);
+      store().restore();
+    }
+  });
+
   it("expands only with an active collection", () => {
     store().expand();
     expect(store().expanded).toBe(false);

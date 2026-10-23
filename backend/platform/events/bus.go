@@ -1,4 +1,4 @@
-// Package events is the core's in-memory change bus (ADR 0007). SQLite commit
+// Package events is the core's in-memory change bus (Verdict 0007). SQLite commit
 // hooks record which tables a transaction wrote; the bus coalesces them into
 // numbered change events that clients watch to refresh what they show.
 package events
@@ -16,7 +16,7 @@ const (
 	KindSettings     = "settings"
 	KindWork         = "work"
 	KindKnowledge    = "knowledge"
-	KindPPM          = "ppm"
+	KindCanon          = "canon"
 	KindAgentRuns    = "agent_runs"
 	KindArchitecture = "architecture"
 	KindIntegrations = "integrations"
@@ -40,11 +40,11 @@ var tableKinds = map[string]string{
 	"change_ops":                KindWork,
 	"knowledge_items":           KindKnowledge,
 	"knowledge_entity_links":    KindKnowledge,
-	"ppm_entities":              KindPPM,
-	"ppm_relationships":         KindPPM,
-	"ppm_facts":                 KindPPM,
-	"ppm_evidence":              KindPPM,
-	"ppm_fact_evidence":         KindPPM,
+	"canon_entities":              KindCanon,
+	"canon_relationships":         KindCanon,
+	"canon_facts":                 KindCanon,
+	"canon_evidence":              KindCanon,
+	"canon_fact_evidence":         KindCanon,
 	"agent_runs":                KindAgentRuns,
 	"agent_run_steps":           KindAgentRuns,
 	"agent_tool_calls":          KindAgentRuns,

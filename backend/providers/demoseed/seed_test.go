@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/polterware/polterware/backend/domains/knowledge"
 	"github.com/polterware/polterware/backend/providers/demoseed"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
@@ -54,7 +55,7 @@ func TestDefaultsCreatesPolterAndEmptyProjects(t *testing.T) {
 
 func TestDefaultsIsIdempotent(t *testing.T) {
 	store := newSeeded(t)
-	tables := []string{"projects", "environments", "knowledge_items", "work_cards", "work_tasks", "ppm_facts"}
+	tables := []string{"projects", "environments", "knowledge_items", "work_cards", "work_tasks", "canon_facts"}
 	before := map[string]int{}
 	for _, table := range tables {
 		before[table] = count(t, store, `SELECT COUNT(*) FROM `+table)
@@ -87,29 +88,37 @@ func TestDefaultsDoesNotOverwriteAnExistingDatabase(t *testing.T) {
 	}
 }
 
-func TestSeededADRsCoverTheLifecycleStates(t *testing.T) {
+func TestSeededVerdictsCoverTheLifecycleStates(t *testing.T) {
 	store := newSeeded(t)
-	adrs, err := store.ListKnowledge(demoseed.ProjectID, "adr")
+	verdicts, err := store.ListKnowledge(demoseed.ProjectID, "verdict")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(adrs) < 3 {
-		t.Fatalf("want at least 3 seeded ADRs, got %d", len(adrs))
+	if len(verdicts) < 3 {
+		t.Fatalf("want at least 3 seeded Verdicts, got %d", len(verdicts))
 	}
 	states := map[string]bool{}
-	for _, adr := range adrs {
-		states[adr.Status] = true
+	for _, verdict := range verdicts {
+		states[verdict.Status] = true
 	}
 	if !states["active"] || !states["proposed"] {
-		t.Fatalf("seed must show active and proposed ADRs, got %v", states)
+		t.Fatalf("seed must show active and proposed Verdicts, got %v", states)
 	}
 }
 
 func TestSeededSourcesAreProjectRelative(t *testing.T) {
 	store := newSeeded(t)
-	sources, err := store.ListKnowledge(demoseed.ProjectID, "source")
+	items, err := store.ListKnowledge(demoseed.ProjectID, "evidence")
 	if err != nil {
 		t.Fatal(err)
+	}
+	var sources []knowledge.Item
+	for _, item := range items {
+		for _, tag := range item.Tags {
+			if tag == "source" {
+				sources = append(sources, item)
+			}
+		}
 	}
 	if len(sources) == 0 {
 		t.Fatal("seed must register sources")
@@ -123,7 +132,7 @@ func TestSeededSourcesAreProjectRelative(t *testing.T) {
 
 func TestEmptyProjectHasNoContent(t *testing.T) {
 	store := newSeeded(t)
-	for _, table := range []string{"knowledge_items", "work_cards", "ppm_facts"} {
+	for _, table := range []string{"knowledge_items", "work_cards", "canon_facts"} {
 		if n := count(t, store, `SELECT COUNT(*) FROM `+table+` WHERE project_id=?`, demoseed.EmptyProjectID); n != 0 {
 			t.Errorf("empty project has %d rows in %s", n, table)
 		}

@@ -1,8 +1,18 @@
 .pw-progress-ring { position: relative; display: inline-grid; place-items: center; color: var(--color-text-primary); }
 .pw-progress-ring__label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
 .pw-progress-ring > svg, .pw-progress-ring__value { grid-area: 1 / 1; }
-.pw-progress-ring > svg { width: var(--size); height: var(--size); fill: none; }
-.pw-progress-ring__track { stroke: var(--color-border-subtle); }
-.pw-progress-ring__range { stroke: var(--color-brand); stroke-linecap: round; transition: stroke-dashoffset var(--spring-moderate-duration) var(--spring-moderate-ease); }
-.pw-progress-ring__value { font-size: 12px; }
-@media (prefers-reduced-motion: reduce) { .pw-progress-ring__range { transition: none; } }
+/* The frame is wider than the ring, so the svg lets it spill out instead of clipping it. */
+.pw-progress-ring > svg { width: var(--size); height: var(--size); fill: none; overflow: visible; }
+/* Ark sets stroke-width inline per circle; the layers below widen or narrow it, so they win with !important. */
+.pw-progress-ring__stop-track-top { stop-color: var(--field-fill-top); }
+.pw-progress-ring__stop-track-bottom { stop-color: var(--field-fill-bottom); }
+.pw-progress-ring__stop-face-top { stop-color: #5a5a5a; }
+.pw-progress-ring__stop-face-bottom { stop-color: #3d3d3d; }
+.pw-progress-ring__track-frame { stroke: var(--field-frame); stroke-width: calc(var(--thickness) + 2px) !important; }
+.pw-progress-ring__track { stroke-width: var(--thickness) !important; }
+.pw-progress-ring__range-frame, .pw-progress-ring__range-rim, .pw-progress-ring__range { stroke-linecap: round; transition: stroke-dashoffset var(--spring-moderate-duration) var(--spring-moderate-ease); }
+.pw-progress-ring__range-frame { stroke: var(--field-frame); stroke-width: calc(var(--thickness) + 2px) !important; }
+.pw-progress-ring__range-rim { stroke: #6a6a6a; stroke-width: var(--thickness) !important; }
+.pw-progress-ring__range { stroke-width: calc(var(--thickness) - 2px) !important; }
+.pw-progress-ring__value { display: inline-flex; }
+@media (prefers-reduced-motion: reduce) { .pw-progress-ring__range-frame, .pw-progress-ring__range-rim, .pw-progress-ring__range { transition: none; } }
