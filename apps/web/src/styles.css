@@ -39,7 +39,7 @@ p { line-height: 1.6; }
 .pw-navmenu-preview-frame > * { width: 560px; flex-shrink: 0; }
 
 /* Hero */
-.hero { padding-block: 72px 56px; text-align: center; }
+.hero { padding-block: 48px 24px; text-align: center; }
 .hero h1 { font-size: clamp(44px, 7vw, 76px); line-height: 1.02; letter-spacing: -0.045em; margin: 0 auto 28px; max-width: 980px; }
 .hero-foot { display: flex; align-items: center; justify-content: center; gap: 32px; }
 .hero-lead { font-size: 18px; line-height: 1.55; margin: 0 auto; max-width: 560px; color: var(--color-text-secondary); }
@@ -48,11 +48,11 @@ p { line-height: 1.6; }
 .hero-new strong { color: var(--color-text-primary); font-weight: 500; }
 .hero-new:hover { color: var(--color-text-primary); }
 .hero-status { font-size: 13px; color: var(--color-text-muted); }
-.hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 36px; }
+.hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 28px; }
 
 /* Showcase */
 .showcase { padding-bottom: 120px; }
-.showcase-frame { border-radius: calc(var(--radius-surface) + 8px); padding: 8px; background: var(--color-surface-subtle); border: 1px solid var(--color-border-subtle); box-shadow: 0 40px 120px var(--color-shadow); mask-image: linear-gradient(to bottom, #000 55%, transparent 100%); }
+.showcase-frame { border-radius: calc(var(--radius-surface) + 8px); padding: 8px; background: var(--color-surface-subtle); border: 1px solid var(--color-border-subtle); box-shadow: 0 40px 120px var(--color-shadow); }
 
 /* Statement */
 .statement { padding-block: 96px 64px; border-top: 1px solid var(--color-border-subtle); }
@@ -226,3 +226,6 @@ a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; 
   .site-footer-grid { grid-template-columns: 1fr 1fr; }
   .site-footer-brand { grid-column: 1 / -1; }
 }
+/* Fades whatever crosses the bottom edge of the first viewport into the page background. */
+main { position: relative; }
+main::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 100vh; z-index: 1; pointer-events: none; background: linear-gradient(to bottom, transparent 72%, var(--color-app-background) 100%); }
