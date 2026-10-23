@@ -1,4 +1,4 @@
-import { LinkButton, ArrowRight02Icon } from "@polterware/frontend-design-system";
+import { LinkButton, ArrowRight02Icon, ExternalLink } from "@polterware/frontend-design-system";
 import { Seo } from "../components/Seo";
 import { Feature, Hero, InstallCommand, Showcase } from "../components/Sections";
 import { VitalsMockup } from "../components/mockups/VitalsMockup";
@@ -14,7 +14,7 @@ export default function Home() {
         lead="A small local-first companion. Connect to a host over SSH and see CPU, memory, disks, network and processes, then open a terminal without leaving the app."
         actions={<>
           <LinkButton variant="primary" href="#install">Download for macOS</LinkButton>
-          <LinkButton variant="ghost" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">Releases<ArrowRight02Icon size={16} /></LinkButton>
+          <LinkButton variant="ghost" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">Releases<ExternalLink size={16} /></LinkButton>
         </>}
         aside={<span class="hero-status">{vitals.status}</span>}
       />
@@ -30,7 +30,7 @@ export default function Home() {
         <h2 id="install-title">Install Polterware Vitals</h2>
         <p>Alpha builds for macOS on Apple Silicon. Run the same command again to update.</p>
         <InstallCommand command={installCommand()} />
-        <a class="text-link" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">All releases<ArrowRight02Icon size={14} /></a>
+        <a class="text-link" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">All releases<ExternalLink size={14} /></a>
       </section>
 
     </main>

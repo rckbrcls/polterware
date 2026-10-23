@@ -1,4 +1,5 @@
-import { For } from "solid-js";
+import { For, Show } from "solid-js";
+import { ExternalLink } from "@polterware/frontend-design-system";
 import { RELEASES_URL, REPO_URL, vitals } from "../data/products";
 
 const columns = [
@@ -33,7 +34,7 @@ export function SiteFooter() {
             <h2>{column.title}</h2>
             <ul>
               <For each={column.links}>{(link) => (
-                <li><a href={link.href} target={"external" in link && link.external ? "_blank" : undefined} rel={"external" in link && link.external ? "noopener noreferrer" : undefined}>{link.label}</a></li>
+                <li><a href={link.href} target={"external" in link && link.external ? "_blank" : undefined} rel={"external" in link && link.external ? "noopener noreferrer" : undefined}>{link.label}<Show when={"external" in link && link.external}><ExternalLink size={12} aria-hidden="true" /></Show></a></li>
               )}</For>
             </ul>
           </nav>
