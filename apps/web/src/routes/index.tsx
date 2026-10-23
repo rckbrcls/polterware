@@ -15,7 +15,6 @@ export default function Home() {
           <LinkButton variant="primary" href="#install">Download for macOS</LinkButton>
           <LinkButton variant="ghost" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">Releases<ArrowUpRight01Icon size={16} /></LinkButton>
         </>}
-        aside={<span class="hero-status">{vitals.status}</span>}
       />
       <Showcase><VitalsMockup /></Showcase>
 
