@@ -1,8 +1,8 @@
 import { For } from "solid-js";
-import { RELEASES_URL, REPO_URL, upcoming, vitals } from "../data/products";
+import { RELEASES_URL, REPO_URL, vitals } from "../data/products";
 
 const columns = [
-  { title: "Products", links: [{ label: vitals.name, href: "/" }, ...upcoming.map((item) => ({ label: `${item.name} (soon)`, href: "/#upcoming-title" }))] },
+  { title: "Products", links: [{ label: vitals.name, href: "/" }] },
   {
     title: "Resources",
     links: [

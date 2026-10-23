@@ -1,9 +1,8 @@
 import { LinkButton, ArrowRight02Icon } from "@polterware/frontend-design-system";
-import { For } from "solid-js";
 import { Seo } from "../components/Seo";
 import { Feature, Hero, InstallCommand, Showcase } from "../components/Sections";
 import { VitalsMockup } from "../components/mockups/VitalsMockup";
-import { RELEASES_URL, installCommand, upcoming, vitals } from "../data/products";
+import { RELEASES_URL, installCommand, vitals } from "../data/products";
 
 export default function Home() {
   return (
@@ -34,14 +33,6 @@ export default function Home() {
         <a class="text-link" href={RELEASES_URL} target="_blank" rel="noopener noreferrer">All releases<ArrowRight02Icon size={14} /></a>
       </section>
 
-      <section class="install-section site-container" aria-labelledby="upcoming-title">
-        <p class="eyebrow mono">IN DEVELOPMENT</p>
-        <h2 id="upcoming-title">More from Polterware, still in the works.</h2>
-        <p>These are not released yet. They live on the develop branch while they take shape.</p>
-        <ul>
-          <For each={upcoming}>{(item) => <li><strong>{item.name}</strong> — {item.summary}</li>}</For>
-        </ul>
-      </section>
     </main>
   );
 }

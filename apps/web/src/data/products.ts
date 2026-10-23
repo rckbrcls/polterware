@@ -10,10 +10,3 @@ export const vitals = {
   summary: "Watch remote machines over SSH: metrics, processes and a terminal.",
   status: "Alpha · macOS on Apple Silicon",
 };
-
-/** Products still in development on the `develop` branch. Listed without links or install commands. */
-export const upcoming = [
-  { name: "Polterware", summary: "Shared, evidence-backed project context for people and coding agents." },
-  { name: "Polterware Notes", summary: "Local-first notes and reminders that people and coding agents share." },
-  { name: "Dispatch", summary: "Hand a task to the right coding-agent CLI by difficulty." },
-];
