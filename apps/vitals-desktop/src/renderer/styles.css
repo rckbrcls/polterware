@@ -552,7 +552,8 @@ main.vitals-main {
   height: calc(100% - 48px);
   min-height: 240px;
   padding: 20px 16px 12px;
-  background: var(--color-surface-subtle);
+  /* Same dark gray as the surface, so the toolbar and the shell read as one plane. */
+  background: var(--color-surface);
 }
 
 .vitals-terminal-pane[hidden] {
