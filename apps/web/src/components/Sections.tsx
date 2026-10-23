@@ -1,5 +1,6 @@
 import { For, Show, children, createSignal, type JSX } from "solid-js";
 import { Check, Copy, ArrowRight02Icon } from "@polterware/frontend-design-system";
+import { parallax } from "./parallax";
 
 export function Hero(props: {
   eyebrow?: string;
@@ -14,19 +15,19 @@ export function Hero(props: {
   return (
     <section class="hero site-container" aria-labelledby="hero-title">
       <Show when={props.eyebrow}><p class="eyebrow">{props.eyebrow}</p></Show>
-      <h1 id="hero-title">{props.title}</h1>
-      <div class="hero-foot">
+      <h1 id="hero-title" ref={parallax(16)}>{props.title}</h1>
+      <div class="hero-foot" ref={parallax(32)}>
         <p class="hero-lead">{props.lead}</p>
         <Show when={aside()}><div class="hero-aside">{aside()}</div></Show>
       </div>
-      <Show when={actions()}><div class="hero-actions">{actions()}</div></Show>
+      <Show when={actions()}><div class="hero-actions" ref={parallax(44)}>{actions()}</div></Show>
     </section>
   );
 }
 
 /** A wide product picture that bleeds past the text column, like Linear's app shot. */
 export function Showcase(props: { children: JSX.Element }) {
-  return <div class="showcase site-container"><div class="showcase-frame">{props.children}</div></div>;
+  return <div class="showcase site-container"><div class="showcase-frame" ref={parallax(36)}>{props.children}</div></div>;
 }
 
 /** Linear-style statement: the first sentence bright, the rest muted. */
@@ -66,7 +67,7 @@ export function Feature(props: {
 }) {
   return (
     <section id={props.id} class="feature site-container" classList={{ "feature-reverse": props.reverse }}>
-      <div class="feature-copy">
+      <div class="feature-copy" ref={parallax(24)}>
         <Show when={props.eyebrow}><p class="eyebrow mono">{props.index ? `${props.index} ` : ""}{props.eyebrow}</p></Show>
         <h2>{props.title}</h2>
         <p>{props.body}</p>
@@ -76,7 +77,7 @@ export function Feature(props: {
           </ul>
         </Show>
       </div>
-      <div class="feature-visual">{props.visual}</div>
+      <div class="feature-visual" ref={parallax(56)}>{props.visual}</div>
     </section>
   );
 }
