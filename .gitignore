@@ -66,3 +66,7 @@ apps/web/.solid-start/
 
 # Generated gallery props (tooling/docs-props.mjs)
 apps/gallery/src/generated/
+
+# Downloaded Sparkle distribution, headers, and compiled native bridge
+tooling/updater/vendor/
+tooling/updater/build/

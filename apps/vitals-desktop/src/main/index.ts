@@ -1,10 +1,11 @@
 import { join } from "node:path";
-import { app, BrowserWindow, ipcMain, nativeImage, nativeTheme } from "electron";
+import { app, BrowserWindow, ipcMain, nativeImage, nativeTheme, Menu } from "electron";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { createWindow } from "./window.js";
 import { SessionManager } from "./session-manager.js";
 import { registerVitalsIpcHandlers } from "./ipc.js";
 import { getSettings } from "./settings.js";
+import { desktopUpdater } from "./updater.js";
 
 // Keep native controls and windows dark regardless of the system appearance.
 nativeTheme.themeSource = "dark";
@@ -25,6 +26,11 @@ function applyDevDockIcon(): void {
 app.whenReady().then(() => {
   electronApp.setAppUserModelId("com.polterware.vitals");
   applyDevDockIcon();
+  desktopUpdater.start();
+  Menu.setApplicationMenu(Menu.buildFromTemplate([
+    { label: "Polterware Vitals", submenu: [{ role: "about" }, desktopUpdater.menuItem(), { type: "separator" }, { role: "quit" }] },
+    { role: "editMenu" }, { role: "windowMenu" },
+  ]));
   app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });

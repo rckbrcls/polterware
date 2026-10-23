@@ -2,8 +2,8 @@
 # Installs or updates a Polterware desktop app (Polterware, Polterware Vitals, Polterware Notes) on macOS
 # from the newest <app>-v<version> GitHub release. Run it again to update.
 #
-#   curl -fsSL https://raw.githubusercontent.com/rckbrcls/polterware/main/scripts/install-desktop.sh | bash
-#   curl -fsSL https://raw.githubusercontent.com/rckbrcls/polterware/main/scripts/install-desktop.sh | APP=polterware bash
+#   curl -fsSL https://polterware.com/install.sh | bash
+#   curl -fsSL https://polterware.com/install.sh | APP=polterware bash
 set -euo pipefail
 
 REPO="rckbrcls/polterware"

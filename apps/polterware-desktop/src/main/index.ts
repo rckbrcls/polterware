@@ -27,6 +27,7 @@ import { createAppearancePreferencesController } from "./appearance-preferences.
 import { createQuitPreferencesController, type QuitPreferencesController } from "./quit-preferences.js";
 import { createMcpSupervisor } from "./mcp-supervisor.js";
 import { installApplicationMenu } from "./application-menu.js";
+import { desktopUpdater } from "./updater.js";
 
 // Keep native controls and windows dark regardless of the system appearance.
 nativeTheme.themeSource = "dark";
@@ -91,10 +92,12 @@ function afterCoreStartup<T extends Record<string, (...args: never[]) => unknown
 
 async function bootstrap() {
   configureLogging();
+  desktopUpdater.start();
   installApplicationMenu(
     {
       isPackaged: app.isPackaged,
       platform: process.platform,
+      checkForUpdates: desktopUpdater.check,
     },
     Menu,
   );
@@ -298,6 +301,7 @@ async function bootstrap() {
 
   let quitConfirmed = false;
   app.on("before-quit", (event) => {
+    if (desktopUpdater.isInstalling()) quitConfirmed = true;
     if (!quitConfirmed) {
       const quitSettings = quitPreferences.getPreferences();
       if (!quitSettings.confirmOnQuit) {

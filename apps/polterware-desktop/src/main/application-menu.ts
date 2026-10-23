@@ -3,6 +3,7 @@ import type { Menu, MenuItemConstructorOptions } from "electron";
 export type ApplicationMenuOptions = {
   isPackaged: boolean;
   platform: NodeJS.Platform;
+  checkForUpdates?: () => void;
 };
 
 export type ApplicationMenuApi = {
@@ -14,6 +15,7 @@ export type ApplicationMenuApi = {
 export function buildApplicationMenuTemplate({
   isPackaged,
   platform,
+  checkForUpdates,
 }: ApplicationMenuOptions): MenuItemConstructorOptions[] {
   const viewSubmenu: MenuItemConstructorOptions[] = [];
 
@@ -29,7 +31,16 @@ export function buildApplicationMenuTemplate({
   };
 
   if (platform === "darwin") {
-    return [{ role: "appMenu" }, { role: "editMenu" }, viewMenu, { role: "windowMenu" }];
+    return [checkForUpdates ? {
+      role: "appMenu",
+      submenu: [
+        { role: "about" }, { type: "separator" },
+        { label: "Check for Updates…", enabled: isPackaged, click: checkForUpdates },
+        { type: "separator" }, { role: "services" }, { type: "separator" },
+        { role: "hide" }, { role: "hideOthers" }, { role: "unhide" },
+        { type: "separator" }, { role: "quit" },
+      ],
+    } : { role: "appMenu" }, { role: "editMenu" }, viewMenu, { role: "windowMenu" }];
   }
 
   return [

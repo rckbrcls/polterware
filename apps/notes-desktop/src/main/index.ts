@@ -18,7 +18,7 @@ import { createAppLog, ensureAppLogFile, type AppLog } from "./app-log.js";
 import { readReduceTransparency, writeReduceTransparency } from "./appearance.js";
 import { mcpProbePublicResult, probeMcpConnection } from "./mcp-probe.js";
 import { APP_METHODS, EVENTS, type DeepLink } from "../shared/bridge.js";
-import { updateStatus } from "./updater.js";
+import { desktopUpdater } from "./updater.js";
 import { installReminders, runNotifyInspect } from "./reminders/index.js";
 
 // Keep native controls and windows dark regardless of the system appearance.
@@ -160,7 +160,7 @@ function registerIpc(reminders: { requestAuthorization(): Promise<boolean> }): v
       shell.showItemInFolder(await resolveAttachmentUrl(input, join(data, "attachments")));
     },
     startMicrophone: async () => process.platform === "darwin" && systemPreferences.askForMediaAccess("microphone"),
-    getInfo: () => ({ name: "Polterware Notes", version: app.getVersion(), updates: updateStatus }),
+    getInfo: () => ({ name: "Polterware Notes", version: app.getVersion(), updates: desktopUpdater.status() }),
     requestNotificationAuthorization: () => handleRequestNotificationAuthorization(reminders),
     openLog: () => { shell.showItemInFolder(ensureAppLogFile(getLogs())); },
     openDataFolder: async () => { await shell.openPath(data); },
@@ -236,13 +236,12 @@ function installSessionSecurity(): void {
 }
 function installMenu(): void {
   Menu.setApplicationMenu(Menu.buildFromTemplate([
-    { label: "Polterware Notes", submenu: [{ role: "about" }, { type: "separator" }, { role: "hide" }, { role: "hideOthers" }, { role: "unhide" }, { type: "separator" }, { role: "quit" }] },
+    { label: "Polterware Notes", submenu: [{ role: "about" }, desktopUpdater.menuItem(), { type: "separator" }, { role: "hide" }, { role: "hideOthers" }, { role: "unhide" }, { type: "separator" }, { role: "quit" }] },
     { label: "File", submenu: [{ label: "Open Polterware Notes", click: showWindow }, { role: "close" }] },
     { role: "editMenu" }, { role: "viewMenu" }, { role: "windowMenu" },
     { role: "help", submenu: [
       { label: "Open Data Folder", click: () => { void shell.openPath(data); } },
       { label: "Reveal Core Log", click: () => shell.showItemInFolder(join(data, "run/core.log")) },
-      { label: "Updates are not available yet", enabled: false },
     ] },
   ]));
 }
@@ -295,6 +294,7 @@ else {
       if (app.isPackaged) app.setAsDefaultProtocolClient("pwnotes");
       else app.setAsDefaultProtocolClient("pwnotes", process.execPath, [app.getAppPath()]);
       try { resetTempImportDirectory(tempImportDir); } catch { /* Recreated on the first granted write. */ }
+      desktopUpdater.start();
       registerIpc(reminders); installSessionSecurity(); installMenu();
       // Open the window before the core is up so the boot splash paints at once; RPC calls wait on coreStartupSettled.
       let windowShown = false;

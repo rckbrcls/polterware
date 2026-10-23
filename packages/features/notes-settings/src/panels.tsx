@@ -86,7 +86,7 @@ export function GeneralPanel() {
           </span>
         </SettingsRow>
         <SettingsRow label="Updates">
-          <StatusChip tone="muted" label={store.appInfo()?.updates === "disabled" ? "Disabled" : "Unavailable"} />
+          <StatusChip tone="muted" label={store.appInfo()?.updates === "enabled" ? "Available in app menu" : store.appInfo()?.updates === "disabled" ? "Disabled" : "Unavailable"} />
         </SettingsRow>
         <SwitchRow
           label={<span class="flex flex-col whitespace-normal"><span>Keep running in background</span><span class="whitespace-normal text-[11.5px] text-[var(--color-text-secondary)]">Armed reminders still fire after Polterware Notes quits. This does not enable launch at login.</span></span>}

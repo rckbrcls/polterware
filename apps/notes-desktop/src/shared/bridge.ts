@@ -37,7 +37,7 @@ export type NotesDesktopBridge = {
     saveBackup(): Promise<string | null>;
     revealInFinder(attachmentUrl: string): Promise<void>;
     startMicrophone(): Promise<boolean>;
-    getInfo(): Promise<{ name: string; version: string; updates: "disabled" }>;
+    getInfo(): Promise<{ name: string; version: string; updates: "enabled" | "disabled" | "unavailable" }>;
     requestNotificationAuthorization(): Promise<boolean>;
     openLog(): Promise<void>;
     openDataFolder(): Promise<void>;

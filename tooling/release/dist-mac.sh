@@ -43,6 +43,8 @@ case "$APP_KEY" in
   vitals) bash "$DESKTOP/agent/build.sh" ;;
 esac
 
+bash "$ROOT/tooling/updater/build.sh" "$APP_KEY"
+
 pnpm --dir "$DESKTOP" exec electron-vite build --mode production
 pnpm --dir "$DESKTOP" exec electron-builder --mac dmg zip --arm64 --publish never \
   "--config.extraMetadata.version=$VERSION" "--config.directories.output=$OUTPUT"
@@ -77,3 +79,5 @@ const report = { app: key, version, arch: 'arm64', electron, sourceDateEpoch: pr
 fs.writeFileSync(path.join(directory, 'build-report.json'), JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));
 JS
+
+node "$ROOT/tooling/updater/appcast.cjs" "$APP_KEY" "$OUTPUT" "$VERSION"

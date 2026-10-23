@@ -1,3 +1,8 @@
-/** Desktop releases ship without an update feed (see tooling/release). */
-export const updateStatus = "disabled" as const;
-// No update checks, downloads or installs before a signed release feed is approved.
+import { app, dialog } from "electron";
+import { createDesktopUpdater } from "../../../../tooling/updater/runtime";
+
+export const desktopUpdater = createDesktopUpdater({
+  isPackaged: app.isPackaged,
+  resourcesPath: process.resourcesPath,
+  showError: (title, message) => dialog.showErrorBox(title, message),
+});

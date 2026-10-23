@@ -21,6 +21,17 @@ function collectRoles(
 }
 
 describe("buildApplicationMenuTemplate", () => {
+  it("exposes the updater in the packaged macOS app menu", () => {
+    const checkForUpdates = () => {};
+    const template = buildApplicationMenuTemplate({ isPackaged: true, platform: "darwin", checkForUpdates });
+    const submenu = template[0]?.submenu;
+    expect(Array.isArray(submenu)).toBe(true);
+    if (!Array.isArray(submenu)) throw new Error("App menu missing");
+    const item = submenu.find(item => item.label === "Check for Updates…");
+    expect(item?.enabled).toBe(true);
+    expect(item?.click).toBe(checkForUpdates);
+  });
+
   it("omits reload, DevTools, and zoom roles when packaged", () => {
     const roles = collectRoles(
       buildApplicationMenuTemplate({ isPackaged: true, platform: "darwin" }),

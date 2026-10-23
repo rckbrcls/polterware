@@ -17,6 +17,9 @@ on:
         description: Existing <app>-v<version> tag
         required: true
         type: string
+    secrets:
+      POLTERWARE_SPARKLE_PRIVATE_KEY:
+        required: true
 
 permissions:
   contents: read
@@ -70,6 +73,7 @@ jobs:
           APP: ${{ inputs.app }}
           DESKTOP: ${{ steps.meta.outputs.desktop }}
           RELEASE_VERSION: ${{ steps.meta.outputs.version }}
+          POLTERWARE_SPARKLE_PRIVATE_KEY: ${{ secrets.POLTERWARE_SPARKLE_PRIVATE_KEY }}
         run: |
           bash tooling/release/dist-mac.sh "$APP"
           cat "$DESKTOP/release/$RELEASE_VERSION/gatekeeper.txt" >> "$GITHUB_STEP_SUMMARY"
@@ -82,6 +86,7 @@ jobs:
             ${{ steps.meta.outputs.desktop }}/release/*/*.dmg
             ${{ steps.meta.outputs.desktop }}/release/*/*.zip
             ${{ steps.meta.outputs.desktop }}/release/*/SHA256SUMS
+            ${{ steps.meta.outputs.desktop }}/release/*/appcast.xml
             ${{ steps.meta.outputs.desktop }}/release/*/bundle-verification.txt
             ${{ steps.meta.outputs.desktop }}/release/*/gatekeeper.txt
             ${{ steps.meta.outputs.desktop }}/release/*/build-report.json
@@ -115,10 +120,10 @@ jobs:
             cat > release-notes.txt <<NOTES
           $PRODUCT $VERSION for macOS on Apple Silicon (arm64). Ad-hoc signed; not notarized.
           Gatekeeper rejection is expected. First run: right-click the extracted $PRODUCT.app and choose Open, or remove quarantine from that trusted app with xattr -dr com.apple.quarantine /path/to/$PRODUCT.app.
-          Install or update from a terminal (run it again to update): curl -fsSL https://raw.githubusercontent.com/$GH_REPO/$RELEASE_TAG/scripts/install-desktop.sh | APP=$APP bash
+          Install or update from a terminal (run it again to update): curl -fsSL https://polterware.com/install.sh | APP=$APP bash
           NOTES
             gh release create "$RELEASE_TAG" --verify-tag --draft "${prerelease[@]}" --title "$PRODUCT $VERSION" --notes-file release-notes.txt
           fi
-          mapfile -t assets < <(find artifacts -type f \( -name '*.dmg' -o -name '*.zip' -o -name SHA256SUMS \))
-          [[ "${#assets[@]}" == 3 ]] || { echo 'Expected exactly DMG, ZIP and SHA256SUMS.' >&2; exit 1; }
+          mapfile -t assets < <(find artifacts -type f \( -name '*.dmg' -o -name '*.zip' -o -name SHA256SUMS -o -name appcast.xml \))
+          [[ "${#assets[@]}" == 4 ]] || { echo 'Expected DMG, ZIP, SHA256SUMS and signed appcast.' >&2; exit 1; }
           gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber

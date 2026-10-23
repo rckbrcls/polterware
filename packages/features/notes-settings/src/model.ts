@@ -27,7 +27,7 @@ type Namespace<S extends { method: object }> = {
     : never;
 };
 
-export type AppInfo = { name: string; version: string; updates: "disabled" };
+export type AppInfo = { name: string; version: string; updates: "enabled" | "disabled" | "unavailable" };
 export type SettingsJSON = JsonOf<typeof SettingsSchema>;
 export type AgentInfoJSON = JsonOf<typeof GetAgentInfoResponseSchema>;
 export type ReminderStatusJSON = JsonOf<typeof ReminderStatusResponseSchema>;

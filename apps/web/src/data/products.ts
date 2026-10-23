@@ -1,12 +1,12 @@
 /** The command the site shows for the Polterware CLI. One place to change if the binary is renamed. */
 export const CLI = "polterware";
 
-export const REPO_URL = "https://github.com/polterware/polterware";
+export const REPO_URL = "https://github.com/rckbrcls/polterware";
 export const RELEASES_URL = `${REPO_URL}/releases`;
-export const INSTALL_SCRIPT = "https://raw.githubusercontent.com/polterware/polterware/main/scripts/install-desktop.sh";
+export const INSTALL_SCRIPT = "https://polterware.com/install.sh";
 
 export const installCommand = (app?: "polterware" | "vitals" | "notes") =>
-  `curl -fsSL ${INSTALL_SCRIPT} | ${app === "polterware" || app === "notes" ? `APP=${app} ` : ""}bash`;
+  `curl -fsSL ${INSTALL_SCRIPT} | APP=${app ?? "vitals"} bash`;
 
 export type ProductId = "polterware" | "cli" | "notes" | "dispatch" | "vitals";
 

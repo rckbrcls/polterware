@@ -21,6 +21,8 @@ concurrency:
 jobs:
   release:
     uses: ./.github/workflows/desktop-release.yml
+    secrets:
+      POLTERWARE_SPARKLE_PRIVATE_KEY: ${{ secrets.POLTERWARE_SPARKLE_PRIVATE_KEY }}
     with:
       app: notes
       tag: ${{ inputs.tag || github.ref_name }}
