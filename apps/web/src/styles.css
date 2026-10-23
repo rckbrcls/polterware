@@ -52,7 +52,7 @@ p { line-height: 1.6; }
 .install-section h2 { font-size: clamp(28px, 3vw, 40px); margin: 0 0 12px; letter-spacing: -0.035em; }
 .install-section p { margin: 0 0 28px; max-width: 560px; }
 /* Frame and fill come from the shared `card-texture`; the extra inset clears its four inner rings. */
-.install { display: flex; align-items: center; gap: 8px; max-width: 920px; padding: 8px 8px 8px 20px; }
+.install { display: flex; align-items: center; gap: 24px; width: fit-content; max-width: 100%; padding: 8px 8px 8px 20px; }
 .install code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; font-family: var(--font-mono, ui-monospace, monospace); font-size: 13px; color: var(--color-text-primary); padding-block: 8px; }
 .install code .mk-prompt { margin-right: 10px; }
 .text-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 20px; font-size: 14px; color: var(--color-text-secondary); }
