@@ -6,8 +6,11 @@ import {
   type AppIpcRequests,
   type AppIpcResponses,
   type CoreChangeEvent,
+  type DispatchWatchEvent,
   type JsonObject,
 } from "../shared/ipc.js";
+
+let watchRunCounter = 0;
 
 type BridgeListener = (...args: unknown[]) => void;
 type BridgeIpc = {
@@ -163,6 +166,51 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
           coreCall(ipc, IPC_CHANNELS.core.getAgentSetup, payload),
         setHookSwitch: (payload: JsonObject) =>
           coreCall(ipc, IPC_CHANNELS.core.setHookSwitch, payload),
+      },
+      dispatch: {
+        listRuns: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listRuns, payload),
+        getRun: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.getRun, payload),
+        startRun: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.startRun, payload),
+        cancelRun: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.cancelRun, payload),
+        result: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.result, payload),
+        listWorktrees: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listWorktrees, payload),
+        listQuota: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listQuota, payload),
+        listTiers: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listTiers, payload),
+        listAgents: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listAgents, payload),
+        listHistory: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listHistory, payload),
+        checkTiers: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.checkTiers, payload),
+        stats: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.stats, payload),
+        watchRun: (
+          input: string | { id: string; afterSeq?: number },
+          callback: (event: DispatchWatchEvent) => void,
+        ) => {
+          const id = typeof input === "string" ? input.trim() : String(input?.id ?? "").trim();
+          const afterSeq =
+            typeof input === "object" && input !== null && typeof input.afterSeq === "number"
+              ? input.afterSeq
+              : 0;
+          if (!id) return () => {};
+          const subscriptionId = `watch-${++watchRunCounter}`;
+          const listener: BridgeListener = (_event, payload) => {
+            if (!payload || typeof payload !== "object") return;
+            const record = payload as DispatchWatchEvent & { subscriptionId?: string };
+            if (record.subscriptionId && record.subscriptionId !== subscriptionId) return;
+            if (record.id && record.id !== id) return;
+            callback({
+              id: String(record.id ?? id),
+              seq: Number(record.seq ?? 0),
+              kind: String(record.kind ?? ""),
+              text: String(record.text ?? ""),
+              at: String(record.at ?? ""),
+            });
+          };
+          ipc.on?.(IPC_EVENTS.core.dispatchRunEvent, listener);
+          void coreCall(ipc, IPC_CHANNELS.core.watchRun, { subscriptionId, id, afterSeq }).catch(() => {});
+          return () => {
+            ipc.removeListener?.(IPC_EVENTS.core.dispatchRunEvent, listener);
+            void coreCall(ipc, IPC_CHANNELS.core.unwatchRun, { subscriptionId, id }).catch(() => {});
+          };
+        },
       },
       integrations: {
         listProviders: () => coreCall(ipc, IPC_CHANNELS.core.listCliProviders),

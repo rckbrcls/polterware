@@ -101,6 +101,20 @@ export const IPC_CHANNELS = {
     listChanges: "core:list-changes",
     getAgentSetup: "core:get-agent-setup",
     setHookSwitch: "core:set-hook-switch",
+    listRuns: "core:list-runs",
+    getRun: "core:get-run",
+    startRun: "core:start-run",
+    cancelRun: "core:cancel-run",
+    result: "core:result",
+    watchRun: "core:watch-run",
+    unwatchRun: "core:unwatch-run",
+    listWorktrees: "core:list-worktrees",
+    listQuota: "core:list-quota",
+    listTiers: "core:list-tiers",
+    listAgents: "core:list-agents",
+    listHistory: "core:list-history",
+    checkTiers: "core:check-tiers",
+    stats: "core:stats",
     listCliProviders: "core:list-cli-providers",
     listIntegrationConnections: "core:list-integration-connections",
     saveIntegrationConnection: "core:save-integration-connection",
@@ -129,8 +143,17 @@ export const IPC_EVENTS = {
   core: {
     changed: "core:changed",
     statusChanged: "core:status-changed",
+    dispatchRunEvent: "core:dispatch-run-event",
   },
 } as const;
+
+export type DispatchWatchEvent = {
+  id: string;
+  seq: number;
+  kind: string;
+  text: string;
+  at: string;
+};
 
 /** A coalesced store change from the core (Verdict 0007). */
 export type CoreChangeEvent = {

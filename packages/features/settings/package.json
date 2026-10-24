@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@polterware/bot-avatars": "workspace:*",
+    "@polterware/feature-dispatch": "workspace:*",
     "@polterware/feature-shell": "workspace:*",
     "@polterware/frontend-design-system": "workspace:*",
     "@polterware/frontend-state": "workspace:*"

@@ -4,12 +4,13 @@ import {
   type PlatformContext,
 } from "@polterware/frontend-platform";
 
-/** Project surfaces: Inbox, Work, Atlas, Truth, Activity. Settings (with Agents and Integrations) is a dialog, not a section. */
+/** Project surfaces: Inbox, Work, Atlas, Truth, Dispatch, Activity. Settings (with Agents and Integrations) is a dialog, not a section. */
 export type NavSectionId =
   | "inbox"
   | "atlas"
   | "work"
   | "truth"
+  | "dispatch"
   | "activity";
 
 /** Full pages reachable outside the sidebar (e.g. from the Help menu). */
@@ -26,6 +27,7 @@ export type ProjectSettingsTabId =
   | "advanced";
 export type WorkTabId = "board" | "specs";
 export type TruthTabId = "decisions" | "facts" | "evidence";
+export type DispatchTabId = "runs" | "worktrees" | "pace" | "tiers";
 
 export type DialogState =
   | { type: "arch-node-create" }
@@ -69,6 +71,7 @@ export const DEFAULT_TABS = {
   atlas: "map",
   work: "board",
   truth: "decisions",
+  dispatch: "runs",
   activity: "all",
   cli: "reference",
 } satisfies Record<SectionId, string>;
@@ -91,6 +94,12 @@ export const SECTION_TABS = {
     { id: "facts", label: "Facts" },
     { id: "evidence", label: "Evidence" },
   ],
+  dispatch: [
+    { id: "runs", label: "Runs" },
+    { id: "worktrees", label: "Worktrees" },
+    { id: "pace", label: "Pace" },
+    { id: "tiers", label: "Tiers & Agents" },
+  ],
   // Route id only — Activity is a flat page (no tab rail).
   activity: [{ id: "all", label: "All" }],
 } satisfies Partial<Record<SectionId, { id: string; label: string }[]>>;
@@ -100,6 +109,7 @@ const NAV_SECTIONS = {
   atlas: true,
   work: true,
   truth: true,
+  dispatch: true,
   activity: true,
 } satisfies Record<string, boolean>;
 
