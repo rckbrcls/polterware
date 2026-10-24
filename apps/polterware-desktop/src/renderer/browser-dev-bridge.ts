@@ -412,7 +412,7 @@ const previewDispatchRuns = [
   {
     id: "drun-1",
     projectId: PREVIEW_PROJECT_ID,
-    status: "merged",
+    status: "completed",
     tier: "normal",
     agent: "codex",
     model: "gpt-5-codex",
@@ -446,9 +446,9 @@ const previewDispatchRuns = [
     projectId: PREVIEW_PROJECT_ID,
     status: "failed",
     tier: "hard",
-    agent: "claude",
-    model: "claude-opus-4-6",
-    provider: "anthropic",
+    agent: "grok",
+    model: "grok-4.7",
+    provider: "xai",
     effort: "high",
     prompt: "Refactor the Atlas layout serializer",
     cardSlug: "atlas-canvas",
@@ -495,8 +495,8 @@ const previewDispatchWorktrees = [
     path: "/preview/worktrees/drun-2",
     branch: "dispatch/drun-2",
     baseSha: "a1b2c3d",
-    status: "dirty",
-    owner: "claude",
+    status: "active",
+    owner: "grok",
   },
 ];
 
@@ -513,8 +513,8 @@ const previewDispatchQuota = [
     sampledAt: "2026-09-26T10:00:00.000Z",
   },
   {
-    agent: "claude",
-    provider: "anthropic",
+    agent: "grok",
+    provider: "xai",
     window: "5h",
     source: "ledger",
     confidence: "low",
@@ -527,7 +527,7 @@ const previewDispatchQuota = [
 const previewDispatchTiers = [
   { name: "easy", provider: "openai", agent: "codex", model: "gpt-5-codex-mini", speed: 9, strength: 6, position: 1 },
   { name: "normal", provider: "openai", agent: "codex", model: "gpt-5-codex", speed: 7, strength: 8, position: 2 },
-  { name: "hard", provider: "anthropic", agent: "claude", model: "claude-opus-4-6", speed: 5, strength: 10, position: 3 },
+  { name: "hard", provider: "xai", agent: "grok", model: "grok-4.7", speed: 5, strength: 10, position: 3 },
 ];
 
 const previewDispatchAgents = [
@@ -542,9 +542,9 @@ const previewDispatchAgents = [
     cooldownUntil: "",
   },
   {
-    name: "claude",
-    bin: "claude",
-    provider: "anthropic",
+    name: "grok",
+    bin: "grok",
+    provider: "xai",
     quotaSource: "ledger",
     confidence: "low",
     risk: "medium",
@@ -591,7 +591,7 @@ const previewDispatchHistory = [
     runId: "drun-2",
     projectId: PREVIEW_PROJECT_ID,
     kind: "failed",
-    agent: "claude",
+    agent: "grok",
     tier: "hard",
     text: "go vet reported an unused import",
     seq: 4,
@@ -775,6 +775,9 @@ function createBrowserDevBridge(): PolterwareBridge {
             exitClass: "",
             error: "",
             note: "",
+            filesChanged: 0,
+            insertions: 0,
+            deletions: 0,
             createdAt: new Date().toISOString(),
             startedAt: new Date().toISOString(),
             finishedAt: "",
