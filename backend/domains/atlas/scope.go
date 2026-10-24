@@ -10,6 +10,24 @@ type Scope struct {
 // Active reports whether the scope narrows anything.
 func (s Scope) Active() bool { return s.NodeID != "" }
 
+// MultiScope is a global filter over several Atlas nodes. The match is the
+// union of each node's Scope. Exact applies to every node. An empty NodeIDs
+// is the whole project.
+type MultiScope struct {
+	NodeIDs []string
+	Exact   bool
+}
+
+// Active reports whether the scope narrows anything.
+func (s MultiScope) Active() bool {
+	for _, id := range s.NodeIDs {
+		if id != "" {
+			return true
+		}
+	}
+	return false
+}
+
 // ScopeSet holds the node IDs a scope matches. A nil set matches everything.
 type ScopeSet map[string]bool
 
@@ -61,6 +79,26 @@ func ResolveScope(nodes []Node, scope Scope) ScopeSet {
 			break
 		}
 		set[parent] = true
+	}
+	return set
+}
+
+// ResolveScopes returns the union of ResolveScope for each node. An empty
+// scope matches everything (a nil set). A node that is unknown or removed
+// contributes nothing; when every node is skipped the set is empty and matches
+// only unscoped entities.
+func ResolveScopes(nodes []Node, scope MultiScope) ScopeSet {
+	if !scope.Active() {
+		return nil
+	}
+	set := ScopeSet{}
+	for _, id := range scope.NodeIDs {
+		if id == "" {
+			continue
+		}
+		for nodeID := range ResolveScope(nodes, Scope{NodeID: id, Exact: scope.Exact}) {
+			set[nodeID] = true
+		}
 	}
 	return set
 }

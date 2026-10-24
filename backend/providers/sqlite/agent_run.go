@@ -197,11 +197,26 @@ type ChangeRow struct {
 	CreatedAt   time.Time
 }
 
+// ChangeLimit clamps a history page size. Non-positive and oversized limits
+// fall back to 50, matching ListChanges.
+func ChangeLimit(limit int) int {
+	if limit <= 0 || limit > 200 {
+		return 50
+	}
+	return limit
+}
+
 // ListChanges returns change steps for a project, newest first, with optional actor filter.
 func (s *Store) ListChanges(projectID, actorKind string, limit int) ([]ChangeRow, error) {
-	if limit <= 0 || limit > 200 {
-		limit = 50
-	}
+	return s.queryChanges(projectID, actorKind, ChangeLimit(limit))
+}
+
+// ListAllChanges returns every change step for a project, newest first.
+func (s *Store) ListAllChanges(projectID, actorKind string) ([]ChangeRow, error) {
+	return s.queryChanges(projectID, actorKind, 0)
+}
+
+func (s *Store) queryChanges(projectID, actorKind string, limit int) ([]ChangeRow, error) {
 	query := `
 		SELECT s.id, s.agent_run_id, r.project_id, r.actor_kind, r.agent_label, r.status, r.task,
 		       s.summary, s.payload_json, s.created_at
@@ -213,8 +228,11 @@ func (s *Store) ListChanges(projectID, actorKind string, limit int) ([]ChangeRow
 		query += ` AND r.actor_kind = ?`
 		args = append(args, actorKind)
 	}
-	query += ` ORDER BY s.created_at DESC, s.rowid DESC LIMIT ?`
-	args = append(args, limit)
+	query += ` ORDER BY s.created_at DESC, s.rowid DESC`
+	if limit > 0 {
+		query += ` LIMIT ?`
+		args = append(args, limit)
+	}
 
 	rows, err := s.DB.Query(query, args...)
 	if err != nil {

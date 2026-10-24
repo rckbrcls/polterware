@@ -15,6 +15,14 @@ func stringFrom(value any) string {
 	return text
 }
 
+// scopeRefsFrom accepts a scope argument as one node or a list of nodes.
+func scopeRefsFrom(value any) []string {
+	if text, ok := value.(string); ok {
+		return []string{text}
+	}
+	return stringSliceFrom(value)
+}
+
 func boolFrom(value any) bool {
 	flag, _ := value.(bool)
 	return flag

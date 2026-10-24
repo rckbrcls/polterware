@@ -65,15 +65,15 @@ func usage() {
   polterware [-db path] apply <file|-> [--dry-run] [--project <id>] [--summary ...] [--rationale ...] [--agent-run-id ...]
   polterware [-db path] lint <file|dir|-> [--project <id>]   (silent on success)
   polterware [-db path] format                               (print the Polter format spec)
-  polterware [-db path] query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "atlas [<path>] [at <point>]" | "atlas history" | "decisions [state]" | "decision <verdict>" | "feature <slug> [step]" | "verify <slug>" [--scope <node>] [--exact] [--project <id>]
-  polterware [-db path] status [--scope <node>] [--exact] [--project <id>]
+  polterware [-db path] query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "atlas [<path>] [at <point>]" | "atlas history" | "decisions [state]" | "decision <verdict>" | "feature <slug> [step]" | "verify <slug>" [--scope <node>[,<node>]] [--exact] [--project <id>]
+  polterware [-db path] status [--scope <node>[,<node>]] [--exact] [--project <id>]
   polterware [-db path] handoff [--card <slug>] [--note "..."] [--project <id>]
   polterware [-db path] task claim|done|release <slug>#T2 [--agent name] [--project <id>]
   polterware [-db path] decision list [state] | show <verdict> | propose "<title>" | activate <verdict> | challenge <verdict> --reason "..." | supersede <verdict> (--by <verdict> | --title "...") | trigger <verdict> "..." [--project <id>]
   polterware [-db path] feature new "<intent>" [--title "..."] [--under <node>] [--architecture] [--project <id>]
   polterware [-db path] feature shape <slug> | contract <slug> [--accept] | plan <slug> [--approve] [--project <id>]
   polterware [-db path] verify <slug|slug#T2> [--project <id>]   (exit 1 when a check fails)
-  polterware [-db path] inbox [<id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore | verify | reject] [--agent name] [--scope <node>] [--exact] [--project <id>]
+  polterware [-db path] inbox [<id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore | verify | reject] [--agent name] [--scope <node>[,<node>]] [--exact] [--project <id>]
   polterware [-db path] scope <decision|fact|evidence|item> <id> [<node path>] [--project <id>]   (empty node clears the scope)
   polterware [-db path] setup [doctor] | claude [--uninstall | --enable | --disable | --skill-only] | codex [--uninstall] [--project <id>]
   polterware [-db path] hooks [list] | enable|disable <status|stop|lint|session|all>

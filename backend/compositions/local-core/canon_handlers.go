@@ -83,7 +83,7 @@ func (core *Core) ListFacts(_ context.Context, request *connect.Request[localv1.
 	if err != nil {
 		return nil, internal(err)
 	}
-	resolved, err := wedge.LoadNodeScope(core.Store, request.Msg.ProjectId, request.Msg.ScopeNode, request.Msg.ScopeExact)
+	resolved, err := wedge.LoadNodeScopes(core.Store, request.Msg.ProjectId, wedge.ScopeRefs(request.Msg.ScopeNode, request.Msg.ScopeNodes), request.Msg.ScopeExact)
 	if err != nil {
 		return nil, invalid(err.Error())
 	}
@@ -170,7 +170,7 @@ func (core *Core) ListEvidence(_ context.Context, request *connect.Request[local
 	if err != nil {
 		return nil, internal(err)
 	}
-	resolved, err := wedge.LoadNodeScope(core.Store, request.Msg.ProjectId, request.Msg.ScopeNode, request.Msg.ScopeExact)
+	resolved, err := wedge.LoadNodeScopes(core.Store, request.Msg.ProjectId, wedge.ScopeRefs(request.Msg.ScopeNode, request.Msg.ScopeNodes), request.Msg.ScopeExact)
 	if err != nil {
 		return nil, invalid(err.Error())
 	}
@@ -415,20 +415,20 @@ func (core *Core) CompileContext(_ context.Context, request *connect.Request[loc
 		return nil, invalid("project id is required")
 	}
 	var pkg contextpkg.Package
-	scope, err := wedge.ResolveScopeRef(core.Store, request.Msg.ProjectId, request.Msg.ScopeNode, request.Msg.ScopeExact)
+	scope, err := wedge.ResolveScopeRefs(core.Store, request.Msg.ProjectId, wedge.ScopeRefs(request.Msg.ScopeNode, request.Msg.ScopeNodes), request.Msg.ScopeExact)
 	if err != nil {
 		return nil, invalid(err.Error())
 	}
 	if request.Msg.AgentRunId != "" {
 		// Same path as the CLI and MCP: appends a context step to the run.
 		pkg, err = wedge.CompileContext(core.Store, wedge.ContextInput{
-			ProjectID:   request.Msg.ProjectId,
-			Query:       request.Msg.Query,
-			EntityID:    request.Msg.EntityId,
-			TokenBudget: int(request.Msg.TokenBudget),
-			AgentRunID:  request.Msg.AgentRunId,
-			ScopeNodeID: scope.NodeID,
-			ScopeExact:  scope.Exact,
+			ProjectID:    request.Msg.ProjectId,
+			Query:        request.Msg.Query,
+			EntityID:     request.Msg.EntityId,
+			TokenBudget:  int(request.Msg.TokenBudget),
+			AgentRunID:   request.Msg.AgentRunId,
+			ScopeNodeIDs: scope.NodeIDs,
+			ScopeExact:   scope.Exact,
 		})
 		if err != nil {
 			return nil, mapAuditedErr(err)
@@ -436,12 +436,12 @@ func (core *Core) CompileContext(_ context.Context, request *connect.Request[loc
 	} else {
 		_, _ = core.Store.SyncProjectModel(request.Msg.ProjectId)
 		pkg, err = core.Store.CompileContext(contextpkg.Request{
-			ProjectID:   request.Msg.ProjectId,
-			Query:       request.Msg.Query,
-			EntityID:    request.Msg.EntityId,
-			TokenBudget: int(request.Msg.TokenBudget),
-			ScopeNodeID: scope.NodeID,
-			ScopeExact:  scope.Exact,
+			ProjectID:    request.Msg.ProjectId,
+			Query:        request.Msg.Query,
+			EntityID:     request.Msg.EntityId,
+			TokenBudget:  int(request.Msg.TokenBudget),
+			ScopeNodeIDs: scope.NodeIDs,
+			ScopeExact:   scope.Exact,
 		})
 	}
 	summary := "compile failed"

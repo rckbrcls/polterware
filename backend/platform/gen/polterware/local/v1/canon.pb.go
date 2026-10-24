@@ -886,11 +886,13 @@ func (x *CanonEvidence) GetScopeNodeId() string {
 }
 
 type ListFactsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	EntityId      string                 `protobuf:"bytes,2,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
-	ScopeNode     string                 `protobuf:"bytes,3,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
-	ScopeExact    bool                   `protobuf:"varint,4,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId  string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	EntityId   string                 `protobuf:"bytes,2,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
+	ScopeNode  string                 `protobuf:"bytes,3,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
+	ScopeExact bool                   `protobuf:"varint,4,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	// scope_nodes is merged with scope_node. The list is the union.
+	ScopeNodes    []string `protobuf:"bytes,5,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -951,6 +953,13 @@ func (x *ListFactsRequest) GetScopeExact() bool {
 		return x.ScopeExact
 	}
 	return false
+}
+
+func (x *ListFactsRequest) GetScopeNodes() []string {
+	if x != nil {
+		return x.ScopeNodes
+	}
+	return nil
 }
 
 type ListFactsResponse struct {
@@ -1190,10 +1199,12 @@ func (x *UpsertFactResponse) GetFact() *CanonFact {
 }
 
 type ListEvidenceRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	ScopeNode     string                 `protobuf:"bytes,2,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
-	ScopeExact    bool                   `protobuf:"varint,3,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId  string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	ScopeNode  string                 `protobuf:"bytes,2,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
+	ScopeExact bool                   `protobuf:"varint,3,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	// scope_nodes is merged with scope_node. The list is the union.
+	ScopeNodes    []string `protobuf:"bytes,4,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1247,6 +1258,13 @@ func (x *ListEvidenceRequest) GetScopeExact() bool {
 		return x.ScopeExact
 	}
 	return false
+}
+
+func (x *ListEvidenceRequest) GetScopeNodes() []string {
+	if x != nil {
+		return x.ScopeNodes
+	}
+	return nil
 }
 
 type ListEvidenceResponse struct {
@@ -1796,7 +1814,7 @@ const file_polterware_local_v1_canon_proto_rawDesc = "" +
 	"\n" +
 	"updated_at\x18\n" +
 	" \x01(\tR\tupdatedAt\x12\"\n" +
-	"\rscope_node_id\x18\v \x01(\tR\vscopeNodeId\"\x8e\x01\n" +
+	"\rscope_node_id\x18\v \x01(\tR\vscopeNodeId\"\xaf\x01\n" +
 	"\x10ListFactsRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x1b\n" +
@@ -1804,7 +1822,9 @@ const file_polterware_local_v1_canon_proto_rawDesc = "" +
 	"\n" +
 	"scope_node\x18\x03 \x01(\tR\tscopeNode\x12\x1f\n" +
 	"\vscope_exact\x18\x04 \x01(\bR\n" +
-	"scopeExact\"I\n" +
+	"scopeExact\x12\x1f\n" +
+	"\vscope_nodes\x18\x05 \x03(\tR\n" +
+	"scopeNodes\"I\n" +
 	"\x11ListFactsResponse\x124\n" +
 	"\x05facts\x18\x01 \x03(\v2\x1e.polterware.local.v1.CanonFactR\x05facts\" \n" +
 	"\x0eGetFactRequest\x12\x0e\n" +
@@ -1816,14 +1836,16 @@ const file_polterware_local_v1_canon_proto_rawDesc = "" +
 	"\x04fact\x18\x01 \x01(\v2\x1e.polterware.local.v1.CanonFactR\x04fact\x12;\n" +
 	"\x06change\x18\x02 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"H\n" +
 	"\x12UpsertFactResponse\x122\n" +
-	"\x04fact\x18\x01 \x01(\v2\x1e.polterware.local.v1.CanonFactR\x04fact\"t\n" +
+	"\x04fact\x18\x01 \x01(\v2\x1e.polterware.local.v1.CanonFactR\x04fact\"\x95\x01\n" +
 	"\x13ListEvidenceRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x1d\n" +
 	"\n" +
 	"scope_node\x18\x02 \x01(\tR\tscopeNode\x12\x1f\n" +
 	"\vscope_exact\x18\x03 \x01(\bR\n" +
-	"scopeExact\"V\n" +
+	"scopeExact\x12\x1f\n" +
+	"\vscope_nodes\x18\x04 \x03(\tR\n" +
+	"scopeNodes\"V\n" +
 	"\x14ListEvidenceResponse\x12>\n" +
 	"\bevidence\x18\x01 \x03(\v2\".polterware.local.v1.CanonEvidenceR\bevidence\"$\n" +
 	"\x12GetEvidenceRequest\x12\x0e\n" +

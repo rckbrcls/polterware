@@ -192,12 +192,12 @@ func ApplyPolter(store *storepkg.Store, in ApplyInput) (ApplyResult, error) {
 // "handoff <slug>", "oracle", "atlas", "decisions [state]", "decision <verdict>",
 // "feature <slug>", "verify <target>") in text.
 func QueryPolter(store *storepkg.Store, projectID, text string) (string, error) {
-	return QueryPolterScoped(store, projectID, text, atlas.Scope{})
+	return QueryPolterScoped(store, projectID, text, atlas.MultiScope{})
 }
 
 // QueryPolterScoped answers a query over the cards, Decisions and Inbox items
-// inside scope. An inactive scope is the whole project.
-func QueryPolterScoped(store *storepkg.Store, projectID, text string, scope atlas.Scope) (string, error) {
+// inside scope. An inactive scope is the whole project. Several nodes are a union.
+func QueryPolterScoped(store *storepkg.Store, projectID, text string, scope atlas.MultiScope) (string, error) {
 	query, err := polter.ParseQuery(text)
 	if err != nil {
 		return "", err
@@ -281,7 +281,7 @@ func queryHandoff(store *storepkg.Store, snapshot work.Snapshot, slug string) (s
 	return polter.EncodeHandoff(card, handoff), nil
 }
 
-func queryStatus(store *storepkg.Store, snapshot work.Snapshot, scope atlas.Scope) string {
+func queryStatus(store *storepkg.Store, snapshot work.Snapshot, scope atlas.MultiScope) string {
 	// The Inbox is a best-effort addition: a drift read that fails leaves
 	// status without its inbox lines rather than failing the session start.
 	inboxLines := ""

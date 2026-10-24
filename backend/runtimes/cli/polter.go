@@ -150,7 +150,7 @@ func runQuery(dbPath string, args []string) error {
 	if err != nil {
 		return err
 	}
-	res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{ProjectId: project.Id, Query: strings.Join(positional, " "), ScopeNode: *scope.node, ScopeExact: *scope.exact}))
+	res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{ProjectId: project.Id, Query: strings.Join(positional, " "), ScopeNodes: scope.nodes(), ScopeExact: *scope.exact}))
 	if err != nil {
 		return err
 	}
@@ -174,7 +174,7 @@ func runStatus(dbPath string, args []string) error {
 	if err != nil {
 		return err
 	}
-	res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{ProjectId: project.Id, Query: polter.QueryStatus, ScopeNode: *scope.node, ScopeExact: *scope.exact}))
+	res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{ProjectId: project.Id, Query: polter.QueryStatus, ScopeNodes: scope.nodes(), ScopeExact: *scope.exact}))
 	if err != nil {
 		return err
 	}

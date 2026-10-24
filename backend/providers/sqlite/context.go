@@ -139,12 +139,13 @@ func (s *Store) CompileContext(req contextpkg.Request) (contextpkg.Package, erro
 }
 
 // scopeContextItems drops knowledge and fact candidates scoped outside the
-// request's node. Entities and unscoped items stay.
+// request's nodes (the union of each node). Entities and unscoped items stay.
 func (s *Store) scopeContextItems(req contextpkg.Request, items []contextpkg.Item) ([]contextpkg.Item, error) {
-	if req.ScopeNodeID == "" {
+	ids := req.ScopeIDs()
+	if len(ids) == 0 {
 		return items, nil
 	}
-	resolved, err := s.LoadScope(req.ProjectID, atlas.Scope{NodeID: req.ScopeNodeID, Exact: req.ScopeExact})
+	resolved, err := s.LoadScopes(req.ProjectID, atlas.MultiScope{NodeIDs: ids, Exact: req.ScopeExact})
 	if err != nil {
 		return nil, err
 	}

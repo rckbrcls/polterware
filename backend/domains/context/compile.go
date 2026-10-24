@@ -27,9 +27,30 @@ type Request struct {
 	EntityID    string
 	TokenBudget int
 	// ScopeNodeID narrows candidates to one Atlas node, its descendants and,
-	// unless ScopeExact, its ancestors. Empty is the whole project.
-	ScopeNodeID string
-	ScopeExact  bool
+	// unless ScopeExact, its ancestors. ScopeNodeIDs adds more nodes; the
+	// package keeps the union. Empty is the whole project.
+	ScopeNodeID  string
+	ScopeNodeIDs []string
+	ScopeExact   bool
+}
+
+// ScopeIDs returns the legacy node plus ScopeNodeIDs, without blanks or duplicates.
+func (r Request) ScopeIDs() []string {
+	seen := map[string]bool{}
+	var out []string
+	add := func(id string) {
+		id = strings.TrimSpace(id)
+		if id == "" || seen[id] {
+			return
+		}
+		seen[id] = true
+		out = append(out, id)
+	}
+	add(r.ScopeNodeID)
+	for _, id := range r.ScopeNodeIDs {
+		add(id)
+	}
+	return out
 }
 
 // EvidenceRef is a compact pointer to Canon evidence supporting a context item.

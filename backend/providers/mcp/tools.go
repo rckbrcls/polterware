@@ -28,6 +28,16 @@ const (
 	ToolPolterFormat = "polter.format"
 )
 
+func scopeArgumentSchema() map[string]any {
+	return map[string]any{
+		"description": "Atlas node path, slug, or id, or a list of them. The read keeps the union of each node, its descendants, and its ancestors. Omit for the whole project.",
+		"oneOf": []any{
+			map[string]any{"type": "string"},
+			map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+		},
+	}
+}
+
 func auditedWriteProperties(extra map[string]any) map[string]any {
 	props := map[string]any{
 		"project_id":   map[string]any{"type": "string"},
@@ -60,10 +70,10 @@ func toolDefinitions() []map[string]any {
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"project_id": map[string]any{"type": "string"},
-					"query":      map[string]any{"type": "string", "description": "\"cards\" (default), \"card <slug>\", \"status\", \"inbox\", \"handoff <slug>\", \"decisions [state]\", \"decision <verdict>\", \"feature <slug> [shape|contract|plan]\", or \"verify <slug|slug#T2>\""},
-					"scope":        map[string]any{"type": "string", "description": "Atlas node path, slug, or id: narrow the read to that node, its descendants and ancestors. Omit for the whole project."},
-					"scope_exact":  map[string]any{"type": "boolean", "description": "With scope, leave out the node's ancestors."},
+					"project_id":  map[string]any{"type": "string"},
+					"query":       map[string]any{"type": "string", "description": "\"cards\" (default), \"card <slug>\", \"status\", \"inbox\", \"handoff <slug>\", \"decisions [state]\", \"decision <verdict>\", \"feature <slug> [shape|contract|plan]\", or \"verify <slug|slug#T2>\""},
+					"scope":       scopeArgumentSchema(),
+					"scope_exact": map[string]any{"type": "boolean", "description": "With scope, leave out each node's ancestors."},
 				},
 				"required": []string{"project_id"},
 			},
@@ -95,8 +105,8 @@ func toolDefinitions() []map[string]any {
 					"entity_id":    map[string]any{"type": "string"},
 					"token_budget": map[string]any{"type": "integer"},
 					"agent_run_id": map[string]any{"type": "string"},
-					"scope":        map[string]any{"type": "string", "description": "Atlas node path, slug, or id: narrow the read to that node, its descendants and ancestors. Omit for the whole project."},
-					"scope_exact":  map[string]any{"type": "boolean", "description": "With scope, leave out the node's ancestors."},
+					"scope":        scopeArgumentSchema(),
+					"scope_exact":  map[string]any{"type": "boolean", "description": "With scope, leave out each node's ancestors."},
 				},
 				"required": []string{"project_id"},
 			},
@@ -220,10 +230,10 @@ func toolDefinitions() []map[string]any {
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": auditedWriteProperties(map[string]any{
-					"kind":              map[string]any{"type": "string"},
-					"id":                map[string]any{"type": "string"},
-					"evidence_summary":  map[string]any{"type": "string"},
-					"path":              map[string]any{"type": "string"},
+					"kind":             map[string]any{"type": "string"},
+					"id":               map[string]any{"type": "string"},
+					"evidence_summary": map[string]any{"type": "string"},
+					"path":             map[string]any{"type": "string"},
 				}),
 				"required": auditedWriteRequired("kind"),
 			},
@@ -246,14 +256,14 @@ func toolDefinitions() []map[string]any {
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": auditedWriteProperties(map[string]any{
-					"title":         map[string]any{"type": "string"},
-					"kind":          map[string]any{"type": "string"},
-					"id":            map[string]any{"type": "string"},
-					"body":          map[string]any{"type": "string"},
-					"tags":          map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-					"item_summary":  map[string]any{"type": "string"},
-					"status":        map[string]any{"type": "string"},
-					"extra_json":    map[string]any{"type": "string"},
+					"title":        map[string]any{"type": "string"},
+					"kind":         map[string]any{"type": "string"},
+					"id":           map[string]any{"type": "string"},
+					"body":         map[string]any{"type": "string"},
+					"tags":         map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+					"item_summary": map[string]any{"type": "string"},
+					"status":       map[string]any{"type": "string"},
+					"extra_json":   map[string]any{"type": "string"},
 				}),
 				"required": auditedWriteRequired("title", "kind"),
 			},

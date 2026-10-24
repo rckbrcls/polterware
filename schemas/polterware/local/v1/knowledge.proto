@@ -52,6 +52,8 @@ message ListKnowledgeRequest {
   string kind = 2;
   string scope_node = 3;
   bool scope_exact = 4;
+  // scope_nodes is merged with scope_node. The list is the union.
+  repeated string scope_nodes = 5;
 }
 message ListKnowledgeResponse { repeated KnowledgeItem items = 1; }
 message DeleteKnowledgeRequest {
