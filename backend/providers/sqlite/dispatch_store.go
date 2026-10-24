@@ -172,21 +172,20 @@ func (s *Store) GetRun(ctx context.Context, id string) (dispatch.Run, error) {
 }
 
 func (s *Store) ListRuns(ctx context.Context, projectID string, limit, offset int) ([]dispatch.Run, error) {
-	if limit <= 0 {
-		limit = 50
-	}
 	if offset < 0 {
 		offset = 0
 	}
-	rows, err := s.DB.QueryContext(
-		ctx,
-		`SELECT `+selectDispatchRunColumns+`
+	// limit 0 means every row. Callers that want a page pass a positive limit.
+	query := `SELECT ` + selectDispatchRunColumns + `
 		 FROM dispatch_runs
 		 WHERE project_id = ?
-		 ORDER BY created_at DESC, rowid DESC
-		 LIMIT ? OFFSET ?`,
-		projectID, limit, offset,
-	)
+		 ORDER BY created_at DESC, rowid DESC`
+	args := []any{projectID}
+	if limit > 0 {
+		query += ` LIMIT ? OFFSET ?`
+		args = append(args, limit, offset)
+	}
+	rows, err := s.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
