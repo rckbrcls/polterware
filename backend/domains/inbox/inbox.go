@@ -1,6 +1,7 @@
 // Package inbox derives the items that need a person from data the project
-// already has: open questions (Decision), drift findings (Drift), and facts no
-// evidence backs (Verify). Items are never stored; only a person's disposition
+// already has: open questions (Decision), drift findings (Drift), facts no
+// evidence backs (Verify), and deploy links whose provider CLI is not
+// connected (also Verify). Items are never stored; only a person's disposition
 // is, keyed by the item's stable key.
 package inbox
 
@@ -78,6 +79,29 @@ type Fact struct {
 	Source     string
 	Actor      string
 }
+
+// DeployLink is one node deployment. A Verify item is derived when its
+// provider CLI is not connected.
+type DeployLink struct {
+	NodeID        string
+	NodePath      string
+	EnvironmentID string
+	Environment   string
+	Provider      string
+	Resource      string
+}
+
+// ProviderConnection is one stored CLI connection. Status "connected" matches
+// a successful probe. An empty EnvironmentID covers every environment.
+type ProviderConnection struct {
+	ProviderID    string
+	EnvironmentID string
+	Status        string
+}
+
+// ProviderStatusConnected is the probe status stored when a provider CLI
+// reports an authenticated session.
+const ProviderStatusConnected = "connected"
 
 // Disposition is the latest thing a person did with one item.
 type Disposition struct {
@@ -188,9 +212,40 @@ func DriftKey(finding drift.Finding) string {
 	return "drift:" + finding.Type + ":" + hex.EncodeToString(sum[:6])
 }
 
-// Derive builds the Inbox from its three sources and the latest disposition
-// per key. Info drift is left out: a scan clears it, not a person.
-func Derive(questions []Question, findings []drift.Finding, facts []Fact, dispositions []Disposition) Result {
+// DeployKey is the stable key of a Verify item for one node in one environment.
+// It does not include the provider or resource, so a relink stays the same item.
+func DeployKey(nodeID, environmentID string) string {
+	return "verify:deploy:" + nodeID + ":" + environmentID
+}
+
+// UnconnectedDeploys keeps links whose provider CLI is not connected for that
+// environment. A connection with an empty environment covers every environment.
+func UnconnectedDeploys(links []DeployLink, connections []ProviderConnection) []DeployLink {
+	var out []DeployLink
+	for _, link := range links {
+		if !providerConnected(link.Provider, link.EnvironmentID, connections) {
+			out = append(out, link)
+		}
+	}
+	return out
+}
+
+func providerConnected(provider, environmentID string, connections []ProviderConnection) bool {
+	for _, connection := range connections {
+		if connection.ProviderID != provider || connection.Status != ProviderStatusConnected {
+			continue
+		}
+		if connection.EnvironmentID == "" || connection.EnvironmentID == environmentID {
+			return true
+		}
+	}
+	return false
+}
+
+// Derive builds the Inbox from its sources and the latest disposition per key.
+// Info drift is left out: a scan clears it, not a person. deploys are the
+// links whose provider CLI is not connected.
+func Derive(questions []Question, findings []drift.Finding, facts []Fact, deploys []DeployLink, dispositions []Disposition) Result {
 	latest := map[string]Disposition{}
 	for _, d := range dispositions {
 		if current, ok := latest[d.Key]; !ok || !d.CreatedAt.Before(current.CreatedAt) {
@@ -223,6 +278,22 @@ func Derive(questions []Question, findings []drift.Finding, facts []Fact, dispos
 			ID: ShortID(key), Key: key, Kind: KindVerify,
 			Title: fact.Statement, Detail: fact.TruthClass, Where: fact.Source, Source: fact.Actor,
 			FactID: fact.ID,
+		})
+	}
+	for _, link := range deploys {
+		key := DeployKey(link.NodeID, link.EnvironmentID)
+		env := link.Environment
+		if env == "" {
+			env = link.EnvironmentID
+		}
+		where := link.NodePath
+		if where == "" {
+			where = link.NodeID
+		}
+		items = append(items, Item{
+			ID: ShortID(key), Key: key, Kind: KindVerify,
+			Title:  fmt.Sprintf("Connect %s for %s in %s", link.Provider, where, env),
+			Detail: link.Provider, Where: where, Source: env,
 		})
 	}
 

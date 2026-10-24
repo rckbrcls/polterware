@@ -195,7 +195,7 @@ var MetaKeys = []string{"stage", "owner", "under", "decisions", "status", "kind"
 
 // NodeMetaKeys are the Atlas node metadata keys. repo: names a registered
 // checkout (empty is the project root); path: is a folder inside it.
-var NodeMetaKeys = []string{"level", "under", "repo", "path", "decisions", "uses", "status", "migrating"}
+var NodeMetaKeys = []string{"level", "under", "repo", "path", "decisions", "uses", "deploys", "status", "migrating"}
 
 var frontmatterKeys = map[string]bool{"polter": true, "summary": true, "rationale": true}
 
@@ -819,6 +819,13 @@ func (d *decoder) nodeMeta(n int, line string) {
 			if from != "" {
 				value = from + " -> " + to
 			}
+		case "deploys":
+			specs, err := ParseDeploys(value)
+			if err != nil {
+				d.errorf(n, "%s", err.Error())
+				break
+			}
+			value = FormatDeploys(specs)
 		case "under", "decisions", "uses":
 		default:
 			d.errorf(n, "unknown key %q: use %s", key, strings.Join(NodeMetaKeys, ", "))

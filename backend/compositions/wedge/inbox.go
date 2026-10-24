@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/inbox"
 	"github.com/polterware/polterware/backend/domains/canon"
+	"github.com/polterware/polterware/backend/domains/inbox"
 	"github.com/polterware/polterware/backend/domains/work"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
@@ -58,11 +58,25 @@ func listInbox(store *storepkg.Store, snapshot work.Snapshot) (inbox.Result, err
 	if err != nil {
 		return inbox.Result{}, err
 	}
+	links, err := store.ListNodeDeployLinks(snapshot.ProjectID)
+	if err != nil {
+		return inbox.Result{}, err
+	}
+	connections, err := store.ListConnections(snapshot.ProjectID)
+	if err != nil {
+		return inbox.Result{}, err
+	}
+	probes := make([]inbox.ProviderConnection, 0, len(connections))
+	for _, connection := range connections {
+		probes = append(probes, inbox.ProviderConnection{
+			ProviderID: connection.ProviderID, EnvironmentID: connection.EnvironmentID, Status: connection.Status,
+		})
+	}
 	dispositions, err := store.ListInboxDispositions(snapshot.ProjectID)
 	if err != nil {
 		return inbox.Result{}, err
 	}
-	return inbox.Derive(questions, findings, facts, dispositions), nil
+	return inbox.Derive(questions, findings, facts, inbox.UnconnectedDeploys(links, probes), dispositions), nil
 }
 
 // ResolveInboxInput is one action on one Inbox item.
@@ -121,6 +135,9 @@ func ResolveInbox(store *storepkg.Store, in ResolveInboxInput) (ResolveInboxResu
 		result.Apply = &applied
 		return result, err
 	case inbox.ActionVerify:
+		if strings.HasPrefix(item.Key, "verify:deploy:") {
+			return result, inboxInput("connect the %s CLI to clear this item", item.Detail)
+		}
 		if actor == "" || actor == "system" {
 			return result, canon.ErrVerifiedRequiresActor
 		}

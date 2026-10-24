@@ -12,4 +12,17 @@ if [[ -f schemas/buf.yaml ]]; then
     }
   fi
 fi
+# The TS plugin writes a trailing blank line. Drop that line when it is the
+# only change, so `git diff --check` stays clean for files committed without it.
+while IFS= read -r file; do
+  [[ -n "$file" ]] || continue
+  numstat=$(git diff --numstat -- "$file")
+  added=${numstat%%$'\t'*}
+  rest=${numstat#*$'\t'}
+  removed=${rest%%$'\t'*}
+  check=$(git diff --check -- "$file" 2>&1 || true)
+  if [[ "$added" == "1" && "$removed" == "0" && "$check" == *"new blank line at EOF"* ]]; then
+    git checkout -- "$file"
+  fi
+done < <(git diff --name-only --diff-filter=M)
 echo "generate done"

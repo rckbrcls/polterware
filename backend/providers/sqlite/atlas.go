@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/integrations"
 	"github.com/polterware/polterware/backend/domains/work"
+	"github.com/polterware/polterware/backend/platform/ids"
 )
 
 func (s *Store) loadAtlasNodes(projectID string) ([]atlas.Node, error) {
@@ -49,6 +51,23 @@ func (s *Store) loadAtlasNodes(projectID string) ([]atlas.Node, error) {
 			}
 			return nil
 		})
+	if err != nil {
+		return nil, err
+	}
+	err = s.eachRow(`SELECT d.id,d.node_id,d.environment_id,COALESCE(e.name,''),d.provider,d.resource
+		FROM node_deployments d LEFT JOIN environments e ON e.id=d.environment_id
+		WHERE d.project_id=? ORDER BY e.name, d.environment_id`,
+		projectID, func(rows *sql.Rows) error {
+			var deploy atlas.Deployment
+			var nodeID string
+			if err := rows.Scan(&deploy.ID, &nodeID, &deploy.EnvironmentID, &deploy.Environment, &deploy.Provider, &deploy.Resource); err != nil {
+				return err
+			}
+			if i, ok := index[nodeID]; ok {
+				nodes[i].Deploys = append(nodes[i].Deploys, deploy)
+			}
+			return nil
+		})
 	return nodes, err
 }
 
@@ -56,6 +75,7 @@ func applyAtlasOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 	if op.NodeID != "" {
 		return applyAtlasInvariant(tx, op, now)
 	}
+	deploys, hasDeploys := op.Fields["deploys"]
 	parent, _ := op.Fields["parent_id"].(string)
 	switch op.Kind {
 	case work.OpCreate:
@@ -75,12 +95,101 @@ func applyAtlasOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 			VALUES(?,?,NULLIF(?,''),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			op.EntityID, projectID, parent, op.Fields["level"], op.Fields["slug"], op.Fields["path"],
 			op.Fields["title"], op.Fields["intent"], op.Fields["status"], decisions, uses, op.Fields["position"], repo, folder, migrationFrom, migrationTo, now, now)
-		return err
+		if err != nil {
+			return err
+		}
 	case work.OpUpdate, work.OpRemove:
-		return updateAtlasNode(tx, op, now)
+		columnOp := op
+		columnOp.Fields = withoutField(op.Fields, "deploys")
+		if err := updateAtlasNode(tx, columnOp, now); err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("unknown op %q", op.Kind)
 	}
+	if !hasDeploys {
+		return nil
+	}
+	return applyNodeDeploys(tx, projectID, op.EntityID, deploys, now)
+}
+
+func withoutField(fields map[string]any, key string) map[string]any {
+	out := make(map[string]any, len(fields))
+	for name, value := range fields {
+		if name == key {
+			continue
+		}
+		out[name] = value
+	}
+	return out
+}
+
+// applyNodeDeploys replaces the node's links with value. An empty list clears
+// them. Provider is checked again so a hand-built op cannot store an unknown
+// catalog id or a credential.
+func applyNodeDeploys(tx *sql.Tx, projectID, nodeID string, value any, now string) error {
+	deploys, ok := atlas.DeploymentsFrom(value)
+	if !ok {
+		return fmt.Errorf("invalid deploys")
+	}
+	existing := map[string]atlas.Deployment{}
+	rows, err := tx.Query(`SELECT id,environment_id,provider,resource FROM node_deployments WHERE node_id=?`, nodeID)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var deploy atlas.Deployment
+		if err := rows.Scan(&deploy.ID, &deploy.EnvironmentID, &deploy.Provider, &deploy.Resource); err != nil {
+			_ = rows.Close()
+			return err
+		}
+		existing[deploy.EnvironmentID] = deploy
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+	seen := map[string]bool{}
+	for _, deploy := range deploys {
+		if !integrations.KnownProvider(deploy.Provider) {
+			return fmt.Errorf("unknown provider %q", deploy.Provider)
+		}
+		if deploy.EnvironmentID == "" || strings.TrimSpace(deploy.Resource) == "" || strings.ContainsAny(deploy.Resource, "\r\n") {
+			return fmt.Errorf("deployment needs an environment and a resource")
+		}
+		if strings.Contains(strings.ToLower(deploy.Resource), "begin private") || strings.Contains(strings.ToLower(deploy.Resource), "begin rsa") {
+			return fmt.Errorf("deployment resource must not be a credential")
+		}
+		seen[deploy.EnvironmentID] = true
+		current, found := existing[deploy.EnvironmentID]
+		if found && current.Provider == deploy.Provider && current.Resource == deploy.Resource {
+			continue
+		}
+		if found {
+			if _, err := tx.Exec(`UPDATE node_deployments SET provider=?, resource=?, updated_at=? WHERE id=?`,
+				deploy.Provider, deploy.Resource, now, current.ID); err != nil {
+				return err
+			}
+			continue
+		}
+		id := deploy.ID
+		if id == "" {
+			id = ids.NewULID()
+		}
+		if _, err := tx.Exec(`INSERT INTO node_deployments(id,project_id,node_id,environment_id,provider,resource,created_at,updated_at)
+			VALUES(?,?,?,?,?,?,?,?)`,
+			id, projectID, nodeID, deploy.EnvironmentID, deploy.Provider, deploy.Resource, now, now); err != nil {
+			return err
+		}
+	}
+	for env, deploy := range existing {
+		if seen[env] {
+			continue
+		}
+		if _, err := tx.Exec(`DELETE FROM node_deployments WHERE id=?`, deploy.ID); err != nil {
+			return err
+		}
+	}
+	return rows.Err()
 }
 
 func updateAtlasNode(tx *sql.Tx, op work.Op, now string) error {

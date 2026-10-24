@@ -42,6 +42,7 @@ func PlanAs(doc Document, snapshot work.Snapshot, holder string) ([]work.Op, []D
 	}
 	p.diags = append(p.diags, CheckGraph(doc, snapshot.Nodes, snapshot.Cards)...)
 	p.diags = append(p.diags, CheckRepos(doc, snapshot.Repos)...)
+	p.diags = append(p.diags, CheckDeploys(doc, snapshot.Environments)...)
 	p.planNodes(doc)
 	for _, node := range doc.Cards {
 		if existing, ok := snapshot.Card(node.Slug); ok {
@@ -94,9 +95,21 @@ func (p *planner) failed(line int) bool {
 	return false
 }
 
+// failedDeploys reports a decode error on the node's deploys: line. Those
+// errors sit on the metadata line, not the heading, so failed(node.Line) misses
+// them. A bad line must not write the node.
+func (p *planner) failedDeploys(node AtlasNode) bool {
+	for _, entry := range node.Meta {
+		if entry.Key == "deploys" && p.failed(entry.Line) {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *planner) planNodes(doc Document) {
 	for _, node := range doc.Nodes {
-		if p.failed(node.Line) {
+		if p.failed(node.Line) || p.failedDeploys(node) {
 			continue
 		}
 		under, hasUnder := node.MetaValue("under")
@@ -153,11 +166,17 @@ func (p *planner) createNode(node AtlasNode, path, level, parentID string) {
 	folder, _ := node.MetaValue("path")
 	migrating, _ := node.MetaValue("migrating")
 	migrationFrom, migrationTo, _ := ParseMigration(migrating)
+	deploys, _, err := resolveDeploys(node, nil, p.snapshot.Environments)
+	if err != nil {
+		p.errorf(deploysLine(node), "%s", err.Error())
+		return
+	}
 	id := ids.NewULID()
 	created := atlas.Node{
 		ID: id, Slug: node.Slug, Path: path, Title: node.Title, Intent: node.Intent,
 		Level: level, Status: atlas.NodeActive, ParentID: parentID, Position: p.nextNode,
 		Uses: splitList(uses), Repo: repo, Folder: folder, MigrationFrom: migrationFrom, MigrationTo: migrationTo,
+		Deploys: deploys,
 	}
 	p.ops = append(p.ops, work.Op{
 		Entity: work.EntityNode, Kind: work.OpCreate, EntityID: id, CardSlug: path, Label: node.Title,
@@ -167,6 +186,7 @@ func (p *planner) createNode(node AtlasNode, path, level, parentID string) {
 			"decisions": splitList(decisions), "uses": splitList(uses), "position": p.nextNode,
 			"repo": repo, "folder": folder,
 			"migration_from": migrationFrom, "migration_to": migrationTo,
+			"deploys": nonNilDeploys(deploys),
 		},
 	})
 	p.nextNode++
@@ -206,6 +226,17 @@ func (p *planner) updateNode(node AtlasNode, existing atlas.Node, path, level, p
 			set("uses", nonNil(existing.Uses), list)
 			existing.Uses = list
 		}
+	}
+	// A present deploys: replaces the node's links; an empty value clears them.
+	// An absent line leaves the stored links alone.
+	if deploys, mentioned, err := resolveDeploys(node, existing.Deploys, p.snapshot.Environments); err != nil {
+		p.errorf(deploysLine(node), "%s", err.Error())
+		return
+	} else if mentioned {
+		if !sameDeploys(deploys, existing.Deploys) {
+			set("deploys", nonNilDeploys(existing.Deploys), deploys)
+		}
+		existing.Deploys = deploys
 	}
 	// A present repo: or path: is authoritative, so an empty value moves the
 	// node back to the project root or the checkout root.
@@ -954,6 +985,17 @@ func short(value any) string {
 	text := fmt.Sprint(value)
 	if list, ok := value.([]string); ok {
 		text = "[" + strings.Join(list, ", ") + "]"
+	}
+	if deploys, ok := value.([]atlas.Deployment); ok {
+		parts := make([]string, len(deploys))
+		for i, deploy := range deploys {
+			name := deploy.Environment
+			if name == "" {
+				name = deploy.EnvironmentID
+			}
+			parts[i] = name + "=" + deploy.Provider + ":" + deploy.Resource
+		}
+		text = "[" + strings.Join(parts, ", ") + "]"
 	}
 	if text == "" {
 		return `""`

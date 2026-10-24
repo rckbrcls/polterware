@@ -16,7 +16,7 @@ const (
 	KindSettings     = "settings"
 	KindWork         = "work"
 	KindKnowledge    = "knowledge"
-	KindCanon          = "canon"
+	KindCanon        = "canon"
 	KindAgentRuns    = "agent_runs"
 	KindArchitecture = "architecture"
 	KindIntegrations = "integrations"
@@ -37,14 +37,15 @@ var tableKinds = map[string]string{
 	"inbox_dispositions":        KindWork,
 	"atlas_nodes":               KindWork,
 	"atlas_invariants":          KindWork,
+	"node_deployments":          KindWork,
 	"change_ops":                KindWork,
 	"knowledge_items":           KindKnowledge,
 	"knowledge_entity_links":    KindKnowledge,
-	"canon_entities":              KindCanon,
-	"canon_relationships":         KindCanon,
-	"canon_facts":                 KindCanon,
-	"canon_evidence":              KindCanon,
-	"canon_fact_evidence":         KindCanon,
+	"canon_entities":            KindCanon,
+	"canon_relationships":       KindCanon,
+	"canon_facts":               KindCanon,
+	"canon_evidence":            KindCanon,
+	"canon_fact_evidence":       KindCanon,
 	"agent_runs":                KindAgentRuns,
 	"agent_run_steps":           KindAgentRuns,
 	"agent_tool_calls":          KindAgentRuns,

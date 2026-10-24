@@ -216,6 +216,18 @@ message AtlasInvariant {
   string text = 2;
 }
 
+// NodeDeployment is where one Atlas node is deployed in one environment.
+// provider is a catalog id. resource names the remote target. Credentials
+// are never stored.
+message NodeDeployment {
+  string id = 1;
+  string environment_id = 2;
+  // environment is the environment name, for display.
+  string environment = 3;
+  string provider = 4;
+  string resource = 5;
+}
+
 // AtlasNode is a system, domain, or component. status is derived:
 // proposed, in_progress, delivered, or drift.
 message AtlasNode {
@@ -242,6 +254,8 @@ message AtlasNode {
   string migration_to = 17;
   // uses lists the node paths this node depends on; the map draws them as edges.
   repeated string uses = 18;
+  // deploys lists this node's links, one per environment.
+  repeated NodeDeployment deploys = 19;
 }
 
 // ListAtlas reads the live graph, or the graph replayed at as_of (an RFC3339

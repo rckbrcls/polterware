@@ -78,7 +78,7 @@ func polterReferences(store *storepkg.Store, snapshot work.Snapshot) (*polter.Re
 	if err != nil {
 		return nil, err
 	}
-	refs := &polter.References{Cards: snapshot.Cards, Nodes: snapshot.Nodes, Repos: snapshot.Repos}
+	refs := &polter.References{Cards: snapshot.Cards, Nodes: snapshot.Nodes, Repos: snapshot.Repos, Environments: snapshot.Environments}
 	for _, verdict := range verdicts {
 		refs.Verdicts = append(refs.Verdicts, polter.VerdictRef{ID: verdict.ID, Title: verdict.Title, Status: verdict.Status})
 	}

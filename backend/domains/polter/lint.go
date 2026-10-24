@@ -23,6 +23,9 @@ type References struct {
 	// Repos names the project's registered checkouts. Node repo: and task
 	// [repo: …] must name one; empty is the project root.
 	Repos []string
+	// Environments are the project's environments. deploys: names one by id
+	// or by name.
+	Environments []work.NamedEnvironment
 	// Git is the local repository view used to hint on handoff mismatches.
 	// Nil skips that check.
 	Git *GitView
@@ -45,6 +48,7 @@ func Lint(text string, refs *References) (Document, []Diagnostic) {
 		diags = append(diags, checkReferences(doc, *refs)...)
 		diags = append(diags, CheckGraph(doc, refs.Nodes, refs.Cards)...)
 		diags = append(diags, CheckRepos(doc, refs.Repos)...)
+		diags = append(diags, CheckDeploys(doc, refs.Environments)...)
 		diags = append(diags, checkHints(doc, refs.Cards)...)
 		diags = append(diags, stageHints(doc, refs.Cards)...)
 		diags = append(diags, architectureHints(doc, refs.Cards, refs.Nodes)...)

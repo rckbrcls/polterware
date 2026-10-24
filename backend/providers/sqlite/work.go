@@ -16,6 +16,13 @@ import (
 // and invariants, ordered by position.
 func (s *Store) LoadWorkSnapshot(projectID string) (work.Snapshot, error) {
 	snapshot := work.Snapshot{ProjectID: projectID}
+	envs, err := s.ListEnvironments(projectID)
+	if err != nil {
+		return snapshot, err
+	}
+	for _, env := range envs {
+		snapshot.Environments = append(snapshot.Environments, work.NamedEnvironment{ID: env.ID, Name: env.Name})
+	}
 	rows, err := s.DB.Query(`SELECT id,slug,title,intent,stage,status,owner,kind,under,decisions_json,position,created_at,updated_at
 		FROM work_cards WHERE project_id=? ORDER BY position, created_at`, projectID)
 	if err != nil {

@@ -17,12 +17,16 @@ func TestSQLiteUsesSingleBaseline(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(versions) == 0 {
-		t.Fatal("no migrations applied")
+	want, err := dbsqlite.MigrationVersions()
+	if err != nil {
+		t.Fatal(err)
 	}
-	for i, ver := range versions {
-		if ver != i+1 {
-			t.Fatalf("versions must be contiguous from 1, got %v", versions)
+	if len(versions) == 0 || len(versions) != len(want) {
+		t.Fatalf("applied %v, embedded %v", versions, want)
+	}
+	for i := range want {
+		if versions[i] != want[i] {
+			t.Fatalf("applied %v, embedded %v", versions, want)
 		}
 	}
 }

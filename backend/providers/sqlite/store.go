@@ -346,13 +346,13 @@ func (s *Store) StoreHealth() (bool, string, error) {
 
 func (s *Store) Reset() error {
 	tables := []string{
+		"node_deployments",
 		"integration_sync_runs",
 		"integration_resources",
 		"architecture_view_members",
 		"knowledge_items",
 		"architecture_views",
 		"architecture_layouts",
-		"resources",
 		"project_settings",
 		"integration_connections",
 		"environments",
