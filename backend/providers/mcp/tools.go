@@ -66,12 +66,12 @@ func toolDefinitions() []map[string]any {
 		},
 		{
 			"name":        ToolPolterQuery,
-			"description": "Read Work state in Polter format: \"cards\", \"card <slug>\", \"status\" (current card, branch, last handoff), or \"handoff <slug>\".",
+			"description": "Read Work state in Polter format: \"cards\", \"card <slug>\", \"status\" (current card, branch, last handoff), \"handoff <slug>\", \"canvas\" (agent-visible canvases), or \"canvas <name|id>\" (node-link export). A canvas that is not agent-visible is not listed and is not found.",
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"project_id":  map[string]any{"type": "string"},
-					"query":       map[string]any{"type": "string", "description": "\"cards\" (default), \"card <slug>\", \"status\", \"inbox\", \"handoff <slug>\", \"decisions [state]\", \"decision <verdict>\", \"feature <slug> [shape|contract|plan]\", or \"verify <slug|slug#T2>\""},
+					"query":       map[string]any{"type": "string", "description": "\"cards\" (default), \"card <slug>\", \"status\", \"inbox\", \"handoff <slug>\", \"decisions [state]\", \"decision <verdict>\", \"feature <slug> [shape|contract|plan]\", \"verify <slug|slug#T2>\", \"canvas\", or \"canvas <name|id>\" (agent-visible only)"},
 					"scope":       scopeArgumentSchema(),
 					"scope_exact": map[string]any{"type": "boolean", "description": "With scope, leave out each node's ancestors."},
 				},
