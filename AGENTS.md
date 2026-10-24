@@ -6,7 +6,7 @@
 - Write code, UI strings, technical documentation, commits, logs, and identifiers in English.
 - Preserve unrelated work and make the smallest safe change.
 - Do not create branches or commits unless explicitly requested.
-- Do not run browsers, automated tests, builds, previews, distributions, or development servers unless explicitly requested in the current task.
+- Do not run browsers, previews, distributions, or development servers unless explicitly requested in the current task. Automated tests and builds may run by default.
 
 ## Work cards
 
@@ -79,6 +79,6 @@ Do not hand-roll shared control chrome, menus, dialogs, operational tables, or e
 
 ## Verification
 
-After relevant changes, use static checks allowed by the task: typecheck, `pnpm design:lint`, `buf lint`, `go vet ./...`, and `git diff --check`. Maintain risk-proportional tests, but do not run them without explicit permission.
+After relevant changes, run the static checks (typecheck, `pnpm design:lint`, `buf lint`, `go vet ./...`, `git diff --check`) and the tests that cover the change. Maintain risk-proportional tests.
 
 Do not add Markdown design or planning documents. Record decisions and work in the Polterware store (`polterware apply`); put unshipped direction in `docs/future.md` and delete items from it when they ship.
