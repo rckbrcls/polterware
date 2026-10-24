@@ -1,0 +1,440 @@
+package dispatch
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+)
+
+const defaultVerifyTimeout = 10 * time.Minute
+
+// VerifyStatus is the verdict for a run. error means the verifier itself failed.
+type VerifyStatus string
+
+const (
+	VerifyStatusVerified     VerifyStatus = "verified"
+	VerifyStatusFailed       VerifyStatus = "verification_failed"
+	VerifyStatusUnverified   VerifyStatus = "unverified"
+	VerifyStatusError        VerifyStatus = "error"
+	StatusVerified                        = VerifyStatusVerified
+	StatusVerificationFailed              = VerifyStatusFailed
+	StatusUnverified                      = VerifyStatusUnverified
+	StatusError                           = VerifyStatusError
+)
+
+// CheckStatus is the outcome of one check.
+type CheckStatus string
+
+const (
+	CheckPassed  CheckStatus = "passed"
+	CheckFailed  CheckStatus = "failed"
+	CheckSkipped CheckStatus = "skipped"
+	CheckError   CheckStatus = "error"
+	CheckTimeout CheckStatus = "timeout"
+)
+
+// VerifyResult is the verifier verdict stored on a run (serialized in Run.VerifyJSON).
+type VerifyResult struct {
+	Status         VerifyStatus  `json:"status"`
+	Checks         []CheckResult `json:"checks,omitempty"`
+	Warnings       []string      `json:"warnings,omitempty"`
+	DurationMs     int64         `json:"durationMs,omitempty"`
+	BaselineCached bool          `json:"baselineCached,omitempty"`
+}
+
+// Result is an alias for VerifyResult.
+type Result = VerifyResult
+
+// VerifyResult decodes Run.VerifyJSON when present.
+func (r Run) VerifyResult() *VerifyResult {
+	if strings.TrimSpace(r.VerifyJSON) == "" {
+		return nil
+	}
+	var res VerifyResult
+	if err := json.Unmarshal([]byte(r.VerifyJSON), &res); err != nil {
+		return nil
+	}
+	return &res
+}
+
+// CheckResult is one configured check or a cheap diff check that failed.
+type CheckResult struct {
+	Name        string      `json:"name"`
+	Status      CheckStatus `json:"status"`
+	ExitCode    int         `json:"exitCode,omitempty"`
+	DurationMs  int64       `json:"durationMs,omitempty"`
+	Regressions []string    `json:"regressions,omitempty"`
+	Preexisting []string    `json:"preexisting,omitempty"`
+	Tail        string      `json:"tail,omitempty"`
+}
+
+// VerifyOptions selects the tree to verify. Repo is the main clone (where
+// .dispatch/verify.json usually lives); it defaults to Worktree.
+type VerifyOptions struct {
+	Repo     string
+	Worktree string
+	BaseSHA  string
+}
+
+// VerifyExample is the verify.json written by `dispatch verify --init`.
+const VerifyExample = `{
+  "checks": [
+    {
+      "name": "test",
+      "argv": ["go", "test", "./..."],
+      "timeout": "10m",
+      "required": true,
+      "parse": "gotest"
+    }
+  ]
+}
+`
+
+const Example = VerifyExample
+
+// ConfigPath is <repo>/.dispatch/verify.json.
+func ConfigPath(repo string) string {
+	return filepath.Join(repo, ".dispatch", "verify.json")
+}
+
+// VerifyConfigPath is an alias for ConfigPath.
+func VerifyConfigPath(repo string) string { return ConfigPath(repo) }
+
+// Verify executes project checks and the cheap diff checks. A missing config
+// with no go.mod is unverified, which is not a pass.
+func Verify(ctx context.Context, opt VerifyOptions) (res VerifyResult, err error) {
+	start := time.Now()
+	finished := false
+	defer func() {
+		res.DurationMs = time.Since(start).Milliseconds()
+		if finished {
+			return
+		}
+		if err == nil {
+			err = ctx.Err()
+		}
+		if res.Status == "" || res.Status == VerifyStatusVerified || res.Status == VerifyStatusUnverified {
+			res.Status = VerifyStatusError
+		}
+	}()
+
+	if opt.Worktree == "" {
+		res.Status = VerifyStatusError
+		finished = true
+		return res, fmt.Errorf("verify: empty worktree")
+	}
+	if opt.Repo == "" {
+		opt.Repo = opt.Worktree
+	}
+	cfg, err := loadVerifyConfig(opt.Repo, opt.Worktree)
+	if err != nil {
+		res.Status = VerifyStatusError
+		finished = true
+		return res, err
+	}
+
+	var checks []CheckResult
+	if opt.BaseSHA != "" {
+		warnings, cheap, cerr := cheapChecks(ctx, opt.Worktree, opt.BaseSHA)
+		if cerr != nil {
+			if ctx.Err() != nil {
+				return res, cerr
+			}
+			res.Status = VerifyStatusError
+			finished = true
+			return res, cerr
+		}
+		res.Warnings = warnings
+		checks = append(checks, cheap...)
+	} else if !cfg.skip {
+		res.Warnings = append(res.Warnings, "cheap checks skipped: no base SHA")
+	}
+
+	var ran []executedCheck
+	for _, c := range cfg.checks {
+		if err := ctx.Err(); err != nil {
+			res.Checks = checks
+			return res, err
+		}
+		ex := runVerifyCheck(ctx, c, opt.Worktree)
+		ran = append(ran, ex)
+		if ctx.Err() != nil {
+			res.Checks = append(checks, ex.bare())
+			return res, ctx.Err()
+		}
+	}
+
+	var base map[string]cachedCheck
+	if needs := failedVerifyChecks(cfg.checks, ran); len(needs) > 0 {
+		if opt.BaseSHA == "" {
+			res.Checks = append(checks, bareAllVerify(ran)...)
+			res.Status = VerifyStatusError
+			finished = true
+			return res, fmt.Errorf("no base SHA to compare failures")
+		}
+		var cached bool
+		var berr error
+		base, cached, berr = verifyBaseline(ctx, opt.Repo, opt.BaseSHA, cfg.checks, needs)
+		res.BaselineCached = cached
+		if berr != nil {
+			res.Checks = append(checks, bareAllVerify(ran)...)
+			if ctx.Err() != nil {
+				return res, berr
+			}
+			res.Status = VerifyStatusError
+			finished = true
+			return res, berr
+		}
+	}
+
+	reproved, verifierErr, executedAny := false, false, false
+	for _, ex := range ran {
+		cr := ex.judge(base)
+		if ex.status != CheckSkipped {
+			executedAny = true
+		}
+		if ex.check.Required && cr.Status == CheckError {
+			verifierErr = true
+		}
+		if ex.check.Required && len(cr.Regressions) > 0 {
+			reproved = true
+		}
+		checks = append(checks, cr)
+	}
+	for _, c := range checks {
+		if len(c.Regressions) > 0 && (c.Name == checkDiff || c.Name == checkConflicts) {
+			reproved = true
+		}
+	}
+	res.Checks = checks
+	switch {
+	case reproved:
+		res.Status = VerifyStatusFailed
+	case verifierErr:
+		res.Status = VerifyStatusError
+	case cfg.skip || !executedAny:
+		res.Status = VerifyStatusUnverified
+	default:
+		res.Status = VerifyStatusVerified
+	}
+	finished = true
+	return res, nil
+}
+
+// RunVerify is an alias for Verify.
+func RunVerify(ctx context.Context, opt VerifyOptions) (VerifyResult, error) {
+	return Verify(ctx, opt)
+}
+
+type verifyFileConfig struct {
+	Checks []verifyCheckConfig `json:"checks"`
+}
+
+type verifyCheckConfig struct {
+	Name     string   `json:"name"`
+	Argv     []string `json:"argv"`
+	Timeout  string   `json:"timeout,omitempty"`
+	Required *bool    `json:"required,omitempty"`
+	Parse    string   `json:"parse,omitempty"`
+}
+
+type verifyCheck struct {
+	Name     string
+	Argv     []string
+	Timeout  time.Duration
+	Required bool
+	Parse    string
+}
+
+type verifyLoaded struct {
+	checks []verifyCheck
+	skip   bool
+}
+
+// HasConfig reports whether repo has a verify config (.dispatch/verify.json)
+// or autodiscoverable checks (e.g. go.mod).
+func HasConfig(repo string) bool {
+	cfg, err := loadVerifyConfig(repo, repo)
+	return err == nil && !cfg.skip
+}
+
+// HasVerifyConfig is an alias for HasConfig.
+func HasVerifyConfig(repo string) bool { return HasConfig(repo) }
+
+func loadVerifyConfig(repo, worktree string) (verifyLoaded, error) {
+	b, path, err := readVerifyConfig(repo, worktree)
+	if err != nil {
+		return verifyLoaded{}, err
+	}
+	if b == nil {
+		if _, err := os.Stat(filepath.Join(worktree, "go.mod")); err == nil {
+			return verifyLoaded{checks: discoveredVerifyChecks()}, nil
+		}
+		return verifyLoaded{skip: true}, nil
+	}
+	var f verifyFileConfig
+	if err := json.Unmarshal(b, &f); err != nil {
+		return verifyLoaded{}, fmt.Errorf("%s: %w", path, err)
+	}
+	if len(f.Checks) == 0 {
+		return verifyLoaded{skip: true}, nil
+	}
+	checks, err := normalizeVerifyChecks(path, f.Checks)
+	if err != nil {
+		return verifyLoaded{}, err
+	}
+	return verifyLoaded{checks: checks}, nil
+}
+
+// readVerifyConfig prefers the main checkout. A gitignored .dispatch/verify.json
+// is not present in a worktree cut from HEAD, and the agent must not be
+// able to drop checks by editing only the worktree copy.
+func readVerifyConfig(repo, worktree string) ([]byte, string, error) {
+	candidates := []string{ConfigPath(repo)}
+	if worktree != repo {
+		candidates = append(candidates, ConfigPath(worktree))
+	}
+	for _, p := range candidates {
+		b, err := os.ReadFile(p)
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			return nil, p, err
+		}
+		return b, p, nil
+	}
+	return nil, "", nil
+}
+
+func discoveredVerifyChecks() []verifyCheck {
+	return []verifyCheck{
+		{Name: "vet", Argv: []string{"go", "vet", "./..."}, Timeout: defaultVerifyTimeout, Required: true, Parse: "none"},
+		{Name: "test", Argv: []string{"go", "test", "./..."}, Timeout: defaultVerifyTimeout, Required: true, Parse: "gotest"},
+	}
+}
+
+func normalizeVerifyChecks(path string, in []verifyCheckConfig) ([]verifyCheck, error) {
+	seen := map[string]bool{}
+	out := make([]verifyCheck, 0, len(in))
+	for i, c := range in {
+		name := c.Name
+		if name == "" {
+			name = fmt.Sprintf("check-%d", i+1)
+		}
+		if seen[name] {
+			return nil, fmt.Errorf("%s: duplicate check %q", path, name)
+		}
+		seen[name] = true
+		if len(c.Argv) == 0 || c.Argv[0] == "" {
+			return nil, fmt.Errorf("%s: check %q has empty argv", path, name)
+		}
+		mode := c.Parse
+		if mode == "" {
+			mode = "none"
+		}
+		if mode != "none" && mode != "gotest" {
+			return nil, fmt.Errorf("%s: check %q: parse %q (want gotest|none)", path, name, mode)
+		}
+		timeout := defaultVerifyTimeout
+		if c.Timeout != "" {
+			d, err := time.ParseDuration(c.Timeout)
+			if err != nil {
+				return nil, fmt.Errorf("%s: check %q: timeout: %w", path, name, err)
+			}
+			if d <= 0 {
+				return nil, fmt.Errorf("%s: check %q: timeout must be positive", path, name)
+			}
+			timeout = d
+		}
+		required := true
+		if c.Required != nil {
+			required = *c.Required
+		}
+		out = append(out, verifyCheck{
+			Name: name, Argv: append([]string{}, c.Argv...), Timeout: timeout,
+			Required: required, Parse: mode,
+		})
+	}
+	return out, nil
+}
+
+func verifyConfigHash(checks []verifyCheck) string {
+	type wire struct {
+		Name     string   `json:"name"`
+		Argv     []string `json:"argv"`
+		Timeout  string   `json:"timeout"`
+		Required bool     `json:"required"`
+		Parse    string   `json:"parse"`
+	}
+	w := make([]wire, len(checks))
+	for i, c := range checks {
+		w[i] = wire{c.Name, c.Argv, c.Timeout.String(), c.Required, c.Parse}
+	}
+	b, _ := json.Marshal(w)
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:])
+}
+
+func verifyDispatchHome() string {
+	if h := os.Getenv("DISPATCH_HOME"); h != "" {
+		return h
+	}
+	u, err := os.UserHomeDir()
+	if err != nil {
+		return filepath.Join(".", ".dispatch")
+	}
+	return filepath.Join(u, ".dispatch")
+}
+
+// Check validates a verify config file the way a run would read it. A
+// missing file is an error: callers use it on a file they just wrote.
+func Check(path string) error {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	var f verifyFileConfig
+	if err := json.Unmarshal(b, &f); err != nil {
+		return fmt.Errorf("%s: %w", path, err)
+	}
+	_, err = normalizeVerifyChecks(path, f.Checks)
+	return err
+}
+
+// CheckVerifyConfig is an alias for Check.
+func CheckVerifyConfig(path string) error { return Check(path) }
+
+// Describe lists the checks configured at path as "name: argv" lines.
+func Describe(path string) ([]string, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var f verifyFileConfig
+	if err := json.Unmarshal(b, &f); err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	cs, err := normalizeVerifyChecks(path, f.Checks)
+	if err != nil {
+		return nil, err
+	}
+	var out []string
+	for _, c := range cs {
+		req := "optional"
+		if c.Required {
+			req = "required"
+		}
+		out = append(out, fmt.Sprintf("%s [%s] %s", c.Name, req, strings.Join(c.Argv, " ")))
+	}
+	return out, nil
+}
+
+// DescribeVerifyConfig is an alias for Describe.
+func DescribeVerifyConfig(path string) ([]string, error) { return Describe(path) }
