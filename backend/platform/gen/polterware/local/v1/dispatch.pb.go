@@ -1944,6 +1944,322 @@ func (x *ListHistoryResponse) GetEvents() []*DispatchRunEvent {
 	return nil
 }
 
+type CheckTiersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckTiersRequest) Reset() {
+	*x = CheckTiersRequest{}
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckTiersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckTiersRequest) ProtoMessage() {}
+
+func (x *CheckTiersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckTiersRequest.ProtoReflect.Descriptor instead.
+func (*CheckTiersRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{28}
+}
+
+type CheckTiersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Problems      []string               `protobuf:"bytes,1,rep,name=problems,proto3" json:"problems,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckTiersResponse) Reset() {
+	*x = CheckTiersResponse{}
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckTiersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckTiersResponse) ProtoMessage() {}
+
+func (x *CheckTiersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckTiersResponse.ProtoReflect.Descriptor instead.
+func (*CheckTiersResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *CheckTiersResponse) GetProblems() []string {
+	if x != nil {
+		return x.Problems
+	}
+	return nil
+}
+
+type StatsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	By            string                 `protobuf:"bytes,2,opt,name=by,proto3" json:"by,omitempty"`
+	Since         string                 `protobuf:"bytes,3,opt,name=since,proto3" json:"since,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StatsRequest) Reset() {
+	*x = StatsRequest{}
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StatsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StatsRequest) ProtoMessage() {}
+
+func (x *StatsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StatsRequest.ProtoReflect.Descriptor instead.
+func (*StatsRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *StatsRequest) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *StatsRequest) GetBy() string {
+	if x != nil {
+		return x.By
+	}
+	return ""
+}
+
+func (x *StatsRequest) GetSince() string {
+	if x != nil {
+		return x.Since
+	}
+	return ""
+}
+
+type DispatchStatsRow struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Runs          int32                  `protobuf:"varint,2,opt,name=runs,proto3" json:"runs,omitempty"`
+	SuccessPct    float64                `protobuf:"fixed64,3,opt,name=success_pct,json=successPct,proto3" json:"success_pct,omitempty"`
+	FirstTryPct   float64                `protobuf:"fixed64,4,opt,name=first_try_pct,json=firstTryPct,proto3" json:"first_try_pct,omitempty"`
+	P50Ms         *int64                 `protobuf:"varint,5,opt,name=p50_ms,json=p50Ms,proto3,oneof" json:"p50_ms,omitempty"`
+	P90Ms         *int64                 `protobuf:"varint,6,opt,name=p90_ms,json=p90Ms,proto3,oneof" json:"p90_ms,omitempty"`
+	Fallbacks     int32                  `protobuf:"varint,7,opt,name=fallbacks,proto3" json:"fallbacks,omitempty"`
+	RateLimits    int32                  `protobuf:"varint,8,opt,name=rate_limits,json=rateLimits,proto3" json:"rate_limits,omitempty"`
+	Orphans       int32                  `protobuf:"varint,9,opt,name=orphans,proto3" json:"orphans,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DispatchStatsRow) Reset() {
+	*x = DispatchStatsRow{}
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DispatchStatsRow) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DispatchStatsRow) ProtoMessage() {}
+
+func (x *DispatchStatsRow) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DispatchStatsRow.ProtoReflect.Descriptor instead.
+func (*DispatchStatsRow) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *DispatchStatsRow) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *DispatchStatsRow) GetRuns() int32 {
+	if x != nil {
+		return x.Runs
+	}
+	return 0
+}
+
+func (x *DispatchStatsRow) GetSuccessPct() float64 {
+	if x != nil {
+		return x.SuccessPct
+	}
+	return 0
+}
+
+func (x *DispatchStatsRow) GetFirstTryPct() float64 {
+	if x != nil {
+		return x.FirstTryPct
+	}
+	return 0
+}
+
+func (x *DispatchStatsRow) GetP50Ms() int64 {
+	if x != nil && x.P50Ms != nil {
+		return *x.P50Ms
+	}
+	return 0
+}
+
+func (x *DispatchStatsRow) GetP90Ms() int64 {
+	if x != nil && x.P90Ms != nil {
+		return *x.P90Ms
+	}
+	return 0
+}
+
+func (x *DispatchStatsRow) GetFallbacks() int32 {
+	if x != nil {
+		return x.Fallbacks
+	}
+	return 0
+}
+
+func (x *DispatchStatsRow) GetRateLimits() int32 {
+	if x != nil {
+		return x.RateLimits
+	}
+	return 0
+}
+
+func (x *DispatchStatsRow) GetOrphans() int32 {
+	if x != nil {
+		return x.Orphans
+	}
+	return 0
+}
+
+type StatsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	By            string                 `protobuf:"bytes,1,opt,name=by,proto3" json:"by,omitempty"`
+	Since         string                 `protobuf:"bytes,2,opt,name=since,proto3" json:"since,omitempty"`
+	InFlight      int32                  `protobuf:"varint,3,opt,name=in_flight,json=inFlight,proto3" json:"in_flight,omitempty"`
+	Rows          []*DispatchStatsRow    `protobuf:"bytes,4,rep,name=rows,proto3" json:"rows,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StatsResponse) Reset() {
+	*x = StatsResponse{}
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StatsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StatsResponse) ProtoMessage() {}
+
+func (x *StatsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StatsResponse.ProtoReflect.Descriptor instead.
+func (*StatsResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *StatsResponse) GetBy() string {
+	if x != nil {
+		return x.By
+	}
+	return ""
+}
+
+func (x *StatsResponse) GetSince() string {
+	if x != nil {
+		return x.Since
+	}
+	return ""
+}
+
+func (x *StatsResponse) GetInFlight() int32 {
+	if x != nil {
+		return x.InFlight
+	}
+	return 0
+}
+
+func (x *StatsResponse) GetRows() []*DispatchStatsRow {
+	if x != nil {
+		return x.Rows
+	}
+	return nil
+}
+
 var File_polterware_local_v1_dispatch_proto protoreflect.FileDescriptor
 
 const file_polterware_local_v1_dispatch_proto_rawDesc = "" +
@@ -2116,7 +2432,34 @@ const file_polterware_local_v1_dispatch_proto_rawDesc = "" +
 	"\x05limit\x18\x04 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x05 \x01(\x05R\x06offset\"T\n" +
 	"\x13ListHistoryResponse\x12=\n" +
-	"\x06events\x18\x01 \x03(\v2%.polterware.local.v1.DispatchRunEventR\x06events2\x81\b\n" +
+	"\x06events\x18\x01 \x03(\v2%.polterware.local.v1.DispatchRunEventR\x06events\"\x13\n" +
+	"\x11CheckTiersRequest\"0\n" +
+	"\x12CheckTiersResponse\x12\x1a\n" +
+	"\bproblems\x18\x01 \x03(\tR\bproblems\"S\n" +
+	"\fStatsRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x0e\n" +
+	"\x02by\x18\x02 \x01(\tR\x02by\x12\x14\n" +
+	"\x05since\x18\x03 \x01(\tR\x05since\"\xa4\x02\n" +
+	"\x10DispatchStatsRow\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
+	"\x04runs\x18\x02 \x01(\x05R\x04runs\x12\x1f\n" +
+	"\vsuccess_pct\x18\x03 \x01(\x01R\n" +
+	"successPct\x12\"\n" +
+	"\rfirst_try_pct\x18\x04 \x01(\x01R\vfirstTryPct\x12\x1a\n" +
+	"\x06p50_ms\x18\x05 \x01(\x03H\x00R\x05p50Ms\x88\x01\x01\x12\x1a\n" +
+	"\x06p90_ms\x18\x06 \x01(\x03H\x01R\x05p90Ms\x88\x01\x01\x12\x1c\n" +
+	"\tfallbacks\x18\a \x01(\x05R\tfallbacks\x12\x1f\n" +
+	"\vrate_limits\x18\b \x01(\x05R\n" +
+	"rateLimits\x12\x18\n" +
+	"\aorphans\x18\t \x01(\x05R\aorphansB\t\n" +
+	"\a_p50_msB\t\n" +
+	"\a_p90_ms\"\x8d\x01\n" +
+	"\rStatsResponse\x12\x0e\n" +
+	"\x02by\x18\x01 \x01(\tR\x02by\x12\x14\n" +
+	"\x05since\x18\x02 \x01(\tR\x05since\x12\x1b\n" +
+	"\tin_flight\x18\x03 \x01(\x05R\binFlight\x129\n" +
+	"\x04rows\x18\x04 \x03(\v2%.polterware.local.v1.DispatchStatsRowR\x04rows2\xb0\t\n" +
 	"\x0fDispatchService\x12W\n" +
 	"\bListRuns\x12$.polterware.local.v1.ListRunsRequest\x1a%.polterware.local.v1.ListRunsResponse\x12Q\n" +
 	"\x06GetRun\x12\".polterware.local.v1.GetRunRequest\x1a#.polterware.local.v1.GetRunResponse\x12W\n" +
@@ -2129,7 +2472,10 @@ const file_polterware_local_v1_dispatch_proto_rawDesc = "" +
 	"\tListTiers\x12%.polterware.local.v1.ListTiersRequest\x1a&.polterware.local.v1.ListTiersResponse\x12]\n" +
 	"\n" +
 	"ListAgents\x12&.polterware.local.v1.ListAgentsRequest\x1a'.polterware.local.v1.ListAgentsResponse\x12`\n" +
-	"\vListHistory\x12'.polterware.local.v1.ListHistoryRequest\x1a(.polterware.local.v1.ListHistoryResponseB\xe9\x01\n" +
+	"\vListHistory\x12'.polterware.local.v1.ListHistoryRequest\x1a(.polterware.local.v1.ListHistoryResponse\x12]\n" +
+	"\n" +
+	"CheckTiers\x12&.polterware.local.v1.CheckTiersRequest\x1a'.polterware.local.v1.CheckTiersResponse\x12N\n" +
+	"\x05Stats\x12!.polterware.local.v1.StatsRequest\x1a\".polterware.local.v1.StatsResponseB\xe9\x01\n" +
 	"\x17com.polterware.local.v1B\rDispatchProtoP\x01ZQgithub.com/polterware/polterware/backend/platform/gen/polterware/local/v1;localv1\xa2\x02\x03PLX\xaa\x02\x13Polterware.Local.V1\xca\x02\x13Polterware\\Local\\V1\xe2\x02\x1fPolterware\\Local\\V1\\GPBMetadata\xea\x02\x15Polterware::Local::V1b\x06proto3"
 
 var (
@@ -2144,7 +2490,7 @@ func file_polterware_local_v1_dispatch_proto_rawDescGZIP() []byte {
 	return file_polterware_local_v1_dispatch_proto_rawDescData
 }
 
-var file_polterware_local_v1_dispatch_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_polterware_local_v1_dispatch_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_polterware_local_v1_dispatch_proto_goTypes = []any{
 	(*DispatchRun)(nil),           // 0: polterware.local.v1.DispatchRun
 	(*DispatchRunEvent)(nil),      // 1: polterware.local.v1.DispatchRunEvent
@@ -2174,6 +2520,11 @@ var file_polterware_local_v1_dispatch_proto_goTypes = []any{
 	(*ListAgentsResponse)(nil),    // 25: polterware.local.v1.ListAgentsResponse
 	(*ListHistoryRequest)(nil),    // 26: polterware.local.v1.ListHistoryRequest
 	(*ListHistoryResponse)(nil),   // 27: polterware.local.v1.ListHistoryResponse
+	(*CheckTiersRequest)(nil),     // 28: polterware.local.v1.CheckTiersRequest
+	(*CheckTiersResponse)(nil),    // 29: polterware.local.v1.CheckTiersResponse
+	(*StatsRequest)(nil),          // 30: polterware.local.v1.StatsRequest
+	(*DispatchStatsRow)(nil),      // 31: polterware.local.v1.DispatchStatsRow
+	(*StatsResponse)(nil),         // 32: polterware.local.v1.StatsResponse
 }
 var file_polterware_local_v1_dispatch_proto_depIdxs = []int32{
 	0,  // 0: polterware.local.v1.ListRunsResponse.runs:type_name -> polterware.local.v1.DispatchRun
@@ -2185,33 +2536,38 @@ var file_polterware_local_v1_dispatch_proto_depIdxs = []int32{
 	4,  // 6: polterware.local.v1.ListTiersResponse.tiers:type_name -> polterware.local.v1.DispatchTier
 	5,  // 7: polterware.local.v1.ListAgentsResponse.agents:type_name -> polterware.local.v1.DispatchAgent
 	1,  // 8: polterware.local.v1.ListHistoryResponse.events:type_name -> polterware.local.v1.DispatchRunEvent
-	6,  // 9: polterware.local.v1.DispatchService.ListRuns:input_type -> polterware.local.v1.ListRunsRequest
-	8,  // 10: polterware.local.v1.DispatchService.GetRun:input_type -> polterware.local.v1.GetRunRequest
-	10, // 11: polterware.local.v1.DispatchService.StartRun:input_type -> polterware.local.v1.StartRunRequest
-	12, // 12: polterware.local.v1.DispatchService.CancelRun:input_type -> polterware.local.v1.CancelRunRequest
-	14, // 13: polterware.local.v1.DispatchService.Result:input_type -> polterware.local.v1.ResultRequest
-	16, // 14: polterware.local.v1.DispatchService.WatchRun:input_type -> polterware.local.v1.WatchRunRequest
-	18, // 15: polterware.local.v1.DispatchService.ListWorktrees:input_type -> polterware.local.v1.ListWorktreesRequest
-	20, // 16: polterware.local.v1.DispatchService.ListQuota:input_type -> polterware.local.v1.ListQuotaRequest
-	22, // 17: polterware.local.v1.DispatchService.ListTiers:input_type -> polterware.local.v1.ListTiersRequest
-	24, // 18: polterware.local.v1.DispatchService.ListAgents:input_type -> polterware.local.v1.ListAgentsRequest
-	26, // 19: polterware.local.v1.DispatchService.ListHistory:input_type -> polterware.local.v1.ListHistoryRequest
-	7,  // 20: polterware.local.v1.DispatchService.ListRuns:output_type -> polterware.local.v1.ListRunsResponse
-	9,  // 21: polterware.local.v1.DispatchService.GetRun:output_type -> polterware.local.v1.GetRunResponse
-	11, // 22: polterware.local.v1.DispatchService.StartRun:output_type -> polterware.local.v1.StartRunResponse
-	13, // 23: polterware.local.v1.DispatchService.CancelRun:output_type -> polterware.local.v1.CancelRunResponse
-	15, // 24: polterware.local.v1.DispatchService.Result:output_type -> polterware.local.v1.ResultResponse
-	17, // 25: polterware.local.v1.DispatchService.WatchRun:output_type -> polterware.local.v1.WatchRunResponse
-	19, // 26: polterware.local.v1.DispatchService.ListWorktrees:output_type -> polterware.local.v1.ListWorktreesResponse
-	21, // 27: polterware.local.v1.DispatchService.ListQuota:output_type -> polterware.local.v1.ListQuotaResponse
-	23, // 28: polterware.local.v1.DispatchService.ListTiers:output_type -> polterware.local.v1.ListTiersResponse
-	25, // 29: polterware.local.v1.DispatchService.ListAgents:output_type -> polterware.local.v1.ListAgentsResponse
-	27, // 30: polterware.local.v1.DispatchService.ListHistory:output_type -> polterware.local.v1.ListHistoryResponse
-	20, // [20:31] is the sub-list for method output_type
-	9,  // [9:20] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	31, // 9: polterware.local.v1.StatsResponse.rows:type_name -> polterware.local.v1.DispatchStatsRow
+	6,  // 10: polterware.local.v1.DispatchService.ListRuns:input_type -> polterware.local.v1.ListRunsRequest
+	8,  // 11: polterware.local.v1.DispatchService.GetRun:input_type -> polterware.local.v1.GetRunRequest
+	10, // 12: polterware.local.v1.DispatchService.StartRun:input_type -> polterware.local.v1.StartRunRequest
+	12, // 13: polterware.local.v1.DispatchService.CancelRun:input_type -> polterware.local.v1.CancelRunRequest
+	14, // 14: polterware.local.v1.DispatchService.Result:input_type -> polterware.local.v1.ResultRequest
+	16, // 15: polterware.local.v1.DispatchService.WatchRun:input_type -> polterware.local.v1.WatchRunRequest
+	18, // 16: polterware.local.v1.DispatchService.ListWorktrees:input_type -> polterware.local.v1.ListWorktreesRequest
+	20, // 17: polterware.local.v1.DispatchService.ListQuota:input_type -> polterware.local.v1.ListQuotaRequest
+	22, // 18: polterware.local.v1.DispatchService.ListTiers:input_type -> polterware.local.v1.ListTiersRequest
+	24, // 19: polterware.local.v1.DispatchService.ListAgents:input_type -> polterware.local.v1.ListAgentsRequest
+	26, // 20: polterware.local.v1.DispatchService.ListHistory:input_type -> polterware.local.v1.ListHistoryRequest
+	28, // 21: polterware.local.v1.DispatchService.CheckTiers:input_type -> polterware.local.v1.CheckTiersRequest
+	30, // 22: polterware.local.v1.DispatchService.Stats:input_type -> polterware.local.v1.StatsRequest
+	7,  // 23: polterware.local.v1.DispatchService.ListRuns:output_type -> polterware.local.v1.ListRunsResponse
+	9,  // 24: polterware.local.v1.DispatchService.GetRun:output_type -> polterware.local.v1.GetRunResponse
+	11, // 25: polterware.local.v1.DispatchService.StartRun:output_type -> polterware.local.v1.StartRunResponse
+	13, // 26: polterware.local.v1.DispatchService.CancelRun:output_type -> polterware.local.v1.CancelRunResponse
+	15, // 27: polterware.local.v1.DispatchService.Result:output_type -> polterware.local.v1.ResultResponse
+	17, // 28: polterware.local.v1.DispatchService.WatchRun:output_type -> polterware.local.v1.WatchRunResponse
+	19, // 29: polterware.local.v1.DispatchService.ListWorktrees:output_type -> polterware.local.v1.ListWorktreesResponse
+	21, // 30: polterware.local.v1.DispatchService.ListQuota:output_type -> polterware.local.v1.ListQuotaResponse
+	23, // 31: polterware.local.v1.DispatchService.ListTiers:output_type -> polterware.local.v1.ListTiersResponse
+	25, // 32: polterware.local.v1.DispatchService.ListAgents:output_type -> polterware.local.v1.ListAgentsResponse
+	27, // 33: polterware.local.v1.DispatchService.ListHistory:output_type -> polterware.local.v1.ListHistoryResponse
+	29, // 34: polterware.local.v1.DispatchService.CheckTiers:output_type -> polterware.local.v1.CheckTiersResponse
+	32, // 35: polterware.local.v1.DispatchService.Stats:output_type -> polterware.local.v1.StatsResponse
+	23, // [23:36] is the sub-list for method output_type
+	10, // [10:23] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_polterware_local_v1_dispatch_proto_init() }
@@ -2222,13 +2578,14 @@ func file_polterware_local_v1_dispatch_proto_init() {
 	file_polterware_local_v1_dispatch_proto_msgTypes[0].OneofWrappers = []any{}
 	file_polterware_local_v1_dispatch_proto_msgTypes[3].OneofWrappers = []any{}
 	file_polterware_local_v1_dispatch_proto_msgTypes[5].OneofWrappers = []any{}
+	file_polterware_local_v1_dispatch_proto_msgTypes[31].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_polterware_local_v1_dispatch_proto_rawDesc), len(file_polterware_local_v1_dispatch_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   28,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -116,6 +116,8 @@ func ServeConnect(listener net.Listener, core *Core) *http.Server {
 	register(path, handler)
 	path, handler = localv1connect.NewChangeServiceHandler(core, options...)
 	register(path, handler)
+	path, handler = localv1connect.NewDispatchServiceHandler(core, options...)
+	register(path, handler)
 	register("/mcp", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := auth.authorize(r.Header); err != nil {
 			http.Error(w, "invalid or missing session token", http.StatusUnauthorized)
