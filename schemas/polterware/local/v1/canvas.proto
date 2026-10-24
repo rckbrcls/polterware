@@ -1,0 +1,130 @@
+syntax = "proto3";
+package polterware.local.v1;
+option go_package = "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1;localv1";
+
+import "polterware/local/v1/agentrun.proto";
+
+// CanvasRef cites another project entity.
+// kind is "card", "decision", "fact", "evidence", or "node" (a structure node).
+message CanvasRef {
+  string kind = 1;
+  string id = 2;
+}
+
+// CanvasNode is one vertex of the semantic graph. props_json is a JSON object.
+// Position and size are not node fields; they belong to layout_json.
+message CanvasNode {
+  string id = 1;
+  string kind = 2;
+  string label = 3;
+  string props_json = 4;
+  CanvasRef ref = 5;
+}
+
+// CanvasEdge links from to to. props_json is a JSON object.
+message CanvasEdge {
+  string id = 1;
+  string from = 2;
+  string to = 3;
+  string kind = 4;
+  string props_json = 5;
+}
+
+// CanvasGraph is the semantic property graph. It does not carry layout.
+message CanvasGraph {
+  repeated CanvasNode nodes = 1;
+  repeated CanvasEdge edges = 2;
+}
+
+// Canvas is one saved surface. layout_json holds positions, sizes, and groups
+// and is not interpreted as graph semantics.
+message Canvas {
+  string id = 1;
+  string project_id = 2;
+  string name = 3;
+  // type is "free", "architecture", "roadmap", "flow", "brainstorm", or "ideas".
+  string type = 4;
+  bool agent_visible = 5;
+  CanvasGraph graph = 6;
+  string layout_json = 7;
+  string scope_node_id = 8;
+  string created_at = 9;
+  string updated_at = 10;
+}
+
+// CanvasTypeDefinition is the palette and the rules for one canvas type.
+// node_kinds includes note and text, which every type allows.
+// unrestricted means kinds outside node_kinds and edge_kinds are still valid.
+message CanvasTypeDefinition {
+  string type = 1;
+  string label = 2;
+  repeated string node_kinds = 3;
+  repeated string edge_kinds = 4;
+  repeated string rules = 5;
+  bool unrestricted = 6;
+}
+
+message ListCanvasesRequest {
+  string project_id = 1;
+  // scope_node narrows the list to canvases scoped to that Atlas node
+  // (id or path), its descendants, and, unless scope_exact, its ancestors.
+  // Empty is the whole project. A canvas with no scope stays visible.
+  string scope_node = 2;
+  bool scope_exact = 3;
+}
+message ListCanvasesResponse { repeated Canvas canvases = 1; }
+
+message GetCanvasRequest {
+  string project_id = 1;
+  string id = 2;
+}
+message GetCanvasResponse { Canvas canvas = 1; }
+
+message CreateCanvasRequest {
+  string project_id = 1;
+  string name = 2;
+  string type = 3;
+  bool agent_visible = 4;
+  CanvasGraph graph = 5;
+  string layout_json = 6;
+  string scope_node_id = 7;
+  ChangeEnvelope change = 8;
+  // id is optional; the server assigns one when it is empty.
+  string id = 9;
+}
+message CreateCanvasResponse { Canvas canvas = 1; }
+
+// UpdateCanvas changes only the parts that are set. Omitted parts stay as stored.
+// graph, layout_json, name, and agent_visible are independent.
+message UpdateCanvasRequest {
+  string project_id = 1;
+  string id = 2;
+  ChangeEnvelope change = 3;
+  optional string name = 4;
+  optional bool agent_visible = 5;
+  optional CanvasGraph graph = 6;
+  optional string layout_json = 7;
+  optional string scope_node_id = 8;
+}
+message UpdateCanvasResponse { Canvas canvas = 1; }
+
+message DeleteCanvasRequest {
+  string project_id = 1;
+  string id = 2;
+  ChangeEnvelope change = 3;
+}
+message DeleteCanvasResponse {}
+
+message ListCanvasTypesRequest {}
+message ListCanvasTypesResponse { repeated CanvasTypeDefinition types = 1; }
+
+// CanvasService stores typed canvases. Writes validate the graph and reject
+// violations. Layout is persisted and is not validated as a graph.
+service CanvasService {
+  rpc ListCanvases(ListCanvasesRequest) returns (ListCanvasesResponse);
+  rpc GetCanvas(GetCanvasRequest) returns (GetCanvasResponse);
+  rpc CreateCanvas(CreateCanvasRequest) returns (CreateCanvasResponse);
+  rpc UpdateCanvas(UpdateCanvasRequest) returns (UpdateCanvasResponse);
+  rpc DeleteCanvas(DeleteCanvasRequest) returns (DeleteCanvasResponse);
+  rpc ListCanvasTypes(ListCanvasTypesRequest) returns (ListCanvasTypesResponse);
+}

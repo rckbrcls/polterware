@@ -133,6 +133,9 @@ func ServeConnect(listener net.Listener, core *Core) *http.Server {
 	register(path, handler)
 	path, handler = localv1connect.NewDispatchServiceHandler(core, options...)
 	register(path, handler)
+	// CanvasService is registered in its own block so other server.go edits stay independent.
+	path, handler = localv1connect.NewCanvasServiceHandler(core, options...)
+	register(path, handler)
 	register("/mcp", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := auth.authorize(r.Header); err != nil {
 			http.Error(w, "invalid or missing session token", http.StatusUnauthorized)
