@@ -352,7 +352,7 @@ func (s *Store) Reset() error {
 		"knowledge_items",
 		"architecture_views",
 		"architecture_layouts",
-		"resources",
+		"canvases",
 		"project_settings",
 		"integration_connections",
 		"environments",

@@ -20,6 +20,7 @@ const (
 	KindAgentRuns    = "agent_runs"
 	KindArchitecture = "architecture"
 	KindIntegrations = "integrations"
+	KindCanvas       = "canvas"
 )
 
 var tableKinds = map[string]string{
@@ -56,6 +57,7 @@ var tableKinds = map[string]string{
 	"integration_connections":   KindIntegrations,
 	"integration_resources":     KindIntegrations,
 	"integration_sync_runs":     KindIntegrations,
+	"canvases":                  KindCanvas,
 }
 
 // KindForTable returns the event kind for a table, or "" for tables clients
