@@ -118,7 +118,7 @@ function parseRunObject(row: Record<string, unknown>): DispatchRunView | undefin
   return {
     id,
     projectId: asString(row.projectId),
-    status: asString(row.status) || "queued",
+    status: asString(row.status),
     tier: asString(row.tier),
     agent: asString(row.agent),
     model: asString(row.model),

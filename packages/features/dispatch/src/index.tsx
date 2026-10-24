@@ -77,7 +77,7 @@ function normalizeDispatchTab(tab?: string): DispatchTab {
 
 function isRunActive(status: string): boolean {
   const s = status.toLowerCase();
-  return s === "running" || s === "queued" || s === "starting" || s === "started";
+  return s === "pending" || s === "running";
 }
 
 function formatWhen(value: string): string {

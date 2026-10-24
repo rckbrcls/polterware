@@ -78,60 +78,29 @@ Optional later: bring-your-own LLM key enrichment (`inferred`, promoted by a hum
 
 Independent hypotheses; a win on H2 does not validate H3–H5, and more restriction may lower success (report the trade-off). Minimal design: four conditions (no Polterware, structured output, typed actions, typed actions plus contracts/states/verification), fixed snapshot, task, budget, and model per block, randomized order, repeated runs. Behavioral reproducibility `BR = 1 − D`, where `D` is the mean pairwise distance between normalized action traces; define the normalization and distance before observing results and validate against independent human judges. Report separately: task success, blocked proposals versus *executed* violations, files touched, dependencies added, external calls, tokens, latency, cost. Validate the product (interviews, real use) before widening the architecture.
 
-## Dispatch and agent orchestration (needs a Decision before any code)
+## Dispatch still open
 
-Direction: Polterware becomes the control plane for coding agents, not only the record of their work. Three layers over one store: project truth and context (PPM, Decisions, Facts, Evidence, Context Compiler); change (Activity, Drift, AgentRun, Unified Change History); execution (routing by difficulty, worktrees, verification). Suggested positioning: *the project's source of truth and the place agents are routed from*. Routing alone is a commodity; routing that reads Work cards, Decisions, and run history is not.
+The core engine, SQLite store, CLI, TUI, and Desktop surface (Runs, Worktrees, Pace, Tiers & Agents) are shipped. A dispatch run is a core-executed delegation. It may reference an AgentRun id and a Work card slug. It is not itself an AgentRun. There is no Dispatch MCP tool. `merge`, `clean`, and `recover` stay inside the engine.
 
-Origin: `dispatch` (separate repository, Go, single binary) routes a task to an installed agent CLI (Codex, Cursor, Grok, Antigravity, OpenCode) by tier `easy|normal|hard` instead of model name, ranks candidates by quota pace, falls back when a CLI hits a limit, runs in sandboxed worktrees, and returns a compact result with a verify step. Its run history overlaps Activity and AgentRun. Polterware's earlier "execution is out of scope" rule was removed from `AGENTS.md`, so merging is now allowed.
+Still open:
 
-Chosen shape (leaning):
+- Turn a run's verify result into Evidence on the card.
+- Compare Drift with the real worktree diff.
+- Treat Delivered as merged to the target branch.
+- A Waves tab.
+- Dispatch MCP tools.
+- Context Compiler suggestions that pick a tier from run history.
+- Publishing the standalone `dispatch` repository from this port. This delivery copies the engine in; it does not keep that repository's `internal/` packages as a reusable module.
 
-- Fold dispatch into the local core (`polterware serve`) as a Go package, not a second process. The core is already the only SQLite opener, so runs, tiers, pace, and verify results live in the same store without an event contract between processes.
-- Keep dispatch reusable on its own: its `internal/*` packages are consumed behind a store interface (JSONL standalone, Polterware SQLite embedded) so the `dispatch` repository can keep shipping a light binary.
-- CLI and MCP gain delegation (`polterware dispatch ...`); the TUI gains a runs view; the Desktop shows runs through Activity rather than a second history.
-- Every delegation is an AgentRun. A run can start from a Work card ("run this card at tier hard") and stays linked to it.
-- The `verify` result becomes Evidence on the card, so Verify stage reflects what actually ran.
-
-Git and worktrees as evidence (not a Git client; details in the next section):
-
-- A run in a worktree records branch, base, diff summary, touched files, and commits, linked to the card and the AgentRun.
-- Drift compares the real diff with what the card and active Decisions declared; today Drift only sees declarations.
-- Active worktrees are visible with card, agent, and status; parallel worktrees touching the same files are flagged before merge.
-- Review in one place: card in Verify shows the worktree diff, verify result, and relevant Decisions; approving moves it to Delivered.
-- Out: stage/rebase/blame UI, anything that reads as a second GitKraken.
-
-Constraints:
-
-- Principle conflicts to resolve in the Decision: "Ops, Terminal-as-product, and Nodes stay removed" (delegation must not return as a terminal or ops product) and "no LLM calls or user LLM keys in the local binary" (dispatch spawns existing CLIs and holds no model keys; keep it that way).
-- Sandbox, process-tree cleanup, one writer per directory, and recursion guards come over with the code; they are not optional.
-- Quota and pace come only from the CLIs' official protocols (for example `codex app-server`); never read provider tokens from disk, never persist credentials in SQLite.
-- Cloud's "must not provision remote execution" stays: this is local execution only.
-- Neutrality is the advantage: Polterware routes across vendors and keeps no preferred one.
-- Do not let "orchestrator" widen the scope; prioritize what only Polterware can do (context linked to change linked to execution).
-
-Phases:
-
-1. Extract the dispatch store behind an interface.
-2. Import the package into the core; `polterware dispatch` runs and writes AgentRun.
-3. Link runs to Work cards; verify results become Evidence.
-4. Worktree and Git evidence feeding Drift and Activity.
-5. TUI and Desktop surfaces for runs and worktrees (a new surface needs its own approved Decision).
-6. Optional: run history informs the Context Compiler and tier suggestions per card.
-
-Open: command name (`dispatch` vs `run`); whether runs get their own Atlas/Work surface or live only in Activity; whether tier learning stays in dispatch or moves to the store; how a delegation maps to a claim once Cloud coordination (C1) exists.
-
-## Git and worktrees as the change ledger (needs a Decision before any code)
+## Git and worktrees as the change ledger
 
 Direction: Git is the most reliable evidence of what changed, so Polterware reads it deeply and ties every change to the card, Decision, agent, and run that justified it. It is evidence and lifecycle, never a Git client.
 
 Starting point (shipped, narrow): the scan writes a `git:HEAD` row and up to 20 `git:commit` rows, `repo add` adds `git:<name>:HEAD`, `status` prints the branch, `delivered` checks that `HEAD` is on local `main`/`master`, and `handoff` compares `touched:` and `branch:` with the local diff (see Local item 1; end-to-end verification is still pending). Everything below is not implemented.
 
-Worktree lifecycle (owned by the local core):
+Worktree lifecycle still open (the engine already creates one worktree per run, records path, branch, base, owner, card, and status, and keeps one writer per directory):
 
-- Create one worktree per delegated run or Work card, with a deterministic branch name (card id + short slug) cut from a recorded base commit.
-- Track state: base, branch, path, owner (agent or person), run, card, and status (active, verifying, ready, merged, abandoned).
 - Clean up: remove merged or abandoned worktrees and branches, prune stale ones on `serve` start, and never delete a worktree with uncommitted changes without a finding in the Inbox.
-- One writer per directory, enforced; parallel work always uses separate worktrees.
 - Dirty main checkout is a finding, not an error: runs may start from a clean worktree while the user keeps editing.
 
 Change evidence:
