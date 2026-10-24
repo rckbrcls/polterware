@@ -85,3 +85,75 @@ func TestWorkServiceApplyAndList(t *testing.T) {
 		t.Fatalf("invalid text should be InvalidArgument with a line number: %v", err)
 	}
 }
+
+func TestWorkBoardHandlersAuditWrites(t *testing.T) {
+	store, err := storepkg.New(filepath.Join(t.TempDir(), "boards.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", RootPath: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	core := NewCore(store, "test-token")
+	ctx := context.Background()
+	change := &localv1.ChangeEnvelope{Summary: "Save a view", Rationale: "The board needs a second grouping"}
+
+	if _, err := core.CreateWorkBoard(ctx, connect.NewRequest(&localv1.CreateWorkBoardRequest{ProjectId: project.ID, Name: "Stage"})); connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Fatalf("create without a change envelope: %v", err)
+	}
+	created, err := core.CreateWorkBoard(ctx, connect.NewRequest(&localv1.CreateWorkBoardRequest{
+		ProjectId: project.ID, Name: " Stage ", ConfigJson: `{"version":1,"group":"stage"}`, Change: change,
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created.Msg.Board.GetName() != "Stage" || created.Msg.Board.GetPosition() != 0 {
+		t.Fatalf("create board = %+v", created.Msg.Board)
+	}
+	second, err := core.CreateWorkBoard(ctx, connect.NewRequest(&localv1.CreateWorkBoardRequest{
+		ProjectId: project.ID, Name: "Owners", Change: change,
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	renamed, err := core.UpdateWorkBoard(ctx, connect.NewRequest(&localv1.UpdateWorkBoardRequest{
+		ProjectId: project.ID, Id: second.Msg.Board.Id, Name: "By owner", Change: change,
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if renamed.Msg.Board.GetName() != "By owner" || renamed.Msg.Board.GetConfigJson() != `{"version":1}` {
+		t.Fatalf("rename board = %+v", renamed.Msg.Board)
+	}
+	reordered, err := core.ReorderWorkBoards(ctx, connect.NewRequest(&localv1.ReorderWorkBoardsRequest{
+		ProjectId: project.ID, BoardIds: []string{second.Msg.Board.Id, created.Msg.Board.Id}, Change: change,
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reordered.Msg.Boards) != 2 || reordered.Msg.Boards[0].GetId() != second.Msg.Board.Id || reordered.Msg.Boards[0].GetPosition() != 0 {
+		t.Fatalf("reorder boards = %v", reordered.Msg.Boards)
+	}
+	if _, err := core.DeleteWorkBoard(ctx, connect.NewRequest(&localv1.DeleteWorkBoardRequest{
+		ProjectId: project.ID, Id: second.Msg.Board.Id, Change: change,
+	})); err != nil {
+		t.Fatal(err)
+	}
+	listed, err := core.ListWorkBoards(ctx, connect.NewRequest(&localv1.ListWorkBoardsRequest{ProjectId: project.ID}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(listed.Msg.Boards) != 1 || listed.Msg.Boards[0].GetName() != "Stage" || listed.Msg.Boards[0].GetPosition() != 0 {
+		t.Fatalf("list boards = %v", listed.Msg.Boards)
+	}
+	var creates int
+	if err := store.DB.QueryRow(`SELECT COUNT(1) FROM change_ops WHERE project_id=? AND entity='board' AND op='create'`, project.ID).Scan(&creates); err != nil || creates != 2 {
+		t.Fatalf("audited creates = %d, err=%v", creates, err)
+	}
+	var runID string
+	if err := store.DB.QueryRow(`SELECT agent_run_id FROM change_ops WHERE project_id=? AND entity='board' LIMIT 1`, project.ID).Scan(&runID); err != nil || runID == "" {
+		t.Fatalf("board change_ops run = %q, err=%v", runID, err)
+	}
+}

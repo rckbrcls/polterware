@@ -267,6 +267,29 @@ func dropAllTables(db *sql.DB) error {
 	return tx.Commit()
 }
 
+// MigrationVersions returns the embedded migration numbers in apply order.
+// A reserved number may leave a gap until that migration file exists; the
+// applied set must still match this list.
+func MigrationVersions() ([]int, error) {
+	entries, err := migrationFS.ReadDir("migrations")
+	if err != nil {
+		return nil, err
+	}
+	var vers []int
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".sql") {
+			continue
+		}
+		var ver int
+		if _, err := fmt.Sscanf(entry.Name(), "%d_", &ver); err != nil {
+			return nil, fmt.Errorf("migration name %s: %w", entry.Name(), err)
+		}
+		vers = append(vers, ver)
+	}
+	sort.Ints(vers)
+	return vers, nil
+}
+
 func AppliedVersions(db *sql.DB) ([]int, error) {
 	rows, err := db.Query(`SELECT version FROM schema_migrations ORDER BY version`)
 	if err != nil {

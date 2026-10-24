@@ -250,6 +250,7 @@ const (
 	EntityClaim     = "claim"
 	EntityNode      = "node"
 	EntityDecision  = "decision"
+	EntityBoard     = "board"
 
 	OpCreate = "create"
 	OpUpdate = "update"
