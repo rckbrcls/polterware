@@ -22,6 +22,7 @@ export type {
   ProjectSettingsTabId,
   WorkTabId,
   TruthTabId,
+  DispatchTabId,
 } from "./route";
 export type {
   ProjectSwitcherItem,
@@ -92,6 +93,7 @@ export const DEFAULT_NAV: NavItem[] = [
   { id: "work", label: "Work", group: "PROJECT" },
   { id: "atlas", label: "Atlas", group: "PROJECT" },
   { id: "truth", label: "Truth", group: "PROJECT" },
+  { id: "dispatch", label: "Dispatch", group: "PROJECT" },
   { id: "activity", label: "Activity", group: "PROJECT" },
 ];
 
