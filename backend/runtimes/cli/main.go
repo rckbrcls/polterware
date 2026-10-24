@@ -85,6 +85,8 @@ func main() {
 		err = runHooks(*dbPath, rest)
 	case "hook":
 		err = runHook(*dbPath, rest)
+	case "dispatch":
+		err = runDispatch(*dbPath, rest)
 	case "help", "-h", "--help":
 		usage()
 	default:
