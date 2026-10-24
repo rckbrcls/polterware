@@ -3865,6 +3865,627 @@ func (x *VerifyFeatureResponse) GetChecks() []*VerifyCheck {
 	return nil
 }
 
+// WorkBoard is a saved view over the project's work cards. Cards keep the
+// stage lifecycle (shape, plan, build, verify, delivered). config_json is
+// opaque JSON the UI owns and must be an object with an integer version.
+// A project with no boards uses the implicit default view grouped by stage.
+type WorkBoard struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ProjectId     string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Position      int32                  `protobuf:"varint,4,opt,name=position,proto3" json:"position,omitempty"`
+	ConfigJson    string                 `protobuf:"bytes,5,opt,name=config_json,json=configJson,proto3" json:"config_json,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     string                 `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WorkBoard) Reset() {
+	*x = WorkBoard{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[55]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkBoard) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkBoard) ProtoMessage() {}
+
+func (x *WorkBoard) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[55]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkBoard.ProtoReflect.Descriptor instead.
+func (*WorkBoard) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{55}
+}
+
+func (x *WorkBoard) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *WorkBoard) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *WorkBoard) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *WorkBoard) GetPosition() int32 {
+	if x != nil {
+		return x.Position
+	}
+	return 0
+}
+
+func (x *WorkBoard) GetConfigJson() string {
+	if x != nil {
+		return x.ConfigJson
+	}
+	return ""
+}
+
+func (x *WorkBoard) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *WorkBoard) GetUpdatedAt() string {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return ""
+}
+
+type ListWorkBoardsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListWorkBoardsRequest) Reset() {
+	*x = ListWorkBoardsRequest{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[56]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListWorkBoardsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListWorkBoardsRequest) ProtoMessage() {}
+
+func (x *ListWorkBoardsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[56]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListWorkBoardsRequest.ProtoReflect.Descriptor instead.
+func (*ListWorkBoardsRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{56}
+}
+
+func (x *ListWorkBoardsRequest) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+type ListWorkBoardsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Boards        []*WorkBoard           `protobuf:"bytes,1,rep,name=boards,proto3" json:"boards,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListWorkBoardsResponse) Reset() {
+	*x = ListWorkBoardsResponse{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[57]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListWorkBoardsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListWorkBoardsResponse) ProtoMessage() {}
+
+func (x *ListWorkBoardsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[57]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListWorkBoardsResponse.ProtoReflect.Descriptor instead.
+func (*ListWorkBoardsResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{57}
+}
+
+func (x *ListWorkBoardsResponse) GetBoards() []*WorkBoard {
+	if x != nil {
+		return x.Boards
+	}
+	return nil
+}
+
+// CreateWorkBoard appends a view. An empty config_json becomes {"version":1}.
+type CreateWorkBoardRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	ConfigJson    string                 `protobuf:"bytes,3,opt,name=config_json,json=configJson,proto3" json:"config_json,omitempty"`
+	Change        *ChangeEnvelope        `protobuf:"bytes,4,opt,name=change,proto3" json:"change,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateWorkBoardRequest) Reset() {
+	*x = CreateWorkBoardRequest{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[58]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateWorkBoardRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateWorkBoardRequest) ProtoMessage() {}
+
+func (x *CreateWorkBoardRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[58]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateWorkBoardRequest.ProtoReflect.Descriptor instead.
+func (*CreateWorkBoardRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{58}
+}
+
+func (x *CreateWorkBoardRequest) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *CreateWorkBoardRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateWorkBoardRequest) GetConfigJson() string {
+	if x != nil {
+		return x.ConfigJson
+	}
+	return ""
+}
+
+func (x *CreateWorkBoardRequest) GetChange() *ChangeEnvelope {
+	if x != nil {
+		return x.Change
+	}
+	return nil
+}
+
+type CreateWorkBoardResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Board         *WorkBoard             `protobuf:"bytes,1,opt,name=board,proto3" json:"board,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateWorkBoardResponse) Reset() {
+	*x = CreateWorkBoardResponse{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[59]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateWorkBoardResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateWorkBoardResponse) ProtoMessage() {}
+
+func (x *CreateWorkBoardResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[59]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateWorkBoardResponse.ProtoReflect.Descriptor instead.
+func (*CreateWorkBoardResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{59}
+}
+
+func (x *CreateWorkBoardResponse) GetBoard() *WorkBoard {
+	if x != nil {
+		return x.Board
+	}
+	return nil
+}
+
+// UpdateWorkBoard renames a board and/or replaces its config. An empty name
+// or config_json keeps the stored value. Position changes use ReorderWorkBoards.
+type UpdateWorkBoardRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	ConfigJson    string                 `protobuf:"bytes,4,opt,name=config_json,json=configJson,proto3" json:"config_json,omitempty"`
+	Change        *ChangeEnvelope        `protobuf:"bytes,5,opt,name=change,proto3" json:"change,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateWorkBoardRequest) Reset() {
+	*x = UpdateWorkBoardRequest{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[60]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateWorkBoardRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateWorkBoardRequest) ProtoMessage() {}
+
+func (x *UpdateWorkBoardRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[60]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateWorkBoardRequest.ProtoReflect.Descriptor instead.
+func (*UpdateWorkBoardRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{60}
+}
+
+func (x *UpdateWorkBoardRequest) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *UpdateWorkBoardRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *UpdateWorkBoardRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *UpdateWorkBoardRequest) GetConfigJson() string {
+	if x != nil {
+		return x.ConfigJson
+	}
+	return ""
+}
+
+func (x *UpdateWorkBoardRequest) GetChange() *ChangeEnvelope {
+	if x != nil {
+		return x.Change
+	}
+	return nil
+}
+
+type UpdateWorkBoardResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Board         *WorkBoard             `protobuf:"bytes,1,opt,name=board,proto3" json:"board,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateWorkBoardResponse) Reset() {
+	*x = UpdateWorkBoardResponse{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[61]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateWorkBoardResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateWorkBoardResponse) ProtoMessage() {}
+
+func (x *UpdateWorkBoardResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[61]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateWorkBoardResponse.ProtoReflect.Descriptor instead.
+func (*UpdateWorkBoardResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{61}
+}
+
+func (x *UpdateWorkBoardResponse) GetBoard() *WorkBoard {
+	if x != nil {
+		return x.Board
+	}
+	return nil
+}
+
+type DeleteWorkBoardRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Change        *ChangeEnvelope        `protobuf:"bytes,3,opt,name=change,proto3" json:"change,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteWorkBoardRequest) Reset() {
+	*x = DeleteWorkBoardRequest{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[62]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteWorkBoardRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteWorkBoardRequest) ProtoMessage() {}
+
+func (x *DeleteWorkBoardRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[62]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteWorkBoardRequest.ProtoReflect.Descriptor instead.
+func (*DeleteWorkBoardRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{62}
+}
+
+func (x *DeleteWorkBoardRequest) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *DeleteWorkBoardRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *DeleteWorkBoardRequest) GetChange() *ChangeEnvelope {
+	if x != nil {
+		return x.Change
+	}
+	return nil
+}
+
+type DeleteWorkBoardResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteWorkBoardResponse) Reset() {
+	*x = DeleteWorkBoardResponse{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[63]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteWorkBoardResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteWorkBoardResponse) ProtoMessage() {}
+
+func (x *DeleteWorkBoardResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[63]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteWorkBoardResponse.ProtoReflect.Descriptor instead.
+func (*DeleteWorkBoardResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{63}
+}
+
+// ReorderWorkBoards sets positions from board_ids. The list must contain
+// each board of the project once.
+type ReorderWorkBoardsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	BoardIds      []string               `protobuf:"bytes,2,rep,name=board_ids,json=boardIds,proto3" json:"board_ids,omitempty"`
+	Change        *ChangeEnvelope        `protobuf:"bytes,3,opt,name=change,proto3" json:"change,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReorderWorkBoardsRequest) Reset() {
+	*x = ReorderWorkBoardsRequest{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[64]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReorderWorkBoardsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReorderWorkBoardsRequest) ProtoMessage() {}
+
+func (x *ReorderWorkBoardsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[64]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReorderWorkBoardsRequest.ProtoReflect.Descriptor instead.
+func (*ReorderWorkBoardsRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{64}
+}
+
+func (x *ReorderWorkBoardsRequest) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *ReorderWorkBoardsRequest) GetBoardIds() []string {
+	if x != nil {
+		return x.BoardIds
+	}
+	return nil
+}
+
+func (x *ReorderWorkBoardsRequest) GetChange() *ChangeEnvelope {
+	if x != nil {
+		return x.Change
+	}
+	return nil
+}
+
+type ReorderWorkBoardsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Boards        []*WorkBoard           `protobuf:"bytes,1,rep,name=boards,proto3" json:"boards,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReorderWorkBoardsResponse) Reset() {
+	*x = ReorderWorkBoardsResponse{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[65]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReorderWorkBoardsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReorderWorkBoardsResponse) ProtoMessage() {}
+
+func (x *ReorderWorkBoardsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[65]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReorderWorkBoardsResponse.ProtoReflect.Descriptor instead.
+func (*ReorderWorkBoardsResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{65}
+}
+
+func (x *ReorderWorkBoardsResponse) GetBoards() []*WorkBoard {
+	if x != nil {
+		return x.Boards
+	}
+	return nil
+}
+
 var File_polterware_local_v1_work_proto protoreflect.FileDescriptor
 
 const file_polterware_local_v1_work_proto_rawDesc = "" +
@@ -4195,7 +4816,56 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x15VerifyFeatureResponse\x12\x16\n" +
 	"\x06target\x18\x01 \x01(\tR\x06target\x12\x16\n" +
 	"\x06passed\x18\x02 \x01(\bR\x06passed\x128\n" +
-	"\x06checks\x18\x03 \x03(\v2 .polterware.local.v1.VerifyCheckR\x06checks2\xda\r\n" +
+	"\x06checks\x18\x03 \x03(\v2 .polterware.local.v1.VerifyCheckR\x06checks\"\xc9\x01\n" +
+	"\tWorkBoard\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x02 \x01(\tR\tprojectId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1a\n" +
+	"\bposition\x18\x04 \x01(\x05R\bposition\x12\x1f\n" +
+	"\vconfig_json\x18\x05 \x01(\tR\n" +
+	"configJson\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\tR\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"updated_at\x18\a \x01(\tR\tupdatedAt\"6\n" +
+	"\x15ListWorkBoardsRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\"P\n" +
+	"\x16ListWorkBoardsResponse\x126\n" +
+	"\x06boards\x18\x01 \x03(\v2\x1e.polterware.local.v1.WorkBoardR\x06boards\"\xa9\x01\n" +
+	"\x16CreateWorkBoardRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
+	"\vconfig_json\x18\x03 \x01(\tR\n" +
+	"configJson\x12;\n" +
+	"\x06change\x18\x04 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"O\n" +
+	"\x17CreateWorkBoardResponse\x124\n" +
+	"\x05board\x18\x01 \x01(\v2\x1e.polterware.local.v1.WorkBoardR\x05board\"\xb9\x01\n" +
+	"\x16UpdateWorkBoardRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1f\n" +
+	"\vconfig_json\x18\x04 \x01(\tR\n" +
+	"configJson\x12;\n" +
+	"\x06change\x18\x05 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"O\n" +
+	"\x17UpdateWorkBoardResponse\x124\n" +
+	"\x05board\x18\x01 \x01(\v2\x1e.polterware.local.v1.WorkBoardR\x05board\"\x84\x01\n" +
+	"\x16DeleteWorkBoardRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x12;\n" +
+	"\x06change\x18\x03 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"\x19\n" +
+	"\x17DeleteWorkBoardResponse\"\x93\x01\n" +
+	"\x18ReorderWorkBoardsRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x1b\n" +
+	"\tboard_ids\x18\x02 \x03(\tR\bboardIds\x12;\n" +
+	"\x06change\x18\x03 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"S\n" +
+	"\x19ReorderWorkBoardsResponse\x126\n" +
+	"\x06boards\x18\x01 \x03(\v2\x1e.polterware.local.v1.WorkBoardR\x06boards2\x83\x12\n" +
 	"\vWorkService\x12f\n" +
 	"\rListWorkCards\x12).polterware.local.v1.ListWorkCardsRequest\x1a*.polterware.local.v1.ListWorkCardsResponse\x12Z\n" +
 	"\tListAtlas\x12%.polterware.local.v1.ListAtlasRequest\x1a&.polterware.local.v1.ListAtlasResponse\x12o\n" +
@@ -4215,7 +4885,12 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\rReviewFeature\x12).polterware.local.v1.ReviewFeatureRequest\x1a*.polterware.local.v1.ReviewFeatureResponse\x12f\n" +
 	"\rCreateFeature\x12).polterware.local.v1.CreateFeatureRequest\x1a*.polterware.local.v1.CreateFeatureResponse\x12i\n" +
 	"\x0eAdvanceFeature\x12*.polterware.local.v1.AdvanceFeatureRequest\x1a+.polterware.local.v1.AdvanceFeatureResponse\x12f\n" +
-	"\rVerifyFeature\x12).polterware.local.v1.VerifyFeatureRequest\x1a*.polterware.local.v1.VerifyFeatureResponseB\xe5\x01\n" +
+	"\rVerifyFeature\x12).polterware.local.v1.VerifyFeatureRequest\x1a*.polterware.local.v1.VerifyFeatureResponse\x12i\n" +
+	"\x0eListWorkBoards\x12*.polterware.local.v1.ListWorkBoardsRequest\x1a+.polterware.local.v1.ListWorkBoardsResponse\x12l\n" +
+	"\x0fCreateWorkBoard\x12+.polterware.local.v1.CreateWorkBoardRequest\x1a,.polterware.local.v1.CreateWorkBoardResponse\x12l\n" +
+	"\x0fUpdateWorkBoard\x12+.polterware.local.v1.UpdateWorkBoardRequest\x1a,.polterware.local.v1.UpdateWorkBoardResponse\x12l\n" +
+	"\x0fDeleteWorkBoard\x12+.polterware.local.v1.DeleteWorkBoardRequest\x1a,.polterware.local.v1.DeleteWorkBoardResponse\x12r\n" +
+	"\x11ReorderWorkBoards\x12-.polterware.local.v1.ReorderWorkBoardsRequest\x1a..polterware.local.v1.ReorderWorkBoardsResponseB\xe5\x01\n" +
 	"\x17com.polterware.local.v1B\tWorkProtoP\x01ZQgithub.com/polterware/polterware/backend/platform/gen/polterware/local/v1;localv1\xa2\x02\x03PLX\xaa\x02\x13Polterware.Local.V1\xca\x02\x13Polterware\\Local\\V1\xe2\x02\x1fPolterware\\Local\\V1\\GPBMetadata\xea\x02\x15Polterware::Local::V1b\x06proto3"
 
 var (
@@ -4230,7 +4905,7 @@ func file_polterware_local_v1_work_proto_rawDescGZIP() []byte {
 	return file_polterware_local_v1_work_proto_rawDescData
 }
 
-var file_polterware_local_v1_work_proto_msgTypes = make([]protoimpl.MessageInfo, 55)
+var file_polterware_local_v1_work_proto_msgTypes = make([]protoimpl.MessageInfo, 66)
 var file_polterware_local_v1_work_proto_goTypes = []any{
 	(*WorkTask)(nil),                  // 0: polterware.local.v1.WorkTask
 	(*WorkQuestion)(nil),              // 1: polterware.local.v1.WorkQuestion
@@ -4287,17 +4962,28 @@ var file_polterware_local_v1_work_proto_goTypes = []any{
 	(*VerifyFeatureRequest)(nil),      // 52: polterware.local.v1.VerifyFeatureRequest
 	(*VerifyCheck)(nil),               // 53: polterware.local.v1.VerifyCheck
 	(*VerifyFeatureResponse)(nil),     // 54: polterware.local.v1.VerifyFeatureResponse
-	(*ChangeEnvelope)(nil),            // 55: polterware.local.v1.ChangeEnvelope
+	(*WorkBoard)(nil),                 // 55: polterware.local.v1.WorkBoard
+	(*ListWorkBoardsRequest)(nil),     // 56: polterware.local.v1.ListWorkBoardsRequest
+	(*ListWorkBoardsResponse)(nil),    // 57: polterware.local.v1.ListWorkBoardsResponse
+	(*CreateWorkBoardRequest)(nil),    // 58: polterware.local.v1.CreateWorkBoardRequest
+	(*CreateWorkBoardResponse)(nil),   // 59: polterware.local.v1.CreateWorkBoardResponse
+	(*UpdateWorkBoardRequest)(nil),    // 60: polterware.local.v1.UpdateWorkBoardRequest
+	(*UpdateWorkBoardResponse)(nil),   // 61: polterware.local.v1.UpdateWorkBoardResponse
+	(*DeleteWorkBoardRequest)(nil),    // 62: polterware.local.v1.DeleteWorkBoardRequest
+	(*DeleteWorkBoardResponse)(nil),   // 63: polterware.local.v1.DeleteWorkBoardResponse
+	(*ReorderWorkBoardsRequest)(nil),  // 64: polterware.local.v1.ReorderWorkBoardsRequest
+	(*ReorderWorkBoardsResponse)(nil), // 65: polterware.local.v1.ReorderWorkBoardsResponse
+	(*ChangeEnvelope)(nil),            // 66: polterware.local.v1.ChangeEnvelope
 }
 var file_polterware_local_v1_work_proto_depIdxs = []int32{
 	0,  // 0: polterware.local.v1.WorkCard.tasks:type_name -> polterware.local.v1.WorkTask
 	1,  // 1: polterware.local.v1.WorkCard.questions:type_name -> polterware.local.v1.WorkQuestion
 	2,  // 2: polterware.local.v1.WorkCard.invariants:type_name -> polterware.local.v1.WorkInvariant
 	3,  // 3: polterware.local.v1.ListWorkCardsResponse.cards:type_name -> polterware.local.v1.WorkCard
-	55, // 4: polterware.local.v1.ApplyPolterRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	66, // 4: polterware.local.v1.ApplyPolterRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	4,  // 5: polterware.local.v1.ApplyPolterResponse.diagnostics:type_name -> polterware.local.v1.PolterDiagnostic
 	4,  // 6: polterware.local.v1.LintPolterResponse.diagnostics:type_name -> polterware.local.v1.PolterDiagnostic
-	55, // 7: polterware.local.v1.WriteHandoffRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	66, // 7: polterware.local.v1.WriteHandoffRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	4,  // 8: polterware.local.v1.WriteHandoffResponse.diagnostics:type_name -> polterware.local.v1.PolterDiagnostic
 	17, // 9: polterware.local.v1.RoutedInboxItem.item:type_name -> polterware.local.v1.InboxItem
 	17, // 10: polterware.local.v1.ListInboxResponse.items:type_name -> polterware.local.v1.InboxItem
@@ -4318,52 +5004,70 @@ var file_polterware_local_v1_work_proto_depIdxs = []int32{
 	43, // 25: polterware.local.v1.FeatureReview.questions:type_name -> polterware.local.v1.FeatureQuestion
 	44, // 26: polterware.local.v1.FeatureReview.checks:type_name -> polterware.local.v1.FeatureCheck
 	45, // 27: polterware.local.v1.ReviewFeatureResponse.review:type_name -> polterware.local.v1.FeatureReview
-	55, // 28: polterware.local.v1.CreateFeatureRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	66, // 28: polterware.local.v1.CreateFeatureRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	8,  // 29: polterware.local.v1.CreateFeatureResponse.apply:type_name -> polterware.local.v1.ApplyPolterResponse
 	45, // 30: polterware.local.v1.CreateFeatureResponse.review:type_name -> polterware.local.v1.FeatureReview
-	55, // 31: polterware.local.v1.AdvanceFeatureRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	66, // 31: polterware.local.v1.AdvanceFeatureRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	8,  // 32: polterware.local.v1.AdvanceFeatureResponse.apply:type_name -> polterware.local.v1.ApplyPolterResponse
 	45, // 33: polterware.local.v1.AdvanceFeatureResponse.review:type_name -> polterware.local.v1.FeatureReview
 	53, // 34: polterware.local.v1.VerifyFeatureResponse.checks:type_name -> polterware.local.v1.VerifyCheck
-	5,  // 35: polterware.local.v1.WorkService.ListWorkCards:input_type -> polterware.local.v1.ListWorkCardsRequest
-	27, // 36: polterware.local.v1.WorkService.ListAtlas:input_type -> polterware.local.v1.ListAtlasRequest
-	35, // 37: polterware.local.v1.WorkService.ListAtlasHistory:input_type -> polterware.local.v1.ListAtlasHistoryRequest
-	33, // 38: polterware.local.v1.WorkService.ListAgentSessions:input_type -> polterware.local.v1.ListAgentSessionsRequest
-	7,  // 39: polterware.local.v1.WorkService.ApplyPolter:input_type -> polterware.local.v1.ApplyPolterRequest
-	9,  // 40: polterware.local.v1.WorkService.LintPolter:input_type -> polterware.local.v1.LintPolterRequest
-	11, // 41: polterware.local.v1.WorkService.QueryPolter:input_type -> polterware.local.v1.QueryPolterRequest
-	13, // 42: polterware.local.v1.WorkService.WriteHandoff:input_type -> polterware.local.v1.WriteHandoffRequest
-	15, // 43: polterware.local.v1.WorkService.EndSession:input_type -> polterware.local.v1.EndSessionRequest
-	19, // 44: polterware.local.v1.WorkService.ListInbox:input_type -> polterware.local.v1.ListInboxRequest
-	23, // 45: polterware.local.v1.WorkService.ResolveInboxItem:input_type -> polterware.local.v1.ResolveInboxItemRequest
-	20, // 46: polterware.local.v1.WorkService.SetScope:input_type -> polterware.local.v1.SetScopeRequest
-	37, // 47: polterware.local.v1.WorkService.ExportProjections:input_type -> polterware.local.v1.ExportProjectionsRequest
-	46, // 48: polterware.local.v1.WorkService.ReviewFeature:input_type -> polterware.local.v1.ReviewFeatureRequest
-	48, // 49: polterware.local.v1.WorkService.CreateFeature:input_type -> polterware.local.v1.CreateFeatureRequest
-	50, // 50: polterware.local.v1.WorkService.AdvanceFeature:input_type -> polterware.local.v1.AdvanceFeatureRequest
-	52, // 51: polterware.local.v1.WorkService.VerifyFeature:input_type -> polterware.local.v1.VerifyFeatureRequest
-	6,  // 52: polterware.local.v1.WorkService.ListWorkCards:output_type -> polterware.local.v1.ListWorkCardsResponse
-	28, // 53: polterware.local.v1.WorkService.ListAtlas:output_type -> polterware.local.v1.ListAtlasResponse
-	36, // 54: polterware.local.v1.WorkService.ListAtlasHistory:output_type -> polterware.local.v1.ListAtlasHistoryResponse
-	34, // 55: polterware.local.v1.WorkService.ListAgentSessions:output_type -> polterware.local.v1.ListAgentSessionsResponse
-	8,  // 56: polterware.local.v1.WorkService.ApplyPolter:output_type -> polterware.local.v1.ApplyPolterResponse
-	10, // 57: polterware.local.v1.WorkService.LintPolter:output_type -> polterware.local.v1.LintPolterResponse
-	12, // 58: polterware.local.v1.WorkService.QueryPolter:output_type -> polterware.local.v1.QueryPolterResponse
-	14, // 59: polterware.local.v1.WorkService.WriteHandoff:output_type -> polterware.local.v1.WriteHandoffResponse
-	16, // 60: polterware.local.v1.WorkService.EndSession:output_type -> polterware.local.v1.EndSessionResponse
-	22, // 61: polterware.local.v1.WorkService.ListInbox:output_type -> polterware.local.v1.ListInboxResponse
-	24, // 62: polterware.local.v1.WorkService.ResolveInboxItem:output_type -> polterware.local.v1.ResolveInboxItemResponse
-	21, // 63: polterware.local.v1.WorkService.SetScope:output_type -> polterware.local.v1.SetScopeResponse
-	39, // 64: polterware.local.v1.WorkService.ExportProjections:output_type -> polterware.local.v1.ExportProjectionsResponse
-	47, // 65: polterware.local.v1.WorkService.ReviewFeature:output_type -> polterware.local.v1.ReviewFeatureResponse
-	49, // 66: polterware.local.v1.WorkService.CreateFeature:output_type -> polterware.local.v1.CreateFeatureResponse
-	51, // 67: polterware.local.v1.WorkService.AdvanceFeature:output_type -> polterware.local.v1.AdvanceFeatureResponse
-	54, // 68: polterware.local.v1.WorkService.VerifyFeature:output_type -> polterware.local.v1.VerifyFeatureResponse
-	52, // [52:69] is the sub-list for method output_type
-	35, // [35:52] is the sub-list for method input_type
-	35, // [35:35] is the sub-list for extension type_name
-	35, // [35:35] is the sub-list for extension extendee
-	0,  // [0:35] is the sub-list for field type_name
+	55, // 35: polterware.local.v1.ListWorkBoardsResponse.boards:type_name -> polterware.local.v1.WorkBoard
+	66, // 36: polterware.local.v1.CreateWorkBoardRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	55, // 37: polterware.local.v1.CreateWorkBoardResponse.board:type_name -> polterware.local.v1.WorkBoard
+	66, // 38: polterware.local.v1.UpdateWorkBoardRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	55, // 39: polterware.local.v1.UpdateWorkBoardResponse.board:type_name -> polterware.local.v1.WorkBoard
+	66, // 40: polterware.local.v1.DeleteWorkBoardRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	66, // 41: polterware.local.v1.ReorderWorkBoardsRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	55, // 42: polterware.local.v1.ReorderWorkBoardsResponse.boards:type_name -> polterware.local.v1.WorkBoard
+	5,  // 43: polterware.local.v1.WorkService.ListWorkCards:input_type -> polterware.local.v1.ListWorkCardsRequest
+	27, // 44: polterware.local.v1.WorkService.ListAtlas:input_type -> polterware.local.v1.ListAtlasRequest
+	35, // 45: polterware.local.v1.WorkService.ListAtlasHistory:input_type -> polterware.local.v1.ListAtlasHistoryRequest
+	33, // 46: polterware.local.v1.WorkService.ListAgentSessions:input_type -> polterware.local.v1.ListAgentSessionsRequest
+	7,  // 47: polterware.local.v1.WorkService.ApplyPolter:input_type -> polterware.local.v1.ApplyPolterRequest
+	9,  // 48: polterware.local.v1.WorkService.LintPolter:input_type -> polterware.local.v1.LintPolterRequest
+	11, // 49: polterware.local.v1.WorkService.QueryPolter:input_type -> polterware.local.v1.QueryPolterRequest
+	13, // 50: polterware.local.v1.WorkService.WriteHandoff:input_type -> polterware.local.v1.WriteHandoffRequest
+	15, // 51: polterware.local.v1.WorkService.EndSession:input_type -> polterware.local.v1.EndSessionRequest
+	19, // 52: polterware.local.v1.WorkService.ListInbox:input_type -> polterware.local.v1.ListInboxRequest
+	23, // 53: polterware.local.v1.WorkService.ResolveInboxItem:input_type -> polterware.local.v1.ResolveInboxItemRequest
+	20, // 54: polterware.local.v1.WorkService.SetScope:input_type -> polterware.local.v1.SetScopeRequest
+	37, // 55: polterware.local.v1.WorkService.ExportProjections:input_type -> polterware.local.v1.ExportProjectionsRequest
+	46, // 56: polterware.local.v1.WorkService.ReviewFeature:input_type -> polterware.local.v1.ReviewFeatureRequest
+	48, // 57: polterware.local.v1.WorkService.CreateFeature:input_type -> polterware.local.v1.CreateFeatureRequest
+	50, // 58: polterware.local.v1.WorkService.AdvanceFeature:input_type -> polterware.local.v1.AdvanceFeatureRequest
+	52, // 59: polterware.local.v1.WorkService.VerifyFeature:input_type -> polterware.local.v1.VerifyFeatureRequest
+	56, // 60: polterware.local.v1.WorkService.ListWorkBoards:input_type -> polterware.local.v1.ListWorkBoardsRequest
+	58, // 61: polterware.local.v1.WorkService.CreateWorkBoard:input_type -> polterware.local.v1.CreateWorkBoardRequest
+	60, // 62: polterware.local.v1.WorkService.UpdateWorkBoard:input_type -> polterware.local.v1.UpdateWorkBoardRequest
+	62, // 63: polterware.local.v1.WorkService.DeleteWorkBoard:input_type -> polterware.local.v1.DeleteWorkBoardRequest
+	64, // 64: polterware.local.v1.WorkService.ReorderWorkBoards:input_type -> polterware.local.v1.ReorderWorkBoardsRequest
+	6,  // 65: polterware.local.v1.WorkService.ListWorkCards:output_type -> polterware.local.v1.ListWorkCardsResponse
+	28, // 66: polterware.local.v1.WorkService.ListAtlas:output_type -> polterware.local.v1.ListAtlasResponse
+	36, // 67: polterware.local.v1.WorkService.ListAtlasHistory:output_type -> polterware.local.v1.ListAtlasHistoryResponse
+	34, // 68: polterware.local.v1.WorkService.ListAgentSessions:output_type -> polterware.local.v1.ListAgentSessionsResponse
+	8,  // 69: polterware.local.v1.WorkService.ApplyPolter:output_type -> polterware.local.v1.ApplyPolterResponse
+	10, // 70: polterware.local.v1.WorkService.LintPolter:output_type -> polterware.local.v1.LintPolterResponse
+	12, // 71: polterware.local.v1.WorkService.QueryPolter:output_type -> polterware.local.v1.QueryPolterResponse
+	14, // 72: polterware.local.v1.WorkService.WriteHandoff:output_type -> polterware.local.v1.WriteHandoffResponse
+	16, // 73: polterware.local.v1.WorkService.EndSession:output_type -> polterware.local.v1.EndSessionResponse
+	22, // 74: polterware.local.v1.WorkService.ListInbox:output_type -> polterware.local.v1.ListInboxResponse
+	24, // 75: polterware.local.v1.WorkService.ResolveInboxItem:output_type -> polterware.local.v1.ResolveInboxItemResponse
+	21, // 76: polterware.local.v1.WorkService.SetScope:output_type -> polterware.local.v1.SetScopeResponse
+	39, // 77: polterware.local.v1.WorkService.ExportProjections:output_type -> polterware.local.v1.ExportProjectionsResponse
+	47, // 78: polterware.local.v1.WorkService.ReviewFeature:output_type -> polterware.local.v1.ReviewFeatureResponse
+	49, // 79: polterware.local.v1.WorkService.CreateFeature:output_type -> polterware.local.v1.CreateFeatureResponse
+	51, // 80: polterware.local.v1.WorkService.AdvanceFeature:output_type -> polterware.local.v1.AdvanceFeatureResponse
+	54, // 81: polterware.local.v1.WorkService.VerifyFeature:output_type -> polterware.local.v1.VerifyFeatureResponse
+	57, // 82: polterware.local.v1.WorkService.ListWorkBoards:output_type -> polterware.local.v1.ListWorkBoardsResponse
+	59, // 83: polterware.local.v1.WorkService.CreateWorkBoard:output_type -> polterware.local.v1.CreateWorkBoardResponse
+	61, // 84: polterware.local.v1.WorkService.UpdateWorkBoard:output_type -> polterware.local.v1.UpdateWorkBoardResponse
+	63, // 85: polterware.local.v1.WorkService.DeleteWorkBoard:output_type -> polterware.local.v1.DeleteWorkBoardResponse
+	65, // 86: polterware.local.v1.WorkService.ReorderWorkBoards:output_type -> polterware.local.v1.ReorderWorkBoardsResponse
+	65, // [65:87] is the sub-list for method output_type
+	43, // [43:65] is the sub-list for method input_type
+	43, // [43:43] is the sub-list for extension type_name
+	43, // [43:43] is the sub-list for extension extendee
+	0,  // [0:43] is the sub-list for field type_name
 }
 
 func init() { file_polterware_local_v1_work_proto_init() }
@@ -4378,7 +5082,7 @@ func file_polterware_local_v1_work_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_polterware_local_v1_work_proto_rawDesc), len(file_polterware_local_v1_work_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   55,
+			NumMessages:   66,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

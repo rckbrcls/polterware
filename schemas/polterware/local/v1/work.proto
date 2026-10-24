@@ -440,6 +440,59 @@ message VerifyFeatureResponse {
   repeated VerifyCheck checks = 3;
 }
 
+// WorkBoard is a saved view over the project's work cards. Cards keep the
+// stage lifecycle (shape, plan, build, verify, delivered). config_json is
+// opaque JSON the UI owns and must be an object with an integer version.
+// A project with no boards uses the implicit default view grouped by stage.
+message WorkBoard {
+  string id = 1;
+  string project_id = 2;
+  string name = 3;
+  int32 position = 4;
+  string config_json = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message ListWorkBoardsRequest { string project_id = 1; }
+message ListWorkBoardsResponse { repeated WorkBoard boards = 1; }
+
+// CreateWorkBoard appends a view. An empty config_json becomes {"version":1}.
+message CreateWorkBoardRequest {
+  string project_id = 1;
+  string name = 2;
+  string config_json = 3;
+  ChangeEnvelope change = 4;
+}
+message CreateWorkBoardResponse { WorkBoard board = 1; }
+
+// UpdateWorkBoard renames a board and/or replaces its config. An empty name
+// or config_json keeps the stored value. Position changes use ReorderWorkBoards.
+message UpdateWorkBoardRequest {
+  string project_id = 1;
+  string id = 2;
+  string name = 3;
+  string config_json = 4;
+  ChangeEnvelope change = 5;
+}
+message UpdateWorkBoardResponse { WorkBoard board = 1; }
+
+message DeleteWorkBoardRequest {
+  string project_id = 1;
+  string id = 2;
+  ChangeEnvelope change = 3;
+}
+message DeleteWorkBoardResponse {}
+
+// ReorderWorkBoards sets positions from board_ids. The list must contain
+// each board of the project once.
+message ReorderWorkBoardsRequest {
+  string project_id = 1;
+  repeated string board_ids = 2;
+  ChangeEnvelope change = 3;
+}
+message ReorderWorkBoardsResponse { repeated WorkBoard boards = 1; }
+
 service WorkService {
   rpc ListWorkCards(ListWorkCardsRequest) returns (ListWorkCardsResponse);
   rpc ListAtlas(ListAtlasRequest) returns (ListAtlasResponse);
@@ -458,4 +511,9 @@ service WorkService {
   rpc CreateFeature(CreateFeatureRequest) returns (CreateFeatureResponse);
   rpc AdvanceFeature(AdvanceFeatureRequest) returns (AdvanceFeatureResponse);
   rpc VerifyFeature(VerifyFeatureRequest) returns (VerifyFeatureResponse);
+  rpc ListWorkBoards(ListWorkBoardsRequest) returns (ListWorkBoardsResponse);
+  rpc CreateWorkBoard(CreateWorkBoardRequest) returns (CreateWorkBoardResponse);
+  rpc UpdateWorkBoard(UpdateWorkBoardRequest) returns (UpdateWorkBoardResponse);
+  rpc DeleteWorkBoard(DeleteWorkBoardRequest) returns (DeleteWorkBoardResponse);
+  rpc ReorderWorkBoards(ReorderWorkBoardsRequest) returns (ReorderWorkBoardsResponse);
 }

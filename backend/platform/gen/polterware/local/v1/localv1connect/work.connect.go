@@ -77,6 +77,21 @@ const (
 	// WorkServiceVerifyFeatureProcedure is the fully-qualified name of the WorkService's VerifyFeature
 	// RPC.
 	WorkServiceVerifyFeatureProcedure = "/polterware.local.v1.WorkService/VerifyFeature"
+	// WorkServiceListWorkBoardsProcedure is the fully-qualified name of the WorkService's
+	// ListWorkBoards RPC.
+	WorkServiceListWorkBoardsProcedure = "/polterware.local.v1.WorkService/ListWorkBoards"
+	// WorkServiceCreateWorkBoardProcedure is the fully-qualified name of the WorkService's
+	// CreateWorkBoard RPC.
+	WorkServiceCreateWorkBoardProcedure = "/polterware.local.v1.WorkService/CreateWorkBoard"
+	// WorkServiceUpdateWorkBoardProcedure is the fully-qualified name of the WorkService's
+	// UpdateWorkBoard RPC.
+	WorkServiceUpdateWorkBoardProcedure = "/polterware.local.v1.WorkService/UpdateWorkBoard"
+	// WorkServiceDeleteWorkBoardProcedure is the fully-qualified name of the WorkService's
+	// DeleteWorkBoard RPC.
+	WorkServiceDeleteWorkBoardProcedure = "/polterware.local.v1.WorkService/DeleteWorkBoard"
+	// WorkServiceReorderWorkBoardsProcedure is the fully-qualified name of the WorkService's
+	// ReorderWorkBoards RPC.
+	WorkServiceReorderWorkBoardsProcedure = "/polterware.local.v1.WorkService/ReorderWorkBoards"
 )
 
 // WorkServiceClient is a client for the polterware.local.v1.WorkService service.
@@ -98,6 +113,11 @@ type WorkServiceClient interface {
 	CreateFeature(context.Context, *connect.Request[v1.CreateFeatureRequest]) (*connect.Response[v1.CreateFeatureResponse], error)
 	AdvanceFeature(context.Context, *connect.Request[v1.AdvanceFeatureRequest]) (*connect.Response[v1.AdvanceFeatureResponse], error)
 	VerifyFeature(context.Context, *connect.Request[v1.VerifyFeatureRequest]) (*connect.Response[v1.VerifyFeatureResponse], error)
+	ListWorkBoards(context.Context, *connect.Request[v1.ListWorkBoardsRequest]) (*connect.Response[v1.ListWorkBoardsResponse], error)
+	CreateWorkBoard(context.Context, *connect.Request[v1.CreateWorkBoardRequest]) (*connect.Response[v1.CreateWorkBoardResponse], error)
+	UpdateWorkBoard(context.Context, *connect.Request[v1.UpdateWorkBoardRequest]) (*connect.Response[v1.UpdateWorkBoardResponse], error)
+	DeleteWorkBoard(context.Context, *connect.Request[v1.DeleteWorkBoardRequest]) (*connect.Response[v1.DeleteWorkBoardResponse], error)
+	ReorderWorkBoards(context.Context, *connect.Request[v1.ReorderWorkBoardsRequest]) (*connect.Response[v1.ReorderWorkBoardsResponse], error)
 }
 
 // NewWorkServiceClient constructs a client for the polterware.local.v1.WorkService service. By
@@ -213,6 +233,36 @@ func NewWorkServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(workServiceMethods.ByName("VerifyFeature")),
 			connect.WithClientOptions(opts...),
 		),
+		listWorkBoards: connect.NewClient[v1.ListWorkBoardsRequest, v1.ListWorkBoardsResponse](
+			httpClient,
+			baseURL+WorkServiceListWorkBoardsProcedure,
+			connect.WithSchema(workServiceMethods.ByName("ListWorkBoards")),
+			connect.WithClientOptions(opts...),
+		),
+		createWorkBoard: connect.NewClient[v1.CreateWorkBoardRequest, v1.CreateWorkBoardResponse](
+			httpClient,
+			baseURL+WorkServiceCreateWorkBoardProcedure,
+			connect.WithSchema(workServiceMethods.ByName("CreateWorkBoard")),
+			connect.WithClientOptions(opts...),
+		),
+		updateWorkBoard: connect.NewClient[v1.UpdateWorkBoardRequest, v1.UpdateWorkBoardResponse](
+			httpClient,
+			baseURL+WorkServiceUpdateWorkBoardProcedure,
+			connect.WithSchema(workServiceMethods.ByName("UpdateWorkBoard")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteWorkBoard: connect.NewClient[v1.DeleteWorkBoardRequest, v1.DeleteWorkBoardResponse](
+			httpClient,
+			baseURL+WorkServiceDeleteWorkBoardProcedure,
+			connect.WithSchema(workServiceMethods.ByName("DeleteWorkBoard")),
+			connect.WithClientOptions(opts...),
+		),
+		reorderWorkBoards: connect.NewClient[v1.ReorderWorkBoardsRequest, v1.ReorderWorkBoardsResponse](
+			httpClient,
+			baseURL+WorkServiceReorderWorkBoardsProcedure,
+			connect.WithSchema(workServiceMethods.ByName("ReorderWorkBoards")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -235,6 +285,11 @@ type workServiceClient struct {
 	createFeature     *connect.Client[v1.CreateFeatureRequest, v1.CreateFeatureResponse]
 	advanceFeature    *connect.Client[v1.AdvanceFeatureRequest, v1.AdvanceFeatureResponse]
 	verifyFeature     *connect.Client[v1.VerifyFeatureRequest, v1.VerifyFeatureResponse]
+	listWorkBoards    *connect.Client[v1.ListWorkBoardsRequest, v1.ListWorkBoardsResponse]
+	createWorkBoard   *connect.Client[v1.CreateWorkBoardRequest, v1.CreateWorkBoardResponse]
+	updateWorkBoard   *connect.Client[v1.UpdateWorkBoardRequest, v1.UpdateWorkBoardResponse]
+	deleteWorkBoard   *connect.Client[v1.DeleteWorkBoardRequest, v1.DeleteWorkBoardResponse]
+	reorderWorkBoards *connect.Client[v1.ReorderWorkBoardsRequest, v1.ReorderWorkBoardsResponse]
 }
 
 // ListWorkCards calls polterware.local.v1.WorkService.ListWorkCards.
@@ -322,6 +377,31 @@ func (c *workServiceClient) VerifyFeature(ctx context.Context, req *connect.Requ
 	return c.verifyFeature.CallUnary(ctx, req)
 }
 
+// ListWorkBoards calls polterware.local.v1.WorkService.ListWorkBoards.
+func (c *workServiceClient) ListWorkBoards(ctx context.Context, req *connect.Request[v1.ListWorkBoardsRequest]) (*connect.Response[v1.ListWorkBoardsResponse], error) {
+	return c.listWorkBoards.CallUnary(ctx, req)
+}
+
+// CreateWorkBoard calls polterware.local.v1.WorkService.CreateWorkBoard.
+func (c *workServiceClient) CreateWorkBoard(ctx context.Context, req *connect.Request[v1.CreateWorkBoardRequest]) (*connect.Response[v1.CreateWorkBoardResponse], error) {
+	return c.createWorkBoard.CallUnary(ctx, req)
+}
+
+// UpdateWorkBoard calls polterware.local.v1.WorkService.UpdateWorkBoard.
+func (c *workServiceClient) UpdateWorkBoard(ctx context.Context, req *connect.Request[v1.UpdateWorkBoardRequest]) (*connect.Response[v1.UpdateWorkBoardResponse], error) {
+	return c.updateWorkBoard.CallUnary(ctx, req)
+}
+
+// DeleteWorkBoard calls polterware.local.v1.WorkService.DeleteWorkBoard.
+func (c *workServiceClient) DeleteWorkBoard(ctx context.Context, req *connect.Request[v1.DeleteWorkBoardRequest]) (*connect.Response[v1.DeleteWorkBoardResponse], error) {
+	return c.deleteWorkBoard.CallUnary(ctx, req)
+}
+
+// ReorderWorkBoards calls polterware.local.v1.WorkService.ReorderWorkBoards.
+func (c *workServiceClient) ReorderWorkBoards(ctx context.Context, req *connect.Request[v1.ReorderWorkBoardsRequest]) (*connect.Response[v1.ReorderWorkBoardsResponse], error) {
+	return c.reorderWorkBoards.CallUnary(ctx, req)
+}
+
 // WorkServiceHandler is an implementation of the polterware.local.v1.WorkService service.
 type WorkServiceHandler interface {
 	ListWorkCards(context.Context, *connect.Request[v1.ListWorkCardsRequest]) (*connect.Response[v1.ListWorkCardsResponse], error)
@@ -341,6 +421,11 @@ type WorkServiceHandler interface {
 	CreateFeature(context.Context, *connect.Request[v1.CreateFeatureRequest]) (*connect.Response[v1.CreateFeatureResponse], error)
 	AdvanceFeature(context.Context, *connect.Request[v1.AdvanceFeatureRequest]) (*connect.Response[v1.AdvanceFeatureResponse], error)
 	VerifyFeature(context.Context, *connect.Request[v1.VerifyFeatureRequest]) (*connect.Response[v1.VerifyFeatureResponse], error)
+	ListWorkBoards(context.Context, *connect.Request[v1.ListWorkBoardsRequest]) (*connect.Response[v1.ListWorkBoardsResponse], error)
+	CreateWorkBoard(context.Context, *connect.Request[v1.CreateWorkBoardRequest]) (*connect.Response[v1.CreateWorkBoardResponse], error)
+	UpdateWorkBoard(context.Context, *connect.Request[v1.UpdateWorkBoardRequest]) (*connect.Response[v1.UpdateWorkBoardResponse], error)
+	DeleteWorkBoard(context.Context, *connect.Request[v1.DeleteWorkBoardRequest]) (*connect.Response[v1.DeleteWorkBoardResponse], error)
+	ReorderWorkBoards(context.Context, *connect.Request[v1.ReorderWorkBoardsRequest]) (*connect.Response[v1.ReorderWorkBoardsResponse], error)
 }
 
 // NewWorkServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -452,6 +537,36 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(workServiceMethods.ByName("VerifyFeature")),
 		connect.WithHandlerOptions(opts...),
 	)
+	workServiceListWorkBoardsHandler := connect.NewUnaryHandler(
+		WorkServiceListWorkBoardsProcedure,
+		svc.ListWorkBoards,
+		connect.WithSchema(workServiceMethods.ByName("ListWorkBoards")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workServiceCreateWorkBoardHandler := connect.NewUnaryHandler(
+		WorkServiceCreateWorkBoardProcedure,
+		svc.CreateWorkBoard,
+		connect.WithSchema(workServiceMethods.ByName("CreateWorkBoard")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workServiceUpdateWorkBoardHandler := connect.NewUnaryHandler(
+		WorkServiceUpdateWorkBoardProcedure,
+		svc.UpdateWorkBoard,
+		connect.WithSchema(workServiceMethods.ByName("UpdateWorkBoard")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workServiceDeleteWorkBoardHandler := connect.NewUnaryHandler(
+		WorkServiceDeleteWorkBoardProcedure,
+		svc.DeleteWorkBoard,
+		connect.WithSchema(workServiceMethods.ByName("DeleteWorkBoard")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workServiceReorderWorkBoardsHandler := connect.NewUnaryHandler(
+		WorkServiceReorderWorkBoardsProcedure,
+		svc.ReorderWorkBoards,
+		connect.WithSchema(workServiceMethods.ByName("ReorderWorkBoards")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/polterware.local.v1.WorkService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case WorkServiceListWorkCardsProcedure:
@@ -488,6 +603,16 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 			workServiceAdvanceFeatureHandler.ServeHTTP(w, r)
 		case WorkServiceVerifyFeatureProcedure:
 			workServiceVerifyFeatureHandler.ServeHTTP(w, r)
+		case WorkServiceListWorkBoardsProcedure:
+			workServiceListWorkBoardsHandler.ServeHTTP(w, r)
+		case WorkServiceCreateWorkBoardProcedure:
+			workServiceCreateWorkBoardHandler.ServeHTTP(w, r)
+		case WorkServiceUpdateWorkBoardProcedure:
+			workServiceUpdateWorkBoardHandler.ServeHTTP(w, r)
+		case WorkServiceDeleteWorkBoardProcedure:
+			workServiceDeleteWorkBoardHandler.ServeHTTP(w, r)
+		case WorkServiceReorderWorkBoardsProcedure:
+			workServiceReorderWorkBoardsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -563,4 +688,24 @@ func (UnimplementedWorkServiceHandler) AdvanceFeature(context.Context, *connect.
 
 func (UnimplementedWorkServiceHandler) VerifyFeature(context.Context, *connect.Request[v1.VerifyFeatureRequest]) (*connect.Response[v1.VerifyFeatureResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.VerifyFeature is not implemented"))
+}
+
+func (UnimplementedWorkServiceHandler) ListWorkBoards(context.Context, *connect.Request[v1.ListWorkBoardsRequest]) (*connect.Response[v1.ListWorkBoardsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ListWorkBoards is not implemented"))
+}
+
+func (UnimplementedWorkServiceHandler) CreateWorkBoard(context.Context, *connect.Request[v1.CreateWorkBoardRequest]) (*connect.Response[v1.CreateWorkBoardResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.CreateWorkBoard is not implemented"))
+}
+
+func (UnimplementedWorkServiceHandler) UpdateWorkBoard(context.Context, *connect.Request[v1.UpdateWorkBoardRequest]) (*connect.Response[v1.UpdateWorkBoardResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.UpdateWorkBoard is not implemented"))
+}
+
+func (UnimplementedWorkServiceHandler) DeleteWorkBoard(context.Context, *connect.Request[v1.DeleteWorkBoardRequest]) (*connect.Response[v1.DeleteWorkBoardResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.DeleteWorkBoard is not implemented"))
+}
+
+func (UnimplementedWorkServiceHandler) ReorderWorkBoards(context.Context, *connect.Request[v1.ReorderWorkBoardsRequest]) (*connect.Response[v1.ReorderWorkBoardsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ReorderWorkBoards is not implemented"))
 }

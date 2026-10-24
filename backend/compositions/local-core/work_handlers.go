@@ -2,8 +2,10 @@ package localcore
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -15,6 +17,7 @@ import (
 	"github.com/polterware/polterware/backend/domains/polter"
 	"github.com/polterware/polterware/backend/domains/work"
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
+	"github.com/polterware/polterware/backend/platform/ids"
 )
 
 func (core *Core) ListWorkCards(_ context.Context, request *connect.Request[localv1.ListWorkCardsRequest]) (*connect.Response[localv1.ListWorkCardsResponse], error) {
@@ -397,4 +400,231 @@ func (core *Core) ExportProjections(_ context.Context, request *connect.Request[
 		out = append(out, &localv1.ProjectionFile{Repo: file.Repo, Path: file.Path, Action: file.Action, Reason: file.Reason})
 	}
 	return connect.NewResponse(&localv1.ExportProjectionsResponse{Files: out}), nil
+}
+
+func (core *Core) ListWorkBoards(_ context.Context, request *connect.Request[localv1.ListWorkBoardsRequest]) (*connect.Response[localv1.ListWorkBoardsResponse], error) {
+	if request.Msg.ProjectId == "" {
+		return nil, invalid("project id is required")
+	}
+	boards, err := core.Store.ListWorkBoards(request.Msg.ProjectId)
+	if err != nil {
+		return nil, internal(err)
+	}
+	return connect.NewResponse(&localv1.ListWorkBoardsResponse{Boards: workBoardsProto(boards)}), nil
+}
+
+func (core *Core) CreateWorkBoard(_ context.Context, request *connect.Request[localv1.CreateWorkBoardRequest]) (*connect.Response[localv1.CreateWorkBoardResponse], error) {
+	msg := request.Msg
+	if msg.ProjectId == "" {
+		return nil, invalid("project id is required")
+	}
+	existing, err := core.Store.ListWorkBoards(msg.ProjectId)
+	if err != nil {
+		return nil, internal(err)
+	}
+	if _, err := work.PrepareBoardCreate(work.Board{ProjectID: msg.ProjectId, Name: msg.Name, ConfigJSON: msg.ConfigJson}, existing); err != nil {
+		return nil, mapBoardErr(err)
+	}
+	env, err := changeEnvelopeFromProto(msg.GetChange())
+	if err != nil {
+		return nil, mapAuditedErr(err)
+	}
+	saved, err := core.writeBoard(request.Header(), msg.ProjectId, "create", env, func(run agentrun.Run, batchID string) ([]string, any, error) {
+		created, err := core.Store.CreateWorkBoard(msg.ProjectId, run.ID, batchID, work.Board{Name: msg.Name, ConfigJSON: msg.ConfigJson})
+		if err != nil {
+			return nil, nil, err
+		}
+		return []string{created.ID}, created, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&localv1.CreateWorkBoardResponse{Board: workBoardProto(saved)}), nil
+}
+
+func (core *Core) UpdateWorkBoard(_ context.Context, request *connect.Request[localv1.UpdateWorkBoardRequest]) (*connect.Response[localv1.UpdateWorkBoardResponse], error) {
+	msg := request.Msg
+	if msg.ProjectId == "" || msg.Id == "" {
+		return nil, invalid("project id and board id are required")
+	}
+	existing, err := core.Store.ListWorkBoards(msg.ProjectId)
+	if err != nil {
+		return nil, internal(err)
+	}
+	next, changed, err := work.PrepareBoardUpdate(work.Board{ID: msg.Id, Name: msg.Name, ConfigJSON: msg.ConfigJson}, existing)
+	if err != nil {
+		return nil, mapBoardErr(err)
+	}
+	if !changed {
+		return connect.NewResponse(&localv1.UpdateWorkBoardResponse{Board: workBoardProto(next)}), nil
+	}
+	env, err := changeEnvelopeFromProto(msg.GetChange())
+	if err != nil {
+		return nil, mapAuditedErr(err)
+	}
+	saved, err := core.writeBoard(request.Header(), msg.ProjectId, "update", env, func(run agentrun.Run, batchID string) ([]string, any, error) {
+		updated, err := core.Store.UpdateWorkBoard(msg.ProjectId, run.ID, batchID, work.Board{ID: msg.Id, Name: msg.Name, ConfigJSON: msg.ConfigJson})
+		if err != nil {
+			return nil, nil, err
+		}
+		return []string{updated.ID}, updated, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&localv1.UpdateWorkBoardResponse{Board: workBoardProto(saved)}), nil
+}
+
+func (core *Core) DeleteWorkBoard(_ context.Context, request *connect.Request[localv1.DeleteWorkBoardRequest]) (*connect.Response[localv1.DeleteWorkBoardResponse], error) {
+	msg := request.Msg
+	if msg.ProjectId == "" || msg.Id == "" {
+		return nil, invalid("project id and board id are required")
+	}
+	existing, err := core.Store.ListWorkBoards(msg.ProjectId)
+	if err != nil {
+		return nil, internal(err)
+	}
+	found := false
+	for _, board := range existing {
+		if board.ID == msg.Id {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil, mapBoardErr(work.ErrBoardNotFound)
+	}
+	env, err := changeEnvelopeFromProto(msg.GetChange())
+	if err != nil {
+		return nil, mapAuditedErr(err)
+	}
+	if _, err := core.auditBoard(request.Header(), msg.ProjectId, "delete", env, func(run agentrun.Run, batchID string) ([]string, any, error) {
+		if err := core.Store.DeleteWorkBoard(msg.ProjectId, run.ID, batchID, msg.Id); err != nil {
+			return nil, nil, err
+		}
+		return []string{msg.Id}, nil, nil
+	}); err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&localv1.DeleteWorkBoardResponse{}), nil
+}
+
+func (core *Core) ReorderWorkBoards(_ context.Context, request *connect.Request[localv1.ReorderWorkBoardsRequest]) (*connect.Response[localv1.ReorderWorkBoardsResponse], error) {
+	msg := request.Msg
+	if msg.ProjectId == "" {
+		return nil, invalid("project id is required")
+	}
+	existing, err := core.Store.ListWorkBoards(msg.ProjectId)
+	if err != nil {
+		return nil, internal(err)
+	}
+	next, err := work.ReorderBoards(existing, msg.BoardIds)
+	if err != nil {
+		return nil, mapBoardErr(err)
+	}
+	if !work.PositionsChanged(existing, next) {
+		return connect.NewResponse(&localv1.ReorderWorkBoardsResponse{Boards: workBoardsProto(next)}), nil
+	}
+	env, err := changeEnvelopeFromProto(msg.GetChange())
+	if err != nil {
+		return nil, mapAuditedErr(err)
+	}
+	saved, err := core.writeBoards(request.Header(), msg.ProjectId, "reorder", env, func(run agentrun.Run, batchID string) ([]string, any, error) {
+		boards, err := core.Store.ReorderWorkBoards(msg.ProjectId, run.ID, batchID, msg.BoardIds)
+		if err != nil {
+			return nil, nil, err
+		}
+		ids := make([]string, len(boards))
+		for i, board := range boards {
+			ids[i] = board.ID
+		}
+		return ids, boards, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&localv1.ReorderWorkBoardsResponse{Boards: workBoardsProto(saved)}), nil
+}
+
+func (core *Core) writeBoard(header http.Header, projectID, action string, env wedge.ChangeEnvelope, mutate func(agentrun.Run, string) ([]string, any, error)) (work.Board, error) {
+	result, err := core.auditBoard(header, projectID, action, env, mutate)
+	if err != nil {
+		return work.Board{}, err
+	}
+	board, ok := result.(work.Board)
+	if !ok || board.ID == "" {
+		return work.Board{}, internal(fmt.Errorf("board write returned %T", result))
+	}
+	return board, nil
+}
+
+func (core *Core) writeBoards(header http.Header, projectID, action string, env wedge.ChangeEnvelope, mutate func(agentrun.Run, string) ([]string, any, error)) ([]work.Board, error) {
+	result, err := core.auditBoard(header, projectID, action, env, mutate)
+	if err != nil {
+		return nil, err
+	}
+	boards, ok := result.([]work.Board)
+	if !ok {
+		return nil, internal(fmt.Errorf("board write returned %T", result))
+	}
+	return boards, nil
+}
+
+func (core *Core) auditBoard(header http.Header, projectID, action string, env wedge.ChangeEnvelope, mutate func(agentrun.Run, string) ([]string, any, error)) (any, error) {
+	kind := agentrun.ActorKindHuman
+	tool := "desktop.work.board." + action
+	if client := clientOf(header); client != "desktop" {
+		kind = agentrun.ActorKindAgent
+		tool = "polter.board." + action
+		if strings.TrimSpace(env.AgentRunID) == "" {
+			env.AutoStartLabel = client
+		}
+	}
+	env.ProjectID = projectID
+	env.BatchID = ids.NewULID()
+	written, err := wedge.ExecuteAuditedWrite(core.Store, env, kind, tool, func(run agentrun.Run) ([]string, any, error) {
+		return mutate(run, env.BatchID)
+	})
+	if err != nil {
+		return nil, mapBoardErr(err)
+	}
+	return written.Result, nil
+}
+
+func mapBoardErr(err error) error {
+	if err == nil {
+		return nil
+	}
+	switch {
+	case errors.Is(err, work.ErrBoardNameRequired),
+		errors.Is(err, work.ErrBoardNameLength),
+		errors.Is(err, work.ErrBoardNameTaken),
+		errors.Is(err, work.ErrBoardConfig),
+		errors.Is(err, work.ErrBoardOrder):
+		return invalid(err.Error())
+	case errors.Is(err, work.ErrBoardNotFound), errors.Is(err, sql.ErrNoRows):
+		return connect.NewError(connect.CodeNotFound, err)
+	default:
+		return mapAuditedErr(err)
+	}
+}
+
+func workBoardsProto(boards []work.Board) []*localv1.WorkBoard {
+	out := make([]*localv1.WorkBoard, 0, len(boards))
+	for _, board := range boards {
+		out = append(out, workBoardProto(board))
+	}
+	return out
+}
+
+func workBoardProto(board work.Board) *localv1.WorkBoard {
+	return &localv1.WorkBoard{
+		Id:         board.ID,
+		ProjectId:  board.ProjectID,
+		Name:       board.Name,
+		Position:   int32(board.Position),
+		ConfigJson: board.ConfigJSON,
+		CreatedAt:  board.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:  board.UpdatedAt.UTC().Format(time.RFC3339),
+	}
 }

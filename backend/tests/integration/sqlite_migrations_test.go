@@ -1,10 +1,12 @@
 package integration
 
 import (
+	"path/filepath"
+	"slices"
+	"testing"
+
 	dbsqlite "github.com/polterware/polterware/backend/platform/db/sqlite"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
-	"path/filepath"
-	"testing"
 )
 
 func TestSQLiteUsesSingleBaseline(t *testing.T) {
@@ -17,12 +19,11 @@ func TestSQLiteUsesSingleBaseline(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(versions) == 0 {
-		t.Fatal("no migrations applied")
+	want, err := dbsqlite.MigrationVersions()
+	if err != nil {
+		t.Fatal(err)
 	}
-	for i, ver := range versions {
-		if ver != i+1 {
-			t.Fatalf("versions must be contiguous from 1, got %v", versions)
-		}
+	if len(versions) == 0 || !slices.Equal(versions, want) {
+		t.Fatalf("applied %v, embedded %v", versions, want)
 	}
 }

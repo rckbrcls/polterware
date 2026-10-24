@@ -3,6 +3,7 @@ package sqlite
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -19,17 +20,19 @@ func TestOpenMigrateVersions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	want, err := MigrationVersions()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(vers, want) {
+		t.Fatalf("applied %v, embedded %v", vers, want)
+	}
 	files, err := os.ReadDir("migrations")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(vers) != len(files) {
-		t.Fatalf("applied %d migrations, embedded %d: %v", len(vers), len(files), vers)
-	}
-	for i, ver := range vers {
-		if ver != i+1 {
-			t.Fatalf("versions must be contiguous from 1, got %v", vers)
-		}
+	if len(files) != len(want) {
+		t.Fatalf("disk migrations %d, embedded %d", len(files), len(want))
 	}
 	// idempotent
 	if err := Migrate(db); err != nil {
