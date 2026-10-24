@@ -47,9 +47,15 @@ func TestExportNodeLinkShape(t *testing.T) {
 	if ref["kind"] != RefNode || ref["id"] != "atlas-1" {
 		t.Fatalf("ref = %v", ref)
 	}
+	if first["trust"] != TrustReferenced {
+		t.Fatalf("referenced trust = %v", first["trust"])
+	}
 	second, _ := nodes[1].(map[string]any)
 	if _, ok := second["ref"]; ok {
 		t.Fatalf("note ref = %v", second["ref"])
+	}
+	if second["trust"] != TrustUnverified {
+		t.Fatalf("unverified trust = %v", second["trust"])
 	}
 	link, _ := links[0].(map[string]any)
 	if link["id"] != "e" || link["source"] != "s" || link["target"] != "n" || link["kind"] != EdgeUses {
@@ -76,6 +82,90 @@ func TestExportEmptyGraph(t *testing.T) {
 	}
 	if !doc.Directed || doc.Nodes == nil || doc.Links == nil || len(doc.Nodes) != 0 || len(doc.Links) != 0 {
 		t.Fatalf("empty export = %s", body)
+	}
+}
+
+func TestExportTrustClearsEmptyRef(t *testing.T) {
+	body, err := Export(Graph{Nodes: []Node{
+		{ID: "a", Kind: KindNote, Label: "n", Ref: &Ref{}},
+		{ID: "b", Kind: KindNote, Label: "y", Ref: &Ref{Kind: RefFact, ID: "f1"}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc struct {
+		Nodes []struct {
+			ID    string
+			Trust string
+			Ref   *Ref
+		}
+	}
+	if err := json.Unmarshal(body, &doc); err != nil {
+		t.Fatal(err)
+	}
+	if doc.Nodes[0].Trust != TrustUnverified || doc.Nodes[0].Ref != nil {
+		t.Fatalf("empty ref = %+v", doc.Nodes[0])
+	}
+	if doc.Nodes[1].Trust != TrustReferenced || doc.Nodes[1].Ref == nil || doc.Nodes[1].Ref.ID != "f1" {
+		t.Fatalf("fact ref = %+v", doc.Nodes[1])
+	}
+}
+
+func TestExportMermaidAndDot(t *testing.T) {
+	graph := Graph{
+		Nodes: []Node{
+			{ID: "s", Kind: KindSystem, Label: "API", Ref: &Ref{Kind: RefNode, ID: "atlas-1"}},
+			{ID: "n", Kind: KindNote, Label: "later"},
+		},
+		Edges: []Edge{{ID: "e", From: "s", To: "n", Kind: EdgeUses}},
+	}
+	mermaid := ExportMermaid(graph)
+	wantMermaid := "flowchart LR\n  s[\"API (referenced)\"]\n  n[\"later (unverified)\"]\n  s -->|\"uses\"| n\n"
+	if mermaid != wantMermaid {
+		t.Fatalf("mermaid =\n%s", mermaid)
+	}
+	dot := ExportDot(graph)
+	wantDot := "digraph canvas {\n  rankdir=LR;\n  \"s\" [label=\"API\" kind=\"system\" trust=\"referenced\"];\n  \"n\" [label=\"later\" kind=\"note\" trust=\"unverified\"];\n  \"s\" -> \"n\" [label=\"uses\"];\n}\n"
+	if dot != wantDot {
+		t.Fatalf("dot =\n%s", dot)
+	}
+	if strings.Contains(mermaid, "layout") || strings.Contains(dot, "layout") {
+		t.Fatal("layout leaked into a diagram export")
+	}
+	if _, err := ExportFormat(graph, "yaml"); err == nil {
+		t.Fatal("expected unknown format")
+	}
+	text, err := ExportFormat(graph, "json")
+	if err != nil || !strings.Contains(text, `"trust":"referenced"`) || strings.Contains(text, "layout") {
+		t.Fatalf("json format = %s err=%v", text, err)
+	}
+}
+
+func TestExportMermaidSanitizesIDs(t *testing.T) {
+	text := ExportMermaid(Graph{
+		Nodes: []Node{
+			{ID: "a-b", Kind: KindIdea, Label: `say "hi"`},
+			{ID: "a_b", Kind: KindIdea, Label: "Two"},
+			{ID: "end", Kind: KindEnd, Label: "Stop"},
+			{ID: "9x", Kind: KindIdea, Label: "Nine"},
+		},
+		Edges: []Edge{{ID: "e", From: "end", To: "9x", Kind: "uses|sync"}},
+	})
+	for _, want := range []string{
+		"flowchart LR\n",
+		"  a_b[\"say #quot;hi#quot; (unverified)\"]\n",
+		"  a_b_2[",
+		"  n_end[",
+		"  n_9x[",
+		`n_end -->|"uses|sync"| n_9x`,
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("missing %q in\n%s", want, text)
+		}
+	}
+	dot := ExportDot(Graph{Nodes: []Node{{ID: `a"b`, Kind: KindNote, Label: "line\n2"}}})
+	if !strings.Contains(dot, "label=\"line\\n2\"") || !strings.Contains(dot, "a\\\"b") || !strings.Contains(dot, "trust=\"unverified\"") {
+		t.Fatalf("dot escape =\n%s", dot)
 	}
 }
 

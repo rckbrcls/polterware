@@ -280,3 +280,14 @@ func TestParseQueryAtlasAt(t *testing.T) {
 		t.Fatalf("query = %+v, err = %v", q, err)
 	}
 }
+
+func TestParseQueryCanvas(t *testing.T) {
+	q, err := ParseQuery("canvas")
+	if err != nil || q.Kind != QueryCanvas || q.Slug != "" {
+		t.Fatalf("query = %+v, err = %v", q, err)
+	}
+	q, err = ParseQuery("canvas Shared map")
+	if err != nil || q.Kind != QueryCanvas || q.Slug != "Shared map" {
+		t.Fatalf("query = %+v, err = %v", q, err)
+	}
+}

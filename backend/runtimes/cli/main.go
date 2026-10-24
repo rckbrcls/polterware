@@ -51,6 +51,8 @@ func main() {
 		err = runOracle(*dbPath, rest)
 	case "atlas":
 		err = runAtlas(*dbPath, rest)
+	case "canvas":
+		err = runCanvas(*dbPath, rest)
 	case "export":
 		err = runExport(*dbPath, rest)
 	case "drift":

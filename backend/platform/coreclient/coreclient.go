@@ -168,9 +168,10 @@ type Clients struct {
 	Projects    localv1connect.ProjectServiceClient
 	Work        localv1connect.WorkServiceClient
 	Context     localv1connect.ContextServiceClient
-	Canon         localv1connect.ProjectModelServiceClient
+	Canon       localv1connect.ProjectModelServiceClient
 	AgentRuns   localv1connect.AgentRunServiceClient
 	Changes     localv1connect.ChangeServiceClient
+	Canvas      localv1connect.CanvasServiceClient
 }
 
 // New builds clients for core; client names the caller (ClientHeader).
@@ -184,9 +185,10 @@ func New(core runstate.Core, client string) Clients {
 		Projects:    localv1connect.NewProjectServiceClient(httpClient, base, options),
 		Work:        localv1connect.NewWorkServiceClient(httpClient, base, options),
 		Context:     localv1connect.NewContextServiceClient(httpClient, base, options),
-		Canon:         localv1connect.NewProjectModelServiceClient(httpClient, base, options),
+		Canon:       localv1connect.NewProjectModelServiceClient(httpClient, base, options),
 		AgentRuns:   localv1connect.NewAgentRunServiceClient(httpClient, base, options),
 		Changes:     localv1connect.NewChangeServiceClient(httpClient, base, options),
+		Canvas:      localv1connect.NewCanvasServiceClient(httpClient, base, options),
 	}
 }
 

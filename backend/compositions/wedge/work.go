@@ -190,7 +190,7 @@ func ApplyPolter(store *storepkg.Store, in ApplyInput) (ApplyResult, error) {
 
 // QueryPolter answers a v1 query ("cards", "card <slug>", "status", "inbox",
 // "handoff <slug>", "oracle", "atlas", "decisions [state]", "decision <verdict>",
-// "feature <slug>", "verify <target>") in text.
+// "feature <slug>", "verify <target>", "canvas", "canvas <name|id>") in text.
 func QueryPolter(store *storepkg.Store, projectID, text string) (string, error) {
 	return QueryPolterScoped(store, projectID, text, atlas.MultiScope{})
 }
@@ -239,6 +239,8 @@ func QueryPolterScoped(store *storepkg.Store, projectID, text string, scope atla
 		return polter.EncodeDecision(target, snapshot.Decisions, polter.NodesCiting(snapshot.Nodes, target)), nil
 	case polter.QueryFeature, polter.QueryVerify:
 		return queryFeature(store, snapshot, query)
+	case polter.QueryCanvas:
+		return queryCanvas(store, projectID, query.Slug, scope)
 	case polter.QueryAtlas:
 		project, err := store.GetProject(projectID)
 		if err != nil {

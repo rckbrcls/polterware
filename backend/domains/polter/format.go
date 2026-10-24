@@ -84,9 +84,10 @@ const (
 
 	QueryDecisions = "decisions"
 	QueryDecision  = "decision"
+	QueryCanvas    = "canvas"
 )
 
-const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "oracle <path>", "atlas [<path>] [at <point>]", "atlas history", "decisions [proposed|active|challenged|superseded]", "decision <verdict>", "feature <slug> [shape|contract|plan]", or "verify <slug|slug#T2>"`
+const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "oracle <path>", "atlas [<path>] [at <point>]", "atlas history", "decisions [proposed|active|challenged|superseded]", "decision <verdict>", "feature <slug> [shape|contract|plan]", "verify <slug|slug#T2>", "canvas", or "canvas <name|id>"`
 
 // ParseQuery parses the v1 query language.
 func ParseQuery(text string) (Query, error) {
@@ -125,6 +126,11 @@ func ParseQuery(text string) (Query, error) {
 			return Query{}, fmt.Errorf(`unknown query %q: use "verify <slug>" or "verify <slug>#T2"`, strings.TrimSpace(text))
 		}
 		return Query{Kind: QueryVerify, Slug: fields[1]}, nil
+	case QueryCanvas:
+		if len(fields) == 1 {
+			return Query{Kind: QueryCanvas}, nil
+		}
+		return Query{Kind: QueryCanvas, Slug: strings.Join(fields[1:], " ")}, nil
 	case QueryAtlas:
 		args := fields[1:]
 		query := Query{Kind: QueryAtlas}
