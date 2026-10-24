@@ -342,6 +342,15 @@ func atlasNodeProto(row atlas.Row) *localv1.AtlasNode {
 		MigrationTo:   row.MigrationTo,
 		Uses:          row.Uses,
 	}
+	for _, deploy := range row.Deploys {
+		out.Deploys = append(out.Deploys, &localv1.NodeDeployment{
+			Id:            deploy.ID,
+			EnvironmentId: deploy.EnvironmentID,
+			Environment:   deploy.Environment,
+			Provider:      deploy.Provider,
+			Resource:      deploy.Resource,
+		})
+	}
 	for _, inv := range row.Invariants {
 		if inv.State == work.InvariantRemoved {
 			continue

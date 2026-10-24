@@ -21,7 +21,7 @@ func TestDeriveSourcesAndOrder(t *testing.T) {
 	}
 	facts := []Fact{{ID: "fact-1", Statement: "Local auth is bearer token", TruthClass: "declared", Source: "mcp", Actor: "codex"}}
 
-	result := Derive(questions, findings, facts, nil)
+	result := Derive(questions, findings, facts, nil, nil)
 
 	if len(result.Items) != 5 {
 		t.Fatalf("items = %d, want 5 (info drift left out): %+v", len(result.Items), result.Items)
@@ -67,7 +67,7 @@ func TestDeriveDispositions(t *testing.T) {
 		{Key: "verify:f1", Action: ActionReject, CreatedAt: t0},
 	}
 
-	result := Derive(questions, []drift.Finding{finding}, facts, dispositions)
+	result := Derive(questions, []drift.Finding{finding}, facts, nil, dispositions)
 
 	if len(result.Items) != 2 {
 		t.Fatalf("items = %+v, want the kept fact and the deferred question", result.Items)
@@ -102,6 +102,49 @@ func TestDriftKeyStableAndSensitive(t *testing.T) {
 	}
 }
 
+func TestDeriveUnconnectedDeploy(t *testing.T) {
+	links := []DeployLink{
+		{NodeID: "n1", NodePath: "app/web", EnvironmentID: "env-prod", Environment: "production", Provider: "vercel", Resource: "web"},
+		{NodeID: "n1", NodePath: "app/web", EnvironmentID: "env-local", Environment: "local", Provider: "docker", Resource: "api"},
+		{NodeID: "n2", NodePath: "app/api", EnvironmentID: "env-prod", Environment: "production", Provider: "aws", Resource: "fn"},
+	}
+	connections := []ProviderConnection{
+		{ProviderID: "docker", Status: ProviderStatusConnected},
+		{ProviderID: "aws", EnvironmentID: "env-local", Status: ProviderStatusConnected},
+		{ProviderID: "vercel", Status: "ready"},
+	}
+	pending := UnconnectedDeploys(links, connections)
+	if len(pending) != 2 {
+		t.Fatalf("pending = %+v, want vercel and aws (other environment, and ready is not connected)", pending)
+	}
+	result := Derive(nil, nil, nil, pending, nil)
+	if len(result.Items) != 2 || result.Items[0].Kind != KindVerify || result.Items[1].Kind != KindVerify {
+		t.Fatalf("items = %+v", result.Items)
+	}
+	key := DeployKey("n1", "env-prod")
+	if result.Items[0].Key != key || result.Items[0].Key != DeployKey("n1", "env-prod") {
+		t.Fatalf("key = %q", result.Items[0].Key)
+	}
+	if result.Items[0].Title != "Connect vercel for app/web in production" || result.Items[0].Detail != "vercel" || result.Items[0].Where != "app/web" {
+		t.Fatalf("item = %+v", result.Items[0])
+	}
+	again := Derive(nil, nil, nil, pending, nil)
+	if again.Items[0].Key != result.Items[0].Key || again.Items[0].ID != result.Items[0].ID {
+		t.Fatal("deploy item key must be stable")
+	}
+	hidden := Derive(nil, nil, nil, pending, []Disposition{{Key: key, Action: ActionReject, CreatedAt: time.Now().UTC()}})
+	if len(hidden.Items) != 1 || hidden.Items[0].Key == key {
+		t.Fatalf("reject should hide the vercel item: %+v", hidden.Items)
+	}
+	// A connection for the same provider with no environment covers every environment.
+	covered := UnconnectedDeploys(links, []ProviderConnection{{ProviderID: "vercel", Status: ProviderStatusConnected}})
+	for _, link := range covered {
+		if link.Provider == "vercel" {
+			t.Fatalf("global connection should cover vercel: %+v", covered)
+		}
+	}
+}
+
 func TestParseActionAndStatusLines(t *testing.T) {
 	if action, err := ParseAction("fix-code"); err != nil || action != ActionFixCode {
 		t.Fatalf("ParseAction(fix-code) = %q, %v", action, err)
@@ -115,7 +158,7 @@ func TestParseActionAndStatusLines(t *testing.T) {
 
 	result := Derive(
 		[]Question{{ID: "q1", CardSlug: "a", Text: "Pick one?", Blocking: true}, {ID: "q2", CardSlug: "a", Text: "Later?"}},
-		nil, nil,
+		nil, nil, nil,
 		[]Disposition{{Key: "decision:q2", Action: ActionDelegate}},
 	)
 	lines := StatusLines(result)

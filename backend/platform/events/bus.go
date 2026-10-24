@@ -39,6 +39,7 @@ var tableKinds = map[string]string{
 	"inbox_dispositions":        KindWork,
 	"atlas_nodes":               KindWork,
 	"atlas_invariants":          KindWork,
+	"node_deployments":          KindWork,
 	"change_ops":                KindWork,
 	"knowledge_items":           KindKnowledge,
 	"knowledge_entity_links":    KindKnowledge,

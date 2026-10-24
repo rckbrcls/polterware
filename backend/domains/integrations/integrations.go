@@ -21,6 +21,25 @@ var CLIProviders = []CLIProvider{
 	{ID: "docker", Name: "Docker", Binary: "docker", AuthCommands: []string{"docker login"}, Description: "Registry access through the Docker CLI.", Category: "Infrastructure"},
 }
 
+// KnownProvider reports whether id is one of the catalog provider ids.
+func KnownProvider(id string) bool {
+	for _, provider := range CLIProviders {
+		if provider.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
+// ProviderIDs lists the catalog provider ids, in catalog order.
+func ProviderIDs() []string {
+	ids := make([]string, len(CLIProviders))
+	for i, provider := range CLIProviders {
+		ids[i] = provider.ID
+	}
+	return ids
+}
+
 type Connection struct {
 	ID            string
 	ProjectID     string

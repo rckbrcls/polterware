@@ -204,8 +204,17 @@ type Snapshot struct {
 	// Repos names the project's extra checkouts (project_repos). The
 	// project root is the unnamed default and is not listed.
 	Repos []string
+	// Environments are the project's environments. A deploys: line names one
+	// by id or by name.
+	Environments []NamedEnvironment
 	// Decisions are the project's Verdicts with their lifecycle state.
 	Decisions []decision.Decision
+}
+
+// NamedEnvironment is a project environment a deploys: line can name.
+type NamedEnvironment struct {
+	ID   string
+	Name string
 }
 
 // HasRepo reports whether name is a registered checkout. Empty is the root.

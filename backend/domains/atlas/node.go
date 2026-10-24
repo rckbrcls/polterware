@@ -63,7 +63,11 @@ type Node struct {
 	Status    string
 	Decisions []string
 	// Uses lists the node paths this node depends on. The map draws them as edges.
-	Uses     []string
+	Uses []string
+	// Deploys lists where this node is deployed, one link per environment.
+	// Provider is a catalog id. Resource names the remote target.
+	// Credentials are never stored.
+	Deploys  []Deployment
 	Position int
 	// Repo is a project_repos name; empty is the project root checkout.
 	Repo string
