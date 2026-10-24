@@ -617,4 +617,3 @@ export const CanvasService: GenService<{
   },
 }> = /*@__PURE__*/
   serviceDesc(file_polterware_local_v1_canvas, 0);
-

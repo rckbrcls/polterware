@@ -21,7 +21,7 @@ CREATE TABLE change_ops_new (
   project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   agent_run_id TEXT NOT NULL DEFAULT '',
   batch_id TEXT NOT NULL,
-  entity TEXT NOT NULL CHECK (entity IN ('card', 'task', 'question', 'invariant', 'handoff', 'claim', 'node', 'decision', 'board')),
+  entity TEXT NOT NULL CHECK (entity IN ('card', 'task', 'question', 'invariant', 'handoff', 'claim', 'node', 'decision', 'canvas', 'board')),
   entity_id TEXT NOT NULL,
   op TEXT NOT NULL CHECK (op IN ('create', 'update', 'remove')),
   data_json TEXT NOT NULL DEFAULT '{}',
