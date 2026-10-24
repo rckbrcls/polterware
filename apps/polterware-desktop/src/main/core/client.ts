@@ -5,6 +5,7 @@ import {
   AgentRunService,
   ChangeService,
   ContextService,
+  DispatchService,
   HealthService,
   IntegrationService,
   KnowledgeService,
@@ -31,6 +32,7 @@ export type CoreClients = {
   canon: Client<typeof ProjectModelService>;
   context: Client<typeof ContextService>;
   agentRuns: Client<typeof AgentRunService>;
+  dispatch: Client<typeof DispatchService>;
   integrations: Client<typeof IntegrationService>;
   terminals: Client<typeof TerminalService>;
   changes: Client<typeof ChangeService>;
@@ -56,6 +58,7 @@ export function createCoreClients(endpoint: string, token: string): CoreClients 
     canon: createClient(ProjectModelService, transport),
     context: createClient(ContextService, transport),
     agentRuns: createClient(AgentRunService, transport),
+    dispatch: createClient(DispatchService, transport),
     integrations: createClient(IntegrationService, transport),
     terminals: createClient(TerminalService, transport),
     changes: createClient(ChangeService, transport),

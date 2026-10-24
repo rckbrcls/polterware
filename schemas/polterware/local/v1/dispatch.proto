@@ -1,0 +1,249 @@
+syntax = "proto3";
+package polterware.local.v1;
+option go_package = "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1;localv1";
+
+message DispatchRun {
+  string id = 1;
+  string project_id = 2;
+  string status = 3;
+  string tier = 4;
+  string agent = 5;
+  string model = 6;
+  string provider = 7;
+  string effort = 8;
+  string prompt = 9;
+  string card_slug = 10;
+  string agent_run_id = 11;
+  string dir = 12;
+  string repo = 13;
+  string worktree = 14;
+  string branch = 15;
+  string base_sha = 16;
+  bool read_only = 17;
+  string verification = 18;
+  int32 exit_code = 19;
+  string exit_class = 20;
+  string error = 21;
+  string note = 22;
+  optional int32 files_changed = 23;
+  optional int32 insertions = 24;
+  optional int32 deletions = 25;
+  string created_at = 26;
+  string started_at = 27;
+  string finished_at = 28;
+  string merged_at = 29;
+  string merge_sha = 30;
+}
+
+message DispatchRunEvent {
+  string id = 1;
+  string run_id = 2;
+  string project_id = 3;
+  string kind = 4;
+  string agent = 5;
+  string tier = 6;
+  string text = 7;
+  int64 seq = 8;
+  string at = 9;
+}
+
+message DispatchWorktree {
+  string id = 1;
+  string project_id = 2;
+  string run_id = 3;
+  string card_slug = 4;
+  string path = 5;
+  string branch = 6;
+  string base_sha = 7;
+  string status = 8;
+  string owner = 9;
+}
+
+message DispatchQuotaSnapshot {
+  string agent = 1;
+  string provider = 2;
+  string window = 3;
+  string source = 4;
+  string confidence = 5;
+  optional double used_percent = 6;
+  int32 window_minutes = 7;
+  string resets_at = 8;
+  string sampled_at = 9;
+}
+
+message DispatchTier {
+  string name = 1;
+  string provider = 2;
+  string agent = 3;
+  string model = 4;
+  int32 speed = 5;
+  int32 strength = 6;
+  int32 position = 7;
+}
+
+message DispatchAgent {
+  string name = 1;
+  string bin = 2;
+  string provider = 3;
+  string quota_source = 4;
+  string confidence = 5;
+  string risk = 6;
+  optional double used_percent = 7;
+  string cooldown_until = 8;
+}
+
+message ListRunsRequest {
+  string project_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message ListRunsResponse {
+  repeated DispatchRun runs = 1;
+}
+
+message GetRunRequest {
+  string id = 1;
+}
+
+message GetRunResponse {
+  DispatchRun run = 1;
+}
+
+message StartRunRequest {
+  string project_id = 1;
+  string tier = 2;
+  string prompt = 3;
+  string card_slug = 4;
+  string agent = 5;
+  string worktree = 6;
+  string dir = 7;
+  bool read_only = 8;
+}
+
+message StartRunResponse {
+  DispatchRun run = 1;
+}
+
+message CancelRunRequest {
+  string id = 1;
+}
+
+message CancelRunResponse {
+  DispatchRun run = 1;
+}
+
+// Sections: summary, agent, verification, files, attempts, meta, output.
+message ResultRequest {
+  string id = 1;
+  string section = 2;
+  int32 offset = 3;
+  int32 limit = 4;
+}
+
+message ResultResponse {
+  string content = 1;
+  int32 total = 2;
+}
+
+message WatchRunRequest {
+  string id = 1;
+  int64 after_seq = 2;
+}
+
+message WatchRunResponse {
+  int64 seq = 1;
+  string kind = 2;
+  string text = 3;
+  string at = 4;
+}
+
+message ListWorktreesRequest {
+  string project_id = 1;
+}
+
+message ListWorktreesResponse {
+  repeated DispatchWorktree worktrees = 1;
+}
+
+message ListQuotaRequest {
+  // Empty lists all agents.
+  string agent = 1;
+  string since = 2;
+}
+
+message ListQuotaResponse {
+  repeated DispatchQuotaSnapshot snapshots = 1;
+}
+
+message ListTiersRequest {}
+
+message ListTiersResponse {
+  repeated DispatchTier tiers = 1;
+}
+
+message ListAgentsRequest {}
+
+message ListAgentsResponse {
+  repeated DispatchAgent agents = 1;
+}
+
+// Only event kinds started, verified, merged, failed.
+message ListHistoryRequest {
+  string project_id = 1;
+  string agent = 2;
+  string tier = 3;
+  int32 limit = 4;
+  int32 offset = 5;
+}
+
+message ListHistoryResponse {
+  repeated DispatchRunEvent events = 1;
+}
+
+message CheckTiersRequest {}
+
+message CheckTiersResponse {
+  repeated string problems = 1;
+}
+
+message StatsRequest {
+  string project_id = 1;
+  string by = 2;
+  string since = 3;
+}
+
+message DispatchStatsRow {
+  string key = 1;
+  int32 runs = 2;
+  double success_pct = 3;
+  double first_try_pct = 4;
+  optional int64 p50_ms = 5;
+  optional int64 p90_ms = 6;
+  int32 fallbacks = 7;
+  int32 rate_limits = 8;
+  int32 orphans = 9;
+}
+
+message StatsResponse {
+  string by = 1;
+  string since = 2;
+  int32 in_flight = 3;
+  repeated DispatchStatsRow rows = 4;
+}
+
+service DispatchService {
+  rpc ListRuns(ListRunsRequest) returns (ListRunsResponse);
+  rpc GetRun(GetRunRequest) returns (GetRunResponse);
+  rpc StartRun(StartRunRequest) returns (StartRunResponse);
+  rpc CancelRun(CancelRunRequest) returns (CancelRunResponse);
+  rpc Result(ResultRequest) returns (ResultResponse);
+  rpc WatchRun(WatchRunRequest) returns (stream WatchRunResponse);
+  rpc ListWorktrees(ListWorktreesRequest) returns (ListWorktreesResponse);
+  rpc ListQuota(ListQuotaRequest) returns (ListQuotaResponse);
+  rpc ListTiers(ListTiersRequest) returns (ListTiersResponse);
+  rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse);
+  rpc ListHistory(ListHistoryRequest) returns (ListHistoryResponse);
+  rpc CheckTiers(CheckTiersRequest) returns (CheckTiersResponse);
+  rpc Stats(StatsRequest) returns (StatsResponse);
+}

@@ -59,6 +59,9 @@ const NewFeatureFlow = lazy(() =>
 const TruthFactsPage = lazy(() =>
   import("@polterware/feature-settings").then((m) => ({ default: m.TruthFactsPage })),
 );
+const DispatchPage = lazy(() =>
+  import("@polterware/feature-dispatch").then((m) => ({ default: m.DispatchPage })),
+);
 const ActivityPage = lazy(() =>
   import("@polterware/feature-settings").then((m) => ({ default: m.ActivityPage })),
 );
@@ -1191,6 +1194,14 @@ export function App() {
             tabsLabel="Truth"
             onTabChange={(tab) => applyRoute(setTab(route(), tab))}
             justifyChange={justifyChange}
+          />
+        </Match>
+
+        <Match when={route().section === "dispatch"}>
+          <DispatchPage
+            projectId={currentProjectId()}
+            tab={route().tab}
+            onTabChange={(tab) => applyRoute(setTab(route(), tab))}
           />
         </Match>
 

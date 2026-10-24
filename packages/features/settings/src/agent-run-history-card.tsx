@@ -1,5 +1,11 @@
 import { For, Show, createEffect, createMemo, onCleanup, untrack } from "solid-js";
 import { BotAvatar, botAvatarTypes, type BotAvatarType } from "@polterware/bot-avatars";
+import {
+  DispatchEventSummaryDetail,
+  dispatchStatusTone,
+  type DispatchRunEventView,
+  type DispatchRunView,
+} from "@polterware/feature-dispatch";
 import { agentMarkFor } from "./agent-marks";
 import {
   DataTable,
@@ -157,23 +163,44 @@ function ActorIcon(props: {
 /** Unified Change History feed (B9): human + agent justified mutations, detail in the page panel. */
 export function AgentRunHistoryCard(props: {
   changes: ProjectChangeRow[];
+  dispatchEvents?: DispatchRunEventView[];
   selectedStepId: string;
+  selectedDispatchEventId?: string;
   detail: AgentRunDetail | undefined;
+  dispatchRun?: DispatchRunView | undefined;
   busy: boolean;
   onSelect: (stepId: string, agentRunId: string) => void;
+  onSelectDispatchEvent?: (event: DispatchRunEventView) => void;
   onClear: () => void;
 }) {
   const activeTarget = createDetailPanelSelector((state) => state.activeTarget);
+  const dispatchEvents = () => props.dispatchEvents ?? [];
+
+  const mergedRows = createMemo<ProjectChangeRow[]>(() => [
+    ...props.changes,
+    ...dispatchEvents().map((event): ProjectChangeRow => ({
+      stepId: `dispatch:${event.id}`,
+      agentRunId: event.runId,
+      projectId: event.projectId,
+      actorKind: "agent",
+      agentLabel: event.agent ? `${event.agent}${event.tier ? ` · ${event.tier}` : ""}` : "dispatch",
+      runStatus: event.kind,
+      runTask: event.tier ? `Dispatch (${event.tier})` : "Dispatch",
+      summary: event.text || `Dispatch ${event.kind}`,
+      payloadJson: "{}",
+      createdAt: event.at,
+    })),
+  ]);
 
   createEffect(() => {
-    const targets = props.changes.map((change) => ({
+    const targets = mergedRows().map((change) => ({
       scopeId: HISTORY_SCOPE,
       entityId: change.stepId,
       entityKind: "change",
     }));
     detailPanelStore.getState().registerCollection({
       scopeId: HISTORY_SCOPE,
-      status: props.busy && props.changes.length === 0 ? "loading" : "ready",
+      status: props.busy && mergedRows().length === 0 ? "loading" : "ready",
       targets,
       selectFirst: false,
     });
@@ -183,9 +210,22 @@ export function AgentRunHistoryCard(props: {
   // The panel store owns selection; mirror it into the page so it loads the run.
   createEffect(() => {
     const target = activeTarget();
-    const stepId = target?.scopeId === HISTORY_SCOPE ? target.entityId : "";
-    if (stepId === untrack(() => props.selectedStepId)) return;
-    const change = untrack(() => props.changes).find((row) => row.stepId === stepId);
+    const entityId = target?.scopeId === HISTORY_SCOPE ? target.entityId : "";
+    if (entityId.startsWith("dispatch:")) {
+      const eventId = entityId.slice("dispatch:".length);
+      if (eventId === untrack(() => props.selectedDispatchEventId ?? "")) return;
+      const event = untrack(() => dispatchEvents()).find((item) => item.id === eventId);
+      if (event) props.onSelectDispatchEvent?.(event);
+      else props.onClear();
+      return;
+    }
+    if (
+      entityId === untrack(() => props.selectedStepId)
+      && !untrack(() => props.selectedDispatchEventId)
+    ) {
+      return;
+    }
+    const change = untrack(() => props.changes).find((row) => row.stepId === entityId);
     if (change) props.onSelect(change.stepId, change.agentRunId);
     else props.onClear();
   });
@@ -193,11 +233,14 @@ export function AgentRunHistoryCard(props: {
   const selectedChange = createMemo(() =>
     props.changes.find((change) => change.stepId === props.selectedStepId),
   );
+  const selectedDispatchEvent = createMemo(() =>
+    dispatchEvents().find((event) => event.id === props.selectedDispatchEventId),
+  );
 
   return (
     <div class="flex min-h-0 flex-1 flex-col">
       <div class="min-h-0 flex-1 overflow-auto">
-        <DataTable.Root rows={props.changes} getRowId={(change) => change.stepId}>
+        <DataTable.Root rows={mergedRows()} getRowId={(change) => change.stepId}>
           <DataTable.Table aria-label="Unified change history">
             <DataTable.Header>
               <DataTable.ColumnHeader id="summary" sortBy={(change) => change.summary}>
@@ -214,54 +257,67 @@ export function AgentRunHistoryCard(props: {
               </DataTable.ColumnHeader>
             </DataTable.Header>
             <DataTable.Body>
-              {(change) => (
-                <DataTable.Row
-                  row={change}
-                  rowId={change.stepId}
-                  class={props.selectedStepId === change.stepId ? "pw-data-table-row--active" : undefined}
-                  onActivate={() =>
-                    detailPanelStore.getState().activateTarget({
-                      scopeId: HISTORY_SCOPE,
-                      entityId: change.stepId,
-                      entityKind: "change",
-                    })
-                  }
-                  aria-label={`Open change ${change.summary || change.stepId}`}
-                >
-                  <DataTable.Cell
-                    leading={
-                      <ActorIcon
-                        actorKind={change.actorKind}
-                        agentKey={change.agentLabel || change.agentRunId}
-                        agentLabel={change.agentLabel}
-                        seedKey={change.stepId}
-                        runStatus={change.runStatus}
-                        avatarUrl={change.avatarUrl}
-                      />
+              {(change) => {
+                const isSelected = () =>
+                  change.stepId.startsWith("dispatch:")
+                    ? `dispatch:${props.selectedDispatchEventId ?? ""}` === change.stepId
+                    : props.selectedStepId === change.stepId;
+                return (
+                  <DataTable.Row
+                    row={change}
+                    rowId={change.stepId}
+                    class={isSelected() ? "pw-data-table-row--active" : undefined}
+                    onActivate={() =>
+                      detailPanelStore.getState().activateTarget({
+                        scopeId: HISTORY_SCOPE,
+                        entityId: change.stepId,
+                        entityKind: "change",
+                      })
                     }
+                    aria-label={`Open change ${change.summary || change.stepId}`}
                   >
-                    <div class="min-w-0">
-                      <div class="truncate">{change.summary || "—"}</div>
-                      <Show when={change.runTask && change.runTask !== change.summary}>
-                        <div class="truncate text-[11.5px] text-[var(--color-text-muted)]">{change.runTask}</div>
-                      </Show>
-                    </div>
-                  </DataTable.Cell>
-                  <DataTable.Cell>
-                    <span class="truncate text-[var(--color-text-secondary)]">
-                      {change.agentLabel || (change.actorKind === "human" ? "Human" : "Agent")}
-                    </span>
-                  </DataTable.Cell>
-                  <DataTable.Cell>
-                    <StatusChip tone={runTone(change.runStatus)} label={change.runStatus || "open"} />
-                  </DataTable.Cell>
-                  <DataTable.Cell>
-                    <span class="whitespace-nowrap tabular-nums text-[var(--color-text-muted)]" title={formatWhen(change.createdAt)}>
-                      {formatAgo(change.createdAt)}
-                    </span>
-                  </DataTable.Cell>
-                </DataTable.Row>
-              )}
+                    <DataTable.Cell
+                      leading={
+                        <ActorIcon
+                          actorKind={change.actorKind}
+                          agentKey={change.agentLabel || change.agentRunId}
+                          agentLabel={change.agentLabel}
+                          seedKey={change.stepId}
+                          runStatus={change.runStatus}
+                          avatarUrl={change.avatarUrl}
+                        />
+                      }
+                    >
+                      <div class="min-w-0">
+                        <div class="truncate">{change.summary || "—"}</div>
+                        <Show when={change.runTask && change.runTask !== change.summary}>
+                          <div class="truncate text-[11.5px] text-[var(--color-text-muted)]">{change.runTask}</div>
+                        </Show>
+                      </div>
+                    </DataTable.Cell>
+                    <DataTable.Cell>
+                      <span class="truncate text-[var(--color-text-secondary)]">
+                        {change.agentLabel || (change.actorKind === "human" ? "Human" : "Agent")}
+                      </span>
+                    </DataTable.Cell>
+                    <DataTable.Cell>
+                      <StatusChip
+                        tone={
+                          change.stepId.startsWith("dispatch:")
+                            ? dispatchStatusTone(change.runStatus)
+                            : runTone(change.runStatus)
+                        }
+                        label={change.runStatus || "open"}
+                      />
+                    </DataTable.Cell>
+                    <DataTable.Cell>
+                      <span class="whitespace-nowrap tabular-nums text-[var(--color-text-muted)]" title={formatWhen(change.createdAt)}>
+                        {formatAgo(change.createdAt)}
+                      </span>
+                    </DataTable.Cell>
+                  </DataTable.Row>
+                );
+              }}
             </DataTable.Body>
             <DataTable.Empty>
               <Show
@@ -290,7 +346,11 @@ export function AgentRunHistoryCard(props: {
         </DataTable.Root>
       </div>
 
-      <Show when={selectedChange()}>
+      <Show when={selectedDispatchEvent()}>
+        {(event) => <DispatchEventSummaryDetail event={event()} run={props.dispatchRun} />}
+      </Show>
+
+      <Show when={!selectedDispatchEvent() && selectedChange()}>
         {(change) => <ChangeDetail change={change()} detail={props.detail} selectedStepId={props.selectedStepId} />}
       </Show>
     </div>

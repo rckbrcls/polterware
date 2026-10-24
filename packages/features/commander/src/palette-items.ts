@@ -14,6 +14,7 @@ export const DEFAULT_PALETTE_ITEMS: PaletteItem[] = [
   { id: "nav.atlas", label: "Atlas", group: "Navigation" },
   { id: "nav.work", label: "Work", group: "Navigation" },
   { id: "nav.truth", label: "Truth", group: "Navigation" },
+  { id: "nav.dispatch", label: "Dispatch", group: "Navigation" },
   { id: "nav.activity", label: "Activity", group: "Navigation" },
   { id: "nav.agents", label: "Agents settings", group: "Navigation" },
   { id: "nav.integrations", label: "Integrations settings", group: "Navigation" },

@@ -257,7 +257,16 @@ async function bootstrap() {
   registerPolterwareIpcHandlers({
     ...shellControllers,
     coreLifecycle: coreLifecycleController,
-    core: afterCoreStartup(createCoreDomainControllers(clients), coreStartupSettled),
+    core: afterCoreStartup(
+      createCoreDomainControllers(clients, {
+        emitRunEvent: (event) => {
+          for (const window of BrowserWindow.getAllWindows()) {
+            if (!window.isDestroyed()) window.webContents.send(IPC_EVENTS.core.dispatchRunEvent, event);
+          }
+        },
+      }),
+      coreStartupSettled,
+    ),
   });
   applyGlobalCommanderAccelerator(shortcutPreferences.getGlobalCommanderAccelerator());
   createMainWindow({

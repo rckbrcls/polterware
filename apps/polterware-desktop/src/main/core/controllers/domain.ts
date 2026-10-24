@@ -27,7 +27,16 @@ function isTerminalNotFound(error: unknown): boolean {
   return message.includes("terminal session not found") || message.includes("not_found");
 }
 
-export function createCoreDomainControllers(clients: CoreClients) {
+export type CoreDomainControllerOptions = {
+  emitRunEvent?: (event: JsonObject) => void;
+};
+
+export function createCoreDomainControllers(
+  clients: CoreClients,
+  options: CoreDomainControllerOptions = {},
+) {
+  const runWatchers = new Map<string, AbortController>();
+
   return {
     healthCheck: async () => toJsonObject(await clients.health.check({})),
     getStoreHealth: async () => toJsonObject(await clients.maintenance.getStoreHealth({})),
@@ -87,6 +96,68 @@ export function createCoreDomainControllers(clients: CoreClients) {
     listChanges: async (input?: JsonObject) => toJsonObject(await clients.agentRuns.listChanges(requestMessage(input))),
     getAgentSetup: async (input?: JsonObject) => toJsonObject(await clients.agentRuns.getAgentSetup(requestMessage(input))),
     setHookSwitch: async (input?: JsonObject) => toJsonObject(await clients.agentRuns.setHookSwitch(requestMessage(input))),
+    listRuns: async (input?: JsonObject) => toJsonObject(await clients.dispatch.listRuns(requestMessage(input))),
+    getRun: async (input?: JsonObject) => toJsonObject(await clients.dispatch.getRun(requestMessage(input))),
+    startRun: async (input?: JsonObject) => toJsonObject(await clients.dispatch.startRun(requestMessage(input))),
+    cancelRun: async (input?: JsonObject) => toJsonObject(await clients.dispatch.cancelRun(requestMessage(input))),
+    result: async (input?: JsonObject) => toJsonObject(await clients.dispatch.result(requestMessage(input))),
+    watchRun: async (input?: JsonObject) => {
+      const raw = payload(input);
+      const id = typeof raw.id === "string" ? raw.id.trim() : "";
+      const subscriptionId =
+        typeof raw.subscriptionId === "string" && raw.subscriptionId.trim()
+          ? raw.subscriptionId.trim()
+          : id;
+      const afterSeq = BigInt(typeof raw.afterSeq === "number" && Number.isFinite(raw.afterSeq) ? Math.max(0, Math.trunc(raw.afterSeq)) : 0);
+      if (!id || !subscriptionId) return { ok: false };
+      runWatchers.get(subscriptionId)?.abort();
+      const controller = new AbortController();
+      runWatchers.set(subscriptionId, controller);
+      void (async () => {
+        try {
+          const stream = clients.dispatch.watchRun({ id, afterSeq }, { signal: controller.signal });
+          for await (const item of stream) {
+            if (controller.signal.aborted) break;
+            options.emitRunEvent?.({
+              subscriptionId,
+              id,
+              seq: Number(item.seq),
+              kind: item.kind,
+              text: item.text,
+              at: item.at,
+            });
+          }
+        } catch {
+          // Stream closed or cancelled.
+        } finally {
+          if (runWatchers.get(subscriptionId) === controller) {
+            runWatchers.delete(subscriptionId);
+          }
+        }
+      })();
+      return { ok: true, subscriptionId };
+    },
+    unwatchRun: async (input?: JsonObject) => {
+      const raw = payload(input);
+      const subscriptionId =
+        typeof raw.subscriptionId === "string" && raw.subscriptionId.trim()
+          ? raw.subscriptionId.trim()
+          : typeof raw.id === "string"
+            ? raw.id.trim()
+            : "";
+      if (subscriptionId) {
+        runWatchers.get(subscriptionId)?.abort();
+        runWatchers.delete(subscriptionId);
+      }
+      return { ok: true };
+    },
+    listWorktrees: async (input?: JsonObject) => toJsonObject(await clients.dispatch.listWorktrees(requestMessage(input))),
+    listQuota: async (input?: JsonObject) => toJsonObject(await clients.dispatch.listQuota(requestMessage(input))),
+    listTiers: async (input?: JsonObject) => toJsonObject(await clients.dispatch.listTiers(requestMessage(input))),
+    listAgents: async (input?: JsonObject) => toJsonObject(await clients.dispatch.listAgents(requestMessage(input))),
+    listHistory: async (input?: JsonObject) => toJsonObject(await clients.dispatch.listHistory(requestMessage(input))),
+    checkTiers: async (input?: JsonObject) => toJsonObject(await clients.dispatch.checkTiers(requestMessage(input))),
+    stats: async (input?: JsonObject) => toJsonObject(await clients.dispatch.stats(requestMessage(input))),
     listCliProviders: async () => toJsonObject(await clients.integrations.listCliProviders({})),
     listIntegrationConnections: async (input?: JsonObject) => toJsonObject(await clients.integrations.listIntegrationConnections(requestMessage(input))),
     saveIntegrationConnection: async (input?: JsonObject) => toJsonObject(await clients.integrations.saveIntegrationConnection(requestMessage(input))),

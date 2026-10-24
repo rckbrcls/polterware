@@ -29,6 +29,7 @@ const (
 	sectionCore section = iota
 	sectionClients
 	sectionHooks
+	sectionDispatch
 	sectionRuns
 	sectionCalls
 	sectionHistory
@@ -68,6 +69,7 @@ type snapshot struct {
 	core     runstate.Core
 	coreUp   bool
 	sessions []mcpSession
+	dispatch dispatchSnap
 	runs     []agentrun.Run
 	calls    []agentaccess.ToolCall
 	changes  []changeRow
@@ -134,6 +136,7 @@ type tuiModel struct {
 	cursor  int
 	offsets [sectionCount]int
 	clients []clientState
+	disp    dispatchState
 
 	busy    string
 	confirm string
@@ -197,6 +200,7 @@ func (m *tuiModel) loadSnapshot() tea.Cmd {
 		if projectID == "" {
 			return snapshotMsg(snap)
 		}
+		snap.dispatch = loadDispatchSnap(ctx, c, projectID)
 		if res, err := c.AgentRuns.ListAgentRuns(ctx, connect.NewRequest(&localv1.ListAgentRunsRequest{ProjectId: projectID, Limit: 50})); err != nil {
 			snap.err = err
 		} else {
@@ -291,6 +295,8 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.setMessage(msg.text, msg.err)
 		return m, tea.Batch(m.loadSnapshot(), m.checkClients())
+	case dispatchRunMsg:
+		return m.updateDispatch(msg)
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
@@ -301,6 +307,9 @@ func (m *tuiModel) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	key := msg.String()
 	if key == "ctrl+c" {
 		return m, tea.Quit
+	}
+	if m.disp.open {
+		return m.handleDispatchKey(msg)
 	}
 	if m.confirm != "" {
 		action := m.confirm
@@ -356,6 +365,8 @@ func (m *tuiModel) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 			hook := m.snap.hooks[m.cursor]
 			return m, m.runAction(fmt.Sprintf("hook:%s:%t", hook.Name, !hook.Enabled))
+		case sectionDispatch:
+			return m, m.openDispatchRun()
 		case sectionClients:
 			if m.busy != "" || m.coreBin == "" {
 				return m, nil
@@ -545,6 +556,8 @@ func (m *tuiModel) move(delta int) {
 		m.cursor = clamp(m.cursor+delta, 0, len(m.clients)-1)
 	case sectionHooks:
 		m.cursor = clamp(m.cursor+delta, 0, max(len(m.snap.hooks)-1, 0))
+	case sectionDispatch:
+		m.moveDispatch(delta)
 	case sectionRuns, sectionCalls, sectionHistory:
 		limit := m.listLen(m.focus) - m.listRows()
 		m.offsets[m.focus] = clamp(m.offsets[m.focus]+delta, 0, max(limit, 0))
@@ -553,6 +566,8 @@ func (m *tuiModel) move(delta int) {
 
 func (m *tuiModel) listLen(s section) int {
 	switch s {
+	case sectionDispatch:
+		return len(m.snap.dispatch.runs)
 	case sectionRuns:
 		return len(m.snap.runs)
 	case sectionCalls:
@@ -577,6 +592,9 @@ func (m *tuiModel) View() string {
 	if m.width == 0 {
 		return ""
 	}
+	if m.disp.open {
+		return m.viewDispatchScreen()
+	}
 	var b strings.Builder
 	b.WriteString(m.viewHeader())
 	b.WriteString("\n\n")
@@ -588,6 +606,7 @@ func (m *tuiModel) View() string {
 	b.WriteString("\n")
 	b.WriteString(m.viewWork())
 	b.WriteString(m.viewInbox())
+	b.WriteString(m.viewDispatch())
 	b.WriteString(m.viewRuns())
 	b.WriteString(m.viewCalls())
 	b.WriteString(m.viewHistory())
@@ -891,6 +910,8 @@ func (m *tuiModel) keyHints() string {
 		hints = append(hints, "enter configure/remove")
 	case sectionHooks:
 		hints = append(hints, "enter turn on/off")
+	case sectionDispatch:
+		hints = append(hints, "enter run status")
 	}
 	hints = append(hints, "p project", "i register cwd", "r refresh", "q quit")
 	return styleMuted.Render(strings.Join(hints, " · "))

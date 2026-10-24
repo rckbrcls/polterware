@@ -14,6 +14,7 @@ import {
   History,
   Inbox,
   Layers,
+  Route,
   Settings,
   spring,
   type FluidHover,
@@ -37,6 +38,7 @@ const icons = {
   atlas: (p) => <ChartRelationshipIcon size={p.size ?? 14} class={p.class} />,
   work: (p) => <Briefcase06Icon size={p.size ?? 14} class={p.class} />,
   truth: (p) => <Layers size={p.size ?? 14} class={p.class} />,
+  dispatch: (p) => <Route size={p.size ?? 14} class={p.class} />,
   activity: (p) => <History size={p.size ?? 14} class={p.class} />,
   settings: (p) => <Settings size={p.size ?? 14} class={p.class} />,
 } satisfies Record<string, (p: { size?: number; class?: string }) => JSX.Element>;

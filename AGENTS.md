@@ -21,7 +21,7 @@ Polterware's category is **Project Context & Change Intelligence for AI Coding**
 
 ## Current product boundary
 
-Polterware is both the umbrella and the main local-first app (`apps/polterware-desktop`), alongside Polterware Notes and Polterware Vitals. Polterware's first version is a local SQLite-backed Desktop with project surfaces Inbox, Work, Atlas, Truth, and Activity. Settings is fixed in the sidebar footer and holds Agents and Integrations. Inbox is the default route.
+Polterware is both the umbrella and the main local-first app (`apps/polterware-desktop`), alongside Polterware Notes and Polterware Vitals. Polterware's first version is a local SQLite-backed Desktop with project surfaces Inbox, Work, Atlas, Truth, Dispatch, and Activity. Settings is fixed in the sidebar footer and holds Agents and Integrations. Inbox is the default route.
 
 The umbrella is an ecosystem, not a list: apps and tools live under Polterware only when they can integrate with the others. See [`docs/ecosystem.md`](docs/ecosystem.md) for the admission criteria and the current roster.
 
@@ -59,7 +59,8 @@ The monorepo also hosts Polterware Notes, a separate local-first app with its ow
   - Facts are statements about the project (declared, observed, inferred, or verified); each lists the evidence that backs it.
   - Evidence is one list of `source`, `doc`, and `runbook` items with a kind filter. Sources are registered project-relative paths (`kind = source`); Import from project root runs `ImportProjectSources` for the MVP file set. Generic filesystem indexing beyond that set is not shipped.
   - Resources are Atlas components; there is no separate Inventory surface.
-- Activity: flat page with the Unified Change History of justified changes across every surface, filterable by person or agent; it has no data of its own.
+- Dispatch: Runs, Worktrees, Pace, Tiers & Agents. A dispatch run is a core-executed delegation in `backend/domains/dispatch`. It may reference an AgentRun id and a Work card slug, and it is not itself an AgentRun. CLI (`polterware dispatch`) and the TUI read it through the core. There is no Dispatch MCP tool. Live output stays on Runs. Quota comes only from the CLIs' official protocols; unknown usage stays unknown.
+- Activity: flat page with the Unified Change History of justified changes across every surface, plus dispatch history entries (started, verified, merged, failed), filterable by person, agent, and tier. It has no data of its own. Opening a dispatch entry shows a summary, not the live log.
 - Settings (dialog with a grouped rail):
   - Project: General, Environments
   - Agents: Access, Sessions, Context

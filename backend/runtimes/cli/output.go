@@ -78,6 +78,7 @@ func usage() {
   polterware [-db path] setup [doctor] | claude [--uninstall | --enable | --disable | --skill-only] | codex [--uninstall] [--project <id>]
   polterware [-db path] hooks [list] | enable|disable <status|stop|lint|session|all>
   polterware [-db path] hook session-start [--label name] | session-end | lint | status | stop   (Claude Code hooks; JSON on stdin)
+  polterware [-db path] dispatch run --tier <tier> [--card <slug>] [--agent <name>] [--worktree <dir>] <prompt> | ls | status <id> | result <id> | cancel <id> | tiers [--check] | stats | agents [--json] [--compact]
   polterware [-db path] serve [--listen addr] [--token token]   (local core server for the Desktop)
   polterware [-db path] mcp                                     (MCP server over stdio for coding agents)
 `)

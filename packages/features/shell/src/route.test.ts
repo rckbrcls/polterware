@@ -8,7 +8,7 @@ describe("first version routes", () => {
 
   it("exposes only the Atlas project surfaces", () => {
     expect(
-      ["inbox", "atlas", "work", "truth", "activity"].every(isNavSectionId),
+      ["inbox", "atlas", "work", "truth", "dispatch", "activity"].every(isNavSectionId),
     ).toBe(true);
     expect(isNavSectionId("decisions")).toBe(false);
     expect(isNavSectionId("reality")).toBe(false);
@@ -22,7 +22,9 @@ describe("first version routes", () => {
     expect(SECTION_TABS.atlas?.map((tab) => tab.id)).toEqual(["map", "components", "relations"]);
     expect(SECTION_TABS.work?.map((tab) => tab.id)).toEqual(["board", "specs"]);
     expect(SECTION_TABS.truth?.map((tab) => tab.id)).toEqual(["decisions", "facts", "evidence"]);
+    expect(SECTION_TABS.dispatch?.map((tab) => tab.id)).toEqual(["runs", "worktrees", "pace", "tiers"]);
     expect(DEFAULT_TABS.work).toBe("board");
+    expect(DEFAULT_TABS.dispatch).toBe("runs");
   });
 
   it("switches local projects back to Inbox", () => {

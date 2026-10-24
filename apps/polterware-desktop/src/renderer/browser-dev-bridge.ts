@@ -408,6 +408,197 @@ const previewChanges = previewRunSteps.map((step) => {
   };
 }).reverse();
 
+const previewDispatchRuns = [
+  {
+    id: "drun-1",
+    projectId: PREVIEW_PROJECT_ID,
+    status: "completed",
+    tier: "normal",
+    agent: "codex",
+    model: "gpt-5-codex",
+    provider: "openai",
+    effort: "medium",
+    prompt: "Add dispatch RPC handlers",
+    cardSlug: "event-stream",
+    agentRunId: "",
+    dir: ".",
+    repo: "polterware",
+    worktree: "/preview/worktrees/drun-1",
+    branch: "dispatch/drun-1",
+    baseSha: "a1b2c3d",
+    readOnly: false,
+    verification: "passed",
+    exitCode: 0,
+    exitClass: "ok",
+    error: "",
+    note: "Verified and merged cleanly.",
+    filesChanged: 4,
+    insertions: 120,
+    deletions: 12,
+    createdAt: "2026-09-25T11:00:00.000Z",
+    startedAt: "2026-09-25T11:00:05.000Z",
+    finishedAt: "2026-09-25T11:02:10.000Z",
+    mergedAt: "2026-09-25T11:02:30.000Z",
+    mergeSha: "f4e5d6c",
+  },
+  {
+    id: "drun-2",
+    projectId: PREVIEW_PROJECT_ID,
+    status: "failed",
+    tier: "hard",
+    agent: "grok",
+    model: "grok-4.7",
+    provider: "xai",
+    effort: "high",
+    prompt: "Refactor the Atlas layout serializer",
+    cardSlug: "atlas-canvas",
+    agentRunId: "",
+    dir: ".",
+    repo: "polterware",
+    worktree: "/preview/worktrees/drun-2",
+    branch: "dispatch/drun-2",
+    baseSha: "a1b2c3d",
+    readOnly: false,
+    verification: "failed",
+    exitCode: 1,
+    exitClass: "verification_failed",
+    error: "go vet reported an unused import",
+    note: "",
+    filesChanged: 2,
+    insertions: 48,
+    deletions: 19,
+    createdAt: "2026-09-26T09:10:00.000Z",
+    startedAt: "2026-09-26T09:10:04.000Z",
+    finishedAt: "2026-09-26T09:14:20.000Z",
+    mergedAt: "",
+    mergeSha: "",
+  },
+];
+
+const previewDispatchWorktrees = [
+  {
+    id: "wt-1",
+    projectId: PREVIEW_PROJECT_ID,
+    runId: "drun-1",
+    cardSlug: "event-stream",
+    path: "/preview/worktrees/drun-1",
+    branch: "dispatch/drun-1",
+    baseSha: "a1b2c3d",
+    status: "merged",
+    owner: "codex",
+  },
+  {
+    id: "wt-2",
+    projectId: PREVIEW_PROJECT_ID,
+    runId: "drun-2",
+    cardSlug: "atlas-canvas",
+    path: "/preview/worktrees/drun-2",
+    branch: "dispatch/drun-2",
+    baseSha: "a1b2c3d",
+    status: "active",
+    owner: "grok",
+  },
+];
+
+const previewDispatchQuota = [
+  {
+    agent: "codex",
+    provider: "openai",
+    window: "5h",
+    source: "probe",
+    confidence: "high",
+    usedPercent: 42.5,
+    windowMinutes: 300,
+    resetsAt: "2026-09-26T14:00:00.000Z",
+    sampledAt: "2026-09-26T10:00:00.000Z",
+  },
+  {
+    agent: "grok",
+    provider: "xai",
+    window: "5h",
+    source: "ledger",
+    confidence: "low",
+    windowMinutes: 300,
+    resetsAt: "",
+    sampledAt: "2026-09-26T10:00:00.000Z",
+  },
+];
+
+const previewDispatchTiers = [
+  { name: "easy", provider: "openai", agent: "codex", model: "gpt-5-codex-mini", speed: 9, strength: 6, position: 1 },
+  { name: "normal", provider: "openai", agent: "codex", model: "gpt-5-codex", speed: 7, strength: 8, position: 2 },
+  { name: "hard", provider: "xai", agent: "grok", model: "grok-4.7", speed: 5, strength: 10, position: 3 },
+];
+
+const previewDispatchAgents = [
+  {
+    name: "codex",
+    bin: "codex",
+    provider: "openai",
+    quotaSource: "probe",
+    confidence: "high",
+    risk: "low",
+    usedPercent: 42.5,
+    cooldownUntil: "",
+  },
+  {
+    name: "grok",
+    bin: "grok",
+    provider: "xai",
+    quotaSource: "ledger",
+    confidence: "low",
+    risk: "medium",
+    cooldownUntil: "",
+  },
+];
+
+const previewDispatchHistory = [
+  {
+    id: "devt-1",
+    runId: "drun-1",
+    projectId: PREVIEW_PROJECT_ID,
+    kind: "started",
+    agent: "codex",
+    tier: "normal",
+    text: "Started dispatch run drun-1 on event-stream",
+    seq: 1,
+    at: "2026-09-25T11:00:05.000Z",
+  },
+  {
+    id: "devt-2",
+    runId: "drun-1",
+    projectId: PREVIEW_PROJECT_ID,
+    kind: "verified",
+    agent: "codex",
+    tier: "normal",
+    text: "Verification passed for drun-1",
+    seq: 2,
+    at: "2026-09-25T11:02:10.000Z",
+  },
+  {
+    id: "devt-3",
+    runId: "drun-1",
+    projectId: PREVIEW_PROJECT_ID,
+    kind: "merged",
+    agent: "codex",
+    tier: "normal",
+    text: "Merged dispatch/drun-1 at f4e5d6c",
+    seq: 3,
+    at: "2026-09-25T11:02:30.000Z",
+  },
+  {
+    id: "devt-4",
+    runId: "drun-2",
+    projectId: PREVIEW_PROJECT_ID,
+    kind: "failed",
+    agent: "grok",
+    tier: "hard",
+    text: "go vet reported an unused import",
+    seq: 4,
+    at: "2026-09-26T09:14:20.000Z",
+  },
+];
+
 const stoppedCore: CoreStatus = {
   state: "stopped",
   pid: null,
@@ -540,6 +731,102 @@ function createBrowserDevBridge(): PolterwareBridge {
           run: previewRuns.find((item) => item.id === args?.id),
           steps: previewRunSteps.filter((step) => step.agentRunId === args?.id),
         }),
+      }),
+      dispatch: browserDevApi({
+        listRuns: async (args?: ProjectArgs & { limit?: number; offset?: number }) => {
+          if (args?.projectId !== PREVIEW_PROJECT_ID) return { runs: [] };
+          const offset = args.offset ?? 0;
+          const limit = args.limit && args.limit > 0 ? args.limit : previewDispatchRuns.length;
+          return { runs: previewDispatchRuns.slice(offset, offset + limit) };
+        },
+        getRun: async (args?: { id?: string }) => ({
+          run: previewDispatchRuns.find((item) => item.id === args?.id),
+        }),
+        startRun: async (args?: {
+          projectId?: string;
+          tier?: string;
+          prompt?: string;
+          cardSlug?: string;
+          agent?: string;
+          worktree?: string;
+          dir?: string;
+          readOnly?: boolean;
+        }) => {
+          const run = {
+            id: `drun-${previewDispatchRuns.length + 1}`,
+            projectId: args?.projectId ?? PREVIEW_PROJECT_ID,
+            status: "running",
+            tier: args?.tier || "normal",
+            agent: args?.agent || "codex",
+            model: "gpt-5-codex",
+            provider: "openai",
+            effort: "medium",
+            prompt: args?.prompt ?? "",
+            cardSlug: args?.cardSlug ?? "",
+            agentRunId: "",
+            dir: args?.dir ?? ".",
+            repo: "polterware",
+            worktree: args?.worktree ?? "",
+            branch: "",
+            baseSha: "",
+            readOnly: Boolean(args?.readOnly),
+            verification: "",
+            exitCode: 0,
+            exitClass: "",
+            error: "",
+            note: "",
+            filesChanged: 0,
+            insertions: 0,
+            deletions: 0,
+            createdAt: new Date().toISOString(),
+            startedAt: new Date().toISOString(),
+            finishedAt: "",
+            mergedAt: "",
+            mergeSha: "",
+          };
+          previewDispatchRuns.unshift(run);
+          return { run };
+        },
+        cancelRun: async (args?: { id?: string }) => {
+          const run = previewDispatchRuns.find((item) => item.id === args?.id);
+          if (run) run.status = "cancelled";
+          return { run };
+        },
+        result: async (args?: { id?: string; section?: string }) => {
+          const run = previewDispatchRuns.find((item) => item.id === args?.id);
+          return { content: run ? `${args?.section ?? "summary"}: ${run.note || run.error || run.status}` : "", total: 1 };
+        },
+        listWorktrees: scoped({ worktrees: previewDispatchWorktrees }, { worktrees: [] }),
+        listQuota: async (args?: { agent?: string }) => ({
+          snapshots: previewDispatchQuota.filter((item) => !args?.agent || item.agent === args.agent),
+        }),
+        listTiers: async () => ({ tiers: previewDispatchTiers }),
+        listAgents: async () => ({ agents: previewDispatchAgents }),
+        listHistory: async (args?: ProjectArgs & { agent?: string; tier?: string; limit?: number; offset?: number }) => {
+          if (args?.projectId !== PREVIEW_PROJECT_ID) return { events: [] };
+          const filtered = previewDispatchHistory.filter(
+            (event) =>
+              (!args.agent || event.agent === args.agent) &&
+              (!args.tier || event.tier === args.tier),
+          );
+          const offset = args.offset ?? 0;
+          const limit = args.limit && args.limit > 0 ? args.limit : filtered.length;
+          return { events: filtered.slice(offset, offset + limit) };
+        },
+        checkTiers: async () => ({ problems: [] }),
+        stats: async (args?: ProjectArgs & { by?: string; since?: string }) => ({
+          by: args?.by || "tier",
+          since: args?.since || "",
+          inFlight: 0,
+          rows:
+            args?.projectId === PREVIEW_PROJECT_ID
+              ? [
+                  { key: "normal", runs: 1, successPct: 100, firstTryPct: 100, p50Ms: 125000, p90Ms: 125000, fallbacks: 0, rateLimits: 0, orphans: 0 },
+                  { key: "hard", runs: 1, successPct: 0, firstTryPct: 0, p50Ms: 256000, p90Ms: 256000, fallbacks: 0, rateLimits: 0, orphans: 0 },
+                ]
+              : [],
+        }),
+        watchRun: () => unsubscribe,
       }),
       work: browserDevApi({
         listCards: scoped({ cards: previewCards }, { cards: [] }),
