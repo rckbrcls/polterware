@@ -201,6 +201,37 @@ message ListHistoryResponse {
   repeated DispatchRunEvent events = 1;
 }
 
+message CheckTiersRequest {}
+
+message CheckTiersResponse {
+  repeated string problems = 1;
+}
+
+message StatsRequest {
+  string project_id = 1;
+  string by = 2;
+  string since = 3;
+}
+
+message DispatchStatsRow {
+  string key = 1;
+  int32 runs = 2;
+  double success_pct = 3;
+  double first_try_pct = 4;
+  optional int64 p50_ms = 5;
+  optional int64 p90_ms = 6;
+  int32 fallbacks = 7;
+  int32 rate_limits = 8;
+  int32 orphans = 9;
+}
+
+message StatsResponse {
+  string by = 1;
+  string since = 2;
+  int32 in_flight = 3;
+  repeated DispatchStatsRow rows = 4;
+}
+
 service DispatchService {
   rpc ListRuns(ListRunsRequest) returns (ListRunsResponse);
   rpc GetRun(GetRunRequest) returns (GetRunResponse);
@@ -213,4 +244,6 @@ service DispatchService {
   rpc ListTiers(ListTiersRequest) returns (ListTiersResponse);
   rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse);
   rpc ListHistory(ListHistoryRequest) returns (ListHistoryResponse);
+  rpc CheckTiers(CheckTiersRequest) returns (CheckTiersResponse);
+  rpc Stats(StatsRequest) returns (StatsResponse);
 }

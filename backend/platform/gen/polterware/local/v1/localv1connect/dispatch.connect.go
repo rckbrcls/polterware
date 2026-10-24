@@ -64,6 +64,11 @@ const (
 	// DispatchServiceListHistoryProcedure is the fully-qualified name of the DispatchService's
 	// ListHistory RPC.
 	DispatchServiceListHistoryProcedure = "/polterware.local.v1.DispatchService/ListHistory"
+	// DispatchServiceCheckTiersProcedure is the fully-qualified name of the DispatchService's
+	// CheckTiers RPC.
+	DispatchServiceCheckTiersProcedure = "/polterware.local.v1.DispatchService/CheckTiers"
+	// DispatchServiceStatsProcedure is the fully-qualified name of the DispatchService's Stats RPC.
+	DispatchServiceStatsProcedure = "/polterware.local.v1.DispatchService/Stats"
 )
 
 // DispatchServiceClient is a client for the polterware.local.v1.DispatchService service.
@@ -79,6 +84,8 @@ type DispatchServiceClient interface {
 	ListTiers(context.Context, *connect.Request[v1.ListTiersRequest]) (*connect.Response[v1.ListTiersResponse], error)
 	ListAgents(context.Context, *connect.Request[v1.ListAgentsRequest]) (*connect.Response[v1.ListAgentsResponse], error)
 	ListHistory(context.Context, *connect.Request[v1.ListHistoryRequest]) (*connect.Response[v1.ListHistoryResponse], error)
+	CheckTiers(context.Context, *connect.Request[v1.CheckTiersRequest]) (*connect.Response[v1.CheckTiersResponse], error)
+	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
 }
 
 // NewDispatchServiceClient constructs a client for the polterware.local.v1.DispatchService service.
@@ -158,6 +165,18 @@ func NewDispatchServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(dispatchServiceMethods.ByName("ListHistory")),
 			connect.WithClientOptions(opts...),
 		),
+		checkTiers: connect.NewClient[v1.CheckTiersRequest, v1.CheckTiersResponse](
+			httpClient,
+			baseURL+DispatchServiceCheckTiersProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("CheckTiers")),
+			connect.WithClientOptions(opts...),
+		),
+		stats: connect.NewClient[v1.StatsRequest, v1.StatsResponse](
+			httpClient,
+			baseURL+DispatchServiceStatsProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("Stats")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -174,6 +193,8 @@ type dispatchServiceClient struct {
 	listTiers     *connect.Client[v1.ListTiersRequest, v1.ListTiersResponse]
 	listAgents    *connect.Client[v1.ListAgentsRequest, v1.ListAgentsResponse]
 	listHistory   *connect.Client[v1.ListHistoryRequest, v1.ListHistoryResponse]
+	checkTiers    *connect.Client[v1.CheckTiersRequest, v1.CheckTiersResponse]
+	stats         *connect.Client[v1.StatsRequest, v1.StatsResponse]
 }
 
 // ListRuns calls polterware.local.v1.DispatchService.ListRuns.
@@ -231,6 +252,16 @@ func (c *dispatchServiceClient) ListHistory(ctx context.Context, req *connect.Re
 	return c.listHistory.CallUnary(ctx, req)
 }
 
+// CheckTiers calls polterware.local.v1.DispatchService.CheckTiers.
+func (c *dispatchServiceClient) CheckTiers(ctx context.Context, req *connect.Request[v1.CheckTiersRequest]) (*connect.Response[v1.CheckTiersResponse], error) {
+	return c.checkTiers.CallUnary(ctx, req)
+}
+
+// Stats calls polterware.local.v1.DispatchService.Stats.
+func (c *dispatchServiceClient) Stats(ctx context.Context, req *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {
+	return c.stats.CallUnary(ctx, req)
+}
+
 // DispatchServiceHandler is an implementation of the polterware.local.v1.DispatchService service.
 type DispatchServiceHandler interface {
 	ListRuns(context.Context, *connect.Request[v1.ListRunsRequest]) (*connect.Response[v1.ListRunsResponse], error)
@@ -244,6 +275,8 @@ type DispatchServiceHandler interface {
 	ListTiers(context.Context, *connect.Request[v1.ListTiersRequest]) (*connect.Response[v1.ListTiersResponse], error)
 	ListAgents(context.Context, *connect.Request[v1.ListAgentsRequest]) (*connect.Response[v1.ListAgentsResponse], error)
 	ListHistory(context.Context, *connect.Request[v1.ListHistoryRequest]) (*connect.Response[v1.ListHistoryResponse], error)
+	CheckTiers(context.Context, *connect.Request[v1.CheckTiersRequest]) (*connect.Response[v1.CheckTiersResponse], error)
+	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
 }
 
 // NewDispatchServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -319,6 +352,18 @@ func NewDispatchServiceHandler(svc DispatchServiceHandler, opts ...connect.Handl
 		connect.WithSchema(dispatchServiceMethods.ByName("ListHistory")),
 		connect.WithHandlerOptions(opts...),
 	)
+	dispatchServiceCheckTiersHandler := connect.NewUnaryHandler(
+		DispatchServiceCheckTiersProcedure,
+		svc.CheckTiers,
+		connect.WithSchema(dispatchServiceMethods.ByName("CheckTiers")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dispatchServiceStatsHandler := connect.NewUnaryHandler(
+		DispatchServiceStatsProcedure,
+		svc.Stats,
+		connect.WithSchema(dispatchServiceMethods.ByName("Stats")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/polterware.local.v1.DispatchService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DispatchServiceListRunsProcedure:
@@ -343,6 +388,10 @@ func NewDispatchServiceHandler(svc DispatchServiceHandler, opts ...connect.Handl
 			dispatchServiceListAgentsHandler.ServeHTTP(w, r)
 		case DispatchServiceListHistoryProcedure:
 			dispatchServiceListHistoryHandler.ServeHTTP(w, r)
+		case DispatchServiceCheckTiersProcedure:
+			dispatchServiceCheckTiersHandler.ServeHTTP(w, r)
+		case DispatchServiceStatsProcedure:
+			dispatchServiceStatsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -394,4 +443,12 @@ func (UnimplementedDispatchServiceHandler) ListAgents(context.Context, *connect.
 
 func (UnimplementedDispatchServiceHandler) ListHistory(context.Context, *connect.Request[v1.ListHistoryRequest]) (*connect.Response[v1.ListHistoryResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.ListHistory is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) CheckTiers(context.Context, *connect.Request[v1.CheckTiersRequest]) (*connect.Response[v1.CheckTiersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.CheckTiers is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.Stats is not implemented"))
 }
