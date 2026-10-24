@@ -420,7 +420,7 @@ export function installVitalsMock(): void {
     async listKnownHosts() { return [...knownHosts].map(([key, fingerprint]) => ({ key, fingerprint })); },
     async removeKnownHost(key) { knownHosts.delete(key); },
     async connect(payload) {
-      const sessionId = crypto.randomUUID();
+      const sessionId = payload.sessionId ?? crypto.randomUUID();
       const session: MockSession = {
         sessionId,
         label: payload.label || payload.host,

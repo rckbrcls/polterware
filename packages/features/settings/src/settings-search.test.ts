@@ -13,7 +13,7 @@ describe("searchSettings", () => {
   it("matches label, keywords, and section case-insensitively", () => {
     expect(searchSettings(SETTINGS_SEARCH_ENTRIES, "RESET").map((e) => e.id)).toContain("reset-store");
     expect(searchSettings(SETTINGS_SEARCH_ENTRIES, "sqlite").map((e) => e.id)).toContain("reset-store");
-    expect(searchSettings(SETTINGS_SEARCH_ENTRIES, "danger").length).toBe(2);
+    expect(searchSettings(SETTINGS_SEARCH_ENTRIES, "danger").map((entry) => entry.id)).toEqual(["reset-store"]);
   });
 
   it("requires every term to match", () => {

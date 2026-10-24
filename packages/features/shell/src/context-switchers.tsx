@@ -1,5 +1,5 @@
 import { For, Show, createMemo, createSignal, onCleanup } from "solid-js";
-import { Box, Folder, IconTile, Layers, Plus } from "@polterware/frontend-design-system";
+import { Box, Button, Folder, IconTile, Layers, Plus, Settings } from "@polterware/frontend-design-system";
 import {
   MenuItem,
   MenuList,
@@ -24,7 +24,126 @@ export type WorkspaceContext = {
   environmentId: string;
 };
 
-type MenuId = "project" | "env" | "scope" | null;
+type MenuId = "env" | "scope" | null;
+
+export function SidebarProjectHeader(props: {
+  context: WorkspaceContext;
+  projects?: ProjectSwitcherItem[];
+  onSelectProject?: (projectId: string) => void;
+  onCreateProject?: () => void;
+  onOpenProjectSettings?: () => void;
+}) {
+  const [open, setOpen] = createSignal(false);
+  const [query, setQuery] = createSignal("");
+  let trigger: HTMLDivElement | undefined;
+  let acknowledgeTimer: ReturnType<typeof setTimeout> | undefined;
+  const clearAcknowledge = () => {
+    if (acknowledgeTimer !== undefined) clearTimeout(acknowledgeTimer);
+    acknowledgeTimer = undefined;
+  };
+  onCleanup(clearAcknowledge);
+  const projects = () => props.projects ?? PROJECT_SWITCHER_FIXTURES;
+  const currentProject = createMemo(
+    () => projects().find((project) => project.projectId === props.context.projectId) ?? projects()[0],
+  );
+  const filteredProjects = createMemo(() => {
+    const normalized = query().trim().toLowerCase();
+    if (!normalized) return projects();
+    return projects().filter((project) => project.name.toLowerCase().includes(normalized));
+  });
+  function close() {
+    clearAcknowledge();
+    setOpen(false);
+    setQuery("");
+  }
+  const closeAfterAcknowledge = () => {
+    clearAcknowledge();
+    acknowledgeTimer = setTimeout(() => {
+      acknowledgeTimer = undefined;
+      close();
+    }, SELECTION_ACK_MS);
+  };
+
+  return (
+    <div class="flex items-center gap-1 px-2 pb-2">
+      <div ref={trigger} class="group relative min-w-0 flex-1">
+        <Button
+          variant="texture"
+          aria-label={`Switch project: ${currentProject()?.name ?? "Project"}`}
+          aria-expanded={open()}
+          class="w-full !h-[40px] !justify-start !px-1.5 !pr-9 rounded-[var(--radius-item)] [--tx-face-radius:8px]"
+          onClick={() => setOpen((value) => !value)}
+        >
+          <IconTile size={20} tone="architecture" seed={currentProject()?.projectId ?? "project"} class="shrink-0">
+            <Folder size={12} />
+          </IconTile>
+          <span class="min-w-0 flex-1 truncate text-left">{currentProject()?.name ?? "Project"}</span>
+        </Button>
+        <Button
+          variant="icon"
+          size="icon"
+          class="pointer-events-none !absolute top-1/2 right-1.5 z-10 -translate-y-1/2 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100"
+          aria-label="Project settings"
+          onPointerDown={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            props.onOpenProjectSettings?.();
+          }}
+        >
+          <Settings size={14} />
+        </Button>
+      </div>
+      <Popover
+        open={open()}
+        onClose={close}
+        title="Switch project"
+        width={300}
+        placement="bottom-start"
+        anchorRef={() => trigger}
+      >
+        <PopoverSearchField
+          placeholder="Find project…"
+          value={query()}
+          onInput={setQuery}
+          autofocus
+        />
+        <MenuList class="min-h-0 flex-1 overflow-auto p-2">
+          <For each={filteredProjects()}>
+            {(project) => (
+              <MenuItem
+                class="gap-2 py-2 text-[13.5px]"
+                selected={project.projectId === props.context.projectId}
+                onClick={() => {
+                  props.onSelectProject?.(project.projectId);
+                  closeAfterAcknowledge();
+                }}
+              >
+                <IconTile size={20} tone="architecture" seed={project.projectId}>
+                  <Folder size={12} />
+                </IconTile>
+                <span class="min-w-0 flex-1 truncate text-[var(--color-text-primary)]">{project.name}</span>
+                <SelectionCheck checked={project.projectId === props.context.projectId} size={15} />
+              </MenuItem>
+            )}
+          </For>
+        </MenuList>
+        <div class="border-t border-[var(--color-border-subtle)] p-2">
+          <MenuItem
+            class="gap-2 py-2 text-[13px]"
+            onClick={() => {
+              props.onCreateProject?.();
+              close();
+            }}
+          >
+            <Plus size={14} />
+            New project
+          </MenuItem>
+        </div>
+      </Popover>
+    </div>
+  );
+}
 
 export const WHOLE_PROJECT_SCOPE: WorkspaceScope = { node: "", exact: false };
 
@@ -40,37 +159,24 @@ function kindTone(kind: EnvironmentKind): "warn" | "syncing" | "muted" {
 
 export function WorkspaceContextBar(props: {
   context: WorkspaceContext;
-  projects?: ProjectSwitcherItem[];
   environments?: EnvironmentItem[];
-  onSelectProject?: (projectId: string) => void;
   onSelectEnvironment?: (environmentId: string) => void;
-  onCreateProject?: () => void;
   scopeNodes?: ScopeNodeItem[];
   scope?: WorkspaceScope;
   onSelectScope?: (scope: WorkspaceScope) => void;
 }) {
   const [openMenu, setOpenMenu] = createSignal<MenuId>(null);
   const [query, setQuery] = createSignal("");
-  let projectTrigger: HTMLButtonElement | undefined;
   let environmentTrigger: HTMLButtonElement | undefined;
   let scopeTrigger: HTMLButtonElement | undefined;
 
-  const projects = () => props.projects ?? PROJECT_SWITCHER_FIXTURES;
   const environments = () => props.environments ?? ENVIRONMENT_FIXTURES;
-  const currentProject = createMemo(
-    () => projects().find((project) => project.projectId === props.context.projectId) ?? projects()[0],
-  );
   const currentEnvironment = createMemo(
     () =>
       environments().find((environment) => environment.id === props.context.environmentId) ??
       environments().find((environment) => environment.projectId === props.context.projectId) ??
       environments()[0],
   );
-  const filteredProjects = createMemo(() => {
-    const normalized = query().trim().toLowerCase();
-    if (!normalized) return projects();
-    return projects().filter((project) => project.name.toLowerCase().includes(normalized));
-  });
   // A pick holds the popover open briefly so the marker glide and check are seen.
   let acknowledgeTimer: ReturnType<typeof setTimeout> | undefined;
   const clearAcknowledge = () => {
@@ -109,21 +215,6 @@ export function WorkspaceContextBar(props: {
 
   return (
     <div class="flex min-w-0 items-center gap-1">
-      <SwitcherTrigger
-        ref={(element) => {
-          projectTrigger = element;
-        }}
-        aria-label={`Switch project: ${currentProject()?.name ?? "Project"}`}
-        aria-expanded={openMenu() === "project"}
-        onClick={() => setOpenMenu((current) => (current === "project" ? null : "project"))}
-      >
-        <span class="truncate">{currentProject()?.name ?? "Project"}</span>
-      </SwitcherTrigger>
-
-      <span class="text-[11px] text-[var(--color-text-disabled)]" aria-hidden>
-        /
-      </span>
-
       <SwitcherTrigger
         ref={(element) => {
           environmentTrigger = element;
@@ -225,54 +316,6 @@ export function WorkspaceContextBar(props: {
             </MenuItem>
           </div>
         </Show>
-      </Popover>
-
-      <Popover
-        open={openMenu() === "project"}
-        onClose={close}
-        title="Switch project"
-        width={300}
-        placement="bottom-start"
-        anchorRef={() => projectTrigger}
-      >
-        <PopoverSearchField
-          placeholder="Find project…"
-          value={query()}
-          onInput={setQuery}
-          autofocus
-        />
-        <MenuList class="min-h-0 flex-1 overflow-auto p-2">
-          <For each={filteredProjects()}>
-            {(project) => (
-              <MenuItem
-                class="gap-2 py-2 text-[13.5px]"
-                selected={project.projectId === props.context.projectId}
-                onClick={() => {
-                  props.onSelectProject?.(project.projectId);
-                  closeAfterAcknowledge();
-                }}
-              >
-                <IconTile size={20} tone="architecture" seed={project.projectId}>
-                  <Folder size={12} />
-                </IconTile>
-                <span class="min-w-0 flex-1 truncate text-[var(--color-text-primary)]">{project.name}</span>
-                <SelectionCheck checked={project.projectId === props.context.projectId} size={15} />
-              </MenuItem>
-            )}
-          </For>
-        </MenuList>
-        <div class="border-t border-[var(--color-border-subtle)] p-2">
-          <MenuItem
-            class="gap-2 py-2 text-[13px]"
-            onClick={() => {
-              props.onCreateProject?.();
-              close();
-            }}
-          >
-            <Plus size={14} />
-            New project
-          </MenuItem>
-        </div>
       </Popover>
 
       <Popover

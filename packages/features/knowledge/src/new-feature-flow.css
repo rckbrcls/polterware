@@ -13,21 +13,19 @@
   list-style: none;
 }
 
-.pw-feature-flow__step {
+.pw-feature-flow__step.pw-texture-button {
+  --tx-face-radius: calc(var(--radius-item) - 2px);
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 4px 10px 4px 4px;
-  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-item);
-  background: var(--color-surface);
   color: var(--color-text-muted);
   font-size: 12px;
   cursor: pointer;
 }
 
 .pw-feature-flow__step:hover:not(:disabled) {
-  background: var(--color-surface-hover);
   color: var(--color-text-secondary);
 }
 
@@ -37,13 +35,10 @@
 }
 
 .pw-feature-flow__step:disabled {
-  border-color: var(--color-border-subtle);
-  color: var(--color-text-muted);
   cursor: default;
 }
 
 .pw-feature-flow__step[aria-current="step"] {
-  border-color: var(--color-border-default);
   color: var(--color-text-primary);
 }
 

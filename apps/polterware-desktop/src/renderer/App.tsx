@@ -29,7 +29,6 @@ import {
   type FeatureFlowStep,
   type ProjectSettingsTabId,
   type WorkspaceFeatureReview,
-  type LocalCoreStatus,
   type WorkspaceInboxAction,
   type WorkspaceInboxItem,
 } from "@polterware/feature-shell";
@@ -50,6 +49,9 @@ const IntegrationsView = lazy(() =>
 );
 const SettingsView = lazy(() =>
   import("@polterware/feature-settings").then((m) => ({ default: m.SettingsView })),
+);
+const ProjectSettingsDialog = lazy(() =>
+  import("@polterware/feature-settings").then((m) => ({ default: m.ProjectSettingsDialog })),
 );
 const NewFeatureFlow = lazy(() =>
   import("@polterware/feature-knowledge").then((m) => ({ default: m.NewFeatureFlow })),
@@ -156,7 +158,6 @@ export function App() {
   const [history, setHistory] = createSignal<ClientRoute[]>([historySnapshot(initialRoute)]);
   const [historyIndex, setHistoryIndex] = createSignal(0);
   const [paletteOpen, setPaletteOpen] = createSignal(false);
-  const [coreStatus, setCoreStatus] = createSignal<LocalCoreStatus | null>(null);
   const [createProjectOpen, setCreateProjectOpen] = createSignal(false);
   const [importSourcesBusy, setImportSourcesBusy] = createSignal(false);
   const [workspace, setWorkspace] = createSignal<WorkspaceSnapshot>(emptyWorkspace());
@@ -327,13 +328,7 @@ export function App() {
       },
     });
     const unsubscribeChanges = window.polterware.core.onChange(refresher.push);
-    const unsubscribeCoreStatus = window.polterware.core.onStatusChange?.(setCoreStatus);
-    void window.polterware.app
-      .getCoreStatus?.()
-      .then(setCoreStatus)
-      .catch((error: unknown) => console.warn("Core status unavailable.", error));
     onCleanup(() => {
-      unsubscribeCoreStatus?.();
       window.removeEventListener("keydown", onKeyDown);
       unsubscribeExecute();
       unsubscribeChanges();
@@ -432,7 +427,7 @@ export function App() {
 
   function handlePaletteCommand(id: string) {
     if (id === "nav.settings") {
-      applyRoute(openDialog(route(), { type: "settings", tab: "general" }), "silent");
+      applyRoute(openDialog(route(), { type: "project-settings" }), "silent");
       return;
     }
     if (id === "nav.agents") {
@@ -943,17 +938,10 @@ export function App() {
         applyRoute(setEnvironment(route(), environmentId))
       }
       onOpenCommander={() => setPaletteOpen(true)}
-      onOpenSettings={() => applyRoute(openDialog(route(), { type: "settings", tab: "general" }), "silent")}
+      onOpenSettings={() => applyRoute(openDialog(route(), { type: "settings", tab: "agents-access" }), "silent")}
+      onOpenProjectSettings={() => applyRoute(openDialog(route(), { type: "project-settings" }), "silent")}
       settingsOpen={settingsDialogTab() !== null}
       onOpenCliReference={() => navigateSection("cli")}
-      coreStatus={{
-        status: coreStatus(),
-        onStart: async () => setCoreStatus(await window.polterware.app.startCore()),
-        onStop: async () => setCoreStatus(await window.polterware.app.stopCore()),
-        onRestart: async () => setCoreStatus(await window.polterware.app.restartCore()),
-        onRevealLogs: () => window.polterware.app.revealCoreLogs(),
-        onCopy: (text) => navigator.clipboard.writeText(text),
-      }}
       canGoBack={historyIndex() > 0}
       canGoForward={historyIndex() < history().length - 1}
       onBack={goBack}
@@ -1223,9 +1211,6 @@ export function App() {
             tab={settingsDialogTab() ?? undefined}
             onClose={() => applyRoute(closeDialog(route()), "silent")}
             projectId={currentProjectId()}
-            general={workspace().settings}
-            environments={workspace().settingsEnvironments}
-            repositories={workspace().repositories}
             loading={loading()}
             onTabChange={(tab) => applyRoute(openDialog(route(), { type: "settings", tab: tab as ProjectSettingsTabId }), "silent")}
             renderIntegrations={(integrationsTab, setIntegrationsTab) => (
@@ -1265,6 +1250,27 @@ export function App() {
                 }}
               />
             )}
+            onResetLocalStore={() => {
+              void resetLocalStore().then(async () => {
+                pushToast("Local store reset to the demonstration project.", "success");
+                applyRoute(createDefaultRoute("inbox", PLATFORM_CONTEXT), "replace");
+                await refreshWorkspace("proj-polter");
+              }).catch((error: unknown) => {
+                pushToast(error instanceof Error ? error.message : "Could not reset the local store.", "danger");
+              });
+            }}
+          />
+        </Suspense>
+      </Show>
+
+      <Show when={route().dialog?.type === "project-settings"}>
+        <Suspense>
+          <ProjectSettingsDialog
+            open
+            onClose={() => applyRoute(closeDialog(route()), "silent")}
+            general={workspace().settings}
+            environments={workspace().settingsEnvironments}
+            repositories={workspace().repositories}
             onAddRepository={async (draft) => {
               try {
                 await persistAddProjectRepo(currentProjectId(), draft.name, draft.path);
@@ -1361,15 +1367,6 @@ export function App() {
                 }
               }).catch((error: unknown) => {
                 pushToast(error instanceof Error ? error.message : "Could not archive project.", "danger");
-              });
-            }}
-            onResetLocalStore={() => {
-              void resetLocalStore().then(async () => {
-                pushToast("Local store reset to the demonstration project.", "success");
-                applyRoute(createDefaultRoute("inbox", PLATFORM_CONTEXT), "replace");
-                await refreshWorkspace("proj-polter");
-              }).catch((error: unknown) => {
-                pushToast(error instanceof Error ? error.message : "Could not reset the local store.", "danger");
               });
             }}
           />

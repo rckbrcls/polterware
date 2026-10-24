@@ -34,6 +34,7 @@ export type ProjectChangeRow = {
   summary: string;
   payloadJson: string;
   createdAt: string;
+  avatarUrl?: string;
 };
 
 export type ChangeEnvelopeView = {

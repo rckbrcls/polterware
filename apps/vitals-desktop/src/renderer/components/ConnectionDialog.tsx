@@ -1,6 +1,6 @@
 import { A11yDialog, Button, Field, FormStack, Input, Select, SettingsRow, Switch as ToggleSwitch } from "@polterware/frontend-design-system";
-import { createSignal, Match, Show, Switch } from "solid-js";
-import type { AuthMode, ConnectPayload, SavedServerPublic } from "../api";
+import { createSignal, For, Match, Show, Switch } from "solid-js";
+import type { AuthMode, ConnectPayload, ConnectResult, SavedServerPublic } from "../api";
 
 export function savedConnectPayload(server: SavedServerPublic): ConnectPayload {
   return {
@@ -20,7 +20,10 @@ export interface ConnectionDialogControls {
 }
 
 export function ConnectionDialog(props: {
-  onConnect: (payload: ConnectPayload) => void;
+  /** Resolves once the session is connected or has failed; the form stays open until it succeeds. */
+  onConnect: (payload: ConnectPayload) => Promise<ConnectResult>;
+  onCancelConnect: () => void;
+  progress: string;
   onRefreshSaved: () => void;
   bind: (controls: ConnectionDialogControls) => void;
 }) {
@@ -35,11 +38,21 @@ export function ConnectionDialog(props: {
   const [privateKeyPath, setPrivateKeyPath] = createSignal("");
   const [passphrase, setPassphrase] = createSignal("");
   const [save, setSave] = createSignal(true);
+  const [connecting, setConnecting] = createSignal(false);
+  const [fieldErrors, setFieldErrors] = createSignal<Partial<Record<"host" | "port" | "username" | "password" | "key", string>>>({});
+  const [connectionErrors, setConnectionErrors] = createSignal<string[]>([]);
+  let attempt = 0;
   props.bind({ openNew: () => openNew(), openEdit: (server) => openEdit(server) });
 
-  const canSubmit = () => host().trim().length > 0 && username().trim().length > 0;
+  const clearErrors = () => {
+    setFieldErrors({});
+    setConnectionErrors([]);
+  };
 
   const reset = () => {
+    attempt += 1;
+    setConnecting(false);
+    clearErrors();
     setEditingId(null);
     setLabel("");
     setHost("");
@@ -58,6 +71,9 @@ export function ConnectionDialog(props: {
   };
 
   const openEdit = (server: SavedServerPublic) => {
+    attempt += 1;
+    setConnecting(false);
+    clearErrors();
     setEditingId(server.id);
     setLabel(server.label);
     setHost(server.host);
@@ -71,26 +87,63 @@ export function ConnectionDialog(props: {
     setOpen(true);
   };
 
+  const validate = () => {
+    const errors: ReturnType<typeof fieldErrors> = {};
+    if (host().trim().length === 0) errors.host = "Host is required";
+    if (username().trim().length === 0) errors.username = "User is required";
+    if (!Number.isInteger(port()) || port() < 1 || port() > 65535) errors.port = "Port must be between 1 and 65535";
+    if (authMode() === "password" && password().length === 0) errors.password = "Password is required";
+    if (authMode() === "privateKey" && privateKeyPath().trim().length === 0) errors.key = "Private key path is required";
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const close = () => setOpen(false);
 
-  const submit = () => {
-    if (!canSubmit()) return;
+  const cancel = () => {
+    if (connecting()) {
+      attempt += 1;
+      props.onCancelConnect();
+      setConnecting(false);
+      return;
+    }
+    close();
+  };
+
+  const submit = async () => {
+    if (connecting()) return;
+    setConnectionErrors([]);
+    if (!validate()) return;
     const mode = authMode();
     const editing = editingId();
-    props.onConnect({
+    const current = ++attempt;
+    setConnecting(true);
+    const result = await props.onConnect({
       serverId: editing ?? undefined,
       label: label() || host(),
-      host: host(),
+      host: host().trim(),
       port: port(),
-      username: username(),
+      username: username().trim(),
       authMode: mode,
       password: mode === "password" ? password() : undefined,
       privateKeyPath: mode === "privateKey" ? privateKeyPath() : undefined,
       privateKeyPassphrase: mode === "privateKey" ? passphrase() : undefined,
       save: editing ? true : save(),
     });
-    props.onRefreshSaved();
-    close();
+    if (current !== attempt) return;
+    setConnecting(false);
+    if (result.ok) {
+      props.onRefreshSaved();
+      close();
+    } else {
+      setConnectionErrors(result.errors);
+    }
+  };
+
+  const edit = (setter: (value: string) => void, field?: keyof ReturnType<typeof fieldErrors>) => (event: { currentTarget: HTMLInputElement }) => {
+    setter(event.currentTarget.value);
+    setConnectionErrors([]);
+    if (field && fieldErrors()[field]) setFieldErrors({ ...fieldErrors(), [field]: undefined });
   };
 
   return (
@@ -98,43 +151,53 @@ export function ConnectionDialog(props: {
       open={open()}
       size="sm"
       title={editingId() ? "Edit server" : "Connect"}
-      onClose={close}
+      onClose={cancel}
       footer={
         <>
-          <Button variant="texture" textureTone="danger" onClick={close}>
+          <Button variant="texture" textureTone="danger" onClick={cancel}>
             Cancel
           </Button>
-          <Button variant="texture" textureTone="brand" disabled={!canSubmit()} onClick={submit}>
-            Connect
+          <Button variant="texture" textureTone="brand" disabled={connecting()} onClick={() => void submit()}>
+            {connecting() ? "Connecting…" : "Connect"}
           </Button>
         </>
       }
     >
       <FormStack>
         <Field label="Label" for="vitals-label">
-          <Input id="vitals-label" value={label()} placeholder="prod-1" onInput={(event) => setLabel(event.currentTarget.value)} />
+          <Input id="vitals-label" value={label()} placeholder="prod-1" onInput={edit(setLabel)} disabled={connecting()} />
         </Field>
-        <Field label="Host" for="vitals-host">
-          <Input id="vitals-host" value={host()} required placeholder="192.168.1.10" onInput={(event) => setHost(event.currentTarget.value)} />
+        <Field label="Host" for="vitals-host" error={fieldErrors().host}>
+          <Input id="vitals-host" value={host()} required aria-invalid={!!fieldErrors().host} disabled={connecting()} placeholder="192.168.1.10" onInput={edit(setHost, "host")} />
         </Field>
-        <Field label="Port" for="vitals-port">
+        <Field label="Port" for="vitals-port" error={fieldErrors().port}>
           <Input
             id="vitals-port"
             type="number"
             min={1}
             max={65535}
             value={port()}
-            onInput={(event) => setPort(Number(event.currentTarget.value))}
+            aria-invalid={!!fieldErrors().port}
+            disabled={connecting()}
+            onInput={(event) => {
+              setPort(Number(event.currentTarget.value));
+              setConnectionErrors([]);
+              if (fieldErrors().port) setFieldErrors({ ...fieldErrors(), port: undefined });
+            }}
           />
         </Field>
-        <Field label="User" for="vitals-user">
-          <Input id="vitals-user" value={username()} required onInput={(event) => setUsername(event.currentTarget.value)} />
+        <Field label="User" for="vitals-user" error={fieldErrors().username}>
+          <Input id="vitals-user" value={username()} required aria-invalid={!!fieldErrors().username} disabled={connecting()} onInput={edit(setUsername, "username")} />
         </Field>
         <Field label="Authentication">
           <Select
             aria-label="Authentication"
             value={authMode()}
-            onChange={(value) => setAuthMode(value as AuthMode)}
+            disabled={connecting()}
+            onChange={(value) => {
+              setAuthMode(value as AuthMode);
+              clearErrors();
+            }}
             options={[
               { value: "password", label: "Password" },
               { value: "privateKey", label: "Private key" },
@@ -144,17 +207,19 @@ export function ConnectionDialog(props: {
         </Field>
         <Switch>
           <Match when={authMode() === "password"}>
-            <Field label="Password" for="vitals-password">
-              <Input id="vitals-password" type="password" value={password()} onInput={(event) => setPassword(event.currentTarget.value)} />
+            <Field label="Password" for="vitals-password" error={fieldErrors().password}>
+              <Input id="vitals-password" type="password" value={password()} aria-invalid={!!fieldErrors().password} disabled={connecting()} onInput={edit(setPassword, "password")} />
             </Field>
           </Match>
           <Match when={authMode() === "privateKey"}>
-            <Field label="Private key path" for="vitals-key">
+            <Field label="Private key path" for="vitals-key" error={fieldErrors().key}>
               <Input
                 id="vitals-key"
                 value={privateKeyPath()}
+                aria-invalid={!!fieldErrors().key}
+                disabled={connecting()}
                 placeholder="/Users/you/.ssh/id_ed25519"
-                onInput={(event) => setPrivateKeyPath(event.currentTarget.value)}
+                onInput={edit(setPrivateKeyPath, "key")}
               />
             </Field>
             <Field label="Passphrase (optional)" for="vitals-passphrase">
@@ -162,11 +227,20 @@ export function ConnectionDialog(props: {
                 id="vitals-passphrase"
                 type="password"
                 value={passphrase()}
-                onInput={(event) => setPassphrase(event.currentTarget.value)}
+                disabled={connecting()}
+                onInput={edit(setPassphrase)}
               />
             </Field>
           </Match>
         </Switch>
+        <Show when={connecting() && props.progress}>
+          <span class="pw-field__hint" role="status">{props.progress}</span>
+        </Show>
+        <Show when={connectionErrors().length > 0}>
+          <div role="alert">
+            <For each={connectionErrors()}>{(message) => <span class="pw-field__error">{message}</span>}</For>
+          </div>
+        </Show>
         <Show when={!editingId()}>
           <SettingsRow label="Save server">
             <ToggleSwitch

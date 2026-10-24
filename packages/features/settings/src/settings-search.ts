@@ -1,5 +1,5 @@
 import { SHORTCUT_GROUP_LABELS, shortcutsInGroup } from "@polterware/frontend-state";
-import type { ProjectEnvironment, SettingsTabId } from "./types";
+import type { SettingsTabId } from "./types";
 
 export type SettingsSearchEntry = {
   id: string;
@@ -14,22 +14,9 @@ export type SettingsSearchEntry = {
 export { searchSettings, settingsSectionId } from "@polterware/frontend-design-system";
 
 export const SETTINGS_SEARCH_ENTRIES: SettingsSearchEntry[] = [
-  { id: "project-name", tab: "general", section: "Project", label: "Name" },
-  { id: "project-description", tab: "general", section: "Project", label: "Description" },
-  { id: "project-repository", tab: "general", section: "Project", label: "Primary repository", keywords: "git org repo" },
-  { id: "project-default-env", tab: "general", section: "Project", label: "Default environment" },
-  { id: "project-id", tab: "general", section: "Project", label: "Project ID", keywords: "copy identifier" },
-  {
-    id: "local-repositories",
-    tab: "general",
-    section: "Local repositories",
-    label: "Local repositories",
-    description: "Extra Git checkouts read on scan.",
-    keywords: "git checkout path browse",
-  },
   {
     id: "privacy",
-    tab: "general",
+    tab: "advanced",
     section: "Privacy",
     label: "Privacy",
     description: "Local-first data and credential handling.",
@@ -115,13 +102,6 @@ export const SETTINGS_SEARCH_ENTRIES: SettingsSearchEntry[] = [
     keywords: "server serve process quit start",
   },
   {
-    id: "archive-project",
-    tab: "advanced",
-    section: "Danger zone",
-    label: "Archive project",
-    description: "Hide this project from the switcher.",
-  },
-  {
     id: "reset-store",
     tab: "advanced",
     section: "Danger zone",
@@ -131,9 +111,9 @@ export const SETTINGS_SEARCH_ENTRIES: SettingsSearchEntry[] = [
   },
 ];
 
-/** Entries that depend on live data: environments and shortcut commands. */
-export function dynamicSettingsEntries(environments: readonly ProjectEnvironment[]): SettingsSearchEntry[] {
-  const shortcuts = (["shell", "architecture"] as const).flatMap((group) =>
+/** Shortcut commands, which depend on the live shortcut catalog. */
+export function dynamicSettingsEntries(): SettingsSearchEntry[] {
+  return (["shell", "architecture"] as const).flatMap((group) =>
     shortcutsInGroup(group).map<SettingsSearchEntry>((command) => ({
       id: `shortcut-${command.id}`,
       tab: "shortcuts",
@@ -142,13 +122,4 @@ export function dynamicSettingsEntries(environments: readonly ProjectEnvironment
       keywords: "keyboard chord",
     })),
   );
-  const envs = environments.map<SettingsSearchEntry>((env) => ({
-    id: `environment-${env.id}`,
-    tab: "environments",
-    section: "Environments",
-    label: env.name,
-    description: env.description,
-    keywords: `${env.kind} ${env.protection}`,
-  }));
-  return [...envs, ...shortcuts];
 }

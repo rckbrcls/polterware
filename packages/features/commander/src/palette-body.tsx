@@ -12,11 +12,26 @@ import {
   type JSX,
 } from "solid-js";
 import {
+  Activity,
+  Bot,
+  Box,
+  Briefcase06Icon,
   centerItemInView,
+  ChartRelationshipIcon,
   createFluidHover,
   FluidHoverHighlight,
+  GitBranch,
+  History,
+  IconTile,
+  Inbox,
+  Layers,
+  Maximize2,
+  Plug,
+  Plus,
   Search,
+  Settings,
   type FluidHover,
+  type IconTileTone,
 } from "@polterware/frontend-design-system";
 import {
   capabilityEnabled,
@@ -25,6 +40,37 @@ import {
 import { formatShortcut } from "@polterware/frontend-state";
 import { DEFAULT_PALETTE_ITEMS, type PaletteItem } from "./palette-items";
 import "./commander.css";
+
+const PALETTE_TILES: Record<string, { tone: IconTileTone; icon: () => JSX.Element }> = {
+  "nav.inbox": { tone: "knowledge", icon: () => <Inbox size={12} /> },
+  "nav.atlas": { tone: "architecture", icon: () => <ChartRelationshipIcon size={12} /> },
+  "nav.work": { tone: "execution", icon: () => <Briefcase06Icon size={12} /> },
+  "nav.truth": { tone: "knowledge", icon: () => <Layers size={12} /> },
+  "nav.activity": { tone: "neutral", icon: () => <History size={12} /> },
+  "nav.agents": { tone: "identity", icon: () => <Bot size={12} /> },
+  "nav.integrations": { tone: "integration", icon: () => <Plug size={12} /> },
+  "nav.settings": { tone: "neutral", icon: () => <Settings size={12} /> },
+  "action.open-sync": { tone: "execution", icon: () => <Activity size={12} /> },
+  "action.create-node": { tone: "architecture", icon: () => <Plus size={12} /> },
+  "tool.connect": { tone: "architecture", icon: () => <GitBranch size={12} /> },
+  "view.fit_document": { tone: "architecture", icon: () => <Maximize2 size={12} /> },
+  "action.connect-integration": { tone: "integration", icon: () => <Plug size={12} /> },
+};
+
+function paletteTile(id: string): { tone: IconTileTone; seed: string; icon: JSX.Element } {
+  const known = PALETTE_TILES[id];
+  if (known) return { tone: known.tone, seed: id, icon: known.icon() };
+  return { tone: "architecture", seed: id, icon: <Box size={12} /> };
+}
+
+function PaletteItemTile(props: { id: string }) {
+  const tile = () => paletteTile(props.id);
+  return (
+    <IconTile size={20} tone={tile().tone} seed={tile().seed} class="shrink-0">
+      {tile().icon}
+    </IconTile>
+  );
+}
 
 export type PaletteBodyProps = {
   items?: PaletteItem[];
@@ -277,9 +323,12 @@ function PaletteResults(props: {
                         class={`${rowClass} text-[13px]`}
                         onRun={() => runRow(rowIndex())}
                       >
-                        <span>{command().label}</span>
+                        <span class="flex min-w-0 items-center gap-2">
+                          <PaletteItemTile id={command().id} />
+                          <span class="min-w-0 truncate">{command().label}</span>
+                        </span>
                         <Show when={hint()}>
-                          <span class="text-[11px] text-[var(--color-text-disabled)]">{hint()}</span>
+                          <span class="shrink-0 text-[11px] text-[var(--color-text-disabled)]">{hint()}</span>
                         </Show>
                       </PaletteRow>
                     );
@@ -302,7 +351,12 @@ function PaletteResults(props: {
             class={`${rowClass} mt-2 text-[12px]`}
             onRun={() => runRow(commands().length)}
           >
-            Show all results for “{props.query}”
+            <span class="flex min-w-0 items-center gap-2">
+              <IconTile size={20} tone="neutral" seed="commander-search" class="shrink-0">
+                <Search size={12} />
+              </IconTile>
+              <span class="min-w-0 truncate">Show all results for “{props.query}”</span>
+            </span>
           </PaletteRow>
         </Show>
       </div>

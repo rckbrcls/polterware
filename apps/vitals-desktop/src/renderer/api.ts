@@ -12,7 +12,10 @@ export interface SavedServerPublic {
   privateKeyPath?: string;
 }
 
+export type ConnectResult = { ok: true } | { ok: false; errors: string[] };
+
 export interface ConnectPayload {
+  sessionId?: string;
   serverId?: string;
   label?: string;
   host: string;

@@ -1,0 +1,10 @@
+{
+  "extends": "../../configuration/typescript/tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "noEmit": true,
+    "noUncheckedIndexedAccess": false
+  },
+  "include": ["src"]
+}

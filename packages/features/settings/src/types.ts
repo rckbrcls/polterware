@@ -33,8 +33,6 @@ export type ProjectGeneralSettings = {
 };
 
 export type SettingsTabId =
-  | "general"
-  | "environments"
   | "agents-access"
   | "agents-sessions"
   | "agents-context"

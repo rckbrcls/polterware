@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { accessSync, constants } from "node:fs";
 import type { BrowserWindow } from "electron";
 import type {
   ConnectPayload,
@@ -46,6 +47,8 @@ interface ManagedSession {
   reconnectTimer: ReturnType<typeof setTimeout> | null;
   pendingFingerprint: string | null;
   allowReconnect: boolean;
+  /** A session that never authenticated fails for good instead of retrying. */
+  everConnected: boolean;
 }
 
 export class SessionManager {
@@ -85,7 +88,8 @@ export class SessionManager {
   }
 
   connect(payload: ConnectPayload): { sessionId: string } {
-    const sessionId = randomUUID();
+    const sessionId = payload.sessionId ?? randomUUID();
+    if (this.sessions.has(sessionId)) throw new Error("Session already exists");
     let auth: SessionAuth = {
       password: payload.password,
       privateKeyPath: payload.privateKeyPath,
@@ -106,11 +110,23 @@ export class SessionManager {
       }
     }
 
+    const issues: string[] = [];
     if (authMode === "agent") {
       const agent = resolveAgentSocket();
-      if (!agent) throw new Error("No SSH agent found: SSH_AUTH_SOCK is not set");
-      auth = { agent };
+      if (!agent) issues.push("No SSH agent found: SSH_AUTH_SOCK is not set");
+      else auth = { agent };
     }
+    if (authMode === "privateKey") {
+      if (!auth.privateKeyPath) issues.push("Private key path is required");
+      else {
+        try {
+          accessSync(auth.privateKeyPath, constants.R_OK);
+        } catch {
+          issues.push(`Private key file is not readable: ${auth.privateKeyPath}`);
+        }
+      }
+    }
+    if (issues.length > 0) throw new Error(issues.join("\n"));
 
     const label = payload.label || payload.host || `${payload.username}@${payload.host}`;
 
@@ -127,6 +143,7 @@ export class SessionManager {
       reconnectTimer: null,
       pendingFingerprint: null,
       allowReconnect: true,
+      everConnected: false,
     };
 
     const sendState = (status: ConnectionStateEvent["status"], message?: string) => {
@@ -148,6 +165,26 @@ export class SessionManager {
       } satisfies MetricsEvent);
     };
 
+    // Only a server that authenticated is worth keeping.
+    const saveServer = () => {
+      if (!payload.save) return;
+      upsertServer(
+        {
+          id: payload.serverId,
+          label,
+          host: payload.host,
+          port: payload.port,
+          username: payload.username,
+          authMode: payload.authMode,
+          privateKeyPath: payload.authMode === "privateKey" ? payload.privateKeyPath : undefined,
+        },
+        {
+          password: payload.password,
+          privateKeyPassphrase: payload.privateKeyPassphrase,
+        },
+      );
+    };
+
     const onStatus = (status: string, message?: string) => {
       const mapped =
         status === "connected"
@@ -159,10 +196,14 @@ export class SessionManager {
               : status === "error"
                 ? "error"
                 : "connecting";
+      const current = this.sessions.get(sessionId);
+      if (mapped === "connected" && current && !current.everConnected) {
+        current.everConnected = true;
+        saveServer();
+      }
       sendState(mapped as ConnectionStateEvent["status"], message);
 
-      const current = this.sessions.get(sessionId);
-      if (mapped === "disconnected" && current && current.allowReconnect && getSettings().autoReconnect && !current.reconnectTimer) {
+      if (mapped === "disconnected" && current && current.everConnected && current.allowReconnect && getSettings().autoReconnect && !current.reconnectTimer) {
         const delay = getSettings().reconnectDelaySeconds;
         sendState("reconnecting", "Reconnecting in " + delay + "s…");
         current.reconnectTimer = setTimeout(() => {
@@ -230,24 +271,6 @@ export class SessionManager {
 
     sendState("connecting");
     agent.connect();
-
-    if (payload.save) {
-      upsertServer(
-        {
-          id: payload.serverId,
-          label,
-          host: payload.host,
-          port: payload.port,
-          username: payload.username,
-          authMode: payload.authMode,
-          privateKeyPath: payload.authMode === "privateKey" ? payload.privateKeyPath : undefined,
-        },
-        {
-          password: payload.password,
-          privateKeyPassphrase: payload.privateKeyPassphrase,
-        },
-      );
-    }
 
     return { sessionId };
   }

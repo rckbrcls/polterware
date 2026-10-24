@@ -74,3 +74,6 @@
 .pw-icon-tile--dimmed .pw-icon-tile-mark {
   color: var(--color-icon-tile-mark-dimmed);
 }
+
+.pw-icon-tile--circle { border-radius: 999px; }
+

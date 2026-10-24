@@ -230,8 +230,9 @@ export function NewFeatureFlow(props: {
               <li>
                 <button
                   type="button"
-                  class="pw-feature-flow__step"
+                  class="pw-feature-flow__step pw-texture-button"
                   aria-current={props.step === step.id ? "step" : undefined}
+                  data-selected={props.step === step.id ? "" : undefined}
                   disabled={!reachable(step.id)}
                   onClick={() => props.onStepChange(step.id)}
                 >

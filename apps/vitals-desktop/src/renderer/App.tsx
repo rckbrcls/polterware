@@ -16,6 +16,7 @@ import { MainFrame, MainSurfaceFrame } from "@polterware/frontend-shell";
 import { ErrorBoundary, For, Show, createEffect, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 import {
   type ConnectPayload,
+  type ConnectResult,
   type ConnectionStateEvent,
   type HostKeyPrompt,
   type MetricsSnapshot,
@@ -102,6 +103,9 @@ export function App() {
   const active = createMemo(() => tabs().find((tab) => tab.sessionId === activeId()) ?? null);
   const [recentKeys, setRecentKeys] = createSignal<string[]>(readRecents());
   const closedSessions = new Set<string>();
+  // Connects started from the form: the tab only appears once the session is connected.
+  const attempts = new Map<string, (result: ConnectResult) => void>();
+  const [attemptProgress, setAttemptProgress] = createSignal("");
   let dialog: ConnectionDialogControls | undefined;
 
   const refreshSaved = () => {
@@ -120,6 +124,22 @@ export function App() {
 
     const offState = window.vitals.onConnectionState((event) => {
       if (closedSessions.has(event.sessionId)) return;
+      const settle = attempts.get(event.sessionId);
+      if (settle) {
+        if (event.status === "error" || event.status === "disconnected") {
+          attempts.delete(event.sessionId);
+          closedSessions.add(event.sessionId);
+          void window.vitals.disconnect(event.sessionId);
+          settle({ ok: false, errors: [event.message || "Connection failed"] });
+          return;
+        }
+        if (event.status !== "connected") {
+          if (event.message) setAttemptProgress(event.message);
+          return;
+        }
+        attempts.delete(event.sessionId);
+        settle({ ok: true });
+      }
       const previous = seenStatus.get(event.sessionId);
       seenStatus.set(event.sessionId, event.status);
       if ((event.status === "error" || event.status === "disconnected") && previous !== event.status) {
@@ -224,6 +244,36 @@ export function App() {
     }).catch((error: unknown) => {
       pushToast(error instanceof Error ? error.message : "Connect failed", "danger");
     });
+  };
+
+  /** Connect from the form: resolves once the session is connected or has failed for good. */
+  const connectFromForm = (payload: ConnectPayload): Promise<ConnectResult> => {
+    const sessionId = crypto.randomUUID();
+    const sent = { ...payload, sessionId };
+    setAttemptProgress("");
+    return new Promise<ConnectResult>((resolve) => {
+      attempts.set(sessionId, (result) => {
+        if (result.ok) {
+          payloads.set(sessionId, sent);
+          rememberRecent(sent);
+        }
+        resolve(result);
+      });
+      window.vitals.connect(sent).catch((error: unknown) => {
+        attempts.delete(sessionId);
+        const message = error instanceof Error ? error.message : "Connect failed";
+        resolve({ ok: false, errors: message.split("\n").filter(Boolean) });
+      });
+    });
+  };
+
+  const cancelFormAttempts = () => {
+    for (const [sessionId, settle] of [...attempts]) {
+      attempts.delete(sessionId);
+      closedSessions.add(sessionId);
+      void window.vitals.disconnect(sessionId);
+      settle({ ok: false, errors: [] });
+    }
   };
 
   const closeTab = (sessionId: string) => {
@@ -418,7 +468,9 @@ export function App() {
           onClearRecents={() => { setRecentKeys([]); writeRecents([]); }} />
 
         <ConnectionDialog
-          onConnect={connect}
+          onConnect={connectFromForm}
+          onCancelConnect={cancelFormAttempts}
+          progress={attemptProgress()}
           onRefreshSaved={refreshSaved}
           bind={(controls) => {
             dialog = controls;

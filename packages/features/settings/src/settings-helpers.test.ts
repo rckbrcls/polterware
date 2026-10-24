@@ -9,10 +9,8 @@ import {
 } from "./settings-helpers";
 
 describe("settings helpers", () => {
-  it("groups the tabs as Project · Agents · Integrations · App", () => {
+  it("groups the tabs as Agents · Integrations · App", () => {
     expect(SETTINGS_TABS.map((tab) => tab.id)).toEqual([
-      "general",
-      "environments",
       "agents-access",
       "agents-sessions",
       "agents-context",
@@ -22,7 +20,6 @@ describe("settings helpers", () => {
       "advanced",
     ]);
     expect([...new Set(SETTINGS_TABS.map((tab) => tab.group))]).toEqual([
-      "Project",
       "Agents",
       "Integrations",
       "App",
@@ -31,14 +28,15 @@ describe("settings helpers", () => {
     expect(labels).not.toMatch(/Knowledge/i);
   });
 
-  it("normalizes unknown tab ids to general", () => {
-    expect(normalizeSettingsTab("unknown")).toBe("general");
-    expect(normalizeSettingsTab("environments")).toBe("environments");
+  it("normalizes unknown tab ids to agents access", () => {
+    expect(normalizeSettingsTab("unknown")).toBe("agents-access");
+    expect(normalizeSettingsTab("general")).toBe("agents-access");
+    expect(normalizeSettingsTab("environments")).toBe("agents-access");
     expect(normalizeSettingsTab("shortcuts")).toBe("shortcuts");
     expect(normalizeSettingsTab("agents-context")).toBe("agents-context");
     expect(normalizeSettingsTab("integrations-catalog")).toBe("integrations-catalog");
-    expect(normalizeSettingsTab("agents")).toBe("general");
-    expect(normalizeSettingsTab(undefined)).toBe("general");
+    expect(normalizeSettingsTab("agents")).toBe("agents-access");
+    expect(normalizeSettingsTab(undefined)).toBe("agents-access");
   });
 
   it("builds select options and detail targets from fixtures", () => {

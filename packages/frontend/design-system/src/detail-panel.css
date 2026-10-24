@@ -38,8 +38,8 @@
 .pw-detail-panel__frame[data-expanded="true"] { inset: 0; width: 100%; border-radius: 0; }
 .pw-detail-panel__frame[hidden], .pw-detail-panel__resize-handle[hidden] { display: none; }
 .pw-detail-panel__frame[aria-hidden="true"] { pointer-events: none; }
-/* Inside the 1px rim, a 7px inset keeps the 28px round buttons concentric with the panel's --radius-surface (22px) corner. */
-.pw-detail-panel__header { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; height: 35px; padding: 7px 7px 0; }
+/* Leading inset is 4px larger than the trailing inset so Back, Expand, and Close sit on the surface rim. */
+.pw-detail-panel__header { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; height: 35px; padding: 7px 3px 0 11px; }
 .pw-detail-panel__header-title:empty { display: none; }
 .pw-detail-panel__header:has(.pw-detail-panel__header-title:not(:empty)) {
   display: grid;

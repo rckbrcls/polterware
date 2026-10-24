@@ -1,7 +1,7 @@
 import { SettingsSection } from "./settings-section";
 
 /**
- * Local-first privacy note for Settings → General.
+ * Local-first privacy note for Settings → Advanced.
  * Trust copy only — not a terms-of-service document.
  */
 export function PrivacyCard() {

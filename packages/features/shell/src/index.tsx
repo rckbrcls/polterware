@@ -8,8 +8,7 @@ import { isNavSectionId } from "./route";
 import { SidebarNav, SidebarSettingsItem, type SidebarCount } from "./sidebar";
 import { MainSurface } from "./main-surface";
 import { TitleBar } from "./title-bar";
-import type { CoreStatusMenuProps } from "./core-status-menu";
-import type { WorkspaceContext } from "./context-switchers";
+import { SidebarProjectHeader, type WorkspaceContext } from "./context-switchers";
 import type { EnvironmentItem, ProjectSwitcherItem, ScopeNodeItem, WorkspaceScope } from "./types";
 import { ENVIRONMENT_FIXTURES } from "./fixtures";
 
@@ -69,15 +68,13 @@ export { expandedDetail, openDetail, requestDetailExpanded, setDetailExpandHandl
 export { SidebarNav, SidebarSettingsItem } from "./sidebar";
 export type { SidebarCount } from "./sidebar";
 export { TitleBar } from "./title-bar";
-export { CoreStatusMenu } from "./core-status-menu";
-export type { CoreStatusMenuProps, LocalCoreStatus, LocalCoreState } from "./core-status-menu";
 export { CliReferencePage } from "./cli-reference-page";
 export { InboxPage } from "./inbox-page";
 export { TerminalEmulator } from "./terminal-emulator";
 export { TerminalTranscript } from "./terminal-transcript";
 export { CreateProjectDialog } from "./create-project-dialog";
 export { ProjectSwitcher } from "./project-switcher";
-export { WorkspaceContextBar } from "./context-switchers";
+export { SidebarProjectHeader, WorkspaceContextBar } from "./context-switchers";
 export {
   PROJECT_SWITCHER_FIXTURES,
   ENVIRONMENT_FIXTURES,
@@ -117,13 +114,13 @@ export function Shell(props: {
   onNavigate?: (section: string) => void;
   onProjectSelect?: (projectId: string) => void;
   onCreateProject?: () => void;
+  onOpenProjectSettings?: () => void;
   onSelectEnvironment?: (environmentId: string) => void;
   onOpenCommander?: () => void;
   onOpenSettings?: () => void;
   /** True while the Settings dialog is open. */
   settingsOpen?: boolean;
   onOpenCliReference?: () => void;
-  coreStatus?: CoreStatusMenuProps;
   workspace?: WorkspaceContext;
   projects?: ProjectSwitcherItem[];
   environments?: EnvironmentItem[];
@@ -179,16 +176,12 @@ export function Shell(props: {
         onBack={() => props.onBack?.()}
         onForward={() => props.onForward?.()}
         workspace={workspace()}
-        projects={props.projects}
         environments={props.environments}
-        onSelectProject={selectProject}
         onSelectEnvironment={selectEnvironment}
-        onCreateProject={() => props.onCreateProject?.()}
         scopeNodes={props.scopeNodes}
         scope={props.scope}
         onSelectScope={props.onSelectScope}
         onOpenCommander={() => props.onOpenCommander?.()}
-        coreStatus={props.coreStatus}
       />
 
       <div class="flex min-h-0 flex-1">
@@ -202,6 +195,13 @@ export function Shell(props: {
           ariaLabel="Project navigation"
           sidebar={
             <div class="flex h-full min-h-0 flex-col pt-2">
+              <SidebarProjectHeader
+                context={workspace()}
+                projects={props.projects}
+                onSelectProject={selectProject}
+                onCreateProject={() => props.onCreateProject?.()}
+                onOpenProjectSettings={() => props.onOpenProjectSettings?.()}
+              />
               <div class="flex min-h-0 flex-1 flex-col">
                 <SidebarNav
                   items={items()}

@@ -17,6 +17,8 @@ export interface SavedServerPublic {
 }
 
 export interface ConnectPayload {
+  /** Chosen by the renderer so it can follow the session's events from the first one. */
+  sessionId?: string;
   serverId?: string;
   label?: string;
   host: string;

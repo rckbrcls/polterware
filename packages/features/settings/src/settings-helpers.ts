@@ -1,7 +1,5 @@
 import {
   Bot,
-  FileText,
-  GitBranch,
   Hammer,
   Layers,
   LibraryBig,
@@ -16,28 +14,6 @@ import type { ProjectEnvironment, SettingsTabId } from "./types";
 export type SettingsTab = TabItem & { id: SettingsTabId; group: string };
 
 export const SETTINGS_TABS: SettingsTab[] = [
-  {
-    id: "general",
-    group: "Project",
-    label: "General",
-    tooltip: {
-      title: "Project profile",
-      description:
-        "Name, description, and basic project identity stored locally. Changes apply to this project only.",
-      icon: FileText,
-    },
-  },
-  {
-    id: "environments",
-    group: "Project",
-    label: "Environments",
-    tooltip: {
-      title: "Environments",
-      description:
-        "Development, Staging, Production, or custom. Switch context in the title bar; each environment is local SQLite data, not a hosted workspace.",
-      icon: GitBranch,
-    },
-  },
   {
     id: "agents-access",
     group: "Agents",
@@ -119,7 +95,7 @@ export const SETTINGS_TABS: SettingsTab[] = [
 
 /** Normalize route tab ids to the retained Settings IA. */
 export function normalizeSettingsTab(raw?: string): SettingsTabId {
-  return SETTINGS_TABS.find((item) => item.id === raw)?.id ?? "general";
+  return SETTINGS_TABS.find((item) => item.id === raw)?.id ?? "agents-access";
 }
 
 export function environmentSelectOptions(

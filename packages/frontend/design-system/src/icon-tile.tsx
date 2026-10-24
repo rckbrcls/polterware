@@ -264,7 +264,11 @@ export function IconTile(props: IconTileProps) {
     const stops = props.chromeStops ?? (tint ? chromeStopsFromTint(tint, variant.horizon, variant.smooth) : undefined);
     if (!stops) return;
     const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
-    const finish = renderChromeFinish(size() * dpr, dpr, { ...variant.options, stops, radius: Number.parseFloat(style.borderTopLeftRadius) || 8 });
+    const parsedRadius = Number.parseFloat(style.borderTopLeftRadius);
+    const cssRadius = Number.isFinite(parsedRadius) ? parsedRadius : 8;
+    // A circle uses a huge specified radius. The shader needs the used corner, or the mask leaves the tile.
+    const radius = Math.min(cssRadius, size() / 2);
+    const finish = renderChromeFinish(size() * dpr, dpr, { ...variant.options, stops, radius });
     if (finish) setChrome(finish);
   });
 

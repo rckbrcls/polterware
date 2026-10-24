@@ -161,6 +161,7 @@ export function mapProjectChanges(raw: unknown): ProjectChangeRow[] {
     const row = asRecord(item);
     const stepId = asString(row.stepId);
     if (!stepId) return [];
+    const avatar = asString(row.avatarUrl) || asString(row.photoUrl) || asString(row.imageUrl);
     return [{
       stepId,
       agentRunId: asString(row.agentRunId),
@@ -172,6 +173,7 @@ export function mapProjectChanges(raw: unknown): ProjectChangeRow[] {
       summary: asString(row.summary),
       payloadJson: asString(row.payloadJson),
       createdAt: asString(row.createdAt),
+      ...(avatar ? { avatarUrl: avatar } : {}),
     }];
   });
 }

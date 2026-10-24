@@ -1155,6 +1155,7 @@ function DataTableCell(props: {
   /** Multi-line content keeps wrapping instead of truncating with a fade. */
   wrap?: boolean;
   onClick?: JSX.EventHandlerUnion<HTMLTableCellElement, MouseEvent>;
+  leading?: JSX.Element;
 }) {
   // A cell truncates when its column resizes; the header at the same index says so.
   const [truncate, setTruncate] = createSignal(false);
@@ -1171,9 +1172,23 @@ function DataTableCell(props: {
       colspan={props.colspan}
       onClick={props.onClick}
     >
-      <span class={truncate() ? "pw-data-table-cell-text pw-inline-fade" : "pw-data-table-cell-content"}>
-        {props.children}
-      </span>
+      <Show
+        when={props.leading}
+        fallback={
+          <span class={truncate() ? "pw-data-table-cell-text pw-inline-fade" : "pw-data-table-cell-content"}>
+            {props.children}
+          </span>
+        }
+      >
+        {(leading) => (
+          <div class="flex min-w-0 items-center gap-2.5">
+            <span class="shrink-0">{leading()}</span>
+            <span class={truncate() ? "pw-data-table-cell-text pw-inline-fade" : "pw-data-table-cell-content"}>
+              {props.children}
+            </span>
+          </div>
+        )}
+      </Show>
     </td>
   );
 }

@@ -91,7 +91,7 @@ export const FLUID_HOVER_ACTIVE_ATTR = "data-fluid-hover-active";
 const ACTIVATOR_SELECTOR =
   "a[href], button, [role='menuitem'], [role='menuitemradio'], [role='menuitemcheckbox'], [role='option'], [role='radio'], [role='checkbox'], [role='tab'], [role='link'], [role='button']";
 const GAP_CONTROL_SELECTOR =
-  "input, textarea, select, button, a, summary, [contenteditable], [role='textbox'], [role='searchbox'], [role='button']";
+  "input, textarea, select, button, a, label, summary, [contenteditable], [role='textbox'], [role='searchbox'], [role='button'], [role='switch']";
 
 /** Frames a measurement retries while items have no layout box (a popup not laid out yet). */
 const MEASUREMENT_ATTEMPTS = 3;

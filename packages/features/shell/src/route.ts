@@ -17,8 +17,6 @@ export type PageSectionId = "cli";
 
 export type SectionId = NavSectionId | PageSectionId;
 export type ProjectSettingsTabId =
-  | "general"
-  | "environments"
   | "agents-access"
   | "agents-sessions"
   | "agents-context"
@@ -33,6 +31,7 @@ export type DialogState =
   | { type: "arch-node-create" }
   | { type: "create-view" }
   | { type: "settings"; tab: ProjectSettingsTabId }
+  | { type: "project-settings" }
   | { type: "confirm"; message: string }
   | null;
 
