@@ -71,6 +71,21 @@ type Attempt struct {
 }
 
 // Run is one delegated execution. It is not an AgentRun record.
+//
+// Tier fields:
+//   - RequestedTier is the caller's tier before classification; it is empty
+//     for tierless model/provider requests. On resume it is the previous
+//     run's Tier, so it equals Tier.
+//   - Tier is the routing tier. It differs from RequestedTier only when
+//     sensitive-code classification promotes a new request to a higher tier.
+//   - ExecutionTier is the tier of the candidate that actually ran and selects
+//     the classifier head trained on the outcome. It differs from Tier when a
+//     tierless filter or --relax resolves to a table candidate of another
+//     tier, falls back to Tier when the candidate has none, and stays empty if
+//     no attempt started or neither tier is known.
+//
+// ClassifyFeatures are only meaningful when FeatureSchema equals the current
+// FeatureSchema; records with another schema are ignored by the classifier.
 type Run struct {
 	ID               string
 	ProjectID        string
@@ -103,6 +118,7 @@ type Run struct {
 	TimeoutSec       int
 	SessionID        string
 	ResumedOf        string
+	ParentRunID      string
 	PID              int
 	AgentPID         int
 	ProcStart        string

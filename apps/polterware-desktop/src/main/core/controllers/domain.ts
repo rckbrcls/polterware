@@ -158,6 +158,8 @@ export function createCoreDomainControllers(
     listHistory: async (input?: JsonObject) => toJsonObject(await clients.dispatch.listHistory(requestMessage(input))),
     checkTiers: async (input?: JsonObject) => toJsonObject(await clients.dispatch.checkTiers(requestMessage(input))),
     stats: async (input?: JsonObject) => toJsonObject(await clients.dispatch.stats(requestMessage(input))),
+    getClassifier: async (input?: JsonObject) => toJsonObject(await clients.dispatch.getClassifier(requestMessage(input))),
+    capacity: async (input?: JsonObject) => toJsonObject(await clients.dispatch.capacity(requestMessage(input))),
     listCliProviders: async () => toJsonObject(await clients.integrations.listCliProviders({})),
     listIntegrationConnections: async (input?: JsonObject) => toJsonObject(await clients.integrations.listIntegrationConnections(requestMessage(input))),
     saveIntegrationConnection: async (input?: JsonObject) => toJsonObject(await clients.integrations.saveIntegrationConnection(requestMessage(input))),

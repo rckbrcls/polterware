@@ -4,7 +4,7 @@ import type { DocEntry } from "./docs/types";
 export default {
   name: "Card",
   group: "Layout",
-  summary: "Card offers two opaque finishes: concentric rings (default) and a framed gradient texture with the button geometry and a softer surface palette. Atlas Relations groups and nodes, and Components group containers, use the framed texture. Components list rows stay flat. Surface uses the flat main application material, also used by detail sections. Use a floating Surface only when it is outside the main application surface.",
+  summary: "Card offers two opaque finishes: concentric rings (default) and a framed gradient texture with the button geometry and a softer surface palette. texture=\"compact\" uses the field gradient and a single rim. Atlas Relations groups and nodes, and Components group containers, use the framed texture. Components list rows stay flat. Surface uses the flat main application material, also used by detail sections. Use a floating Surface only when it is outside the main application surface.",
   exports: ["Card", "Surface"],
   examples: [
     { id: "card", title: "Concentric rings (default)", render: () => (

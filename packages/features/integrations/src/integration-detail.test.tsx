@@ -14,7 +14,7 @@ describe("CLI integrations auth", () => {
   });
 
   it("starts interactive PTY auth without password fields", () => {
-    const source = readFileSync(join(import.meta.dirname, "setup-wizard.tsx"), "utf8");
+    const source = readFileSync(join(import.meta.dirname, "connect-provider-dialog.tsx"), "utf8");
     expect(source).toContain("TerminalEmulator");
     expect(source).toContain("createAuthTerminalSession");
     expect(source).toContain("startAuthProbeLoop");

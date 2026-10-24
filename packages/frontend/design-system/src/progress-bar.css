@@ -1,0 +1,20 @@
+.pw-progress-bar { --progress-bar-tone: var(--color-accent); --progress-bar-height: 8px; position: relative; min-width: 0; }
+.pw-progress-bar[data-tone="blue"] { --progress-bar-tone: var(--color-chart-blue); }
+.pw-progress-bar[data-tone="violet"] { --progress-bar-tone: var(--color-chart-violet); }
+.pw-progress-bar[data-tone="success"] { --progress-bar-tone: var(--color-success); }
+.pw-progress-bar[data-tone="warning"] { --progress-bar-tone: var(--color-warning); }
+.pw-progress-bar[data-tone="danger"] { --progress-bar-tone: var(--color-danger); }
+.pw-progress-bar[data-size="sm"] { --progress-bar-height: 6px; }
+.pw-progress-bar__label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
+/* The track is recessed; the range layers a dark frame, lit rim and opaque gradient face. */
+.pw-progress-bar__track { height: var(--progress-bar-height); overflow: hidden; background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom)); box-shadow: inset 0 0 0 1px var(--field-frame); }
+.pw-progress-bar__range {
+  box-sizing: border-box;
+  height: 100%;
+  border: 1px solid var(--field-frame);
+  background: linear-gradient(to bottom, color-mix(in oklab, var(--progress-bar-color, var(--progress-bar-tone)) 65%, #5a5a5a), color-mix(in oklab, var(--progress-bar-color, var(--progress-bar-tone)) 65%, #3d3d3d));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--progress-bar-color, var(--progress-bar-tone)) 65%, #6a6a6a);
+  transition: width var(--spring-moderate-duration) var(--spring-moderate-ease);
+}
+.pw-progress-bar[data-empty="true"] .pw-progress-bar__range { display: none; }
+@media (prefers-reduced-motion: reduce) { .pw-progress-bar__range { transition: none; } }

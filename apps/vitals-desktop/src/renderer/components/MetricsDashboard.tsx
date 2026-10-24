@@ -1,4 +1,4 @@
-import { Activity, ArrowDataTransferVertical, Button, Cpu, DataTable, IconTile, EmptyIllustration, Gauge, HardDrive, ListOrdered, MemoryStick, PageEmpty, RefreshCw, Server, StatusChip, Zap } from "@polterware/frontend-design-system";
+import { Activity, ArrowDataTransferVertical, Button, Cpu, DataTable, IconTile, EmptyIllustration, Gauge, HardDrive, ListOrdered, MemoryStick, PageEmpty, ProgressBar, RefreshCw, Server, SparkChart, StatusChip, Zap } from "@polterware/frontend-design-system";
 import { For, Show, createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import { connectionPresentation, type ConnectionMetricsMode, type ConnectionStatus, type DiskIoStats, type DiskPartition, type MetricsSnapshot, type NetworkInterface, type SessionHistory } from "../api";
 import { formatBytesPerSec, formatNetworkRate, formatKb, formatPercent, formatUptime } from "../utils/format";
@@ -9,7 +9,6 @@ import type { CardLayoutState } from "./card-layout-state";
 import { createCardReorder } from "./card-reorder";
 import { EchoRing } from "./EchoRing";
 import { ProcessTable } from "./ProcessTable";
-import { SparkChart } from "./SparkChart";
 
 function loadLevel(percent: number): "ok" | "warn" | "hot" {
   if (percent >= 85) return "hot";
@@ -43,9 +42,14 @@ function SensorTileView(props: { tile: SensorTile }) {
       </span>
       <span class="vitals-sensor-label">{props.tile.label}</span>
       <Show when={props.tile.percent !== undefined}>
-        <div class="vitals-bar" aria-hidden="true">
-          <span data-level={props.tile.level} style={{ width: `${Math.min(100, Math.max(0, props.tile.percent ?? 0))}%` }} />
-        </div>
+        <ProgressBar
+          label={props.tile.label}
+          value={props.tile.percent ?? null}
+          aria-valuetext={`${props.tile.value}${props.tile.unit ? ` ${props.tile.unit}` : ""}`}
+          size="sm"
+          class="vitals-bar"
+          style={{ "--progress-bar-color": `var(--color-chart-${props.tile.level === "hot" ? "red" : props.tile.level === "warn" ? "amber" : "cyan"})` }}
+        />
       </Show>
     </div>
   );
@@ -232,9 +236,13 @@ export function MetricsDashboard(props: {
                               <div class="vitals-core">
                                 <span>{core.name}</span>
                                 <span>{formatPercent(core.usagePercent, 0)}</span>
-                                <div class="vitals-bar" aria-hidden="true">
-                                  <span data-level={loadLevel(core.usagePercent)} style={{ width: `${Math.min(100, Math.max(0, core.usagePercent))}%` }} />
-                                </div>
+                                <ProgressBar
+                                  label={`${core.name} usage`}
+                                  value={core.usagePercent}
+                                  size="sm"
+                                  class="vitals-bar"
+                                  style={{ "--progress-bar-color": `var(--color-chart-${loadLevel(core.usagePercent) === "hot" ? "red" : loadLevel(core.usagePercent) === "warn" ? "amber" : "cyan"})` }}
+                                />
                               </div>
                             )}
                           </For>
@@ -251,9 +259,13 @@ export function MetricsDashboard(props: {
                         <div class="vitals-sub">
                           {formatKb(snapshot().memory.usedKb)} / {formatKb(snapshot().memory.totalKb)}
                         </div>
-                        <div class="vitals-bar vitals-stat-bar" aria-hidden="true">
-                          <span data-level={loadLevel(memPct())} style={{ width: `${Math.min(100, Math.max(0, memPct()))}%` }} />
-                        </div>
+                        <ProgressBar
+                          label="Memory usage"
+                          value={memPct()}
+                          size="sm"
+                          class="vitals-stat-bar"
+                          style={{ "--progress-bar-color": `var(--color-chart-${loadLevel(memPct()) === "hot" ? "red" : loadLevel(memPct()) === "warn" ? "amber" : "cyan"})` }}
+                        />
                       </div>
                       <div class="vitals-sensors vitals-sensors-pair">
                         <SensorTileView

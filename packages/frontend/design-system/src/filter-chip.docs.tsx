@@ -37,7 +37,7 @@ export default {
   name: "FilterChip",
   group: "Data",
   summary:
-    "Quiet filter chip with fill and type for secondary status, scope, or category filters under PageToolbar. FilterChipGroup arranges an exclusive set of choices.",
+    "Secondary status, scope, or category filters under PageToolbar. Counts use the shared CountBadge texture through FloatingCountBadge. FilterChipGroup arranges an exclusive set of choices.",
   exports: ["FilterChip", "FilterChipGroup"],
   examples: [
     {

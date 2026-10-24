@@ -1,4 +1,4 @@
-import { createMemo } from "solid-js";
+import { Show, createMemo } from "solid-js";
 import { DetailPanel } from "@polterware/frontend-design-system";
 import type { WorkspaceEntityLink, WorkspaceCanonEntity } from "@polterware/feature-shell";
 
@@ -24,21 +24,29 @@ export function EntityLinks(props: {
       .map((entity) => ({ id: entity.id, title: entity.title, caption: entity.kind }));
   });
 
+  const canLink = () => Boolean(props.onLinkEntity) && candidates().length > 0;
+
   return (
-    <DetailPanel.LinkedEntities
-      items={items()}
-      candidates={candidates()}
-      linkLabel="Link entity"
-      onOpen={
-        props.onOpenEntity
-          ? (linkId) => {
-              const link = props.links.find((item) => item.id === linkId);
-              if (link) props.onOpenEntity?.(link.entityId, link.entityRefId, link.entityKind);
-            }
-          : undefined
-      }
-      onRemove={props.onUnlink}
-      onLink={props.onLinkEntity}
-    />
+    <Show
+      when={props.links.length > 0 || canLink()}
+      fallback={<span class="text-[var(--color-text-muted)]">No linked entities</span>}
+    >
+      <DetailPanel.LinkedEntities
+        class="min-w-0 max-w-full"
+        items={items()}
+        candidates={candidates()}
+        linkLabel="Link entity"
+        onOpen={
+          props.onOpenEntity
+            ? (linkId) => {
+                const link = props.links.find((item) => item.id === linkId);
+                if (link) props.onOpenEntity?.(link.entityId, link.entityRefId, link.entityKind);
+              }
+            : undefined
+        }
+        onRemove={props.onUnlink}
+        onLink={props.onLinkEntity}
+      />
+    </Show>
   );
 }

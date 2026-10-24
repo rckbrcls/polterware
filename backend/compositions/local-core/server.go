@@ -50,6 +50,19 @@ type Core struct {
 	life     lifecycle
 	calls    inflight
 	sessions agentSessions
+
+	// Dispatch coordination is per core. Maps are lazy-initialized so a zero
+	// Core does not share cancel, watch, or finalize state with another core.
+	dispatchOnce      sync.Once
+	dispatchStartMu   sync.Mutex
+	dispatchCancelMu  sync.Mutex
+	dispatchWatchMu   sync.Mutex
+	dispatchFinishMu  sync.Mutex
+	dispatchCancels   map[string]context.CancelFunc
+	dispatchFinish    map[string]*sync.Mutex
+	dispatchLogOff    map[string]int64
+	dispatchLogReady  map[string]struct{}
+	dispatchFinalized map[string]struct{}
 }
 
 // NewCore wires the core around the only open store of this database. It
@@ -88,6 +101,8 @@ func Listen(address string) (net.Listener, string, error) {
 }
 
 func ServeConnect(listener net.Listener, core *Core) *http.Server {
+	// Runs left RUNNING by a dead core become ORPHANED before the server accepts work.
+	core.reconcileDispatchOnBoot()
 	mux := http.NewServeMux()
 	auth := interceptor{core: core}
 	options := []connect.HandlerOption{connect.WithInterceptors(auth)}

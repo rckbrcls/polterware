@@ -1,6 +1,19 @@
-export type DispatchTab = "runs" | "worktrees" | "pace" | "tiers";
+export type DispatchTab =
+  | "runs"
+  | "agents"
+  | "tiers"
+  | "learning"
+  | "stats";
 
 export type DispatchHistoryEventKind = "started" | "verified" | "merged" | "failed";
+
+export type DispatchAttemptView = {
+  agent: string;
+  model: string;
+  error: string;
+  exitClass: string;
+  durationMs?: number;
+};
 
 export type DispatchRunView = {
   id: string;
@@ -28,6 +41,12 @@ export type DispatchRunView = {
   filesChanged?: number;
   insertions?: number;
   deletions?: number;
+  attempts: DispatchAttemptView[];
+  resumedOf: string;
+  parentRunId: string;
+  queuedMs?: number;
+  runMs?: number;
+  priority: string;
   createdAt: string;
   startedAt: string;
   finishedAt: string;
@@ -112,9 +131,55 @@ export type DispatchStatsRowView = {
   orphans: number;
 };
 
+export type DispatchStatRankView = {
+  key: string;
+  runs: number;
+  samples: number;
+  p50Ms?: number;
+  successPct?: number;
+  reason: string;
+};
+
+export type DispatchStatsRankingsView = {
+  mostUsedModel: DispatchStatRankView;
+  mostUsedProvider: DispatchStatRankView;
+  slowestModel: DispatchStatRankView;
+  mostFailedModel: DispatchStatRankView;
+};
+
 export type DispatchStatsView = {
   by: string;
   since: string;
   inFlight: number;
   rows: DispatchStatsRowView[];
+  rankings: DispatchStatsRankingsView;
+};
+
+export type DispatchClassifierTierView = {
+  tier: string;
+  samples: number;
+  weights: number[];
+};
+
+export type DispatchClassifierView = {
+  featureSchema: number;
+  minSamples: number;
+  featureNames: string[];
+  tiers: DispatchClassifierTierView[];
+};
+
+export type DispatchCapacityKeyView = {
+  key: string;
+  windows: number;
+  hitFull: number;
+  consumedPct?: number;
+  leftoverPct?: number;
+  leftover: string;
+  pace: string;
+};
+
+export type DispatchCapacityView = {
+  since: string;
+  note: string;
+  keys: DispatchCapacityKeyView[];
 };

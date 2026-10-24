@@ -24,7 +24,7 @@ export function AppearanceCard() {
   });
 
   return (
-    <SettingsSection title="Appearance">
+    <SettingsSection title="Appearance" description="Choose frosted or opaque macOS window chrome on this computer.">
       <SettingsRow
         label="Reduce transparency"
         description="On macOS, the title bar and sidebar can show a frosted glass view of windows behind Polterware. This uses a solid fill instead."

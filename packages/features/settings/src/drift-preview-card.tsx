@@ -1,5 +1,5 @@
 import { For, Show } from "solid-js";
-import { Button, Field, Input, StatusChip } from "@polterware/frontend-design-system";
+import { Button, Field, GitCompare, IconTile, Input, StatusChip } from "@polterware/frontend-design-system";
 import type { DriftPreviewResult } from "./agents-types";
 import { driftFindingSeverityTone } from "./drift-step-payload";
 
@@ -68,31 +68,36 @@ export function DriftPreviewCard(props: {
               <ul class="m-0 flex list-none flex-col gap-4 p-0">
                 <For each={result().findings}>
                   {(finding) => (
-                    <li class="flex min-w-0 flex-col gap-1">
-                      <div class="flex flex-wrap items-center gap-2">
-                        <StatusChip
-                          tone={driftFindingSeverityTone(finding.severity)}
-                          label={finding.severity || "finding"}
-                        />
-                        <Show when={finding.type}>
-                          <span class="font-mono text-[11px] text-[var(--color-text-muted)]">
-                            {finding.type}
-                          </span>
+                    <li class="flex min-w-0 items-start gap-3">
+                      <IconTile size={24} tone="observability" seed={finding.summary} class="shrink-0">
+                        <GitCompare size={14} />
+                      </IconTile>
+                      <div class="flex min-w-0 flex-1 flex-col gap-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <StatusChip
+                            tone={driftFindingSeverityTone(finding.severity)}
+                            label={finding.severity || "finding"}
+                          />
+                          <Show when={finding.type}>
+                            <span class="font-mono text-[11px] text-[var(--color-text-muted)]">
+                              {finding.type}
+                            </span>
+                          </Show>
+                        </div>
+                        <p class="m-0 text-[12.5px] text-[var(--color-text-primary)]">
+                          {finding.summary || "—"}
+                        </p>
+                        <Show when={finding.subjectIds.length > 0}>
+                          <p class="m-0 truncate font-mono text-[11px] text-[var(--color-text-muted)] pw-selectable">
+                            Subjects: {finding.subjectIds.join(", ")}
+                          </p>
+                        </Show>
+                        <Show when={finding.evidenceIds.length > 0}>
+                          <p class="m-0 truncate font-mono text-[11px] text-[var(--color-text-muted)] pw-selectable">
+                            Evidence: {finding.evidenceIds.join(", ")}
+                          </p>
                         </Show>
                       </div>
-                      <p class="m-0 text-[12.5px] text-[var(--color-text-primary)]">
-                        {finding.summary || "—"}
-                      </p>
-                      <Show when={finding.subjectIds.length > 0}>
-                        <p class="m-0 truncate font-mono text-[11px] text-[var(--color-text-muted)] pw-selectable">
-                          Subjects: {finding.subjectIds.join(", ")}
-                        </p>
-                      </Show>
-                      <Show when={finding.evidenceIds.length > 0}>
-                        <p class="m-0 truncate font-mono text-[11px] text-[var(--color-text-muted)] pw-selectable">
-                          Evidence: {finding.evidenceIds.join(", ")}
-                        </p>
-                      </Show>
                     </li>
                   )}
                 </For>

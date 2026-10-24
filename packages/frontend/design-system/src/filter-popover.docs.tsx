@@ -118,7 +118,7 @@ export default {
   name: "FilterPopover",
   group: "Data",
   summary:
-    "Compact filter controls for PageToolbar actions, with Ark-backed positioning and dismissal. FilterCategoryPopover opens a single category directly from a chip trigger.",
+    "Compact filter controls for PageToolbar actions, with Ark-backed positioning and dismissal. Group selections use a blue, round 18px CountBadge with the shared raised texture. FilterCategoryPopover opens a category from a chip with the same count material.",
   exports: ["FilterPopover", "FilterCategoryPopover"],
   examples: [
     {

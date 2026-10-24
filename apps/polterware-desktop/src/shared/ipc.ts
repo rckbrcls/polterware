@@ -115,6 +115,8 @@ export const IPC_CHANNELS = {
     listHistory: "core:list-history",
     checkTiers: "core:check-tiers",
     stats: "core:stats",
+    getClassifier: "core:get-classifier",
+    capacity: "core:capacity",
     listCliProviders: "core:list-cli-providers",
     listIntegrationConnections: "core:list-integration-connections",
     saveIntegrationConnection: "core:save-integration-connection",

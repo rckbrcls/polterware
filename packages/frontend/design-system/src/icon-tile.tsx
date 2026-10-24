@@ -108,7 +108,7 @@ export type IconTileProps = {
   aurora?: AuroraPalette;
   /** Chrome gradient stops; derived from the accent when omitted. */
   chromeStops?: readonly ChromeStop[];
-  /** Pin a reflection family; otherwise the seed selects one procedurally. */
+  /** Pin a reflection shape. Without a preset the seed varies the horizon metal. */
   chromePreset?: ChromePreset;
   /** Seeds the procedural finish (for example an entity id); the same seed draws the same reflection. Random when omitted. */
   seed?: string;
@@ -255,7 +255,7 @@ export function IconTile(props: IconTileProps) {
   let tile!: HTMLSpanElement;
 
   // Static chrome finish: rendered once on the client from the tile's computed accent and radius,
-  // with a procedural reflection picked by the seed. Until then (SSR, first paint, no WebGL2)
+  // with horizon-metal lighting varied by the seed. Until then (SSR, first paint, no WebGL2)
   // the tile shows its flat accent tint.
   onMount(() => {
     const style = getComputedStyle(tile);

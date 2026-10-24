@@ -1,72 +1,140 @@
 import {
-  Bot,
-  Hammer,
-  Layers,
-  LibraryBig,
+  Folder,
+  GitBranch,
+  Globe,
+  Archive,
   Plug,
-  ShieldCheck,
+  Bot,
+  Webhook,
+  BookOpen,
+  Eye,
+  Layers,
+  GitCompare,
   Zap,
+  Sun,
+  Cpu,
+  Shield,
+  Database,
   type TabItem,
 } from "@polterware/frontend-design-system";
 import type { ProjectEnvironment, SettingsTabId } from "./types";
 
-/** A settings rail entry; `group` is the small label shown above its run of entries. */
-export type SettingsTab = TabItem & { id: SettingsTabId; group: string };
+/** A settings rail entry; every page has a group and a distinct icon. */
+export type SettingsTab = TabItem & {
+  id: SettingsTabId;
+  group: "Project" | "Agents" | "App";
+  tooltip: NonNullable<TabItem["tooltip"]> & { icon: typeof Folder };
+};
 
 export const SETTINGS_TABS: SettingsTab[] = [
   {
-    id: "agents-access",
-    group: "Agents",
-    label: "Access",
+    id: "general",
+    group: "Project",
+    label: "General",
     tooltip: {
-      title: "Agent access",
-      description:
-        "Start or stop the MCP helper, install agent hooks, and copy the Polterware skill so agents read the same project state.",
-      icon: Bot,
+      title: "Project settings",
+      description: "Name, description, primary repository, and default environment.",
+      icon: Folder,
     },
   },
   {
-    id: "agents-sessions",
-    group: "Agents",
-    label: "Sessions",
+    id: "repositories",
+    group: "Project",
+    label: "Repositories",
     tooltip: {
-      title: "Live sessions",
-      description:
-        "Agents working on this project now, the tasks they claimed, and the most recent handoffs.",
+      title: "Local repositories",
+      description: "Manage extra local Git checkouts and their paths.",
+      icon: GitBranch,
+    },
+  },
+  {
+    id: "environments",
+    group: "Project",
+    label: "Environments",
+    tooltip: {
+      title: "Project environments",
+      description: "Manage local environments and their default.",
+      icon: Globe,
+    },
+  },
+  {
+    id: "project-danger",
+    group: "Project",
+    label: "Danger zone",
+    tooltip: {
+      title: "Project danger zone",
+      description: "Archive the current project without deleting its local data.",
+      icon: Archive,
+    },
+  },
+  {
+    id: "agents-mcp",
+    group: "Agents",
+    label: "MCP server",
+    tooltip: {
+      title: "MCP server",
+      description: "Start or stop the local MCP helper and copy client configuration.",
       icon: Plug,
     },
   },
   {
-    id: "agents-context",
+    id: "agents-setup",
     group: "Agents",
-    label: "Context",
+    label: "Agent setup",
     tooltip: {
-      title: "Context and drift",
-      description:
-        "Preview the Oracle text an agent would receive, CompileContext, and the Narrow Drift Checker. Findings are advisory.",
+      title: "Agent setup",
+      description: "Check Claude Code and Codex setup and copy repair commands.",
+      icon: Bot,
+    },
+  },
+  {
+    id: "agents-hooks",
+    group: "Agents",
+    label: "Hooks",
+    tooltip: {
+      title: "Agent hooks",
+      description: "Switch the Polterware plugin hooks on or off.",
+      icon: Webhook,
+    },
+  },
+  {
+    id: "agents-skill",
+    group: "Agents",
+    label: "AI skill",
+    tooltip: {
+      title: "AI skill",
+      description: "Copy or download the Polterware instructions for coding agents.",
+      icon: BookOpen,
+    },
+  },
+  {
+    id: "agents-oracle",
+    group: "Agents",
+    label: "Oracle",
+    tooltip: {
+      title: "Oracle",
+      description: "Preview the exact text an agent receives for one node, card, or title.",
+      icon: Eye,
+    },
+  },
+  {
+    id: "agents-compile",
+    group: "Agents",
+    label: "Compile context",
+    tooltip: {
+      title: "Compile context",
+      description: "Preview the ranked context package within a token budget.",
       icon: Layers,
     },
   },
   {
-    id: "integrations-connected",
-    group: "Integrations",
-    label: "Connected",
+    id: "agents-drift",
+    group: "Agents",
+    label: "Drift check",
     tooltip: {
-      title: "Connected providers",
-      description:
-        "Providers already authenticated via their CLI. Credentials stay in the OS/CLI store, not SQLite.",
-      icon: ShieldCheck,
-    },
-  },
-  {
-    id: "integrations-catalog",
-    group: "Integrations",
-    label: "Catalog",
-    tooltip: {
-      title: "Provider catalog",
-      description:
-        "Fixed list: GitHub, GitLab, AWS, Google Cloud, Azure, Vercel, Supabase, Terraform, and Docker. Detect CLI, run auth in a core PTY, probe connection.",
-      icon: LibraryBig,
+      title: "Drift check",
+      description: "Run the narrow drift checker over the project model.",
+      icon: GitCompare,
     },
   },
   {
@@ -75,27 +143,62 @@ export const SETTINGS_TABS: SettingsTab[] = [
     label: "Shortcuts",
     tooltip: {
       title: "Keyboard shortcuts",
-      description:
-        "Remap Shell and Architecture chords for this computer. Architecture shortcuts work when the canvas is focused and you are not typing in a field.",
+      description: "Remap Shell and Architecture chords for this computer.",
       icon: Zap,
     },
   },
   {
-    id: "advanced",
+    id: "appearance",
     group: "App",
-    label: "Advanced",
+    label: "Appearance",
     tooltip: {
-      title: "Danger zone",
-      description:
-        "Archive the project or reset the local demonstration store. Destructive and local-only — use when you intentionally want a clean slate.",
-      icon: Hammer,
+      title: "Appearance",
+      description: "Choose frosted or opaque macOS window chrome.",
+      icon: Sun,
+    },
+  },
+  {
+    id: "local-core",
+    group: "App",
+    label: "Local core",
+    tooltip: {
+      title: "Local core",
+      description: "Manage core status, lifecycle, idle timeout, and quit behavior.",
+      icon: Cpu,
+    },
+  },
+  {
+    id: "privacy",
+    group: "App",
+    label: "Privacy",
+    tooltip: {
+      title: "Privacy",
+      description: "Local-first project data and provider credential handling.",
+      icon: Shield,
+    },
+  },
+  {
+    id: "app-danger",
+    group: "App",
+    label: "Danger zone",
+    tooltip: {
+      title: "App danger zone",
+      description: "Reset the local demonstration store.",
+      icon: Database,
     },
   },
 ];
 
-/** Normalize route tab ids to the retained Settings IA. */
+/** Preserve links to the former pages by opening their first focused concern. */
 export function normalizeSettingsTab(raw?: string): SettingsTabId {
-  return SETTINGS_TABS.find((item) => item.id === raw)?.id ?? "agents-access";
+  const current = SETTINGS_TABS.find((item) => item.id === raw);
+  if (current) return current.id;
+  switch (raw) {
+    case "agents-access": return "agents-mcp";
+    case "agents-context": return "agents-oracle";
+    case "advanced": return "appearance";
+    default: return "agents-mcp";
+  }
 }
 
 export function environmentSelectOptions(

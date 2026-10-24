@@ -148,14 +148,14 @@ export function emptyAtlas(): WorkspaceAtlas {
  * The global scope the Desktop reads under: an Atlas node path, or empty for the
  * whole project. Loaders read it so every refresh path stays scoped.
  */
-let activeScope: { node: string; exact: boolean } = { node: "", exact: false };
+let activeScope: { node: string } = { node: "" };
 
-export function setActiveScope(scope: { node: string; exact: boolean }): void {
-  activeScope = { node: scope.node, exact: scope.exact };
+export function setActiveScope(scope: { node: string }): void {
+  activeScope = { node: scope.node };
 }
 
-function scopeArgs(): { scopeNode?: string; scopeExact?: boolean } {
-  return activeScope.node ? { scopeNode: activeScope.node, scopeExact: activeScope.exact } : {};
+function scopeArgs(): { scopeNode?: string } {
+  return activeScope.node ? { scopeNode: activeScope.node } : {};
 }
 
 /** Work cards only — the slice a Work change event refreshes. */

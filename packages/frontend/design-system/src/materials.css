@@ -131,6 +131,14 @@
   to { --inline-fade-end: 0px; }
 }
 
+/* Opaque scrim whose left edge fades, so trailing text reads as cut under a control. */
+.pw-fade-inline-start {
+  --inline-fade-start: 28px;
+  --material-fade-edge-inline-start: linear-gradient(to right, transparent, #000 var(--inline-fade-start));
+  -webkit-mask-image: var(--material-fade-edge-inline-start);
+  mask-image: var(--material-fade-edge-inline-start);
+}
+
 /* base.css collapses animation durations under reduced motion; scroll timelines need auto. */
 @media (prefers-reduced-motion: reduce) {
   .pw-scroll-fade,
@@ -322,7 +330,7 @@
   transition: background var(--duration-control) var(--ease-standard);
 }
 
-.card-texture-framed {
+.card-texture-framed:not([data-texture="compact"]) {
   /* Large content surfaces use a quieter palette than compact texture buttons. */
   --tx-frame: var(--field-frame);
   --tx-outer-top: var(--card-ring-light);
@@ -331,6 +339,17 @@
   --tx-face-bottom: color-mix(in srgb, var(--color-surface) 85%, var(--color-surface-subtle));
   --tx-face-radius: calc(var(--radius-card) - 2px);
   border-radius: var(--radius-card);
+}
+
+/* Compact controls: the field gradient and one rim, without the button metal or the four card rings. */
+.card-texture-framed[data-texture="compact"] {
+  --tx-frame: var(--field-frame);
+  --tx-outer-top: #383838;
+  --tx-outer-bottom: #2e2e2e;
+  --tx-face-top: var(--field-fill-top);
+  --tx-face-bottom: var(--field-fill-bottom);
+  border-radius: 12px;
+  --tx-face-radius: 10px;
 }
 
 /** Nested product card — same as base.css .card-panel (design-system Card). */

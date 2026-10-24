@@ -1,4 +1,4 @@
-import { Button, Copy, Download, pushToast } from "@polterware/frontend-design-system";
+import { BookOpen, Button, Copy, Download, pushToast } from "@polterware/frontend-design-system";
 import { SettingsRow, SettingsSection } from "./settings-section";
 import {
   POLTERWARE_AI_SKILL_FILENAME,
@@ -18,8 +18,11 @@ function downloadSkill() {
 /** Polterware AI skill export (copy / download). */
 export function SkillCard() {
   return (
-    <SettingsSection title="AI skill">
+    <SettingsSection title="AI skill" description="Copy or download the Polterware instructions for coding agents.">
       <SettingsRow
+        icon={BookOpen}
+        tone="knowledge"
+        seed="ai-skill"
         label="Polterware AI skill"
         description="Markdown that teaches any agent the Polterware MCP tools and local CLI."
       >

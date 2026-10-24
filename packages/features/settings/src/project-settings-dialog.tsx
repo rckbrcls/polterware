@@ -1,62 +1,37 @@
-import { createEffect, createSignal, For, Show } from "solid-js";
+import { createEffect, createSignal, For, Show, type JSX } from "solid-js";
 import {
   A11yDialog,
   Button,
   Input,
+  GitBranch,
   Plus,
   Select,
   SettingsDialog,
   Textarea,
   pushToast,
-  type SettingsNavItem,
-  type SettingsSearchEntry,
 } from "@polterware/frontend-design-system";
 import { CreateEnvironmentDialog, type CreateEnvironmentDraft } from "./create-environment-dialog";
 import { EnvironmentsEmpty } from "./environments-empty";
 import { EnvironmentRows } from "./environment-rows";
 import { archiveProjectToast, saveGeneralSettingsToast } from "./environment-status";
-import type { ProjectEnvironment, ProjectGeneralSettings, ProjectRepository } from "./types";
-import { environmentSelectOptions } from "./settings-helpers";
+import type { ProjectEnvironment, ProjectGeneralSettings, ProjectRepository, ProjectSettingsPageId } from "./types";
+import { environmentSelectOptions, SETTINGS_TABS } from "./settings-helpers";
 import { SettingsRow, SettingsSection } from "./settings-section";
+import { SETTINGS_SEARCH_ENTRIES } from "./settings-search";
 
-const PROJECT_SETTINGS_ITEMS: readonly SettingsNavItem[] = [
-  { id: "general", label: "General" },
-];
-
-const PROJECT_SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
-  {
-    item: "general",
-    section: "Project",
-    label: "Project",
-    description: "Local project details. Changes persist in the local SQLite store.",
-    keywords: "name description primary repository default environment project id",
-  },
-  {
-    item: "general",
-    section: "Local repositories",
-    label: "Local repositories",
-    description: "Extra Git checkouts. The project directory stays the checkpoint used by status. Each path here is read on scan.",
-    keywords: "git checkout path browse add repository",
-  },
-  {
-    item: "general",
-    section: "Environments",
-    label: "Environments",
-    keywords: "add environment default delete",
-  },
-  {
-    item: "general",
-    section: "Danger zone",
-    label: "Danger zone",
-    description: "Hide this project from the switcher. Local data stays in SQLite until you reset the store.",
-    keywords: "archive project",
-  },
-];
+const PROJECT_SETTINGS_ITEMS = SETTINGS_TABS.filter((item) => item.group === "Project")
+  .map((item) => ({ id: item.id, label: item.label, group: item.group, icon: item.tooltip.icon }));
+const PROJECT_SETTINGS_SEARCH_ENTRIES = SETTINGS_SEARCH_ENTRIES
+  .filter((entry) => PROJECT_SETTINGS_ITEMS.some((item) => item.id === entry.tab))
+  .map((entry) => ({ ...entry, item: entry.tab }));
 
 /** Name, repositories, environments, and archive for the current project. */
 export function ProjectSettingsDialog(props: {
   open: boolean;
   onClose: () => void;
+  /** Reuse the project controls inside the main Settings rail. */
+  embedded?: boolean;
+  tab?: ProjectSettingsPageId;
   general?: ProjectGeneralSettings;
   environments?: ProjectEnvironment[];
   repositories?: ProjectRepository[];
@@ -81,7 +56,8 @@ export function ProjectSettingsDialog(props: {
   const [repoBusy, setRepoBusy] = createSignal(false);
   const [archiveOpen, setArchiveOpen] = createSignal(false);
   const [createOpen, setCreateOpen] = createSignal(false);
-  const [activeSection, setActiveSection] = createSignal("general");
+  const [activeSection, setActiveSection] = createSignal<string>(props.tab ?? "general");
+  const page = () => props.embedded ? props.tab ?? "general" : activeSection();
 
   createEffect(() => {
     const next = general();
@@ -161,171 +137,188 @@ export function ProjectSettingsDialog(props: {
     pushToast("Project ID copied.", "success");
   }
 
+  const Container = (containerProps: { children: JSX.Element }) => props.embedded ? containerProps.children : (
+    <SettingsDialog
+      open={props.open}
+      title="Project settings"
+      items={PROJECT_SETTINGS_ITEMS}
+      active={activeSection()}
+      onSelect={setActiveSection}
+      searchEntries={PROJECT_SETTINGS_SEARCH_ENTRIES}
+      onClose={() => props.onClose()}
+    >
+      {containerProps.children}
+    </SettingsDialog>
+  );
+
   return (
     <>
-      <SettingsDialog
-        open={props.open}
-        title="Project settings"
-        items={PROJECT_SETTINGS_ITEMS}
-        active={activeSection()}
-        onSelect={setActiveSection}
-        searchEntries={PROJECT_SETTINGS_SEARCH_ENTRIES}
-        onClose={() => props.onClose()}
-      >
+      <Container>
         <div class="flex flex-col gap-6">
-          <SettingsSection
-            title="Project"
-            description="Local project details. Changes persist in the local SQLite store."
-          >
-            <SettingsRow label="Name" for="settings-project-name">
-              <Input
-                id="settings-project-name"
-                size="md"
-                class="w-72"
-                value={name()}
-                onInput={(event) => setName(event.currentTarget.value)}
-              />
-            </SettingsRow>
-            <SettingsRow label="Description" for="settings-project-description">
-              <Textarea
-                id="settings-project-description"
-                class="w-72"
-                value={description()}
-                onInput={(event) => setDescription(event.currentTarget.value)}
-              />
-            </SettingsRow>
-            <SettingsRow label="Primary repository" for="settings-project-repo">
-              <Input
-                id="settings-project-repo"
-                size="md"
-                class="w-72"
-                placeholder="org/repo"
-                value={repository()}
-                onInput={(event) => setRepository(event.currentTarget.value)}
-              />
-            </SettingsRow>
-            <SettingsRow label="Default environment" for="settings-default-env">
-              <Select
-                id="settings-default-env"
-                size="md"
-                value={defaultEnvironmentId()}
-                options={environmentSelectOptions(environments())}
-                onChange={(value) => setDefaultEnvironmentId(value)}
-              />
-            </SettingsRow>
-            <SettingsRow label="Project ID">
-              <span class="pw-selectable font-mono text-[12px] text-[var(--color-text-primary)]">
-                {general()?.projectId ?? "—"}
-              </span>
-              <Button size="sm" variant="ghost" onClick={() => void handleCopyProjectId()}>
-                Copy
-              </Button>
-            </SettingsRow>
-            <div class="flex justify-end gap-2">
-              <Button
-                size="sm"
-                variant="texture"
-                onClick={() => {
-                  setName(general()?.name ?? "");
-                  setDescription(general()?.description ?? "");
-                  setDefaultEnvironmentId(general()?.defaultEnvironmentId ?? "");
-                  setRepository(general()?.repository ?? "");
-                }}
-              >
-                Cancel
-              </Button>
-              <Button size="sm" variant="secondary" onClick={handleSaveGeneral}>
-                Save changes
-              </Button>
-            </div>
-          </SettingsSection>
-
-          <SettingsSection
-            title="Local repositories"
-            description="Extra Git checkouts. The project directory stays the checkpoint used by status. Each path here is read on scan."
-          >
-            <For each={props.repositories ?? []}>
-              {(repo) => (
-                <SettingsRow
-                  label={<span class="font-mono text-[12px]">{repo.name}</span>}
-                  description={<span class="font-mono" title={repo.path}>{repo.path}</span>}
-                >
-                  <Button size="sm" variant="ghost" disabled={repoBusy()} onClick={() => void handleRemoveRepository(repo.name)}>
-                    Remove
-                  </Button>
-                </SettingsRow>
-              )}
-            </For>
-            <SettingsRow label="Name" for="settings-repo-name">
-              <Input
-                id="settings-repo-name"
-                size="md"
-                class="w-72"
-                placeholder="api"
-                value={repoName()}
-                onInput={(event) => setRepoName(event.currentTarget.value)}
-              />
-            </SettingsRow>
-            <SettingsRow label="Path" for="settings-repo-path">
-              <Input
-                id="settings-repo-path"
-                size="md"
-                class="w-72"
-                placeholder="/path/to/checkout"
-                value={repoPath()}
-                onInput={(event) => setRepoPath(event.currentTarget.value)}
-              />
-            </SettingsRow>
-            <div class="flex justify-end gap-2">
-              <Button size="sm" variant="ghost" disabled={repoBusy()} onClick={() => void handleBrowseRepository()}>
-                Browse
-              </Button>
-              <Button size="sm" variant="secondary" disabled={repoBusy() || !repoName().trim() || !repoPath().trim()} onClick={() => void handleAddRepository()}>
-                Add repository
-              </Button>
-            </div>
-          </SettingsSection>
-
-          <SettingsSection title="Environments">
-            <div class="flex justify-end">
-              <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>
-                <Plus size={14} aria-hidden /> Add environment
-              </Button>
-            </div>
-            <Show
-              when={environments().length > 0}
-              fallback={
-                <EnvironmentsEmpty
-                  onCreate={() => setCreateOpen(true)}
-                  onCreateFromTemplate={
-                    props.onCreateEnvironment
-                      ? (template) => props.onCreateEnvironment?.(template.draft)
-                      : undefined
-                  }
-                />
-              }
+          <Show when={page() === "general"}>
+            <SettingsSection
+              title="Project"
+              description="Local project details. Changes persist in the local SQLite store."
             >
-              <EnvironmentRows
-                environments={environments()}
-                canDelete={environments().length > 1}
-                onSetDefault={props.onSetDefaultEnvironment}
-                onDelete={props.onDeleteEnvironment}
-              />
-            </Show>
-          </SettingsSection>
+              <SettingsRow label="Name" for="settings-project-name">
+                <Input
+                  id="settings-project-name"
+                  size="md"
+                  class="w-72"
+                  value={name()}
+                  onInput={(event) => setName(event.currentTarget.value)}
+                />
+              </SettingsRow>
+              <SettingsRow label="Description" for="settings-project-description">
+                <Textarea
+                  id="settings-project-description"
+                  class="w-72"
+                  value={description()}
+                  onInput={(event) => setDescription(event.currentTarget.value)}
+                />
+              </SettingsRow>
+              <SettingsRow label="Primary repository" for="settings-project-repo">
+                <Input
+                  id="settings-project-repo"
+                  size="md"
+                  class="w-72"
+                  placeholder="org/repo"
+                  value={repository()}
+                  onInput={(event) => setRepository(event.currentTarget.value)}
+                />
+              </SettingsRow>
+              <SettingsRow label="Default environment" for="settings-default-env">
+                <Select
+                  id="settings-default-env"
+                  size="md"
+                  value={defaultEnvironmentId()}
+                  options={environmentSelectOptions(environments())}
+                  onChange={(value) => setDefaultEnvironmentId(value)}
+                />
+              </SettingsRow>
+              <SettingsRow label="Project ID">
+                <span class="pw-selectable font-mono text-[12px] text-[var(--color-text-primary)]">
+                  {general()?.projectId ?? "—"}
+                </span>
+                <Button size="sm" variant="ghost" onClick={() => void handleCopyProjectId()}>
+                  Copy
+                </Button>
+              </SettingsRow>
+              <div class="flex justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="texture"
+                  onClick={() => {
+                    setName(general()?.name ?? "");
+                    setDescription(general()?.description ?? "");
+                    setDefaultEnvironmentId(general()?.defaultEnvironmentId ?? "");
+                    setRepository(general()?.repository ?? "");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button size="sm" variant="secondary" onClick={handleSaveGeneral}>
+                  Save changes
+                </Button>
+              </div>
+            </SettingsSection>
+          </Show>
 
-          <SettingsSection
-            title="Danger zone"
-            description="Hide this project from the switcher. Local data stays in SQLite until you reset the store."
-          >
-            <SettingsRow label="Archive project" description="Hide this project from the switcher.">
-              <Button size="sm" variant="danger" onClick={() => setArchiveOpen(true)}>
-                Archive project
-              </Button>
-            </SettingsRow>
-          </SettingsSection>
+          <Show when={page() === "repositories"}>
+            <SettingsSection
+              title="Local repositories"
+              description="Extra Git checkouts. The project directory stays the checkpoint used by status. Each path here is read on scan."
+            >
+              <For each={props.repositories ?? []}>
+                {(repo) => (
+                  <SettingsRow
+                    icon={GitBranch}
+                    tone="integration"
+                    seed={repo.id}
+                    label={<span class="font-mono text-[12px]">{repo.name}</span>}
+                    description={<span class="font-mono" title={repo.path}>{repo.path}</span>}
+                  >
+                    <Button size="sm" variant="ghost" disabled={repoBusy()} onClick={() => void handleRemoveRepository(repo.name)}>
+                      Remove
+                    </Button>
+                  </SettingsRow>
+                )}
+              </For>
+              <SettingsRow label="Name" for="settings-repo-name">
+                <Input
+                  id="settings-repo-name"
+                  size="md"
+                  class="w-72"
+                  placeholder="api"
+                  value={repoName()}
+                  onInput={(event) => setRepoName(event.currentTarget.value)}
+                />
+              </SettingsRow>
+              <SettingsRow label="Path" for="settings-repo-path">
+                <Input
+                  id="settings-repo-path"
+                  size="md"
+                  class="w-72"
+                  placeholder="/path/to/checkout"
+                  value={repoPath()}
+                  onInput={(event) => setRepoPath(event.currentTarget.value)}
+                />
+              </SettingsRow>
+              <div class="flex justify-end gap-2">
+                <Button size="sm" variant="ghost" disabled={repoBusy()} onClick={() => void handleBrowseRepository()}>
+                  Browse
+                </Button>
+                <Button size="sm" variant="secondary" disabled={repoBusy() || !repoName().trim() || !repoPath().trim()} onClick={() => void handleAddRepository()}>
+                  Add repository
+                </Button>
+              </div>
+            </SettingsSection>
+          </Show>
+
+          <Show when={page() === "environments"}>
+            <SettingsSection title="Environments" description="Manage local environments and choose the project default.">
+              <div class="flex justify-end">
+                <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>
+                  <Plus size={14} aria-hidden /> Add environment
+                </Button>
+              </div>
+              <Show
+                when={environments().length > 0}
+                fallback={
+                  <EnvironmentsEmpty
+                    onCreate={() => setCreateOpen(true)}
+                    onCreateFromTemplate={
+                      props.onCreateEnvironment
+                        ? (template) => props.onCreateEnvironment?.(template.draft)
+                        : undefined
+                    }
+                  />
+                }
+              >
+                <EnvironmentRows
+                  environments={environments()}
+                  canDelete={environments().length > 1}
+                  onSetDefault={props.onSetDefaultEnvironment}
+                  onDelete={props.onDeleteEnvironment}
+                />
+              </Show>
+            </SettingsSection>
+          </Show>
+
+          <Show when={page() === "project-danger"}>
+            <SettingsSection
+              title="Danger zone"
+              description="Hide this project from the switcher. Local data stays in SQLite until you reset the store."
+            >
+              <SettingsRow label="Archive project" description="Hide this project from the switcher.">
+                <Button size="sm" variant="danger" onClick={() => setArchiveOpen(true)}>
+                  Archive project
+                </Button>
+              </SettingsRow>
+            </SettingsSection>
+          </Show>
         </div>
-      </SettingsDialog>
+      </Container>
 
       <CreateEnvironmentDialog
         open={createOpen()}

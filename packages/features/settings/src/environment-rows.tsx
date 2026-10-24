@@ -1,5 +1,5 @@
 import { For, Show, createSignal } from "solid-js";
-import { Button, Server, StatusChip } from "@polterware/frontend-design-system";
+import { Button, IconTile, Server, StatusChip } from "@polterware/frontend-design-system";
 import type { ProjectEnvironment } from "./types";
 import {
   environmentKindLabel,
@@ -31,7 +31,9 @@ export function EnvironmentRows(props: {
                 aria-expanded={open()}
                 onClick={() => setExpandedId(open() ? null : environment.id)}
               >
-                <Server size={14} aria-hidden />
+                <IconTile size={24} tone="infrastructure" seed={environment.id} class="shrink-0">
+                  <Server size={14} />
+                </IconTile>
                 <span class="min-w-0 flex-1 truncate">{environment.name}</span>
                 <Show when={environment.isDefault}>
                   <StatusChip tone="muted" label="Default" />
@@ -46,7 +48,7 @@ export function EnvironmentRows(props: {
                 />
               </button>
               <Show when={open()}>
-                <div class="flex flex-col gap-2 pl-[26px] text-[12px] text-[var(--color-text-secondary)]">
+                <div class="flex flex-col gap-2 pl-9 text-[12px] text-[var(--color-text-secondary)]">
                   <p class="m-0">{environment.description || "No summary yet."}</p>
                   <Show when={rules().length > 0}>
                     <ul class="m-0 list-disc space-y-1 pl-4" aria-label="Protection rules">

@@ -1,5 +1,5 @@
 import { Show, createMemo } from "solid-js";
-import { Button, Kbd, pushToast } from "@polterware/frontend-design-system";
+import { Button, IconTile, Kbd, Zap, pushToast } from "@polterware/frontend-design-system";
 import {
   createShortcutSelector,
   formatChord,
@@ -59,6 +59,9 @@ export function ShortcutRow(props: {
 
   return (
     <div class="flex items-center gap-3">
+      <IconTile size={24} seed={props.command.id} class="shrink-0">
+        <Zap size={14} />
+      </IconTile>
       <div class="min-w-0 flex-1">
         <p class="m-0 text-[12.5px] text-[var(--color-text-primary)]">{props.command.label}</p>
         <Show when={isCustom()}>

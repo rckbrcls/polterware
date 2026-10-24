@@ -9,34 +9,47 @@ import {
 } from "./settings-helpers";
 
 describe("settings helpers", () => {
-  it("groups the tabs as Agents · Integrations · App", () => {
+  it("groups the tabs as Project · Agents · App", () => {
     expect(SETTINGS_TABS.map((tab) => tab.id)).toEqual([
-      "agents-access",
-      "agents-sessions",
-      "agents-context",
-      "integrations-connected",
-      "integrations-catalog",
+      "general",
+      "repositories",
+      "environments",
+      "project-danger",
+      "agents-mcp",
+      "agents-setup",
+      "agents-hooks",
+      "agents-skill",
+      "agents-oracle",
+      "agents-compile",
+      "agents-drift",
       "shortcuts",
-      "advanced",
+      "appearance",
+      "local-core",
+      "privacy",
+      "app-danger",
     ]);
     expect([...new Set(SETTINGS_TABS.map((tab) => tab.group))]).toEqual([
+      "Project",
       "Agents",
-      "Integrations",
       "App",
     ]);
     const labels = SETTINGS_TABS.map((tab) => tab.label).join(" ");
     expect(labels).not.toMatch(/Knowledge/i);
+    expect(new Set(SETTINGS_TABS.map((tab) => tab.tooltip.icon)).size).toBe(SETTINGS_TABS.length);
   });
 
-  it("normalizes unknown tab ids to agents access", () => {
-    expect(normalizeSettingsTab("unknown")).toBe("agents-access");
-    expect(normalizeSettingsTab("general")).toBe("agents-access");
-    expect(normalizeSettingsTab("environments")).toBe("agents-access");
+  it("preserves focused pages and redirects former page ids", () => {
+    expect(normalizeSettingsTab("unknown")).toBe("agents-mcp");
+    expect(normalizeSettingsTab("general")).toBe("general");
+    expect(normalizeSettingsTab("environments")).toBe("environments");
     expect(normalizeSettingsTab("shortcuts")).toBe("shortcuts");
-    expect(normalizeSettingsTab("agents-context")).toBe("agents-context");
-    expect(normalizeSettingsTab("integrations-catalog")).toBe("integrations-catalog");
-    expect(normalizeSettingsTab("agents")).toBe("agents-access");
-    expect(normalizeSettingsTab(undefined)).toBe("agents-access");
+    expect(normalizeSettingsTab("agents-access")).toBe("agents-mcp");
+    expect(normalizeSettingsTab("agents-context")).toBe("agents-oracle");
+    expect(normalizeSettingsTab("advanced")).toBe("appearance");
+    expect(normalizeSettingsTab("repositories")).toBe("repositories");
+    expect(normalizeSettingsTab("integrations-catalog")).toBe("agents-mcp");
+    expect(normalizeSettingsTab("agents")).toBe("agents-mcp");
+    expect(normalizeSettingsTab(undefined)).toBe("agents-mcp");
   });
 
   it("builds select options and detail targets from fixtures", () => {

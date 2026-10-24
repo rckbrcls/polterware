@@ -1,7 +1,6 @@
-import { Match, Switch, createEffect, createSignal, on, onCleanup, onMount } from "solid-js";
+import { Match, Switch, Show, createEffect, createSignal, on } from "solid-js";
 import { Button, RefreshCw, pushToast } from "@polterware/frontend-design-system";
 import type {
-  AgentSessionsView,
   AgentSetupView,
   CompilePreviewResult,
   DriftPreviewResult,
@@ -14,7 +13,6 @@ import {
   mapMcpStatus,
   workQuery,
 } from "./agents-bridge";
-import { AgentSessionsCard, mapAgentSessions } from "./agent-sessions-card";
 import { AgentSetupCard, mapAgentSetup, mapHookSwitches } from "./agent-setup-card";
 import { CompilePreviewCard } from "./compile-preview-card";
 import { DriftPreviewCard } from "./drift-preview-card";
@@ -23,9 +21,9 @@ import { OraclePreviewCard } from "./oracle-preview-card";
 import { SettingsSection } from "./settings-section";
 import { SkillCard } from "./skill-card";
 
-export type AgentsSettingsTab = "access" | "sessions" | "context";
+export type AgentsSettingsTab = "mcp" | "setup" | "hooks" | "skill" | "oracle" | "compile" | "drift";
 
-/** Agents inside the Settings dialog: MCP access, live sessions, and context/drift previews. */
+/** Agents inside the Settings dialog: MCP access and context/drift previews. */
 export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSettingsTab }) {
   const [mcpStatus, setMcpStatus] = createSignal<McpStatusView | undefined>();
   const [mcpBusy, setMcpBusy] = createSignal(false);
@@ -39,23 +37,18 @@ export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSetti
   const [driftResult, setDriftResult] = createSignal<DriftPreviewResult | undefined>();
   const [driftError, setDriftError] = createSignal<string | undefined>();
 
-  const [sessionsView, setSessionsView] = createSignal<AgentSessionsView | undefined>();
-  const [sessionsLoaded, setSessionsLoaded] = createSignal(false);
-
   const [setupView, setSetupView] = createSignal<AgentSetupView | undefined>();
   const [setupLoaded, setSetupLoaded] = createSignal(false);
 
   // The panel stays mounted across project switches: drop the previous project's
-  // views so the cards show their loading state. The setup and sessions effects
-  // below refetch on their own because they read projectId.
+  // views so the cards show their loading state. The setup effect below
+  // refetches on its own because it reads projectId.
   createEffect(
     on(
       () => props.projectId,
       () => {
         setSetupView(undefined);
         setSetupLoaded(false);
-        setSessionsView(undefined);
-        setSessionsLoaded(false);
         setCompileResult(undefined);
         setDriftResult(undefined);
       },
@@ -98,34 +91,7 @@ export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSetti
   };
 
   createEffect(() => {
-    if (props.tab === "access") void refreshSetup();
-  });
-
-  const refreshSessions = async () => {
-    const projectId = props.projectId.trim();
-    const root = globalThis as {
-      polterware?: { core?: { work?: { listAgentSessions?: (payload: { projectId: string }) => Promise<unknown> } } };
-    };
-    const list = root.polterware?.core?.work?.listAgentSessions;
-    if (!list || !projectId) {
-      setSessionsLoaded(true);
-      return;
-    }
-    try {
-      setSessionsView(mapAgentSessions(await list({ projectId })));
-    } catch (error: unknown) {
-      pushToast(error instanceof Error ? error.message : "Could not read sessions.", "danger");
-    } finally {
-      setSessionsLoaded(true);
-    }
-  };
-
-  // Sessions start and end outside the renderer, so poll while the tab is open.
-  createEffect(() => {
-    if (props.tab !== "sessions") return;
-    void refreshSessions();
-    const timer = setInterval(() => void refreshSessions(), 5000);
-    onCleanup(() => clearInterval(timer));
+    if (props.tab === "setup" || props.tab === "hooks") void refreshSetup();
   });
 
   const refreshMcp = async () => {
@@ -239,60 +205,47 @@ export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSetti
       .finally(() => setDriftBusy(false));
   };
 
-  onMount(() => {
-    void refreshMcp();
+  createEffect(() => {
+    if (props.tab === "mcp") void refreshMcp();
   });
 
   const refreshCurrent = () => {
-    if (props.tab === "access") {
-      void refreshMcp();
-      void refreshSetup();
-    } else if (props.tab === "sessions") {
-      void refreshSessions();
-    } else {
-      runCompile();
-      runDrift();
-    }
+    if (props.tab === "mcp") void refreshMcp();
+    else void refreshSetup();
   };
-
-  const refreshDisabled = () =>
-    (props.tab === "access" && mcpBusy()) || (props.tab === "context" && (compileBusy() || driftBusy()));
 
   return (
     <div class="flex flex-col gap-6 text-[12.5px]">
-      <div class="-mb-3 flex justify-end">
-        <Button size="sm" variant="ghost" disabled={refreshDisabled()} onClick={refreshCurrent}>
-          <RefreshCw size={14} />
-          Refresh
-        </Button>
-      </div>
       <Switch>
-        <Match when={props.tab === "access"}>
+        <Match when={props.tab === "mcp"}>
           <McpStatusCard
             status={mcpStatus()}
             busy={mcpBusy()}
             onStart={() => startMcp()}
             onStop={() => stopMcp()}
           />
+        </Match>
+        <Match when={props.tab === "setup" || props.tab === "hooks"}>
           <AgentSetupCard
+            section={props.tab === "hooks" ? "hooks" : "setup"}
             setup={setupView()}
             loaded={setupLoaded()}
             onToggle={(name, enabled) => void toggleHook(name, enabled)}
           />
+        </Match>
+        <Match when={props.tab === "skill"}>
           <SkillCard />
         </Match>
 
-        <Match when={props.tab === "sessions"}>
-          <AgentSessionsCard view={sessionsView()} loaded={sessionsLoaded()} />
-        </Match>
-
-        <Match when={props.tab === "context"}>
+        <Match when={props.tab === "oracle"}>
           <SettingsSection
             title="Oracle"
             description="The exact text an agent receives for one node, card, or title."
           >
             <OraclePreviewCard projectId={props.projectId} query={workQuery()} />
           </SettingsSection>
+        </Match>
+        <Match when={props.tab === "compile"}>
           <SettingsSection
             title="Compile context"
             description="The ranked context package an agent gets for a query, within a token budget."
@@ -310,6 +263,8 @@ export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSetti
               onCompile={() => runCompile()}
             />
           </SettingsSection>
+        </Match>
+        <Match when={props.tab === "drift"}>
           <SettingsSection
             title="Drift check"
             description="The narrow drift checker over the project model. Findings are advisory."
@@ -325,6 +280,14 @@ export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSetti
           </SettingsSection>
         </Match>
       </Switch>
+      <Show when={props.tab === "mcp" || props.tab === "setup" || props.tab === "hooks"}>
+        <div class="flex justify-end">
+          <Button size="sm" variant="ghost" disabled={props.tab === "mcp" && mcpBusy()} onClick={refreshCurrent}>
+            <RefreshCw size={14} aria-hidden />
+            Refresh
+          </Button>
+        </div>
+      </Show>
     </div>
   );
 }

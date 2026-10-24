@@ -20,7 +20,7 @@ export function ScopePicker(props: {
   return (
     <Select
       size="sm"
-      class={props.class ?? "w-56"}
+      class={props.class ?? "w-full min-w-0"}
       aria-label={props["aria-label"] ?? "Atlas scope"}
       options={options()}
       value={props.value}

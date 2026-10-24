@@ -15,25 +15,27 @@ export function ShortcutsPage() {
 
   return (
     <div class="flex flex-col gap-6">
-      <p class="m-0 px-1 text-[11.5px] text-[var(--color-text-muted)]">
-        Shortcuts apply on this computer. Architecture chords work when the canvas is focused and you
-        are not typing in a field. Escape cancels recording and stays reserved for dialogs.
-      </p>
-      <For each={GROUPS}>
-        {(group) => (
-          <SettingsSection title={SHORTCUT_GROUP_LABELS[group]}>
-            <For each={shortcutsInGroup(group)}>
-              {(command) => (
-                <ShortcutRow
-                  command={command}
-                  recordingId={recordingId()}
-                  onRecordingChange={setRecordingId}
-                />
-              )}
-            </For>
-          </SettingsSection>
-        )}
-      </For>
+      <SettingsSection
+        title="Shortcuts"
+        description="Shortcuts apply on this computer. Architecture chords work when the canvas is focused and you are not typing in a field. Escape cancels recording and stays reserved for dialogs."
+      >
+        <For each={GROUPS}>
+          {(group) => (
+            <div class="flex flex-col gap-4">
+              <h4 class="m-0 text-[12px] font-medium text-[var(--color-text-muted)]">{SHORTCUT_GROUP_LABELS[group]}</h4>
+              <For each={shortcutsInGroup(group)}>
+                {(command) => (
+                  <ShortcutRow
+                    command={command}
+                    recordingId={recordingId()}
+                    onRecordingChange={setRecordingId}
+                  />
+                )}
+              </For>
+            </div>
+          )}
+        </For>
+      </SettingsSection>
     </div>
   );
 }

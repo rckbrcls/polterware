@@ -1,5 +1,5 @@
 import { For, Show } from "solid-js";
-import { Button, Field, Input, StatusChip } from "@polterware/frontend-design-system";
+import { Button, Field, FileText, IconTile, Input, Link, StatusChip } from "@polterware/frontend-design-system";
 import type { CompilePreviewResult } from "./agents-types";
 
 /** CompileContext playground for the current project. */
@@ -80,34 +80,42 @@ export function CompilePreviewCard(props: {
               <ol class="m-0 flex list-none flex-col gap-4 p-0">
                 <For each={result().items}>
                   {(item) => (
-                    <li class="flex min-w-0 flex-col gap-1">
-                      <p class="m-0 text-[12.5px] text-[var(--color-text-primary)]">{item.title}</p>
-                      <p class="m-0 truncate font-mono text-[11px] text-[var(--color-text-muted)]">
-                        {[item.kind, item.truthClass, item.source, item.path].filter(Boolean).join(" · ")}
-                      </p>
-                      <Show when={item.excerpt}>
-                        <p class="m-0 line-clamp-2 text-[12px] text-[var(--color-text-secondary)]">
-                          {item.excerpt}
+                    <li class="flex min-w-0 items-start gap-3">
+                      <IconTile size={24} tone="knowledge" seed={item.title} class="shrink-0">
+                        <FileText size={14} />
+                      </IconTile>
+                      <div class="flex min-w-0 flex-1 flex-col gap-1">
+                        <p class="m-0 text-[12.5px] text-[var(--color-text-primary)]">{item.title}</p>
+                        <p class="m-0 truncate font-mono text-[11px] text-[var(--color-text-muted)]">
+                          {[item.kind, item.truthClass, item.source, item.path].filter(Boolean).join(" · ")}
                         </p>
-                      </Show>
-                      <Show when={item.reasons.length > 0}>
-                        <p class="m-0 text-[11.5px] text-[var(--color-text-muted)]">
-                          Why: {item.reasons.join(", ")}
-                        </p>
-                      </Show>
-                      <Show when={item.evidence.length > 0}>
-                        <ul class="m-0 flex list-none flex-col gap-0.5 p-0">
-                          <For each={item.evidence}>
-                            {(ev) => (
-                              <li class="truncate text-[11.5px] text-[var(--color-text-muted)]">
-                                Evidence · {ev.kind}
-                                {ev.path ? ` · ${ev.path}` : ""}
-                                {ev.summary ? ` — ${ev.summary}` : ""}
-                              </li>
-                            )}
-                          </For>
-                        </ul>
-                      </Show>
+                        <Show when={item.excerpt}>
+                          <p class="m-0 line-clamp-2 text-[12px] text-[var(--color-text-secondary)]">
+                            {item.excerpt}
+                          </p>
+                        </Show>
+                        <Show when={item.reasons.length > 0}>
+                          <p class="m-0 text-[11.5px] text-[var(--color-text-muted)]">
+                            Why: {item.reasons.join(", ")}
+                          </p>
+                        </Show>
+                        <Show when={item.evidence.length > 0}>
+                          <ul class="m-0 flex list-none flex-col gap-0.5 p-0">
+                            <For each={item.evidence}>
+                              {(ev) => (
+                                <li class="flex min-w-0 items-center gap-1.5 text-[11.5px] text-[var(--color-text-muted)]">
+                                  <Link size={12} aria-hidden class="shrink-0" />
+                                  <span class="truncate">
+                                    Evidence · {ev.kind}
+                                    {ev.path ? ` · ${ev.path}` : ""}
+                                    {ev.summary ? ` — ${ev.summary}` : ""}
+                                  </span>
+                                </li>
+                              )}
+                            </For>
+                          </ul>
+                        </Show>
+                      </div>
                     </li>
                   )}
                 </For>

@@ -12,8 +12,9 @@ import { AgentsSettingsPanel, type AgentsSettingsTab } from "./agents-settings-p
 import { CoreCard } from "./core-card";
 import { PrivacyCard } from "./privacy-card";
 import { dynamicSettingsEntries, SETTINGS_SEARCH_ENTRIES } from "./settings-search";
+import type { ProjectSettingsPageId } from "./types";
 
-export type { EnvironmentKind, ProjectEnvironment, ProjectGeneralSettings, ProjectRepository, ProtectionLevel, SettingsTabId } from "./types";
+export type { EnvironmentKind, ProjectEnvironment, ProjectGeneralSettings, ProjectRepository, ProjectSettingsPageId, ProtectionLevel, SettingsTabId } from "./types";
 export type { CreateEnvironmentDraft } from "./create-environment-dialog";
 export { SETTINGS_ENVIRONMENT_MOCKS, PROJECT_GENERAL_SETTINGS_MOCK } from "./fixtures";
 export {
@@ -36,7 +37,7 @@ export { AppearanceCard } from "./appearance-card";
 export { PrivacyCard } from "./privacy-card";
 export { ProjectSettingsDialog } from "./project-settings-dialog";
 
-/** App settings: agents, integrations, shortcuts, and this computer. */
+/** Project settings, agents, shortcuts, and this computer. */
 export function SettingsView(props: {
   open: boolean;
   onClose: () => void;
@@ -44,8 +45,8 @@ export function SettingsView(props: {
   projectId?: string;
   loading?: boolean;
   onTabChange?: (t: string) => void;
-  /** Integrations tab body; the host supplies it so this package stays independent of the Integrations feature. */
-  renderIntegrations?: (tab: "connected" | "catalog", setTab: (tab: "connected" | "catalog") => void) => JSX.Element;
+  /** Project controls share the host callbacks with the project switcher dialog. */
+  renderProjectSettings?: (tab: ProjectSettingsPageId) => JSX.Element;
   onResetLocalStore?: () => void;
 }) {
   const tab = () => normalizeSettingsTab(props.tab);
@@ -53,7 +54,7 @@ export function SettingsView(props: {
 
   const activeTab = () => SETTINGS_TABS.find((item) => item.id === tab());
   const headingFor = (item?: (typeof SETTINGS_TABS)[number]) =>
-    item && (item.group === "Agents" || item.group === "Integrations") ? `${item.group} · ${item.label}` : item?.label;
+    item && (item.group === "Agents" || item.group === "Project") ? `${item.group} · ${item.label}` : item?.label;
 
   const searchEntries = createMemo(() =>
     [...SETTINGS_SEARCH_ENTRIES, ...dynamicSettingsEntries()].map((entry) => ({ ...entry, item: entry.tab })),
@@ -64,7 +65,7 @@ export function SettingsView(props: {
       <SettingsDialog
         open={props.open}
         title="Settings"
-        items={SETTINGS_TABS.map((item) => ({ id: item.id, label: item.label, group: item.group, icon: item.tooltip?.icon }))}
+        items={SETTINGS_TABS.map((item) => ({ id: item.id, label: item.label, group: item.group, icon: item.tooltip.icon }))}
         active={tab()}
         onSelect={(id) => props.onTabChange?.(id)}
         searchEntries={searchEntries()}
@@ -72,6 +73,10 @@ export function SettingsView(props: {
         loading={props.loading}
         onClose={props.onClose}
       >
+        <Show when={activeTab()?.group === "Project"}>
+          {props.renderProjectSettings?.(tab() as ProjectSettingsPageId)}
+        </Show>
+
         <Show when={tab().startsWith("agents-")}>
           <AgentsSettingsPanel
             projectId={props.projectId ?? ""}
@@ -79,21 +84,20 @@ export function SettingsView(props: {
           />
         </Show>
 
-        <Show when={tab().startsWith("integrations-")}>
-          {props.renderIntegrations?.(
-            tab() === "integrations-catalog" ? "catalog" : "connected",
-            (next) => props.onTabChange?.(`integrations-${next}`),
-          )}
-        </Show>
-
         <Show when={tab() === "shortcuts"}>
           <ShortcutsPage />
         </Show>
 
-        <Show when={tab() === "advanced"}>
+        <Show when={tab() === "appearance"}>
           <AppearanceCard />
+        </Show>
+        <Show when={tab() === "local-core"}>
           <CoreCard />
+        </Show>
+        <Show when={tab() === "privacy"}>
           <PrivacyCard />
+        </Show>
+        <Show when={tab() === "app-danger"}>
           <SettingsSection
             title="Danger zone"
             description="Reset recreates the demonstration project in the local store. Architecture, resources, and knowledge are replaced."

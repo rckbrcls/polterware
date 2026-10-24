@@ -1,4 +1,4 @@
-import { For, createEffect, createMemo, createSignal, on, onMount } from "solid-js";
+import { createEffect, createMemo, createSignal, on, onMount } from "solid-js";
 import {
   dispatchBridge,
   mapDispatchHistory,
@@ -8,13 +8,12 @@ import {
 } from "@polterware/feature-dispatch";
 import { EntityDetailHost } from "@polterware/feature-shell";
 import {
-  FilterChip,
-  ToolbarIconButton,
+  FilterPopover,
   PageContent,
   PageToolbar,
   Tabs,
-  RefreshCw,
   pushToast,
+  type FilterPopoverGroup,
 } from "@polterware/frontend-design-system";
 import type { AgentRunDetail, ProjectChangeRow } from "./agents-types";
 import { agentsBridge, mapAgentRunDetail, mapProjectChanges } from "./agents-bridge";
@@ -143,6 +142,45 @@ export function ActivityPage(props: { projectId: string }) {
     }
   };
 
+  const dispatchFilterGroups = (): FilterPopoverGroup[] => {
+    const groups: FilterPopoverGroup[] = [
+      {
+        id: "tier",
+        label: "Tier",
+        selectionMode: "single",
+        options: knownTiers().map((tier) => ({
+          id: tier,
+          label: tier,
+          checked: dispatchTierFilter() === tier,
+          onCheckedChange: (checked: boolean) => {
+            const next = checked ? tier : "";
+            setDispatchTierFilter(next);
+            void refreshDispatchHistory(dispatchAgentFilter(), next);
+          },
+        })),
+      },
+    ];
+    const agents = knownAgents();
+    if (agents.length > 0) {
+      groups.push({
+        id: "agent",
+        label: "Agent",
+        selectionMode: "single",
+        options: agents.map((agent) => ({
+          id: agent,
+          label: agent,
+          checked: dispatchAgentFilter() === agent,
+          onCheckedChange: (checked: boolean) => {
+            const next = checked ? agent : "";
+            setDispatchAgentFilter(next);
+            void refreshDispatchHistory(next, dispatchTierFilter());
+          },
+        })),
+      });
+    }
+    return groups;
+  };
+
   const filteredDispatchEvents = createMemo(() => {
     const agent = dispatchAgentFilter();
     const tier = dispatchTierFilter();
@@ -190,59 +228,17 @@ export function ActivityPage(props: { projectId: string }) {
           />
         </PageToolbar.Tabs>
         <PageToolbar.Actions>
-          <div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Dispatch tier filter">
-            <FilterChip
-              selected={dispatchTierFilter() === ""}
-              onClick={() => {
-                setDispatchTierFilter("");
-                void refreshDispatchHistory(dispatchAgentFilter(), "");
-              }}
-            >
-              All tiers
-            </FilterChip>
-            <For each={knownTiers()}>
-              {(tier) => (
-                <FilterChip
-                  selected={dispatchTierFilter() === tier}
-                  onClick={() => {
-                    const next = dispatchTierFilter() === tier ? "" : tier;
-                    setDispatchTierFilter(next);
-                    void refreshDispatchHistory(dispatchAgentFilter(), next);
-                  }}
-                >
-                  {tier}
-                </FilterChip>
-              )}
-            </For>
-          </div>
-          <div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Dispatch agent filter">
-            <FilterChip
-              selected={dispatchAgentFilter() === ""}
-              onClick={() => {
-                setDispatchAgentFilter("");
-                void refreshDispatchHistory("", dispatchTierFilter());
-              }}
-            >
-              All agents
-            </FilterChip>
-            <For each={knownAgents()}>
-              {(agent) => (
-                <FilterChip
-                  selected={dispatchAgentFilter() === agent}
-                  onClick={() => {
-                    const next = dispatchAgentFilter() === agent ? "" : agent;
-                    setDispatchAgentFilter(next);
-                    void refreshDispatchHistory(next, dispatchTierFilter());
-                  }}
-                >
-                  {agent}
-                </FilterChip>
-              )}
-            </For>
-          </div>
-          <ToolbarIconButton label="Refresh" disabled={busy()} onClick={() => void refresh()}>
-            <RefreshCw size={14} />
-          </ToolbarIconButton>
+          <FilterPopover
+            ariaLabel="Activity filters"
+            title="Filter activity"
+            active={dispatchTierFilter() !== "" || dispatchAgentFilter() !== ""}
+            onClear={() => {
+              setDispatchTierFilter("");
+              setDispatchAgentFilter("");
+              void refreshDispatchHistory("", "");
+            }}
+            groups={dispatchFilterGroups()}
+          />
         </PageToolbar.Actions>
       </PageToolbar.Root>
       <PageContent class="flex min-h-0 flex-1 flex-col p-0">

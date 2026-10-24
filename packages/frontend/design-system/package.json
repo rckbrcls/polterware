@@ -26,7 +26,8 @@
     "@tiptap/starter-kit": "^3.31.3",
     "marked": "^18.0.14",
     "motion": "^13.4.4",
-    "turndown": "^7.2.4"
+    "turndown": "^7.2.4",
+    "uplot": "^1.6.32"
   },
   "devDependencies": {
     "@types/node": "^24.13.6",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { canExpandDetail, detailDisplayFor } from "./detail-display";
+import { canExpandDetail, detailDisplayFor, isDocumentDetail } from "./detail-display";
 
 describe("detailDisplayFor", () => {
   it("classifies peek, page, and both kinds", () => {
@@ -9,7 +9,7 @@ describe("detailDisplayFor", () => {
     expect(detailDisplayFor("change")).toBe("peek");
     expect(detailDisplayFor("evidence")).toBe("page");
     expect(detailDisplayFor("verdict")).toBe("page");
-    expect(detailDisplayFor("card")).toBe("both");
+    expect(detailDisplayFor("card")).toBe("page");
     expect(detailDisplayFor("arch-node")).toBe("both");
   });
 
@@ -22,5 +22,10 @@ describe("detailDisplayFor", () => {
     expect(canExpandDetail("fact")).toBe(false);
     expect(canExpandDetail("evidence")).toBe(true);
     expect(canExpandDetail("card")).toBe(true);
+  });
+
+  it("limits writing canvases to knowledge documents, preserving Atlas and fact details", () => {
+    for (const kind of ["verdict", "evidence", "card"]) expect(isDocumentDetail(kind)).toBe(true);
+    for (const kind of ["arch-view", "atlas-card", "fact", undefined]) expect(isDocumentDetail(kind)).toBe(false);
   });
 });

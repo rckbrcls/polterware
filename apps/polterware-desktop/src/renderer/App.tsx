@@ -35,6 +35,7 @@ import {
 import { ArchitectureView } from "@polterware/feature-architecture";
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
 import { hydrateAppearancePreferences, hydrateShortcutPreferences } from "@polterware/feature-settings/boot";
+import type { ProjectSettingsPageId } from "@polterware/feature-settings";
 import { CommandPalette } from "@polterware/feature-commander";
 import { PageLoading, pushToast, type TabItem } from "@polterware/frontend-design-system";
 import { detailDisplayFor, detailPanelStore, matchesShortcut } from "@polterware/frontend-state";
@@ -153,6 +154,18 @@ function isEnvironmentKind(kind: string): kind is EnvironmentItem["kind"] {
     || kind === "staging"
     || kind === "development"
     || kind === "local";
+}
+
+function dispatchTabsFor(section: string): TabItem[] {
+  if (section === "dispatch-routing") return [...SECTION_TABS["dispatch-routing"]];
+  if (section === "dispatch-usage") return [...SECTION_TABS["dispatch-usage"]];
+  return [...SECTION_TABS.dispatch];
+}
+
+function dispatchTabsLabel(section: string): string {
+  if (section === "dispatch-routing") return "Routing";
+  if (section === "dispatch-usage") return "Usage";
+  return "Runs";
 }
 
 export function App() {
@@ -386,8 +399,9 @@ export function App() {
   });
   onCleanup(() => setDetailExpandHandler(undefined));
 
-  function navigateSection(section: string) {
-    applyRoute(goSection(route(), section));
+  function navigateSection(section: string, tab?: string) {
+    const next = goSection(route(), section);
+    applyRoute(tab ? setTab(next, tab) : next);
   }
 
   /** Evidence opens in the Evidence list; Verdicts open in the Decisions list. */
@@ -430,15 +444,11 @@ export function App() {
 
   function handlePaletteCommand(id: string) {
     if (id === "nav.settings") {
-      applyRoute(openDialog(route(), { type: "project-settings" }), "silent");
+      applyRoute(openDialog(route(), { type: "settings", tab: "general" }), "silent");
       return;
     }
     if (id === "nav.agents") {
-      applyRoute(openDialog(route(), { type: "settings", tab: "agents-access" }), "silent");
-      return;
-    }
-    if (id === "nav.integrations") {
-      applyRoute(openDialog(route(), { type: "settings", tab: "integrations-connected" }), "silent");
+      applyRoute(openDialog(route(), { type: "settings", tab: "agents-mcp" }), "silent");
       return;
     }
     if (id.startsWith("nav.")) {
@@ -446,7 +456,7 @@ export function App() {
       return;
     }
     if (id === "action.open-sync") {
-      applyRoute(openDialog(route(), { type: "settings", tab: "advanced" }), "silent");
+      applyRoute(openDialog(route(), { type: "settings", tab: "local-core" }), "silent");
       return;
     }
     if (id === "action.create-node") {
@@ -454,12 +464,13 @@ export function App() {
       return;
     }
     if (id === "action.connect-integration") {
-      applyRoute(openDialog(route(), { type: "settings", tab: "integrations-catalog" }), "silent");
+      const target = route().section === "integrations" ? route() : setTab(goSection(route(), "integrations"), "catalog");
+      applyRoute(openDialog(target, { type: "connect-integration" }), route().section === "integrations" ? "silent" : "push");
     }
   }
 
   /** The global scope: an Atlas node path, or empty for the whole project. */
-  const [scope, setScope] = createSignal<WorkspaceScope>({ node: "", exact: false });
+  const [scope, setScope] = createSignal<WorkspaceScope>({ node: "" });
   const scopeNodes = createMemo<ScopeNodeItem[]>(() =>
     workspace().atlas.nodes.map((node) => ({
       id: node.id,
@@ -489,8 +500,8 @@ export function App() {
 
   function selectProject(projectId: string) {
     if (scope().node !== "") {
-      setActiveScope({ node: "", exact: false });
-      setScope({ node: "", exact: false });
+      setActiveScope({ node: "" });
+      setScope({ node: "" });
     }
     const environment =
       workspace().environments.find((item) => item.projectId === projectId) ?? workspace().environments[0];
@@ -926,6 +937,118 @@ export function App() {
     );
   }
 
+  function ProjectSettings(props: { embedded?: boolean; tab?: ProjectSettingsPageId }) {
+    return (
+      <ProjectSettingsDialog
+        open
+        embedded={props.embedded}
+        tab={props.tab}
+        onClose={() => applyRoute(closeDialog(route()), "silent")}
+        general={workspace().settings}
+        environments={workspace().settingsEnvironments}
+        repositories={workspace().repositories}
+        onAddRepository={async (draft) => {
+          try {
+            await persistAddProjectRepo(currentProjectId(), draft.name, draft.path);
+            pushToast(`Repository "${draft.name}" added.`, "success");
+            await refreshWorkspace(currentProjectId());
+          } catch (error: unknown) {
+            pushToast(error instanceof Error ? error.message : "Could not add repository.", "danger");
+            throw error;
+          }
+        }}
+        onRemoveRepository={async (name) => {
+          try {
+            await persistRemoveProjectRepo(currentProjectId(), name);
+            pushToast(`Repository "${name}" removed.`, "success");
+            await refreshWorkspace(currentProjectId());
+          } catch (error: unknown) {
+            pushToast(error instanceof Error ? error.message : "Could not remove repository.", "danger");
+            throw error;
+          }
+        }}
+        onBrowseRepository={async () => {
+          const selected = await window.polterware.app.selectDirectory();
+          return selected.path;
+        }}
+        onSaveGeneral={(settings) => {
+          void persistProjectSettings(
+            currentProjectId(),
+            settings,
+            workspace().settingsEnvironments,
+          ).then(async () => {
+            pushToast("Project settings saved.", "success");
+            await refreshWorkspace(currentProjectId());
+          }).catch((error: unknown) => {
+            pushToast(error instanceof Error ? error.message : "Could not save settings.", "danger");
+          });
+        }}
+        onCreateEnvironment={(draft) => {
+          void persistEnvironment({
+            projectId: currentProjectId(),
+            name: draft.name,
+            kind: draft.kind,
+            protection: draft.protection,
+            existingCount: workspace().settingsEnvironments.length,
+            settings: workspace().settings,
+          }).then(async () => {
+            pushToast(`Environment "${draft.name}" saved locally.`, "success");
+            await refreshWorkspace(currentProjectId());
+          }).catch((error: unknown) => {
+            pushToast(error instanceof Error ? error.message : "Could not save environment.", "danger");
+          });
+        }}
+        onSetDefaultEnvironment={(environmentId) => {
+          const environment = workspace().settingsEnvironments.find((item) => item.id === environmentId);
+          void persistEnvironmentDefault(workspace(), currentProjectId(), environmentId).then(async () => {
+            pushToast(
+              environment
+                ? `${environment.name} is now the default environment.`
+                : "Default environment updated.",
+              "success",
+            );
+            await refreshWorkspace(currentProjectId());
+          }).catch((error: unknown) => {
+            pushToast(error instanceof Error ? error.message : "Could not update default environment.", "danger");
+          });
+        }}
+        onDeleteEnvironment={(environmentId) => {
+          const environment = workspace().settingsEnvironments.find((item) => item.id === environmentId);
+          void persistDeleteEnvironment(currentProjectId(), environmentId).then(async () => {
+            pushToast(
+              environment
+                ? `Environment "${environment.name}" deleted.`
+                : "Environment deleted.",
+              "success",
+            );
+            await refreshWorkspace(currentProjectId());
+          }).catch((error: unknown) => {
+            pushToast(error instanceof Error ? error.message : "Could not delete environment.", "danger");
+          });
+        }}
+        onArchiveProject={() => {
+          const projectId = currentProjectId();
+          const name = workspace().settings.name;
+          void persistArchiveProject(projectId).then(async () => {
+            pushToast(`Project "${name}" archived.`, "success");
+            const listed = await loadProjects();
+            const fallback = listed.projects.find((project) => project.projectId !== projectId) ?? listed.projects[0];
+            if (fallback) {
+              selectProject(fallback.projectId);
+              await refreshWorkspace(fallback.projectId);
+            } else {
+              loadedProjectId = "";
+              setCreateProjectOpen(true);
+              setWorkspace({ ...emptyWorkspace(), available: true, projects: [] });
+            }
+          }).catch((error: unknown) => {
+            pushToast(error instanceof Error ? error.message : "Could not archive project.", "danger");
+          });
+        }}
+      />
+    );
+  }
+
   return (
     <Shell
       route={route}
@@ -941,7 +1064,7 @@ export function App() {
         applyRoute(setEnvironment(route(), environmentId))
       }
       onOpenCommander={() => setPaletteOpen(true)}
-      onOpenSettings={() => applyRoute(openDialog(route(), { type: "settings", tab: "agents-access" }), "silent")}
+      onOpenSettings={() => applyRoute(openDialog(route(), { type: "settings", tab: "general" }), "silent")}
       onOpenProjectSettings={() => applyRoute(openDialog(route(), { type: "project-settings" }), "silent")}
       settingsOpen={settingsDialogTab() !== null}
       onOpenCliReference={() => navigateSection("cli")}
@@ -1197,43 +1320,41 @@ export function App() {
           />
         </Match>
 
-        <Match when={route().section === "dispatch"}>
+        <Match
+          when={
+            route().section === "dispatch"
+            || route().section === "dispatch-routing"
+            || route().section === "dispatch-usage"
+          }
+        >
           <DispatchPage
             projectId={currentProjectId()}
             tab={route().tab}
+            tabs={dispatchTabsFor(route().section)}
+            tabsLabel={dispatchTabsLabel(route().section)}
             onTabChange={(tab) => applyRoute(setTab(route(), tab))}
           />
         </Match>
 
-        <Match when={route().section === "activity"}>
-          <ActivityPage projectId={currentProjectId()} />
-        </Match>
-
-        <Match when={route().section === "cli"}>
-          <CliReferencePage />
-        </Match>
-      </Switch>
-      </Suspense>
-
-      <Show when={settingsDialogTab()}>
-        <Suspense>
-          <SettingsView
-            open
-            tab={settingsDialogTab() ?? undefined}
-            onClose={() => applyRoute(closeDialog(route()), "silent")}
-            projectId={currentProjectId()}
-            loading={loading()}
-            onTabChange={(tab) => applyRoute(openDialog(route(), { type: "settings", tab: tab as ProjectSettingsTabId }), "silent")}
-            renderIntegrations={(integrationsTab, setIntegrationsTab) => (
+        <Match when={route().section === "integrations"}>
+          <Show when={currentProjectId()} keyed>
+            {(projectId) => (
               <IntegrationsView
-                projectId={currentProjectId()}
+                projectId={projectId}
                 providers={workspace().providers}
+                connectOpen={route().dialog?.type === "connect-integration"}
+                connectProviderId={(() => {
+                  const dialog = route().dialog;
+                  return dialog?.type === "connect-integration" ? dialog.providerId : undefined;
+                })()}
+                onOpenConnect={(providerId) => applyRoute(openDialog(route(), { type: "connect-integration", providerId }), "silent")}
+                onCloseConnect={() => applyRoute(closeDialog(route()), "silent")}
                 integrations={workspace().integrations}
                 resources={workspace().integrationResources}
                 syncRuns={workspace().syncRuns}
-                tab={integrationsTab}
+                tab={route().tab}
                 loading={loading() || !workspace().extensionsReady}
-                onTabChange={(next) => setIntegrationsTab(next as "connected" | "catalog")}
+                onTabChange={(next) => applyRoute(setTab(route(), next))}
                 onConnect={(provider) => {
                   void persistIntegrationConnection({
                     projectId: currentProjectId(),
@@ -1261,6 +1382,29 @@ export function App() {
                 }}
               />
             )}
+          </Show>
+        </Match>
+
+        <Match when={route().section === "activity"}>
+          <ActivityPage projectId={currentProjectId()} />
+        </Match>
+
+        <Match when={route().section === "cli"}>
+          <CliReferencePage />
+        </Match>
+      </Switch>
+      </Suspense>
+
+      <Show when={settingsDialogTab()}>
+        <Suspense>
+          <SettingsView
+            open
+            tab={settingsDialogTab() ?? undefined}
+            onClose={() => applyRoute(closeDialog(route()), "silent")}
+            projectId={currentProjectId()}
+            loading={loading()}
+            onTabChange={(tab) => applyRoute(openDialog(route(), { type: "settings", tab: tab as ProjectSettingsTabId }), "silent")}
+            renderProjectSettings={(tab) => <ProjectSettings embedded tab={tab} />}
             onResetLocalStore={() => {
               void resetLocalStore().then(async () => {
                 pushToast("Local store reset to the demonstration project.", "success");
@@ -1276,111 +1420,7 @@ export function App() {
 
       <Show when={route().dialog?.type === "project-settings"}>
         <Suspense>
-          <ProjectSettingsDialog
-            open
-            onClose={() => applyRoute(closeDialog(route()), "silent")}
-            general={workspace().settings}
-            environments={workspace().settingsEnvironments}
-            repositories={workspace().repositories}
-            onAddRepository={async (draft) => {
-              try {
-                await persistAddProjectRepo(currentProjectId(), draft.name, draft.path);
-                pushToast(`Repository "${draft.name}" added.`, "success");
-                await refreshWorkspace(currentProjectId());
-              } catch (error: unknown) {
-                pushToast(error instanceof Error ? error.message : "Could not add repository.", "danger");
-                throw error;
-              }
-            }}
-            onRemoveRepository={async (name) => {
-              try {
-                await persistRemoveProjectRepo(currentProjectId(), name);
-                pushToast(`Repository "${name}" removed.`, "success");
-                await refreshWorkspace(currentProjectId());
-              } catch (error: unknown) {
-                pushToast(error instanceof Error ? error.message : "Could not remove repository.", "danger");
-                throw error;
-              }
-            }}
-            onBrowseRepository={async () => {
-              const selected = await window.polterware.app.selectDirectory();
-              return selected.path;
-            }}
-            onSaveGeneral={(settings) => {
-              void persistProjectSettings(
-                currentProjectId(),
-                settings,
-                workspace().settingsEnvironments,
-              ).then(async () => {
-                pushToast("Project settings saved.", "success");
-                await refreshWorkspace(currentProjectId());
-              }).catch((error: unknown) => {
-                pushToast(error instanceof Error ? error.message : "Could not save settings.", "danger");
-              });
-            }}
-            onCreateEnvironment={(draft) => {
-              void persistEnvironment({
-                projectId: currentProjectId(),
-                name: draft.name,
-                kind: draft.kind,
-                protection: draft.protection,
-                existingCount: workspace().settingsEnvironments.length,
-                settings: workspace().settings,
-              }).then(async () => {
-                pushToast(`Environment "${draft.name}" saved locally.`, "success");
-                await refreshWorkspace(currentProjectId());
-              }).catch((error: unknown) => {
-                pushToast(error instanceof Error ? error.message : "Could not save environment.", "danger");
-              });
-            }}
-            onSetDefaultEnvironment={(environmentId) => {
-              const environment = workspace().settingsEnvironments.find((item) => item.id === environmentId);
-              void persistEnvironmentDefault(workspace(), currentProjectId(), environmentId).then(async () => {
-                pushToast(
-                  environment
-                    ? `${environment.name} is now the default environment.`
-                    : "Default environment updated.",
-                  "success",
-                );
-                await refreshWorkspace(currentProjectId());
-              }).catch((error: unknown) => {
-                pushToast(error instanceof Error ? error.message : "Could not update default environment.", "danger");
-              });
-            }}
-            onDeleteEnvironment={(environmentId) => {
-              const environment = workspace().settingsEnvironments.find((item) => item.id === environmentId);
-              void persistDeleteEnvironment(currentProjectId(), environmentId).then(async () => {
-                pushToast(
-                  environment
-                    ? `Environment "${environment.name}" deleted.`
-                    : "Environment deleted.",
-                  "success",
-                );
-                await refreshWorkspace(currentProjectId());
-              }).catch((error: unknown) => {
-                pushToast(error instanceof Error ? error.message : "Could not delete environment.", "danger");
-              });
-            }}
-            onArchiveProject={() => {
-              const projectId = currentProjectId();
-              const name = workspace().settings.name;
-              void persistArchiveProject(projectId).then(async () => {
-                pushToast(`Project "${name}" archived.`, "success");
-                const listed = await loadProjects();
-                const fallback = listed.projects.find((project) => project.projectId !== projectId) ?? listed.projects[0];
-                if (fallback) {
-                  selectProject(fallback.projectId);
-                  await refreshWorkspace(fallback.projectId);
-                } else {
-                  loadedProjectId = "";
-                  setCreateProjectOpen(true);
-                  setWorkspace({ ...emptyWorkspace(), available: true, projects: [] });
-                }
-              }).catch((error: unknown) => {
-                pushToast(error instanceof Error ? error.message : "Could not archive project.", "danger");
-              });
-            }}
-          />
+          <ProjectSettings />
         </Suspense>
       </Show>
 

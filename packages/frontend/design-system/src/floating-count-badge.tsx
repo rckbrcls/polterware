@@ -1,4 +1,5 @@
 import type { JSX } from "solid-js";
+import { CountBadge, type CountBadgeTone } from "./count-badge";
 import "./floating-count-badge.css";
 
 export type FloatingCountBadgeProps = {
@@ -8,7 +9,7 @@ export type FloatingCountBadgeProps = {
   class?: string;
 };
 
-export type FloatingCountBadgeTone = "info" | "warning" | "success" | "danger";
+export type FloatingCountBadgeTone = CountBadgeTone;
 
 export function hasFloatingCount(count: number | undefined): count is number {
   return count != null;
@@ -21,11 +22,11 @@ export function getFloatingCountAriaLabel(count: number, ariaLabel?: string): st
 /** Count attached to the top-right corner of an interactive control. */
 export function FloatingCountBadge(props: FloatingCountBadgeProps): JSX.Element {
   return (
-    <span
+    <CountBadge
+      count={props.count}
+      tone={props.tone}
       class={`pw-floating-count-badge pw-floating-count-badge--${props.tone ?? "info"} ${props.class ?? ""}`}
-      aria-label={getFloatingCountAriaLabel(props.count, props.ariaLabel)}
-    >
-      {props.count}
-    </span>
+      ariaLabel={getFloatingCountAriaLabel(props.count, props.ariaLabel)}
+    />
   );
 }

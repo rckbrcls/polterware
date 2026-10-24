@@ -21,7 +21,7 @@ Polterware's category is **Project Context & Change Intelligence for AI Coding**
 
 ## Current product boundary
 
-Polterware is both the umbrella and the main local-first app (`apps/polterware-desktop`), alongside Polterware Notes and Polterware Vitals. Polterware's first version is a local SQLite-backed Desktop with project surfaces Inbox, Work, Atlas, Truth, Dispatch, and Activity. Settings is fixed in the sidebar footer and holds Agents and Integrations. Inbox is the default route.
+Polterware is both the umbrella and the main local-first app (`apps/polterware-desktop`), alongside Polterware Notes and Polterware Vitals. Polterware's first version is a local SQLite-backed Desktop with project surfaces Inbox, Work, Atlas, Truth, Dispatch, Integrations, and Activity. Settings is fixed in the sidebar footer and holds Project, Agents, and App preferences. Inbox is the default route.
 
 The umbrella is an ecosystem, not a list: apps and tools live under Polterware only when they can integrate with the others. See [`docs/ecosystem.md`](docs/ecosystem.md) for the admission criteria and the current roster.
 
@@ -59,15 +59,15 @@ The monorepo also hosts Polterware Notes, a separate local-first app with its ow
   - Facts are statements about the project (declared, observed, inferred, or verified); each lists the evidence that backs it.
   - Evidence is one list of `source`, `doc`, and `runbook` items with a kind filter. Sources are registered project-relative paths (`kind = source`); Import from project root runs `ImportProjectSources` for the MVP file set. Generic filesystem indexing beyond that set is not shipped.
   - Resources are Atlas components; there is no separate Inventory surface.
-- Dispatch: Runs, Worktrees, Pace, Tiers & Agents. A dispatch run is a core-executed delegation in `backend/domains/dispatch`. It may reference an AgentRun id and a Work card slug, and it is not itself an AgentRun. CLI (`polterware dispatch`) and the TUI read it through the core. There is no Dispatch MCP tool. Live output stays on Runs. Quota comes only from the CLIs' official protocols; unknown usage stays unknown.
+- Dispatch: sidebar section with three routes. Runs holds Runs and Agents. Routing holds Tiers and Learning. Usage holds Stats. Agents show quota and pace per agent. Worktree info lives on the run card. A dispatch run is a core-executed delegation in `backend/domains/dispatch`. It may reference an AgentRun id and a Work card slug, and it is not itself an AgentRun. CLI (`polterware dispatch`) and the TUI read it through the core. There is no Dispatch MCP tool. Live output stays on Runs. Quota comes only from the CLIs' official protocols; unknown usage stays unknown.
+- Integrations: one sidebar route after Dispatch, with Connected and Catalog tabs (**KEEP** — evidence + Connect UI).
 - Activity: flat page with the Unified Change History of justified changes across every surface, plus dispatch history entries (started, verified, merged, failed), filterable by person, agent, and tier. It has no data of its own. Opening a dispatch entry shows a summary, not the live log.
 - Settings (dialog with a grouped rail):
-  - Project: General, Environments
-  - Agents: Access, Sessions, Context
-  - Integrations: Connected, Catalog (**KEEP** — evidence + Connect UI)
-  - App: Shortcuts, Advanced
+  - Project: General, Repositories, Environments, Danger zone (archive project)
+  - Agents: MCP server, Agent setup, Hooks, AI skill, Oracle, Compile context, Drift check
+  - App: Shortcuts, Appearance, Local core, Privacy, Danger zone (reset local store)
 
-Scope is a global filter, not a surface: the title bar scope switcher picks an Atlas node (system, domain, or component) or the whole project. It narrows Work cards (through their component), Decisions, Facts, Evidence, Inbox/Drift, the Context Compiler, `polterware query|status|inbox|oracle --scope <node> [--exact]`, and the MCP `scope` argument. An entity has one optional scope (`scope_node_id`); no scope means the whole project and stays visible under any filter. Decisions take `scope:` in Polter; derived Inbox/Drift items are scoped with `polterware scope item <key> <node>`.
+Scope is a global filter, not a surface: the title bar scope switcher picks an Atlas node (system, domain, or component) or the whole project, always including ancestors (non-exact). It narrows Work cards (through their component), Decisions, Facts, Evidence, Inbox/Drift, the Context Compiler, `polterware query|status|inbox|oracle --scope <node> [--exact]`, and the MCP `scope` argument. An entity has one optional scope (`scope_node_id`); no scope means the whole project and stays visible under any filter. Decisions take `scope:` in Polter; derived Inbox/Drift items are scoped with `polterware scope item <key> <node>`.
 
 Keep project and environment switchers, Commander, history controls, and Settings. Do not introduce additional product surfaces without an approved decision.
 

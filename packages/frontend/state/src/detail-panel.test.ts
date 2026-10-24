@@ -155,6 +155,28 @@ describe("detailPanelStore", () => {
     expect(store()).toMatchObject({ expanded: true, activeTarget: firstTarget });
   });
 
+  it("starts document properties closed and resets visibility between documents", () => {
+    for (const entityKind of ["verdict", "evidence", "card"]) {
+      const target = { scopeId, entityId: entityKind, entityKind };
+      store().activateTarget(target);
+      expect(store()).toMatchObject({ activeTarget: target, open: false });
+      store().show();
+      expect(store().open).toBe(true);
+    }
+    store().activateTarget(firstTarget);
+    expect(store()).toMatchObject({ activeTarget: firstTarget, open: true });
+  });
+
+  it("keeps properties closed when a document is opened through pending navigation", () => {
+    const target = { scopeId: nextScopeId, entityId: "evidence-1", entityKind: "evidence" };
+    store().registerCollection({ scopeId, status: "ready", targets: [firstTarget] });
+    store().show();
+    store().requestTarget(target);
+    store().unregisterCollection(scopeId);
+    store().registerCollection({ scopeId: nextScopeId, status: "ready", targets: [target] });
+    expect(store()).toMatchObject({ activeTarget: target, pendingTarget: null, open: false });
+  });
+
   it("clearTarget shows the empty state and a refresh keeps it empty", () => {
     store().registerCollection({ scopeId, status: "ready", targets: [firstTarget, secondTarget] });
 

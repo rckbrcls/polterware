@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS dispatch_runs (
   timeout_sec INTEGER NOT NULL DEFAULT 0,
   session_id TEXT NOT NULL DEFAULT '',
   resumed_of TEXT NOT NULL DEFAULT '',
+  parent_run_id TEXT NOT NULL DEFAULT '',
   pid INTEGER NOT NULL DEFAULT 0,
   agent_pid INTEGER NOT NULL DEFAULT 0,
   proc_start TEXT NOT NULL DEFAULT '',

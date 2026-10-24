@@ -2,6 +2,7 @@ import { ChevronRight, ListFilter } from "./hugeicons";
 import type { JSX } from "solid-js";
 import { For, Show, createMemo, createSignal, onCleanup } from "solid-js";
 import { Button } from "./button";
+import { CountBadge } from "./count-badge";
 import { FilterChip } from "./filter-chip";
 import {
   FilterOptionsHeader,
@@ -265,9 +266,11 @@ export function FilterPopover(props: FilterPopoverProps) {
                           </Show>
                           <span class="min-w-0 flex-1 truncate">{group.label}</span>
                           <Show when={checkedCount() > 0}>
-                            <span class="pw-filter-popover-count" aria-label={`${checkedCount()} selected`}>
-                              {checkedCount()}
-                            </span>
+                            <CountBadge
+                              count={checkedCount()}
+                              class="pw-filter-popover-count"
+                              ariaLabel={`${checkedCount()} selected`}
+                            />
                           </Show>
                           <ChevronRight size={14} class="shrink-0 text-[var(--color-text-muted)]" aria-hidden />
                         </MenuItem>

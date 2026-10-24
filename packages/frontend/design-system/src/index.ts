@@ -8,6 +8,8 @@ if (typeof document !== "undefined") installSpringCssProperties();
 export { Button, LinkButton } from "./button";
 export type { ButtonProps, ButtonVariant, ButtonSize, ButtonTone, LinkButtonProps } from "./button";
 export { Badge } from "./badge";
+export { CountBadge } from "./count-badge";
+export type { CountBadgeProps, CountBadgeTone } from "./count-badge";
 export { FloatingCountBadge } from "./floating-count-badge";
 export type {
   FloatingCountBadgeProps,
@@ -235,8 +237,10 @@ export { IconPicker, PICKER_ICONS, type IconPickerProps, type PickerIconName } f
 export { TreeView, type TreeViewProps, type TreeViewNode } from "./tree-view";
 export { SegmentDisplay, type SegmentDisplayProps } from "./segment-display";
 export { ProgressRing, type ProgressRingProps } from "./progress-ring";
+export { ProgressBar, type ProgressBarProps } from "./progress-bar";
 export { Heatmap, heatmapLevel, type HeatmapProps, type HeatmapDay } from "./heatmap";
 export { CalendarGrid, type CalendarGridProps } from "./calendar-grid";
+export { SparkChart, type SparkChartProps } from "./spark-chart";
 
 /* Load after component chrome so keyboard focus remains visible. */
 import "./accessibility.css";

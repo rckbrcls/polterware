@@ -1,4 +1,4 @@
-import type { BotAvatarType } from "@polterware/bot-avatars";
+import type { BotAvatarType } from "./types";
 
 /**
  * Known agents use a library body that still reads under the fur, plus the

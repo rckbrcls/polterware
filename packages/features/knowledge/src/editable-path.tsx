@@ -13,19 +13,22 @@ export function EditablePath(props: {
       fallback={
         <button
           type="button"
-          class="pw-knowledge-path font-mono pw-selectable"
+          class="pw-knowledge-path pw-selectable"
+          classList={{ "font-mono": Boolean(props.value) }}
+          data-empty={props.value ? undefined : ""}
           disabled={!props.onChange}
-          title={props.onChange ? "Edit path relative to the project root" : undefined}
+          title={props.value || (props.onChange ? "Path relative to the project root" : undefined)}
           onClick={() => setEditing(true)}
         >
-          {props.value || "Set path"}
+          {props.value || (props.onChange ? "Set path" : "No path")}
         </button>
       }
     >
       <Input
         size="sm"
-        class="w-[320px] max-w-full font-mono"
+        class="pw-knowledge-path-control w-full font-mono"
         value={props.value}
+        placeholder="path/relative/to/project-root"
         aria-label="Path relative to the project root"
         autofocus
         onInput={(event) => props.onChange?.(event.currentTarget.value)}

@@ -1,90 +1,28 @@
-/* Knowledge document canvas inside DetailPanel layout="document".
- * Scroll lives on .pw-detail-panel__body — this tree must grow with content. */
-
-.pw-knowledge-doc {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  min-height: 100%;
-  flex-direction: column;
-}
-
-.pw-knowledge-doc__body {
-  position: relative;
-  display: flex;
-  min-width: 0;
-  flex: 1 0 auto;
-  flex-direction: column;
-  /* Extra bottom pad so the floating format dock has room while sticky */
-  padding: 20px 20px 24px;
-}
-
-.pw-knowledge-doc__column {
-  display: flex;
-  width: 100%;
-  max-width: 760px;
-  min-height: 0;
-  flex: 1 0 auto;
-  flex-direction: column;
-  margin-inline: auto;
-  gap: 20px;
-}
-
-.pw-knowledge-doc__tabs {
-  min-width: 0;
-}
-
-/* Title + inline properties + linked entities: chrome around the document, not a form. */
-.pw-knowledge-doc__header {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.pw-knowledge-doc__title {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-}
-
-/* Note-style title: same borderless field as the Polterware Notes page. */
-.pw-knowledge-doc__title-input.pw-knowledge-doc__title-input {
-  height: auto;
-  padding: 2px 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--color-text-primary);
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-}
-
-.pw-knowledge-doc__title-input.pw-knowledge-doc__title-input:focus,
-.pw-knowledge-doc__title-input.pw-knowledge-doc__title-input:focus-visible {
-  outline: none;
-  box-shadow: none;
-}
-
+/* Editable path: a full-width row value that wraps instead of truncating. */
 .pw-knowledge-path {
+  display: block;
+  width: 100%;
+  min-width: 0;
   max-width: 100%;
-  overflow: hidden;
+  min-height: var(--control-height-sm);
+  flex: 1 0 100%;
   border: 0;
   border-radius: var(--radius-control);
-  margin-inline: -6px;
   background: transparent;
   color: var(--color-text-primary);
   cursor: text;
   font-size: 12px;
-  padding: 2px 6px;
+  line-height: 1.5;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  padding: 3px 8px;
   text-align: left;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.pw-knowledge-path[data-empty] {
+  color: var(--color-text-muted);
 }
 
 .pw-knowledge-path:hover:not(:disabled) {
@@ -93,26 +31,4 @@
 
 .pw-knowledge-path:disabled {
   cursor: default;
-}
-
-.pw-knowledge-doc__meta {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  border-bottom: 1px solid var(--color-border-subtle);
-  gap: 10px;
-  padding-bottom: 16px;
-}
-
-/* Every property may be hidden when empty; drop the divider with them. */
-.pw-knowledge-doc__meta:not(:has(> :not(:empty))) {
-  display: none;
-}
-
-/* Header titles retain editing while matching the shared compact identity. */
-.pw-detail-panel__header-title .pw-knowledge-doc__title-input.pw-knowledge-doc__title-input {
-  width: 100%;
-  font-size: 14px;
-  line-height: 1.35;
-  text-align: inherit;
 }

@@ -272,7 +272,7 @@ export function AddToArchitectureDialog(props: {
                 fallback={
                   <div class="flex flex-col items-center gap-3 px-2 py-10 text-center">
                     <p class="m-0 text-[12px] text-[var(--color-text-muted)]">
-                      No synced resources yet. Connect an integration in Settings and sync it.
+                      No synced resources yet. Connect a provider in Integrations · Catalog and refresh its metadata.
                     </p>
                   </div>
                 }

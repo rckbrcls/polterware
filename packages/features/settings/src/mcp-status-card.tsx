@@ -1,5 +1,5 @@
 import { Show } from "solid-js";
-import { Button, StatusChip, pushToast } from "@polterware/frontend-design-system";
+import { Button, Cpu, Database, Plug, SourceCodeIcon, StatusChip, pushToast } from "@polterware/frontend-design-system";
 import type { McpStatusView } from "./agents-types";
 import { SettingsRow, SettingsSection } from "./settings-section";
 
@@ -32,7 +32,7 @@ export function McpStatusCard(props: {
       title="MCP server"
       description="A local helper that lets MCP clients read and write this project through the core."
     >
-      <SettingsRow label="Local MCP helper">
+      <SettingsRow icon={Plug} tone="integration" seed="mcp-helper" label="Local MCP helper">
         <Show when={status()} fallback={<StatusChip tone="muted" label="Checking" />}>
           <StatusChip tone={running() ? "ok" : "muted"} label={running() ? "Running" : "Stopped"} />
         </Show>
@@ -50,13 +50,13 @@ export function McpStatusCard(props: {
         </Show>
       </SettingsRow>
 
-      <SettingsRow label="Process">
+      <SettingsRow icon={Cpu} seed="mcp-process" label="Process">
         <span class="font-mono pw-selectable text-[12px] text-[var(--color-text-secondary)]">
           {status()?.pid ? `PID ${status()?.pid}` : "—"}
         </span>
       </SettingsRow>
 
-      <SettingsRow label="Database">
+      <SettingsRow icon={Database} tone="data" seed="mcp-database" label="Database">
         <span
           class="max-w-[20rem] truncate font-mono pw-selectable text-[12px] text-[var(--color-text-secondary)]"
           title={status()?.dbPath}
@@ -65,7 +65,7 @@ export function McpStatusCard(props: {
         </span>
       </SettingsRow>
 
-      <SettingsRow label="Connect a client" description="Paste into your agent's MCP settings.">
+      <SettingsRow icon={SourceCodeIcon} seed="mcp-client" label="Connect a client" description="Paste into your agent's MCP settings.">
         <Button
           size="sm"
           variant="ghost"

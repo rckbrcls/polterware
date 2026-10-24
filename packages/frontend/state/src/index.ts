@@ -1,6 +1,6 @@
 import { createSignal, getOwner, onCleanup, type Accessor } from "solid-js";
 import { createStore } from "zustand/vanilla";
-import { canExpandDetail } from "./detail-display";
+import { canExpandDetail, isDocumentDetail } from "./detail-display";
 
 export function createSelectionStore() {
   const [systemId, setSystemId] = createSignal<string | null>("sys-local");
@@ -154,7 +154,7 @@ export const detailPanelStore = createStore<DetailPanelState>()(
       },
 
       requestTarget: (target) => {
-        set({ pendingTarget: target, open: true });
+        set({ pendingTarget: target, open: !isDocumentDetail(target.entityKind) });
       },
 
       activateTarget: (target) => {
@@ -165,7 +165,7 @@ export const detailPanelStore = createStore<DetailPanelState>()(
           lastTarget: target,
           pendingTarget: null,
           selectionScope: target.scopeId,
-          open: true,
+          open: !isDocumentDetail(target.entityKind),
           expanded: state.activeScope === target.scopeId ? state.expanded : false,
         });
       },

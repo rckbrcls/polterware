@@ -185,7 +185,11 @@ func (d Deps) evaluate(ctx context.Context, cs []Candidate, live bool) []Candida
 // once for the union; each group is ranked on its own so a relaxed candidate
 // never outranks a filtered one.
 func (d Deps) plan(ctx context.Context, o Options, live bool) (ordered, balanced []Candidate, rejected []string, relaxed bool) {
-	primary, rejected := d.selectCandidatesWith(ctx, o)
+	return d.planWithCooldowns(ctx, o, live, storeCooldowns(ctx, d.Store, d.now()))
+}
+
+func (d Deps) planWithCooldowns(ctx context.Context, o Options, live bool, cool map[string]time.Time) (ordered, balanced []Candidate, rejected []string, relaxed bool) {
+	primary, rejected := d.selectCandidatesCool(ctx, o, cool)
 	var extra []Candidate
 	if o.Filters.Relax && policyRequestReason(d.Policy, o.Filters) == "" {
 		fb := o
@@ -193,7 +197,7 @@ func (d Deps) plan(ctx context.Context, o Options, live bool) (ordered, balanced
 		if fb.Tier == "" {
 			fb.Tier = adapter.TierNormal
 		}
-		found, why := d.selectCandidatesWith(ctx, fb)
+		found, why := d.selectCandidatesCool(ctx, fb, cool)
 		for _, c := range found {
 			dup := false
 			for _, p := range primary {
@@ -210,7 +214,7 @@ func (d Deps) plan(ctx context.Context, o Options, live bool) (ordered, balanced
 			rejected = append(rejected, why...)
 		}
 	}
-	all := d.observe(ctx, append(append([]Candidate{}, primary...), extra...), live)
+	all := d.observeWithCooldowns(ctx, append(append([]Candidate{}, primary...), extra...), live, cool)
 	n := len(primary)
 	ordered = append(Rank(all[:n]), Rank(all[n:])...)
 	sh := shiftPriority(all, PriorityBalanced)
@@ -219,6 +223,13 @@ func (d Deps) plan(ctx context.Context, o Options, live bool) (ordered, balanced
 }
 
 func (d Deps) observe(ctx context.Context, cs []Candidate, live bool) []Candidate {
+	return d.observeWithCooldowns(ctx, cs, live, storeCooldowns(ctx, d.Store, d.now()))
+}
+
+func (d Deps) observeWithCooldowns(ctx context.Context, cs []Candidate, live bool, cool map[string]time.Time) []Candidate {
+	if len(cs) == 0 {
+		return cs
+	}
 	// One quota fetch per agent, in parallel; ModelQuoter adapters resolve
 	// per model, others share one quota across their models.
 	byAgent := map[string][]int{}
@@ -265,8 +276,16 @@ func (d Deps) observe(ctx context.Context, cs []Candidate, live bool) []Candidat
 	wg.Wait()
 
 	now := d.now()
-	cool := storeCooldowns(ctx, d.Store, now)
 	recorded := map[string]bool{}
+	snaps := map[string][]Snapshot{}
+	snapshots := func(key string) []Snapshot {
+		if s, ok := snaps[key]; ok {
+			return s
+		}
+		s := storeSnapshots(ctx, d.Store, key)
+		snaps[key] = s
+		return s
+	}
 	for i := range cs {
 		c := &cs[i]
 		_, c.CooledDown = cooling(cool, c.Adapter.Name(), candidateProvider(*c))
@@ -278,7 +297,7 @@ func (d Deps) observe(ctx context.Context, cs []Candidate, live bool) []Candidat
 					key = "antigravity:Gemini Models"
 				}
 			}
-			for _, snap := range storeSnapshots(ctx, d.Store, key) {
+			for _, snap := range snapshots(key) {
 				if snap.ResetsAt.After(now) {
 					c.Quota = &adapter.Quota{Key: key, UsedPercent: snap.UsedPercent, ResetsAt: snap.ResetsAt, WindowMinutes: snap.WindowMinutes}
 				}
@@ -311,7 +330,7 @@ func (d Deps) observe(ctx context.Context, cs []Candidate, live bool) []Candidat
 			})
 		}
 		if c.Quota.WindowMinutes == 7*24*60 {
-			h := Historical(storeSnapshots(ctx, d.Store, key), c.Quota.UsedPercent, c.Quota.ResetsAt, now)
+			h := Historical(snapshots(key), c.Quota.UsedPercent, c.Quota.ResetsAt, now)
 			if h.Valid {
 				c.Hist = &h
 			}
@@ -321,10 +340,10 @@ func (d Deps) observe(ctx context.Context, cs []Candidate, live bool) []Candidat
 	return cs
 }
 
-// attachEvidence copies tier-segmented measurements onto candidates.
-// A read error leaves the static prior in place.
+// attachEvidence copies tier-segmented measurements onto candidates once for
+// the whole candidate slice. A read error leaves the static prior in place.
 func (d Deps) attachEvidence(ctx context.Context, cs []Candidate) {
-	if d.Store == nil {
+	if d.Store == nil || len(cs) == 0 {
 		return
 	}
 	recs, err := d.Store.ListRuns(ctx, "", 0, 0)
@@ -414,7 +433,8 @@ func (d Deps) Begin(o Options) (Run, error) {
 		Prompt: o.Prompt, Dir: o.Dir, ReadOnly: o.ReadOnly, CreatedAt: d.now(),
 		TimeoutSec: int(o.Timeout / time.Second), NoWorktree: o.NoWorktree, NoVerify: o.NoVerify,
 		Profile: o.Profile, Prefer: o.Prefer, Avoid: o.Avoid,
-		Requested: &reqFilters,
+		Requested:   &reqFilters,
+		ParentRunID: os.Getenv(runIDEnv),
 	}
 	if o.Resume != "" {
 		prev, err := d.Store.GetRun(context.Background(), o.Resume)
@@ -495,125 +515,24 @@ func (d Deps) Execute(ctx context.Context, rec Run) (Run, error) {
 	if err := d.Reconcile(ctx); err != nil {
 		return rec, err
 	}
+
+	cool := storeCooldowns(ctx, d.Store, d.now())
+	cands, resumeSession, failMsg := d.planCandidates(ctx, rec, cool)
+	if failMsg != "" {
+		return d.finishRun(ctx, rec, time.Time{}, StatusFailed, failMsg)
+	}
+	dir, wtErr := d.prepareWorktree(ctx, &rec)
+	if wtErr != "" {
+		return d.finishRun(ctx, rec, time.Time{}, StatusFailed, wtErr)
+	}
+
 	timeout := time.Duration(rec.TimeoutSec) * time.Second
+	childEnv := childEnviron(rec.ID)
 	var agentStart time.Time // start of the attempt that ends the run
-
-	finish := func(s string, msg string) (Run, error) {
-		now := d.now()
-		rec.Status, rec.Error, rec.FinishedAt = s, msg, now
-		if rec.RunMs == nil && !agentStart.IsZero() {
-			rec.RunMs = I64(nonNegMs(now.Sub(agentStart)))
-		}
-		completeTelemetry(&rec, rec.FinishedAt)
-		rec.Output = sandbox.Redact(rec.Output)
-		rec.Error = sandbox.Redact(rec.Error)
-		rec.Note = sandbox.Redact(rec.Note)
-		for i := range rec.Attempts {
-			rec.Attempts[i].Error = sandbox.Redact(rec.Attempts[i].Error)
-		}
-		var err error
-		if d.Store != nil {
-			err = d.Store.SaveRun(ctx, rec)
-		}
-		if err == nil {
-			_ = ObserveClassifier(d.classifierPath(), rec)
-		}
-		return rec, err
-	}
-
-	extra := []string{
-		depthEnv + "=1",
-		runIDEnv + "=" + rec.ID,
-		noDelegateEnv + "=1",
-	}
-	if parent := os.Getenv(runIDEnv); parent != "" {
-		extra = append(extra, parentRunIDEnv+"="+parent)
-	}
-	childEnv := sandbox.Environ(extra...)
-
-	dir := rec.Dir
-	if dir == "" {
-		dir, _ = os.Getwd()
-	}
-	dir, _ = filepath.Abs(dir)
-
-	var cands []Candidate
-	resumeSession := ""
-	if rec.ResumedOf != "" {
-		a := d.adapter(rec.Agent)
-		if a == nil || !d.installed(a.Binary()) {
-			return finish(StatusFailed, "agent "+rec.Agent+" is not available to resume")
-		}
-		if !a.Capabilities().SessionResume {
-			return finish(StatusFailed, a.Name()+" does not support session resume")
-		}
-		cands = []Candidate{{Adapter: a, Model: rec.Model, Provider: rec.Provider, Effort: rec.Effort}}
-		resumeSession = rec.SessionID
-		if rec.Worktree != "" {
-			if _, err := os.Stat(rec.Worktree); err == nil {
-				if root := worktree.Root(rec.Worktree); root != "" {
-					dir = rec.Worktree
-				}
-			} else {
-				rec.Note = "previous worktree is gone; resumed in " + dir
-			}
-		}
-	} else {
-		var rejected []string
-		o := Options{Tier: adapter.Tier(rec.Tier), ReadOnly: rec.ReadOnly, Prefer: rec.Prefer, Avoid: rec.Avoid}
-		if rec.Requested != nil {
-			o.Filters = *rec.Requested
-		}
-		if o.Filters.Priority == "" {
-			o.Filters.Priority = PriorityBalanced
-		}
-		cands, _, rejected, _ = d.plan(ctx, o, true)
-		if len(cands) == 0 {
-			if len(rejected) > 0 {
-				return finish(StatusFailed, strings.Join(rejected, "; "))
-			}
-			return finish(StatusFailed, "no installed agent serves tier "+rec.Tier)
-		}
-		if !rec.ReadOnly && !rec.NoWorktree {
-			if root := worktree.Root(dir); root != "" && worktree.HasCommits(root) {
-				base := d.WorktreeDir
-				if base == "" {
-					base = filepath.Join(root, ".dispatch", "worktrees")
-					worktree.Exclude(root, ".dispatch/")
-				}
-				path := filepath.Join(base, rec.ID)
-				branch, err := worktree.Create(root, path, rec.ID)
-				if err != nil {
-					return finish(StatusFailed, "worktree: "+err.Error())
-				}
-				rec.Repo, rec.Worktree, rec.Branch = root, path, branch
-				rec.BaseSHA, err = worktree.Head(path)
-				if err != nil {
-					return finish(StatusFailed, err.Error())
-				}
-				if d.Store != nil {
-					_ = d.Store.SaveWorktree(ctx, WorktreeInfo{
-						ID:        rec.ID,
-						ProjectID: rec.ProjectID,
-						RunID:     rec.ID,
-						CardSlug:  rec.CardSlug,
-						Path:      path,
-						Branch:    branch,
-						BaseSHA:   rec.BaseSHA,
-						Status:    WorktreeActive,
-					})
-				}
-				dir = filepath.Join(path, worktree.Rel(root, dir))
-				if worktree.Dirty(root) {
-					rec.Note = joinNote(rec.Note, "checkout has uncommitted changes; the worktree was cut from HEAD and does not include them")
-				}
-			}
-		}
-	}
-
 	var skipped []string
+
 	for _, c := range cands {
-		if key, ok := cooling(storeCooldowns(ctx, d.Store, d.now()), c.Adapter.Name(), candidateProvider(c)); ok {
+		if key, ok := cooling(cool, c.Adapter.Name(), candidateProvider(c)); ok {
 			skipped = append(skipped, key+" in cooldown")
 			continue
 		}
@@ -623,125 +542,287 @@ func (d Deps) Execute(ctx context.Context, rec Run) (Run, error) {
 		}
 		attemptStart := d.now()
 		agentStart = attemptStart
-		rec.AgentPID = 0
-		rec.Status, rec.Agent, rec.Model = StatusRunning, c.Adapter.Name(), c.Model
-		rec.ExecutionTier = c.Tier
-		if rec.ExecutionTier == "" && adapter.Tier(rec.Tier).Valid() {
-			rec.ExecutionTier = rec.Tier
+		res, runErr, saveErr := d.runAttempt(ctx, &rec, c, dir, resumeSession, timeout, childEnv)
+		if saveErr != nil {
+			return rec, saveErr
 		}
-		// The tier covariates must describe the executed head, including relax.
-		if len(rec.ClassifyFeatures) == len(Features{}) {
-			var f Features
-			copy(f[:], rec.ClassifyFeatures)
-			f = f.WithTier(adapter.Tier(rec.ExecutionTier))
-			rec.ClassifyFeatures = append([]float64(nil), f[:]...)
-		}
-		rec.Provider = c.Provider
-		if rec.Provider == "" {
-			rec.Provider = ProviderOf(rec.Agent, rec.Model)
-		}
-		rec.Effort = c.Effort
-		if rec.Effort == "" {
-			rec.Effort = EffortOf(rec.Model)
-		}
-		prio := c.Priority
-		if prio == "" && rec.Requested != nil {
-			prio = rec.Requested.Priority
-		}
-		if prio == "" {
-			prio = PriorityBalanced
-		}
-		rec.Resolved = &Filters{Provider: rec.Provider, Model: rec.Model, Agent: rec.Agent, Effort: rec.Effort, Priority: prio}
-		rec.Note = joinNote(rec.Note, c.Note)
-		if d.Store != nil {
-			if err := d.Store.SaveRun(ctx, rec); err != nil {
-				return rec, err
-			}
-		}
-		logPath := d.agentLogPath(rec.ID)
-		req := adapter.Request{
-			Effort: rec.Effort, Prompt: rec.Prompt, Tier: adapter.Tier(rec.Tier), Dir: dir, ReadOnly: rec.ReadOnly,
-			Started: func(pid int) error {
-				rec.AgentPID = pid
-				if d.Store == nil {
-					return nil
-				}
-				return d.Store.SaveRun(ctx, rec)
-			},
-			Timeout: timeout, ResumeSession: resumeSession, Env: childEnv,
-			LogPath: logPath,
-		}
-		markAttempt(req.LogPath, rec.Attempts, c)
-		var res adapter.Result
-		var err error
-		if resumeSession != "" {
-			if r, ok := c.Adapter.(adapter.Resumer); ok {
-				res, err = r.Resume(ctx, req, c.Model)
-			} else {
-				res, err = c.Adapter.Run(ctx, req, c.Model)
-			}
-		} else {
-			res, err = c.Adapter.Run(ctx, req, c.Model)
-		}
-		rec.ExitCode, rec.SessionID = res.ExitCode, res.SessionID
 		switch {
-		case errors.Is(err, adapter.ErrProcessesAlive):
-			return finish(StatusFailed, err.Error())
-		case err == nil:
-			rec.Output = res.Output
-			rec.RunMs = I64(nonNegMs(d.now().Sub(agentStart)))
-			if rec.Worktree != "" && !rec.ReadOnly {
-				committed := true
-				if ok, cerr := worktree.Commit(rec.Worktree, rec.ID); cerr != nil {
-					committed = false
-					rec.Note = joinNote(rec.Note, "commit failed: "+cerr.Error())
-				} else if ok {
-					rec.Note = joinNote(rec.Note, "changes committed on "+rec.Branch)
-				} else {
-					rec.Note = joinNote(rec.Note, "no file changes")
-				}
-				if !rec.NoVerify {
-					if !committed {
-						rec.Verification = string(VerifyStatusError)
-						if b, jerr := json.Marshal(VerifyResult{Status: VerifyStatusError}); jerr == nil {
-							rec.VerifyJSON = string(b)
-						}
-						rec.Note = joinNote(rec.Note, "verification skipped: commit failed")
-					} else {
-						d.applyVerify(ctx, &rec)
-					}
-				}
-			}
-			return finish(StatusCompleted, "")
+		case errors.Is(runErr, adapter.ErrProcessesAlive):
+			return d.finishRun(ctx, rec, agentStart, StatusFailed, runErr.Error())
+		case runErr == nil:
+			d.postRun(ctx, &rec, res.Output, agentStart)
+			return d.finishRun(ctx, rec, agentStart, StatusCompleted, "")
 		case ctx.Err() != nil:
-			return finish(StatusCancelled, ctx.Err().Error())
-		case errors.Is(err, context.DeadlineExceeded):
-			return finish(StatusTimedOut, "timeout after "+timeout.String())
+			return d.finishRun(ctx, rec, agentStart, StatusCancelled, ctx.Err().Error())
+		case errors.Is(runErr, context.DeadlineExceeded):
+			return d.finishRun(ctx, rec, agentStart, StatusTimedOut, "timeout after "+timeout.String())
 		}
-		now := d.now()
-		if d.Store != nil {
-			switch classOf(err.Error()) {
-			case "credits":
-				_ = d.Store.SetCooldown(ctx, creditKey(c.Adapter.Name(), candidateProvider(c)), now.Add(creditCooldownFor))
-			case "rate_limit":
-				_ = d.Store.SetCooldown(ctx, c.Adapter.Name(), now.Add(cooldownFor))
-			}
+		if d.recordAttemptFailure(ctx, &rec, c, runErr, attemptStart) {
+			cool = storeCooldowns(ctx, d.Store, d.now())
 		}
-		rec.Attempts = append(rec.Attempts, Attempt{
-			Agent: c.Adapter.Name(), Model: c.Model, Error: err.Error(),
-			DurationMs: I64(nonNegMs(now.Sub(attemptStart))),
-			ExitClass:  classOf(err.Error()),
-		})
 	}
 	if len(rec.Attempts) == 0 {
 		msg := strings.Join(skipped, "; ")
 		if msg == "" {
 			msg = "no candidate could run"
 		}
-		return finish(StatusFailed, msg)
+		return d.finishRun(ctx, rec, agentStart, StatusFailed, msg)
 	}
 	last := rec.Attempts[len(rec.Attempts)-1]
-	return finish(StatusFailed, fmt.Sprintf("all %d candidates failed; last: %s/%s: %s", len(rec.Attempts), last.Agent, last.Model, last.Error))
+	return d.finishRun(ctx, rec, agentStart, StatusFailed, fmt.Sprintf("all %d candidates failed; last: %s/%s: %s", len(rec.Attempts), last.Agent, last.Model, last.Error))
+}
+
+// childEnviron is the agent environment: recursion guards plus run ids.
+func childEnviron(runID string) []string {
+	extra := []string{
+		depthEnv + "=1",
+		runIDEnv + "=" + runID,
+		noDelegateEnv + "=1",
+	}
+	if parent := os.Getenv(runIDEnv); parent != "" {
+		extra = append(extra, parentRunIDEnv+"="+parent)
+	}
+	return sandbox.Environ(extra...)
+}
+
+// planCandidates returns the ordered candidates, the session to resume, and a
+// failure message when nothing can run. cool is the Execute cooldown snapshot.
+func (d Deps) planCandidates(ctx context.Context, rec Run, cool map[string]time.Time) ([]Candidate, string, string) {
+	if rec.ResumedOf != "" {
+		a := d.adapter(rec.Agent)
+		if a == nil || !d.installed(a.Binary()) {
+			return nil, "", "agent " + rec.Agent + " is not available to resume"
+		}
+		if !a.Capabilities().SessionResume {
+			return nil, "", a.Name() + " does not support session resume"
+		}
+		cands := []Candidate{{Adapter: a, Model: rec.Model, Provider: rec.Provider, Effort: rec.Effort}}
+		return cands, rec.SessionID, ""
+	}
+	o := Options{Tier: adapter.Tier(rec.Tier), ReadOnly: rec.ReadOnly, Prefer: rec.Prefer, Avoid: rec.Avoid}
+	if rec.Requested != nil {
+		o.Filters = *rec.Requested
+	}
+	if o.Filters.Priority == "" {
+		o.Filters.Priority = PriorityBalanced
+	}
+	cands, _, rejected, _ := d.planWithCooldowns(ctx, o, true, cool)
+	if len(cands) == 0 {
+		if len(rejected) > 0 {
+			return nil, "", strings.Join(rejected, "; ")
+		}
+		return nil, "", "no installed agent serves tier " + rec.Tier
+	}
+	return cands, "", ""
+}
+
+// prepareWorktree resolves the agent directory and, for writable runs in a git
+// checkout, cuts the run worktree. A non-empty message fails the run.
+func (d Deps) prepareWorktree(ctx context.Context, rec *Run) (string, string) {
+	dir := rec.Dir
+	if dir == "" {
+		dir, _ = os.Getwd()
+	}
+	dir, _ = filepath.Abs(dir)
+	if rec.ResumedOf != "" {
+		if rec.Worktree != "" {
+			if _, err := os.Stat(rec.Worktree); err == nil {
+				if root := worktree.Root(rec.Worktree); root != "" {
+					dir = rec.Worktree
+				}
+			} else {
+				rec.Note = "previous worktree is gone; resumed in " + dir
+			}
+		}
+		return dir, ""
+	}
+	if rec.ReadOnly || rec.NoWorktree {
+		return dir, ""
+	}
+	root := worktree.Root(dir)
+	if root == "" || !worktree.HasCommits(root) {
+		return dir, ""
+	}
+	base := d.WorktreeDir
+	if base == "" {
+		base = filepath.Join(root, ".dispatch", "worktrees")
+		worktree.Exclude(root, ".dispatch/")
+	}
+	path := filepath.Join(base, rec.ID)
+	branch, err := worktree.Create(root, path, rec.ID)
+	if err != nil {
+		return dir, "worktree: " + err.Error()
+	}
+	rec.Repo, rec.Worktree, rec.Branch = root, path, branch
+	rec.BaseSHA, err = worktree.Head(path)
+	if err != nil {
+		return dir, err.Error()
+	}
+	if d.Store != nil {
+		_ = d.Store.SaveWorktree(ctx, WorktreeInfo{
+			ID:        rec.ID,
+			ProjectID: rec.ProjectID,
+			RunID:     rec.ID,
+			CardSlug:  rec.CardSlug,
+			Path:      path,
+			Branch:    branch,
+			BaseSHA:   rec.BaseSHA,
+			Status:    WorktreeActive,
+		})
+	}
+	dir = filepath.Join(path, worktree.Rel(root, dir))
+	if worktree.Dirty(root) {
+		rec.Note = joinNote(rec.Note, "checkout has uncommitted changes; the worktree was cut from HEAD and does not include them")
+	}
+	return dir, ""
+}
+
+// runAttempt records the chosen candidate on rec and runs it. The second error
+// is a store failure that aborts Execute without finishing the run.
+func (d Deps) runAttempt(ctx context.Context, rec *Run, c Candidate, dir, resumeSession string, timeout time.Duration, childEnv []string) (adapter.Result, error, error) {
+	rec.AgentPID = 0
+	rec.Status, rec.Agent, rec.Model = StatusRunning, c.Adapter.Name(), c.Model
+	rec.ExecutionTier = c.Tier
+	if rec.ExecutionTier == "" && adapter.Tier(rec.Tier).Valid() {
+		rec.ExecutionTier = rec.Tier
+	}
+	// The tier covariates must describe the executed head, including relax.
+	if rec.FeatureSchema == FeatureSchema && len(rec.ClassifyFeatures) == len(Features{}) {
+		var f Features
+		copy(f[:], rec.ClassifyFeatures)
+		f = f.WithTier(adapter.Tier(rec.ExecutionTier))
+		rec.ClassifyFeatures = append([]float64(nil), f[:]...)
+	} else {
+		rec.FeatureSchema = 0
+		rec.ClassifyFeatures = nil
+	}
+	rec.Provider = c.Provider
+	if rec.Provider == "" {
+		rec.Provider = ProviderOf(rec.Agent, rec.Model)
+	}
+	rec.Effort = c.Effort
+	if rec.Effort == "" {
+		rec.Effort = EffortOf(rec.Model)
+	}
+	prio := c.Priority
+	if prio == "" && rec.Requested != nil {
+		prio = rec.Requested.Priority
+	}
+	if prio == "" {
+		prio = PriorityBalanced
+	}
+	rec.Resolved = &Filters{Provider: rec.Provider, Model: rec.Model, Agent: rec.Agent, Effort: rec.Effort, Priority: prio}
+	rec.Note = joinNote(rec.Note, c.Note)
+	if d.Store != nil {
+		if err := d.Store.SaveRun(ctx, *rec); err != nil {
+			return adapter.Result{}, nil, err
+		}
+	}
+	req := adapter.Request{
+		Effort: rec.Effort, Prompt: rec.Prompt, Tier: adapter.Tier(rec.Tier), Dir: dir, ReadOnly: rec.ReadOnly,
+		Started: func(pid int) error {
+			rec.AgentPID = pid
+			if d.Store == nil {
+				return nil
+			}
+			return d.Store.SaveRun(ctx, *rec)
+		},
+		Timeout: timeout, ResumeSession: resumeSession, Env: childEnv,
+		LogPath: d.agentLogPath(rec.ID),
+	}
+	markAttempt(req.LogPath, rec.Attempts, c)
+	var res adapter.Result
+	var err error
+	if resumeSession != "" {
+		if r, ok := c.Adapter.(adapter.Resumer); ok {
+			res, err = r.Resume(ctx, req, c.Model)
+		} else {
+			res, err = c.Adapter.Run(ctx, req, c.Model)
+		}
+	} else {
+		res, err = c.Adapter.Run(ctx, req, c.Model)
+	}
+	rec.ExitCode, rec.SessionID = res.ExitCode, res.SessionID
+	return res, err, nil
+}
+
+// postRun stores a successful attempt's output, commits the worktree, and
+// verifies the commit unless verification is disabled.
+func (d Deps) postRun(ctx context.Context, rec *Run, output string, agentStart time.Time) {
+	rec.Output = output
+	rec.RunMs = I64(nonNegMs(d.now().Sub(agentStart)))
+	if rec.Worktree == "" || rec.ReadOnly {
+		return
+	}
+	committed := true
+	if ok, cerr := worktree.Commit(rec.Worktree, rec.ID); cerr != nil {
+		committed = false
+		rec.Note = joinNote(rec.Note, "commit failed: "+cerr.Error())
+	} else if ok {
+		rec.Note = joinNote(rec.Note, "changes committed on "+rec.Branch)
+	} else {
+		rec.Note = joinNote(rec.Note, "no file changes")
+	}
+	if rec.NoVerify {
+		return
+	}
+	if !committed {
+		rec.Verification = string(VerifyStatusError)
+		if b, jerr := json.Marshal(VerifyResult{Status: VerifyStatusError}); jerr == nil {
+			rec.VerifyJSON = string(b)
+		}
+		rec.Note = joinNote(rec.Note, "verification skipped: commit failed")
+		return
+	}
+	d.applyVerify(ctx, rec)
+}
+
+// recordAttemptFailure sets cooldowns for quota errors and appends the failed
+// attempt. It reports whether a cooldown was written.
+func (d Deps) recordAttemptFailure(ctx context.Context, rec *Run, c Candidate, err error, attemptStart time.Time) bool {
+	now := d.now()
+	cls := classOf(err.Error())
+	cooled := false
+	if d.Store != nil {
+		switch cls {
+		case "credits":
+			_ = d.Store.SetCooldown(ctx, creditKey(c.Adapter.Name(), candidateProvider(c)), now.Add(creditCooldownFor))
+			cooled = true
+		case "rate_limit":
+			_ = d.Store.SetCooldown(ctx, c.Adapter.Name(), now.Add(cooldownFor))
+			cooled = true
+		}
+	}
+	rec.Attempts = append(rec.Attempts, Attempt{
+		Agent: c.Adapter.Name(), Model: c.Model, Error: err.Error(),
+		DurationMs: I64(nonNegMs(now.Sub(attemptStart))),
+		ExitClass:  cls,
+	})
+	return cooled
+}
+
+// finishRun redacts, persists, and trains the classifier on a terminal run.
+func (d Deps) finishRun(ctx context.Context, rec Run, agentStart time.Time, status, msg string) (Run, error) {
+	now := d.now()
+	rec.Status, rec.Error, rec.FinishedAt = status, msg, now
+	if rec.RunMs == nil && !agentStart.IsZero() {
+		rec.RunMs = I64(nonNegMs(now.Sub(agentStart)))
+	}
+	completeTelemetry(&rec, rec.FinishedAt)
+	rec.Output = sandbox.Redact(rec.Output)
+	rec.Error = sandbox.Redact(rec.Error)
+	rec.Note = sandbox.Redact(rec.Note)
+	for i := range rec.Attempts {
+		rec.Attempts[i].Error = sandbox.Redact(rec.Attempts[i].Error)
+	}
+	var err error
+	if d.Store != nil {
+		err = d.Store.SaveRun(ctx, rec)
+	}
+	if err == nil {
+		_ = ObserveClassifier(d.classifierPath(), rec)
+	}
+	return rec, err
 }
 
 // markAttempt writes a separator into the live log when a run falls back,

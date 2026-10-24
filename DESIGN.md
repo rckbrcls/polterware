@@ -9,19 +9,31 @@ Polterware is a dense local operator workspace, not a generic dashboard. Prefer 
 The application opens on Inbox. The project sidebar is fixed:
 
 ```text
-Inbox
-Work
-Atlas
-Decisions
-Reality
+NOW
+  Inbox
+  Activity
+
+PROJECT
+  Work
+  Atlas
+  Truth
+
+DISPATCH
+  Runs          Runs, Agents
+  Routing       Tiers, Learning
+  Usage         Stats
+
+  Integrations  Connected, Catalog
 
 FOOTER
   Settings
 ```
 
-Settings is a dialog with a grouped rail: Project (General, Environments), Agents (Access, Sessions, Context), Integrations (Connected, Catalog), and App (Shortcuts, Advanced).
+Integrations is one sidebar route in its own CONNECT section after Dispatch. Its Connected and Catalog tabs use the shared `Tabs` in `PageToolbar.Tabs`, like Dispatch.
 
-The title bar contains history controls, one ghost project switcher, one environment kind switcher, Commander, and a Help menu. There are no unrelated title-bar actions.
+Settings is a dialog with a grouped rail and one concern per page: Project (General, Repositories, Environments, Danger zone — archive project), Agents (MCP server, Agent setup, Hooks, AI skill, Oracle, Compile context, Drift check), and App (Shortcuts, Appearance, Local core, Privacy, Danger zone — reset local store). Every rail entry and entity or shortcut list row uses a Hugeicons Free Stroke Rounded icon.
+
+The title bar contains history controls, one ghost project switcher, one environment kind switcher, a scope switcher, Commander, and a Help menu. The scope switcher always includes ancestors (non-exact); exact scope remains a CLI/MCP capability. There are no unrelated title-bar actions.
 
 ## Shared primitives
 
@@ -93,7 +105,7 @@ Structural fills are opaque shared neutral tokens. Text and labeled icons use op
 
 Covers and tiles reuse the shared chrome finish (a chromatic metal reflection derived from an accent color). Use `AuroraCover` and the `IconTile` aurora option where applicable; structural surfaces stay opaque neutral.
 
-Exception — macOS Desktop window chrome only: the main window title bar and sidebar may use shared `--color-shell-glass` / `--color-sidebar-glass` washes so frosted Electron vibrancy shows through while keeping the quiet dark cast. Commander (in-app palette and global overlay) uses the same opaque `surface-panel-float` material as other product dialogs. All other product surfaces, text, dialogs, and cards stay opaque. Settings Advanced → Reduce transparency disables main-window vibrancy / frost and restores opaque title bar and sidebar. Do not extend this exception to Commander, other in-app dialogs, cards, or other platforms.
+Exception — macOS Desktop window chrome only: the main window title bar and sidebar may use shared `--color-shell-glass` / `--color-sidebar-glass` washes so frosted Electron vibrancy shows through while keeping the quiet dark cast. Commander (in-app palette and global overlay) uses the same opaque `surface-panel-float` material as other product dialogs. All other product surfaces, text, dialogs, and cards stay opaque. Settings Appearance → Reduce transparency disables main-window vibrancy / frost and restores opaque title bar and sidebar. Do not extend this exception to Commander, other in-app dialogs, cards, or other platforms.
 
 Polterware, Polterware Notes, and Polterware Vitals share one lifted dark neutral ladder from `base.css`: canvas, shell, and sidebar `#131313`, surfaces stepping from `#161616` to `#232323`. All apps use dark mode exclusively, regardless of system appearance or saved theme preferences. Theme selectors and light palettes are unavailable; shared semantic tokens remain the foundation for future themes.
 
@@ -114,7 +126,7 @@ Nested radii stay concentric: an inner panel's radius is the outer radius minus 
 
 Cards whose content can scroll put `.pw-scroll-fade` on the scroller (tables inside it fade too): a shared mask fades the top edge under the header and the bottom edge only while content continues past them. It is a mask on opaque content, not translucent chrome.
 
-Card has two shared opaque finishes: `variant="rings"` (default `.card-panel` / `.card-texture`) uses four concentric contours; `variant="texture"` (`.card-texture-framed`) uses the dark frame, lit rim and gradient geometry of texture buttons, with a softer surface palette and no button hover or press behavior. Atlas Relations groups and component cards, and Components group containers, use the shared framed Card texture; hover and selection tint the face without replacing its frame, and heading hover corners follow the inset radius. Clicking a Relations group header toggles its body, including Enter and Space activation; its chevron is decorative. Component cards inside the body open entity details. Components lists use flat borderless rows inside their textured group containers. Components group headers follow the same collapse behavior and provide a separate icon button for domain details (omitted for Unassigned). Pointer clicks do not latch the header highlight; keyboard focus remains visible. Relations center nodes use the normal card border rather than a permanent focus border. Detail sections use the nested main Surface material (`.surface-panel.surface-panel--nested`): a flat `--color-surface-subtle` fill, `--radius-card` corners and the main surface frame, with no gradient. Markdown editors keep their existing surface. Use `control-field`, `.surface-panel`, `.surface-panel-float`, `.menu-panel`, and `Card` for shared edge-light chrome. Do not hand-roll border, background, and radius recipes.
+Card has two shared opaque finishes: `variant="rings"` (default `.card-panel` / `.card-texture`) uses four concentric contours; `variant="texture"` (`.card-texture-framed`) uses the dark frame, lit rim and gradient geometry of texture buttons, with a softer surface palette and no button hover or press behavior. `texture="compact"` uses the field gradient and a single rim, for small controls that should not wear the button metal or the four card rings. Atlas Relations groups and component cards, and Components group containers, use the shared framed Card texture; hover and selection tint the face without replacing its frame, and heading hover corners follow the inset radius. Clicking a Relations group header toggles its body, including Enter and Space activation; its chevron is decorative. Component cards inside the body open entity details. Components lists use flat borderless rows inside their textured group containers. Components group headers follow the same collapse behavior and provide a separate icon button for domain details (omitted for Unassigned). Pointer clicks do not latch the header highlight; keyboard focus remains visible. Relations center nodes use the normal card border rather than a permanent focus border. Detail sections use the nested main Surface material (`.surface-panel.surface-panel--nested`): a flat `--color-surface-subtle` fill, `--radius-card` corners and the main surface frame, with no gradient. Markdown editors keep their existing surface. Use `control-field`, `.surface-panel`, `.surface-panel-float`, `.menu-panel`, and `Card` for shared edge-light chrome. Do not hand-roll border, background, and radius recipes.
 
 ## Execution honesty
 

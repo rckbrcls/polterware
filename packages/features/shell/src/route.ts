@@ -4,13 +4,16 @@ import {
   type PlatformContext,
 } from "@polterware/frontend-platform";
 
-/** Project surfaces: Inbox, Work, Atlas, Truth, Dispatch, Activity. Settings (with Agents and Integrations) is a dialog, not a section. */
+/** Project surfaces. Dispatch is three routes (Runs, Routing, Usage), with tabs on Runs and Routing. Settings is a dialog, not a section. */
 export type NavSectionId =
   | "inbox"
   | "atlas"
   | "work"
   | "truth"
   | "dispatch"
+  | "dispatch-routing"
+  | "dispatch-usage"
+  | "integrations"
   | "activity";
 
 /** Full pages reachable outside the sidebar (e.g. from the Help menu). */
@@ -18,22 +21,37 @@ export type PageSectionId = "cli";
 
 export type SectionId = NavSectionId | PageSectionId;
 export type ProjectSettingsTabId =
-  | "agents-access"
-  | "agents-sessions"
-  | "agents-context"
-  | "integrations-connected"
-  | "integrations-catalog"
+  | "general"
+  | "repositories"
+  | "environments"
+  | "project-danger"
+  | "agents-mcp"
+  | "agents-setup"
+  | "agents-hooks"
+  | "agents-skill"
+  | "agents-oracle"
+  | "agents-compile"
+  | "agents-drift"
   | "shortcuts"
-  | "advanced";
+  | "appearance"
+  | "local-core"
+  | "privacy"
+  | "app-danger";
 export type WorkTabId = "board" | "specs";
 export type TruthTabId = "decisions" | "facts" | "evidence";
-export type DispatchTabId = "runs" | "worktrees" | "pace" | "tiers";
+export type DispatchTabId =
+  | "runs"
+  | "agents"
+  | "tiers"
+  | "learning"
+  | "stats";
 
 export type DialogState =
   | { type: "arch-node-create" }
   | { type: "create-view" }
   | { type: "settings"; tab: ProjectSettingsTabId }
   | { type: "project-settings" }
+  | { type: "connect-integration"; providerId?: string }
   | { type: "confirm"; message: string }
   | null;
 
@@ -56,7 +74,9 @@ export type ShellStatus = {
 };
 
 export type NavItem = {
-  id: NavSectionId;
+  id: string;
+  section: NavSectionId;
+  tab?: string;
   label: string;
   group?: string;
   icon?: string;
@@ -72,6 +92,9 @@ export const DEFAULT_TABS = {
   work: "board",
   truth: "decisions",
   dispatch: "runs",
+  "dispatch-routing": "tiers",
+  "dispatch-usage": "stats",
+  integrations: "connected",
   activity: "all",
   cli: "reference",
 } satisfies Record<SectionId, string>;
@@ -94,11 +117,23 @@ export const SECTION_TABS = {
     { id: "facts", label: "Facts" },
     { id: "evidence", label: "Evidence" },
   ],
+  // A run, and the agents that can take it. Worktree info lives on the run card.
   dispatch: [
     { id: "runs", label: "Runs" },
-    { id: "worktrees", label: "Worktrees" },
-    { id: "pace", label: "Pace" },
-    { id: "tiers", label: "Tiers & Agents" },
+    { id: "agents", label: "Agents" },
+  ],
+  // Tier order, and what the classifier learned.
+  "dispatch-routing": [
+    { id: "tiers", label: "Tiers" },
+    { id: "learning", label: "Learning" },
+  ],
+  // Route id only — Usage shows Stats directly (no tab rail).
+  "dispatch-usage": [
+    { id: "stats", label: "Stats" },
+  ],
+  integrations: [
+    { id: "connected", label: "Connected" },
+    { id: "catalog", label: "Catalog" },
   ],
   // Route id only — Activity is a flat page (no tab rail).
   activity: [{ id: "all", label: "All" }],
@@ -110,6 +145,9 @@ const NAV_SECTIONS = {
   work: true,
   truth: true,
   dispatch: true,
+  "dispatch-routing": true,
+  "dispatch-usage": true,
+  integrations: true,
   activity: true,
 } satisfies Record<string, boolean>;
 
@@ -206,14 +244,32 @@ export function resolveRoute(
     section = tab === "history" ? "activity" : "truth";
     if (tab === "sources" || tab === "docs") tab = "evidence";
   }
-  // Agents and Integrations moved into the Settings dialog; their facts live in Truth and their history in Activity.
+  // Agents moved into the Settings dialog; their facts live in Truth and their history in Activity.
   if (section === "agents" && tab === "facts") {
     section = "truth";
   } else if (section === "agents" && tab === "history") {
     section = "activity";
-  } else if (section === "agents" || section === "integrations") {
+  } else if (section === "agents") {
     section = DEFAULT_SECTION;
     tab = undefined;
+  }
+  // Preserve deep links to the former separate Integrations routes.
+  if (section === "integrations-connected" || section === "integrations-catalog") {
+    tab = section === "integrations-catalog" ? "catalog" : "connected";
+    section = "integrations";
+  }
+  // Legacy Dispatch routes. Worktrees folded into the run card.
+  if (section === "dispatch-agents") {
+    if (tab === "tiers" || tab === "learning") {
+      section = "dispatch-routing";
+    } else {
+      section = "dispatch";
+      tab = "agents";
+    }
+  } else if (section === "dispatch") {
+    if (tab === "worktrees") tab = "runs";
+    else if (tab === "tiers" || tab === "learning") section = "dispatch-routing";
+    else if (tab === "stats") section = "dispatch-usage";
   }
 
   if (isSectionId(section) && sectionAvailable(section, platform)) {

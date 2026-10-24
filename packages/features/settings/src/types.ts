@@ -32,11 +32,5 @@ export type ProjectGeneralSettings = {
   dataSource: DataSource;
 };
 
-export type SettingsTabId =
-  | "agents-access"
-  | "agents-sessions"
-  | "agents-context"
-  | "integrations-connected"
-  | "integrations-catalog"
-  | "shortcuts"
-  | "advanced";
+export type SettingsTabId = import("@polterware/feature-shell").ProjectSettingsTabId;
+export type ProjectSettingsPageId = Extract<SettingsTabId, "general" | "repositories" | "environments" | "project-danger">;

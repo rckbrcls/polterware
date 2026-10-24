@@ -8,13 +8,11 @@ import {
   Square,
   StatusChip,
   X,
-  FileText,
   HelpCircle,
-  Settings,
   ShieldCheck,
 } from "@polterware/frontend-design-system";
 import type { WorkStage, WorkspaceWorkCard, WorkspaceWorkTask } from "@polterware/feature-shell";
-import { KnowledgeDocumentNotFound } from "./knowledge-document-shell";
+import { KnowledgeDocumentNotFound, KnowledgeDocumentShell } from "./knowledge-document-shell";
 import { WORK_STAGES, cardTaskProgress, isWorkStage } from "./work-stage";
 
 function TaskStateIcon(props: { state: WorkspaceWorkTask["state"] }) {
@@ -45,164 +43,133 @@ export function WorkCardDetail(props: {
         const continuable = () =>
           Boolean(props.onContinueFlow) && (card().stage === "shape" || card().stage === "plan");
         return (
-          <DetailPanel.Content>
-            <DetailPanel.Header />
+          <KnowledgeDocumentShell
+            entityId={card().slug}
+            title={card().title}
+            icon={<ListChecks size={32} />}
+            bodyMarkdown={card().intent}
+            properties={
+              <>
+                <DetailPanel.Property label="Stage" value={
+                  <Select aria-label="Work stage" size="sm" class="w-full"
+                    options={WORK_STAGES.map(stage => ({ value: stage.id, label: stage.label }))}
+                    value={card().stage} disabled={!props.onSetStage}
+                    onChange={next => { if (isWorkStage(next) && next !== card().stage) props.onSetStage?.(next); }} />
+                } />
+                <DetailPanel.Property label="Slug" value={card().slug} mono />
+                <DetailPanel.Property label="Kind" value={card().kind === "architecture" ? "Architecture change" : "Feature"} />
+                <DetailPanel.Property label="Owner" value={card().owner || null} />
+                <DetailPanel.Property label="Component" value={card().under || null} mono />
+                <DetailPanel.Property label="Decisions" value={card().decisions.length > 0 ? card().decisions.join(", ") : null} />
+                <DetailPanel.Property label="Updated" value={card().updatedAt} />
+              </>
+            }
+            metadataActions={<>
+              <Show when={continuable()}>
+                <Button variant="secondary" size="sm" onClick={() => props.onContinueFlow?.()}>
+                  {card().stage === "shape" ? "Continue shaping" : "Continue planning"}
+                </Button>
+              </Show>
+              <p class="pw-detail-panel__text" data-empty>Agents edit tasks, questions, and invariants with polterware apply.</p>
+            </>}
+            footerActions={
+              <Show when={props.onRemove}>
+                <Button variant="danger" size="sm" onClick={() => props.onRemove?.()}>Remove from board</Button>
+              </Show>
+            }
+          >
+            <DetailPanel.Section
+              title="Tasks" icon={<ListChecks size={14} />}
+              aside={
+                progress().total > 0 ? (
+                  <StatusChip
+                    tone={progress().done === progress().total ? "healthy" : "muted"}
+                    label={`${progress().done}/${progress().total}`}
+                  />
+                ) : undefined
+              }
+            >
+              <Show
+                when={card().tasks.length > 0}
+                fallback={<p class="pw-detail-panel__text" data-empty>No tasks yet.</p>}
+              >
+                <ul class="m-0 grid list-none gap-1.5 p-0" aria-label="Tasks">
+                  <For each={card().tasks}>
+                    {(task) => (
+                      <li
+                        class="flex items-start gap-2 text-[12.5px]"
+                        classList={{
+                          "text-[var(--color-text-secondary)]": task.state === "open",
+                          "text-[var(--color-text-muted)]": task.state !== "open",
+                        }}
+                      >
+                        <span class="mt-0.5 shrink-0">
+                          <TaskStateIcon state={task.state} />
+                        </span>
+                        <span class="w-7 shrink-0 font-mono text-[11px] leading-5 text-[var(--color-text-muted)]">
+                          T{task.number}
+                        </span>
+                        <span class="min-w-0 flex-1" classList={{ "line-through": task.state === "dropped" }}>
+                          {task.title}
+                          <Show when={task.scope}>
+                            <span class="ml-2 font-mono text-[11px] text-[var(--color-text-muted)]">
+                              {task.scope}
+                            </span>
+                          </Show>
+                          <Show when={task.claimHolder}>
+                            <span class="ml-2 text-[11px] text-[var(--color-text-muted)]">
+                              claimed by {task.claimHolder}
+                            </span>
+                          </Show>
+                        </span>
+                      </li>
+                    )}
+                  </For>
+                </ul>
+              </Show>
+            </DetailPanel.Section>
 
-            <DetailPanel.Body>
-              <DetailPanel.Main>
-                <DetailPanel.Title
-                  icon={<ListChecks size={16} />}
-                  title={card().title}
-                />
-                <DetailPanel.Section title="Intent" icon={<FileText size={14} />} aside={
-                  <Show when={continuable()}>
-                    <Button variant="secondary" size="sm" onClick={() => props.onContinueFlow?.()}>
-                      {card().stage === "shape" ? "Continue shaping" : "Continue planning"}
-                    </Button>
-                  </Show>
-                }>
-                  <Show
-                    when={card().intent}
-                    fallback={<p class="pw-detail-panel__text" data-empty>No intent yet.</p>}
-                  >
-                    <p class="pw-detail-panel__text whitespace-pre-wrap">{card().intent}</p>
-                  </Show>
-                </DetailPanel.Section>
+            <Show when={card().questions.length > 0}>
+              <DetailPanel.Section title="Questions" icon={<HelpCircle size={14} />}>
+                <ul class="m-0 grid list-none gap-2 p-0" aria-label="Questions">
+                  <For each={card().questions}>
+                    {(question) => (
+                      <li class="grid gap-1 text-[12.5px] text-[var(--color-text-secondary)]">
+                        <span class="flex flex-wrap items-center gap-1.5">
+                          <span>{question.text}</span>
+                          <Show when={question.blocking && question.state === "open"}>
+                            <StatusChip tone="warn" label="Blocking" />
+                          </Show>
+                          <Show when={question.state === "answered"}>
+                            <StatusChip tone="healthy" label="Answered" />
+                          </Show>
+                        </span>
+                        <Show when={question.state === "answered" && question.answer}>
+                          <span class="text-[var(--color-text-muted)]">{question.answer}</span>
+                        </Show>
+                        <Show when={question.state === "open" && question.options.length > 0}>
+                          <span class="font-mono text-[11px] text-[var(--color-text-muted)]">
+                            {question.options.join(" | ")}
+                          </span>
+                        </Show>
+                      </li>
+                    )}
+                  </For>
+                </ul>
+              </DetailPanel.Section>
+            </Show>
 
-                <DetailPanel.Section
-                  title="Tasks" icon={<ListChecks size={14} />}
-                  aside={
-                    progress().total > 0 ? (
-                      <StatusChip
-                        tone={progress().done === progress().total ? "healthy" : "muted"}
-                        label={`${progress().done}/${progress().total}`}
-                      />
-                    ) : undefined
-                  }
+            <Show when={card().invariants.length > 0}>
+              <DetailPanel.Section title="Invariants" icon={<ShieldCheck size={14} />}>
+                <ul
+                  class="m-0 list-disc space-y-1 pl-4 text-[12.5px] text-[var(--color-text-secondary)]"
+                  aria-label="Invariants"
                 >
-                  <Show
-                    when={card().tasks.length > 0}
-                    fallback={<p class="pw-detail-panel__text" data-empty>No tasks yet.</p>}
-                  >
-                    <ul class="m-0 grid list-none gap-1.5 p-0" aria-label="Tasks">
-                      <For each={card().tasks}>
-                        {(task) => (
-                          <li
-                            class="flex items-start gap-2 text-[12.5px]"
-                            classList={{
-                              "text-[var(--color-text-secondary)]": task.state === "open",
-                              "text-[var(--color-text-muted)]": task.state !== "open",
-                            }}
-                          >
-                            <span class="mt-0.5 shrink-0">
-                              <TaskStateIcon state={task.state} />
-                            </span>
-                            <span class="w-7 shrink-0 font-mono text-[11px] leading-5 text-[var(--color-text-muted)]">
-                              T{task.number}
-                            </span>
-                            <span class="min-w-0 flex-1" classList={{ "line-through": task.state === "dropped" }}>
-                              {task.title}
-                              <Show when={task.scope}>
-                                <span class="ml-2 font-mono text-[11px] text-[var(--color-text-muted)]">
-                                  {task.scope}
-                                </span>
-                              </Show>
-                              <Show when={task.claimHolder}>
-                                <span class="ml-2 text-[11px] text-[var(--color-text-muted)]">
-                                  claimed by {task.claimHolder}
-                                </span>
-                              </Show>
-                            </span>
-                          </li>
-                        )}
-                      </For>
-                    </ul>
-                  </Show>
-                </DetailPanel.Section>
-
-                <Show when={card().questions.length > 0}>
-                  <DetailPanel.Section title="Questions" icon={<HelpCircle size={14} />}>
-                    <ul class="m-0 grid list-none gap-2 p-0" aria-label="Questions">
-                      <For each={card().questions}>
-                        {(question) => (
-                          <li class="grid gap-1 text-[12.5px] text-[var(--color-text-secondary)]">
-                            <span class="flex flex-wrap items-center gap-1.5">
-                              <span>{question.text}</span>
-                              <Show when={question.blocking && question.state === "open"}>
-                                <StatusChip tone="warn" label="Blocking" />
-                              </Show>
-                              <Show when={question.state === "answered"}>
-                                <StatusChip tone="healthy" label="Answered" />
-                              </Show>
-                            </span>
-                            <Show when={question.state === "answered" && question.answer}>
-                              <span class="text-[var(--color-text-muted)]">{question.answer}</span>
-                            </Show>
-                            <Show when={question.state === "open" && question.options.length > 0}>
-                              <span class="font-mono text-[11px] text-[var(--color-text-muted)]">
-                                {question.options.join(" | ")}
-                              </span>
-                            </Show>
-                          </li>
-                        )}
-                      </For>
-                    </ul>
-                  </DetailPanel.Section>
-                </Show>
-
-                <Show when={card().invariants.length > 0}>
-                  <DetailPanel.Section title="Invariants" icon={<ShieldCheck size={14} />}>
-                    <ul
-                      class="m-0 list-disc space-y-1 pl-4 text-[12.5px] text-[var(--color-text-secondary)]"
-                      aria-label="Invariants"
-                    >
-                      <For each={card().invariants}>{(invariant) => <li>{invariant.text}</li>}</For>
-                    </ul>
-                  </DetailPanel.Section>
-                </Show>
-              </DetailPanel.Main>
-
-              <DetailPanel.Rail>
-                <DetailPanel.Section title="Properties" icon={<Settings size={14} />}>
-                  <DetailPanel.Properties>
-                    <DetailPanel.Property
-                      label="Stage"
-                      value={
-                        <Select
-                          aria-label="Work stage"
-                          size="sm"
-                          class="w-32"
-                          options={WORK_STAGES.map((stage) => ({ value: stage.id, label: stage.label }))}
-                          value={card().stage}
-                          disabled={!props.onSetStage}
-                          onChange={(next) => {
-                            if (isWorkStage(next) && next !== card().stage) props.onSetStage?.(next);
-                          }}
-                        />
-                      }
-                    />
-                    <DetailPanel.Property label="Slug" value={card().slug} mono />
-                    <DetailPanel.Property label="Kind" value={card().kind === "architecture" ? "Architecture change" : "Feature"} />
-                    <DetailPanel.Property label="Owner" value={card().owner || null} />
-                    <DetailPanel.Property label="Under" value={card().under || null} mono />
-                    <DetailPanel.Property
-                      label="Decisions"
-                      value={card().decisions.length > 0 ? card().decisions.join(", ") : null}
-                    />
-                    <DetailPanel.Property label="Updated" value={card().updatedAt} />
-                  </DetailPanel.Properties>
-                  <Show when={props.onRemove}>
-                    <Button variant="danger" size="sm" onClick={() => props.onRemove?.()}>Remove from board</Button>
-                  </Show>
-                </DetailPanel.Section>
-                <DetailPanel.Section>
-                  <p class="pw-detail-panel__text" data-empty>
-                    Agents edit tasks, questions, and invariants with polterware apply.
-                  </p>
-                </DetailPanel.Section>
-              </DetailPanel.Rail>
-            </DetailPanel.Body>
-          </DetailPanel.Content>
+                  <For each={card().invariants}>{(invariant) => <li>{invariant.text}</li>}</For>
+                </ul>
+              </DetailPanel.Section>
+            </Show>
+          </KnowledgeDocumentShell>
         );
       }}
     </Show>

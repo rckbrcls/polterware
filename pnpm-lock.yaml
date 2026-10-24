@@ -452,9 +452,6 @@ importers:
       ssh2:
         specifier: ^1.16.0
         version: 1.17.0
-      uplot:
-        specifier: ^1.6.31
-        version: 1.6.32
     devDependencies:
       '@electron-toolkit/utils':
         specifier: ^4.0.0
@@ -602,6 +599,9 @@ importers:
 
   packages/features/dispatch:
     dependencies:
+      '@polterware/bot-avatars':
+        specifier: workspace:*
+        version: link:../../frontend/bot-avatars
       '@polterware/feature-shell':
         specifier: workspace:*
         version: link:../shell
@@ -1077,6 +1077,9 @@ importers:
       turndown:
         specifier: ^7.2.4
         version: 7.2.4
+      uplot:
+        specifier: ^1.6.32
+        version: 1.6.32
     devDependencies:
       '@types/node':
         specifier: ^24.13.6

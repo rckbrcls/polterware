@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { TreeView } from "./tree-view";
 import { ProgressRing } from "./progress-ring";
+import { ProgressBar } from "./progress-bar";
 import { Heatmap, heatmapLevel } from "./heatmap";
 import { CalendarGrid } from "./calendar-grid";
 import { PageEmpty, EmptyIllustration } from "./feedback";
@@ -58,6 +59,32 @@ describe("ProgressRing", () => {
     expect(host.querySelector('[role="progressbar"]')!.getAttribute("aria-valuenow")).toBe("50");
     const css = readFileSync(join(process.cwd(), "src/progress-ring.css"), "utf8");
     expect(css).toMatch(/prefers-reduced-motion: reduce[\s\S]*transition: none/); expect(css).not.toMatch(/opacity/);
+  });
+});
+describe("ProgressBar", () => {
+  it("keeps its label and value semantics when usage becomes unknown", () => {
+    const [value, setValue] = createSignal<number | null>(42.5);
+    const host = mount(() => <ProgressBar label="Quota usage" value={value()} />);
+    const progress = host.querySelector('[role="progressbar"]')!;
+    const label = document.getElementById(progress.getAttribute("aria-labelledby")!);
+    expect(label?.textContent).toBe("Quota usage");
+    expect(progress.getAttribute("aria-valuenow")).toBe("42.5");
+    expect(progress.getAttribute("aria-valuetext")).toBe("42.5%");
+    setValue(null);
+    expect(progress.hasAttribute("aria-valuenow")).toBe(false);
+    expect(progress.getAttribute("aria-valuetext")).toBe("Unknown");
+    expect(host.querySelector("button, input, [tabindex]")).toBeNull();
+  });
+  it("bounds percentages and preserves a caller's value description", () => {
+    const [value, setValue] = createSignal(120);
+    const host = mount(() => <ProgressBar label="Samples" value={value()} aria-valuetext="6 of 5 verified samples" size="sm" tone="violet" />);
+    const progress = host.querySelector('[role="progressbar"]')!;
+    expect(progress.getAttribute("aria-valuemin")).toBe("0");
+    expect(progress.getAttribute("aria-valuemax")).toBe("100");
+    expect(progress.getAttribute("aria-valuenow")).toBe("100");
+    expect(progress.getAttribute("aria-valuetext")).toBe("6 of 5 verified samples");
+    setValue(-10);
+    expect(progress.getAttribute("aria-valuenow")).toBe("0");
   });
 });
 describe("Heatmap", () => {

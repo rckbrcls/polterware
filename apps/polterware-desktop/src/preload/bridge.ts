@@ -180,6 +180,8 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         listHistory: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listHistory, payload),
         checkTiers: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.checkTiers, payload),
         stats: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.stats, payload),
+        getClassifier: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.getClassifier, payload),
+        capacity: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.capacity, payload),
         watchRun: (
           input: string | { id: string; afterSeq?: number },
           callback: (event: DispatchWatchEvent) => void,

@@ -33,8 +33,8 @@ function Section(props: { title: string; children: import("solid-js").JSX.Elemen
 }
 
 /**
- * One connected integration, laid out inline for the Settings dialog. The global
- * DetailPanel sits behind the dialog scrim, so the embedded view cannot use it.
+ * One connected integration, reusing the connection controls, imported resources,
+ * and sync history on the Connected page.
  */
 export function IntegrationInlineDetail(props: {
   integration: WorkspaceIntegration;

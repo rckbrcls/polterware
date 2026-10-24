@@ -18,6 +18,8 @@ func (d Deps) classifierPath() string {
 func (d Deps) classifyRequest(rec *Run, promote bool) {
 	t := adapter.Tier(rec.Tier)
 	if !t.Valid() {
+		rec.FeatureSchema = 0
+		rec.ClassifyFeatures = nil
 		return // provider/model-only runs have no known requested difficulty
 	}
 	rec.RequestedTier = rec.Tier

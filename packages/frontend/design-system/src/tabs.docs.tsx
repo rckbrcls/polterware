@@ -20,7 +20,7 @@ function ControlledTabs() {
 export default {
   name: "Tabs",
   group: "Layout",
-  summary: "Section navigation tabs pair Ark behavior with a gliding active pill. TabPanel is the presentational association for route- or state-owned content.",
+  summary: "Section navigation tabs pair Ark behavior with a gliding active pill and inline counts using the shared CountBadge texture and tone palette. TabPanel is the presentational association for route- or state-owned content.",
   exports: ["Tabs", "TabPanel"],
   examples: [
     { id: "controlled", title: "Controlled", wide: true, render: () => <ControlledTabs /> },

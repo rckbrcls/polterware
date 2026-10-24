@@ -1,0 +1,15 @@
+/* Badge owns the material and tone palette; count geometry stays shared inline and floating. */
+.pw-badge.pw-count-badge,
+.pw-badge.pw-sidebar-item-count {
+  flex-shrink: 0;
+  min-width: var(--count-badge-size, 16px);
+  max-width: none;
+  height: var(--count-badge-size, 16px);
+  justify-content: center;
+  padding: var(--count-badge-padding, 0 4px);
+  border-radius: var(--count-badge-radius, calc(var(--radius-control) - 2px));
+  font-size: var(--count-badge-font-size, 9px);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}

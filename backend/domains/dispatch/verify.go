@@ -18,14 +18,10 @@ const defaultVerifyTimeout = 10 * time.Minute
 type VerifyStatus string
 
 const (
-	VerifyStatusVerified     VerifyStatus = "verified"
-	VerifyStatusFailed       VerifyStatus = "verification_failed"
-	VerifyStatusUnverified   VerifyStatus = "unverified"
-	VerifyStatusError        VerifyStatus = "error"
-	StatusVerified                        = VerifyStatusVerified
-	StatusVerificationFailed              = VerifyStatusFailed
-	StatusUnverified                      = VerifyStatusUnverified
-	StatusError                           = VerifyStatusError
+	VerifyStatusVerified   VerifyStatus = "verified"
+	VerifyStatusFailed     VerifyStatus = "verification_failed"
+	VerifyStatusUnverified VerifyStatus = "unverified"
+	VerifyStatusError      VerifyStatus = "error"
 )
 
 // CheckStatus is the outcome of one check.
@@ -47,9 +43,6 @@ type VerifyResult struct {
 	DurationMs     int64         `json:"durationMs,omitempty"`
 	BaselineCached bool          `json:"baselineCached,omitempty"`
 }
-
-// Result is an alias for VerifyResult.
-type Result = VerifyResult
 
 // VerifyResult decodes Run.VerifyJSON when present.
 func (r Run) VerifyResult() *VerifyResult {
@@ -96,15 +89,10 @@ const VerifyExample = `{
 }
 `
 
-const Example = VerifyExample
-
 // ConfigPath is <repo>/.dispatch/verify.json.
 func ConfigPath(repo string) string {
 	return filepath.Join(repo, ".dispatch", "verify.json")
 }
-
-// VerifyConfigPath is an alias for ConfigPath.
-func VerifyConfigPath(repo string) string { return ConfigPath(repo) }
 
 // Verify executes project checks and the cheap diff checks. A missing config
 // with no go.mod is unverified, which is not a pass.
@@ -227,11 +215,6 @@ func Verify(ctx context.Context, opt VerifyOptions) (res VerifyResult, err error
 	return res, nil
 }
 
-// RunVerify is an alias for Verify.
-func RunVerify(ctx context.Context, opt VerifyOptions) (VerifyResult, error) {
-	return Verify(ctx, opt)
-}
-
 type verifyFileConfig struct {
 	Checks []verifyCheckConfig `json:"checks"`
 }
@@ -263,9 +246,6 @@ func HasConfig(repo string) bool {
 	cfg, err := loadVerifyConfig(repo, repo)
 	return err == nil && !cfg.skip
 }
-
-// HasVerifyConfig is an alias for HasConfig.
-func HasVerifyConfig(repo string) bool { return HasConfig(repo) }
 
 func loadVerifyConfig(repo, worktree string) (verifyLoaded, error) {
 	b, path, err := readVerifyConfig(repo, worktree)
@@ -408,9 +388,6 @@ func Check(path string) error {
 	return err
 }
 
-// CheckVerifyConfig is an alias for Check.
-func CheckVerifyConfig(path string) error { return Check(path) }
-
 // Describe lists the checks configured at path as "name: argv" lines.
 func Describe(path string) ([]string, error) {
 	b, err := os.ReadFile(path)
@@ -435,6 +412,3 @@ func Describe(path string) ([]string, error) {
 	}
 	return out, nil
 }
-
-// DescribeVerifyConfig is an alias for Describe.
-func DescribeVerifyConfig(path string) ([]string, error) { return Describe(path) }

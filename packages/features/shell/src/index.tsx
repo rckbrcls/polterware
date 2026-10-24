@@ -4,11 +4,11 @@ import { ResizableSidebar, ToastRegion } from "@polterware/frontend-design-syste
 import type { PlatformContext } from "@polterware/frontend-platform";
 import { MainFrame, ShellRoot } from "@polterware/frontend-shell";
 import type { ClientRoute, NavItem, ShellStatus } from "./route";
-import { isNavSectionId } from "./route";
+import { DEFAULT_TABS, isNavSectionId } from "./route";
 import { SidebarNav, SidebarSettingsItem, type SidebarCount } from "./sidebar";
 import { MainSurface } from "./main-surface";
 import { TitleBar } from "./title-bar";
-import { SidebarProjectHeader, type WorkspaceContext } from "./context-switchers";
+import { type WorkspaceContext } from "./context-switchers";
 import type { EnvironmentItem, ProjectSwitcherItem, ScopeNodeItem, WorkspaceScope } from "./types";
 import { ENVIRONMENT_FIXTURES } from "./fixtures";
 
@@ -65,6 +65,7 @@ export {
 } from "./route";
 export { MainSurface, PageHeader, PageContent } from "./main-surface";
 export { EntityDetailHost, type EntityDetailHostProps } from "./entity-detail-host";
+export { EntityDocumentCanvas } from "./entity-document";
 export { expandedDetail, openDetail, requestDetailExpanded, setDetailExpandHandler, setExpandedDetailTarget } from "./detail-expansion";
 export { SidebarNav, SidebarSettingsItem } from "./sidebar";
 export type { SidebarCount } from "./sidebar";
@@ -75,7 +76,7 @@ export { TerminalEmulator } from "./terminal-emulator";
 export { TerminalTranscript } from "./terminal-transcript";
 export { CreateProjectDialog } from "./create-project-dialog";
 export { ProjectSwitcher } from "./project-switcher";
-export { SidebarProjectHeader, WorkspaceContextBar } from "./context-switchers";
+export { WorkspaceContextBar } from "./context-switchers";
 export {
   PROJECT_SWITCHER_FIXTURES,
   ENVIRONMENT_FIXTURES,
@@ -89,12 +90,15 @@ export {
 } from "./workspace-mocks";
 
 export const DEFAULT_NAV: NavItem[] = [
-  { id: "inbox", label: "Inbox", group: "PROJECT" },
-  { id: "work", label: "Work", group: "PROJECT" },
-  { id: "atlas", label: "Atlas", group: "PROJECT" },
-  { id: "truth", label: "Truth", group: "PROJECT" },
-  { id: "dispatch", label: "Dispatch", group: "PROJECT" },
-  { id: "activity", label: "Activity", group: "PROJECT" },
+  { id: "inbox", section: "inbox", label: "Inbox", group: "Now", icon: "inbox" },
+  { id: "activity", section: "activity", label: "Activity", group: "Now", icon: "activity" },
+  { id: "work", section: "work", label: "Work", group: "Project", icon: "work" },
+  { id: "atlas", section: "atlas", label: "Atlas", group: "Project", icon: "atlas" },
+  { id: "truth", section: "truth", label: "Truth", group: "Project", icon: "truth" },
+  { id: "dispatch", section: "dispatch", label: "Runs", group: "Dispatch", icon: "runs" },
+  { id: "dispatch-routing", section: "dispatch-routing", label: "Routing", group: "Dispatch", icon: "routing" },
+  { id: "dispatch-usage", section: "dispatch-usage", label: "Usage", group: "Dispatch", icon: "usage" },
+  { id: "integrations", section: "integrations", label: "Integrations", group: "Connect", icon: "integrations" },
 ];
 
 function workspaceFromRoute(
@@ -113,7 +117,7 @@ export function Shell(props: {
   panel?: () => string;
   setPanel?: (panel: string) => void;
   route?: () => ClientRoute;
-  onNavigate?: (section: string) => void;
+  onNavigate?: (section: string, tab?: string) => void;
   onProjectSelect?: (projectId: string) => void;
   onCreateProject?: () => void;
   onOpenProjectSettings?: () => void;
@@ -147,10 +151,18 @@ export function Shell(props: {
   const workspace = createMemo(
     () => props.workspace ?? localWorkspace() ?? workspaceFromRoute(props.route?.(), props.environments ?? ENVIRONMENT_FIXTURES),
   );
-  const activeId = () => (isNavSectionId(currentSection()) ? currentSection() : "");
+  const activeId = createMemo(() => {
+    const section = currentSection();
+    if (!isNavSectionId(section)) return "";
+    const tab = props.route?.().tab ?? DEFAULT_TABS[section];
+    const matched = items().find(
+      (item) => item.section === section && (!item.tab || item.tab === tab),
+    );
+    return matched?.id ?? "";
+  });
 
-  function select(section: string) {
-    props.onNavigate?.(section);
+  function select(section: string, tab?: string) {
+    props.onNavigate?.(section, tab);
     props.setPanel?.(section);
   }
 
@@ -178,8 +190,12 @@ export function Shell(props: {
         onBack={() => props.onBack?.()}
         onForward={() => props.onForward?.()}
         workspace={workspace()}
+        projects={props.projects}
         environments={props.environments}
+        onSelectProject={selectProject}
         onSelectEnvironment={selectEnvironment}
+        onCreateProject={() => props.onCreateProject?.()}
+        onOpenProjectSettings={() => props.onOpenProjectSettings?.()}
         scopeNodes={props.scopeNodes}
         scope={props.scope}
         onSelectScope={props.onSelectScope}
@@ -197,13 +213,6 @@ export function Shell(props: {
           ariaLabel="Project navigation"
           sidebar={
             <div class="flex h-full min-h-0 flex-col pt-2">
-              <SidebarProjectHeader
-                context={workspace()}
-                projects={props.projects}
-                onSelectProject={selectProject}
-                onCreateProject={() => props.onCreateProject?.()}
-                onOpenProjectSettings={() => props.onOpenProjectSettings?.()}
-              />
               <div class="flex min-h-0 flex-1 flex-col">
                 <SidebarNav
                   items={items()}

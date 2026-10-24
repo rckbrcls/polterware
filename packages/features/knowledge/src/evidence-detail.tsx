@@ -1,7 +1,8 @@
 import { Show, type JSX } from "solid-js";
-import { DetailPanel, Button, FileText } from "@polterware/frontend-design-system";
+import { Button, FileText } from "@polterware/frontend-design-system";
 import type { ScopeNodeItem, WorkspaceEvidence } from "@polterware/feature-shell";
 import { EditablePath } from "./editable-path";
+import { KnowledgeDocumentProperty } from "./knowledge-document-properties";
 import { ScopePicker, scopePathOf } from "./scope-picker";
 import { KnowledgeDocumentNotFound, KnowledgeDocumentShell, type EvidenceNoteProps } from "./knowledge-document-shell";
 
@@ -22,45 +23,40 @@ export function EvidenceDetail(props: {
   return (
     <Show when={props.evidence} fallback={<KnowledgeDocumentNotFound kindLabel="Evidence" />}>
       {(evidence) => (
-        <DetailPanel.Content>
-          <DetailPanel.Header />
-          <KnowledgeDocumentShell
-            title={props.note?.title ?? evidence().title}
-            icon={<FileText size={16} />}
-            bodyMarkdown={props.bodyMarkdown}
-            onBodyChange={props.onBodyChange}
-            onTitleChange={props.note?.onTitleChange}
-            tags={props.note?.tags}
-            tagSuggestions={props.note?.tagSuggestions}
-            onTagsChange={props.note?.onTagsChange}
-            properties={
-              <DetailPanel.Properties variant="inline">
-                <DetailPanel.Property
-                  label="Path"
-                  value={<EditablePath value={props.pathValue} onChange={props.onPathChange} />}
-                />
-                <Show when={props.onScopeChange}>
-                  <DetailPanel.Property
-                    label="Atlas scope"
-                    value={
-                      <ScopePicker
-                        nodes={props.scopeNodes ?? []}
-                        value={scopePathOf(props.scopeNodes ?? [], evidence().scopeNodeId)}
-                        onChange={(path) => props.onScopeChange?.(path)}
-                      />
-                    }
+        <KnowledgeDocumentShell
+          entityId={evidence().id}
+          title={props.note?.title ?? evidence().title}
+          icon={<FileText size={32} />}
+          bodyMarkdown={props.bodyMarkdown}
+          onBodyChange={props.onBodyChange}
+          onTitleChange={props.note?.onTitleChange}
+          tags={props.note?.tags}
+          tagSuggestions={props.note?.tagSuggestions}
+          onTagsChange={props.note?.onTagsChange}
+          properties={
+            <>
+              <KnowledgeDocumentProperty label="Path">
+                <EditablePath value={props.pathValue} onChange={props.onPathChange} />
+              </KnowledgeDocumentProperty>
+              <Show when={props.onScopeChange}>
+                <KnowledgeDocumentProperty label="Atlas scope">
+                  <ScopePicker
+                    nodes={props.scopeNodes ?? []}
+                    value={scopePathOf(props.scopeNodes ?? [], evidence().scopeNodeId)}
+                    onChange={(path) => props.onScopeChange?.(path)}
+                    class="w-full min-w-0 max-w-[20rem]"
                   />
-                </Show>
-              </DetailPanel.Properties>
-            }
-            footerActions={
-              <Show when={props.onArchive}>
-                <Button variant="danger" size="sm" onClick={() => props.onArchive?.()}>Archive</Button>
+                </KnowledgeDocumentProperty>
               </Show>
-            }
-            links={props.links}
-          />
-        </DetailPanel.Content>
+            </>
+          }
+          footerActions={
+            <Show when={props.onArchive}>
+              <Button variant="danger" size="sm" onClick={() => props.onArchive?.()}>Archive</Button>
+            </Show>
+          }
+          links={props.links}
+        />
       )}
     </Show>
   );

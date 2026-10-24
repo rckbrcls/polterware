@@ -13,6 +13,7 @@ import {
   MemoryStick,
   PageToolbar,
   Plus,
+  ProgressBar,
   Settings,
   Tabs,
   X,
@@ -80,7 +81,6 @@ const session = [
 const transcript = [...session.flatMap((step) => [PROMPT + step.command, ...step.output]), PROMPT];
 
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const level = (percent: number) => (percent >= 85 ? "hot" : percent >= 60 ? "warn" : undefined);
 const last = (series: number[]) => series[series.length - 1] ?? 0;
 const drift = (value: number, step: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value + (Math.random() - 0.5) * 2 * step));
@@ -111,10 +111,6 @@ function createLiveMetrics(root: () => HTMLElement | undefined) {
     });
   });
   return live;
-}
-
-function Bar(props: { percent: number; class?: string }) {
-  return <div class={`mk-bar ${props.class ?? ""}`}><span data-level={level(props.percent)} style={{ width: `${props.percent}%` }} /></div>;
 }
 
 /** A line chart with compact y ticks and grid lines, like the app's uPlot spark charts. */
@@ -168,7 +164,14 @@ function Sensor(props: { value: string; unit?: string; label: string; percent?: 
     <div class="mk-sensor">
       <div class="mk-sensor-value">{props.value}<Show when={props.unit}><span class="mk-sensor-unit">{props.unit}</span></Show></div>
       <div class="mk-sensor-label">{props.label}</div>
-      <Show when={props.percent !== undefined}><Bar percent={props.percent!} /></Show>
+      <Show when={props.percent !== undefined}><ProgressBar
+        label={props.label}
+        value={props.percent!}
+        aria-valuetext={`${props.value}${props.unit ? ` ${props.unit}` : ""}`}
+        size="sm"
+        class="mk-bar"
+        style={{ "--progress-bar-color": `var(--color-chart-${props.percent! >= 85 ? "red" : props.percent! >= 60 ? "amber" : "cyan"})` }}
+      /></Show>
     </div>
   );
 }
@@ -182,7 +185,13 @@ function Metrics(props: { live: Live }) {
       <Card title="CPU" icon={Cpu} class="mk-tall">
         <div class="mk-stat-block"><div class="mk-stat">{cpu().toFixed(1)}%</div><div class="mk-sub">Load 0.61 / 0.75 / 0.68</div></div>
         <div class="mk-cores">
-          <Index each={props.live.cores}>{(usage, i) => <div class="mk-core"><span>cpu{i}</span><span>{Math.round(usage())}%</span><Bar percent={usage()} /></div>}</Index>
+          <Index each={props.live.cores}>{(usage, i) => <div class="mk-core"><span>cpu{i}</span><span>{Math.round(usage())}%</span><ProgressBar
+            label={`cpu${i} usage`}
+            value={usage()}
+            size="sm"
+            class="mk-bar"
+            style={{ "--progress-bar-color": `var(--color-chart-${usage() >= 85 ? "red" : usage() >= 60 ? "amber" : "cyan"})` }}
+          /></div>}</Index>
         </div>
         <Spark series={props.live.cpu} max={30} height={96} color="--color-chart-red" ticks={[[10, "10"], [20, "20"]]} />
       </Card>
@@ -190,7 +199,13 @@ function Metrics(props: { live: Live }) {
         <div class="mk-stat-block">
           <div class="mk-stat">{props.live.memory.toFixed(1)}%</div>
           <div class="mk-sub">{((props.live.memory / 100) * 32).toFixed(2)} GB / 32.00 GB</div>
-          <Bar percent={props.live.memory} class="mk-stat-bar" />
+          <ProgressBar
+            label="Memory usage"
+            value={props.live.memory}
+            size="sm"
+            class="mk-stat-bar"
+            style={{ "--progress-bar-color": `var(--color-chart-${props.live.memory >= 85 ? "red" : props.live.memory >= 60 ? "amber" : "cyan"})` }}
+          />
         </div>
         <div class="mk-sensors mk-sensors-pair">
           <Sensor value="179.0" unit="MB" label="Swap of 8.00 GB" percent={2} />

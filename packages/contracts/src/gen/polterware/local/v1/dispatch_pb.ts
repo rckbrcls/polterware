@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file polterware/local/v1/dispatch.proto.
  */
 export const file_polterware_local_v1_dispatch: GenFile = /*@__PURE__*/
-  fileDesc("CiJwb2x0ZXJ3YXJlL2xvY2FsL3YxL2Rpc3BhdGNoLnByb3RvEhNwb2x0ZXJ3YXJlLmxvY2FsLnYxIt8ECgtEaXNwYXRjaFJ1bhIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIMCgR0aWVyGAQgASgJEg0KBWFnZW50GAUgASgJEg0KBW1vZGVsGAYgASgJEhAKCHByb3ZpZGVyGAcgASgJEg4KBmVmZm9ydBgIIAEoCRIOCgZwcm9tcHQYCSABKAkSEQoJY2FyZF9zbHVnGAogASgJEhQKDGFnZW50X3J1bl9pZBgLIAEoCRILCgNkaXIYDCABKAkSDAoEcmVwbxgNIAEoCRIQCgh3b3JrdHJlZRgOIAEoCRIOCgZicmFuY2gYDyABKAkSEAoIYmFzZV9zaGEYECABKAkSEQoJcmVhZF9vbmx5GBEgASgIEhQKDHZlcmlmaWNhdGlvbhgSIAEoCRIRCglleGl0X2NvZGUYEyABKAUSEgoKZXhpdF9jbGFzcxgUIAEoCRINCgVlcnJvchgVIAEoCRIMCgRub3RlGBYgASgJEhoKDWZpbGVzX2NoYW5nZWQYFyABKAVIAIgBARIXCgppbnNlcnRpb25zGBggASgFSAGIAQESFgoJZGVsZXRpb25zGBkgASgFSAKIAQESEgoKY3JlYXRlZF9hdBgaIAEoCRISCgpzdGFydGVkX2F0GBsgASgJEhMKC2ZpbmlzaGVkX2F0GBwgASgJEhEKCW1lcmdlZF9hdBgdIAEoCRIRCgltZXJnZV9zaGEYHiABKAlCEAoOX2ZpbGVzX2NoYW5nZWRCDQoLX2luc2VydGlvbnNCDAoKX2RlbGV0aW9ucyKUAQoQRGlzcGF0Y2hSdW5FdmVudBIKCgJpZBgBIAEoCRIOCgZydW5faWQYAiABKAkSEgoKcHJvamVjdF9pZBgDIAEoCRIMCgRraW5kGAQgASgJEg0KBWFnZW50GAUgASgJEgwKBHRpZXIYBiABKAkSDAoEdGV4dBgHIAEoCRILCgNzZXEYCCABKAMSCgoCYXQYCSABKAkipAEKEERpc3BhdGNoV29ya3RyZWUSCgoCaWQYASABKAkSEgoKcHJvamVjdF9pZBgCIAEoCRIOCgZydW5faWQYAyABKAkSEQoJY2FyZF9zbHVnGAQgASgJEgwKBHBhdGgYBSABKAkSDgoGYnJhbmNoGAYgASgJEhAKCGJhc2Vfc2hhGAcgASgJEg4KBnN0YXR1cxgIIAEoCRINCgVvd25lchgJIAEoCSLXAQoVRGlzcGF0Y2hRdW90YVNuYXBzaG90Eg0KBWFnZW50GAEgASgJEhAKCHByb3ZpZGVyGAIgASgJEg4KBndpbmRvdxgDIAEoCRIOCgZzb3VyY2UYBCABKAkSEgoKY29uZmlkZW5jZRgFIAEoCRIZCgx1c2VkX3BlcmNlbnQYBiABKAFIAIgBARIWCg53aW5kb3dfbWludXRlcxgHIAEoBRIRCglyZXNldHNfYXQYCCABKAkSEgoKc2FtcGxlZF9hdBgJIAEoCUIPCg1fdXNlZF9wZXJjZW50In8KDERpc3BhdGNoVGllchIMCgRuYW1lGAEgASgJEhAKCHByb3ZpZGVyGAIgASgJEg0KBWFnZW50GAMgASgJEg0KBW1vZGVsGAQgASgJEg0KBXNwZWVkGAUgASgFEhAKCHN0cmVuZ3RoGAYgASgFEhAKCHBvc2l0aW9uGAcgASgFIrgBCg1EaXNwYXRjaEFnZW50EgwKBG5hbWUYASABKAkSCwoDYmluGAIgASgJEhAKCHByb3ZpZGVyGAMgASgJEhQKDHF1b3RhX3NvdXJjZRgEIAEoCRISCgpjb25maWRlbmNlGAUgASgJEgwKBHJpc2sYBiABKAkSGQoMdXNlZF9wZXJjZW50GAcgASgBSACIAQESFgoOY29vbGRvd25fdW50aWwYCCABKAlCDwoNX3VzZWRfcGVyY2VudCJECg9MaXN0UnVuc1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRINCgVsaW1pdBgCIAEoBRIOCgZvZmZzZXQYAyABKAUiQgoQTGlzdFJ1bnNSZXNwb25zZRIuCgRydW5zGAEgAygLMiAucG9sdGVyd2FyZS5sb2NhbC52MS5EaXNwYXRjaFJ1biIbCg1HZXRSdW5SZXF1ZXN0EgoKAmlkGAEgASgJIj8KDkdldFJ1blJlc3BvbnNlEi0KA3J1bhgBIAEoCzIgLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hSdW4ilwEKD1N0YXJ0UnVuUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEgwKBHRpZXIYAiABKAkSDgoGcHJvbXB0GAMgASgJEhEKCWNhcmRfc2x1ZxgEIAEoCRINCgVhZ2VudBgFIAEoCRIQCgh3b3JrdHJlZRgGIAEoCRILCgNkaXIYByABKAkSEQoJcmVhZF9vbmx5GAggASgIIkEKEFN0YXJ0UnVuUmVzcG9uc2USLQoDcnVuGAEgASgLMiAucG9sdGVyd2FyZS5sb2NhbC52MS5EaXNwYXRjaFJ1biIeChBDYW5jZWxSdW5SZXF1ZXN0EgoKAmlkGAEgASgJIkIKEUNhbmNlbFJ1blJlc3BvbnNlEi0KA3J1bhgBIAEoCzIgLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hSdW4iSwoNUmVzdWx0UmVxdWVzdBIKCgJpZBgBIAEoCRIPCgdzZWN0aW9uGAIgASgJEg4KBm9mZnNldBgDIAEoBRINCgVsaW1pdBgEIAEoBSIwCg5SZXN1bHRSZXNwb25zZRIPCgdjb250ZW50GAEgASgJEg0KBXRvdGFsGAIgASgFIjAKD1dhdGNoUnVuUmVxdWVzdBIKCgJpZBgBIAEoCRIRCglhZnRlcl9zZXEYAiABKAMiRwoQV2F0Y2hSdW5SZXNwb25zZRILCgNzZXEYASABKAMSDAoEa2luZBgCIAEoCRIMCgR0ZXh0GAMgASgJEgoKAmF0GAQgASgJIioKFExpc3RXb3JrdHJlZXNSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkiUQoVTGlzdFdvcmt0cmVlc1Jlc3BvbnNlEjgKCXdvcmt0cmVlcxgBIAMoCzIlLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hXb3JrdHJlZSIwChBMaXN0UXVvdGFSZXF1ZXN0Eg0KBWFnZW50GAEgASgJEg0KBXNpbmNlGAIgASgJIlIKEUxpc3RRdW90YVJlc3BvbnNlEj0KCXNuYXBzaG90cxgBIAMoCzIqLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hRdW90YVNuYXBzaG90IhIKEExpc3RUaWVyc1JlcXVlc3QiRQoRTGlzdFRpZXJzUmVzcG9uc2USMAoFdGllcnMYASADKAsyIS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoVGllciITChFMaXN0QWdlbnRzUmVxdWVzdCJIChJMaXN0QWdlbnRzUmVzcG9uc2USMgoGYWdlbnRzGAEgAygLMiIucG9sdGVyd2FyZS5sb2NhbC52MS5EaXNwYXRjaEFnZW50ImQKEkxpc3RIaXN0b3J5UmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEg0KBWFnZW50GAIgASgJEgwKBHRpZXIYAyABKAkSDQoFbGltaXQYBCABKAUSDgoGb2Zmc2V0GAUgASgFIkwKE0xpc3RIaXN0b3J5UmVzcG9uc2USNQoGZXZlbnRzGAEgAygLMiUucG9sdGVyd2FyZS5sb2NhbC52MS5EaXNwYXRjaFJ1bkV2ZW50IhMKEUNoZWNrVGllcnNSZXF1ZXN0IiYKEkNoZWNrVGllcnNSZXNwb25zZRIQCghwcm9ibGVtcxgBIAMoCSI9CgxTdGF0c1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRIKCgJieRgCIAEoCRINCgVzaW5jZRgDIAEoCSLSAQoQRGlzcGF0Y2hTdGF0c1JvdxILCgNrZXkYASABKAkSDAoEcnVucxgCIAEoBRITCgtzdWNjZXNzX3BjdBgDIAEoARIVCg1maXJzdF90cnlfcGN0GAQgASgBEhMKBnA1MF9tcxgFIAEoA0gAiAEBEhMKBnA5MF9tcxgGIAEoA0gBiAEBEhEKCWZhbGxiYWNrcxgHIAEoBRITCgtyYXRlX2xpbWl0cxgIIAEoBRIPCgdvcnBoYW5zGAkgASgFQgkKB19wNTBfbXNCCQoHX3A5MF9tcyJyCg1TdGF0c1Jlc3BvbnNlEgoKAmJ5GAEgASgJEg0KBXNpbmNlGAIgASgJEhEKCWluX2ZsaWdodBgDIAEoBRIzCgRyb3dzGAQgAygLMiUucG9sdGVyd2FyZS5sb2NhbC52MS5EaXNwYXRjaFN0YXRzUm93MrAJCg9EaXNwYXRjaFNlcnZpY2USVwoITGlzdFJ1bnMSJC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RSdW5zUmVxdWVzdBolLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFJ1bnNSZXNwb25zZRJRCgZHZXRSdW4SIi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkdldFJ1blJlcXVlc3QaIy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkdldFJ1blJlc3BvbnNlElcKCFN0YXJ0UnVuEiQucG9sdGVyd2FyZS5sb2NhbC52MS5TdGFydFJ1blJlcXVlc3QaJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlN0YXJ0UnVuUmVzcG9uc2USWgoJQ2FuY2VsUnVuEiUucG9sdGVyd2FyZS5sb2NhbC52MS5DYW5jZWxSdW5SZXF1ZXN0GiYucG9sdGVyd2FyZS5sb2NhbC52MS5DYW5jZWxSdW5SZXNwb25zZRJRCgZSZXN1bHQSIi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlJlc3VsdFJlcXVlc3QaIy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlJlc3VsdFJlc3BvbnNlElkKCFdhdGNoUnVuEiQucG9sdGVyd2FyZS5sb2NhbC52MS5XYXRjaFJ1blJlcXVlc3QaJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLldhdGNoUnVuUmVzcG9uc2UwARJmCg1MaXN0V29ya3RyZWVzEikucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0V29ya3RyZWVzUmVxdWVzdBoqLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFdvcmt0cmVlc1Jlc3BvbnNlEloKCUxpc3RRdW90YRIlLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFF1b3RhUmVxdWVzdBomLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFF1b3RhUmVzcG9uc2USWgoJTGlzdFRpZXJzEiUucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0VGllcnNSZXF1ZXN0GiYucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0VGllcnNSZXNwb25zZRJdCgpMaXN0QWdlbnRzEiYucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0QWdlbnRzUmVxdWVzdBonLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEFnZW50c1Jlc3BvbnNlEmAKC0xpc3RIaXN0b3J5EicucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0SGlzdG9yeVJlcXVlc3QaKC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RIaXN0b3J5UmVzcG9uc2USXQoKQ2hlY2tUaWVycxImLnBvbHRlcndhcmUubG9jYWwudjEuQ2hlY2tUaWVyc1JlcXVlc3QaJy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoZWNrVGllcnNSZXNwb25zZRJOCgVTdGF0cxIhLnBvbHRlcndhcmUubG9jYWwudjEuU3RhdHNSZXF1ZXN0GiIucG9sdGVyd2FyZS5sb2NhbC52MS5TdGF0c1Jlc3BvbnNlQukBChdjb20ucG9sdGVyd2FyZS5sb2NhbC52MUINRGlzcGF0Y2hQcm90b1ABWlFnaXRodWIuY29tL3BvbHRlcndhcmUvcG9sdGVyd2FyZS9iYWNrZW5kL3BsYXRmb3JtL2dlbi9wb2x0ZXJ3YXJlL2xvY2FsL3YxO2xvY2FsdjGiAgNQTFiqAhNQb2x0ZXJ3YXJlLkxvY2FsLlYxygITUG9sdGVyd2FyZVxMb2NhbFxWMeICH1BvbHRlcndhcmVcTG9jYWxcVjFcR1BCTWV0YWRhdGHqAhVQb2x0ZXJ3YXJlOjpMb2NhbDo6VjFiBnByb3RvMw==");
+  fileDesc("CiJwb2x0ZXJ3YXJlL2xvY2FsL3YxL2Rpc3BhdGNoLnByb3RvEhNwb2x0ZXJ3YXJlLmxvY2FsLnYxIpoGCgtEaXNwYXRjaFJ1bhIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIMCgR0aWVyGAQgASgJEg0KBWFnZW50GAUgASgJEg0KBW1vZGVsGAYgASgJEhAKCHByb3ZpZGVyGAcgASgJEg4KBmVmZm9ydBgIIAEoCRIOCgZwcm9tcHQYCSABKAkSEQoJY2FyZF9zbHVnGAogASgJEhQKDGFnZW50X3J1bl9pZBgLIAEoCRILCgNkaXIYDCABKAkSDAoEcmVwbxgNIAEoCRIQCgh3b3JrdHJlZRgOIAEoCRIOCgZicmFuY2gYDyABKAkSEAoIYmFzZV9zaGEYECABKAkSEQoJcmVhZF9vbmx5GBEgASgIEhQKDHZlcmlmaWNhdGlvbhgSIAEoCRIRCglleGl0X2NvZGUYEyABKAUSEgoKZXhpdF9jbGFzcxgUIAEoCRINCgVlcnJvchgVIAEoCRIMCgRub3RlGBYgASgJEhoKDWZpbGVzX2NoYW5nZWQYFyABKAVIAIgBARIXCgppbnNlcnRpb25zGBggASgFSAGIAQESFgoJZGVsZXRpb25zGBkgASgFSAKIAQESEgoKY3JlYXRlZF9hdBgaIAEoCRISCgpzdGFydGVkX2F0GBsgASgJEhMKC2ZpbmlzaGVkX2F0GBwgASgJEhEKCW1lcmdlZF9hdBgdIAEoCRIRCgltZXJnZV9zaGEYHiABKAkSNgoIYXR0ZW1wdHMYHyADKAsyJC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoQXR0ZW1wdBISCgpyZXN1bWVkX29mGCAgASgJEhUKDXBhcmVudF9ydW5faWQYISABKAkSFgoJcXVldWVkX21zGCIgASgDSAOIAQESEwoGcnVuX21zGCMgASgDSASIAQESEAoIcHJpb3JpdHkYJCABKAlCEAoOX2ZpbGVzX2NoYW5nZWRCDQoLX2luc2VydGlvbnNCDAoKX2RlbGV0aW9uc0IMCgpfcXVldWVkX21zQgkKB19ydW5fbXMifAoPRGlzcGF0Y2hBdHRlbXB0Eg0KBWFnZW50GAEgASgJEg0KBW1vZGVsGAIgASgJEg0KBWVycm9yGAMgASgJEhIKCmV4aXRfY2xhc3MYBCABKAkSGAoLZHVyYXRpb25fbXMYBSABKANIAIgBAUIOCgxfZHVyYXRpb25fbXMilAEKEERpc3BhdGNoUnVuRXZlbnQSCgoCaWQYASABKAkSDgoGcnVuX2lkGAIgASgJEhIKCnByb2plY3RfaWQYAyABKAkSDAoEa2luZBgEIAEoCRINCgVhZ2VudBgFIAEoCRIMCgR0aWVyGAYgASgJEgwKBHRleHQYByABKAkSCwoDc2VxGAggASgDEgoKAmF0GAkgASgJIqQBChBEaXNwYXRjaFdvcmt0cmVlEgoKAmlkGAEgASgJEhIKCnByb2plY3RfaWQYAiABKAkSDgoGcnVuX2lkGAMgASgJEhEKCWNhcmRfc2x1ZxgEIAEoCRIMCgRwYXRoGAUgASgJEg4KBmJyYW5jaBgGIAEoCRIQCghiYXNlX3NoYRgHIAEoCRIOCgZzdGF0dXMYCCABKAkSDQoFb3duZXIYCSABKAki1wEKFURpc3BhdGNoUXVvdGFTbmFwc2hvdBINCgVhZ2VudBgBIAEoCRIQCghwcm92aWRlchgCIAEoCRIOCgZ3aW5kb3cYAyABKAkSDgoGc291cmNlGAQgASgJEhIKCmNvbmZpZGVuY2UYBSABKAkSGQoMdXNlZF9wZXJjZW50GAYgASgBSACIAQESFgoOd2luZG93X21pbnV0ZXMYByABKAUSEQoJcmVzZXRzX2F0GAggASgJEhIKCnNhbXBsZWRfYXQYCSABKAlCDwoNX3VzZWRfcGVyY2VudCJ/CgxEaXNwYXRjaFRpZXISDAoEbmFtZRgBIAEoCRIQCghwcm92aWRlchgCIAEoCRINCgVhZ2VudBgDIAEoCRINCgVtb2RlbBgEIAEoCRINCgVzcGVlZBgFIAEoBRIQCghzdHJlbmd0aBgGIAEoBRIQCghwb3NpdGlvbhgHIAEoBSK4AQoNRGlzcGF0Y2hBZ2VudBIMCgRuYW1lGAEgASgJEgsKA2JpbhgCIAEoCRIQCghwcm92aWRlchgDIAEoCRIUCgxxdW90YV9zb3VyY2UYBCABKAkSEgoKY29uZmlkZW5jZRgFIAEoCRIMCgRyaXNrGAYgASgJEhkKDHVzZWRfcGVyY2VudBgHIAEoAUgAiAEBEhYKDmNvb2xkb3duX3VudGlsGAggASgJQg8KDV91c2VkX3BlcmNlbnQiRAoPTGlzdFJ1bnNSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSDQoFbGltaXQYAiABKAUSDgoGb2Zmc2V0GAMgASgFIkIKEExpc3RSdW5zUmVzcG9uc2USLgoEcnVucxgBIAMoCzIgLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hSdW4iGwoNR2V0UnVuUmVxdWVzdBIKCgJpZBgBIAEoCSI/Cg5HZXRSdW5SZXNwb25zZRItCgNydW4YASABKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoUnVuIpcBCg9TdGFydFJ1blJlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRIMCgR0aWVyGAIgASgJEg4KBnByb21wdBgDIAEoCRIRCgljYXJkX3NsdWcYBCABKAkSDQoFYWdlbnQYBSABKAkSEAoId29ya3RyZWUYBiABKAkSCwoDZGlyGAcgASgJEhEKCXJlYWRfb25seRgIIAEoCCJBChBTdGFydFJ1blJlc3BvbnNlEi0KA3J1bhgBIAEoCzIgLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hSdW4iHgoQQ2FuY2VsUnVuUmVxdWVzdBIKCgJpZBgBIAEoCSJCChFDYW5jZWxSdW5SZXNwb25zZRItCgNydW4YASABKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoUnVuIksKDVJlc3VsdFJlcXVlc3QSCgoCaWQYASABKAkSDwoHc2VjdGlvbhgCIAEoCRIOCgZvZmZzZXQYAyABKAUSDQoFbGltaXQYBCABKAUiMAoOUmVzdWx0UmVzcG9uc2USDwoHY29udGVudBgBIAEoCRINCgV0b3RhbBgCIAEoBSIwCg9XYXRjaFJ1blJlcXVlc3QSCgoCaWQYASABKAkSEQoJYWZ0ZXJfc2VxGAIgASgDIkcKEFdhdGNoUnVuUmVzcG9uc2USCwoDc2VxGAEgASgDEgwKBGtpbmQYAiABKAkSDAoEdGV4dBgDIAEoCRIKCgJhdBgEIAEoCSIqChRMaXN0V29ya3RyZWVzUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJIlEKFUxpc3RXb3JrdHJlZXNSZXNwb25zZRI4Cgl3b3JrdHJlZXMYASADKAsyJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoV29ya3RyZWUiMAoQTGlzdFF1b3RhUmVxdWVzdBINCgVhZ2VudBgBIAEoCRINCgVzaW5jZRgCIAEoCSJSChFMaXN0UXVvdGFSZXNwb25zZRI9CglzbmFwc2hvdHMYASADKAsyKi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoUXVvdGFTbmFwc2hvdCISChBMaXN0VGllcnNSZXF1ZXN0IkUKEUxpc3RUaWVyc1Jlc3BvbnNlEjAKBXRpZXJzGAEgAygLMiEucG9sdGVyd2FyZS5sb2NhbC52MS5EaXNwYXRjaFRpZXIiEwoRTGlzdEFnZW50c1JlcXVlc3QiSAoSTGlzdEFnZW50c1Jlc3BvbnNlEjIKBmFnZW50cxgBIAMoCzIiLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hBZ2VudCJkChJMaXN0SGlzdG9yeVJlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRINCgVhZ2VudBgCIAEoCRIMCgR0aWVyGAMgASgJEg0KBWxpbWl0GAQgASgFEg4KBm9mZnNldBgFIAEoBSJMChNMaXN0SGlzdG9yeVJlc3BvbnNlEjUKBmV2ZW50cxgBIAMoCzIlLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hSdW5FdmVudCITChFDaGVja1RpZXJzUmVxdWVzdCImChJDaGVja1RpZXJzUmVzcG9uc2USEAoIcHJvYmxlbXMYASADKAkiPQoMU3RhdHNSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSCgoCYnkYAiABKAkSDQoFc2luY2UYAyABKAki0gEKEERpc3BhdGNoU3RhdHNSb3cSCwoDa2V5GAEgASgJEgwKBHJ1bnMYAiABKAUSEwoLc3VjY2Vzc19wY3QYAyABKAESFQoNZmlyc3RfdHJ5X3BjdBgEIAEoARITCgZwNTBfbXMYBSABKANIAIgBARITCgZwOTBfbXMYBiABKANIAYgBARIRCglmYWxsYmFja3MYByABKAUSEwoLcmF0ZV9saW1pdHMYCCABKAUSDwoHb3JwaGFucxgJIAEoBUIJCgdfcDUwX21zQgkKB19wOTBfbXMimAEKEERpc3BhdGNoU3RhdFJhbmsSCwoDa2V5GAEgASgJEgwKBHJ1bnMYAiABKAUSDwoHc2FtcGxlcxgDIAEoBRITCgZwNTBfbXMYBCABKANIAIgBARIYCgtzdWNjZXNzX3BjdBgFIAEoAUgBiAEBEg4KBnJlYXNvbhgGIAEoCUIJCgdfcDUwX21zQg4KDF9zdWNjZXNzX3BjdCKaAgoVRGlzcGF0Y2hTdGF0c1JhbmtpbmdzEj4KD21vc3RfdXNlZF9tb2RlbBgBIAEoCzIlLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hTdGF0UmFuaxJBChJtb3N0X3VzZWRfcHJvdmlkZXIYAiABKAsyJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoU3RhdFJhbmsSPAoNc2xvd2VzdF9tb2RlbBgDIAEoCzIlLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hTdGF0UmFuaxJAChFtb3N0X2ZhaWxlZF9tb2RlbBgEIAEoCzIlLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hTdGF0UmFuayKwAQoNU3RhdHNSZXNwb25zZRIKCgJieRgBIAEoCRINCgVzaW5jZRgCIAEoCRIRCglpbl9mbGlnaHQYAyABKAUSMwoEcm93cxgEIAMoCzIlLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hTdGF0c1JvdxI8CghyYW5raW5ncxgFIAEoCzIqLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hTdGF0c1JhbmtpbmdzIhYKFEdldENsYXNzaWZpZXJSZXF1ZXN0IkgKFkRpc3BhdGNoQ2xhc3NpZmllclRpZXISDAoEdGllchgBIAEoCRIPCgdzYW1wbGVzGAIgASgEEg8KB3dlaWdodHMYAyADKAEilwEKFUdldENsYXNzaWZpZXJSZXNwb25zZRIWCg5mZWF0dXJlX3NjaGVtYRgBIAEoBRITCgttaW5fc2FtcGxlcxgCIAEoBRIVCg1mZWF0dXJlX25hbWVzGAMgAygJEjoKBXRpZXJzGAQgAygLMisucG9sdGVyd2FyZS5sb2NhbC52MS5EaXNwYXRjaENsYXNzaWZpZXJUaWVyIiAKD0NhcGFjaXR5UmVxdWVzdBINCgVzaW5jZRgBIAEoCSK9AQoTRGlzcGF0Y2hDYXBhY2l0eUtleRILCgNrZXkYASABKAkSDwoHd2luZG93cxgCIAEoBRIQCghoaXRfZnVsbBgDIAEoBRIZCgxjb25zdW1lZF9wY3QYBCABKAFIAIgBARIZCgxsZWZ0b3Zlcl9wY3QYBSABKAFIAYgBARIQCghsZWZ0b3ZlchgGIAEoCRIMCgRwYWNlGAcgASgJQg8KDV9jb25zdW1lZF9wY3RCDwoNX2xlZnRvdmVyX3BjdCJnChBDYXBhY2l0eVJlc3BvbnNlEg0KBXNpbmNlGAEgASgJEgwKBG5vdGUYAiABKAkSNgoEa2V5cxgDIAMoCzIoLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hDYXBhY2l0eUtleTLxCgoPRGlzcGF0Y2hTZXJ2aWNlElcKCExpc3RSdW5zEiQucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0UnVuc1JlcXVlc3QaJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RSdW5zUmVzcG9uc2USUQoGR2V0UnVuEiIucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRSdW5SZXF1ZXN0GiMucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRSdW5SZXNwb25zZRJXCghTdGFydFJ1bhIkLnBvbHRlcndhcmUubG9jYWwudjEuU3RhcnRSdW5SZXF1ZXN0GiUucG9sdGVyd2FyZS5sb2NhbC52MS5TdGFydFJ1blJlc3BvbnNlEloKCUNhbmNlbFJ1bhIlLnBvbHRlcndhcmUubG9jYWwudjEuQ2FuY2VsUnVuUmVxdWVzdBomLnBvbHRlcndhcmUubG9jYWwudjEuQ2FuY2VsUnVuUmVzcG9uc2USUQoGUmVzdWx0EiIucG9sdGVyd2FyZS5sb2NhbC52MS5SZXN1bHRSZXF1ZXN0GiMucG9sdGVyd2FyZS5sb2NhbC52MS5SZXN1bHRSZXNwb25zZRJZCghXYXRjaFJ1bhIkLnBvbHRlcndhcmUubG9jYWwudjEuV2F0Y2hSdW5SZXF1ZXN0GiUucG9sdGVyd2FyZS5sb2NhbC52MS5XYXRjaFJ1blJlc3BvbnNlMAESZgoNTGlzdFdvcmt0cmVlcxIpLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFdvcmt0cmVlc1JlcXVlc3QaKi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RXb3JrdHJlZXNSZXNwb25zZRJaCglMaXN0UXVvdGESJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RRdW90YVJlcXVlc3QaJi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RRdW90YVJlc3BvbnNlEloKCUxpc3RUaWVycxIlLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFRpZXJzUmVxdWVzdBomLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFRpZXJzUmVzcG9uc2USXQoKTGlzdEFnZW50cxImLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEFnZW50c1JlcXVlc3QaJy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RBZ2VudHNSZXNwb25zZRJgCgtMaXN0SGlzdG9yeRInLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEhpc3RvcnlSZXF1ZXN0GigucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0SGlzdG9yeVJlc3BvbnNlEl0KCkNoZWNrVGllcnMSJi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoZWNrVGllcnNSZXF1ZXN0GicucG9sdGVyd2FyZS5sb2NhbC52MS5DaGVja1RpZXJzUmVzcG9uc2USTgoFU3RhdHMSIS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlN0YXRzUmVxdWVzdBoiLnBvbHRlcndhcmUubG9jYWwudjEuU3RhdHNSZXNwb25zZRJmCg1HZXRDbGFzc2lmaWVyEikucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRDbGFzc2lmaWVyUmVxdWVzdBoqLnBvbHRlcndhcmUubG9jYWwudjEuR2V0Q2xhc3NpZmllclJlc3BvbnNlElcKCENhcGFjaXR5EiQucG9sdGVyd2FyZS5sb2NhbC52MS5DYXBhY2l0eVJlcXVlc3QaJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhcGFjaXR5UmVzcG9uc2VC6QEKF2NvbS5wb2x0ZXJ3YXJlLmxvY2FsLnYxQg1EaXNwYXRjaFByb3RvUAFaUWdpdGh1Yi5jb20vcG9sdGVyd2FyZS9wb2x0ZXJ3YXJlL2JhY2tlbmQvcGxhdGZvcm0vZ2VuL3BvbHRlcndhcmUvbG9jYWwvdjE7bG9jYWx2MaICA1BMWKoCE1BvbHRlcndhcmUuTG9jYWwuVjHKAhNQb2x0ZXJ3YXJlXExvY2FsXFYx4gIfUG9sdGVyd2FyZVxMb2NhbFxWMVxHUEJNZXRhZGF0YeoCFVBvbHRlcndhcmU6OkxvY2FsOjpWMWIGcHJvdG8z");
 
 /**
  * @generated from message polterware.local.v1.DispatchRun
@@ -165,6 +165,36 @@ export type DispatchRun = Message<"polterware.local.v1.DispatchRun"> & {
    * @generated from field: string merge_sha = 30;
    */
   mergeSha: string;
+
+  /**
+   * @generated from field: repeated polterware.local.v1.DispatchAttempt attempts = 31;
+   */
+  attempts: DispatchAttempt[];
+
+  /**
+   * @generated from field: string resumed_of = 32;
+   */
+  resumedOf: string;
+
+  /**
+   * @generated from field: string parent_run_id = 33;
+   */
+  parentRunId: string;
+
+  /**
+   * @generated from field: optional int64 queued_ms = 34;
+   */
+  queuedMs?: bigint | undefined;
+
+  /**
+   * @generated from field: optional int64 run_ms = 35;
+   */
+  runMs?: bigint | undefined;
+
+  /**
+   * @generated from field: string priority = 36;
+   */
+  priority: string;
 };
 
 /**
@@ -173,6 +203,43 @@ export type DispatchRun = Message<"polterware.local.v1.DispatchRun"> & {
  */
 export const DispatchRunSchema: GenMessage<DispatchRun> = /*@__PURE__*/
   messageDesc(file_polterware_local_v1_dispatch, 0);
+
+/**
+ * @generated from message polterware.local.v1.DispatchAttempt
+ */
+export type DispatchAttempt = Message<"polterware.local.v1.DispatchAttempt"> & {
+  /**
+   * @generated from field: string agent = 1;
+   */
+  agent: string;
+
+  /**
+   * @generated from field: string model = 2;
+   */
+  model: string;
+
+  /**
+   * @generated from field: string error = 3;
+   */
+  error: string;
+
+  /**
+   * @generated from field: string exit_class = 4;
+   */
+  exitClass: string;
+
+  /**
+   * @generated from field: optional int64 duration_ms = 5;
+   */
+  durationMs?: bigint | undefined;
+};
+
+/**
+ * Describes the message polterware.local.v1.DispatchAttempt.
+ * Use `create(DispatchAttemptSchema)` to create a new message.
+ */
+export const DispatchAttemptSchema: GenMessage<DispatchAttempt> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 1);
 
 /**
  * @generated from message polterware.local.v1.DispatchRunEvent
@@ -229,7 +296,7 @@ export type DispatchRunEvent = Message<"polterware.local.v1.DispatchRunEvent"> &
  * Use `create(DispatchRunEventSchema)` to create a new message.
  */
 export const DispatchRunEventSchema: GenMessage<DispatchRunEvent> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 1);
+  messageDesc(file_polterware_local_v1_dispatch, 2);
 
 /**
  * @generated from message polterware.local.v1.DispatchWorktree
@@ -286,7 +353,7 @@ export type DispatchWorktree = Message<"polterware.local.v1.DispatchWorktree"> &
  * Use `create(DispatchWorktreeSchema)` to create a new message.
  */
 export const DispatchWorktreeSchema: GenMessage<DispatchWorktree> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 2);
+  messageDesc(file_polterware_local_v1_dispatch, 3);
 
 /**
  * @generated from message polterware.local.v1.DispatchQuotaSnapshot
@@ -343,7 +410,7 @@ export type DispatchQuotaSnapshot = Message<"polterware.local.v1.DispatchQuotaSn
  * Use `create(DispatchQuotaSnapshotSchema)` to create a new message.
  */
 export const DispatchQuotaSnapshotSchema: GenMessage<DispatchQuotaSnapshot> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 3);
+  messageDesc(file_polterware_local_v1_dispatch, 4);
 
 /**
  * @generated from message polterware.local.v1.DispatchTier
@@ -390,7 +457,7 @@ export type DispatchTier = Message<"polterware.local.v1.DispatchTier"> & {
  * Use `create(DispatchTierSchema)` to create a new message.
  */
 export const DispatchTierSchema: GenMessage<DispatchTier> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 4);
+  messageDesc(file_polterware_local_v1_dispatch, 5);
 
 /**
  * @generated from message polterware.local.v1.DispatchAgent
@@ -442,7 +509,7 @@ export type DispatchAgent = Message<"polterware.local.v1.DispatchAgent"> & {
  * Use `create(DispatchAgentSchema)` to create a new message.
  */
 export const DispatchAgentSchema: GenMessage<DispatchAgent> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 5);
+  messageDesc(file_polterware_local_v1_dispatch, 6);
 
 /**
  * @generated from message polterware.local.v1.ListRunsRequest
@@ -469,7 +536,7 @@ export type ListRunsRequest = Message<"polterware.local.v1.ListRunsRequest"> & {
  * Use `create(ListRunsRequestSchema)` to create a new message.
  */
 export const ListRunsRequestSchema: GenMessage<ListRunsRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 6);
+  messageDesc(file_polterware_local_v1_dispatch, 7);
 
 /**
  * @generated from message polterware.local.v1.ListRunsResponse
@@ -486,7 +553,7 @@ export type ListRunsResponse = Message<"polterware.local.v1.ListRunsResponse"> &
  * Use `create(ListRunsResponseSchema)` to create a new message.
  */
 export const ListRunsResponseSchema: GenMessage<ListRunsResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 7);
+  messageDesc(file_polterware_local_v1_dispatch, 8);
 
 /**
  * @generated from message polterware.local.v1.GetRunRequest
@@ -503,7 +570,7 @@ export type GetRunRequest = Message<"polterware.local.v1.GetRunRequest"> & {
  * Use `create(GetRunRequestSchema)` to create a new message.
  */
 export const GetRunRequestSchema: GenMessage<GetRunRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 8);
+  messageDesc(file_polterware_local_v1_dispatch, 9);
 
 /**
  * @generated from message polterware.local.v1.GetRunResponse
@@ -520,7 +587,7 @@ export type GetRunResponse = Message<"polterware.local.v1.GetRunResponse"> & {
  * Use `create(GetRunResponseSchema)` to create a new message.
  */
 export const GetRunResponseSchema: GenMessage<GetRunResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 9);
+  messageDesc(file_polterware_local_v1_dispatch, 10);
 
 /**
  * @generated from message polterware.local.v1.StartRunRequest
@@ -572,7 +639,7 @@ export type StartRunRequest = Message<"polterware.local.v1.StartRunRequest"> & {
  * Use `create(StartRunRequestSchema)` to create a new message.
  */
 export const StartRunRequestSchema: GenMessage<StartRunRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 10);
+  messageDesc(file_polterware_local_v1_dispatch, 11);
 
 /**
  * @generated from message polterware.local.v1.StartRunResponse
@@ -589,7 +656,7 @@ export type StartRunResponse = Message<"polterware.local.v1.StartRunResponse"> &
  * Use `create(StartRunResponseSchema)` to create a new message.
  */
 export const StartRunResponseSchema: GenMessage<StartRunResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 11);
+  messageDesc(file_polterware_local_v1_dispatch, 12);
 
 /**
  * @generated from message polterware.local.v1.CancelRunRequest
@@ -606,7 +673,7 @@ export type CancelRunRequest = Message<"polterware.local.v1.CancelRunRequest"> &
  * Use `create(CancelRunRequestSchema)` to create a new message.
  */
 export const CancelRunRequestSchema: GenMessage<CancelRunRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 12);
+  messageDesc(file_polterware_local_v1_dispatch, 13);
 
 /**
  * @generated from message polterware.local.v1.CancelRunResponse
@@ -623,7 +690,7 @@ export type CancelRunResponse = Message<"polterware.local.v1.CancelRunResponse">
  * Use `create(CancelRunResponseSchema)` to create a new message.
  */
 export const CancelRunResponseSchema: GenMessage<CancelRunResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 13);
+  messageDesc(file_polterware_local_v1_dispatch, 14);
 
 /**
  * Sections: summary, agent, verification, files, attempts, meta, output.
@@ -657,7 +724,7 @@ export type ResultRequest = Message<"polterware.local.v1.ResultRequest"> & {
  * Use `create(ResultRequestSchema)` to create a new message.
  */
 export const ResultRequestSchema: GenMessage<ResultRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 14);
+  messageDesc(file_polterware_local_v1_dispatch, 15);
 
 /**
  * @generated from message polterware.local.v1.ResultResponse
@@ -679,7 +746,7 @@ export type ResultResponse = Message<"polterware.local.v1.ResultResponse"> & {
  * Use `create(ResultResponseSchema)` to create a new message.
  */
 export const ResultResponseSchema: GenMessage<ResultResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 15);
+  messageDesc(file_polterware_local_v1_dispatch, 16);
 
 /**
  * @generated from message polterware.local.v1.WatchRunRequest
@@ -701,7 +768,7 @@ export type WatchRunRequest = Message<"polterware.local.v1.WatchRunRequest"> & {
  * Use `create(WatchRunRequestSchema)` to create a new message.
  */
 export const WatchRunRequestSchema: GenMessage<WatchRunRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 16);
+  messageDesc(file_polterware_local_v1_dispatch, 17);
 
 /**
  * @generated from message polterware.local.v1.WatchRunResponse
@@ -733,7 +800,7 @@ export type WatchRunResponse = Message<"polterware.local.v1.WatchRunResponse"> &
  * Use `create(WatchRunResponseSchema)` to create a new message.
  */
 export const WatchRunResponseSchema: GenMessage<WatchRunResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 17);
+  messageDesc(file_polterware_local_v1_dispatch, 18);
 
 /**
  * @generated from message polterware.local.v1.ListWorktreesRequest
@@ -750,7 +817,7 @@ export type ListWorktreesRequest = Message<"polterware.local.v1.ListWorktreesReq
  * Use `create(ListWorktreesRequestSchema)` to create a new message.
  */
 export const ListWorktreesRequestSchema: GenMessage<ListWorktreesRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 18);
+  messageDesc(file_polterware_local_v1_dispatch, 19);
 
 /**
  * @generated from message polterware.local.v1.ListWorktreesResponse
@@ -767,7 +834,7 @@ export type ListWorktreesResponse = Message<"polterware.local.v1.ListWorktreesRe
  * Use `create(ListWorktreesResponseSchema)` to create a new message.
  */
 export const ListWorktreesResponseSchema: GenMessage<ListWorktreesResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 19);
+  messageDesc(file_polterware_local_v1_dispatch, 20);
 
 /**
  * @generated from message polterware.local.v1.ListQuotaRequest
@@ -791,7 +858,7 @@ export type ListQuotaRequest = Message<"polterware.local.v1.ListQuotaRequest"> &
  * Use `create(ListQuotaRequestSchema)` to create a new message.
  */
 export const ListQuotaRequestSchema: GenMessage<ListQuotaRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 20);
+  messageDesc(file_polterware_local_v1_dispatch, 21);
 
 /**
  * @generated from message polterware.local.v1.ListQuotaResponse
@@ -808,7 +875,7 @@ export type ListQuotaResponse = Message<"polterware.local.v1.ListQuotaResponse">
  * Use `create(ListQuotaResponseSchema)` to create a new message.
  */
 export const ListQuotaResponseSchema: GenMessage<ListQuotaResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 21);
+  messageDesc(file_polterware_local_v1_dispatch, 22);
 
 /**
  * @generated from message polterware.local.v1.ListTiersRequest
@@ -821,7 +888,7 @@ export type ListTiersRequest = Message<"polterware.local.v1.ListTiersRequest"> &
  * Use `create(ListTiersRequestSchema)` to create a new message.
  */
 export const ListTiersRequestSchema: GenMessage<ListTiersRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 22);
+  messageDesc(file_polterware_local_v1_dispatch, 23);
 
 /**
  * @generated from message polterware.local.v1.ListTiersResponse
@@ -838,7 +905,7 @@ export type ListTiersResponse = Message<"polterware.local.v1.ListTiersResponse">
  * Use `create(ListTiersResponseSchema)` to create a new message.
  */
 export const ListTiersResponseSchema: GenMessage<ListTiersResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 23);
+  messageDesc(file_polterware_local_v1_dispatch, 24);
 
 /**
  * @generated from message polterware.local.v1.ListAgentsRequest
@@ -851,7 +918,7 @@ export type ListAgentsRequest = Message<"polterware.local.v1.ListAgentsRequest">
  * Use `create(ListAgentsRequestSchema)` to create a new message.
  */
 export const ListAgentsRequestSchema: GenMessage<ListAgentsRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 24);
+  messageDesc(file_polterware_local_v1_dispatch, 25);
 
 /**
  * @generated from message polterware.local.v1.ListAgentsResponse
@@ -868,7 +935,7 @@ export type ListAgentsResponse = Message<"polterware.local.v1.ListAgentsResponse
  * Use `create(ListAgentsResponseSchema)` to create a new message.
  */
 export const ListAgentsResponseSchema: GenMessage<ListAgentsResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 25);
+  messageDesc(file_polterware_local_v1_dispatch, 26);
 
 /**
  * Only event kinds started, verified, merged, failed.
@@ -907,7 +974,7 @@ export type ListHistoryRequest = Message<"polterware.local.v1.ListHistoryRequest
  * Use `create(ListHistoryRequestSchema)` to create a new message.
  */
 export const ListHistoryRequestSchema: GenMessage<ListHistoryRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 26);
+  messageDesc(file_polterware_local_v1_dispatch, 27);
 
 /**
  * @generated from message polterware.local.v1.ListHistoryResponse
@@ -924,7 +991,7 @@ export type ListHistoryResponse = Message<"polterware.local.v1.ListHistoryRespon
  * Use `create(ListHistoryResponseSchema)` to create a new message.
  */
 export const ListHistoryResponseSchema: GenMessage<ListHistoryResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 27);
+  messageDesc(file_polterware_local_v1_dispatch, 28);
 
 /**
  * @generated from message polterware.local.v1.CheckTiersRequest
@@ -937,7 +1004,7 @@ export type CheckTiersRequest = Message<"polterware.local.v1.CheckTiersRequest">
  * Use `create(CheckTiersRequestSchema)` to create a new message.
  */
 export const CheckTiersRequestSchema: GenMessage<CheckTiersRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 28);
+  messageDesc(file_polterware_local_v1_dispatch, 29);
 
 /**
  * @generated from message polterware.local.v1.CheckTiersResponse
@@ -954,7 +1021,7 @@ export type CheckTiersResponse = Message<"polterware.local.v1.CheckTiersResponse
  * Use `create(CheckTiersResponseSchema)` to create a new message.
  */
 export const CheckTiersResponseSchema: GenMessage<CheckTiersResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 29);
+  messageDesc(file_polterware_local_v1_dispatch, 30);
 
 /**
  * @generated from message polterware.local.v1.StatsRequest
@@ -981,7 +1048,7 @@ export type StatsRequest = Message<"polterware.local.v1.StatsRequest"> & {
  * Use `create(StatsRequestSchema)` to create a new message.
  */
 export const StatsRequestSchema: GenMessage<StatsRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 30);
+  messageDesc(file_polterware_local_v1_dispatch, 31);
 
 /**
  * @generated from message polterware.local.v1.DispatchStatsRow
@@ -1038,7 +1105,81 @@ export type DispatchStatsRow = Message<"polterware.local.v1.DispatchStatsRow"> &
  * Use `create(DispatchStatsRowSchema)` to create a new message.
  */
 export const DispatchStatsRowSchema: GenMessage<DispatchStatsRow> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 31);
+  messageDesc(file_polterware_local_v1_dispatch, 32);
+
+/**
+ * @generated from message polterware.local.v1.DispatchStatRank
+ */
+export type DispatchStatRank = Message<"polterware.local.v1.DispatchStatRank"> & {
+  /**
+   * @generated from field: string key = 1;
+   */
+  key: string;
+
+  /**
+   * @generated from field: int32 runs = 2;
+   */
+  runs: number;
+
+  /**
+   * @generated from field: int32 samples = 3;
+   */
+  samples: number;
+
+  /**
+   * @generated from field: optional int64 p50_ms = 4;
+   */
+  p50Ms?: bigint | undefined;
+
+  /**
+   * @generated from field: optional double success_pct = 5;
+   */
+  successPct?: number | undefined;
+
+  /**
+   * @generated from field: string reason = 6;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.DispatchStatRank.
+ * Use `create(DispatchStatRankSchema)` to create a new message.
+ */
+export const DispatchStatRankSchema: GenMessage<DispatchStatRank> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 33);
+
+/**
+ * @generated from message polterware.local.v1.DispatchStatsRankings
+ */
+export type DispatchStatsRankings = Message<"polterware.local.v1.DispatchStatsRankings"> & {
+  /**
+   * @generated from field: polterware.local.v1.DispatchStatRank most_used_model = 1;
+   */
+  mostUsedModel?: DispatchStatRank | undefined;
+
+  /**
+   * @generated from field: polterware.local.v1.DispatchStatRank most_used_provider = 2;
+   */
+  mostUsedProvider?: DispatchStatRank | undefined;
+
+  /**
+   * @generated from field: polterware.local.v1.DispatchStatRank slowest_model = 3;
+   */
+  slowestModel?: DispatchStatRank | undefined;
+
+  /**
+   * @generated from field: polterware.local.v1.DispatchStatRank most_failed_model = 4;
+   */
+  mostFailedModel?: DispatchStatRank | undefined;
+};
+
+/**
+ * Describes the message polterware.local.v1.DispatchStatsRankings.
+ * Use `create(DispatchStatsRankingsSchema)` to create a new message.
+ */
+export const DispatchStatsRankingsSchema: GenMessage<DispatchStatsRankings> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 34);
 
 /**
  * @generated from message polterware.local.v1.StatsResponse
@@ -1063,6 +1204,11 @@ export type StatsResponse = Message<"polterware.local.v1.StatsResponse"> & {
    * @generated from field: repeated polterware.local.v1.DispatchStatsRow rows = 4;
    */
   rows: DispatchStatsRow[];
+
+  /**
+   * @generated from field: polterware.local.v1.DispatchStatsRankings rankings = 5;
+   */
+  rankings?: DispatchStatsRankings | undefined;
 };
 
 /**
@@ -1070,7 +1216,170 @@ export type StatsResponse = Message<"polterware.local.v1.StatsResponse"> & {
  * Use `create(StatsResponseSchema)` to create a new message.
  */
 export const StatsResponseSchema: GenMessage<StatsResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_dispatch, 32);
+  messageDesc(file_polterware_local_v1_dispatch, 35);
+
+/**
+ * @generated from message polterware.local.v1.GetClassifierRequest
+ */
+export type GetClassifierRequest = Message<"polterware.local.v1.GetClassifierRequest"> & {
+};
+
+/**
+ * Describes the message polterware.local.v1.GetClassifierRequest.
+ * Use `create(GetClassifierRequestSchema)` to create a new message.
+ */
+export const GetClassifierRequestSchema: GenMessage<GetClassifierRequest> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 36);
+
+/**
+ * @generated from message polterware.local.v1.DispatchClassifierTier
+ */
+export type DispatchClassifierTier = Message<"polterware.local.v1.DispatchClassifierTier"> & {
+  /**
+   * @generated from field: string tier = 1;
+   */
+  tier: string;
+
+  /**
+   * @generated from field: uint64 samples = 2;
+   */
+  samples: bigint;
+
+  /**
+   * @generated from field: repeated double weights = 3;
+   */
+  weights: number[];
+};
+
+/**
+ * Describes the message polterware.local.v1.DispatchClassifierTier.
+ * Use `create(DispatchClassifierTierSchema)` to create a new message.
+ */
+export const DispatchClassifierTierSchema: GenMessage<DispatchClassifierTier> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 37);
+
+/**
+ * @generated from message polterware.local.v1.GetClassifierResponse
+ */
+export type GetClassifierResponse = Message<"polterware.local.v1.GetClassifierResponse"> & {
+  /**
+   * @generated from field: int32 feature_schema = 1;
+   */
+  featureSchema: number;
+
+  /**
+   * @generated from field: int32 min_samples = 2;
+   */
+  minSamples: number;
+
+  /**
+   * @generated from field: repeated string feature_names = 3;
+   */
+  featureNames: string[];
+
+  /**
+   * @generated from field: repeated polterware.local.v1.DispatchClassifierTier tiers = 4;
+   */
+  tiers: DispatchClassifierTier[];
+};
+
+/**
+ * Describes the message polterware.local.v1.GetClassifierResponse.
+ * Use `create(GetClassifierResponseSchema)` to create a new message.
+ */
+export const GetClassifierResponseSchema: GenMessage<GetClassifierResponse> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 38);
+
+/**
+ * @generated from message polterware.local.v1.CapacityRequest
+ */
+export type CapacityRequest = Message<"polterware.local.v1.CapacityRequest"> & {
+  /**
+   * @generated from field: string since = 1;
+   */
+  since: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.CapacityRequest.
+ * Use `create(CapacityRequestSchema)` to create a new message.
+ */
+export const CapacityRequestSchema: GenMessage<CapacityRequest> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 39);
+
+/**
+ * @generated from message polterware.local.v1.DispatchCapacityKey
+ */
+export type DispatchCapacityKey = Message<"polterware.local.v1.DispatchCapacityKey"> & {
+  /**
+   * @generated from field: string key = 1;
+   */
+  key: string;
+
+  /**
+   * @generated from field: int32 windows = 2;
+   */
+  windows: number;
+
+  /**
+   * @generated from field: int32 hit_full = 3;
+   */
+  hitFull: number;
+
+  /**
+   * @generated from field: optional double consumed_pct = 4;
+   */
+  consumedPct?: number | undefined;
+
+  /**
+   * @generated from field: optional double leftover_pct = 5;
+   */
+  leftoverPct?: number | undefined;
+
+  /**
+   * @generated from field: string leftover = 6;
+   */
+  leftover: string;
+
+  /**
+   * @generated from field: string pace = 7;
+   */
+  pace: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.DispatchCapacityKey.
+ * Use `create(DispatchCapacityKeySchema)` to create a new message.
+ */
+export const DispatchCapacityKeySchema: GenMessage<DispatchCapacityKey> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 40);
+
+/**
+ * @generated from message polterware.local.v1.CapacityResponse
+ */
+export type CapacityResponse = Message<"polterware.local.v1.CapacityResponse"> & {
+  /**
+   * @generated from field: string since = 1;
+   */
+  since: string;
+
+  /**
+   * @generated from field: string note = 2;
+   */
+  note: string;
+
+  /**
+   * @generated from field: repeated polterware.local.v1.DispatchCapacityKey keys = 3;
+   */
+  keys: DispatchCapacityKey[];
+};
+
+/**
+ * Describes the message polterware.local.v1.CapacityResponse.
+ * Use `create(CapacityResponseSchema)` to create a new message.
+ */
+export const CapacityResponseSchema: GenMessage<CapacityResponse> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 41);
 
 /**
  * @generated from service polterware.local.v1.DispatchService
@@ -1179,6 +1488,22 @@ export const DispatchService: GenService<{
     methodKind: "unary";
     input: typeof StatsRequestSchema;
     output: typeof StatsResponseSchema;
+  },
+  /**
+   * @generated from rpc polterware.local.v1.DispatchService.GetClassifier
+   */
+  getClassifier: {
+    methodKind: "unary";
+    input: typeof GetClassifierRequestSchema;
+    output: typeof GetClassifierResponseSchema;
+  },
+  /**
+   * @generated from rpc polterware.local.v1.DispatchService.Capacity
+   */
+  capacity: {
+    methodKind: "unary";
+    input: typeof CapacityRequestSchema;
+    output: typeof CapacityResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_polterware_local_v1_dispatch, 0);

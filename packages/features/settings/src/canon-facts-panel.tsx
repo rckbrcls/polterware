@@ -3,12 +3,14 @@ import {
   Button,
   DataTable,
   DetailPanel,
+  IconTile,
   PageEmpty,
   Skeleton,
   StatusChip,
   pushToast,
   History,
   Link,
+  ScrollText,
 } from "@polterware/frontend-design-system";
 import { openDetail } from "@polterware/feature-shell";
 import { detailPanelStore } from "@polterware/frontend-state";
@@ -78,6 +80,19 @@ function mapEvidence(value: unknown): CanonEvidenceRow | undefined {
     createdAt: asString(raw.createdAt),
     updatedAt: asString(raw.updatedAt),
   };
+}
+
+function ProvenanceValue(props: { value: string }) {
+  return (
+    <span class="block w-full min-w-0 truncate text-left" title={props.value}>
+      {props.value}
+    </span>
+  );
+}
+
+function provenanceValue(value: string) {
+  const text = value.trim();
+  return text ? <ProvenanceValue value={text} /> : null;
 }
 
 function truthTone(truthClass: string): "ok" | "warn" | "muted" | "syncing" {
@@ -373,11 +388,19 @@ export function CanonFactsPanel(props: {
                     }}
                     aria-label={`Open fact ${row.statement || row.id}`}
                   >
-                    <DataTable.Cell>
-                      <div class="font-medium">{row.statement || "—"}</div>
-                      <div class="mt-0.5 font-mono text-[11px] text-[var(--color-text-muted)]">
-                        {row.id}
-                        {row.entityId ? ` · ${row.entityId}` : ""}
+                    <DataTable.Cell
+                      leading={
+                        <IconTile size={24} tone="knowledge" seed={row.id}>
+                          <ScrollText size={14} />
+                        </IconTile>
+                      }
+                    >
+                      <div class="min-w-0">
+                        <div class="font-medium">{row.statement || "—"}</div>
+                        <div class="mt-0.5 truncate font-mono text-[11px] text-[var(--color-text-muted)]">
+                          {row.id}
+                          {row.entityId ? ` · ${row.entityId}` : ""}
+                        </div>
                       </div>
                     </DataTable.Cell>
                     <DataTable.Cell>
@@ -425,51 +448,59 @@ export function CanonFactsPanel(props: {
             <DetailPanel.Body>
               <DetailPanel.Main>
                 <DetailPanel.Title title={current().fact.statement || current().fact.id} />
-                <div class="mb-3 flex flex-wrap gap-1.5">
-                  <StatusChip tone={truthTone(current().fact.truthClass)} label={current().fact.truthClass || "—"} />
-                  <StatusChip tone="muted" label={current().fact.actor || "actor"} />
-                </div>
-                <div class="mb-3 flex flex-wrap gap-1.5">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={props.busy}
-                    onClick={() => {
-                      const fact = current().fact;
-                      setFactDialogMode("edit");
-                      setFactDraft({
-                        id: fact.id,
-                        statement: fact.statement,
-                        truthClass: (["declared", "observed", "inferred", "verified"].includes(fact.truthClass)
-                          ? fact.truthClass
-                          : "declared") as CanonFactTruthClass,
-                        entityId: fact.entityId,
-                      });
-                      setFactDialogOpen(true);
-                    }}
-                  >
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="ghost" disabled={props.busy} onClick={() => setLinkDialogOpen(true)}>
-                    Link evidence
-                  </Button>
+                <div class="mb-3 flex min-w-0 flex-col gap-2 border-b border-[var(--color-border-subtle)] pb-3">
+                  <div class="flex min-w-0 flex-wrap items-center gap-1.5">
+                    <StatusChip tone={truthTone(current().fact.truthClass)} label={current().fact.truthClass || "—"} />
+                    <StatusChip tone="muted" label={current().fact.actor || "actor"} />
+                  </div>
+                  <div class="pw-detail-panel__actions">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={props.busy}
+                      onClick={() => {
+                        const fact = current().fact;
+                        setFactDialogMode("edit");
+                        setFactDraft({
+                          id: fact.id,
+                          statement: fact.statement,
+                          truthClass: (["declared", "observed", "inferred", "verified"].includes(fact.truthClass)
+                            ? fact.truthClass
+                            : "declared") as CanonFactTruthClass,
+                          entityId: fact.entityId,
+                        });
+                        setFactDialogOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button size="sm" variant="ghost" disabled={props.busy} onClick={() => setLinkDialogOpen(true)}>
+                      Link evidence
+                    </Button>
+                  </div>
                 </div>
                 <DetailPanel.Section title="Linked evidence" icon={<Link size={14} />}>
                   <Show
                     when={current().evidence.length > 0}
-                    fallback={<p class="m-0 text-[var(--color-text-muted)]">No evidence linked to this fact.</p>}
+                    fallback={<p class="m-0 text-[12.5px] text-[var(--color-text-muted)]">No evidence linked to this fact.</p>}
                   >
-                    <ul class="m-0 list-none space-y-2 p-0">
+                    <ul class="m-0 flex list-none flex-col gap-2.5 p-0">
                       <For each={current().evidence}>
                         {(item) => (
-                          <li class="rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] px-3 py-2">
-                            <div class="flex flex-wrap items-center gap-1.5">
+                          <li class="flex min-w-0 flex-col gap-1 border-t border-[var(--color-border-subtle)] pt-2.5 first:border-t-0 first:pt-0">
+                            <div class="flex min-w-0 items-center gap-1.5">
                               <StatusChip tone="muted" label={item.kind || "other"} />
-                              <span class="font-mono text-[11px] text-[var(--color-text-muted)]">{item.id}</span>
+                              <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-[var(--color-text-muted)]" title={item.id}>
+                                {item.id}
+                              </span>
                             </div>
-                            <div class="mt-1">{item.summary || "—"}</div>
+                            <p class="m-0 text-[12.5px] leading-5 text-[var(--color-text-primary)] [overflow-wrap:anywhere]">
+                              {item.summary || "—"}
+                            </p>
                             <Show when={item.path}>
-                              <div class="mt-0.5 font-mono text-[11px] text-[var(--color-text-muted)]">{item.path}</div>
+                              <p class="m-0 min-w-0 truncate font-mono text-[11px] leading-4 text-[var(--color-text-muted)]" title={item.path}>
+                                {item.path}
+                              </p>
                             </Show>
                           </li>
                         )}
@@ -478,11 +509,11 @@ export function CanonFactsPanel(props: {
                   </Show>
                 </DetailPanel.Section>
                 <DetailPanel.Section title="Provenance" icon={<History size={14} />}>
-                  <DetailPanel.Properties>
-                    <DetailPanel.Property label="Id" value={current().fact.id} mono />
-                    <DetailPanel.Property label="Entity" value={current().fact.entityId || null} mono />
-                    <DetailPanel.Property label="Source" value={current().fact.source || null} mono />
-                    <DetailPanel.Property label="Updated" value={current().fact.updatedAt || null} />
+                  <DetailPanel.Properties class="!gap-1.5 [&_.pw-detail-panel__property]:!min-h-0 [&_.pw-detail-panel__property]:!grid-cols-[72px_minmax(0,1fr)] [&_.pw-detail-panel__property]:!gap-2">
+                    <DetailPanel.Property label="Id" mono value={provenanceValue(current().fact.id)} />
+                    <DetailPanel.Property label="Entity" mono value={provenanceValue(current().fact.entityId)} />
+                    <DetailPanel.Property label="Source" mono value={provenanceValue(current().fact.source)} />
+                    <DetailPanel.Property label="Updated" mono value={provenanceValue(current().fact.updatedAt)} />
                   </DetailPanel.Properties>
                 </DetailPanel.Section>
               </DetailPanel.Main>

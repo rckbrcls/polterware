@@ -825,6 +825,49 @@ function createBrowserDevBridge(): PolterwareBridge {
                   { key: "hard", runs: 1, successPct: 0, firstTryPct: 0, p50Ms: 256000, p90Ms: 256000, fallbacks: 0, rateLimits: 0, orphans: 0 },
                 ]
               : [],
+          rankings:
+            args?.projectId === PREVIEW_PROJECT_ID
+              ? {
+                  mostUsedModel: { key: "gpt-5-codex", runs: 1, samples: 1, p50Ms: 125000, successPct: 100, reason: "" },
+                  mostUsedProvider: { key: "openai", runs: 1, samples: 1, p50Ms: 125000, successPct: 100, reason: "" },
+                  slowestModel: { key: "desconhecido", runs: 0, samples: 0, reason: "insufficient samples (minimum 5)" },
+                  mostFailedModel: { key: "desconhecido", runs: 0, samples: 0, reason: "insufficient samples (minimum 5)" },
+                }
+              : {
+                  mostUsedModel: { key: "desconhecido", runs: 0, samples: 0, reason: "no runs in range" },
+                  mostUsedProvider: { key: "desconhecido", runs: 0, samples: 0, reason: "no runs in range" },
+                  slowestModel: { key: "desconhecido", runs: 0, samples: 0, reason: "insufficient samples (minimum 5)" },
+                  mostFailedModel: { key: "desconhecido", runs: 0, samples: 0, reason: "insufficient samples (minimum 5)" },
+                },
+        }),
+        getClassifier: async () => ({
+          featureSchema: 1,
+          minSamples: 5,
+          featureNames: [
+            "bias", "prompt_chars", "prompt_words", "prompt_lines", "list_items", "code_fences",
+            "existing_files", "existing_packages", "create", "refactor", "fix", "investigate", "test",
+            "risk_auth", "risk_security", "risk_money", "risk_data", "risk_migration", "verification_command",
+            "readonly", "write", "tier_easy", "tier_normal", "tier_hard",
+          ],
+          tiers: [
+            { tier: "easy", samples: 0, weights: [-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0] },
+            { tier: "normal", samples: 2, weights: [-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0] },
+            { tier: "hard", samples: 1, weights: [-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0] },
+          ],
+        }),
+        capacity: async (args?: { since?: string }) => ({
+          since: args?.since || "",
+          note: "Quota percentages are relative to each agent's own window.",
+          keys: [
+            {
+              key: "codex",
+              windows: 1,
+              hitFull: 0,
+              consumedPct: 42.5,
+              leftover: "unknown",
+              pace: "on pace",
+            },
+          ],
         }),
         watchRun: () => unsubscribe,
       }),

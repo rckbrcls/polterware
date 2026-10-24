@@ -362,6 +362,8 @@ export function createPolterwareIpcHandlers(controllers: PolterwareIpcController
     [IPC_CHANNELS.core.listHistory]: coreHandler(controllers, "listHistory"),
     [IPC_CHANNELS.core.checkTiers]: coreHandler(controllers, "checkTiers"),
     [IPC_CHANNELS.core.stats]: coreHandler(controllers, "stats"),
+    [IPC_CHANNELS.core.getClassifier]: coreHandler(controllers, "getClassifier"),
+    [IPC_CHANNELS.core.capacity]: coreHandler(controllers, "capacity"),
     [IPC_CHANNELS.core.listCliProviders]: coreHandler(controllers, "listCliProviders"),
     [IPC_CHANNELS.core.listIntegrationConnections]: coreHandler(controllers, "listIntegrationConnections"),
     [IPC_CHANNELS.core.saveIntegrationConnection]: coreHandler(controllers, "saveIntegrationConnection"),

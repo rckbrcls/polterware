@@ -1,4 +1,5 @@
 export { BotAvatar } from "./BotAvatar";
+export { agentMarkFor, type AgentMark } from "./agent-marks";
 
 export {
   botAvatarFaces,

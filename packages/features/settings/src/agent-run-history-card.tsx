@@ -1,12 +1,11 @@
 import { For, Show, createEffect, createMemo, onCleanup, untrack } from "solid-js";
-import { BotAvatar, botAvatarTypes, type BotAvatarType } from "@polterware/bot-avatars";
+import { BotAvatar, agentMarkFor, botAvatarTypes, type BotAvatarType } from "@polterware/bot-avatars";
 import {
   DispatchEventSummaryDetail,
   dispatchStatusTone,
   type DispatchRunEventView,
   type DispatchRunView,
 } from "@polterware/feature-dispatch";
-import { agentMarkFor } from "./agent-marks";
 import {
   DataTable,
   DetailPanel,

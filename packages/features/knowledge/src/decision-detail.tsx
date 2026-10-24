@@ -2,11 +2,11 @@ import { Show, type JSX } from "solid-js";
 import {
   Button,
   Book03Icon,
-  DetailPanel,
   Select,
   StatusChip,
 } from "@polterware/frontend-design-system";
 import type { ScopeNodeItem, WorkspaceVerdict } from "@polterware/feature-shell";
+import { KnowledgeDocumentProperty } from "./knowledge-document-properties";
 import { KnowledgeDocumentShell, type EvidenceNoteProps } from "./knowledge-document-shell";
 import { decisionStateTone } from "./library-row";
 import { ScopePicker, scopePathOf } from "./scope-picker";
@@ -45,88 +45,76 @@ export function DecisionDetail(props: {
   const canSupersede = () =>
     Boolean(props.onAction) && (props.verdict.state === "active" || props.verdict.state === "challenged") && successors().length > 0;
   return (
-    <DetailPanel.Content>
-      <DetailPanel.Header />
-      <KnowledgeDocumentShell
-        title={props.note?.title ?? props.verdict.title}
-        onTitleChange={props.note?.onTitleChange}
-        tags={props.note?.tags}
-        tagSuggestions={props.note?.tagSuggestions}
-        onTagsChange={props.note?.onTagsChange}
-        icon={<Book03Icon size={16} />}
-        bodyMarkdown={props.bodyMarkdown}
-        onBodyChange={props.onBodyChange}
-        properties={
-          <DetailPanel.Properties variant="inline">
-            <DetailPanel.Property
-              label="Status"
-              value={
-                <div class="flex flex-wrap items-center gap-2">
-                  <StatusChip tone={decisionStateTone(props.verdict.state)}>{STATE_LABEL[props.verdict.state]}</StatusChip>
-                  <Show when={props.onAction}>
-                    <Show when={props.verdict.state === "proposed"}>
-                      <Button variant="secondary" size="sm" onClick={() => props.onAction?.({ kind: "activate" })}>Activate</Button>
-                    </Show>
-                    <Show when={props.verdict.state === "active"}>
-                      <Button variant="ghost" size="sm" onClick={() => props.onAction?.({ kind: "challenge" })}>Open review</Button>
-                    </Show>
-                    <Show when={props.verdict.state === "challenged"}>
-                      <Button variant="ghost" size="sm" onClick={() => props.onAction?.({ kind: "reactivate" })}>Keep active</Button>
-                    </Show>
-                  </Show>
-                </div>
-              }
-            />
-            <DetailPanel.Property
-              label="Scope"
-              value={props.verdict.scope === "principle" ? "Principle (whole project)" : "Decision"}
-            />
-            <Show when={props.onScopeChange}>
-              <DetailPanel.Property
-                label="Atlas scope"
-                value={
-                  <ScopePicker
-                    nodes={props.scopeNodes ?? []}
-                    value={scopePathOf(props.scopeNodes ?? [], props.verdict.scopeNodeId)}
-                    onChange={(path) => props.onScopeChange?.(path)}
-                  />
-                }
-              />
+    <KnowledgeDocumentShell
+      entityId={props.verdict.id}
+      title={props.note?.title ?? props.verdict.title}
+      onTitleChange={props.note?.onTitleChange}
+      tags={props.note?.tags}
+      tagSuggestions={props.note?.tagSuggestions}
+      onTagsChange={props.note?.onTagsChange}
+      icon={<Book03Icon size={32} />}
+      bodyMarkdown={props.bodyMarkdown}
+      onBodyChange={props.onBodyChange}
+      properties={
+        <>
+          <KnowledgeDocumentProperty label="Status">
+            <StatusChip tone={decisionStateTone(props.verdict.state)}>{STATE_LABEL[props.verdict.state]}</StatusChip>
+            <Show when={props.onAction}>
+              <Show when={props.verdict.state === "proposed"}>
+                <Button variant="secondary" size="sm" onClick={() => props.onAction?.({ kind: "activate" })}>Activate</Button>
+              </Show>
+              <Show when={props.verdict.state === "active"}>
+                <Button variant="ghost" size="sm" onClick={() => props.onAction?.({ kind: "challenge" })}>Open review</Button>
+              </Show>
+              <Show when={props.verdict.state === "challenged"}>
+                <Button variant="ghost" size="sm" onClick={() => props.onAction?.({ kind: "reactivate" })}>Keep active</Button>
+              </Show>
             </Show>
-            <DetailPanel.Property label="Review when" value={props.verdict.reviewTrigger || null} />
-            <DetailPanel.Property label="Reason" value={props.verdict.statusReason || null} />
-            <DetailPanel.Property label="Superseded by" value={props.verdict.supersededBy || null} />
-            <DetailPanel.Property
-              label="Supersedes"
-              value={props.verdict.supersedes.length > 0 ? props.verdict.supersedes.join(", ") : null}
-            />
-            <DetailPanel.Property
-              label="Governs"
-              value={props.verdict.governs.length > 0 ? props.verdict.governs.join(", ") : null}
-              mono
-            />
-            <Show when={canSupersede()}>
-              <DetailPanel.Property
-                label="Supersede with"
-                value={
-                  <Select
-                    aria-label="Supersede with"
-                    size="sm"
-                    class="w-56"
-                    placeholder="Choose a decision…"
-                    options={successors().map((other) => ({ value: other.id, label: other.title }))}
-                    value=""
-                    onChange={(next) => {
-                      if (next) props.onAction?.({ kind: "supersede", byId: next });
-                    }}
-                  />
-                }
+          </KnowledgeDocumentProperty>
+          <KnowledgeDocumentProperty label="Reason" show={Boolean(props.verdict.statusReason)}>
+            {props.verdict.statusReason}
+          </KnowledgeDocumentProperty>
+          <KnowledgeDocumentProperty label="Review when" show={Boolean(props.verdict.reviewTrigger)}>
+            {props.verdict.reviewTrigger}
+          </KnowledgeDocumentProperty>
+          <KnowledgeDocumentProperty label="Scope">
+            {props.verdict.scope === "principle" ? "Principle (whole project)" : "Decision"}
+          </KnowledgeDocumentProperty>
+          <Show when={props.onScopeChange}>
+            <KnowledgeDocumentProperty label="Atlas scope">
+              <ScopePicker
+                nodes={props.scopeNodes ?? []}
+                value={scopePathOf(props.scopeNodes ?? [], props.verdict.scopeNodeId)}
+                onChange={(path) => props.onScopeChange?.(path)}
+                class="w-full min-w-0 max-w-[20rem]"
               />
-            </Show>
-          </DetailPanel.Properties>
-        }
-        links={props.links}
-      />
-    </DetailPanel.Content>
+            </KnowledgeDocumentProperty>
+          </Show>
+          <KnowledgeDocumentProperty label="Governs" mono show={props.verdict.governs.length > 0}>
+            {props.verdict.governs.join(", ")}
+          </KnowledgeDocumentProperty>
+          <KnowledgeDocumentProperty label="Supersedes" show={props.verdict.supersedes.length > 0}>
+            {props.verdict.supersedes.join(", ")}
+          </KnowledgeDocumentProperty>
+          <KnowledgeDocumentProperty label="Superseded by" show={Boolean(props.verdict.supersededBy)}>
+            {props.verdict.supersededBy}
+          </KnowledgeDocumentProperty>
+          <KnowledgeDocumentProperty label="Supersede with" show={canSupersede()}>
+            <Select
+              aria-label="Supersede with"
+              size="sm"
+              class="w-full min-w-0 max-w-[20rem]"
+              placeholder="Choose a decision…"
+              options={successors().map((other) => ({ value: other.id, label: other.title }))}
+              value=""
+              onChange={(next) => {
+                if (next) props.onAction?.({ kind: "supersede", byId: next });
+              }}
+            />
+          </KnowledgeDocumentProperty>
+        </>
+      }
+      links={props.links}
+    />
   );
 }

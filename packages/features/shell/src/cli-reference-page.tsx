@@ -357,7 +357,8 @@ export function CliReferencePage() {
         <PageToolbar.Actions>
           <Button
             size="sm"
-            variant="ghost"
+            variant="texture"
+            textureTone="neutral"
             onClick={() => void copyText(cliReferenceMarkdown(), "Reference")}
           >
             <Copy size={14} />

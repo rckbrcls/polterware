@@ -1,17 +1,21 @@
 import { Show, createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import {
   Button,
-  PageContent,
-  PageHeader,
+  Copy,
+  Dialog,
+  IconTile,
+  RefreshCw,
+  Surface,
   StatusChip,
   pushToast,
 } from "@polterware/frontend-design-system";
 import {
   TerminalEmulator,
-  TerminalTranscript,
   type CliConnectionState,
   type WorkspaceCatalogProvider,
 } from "@polterware/feature-shell";
+import { NodeIcon } from "@polterware/feature-architecture/icons";
+import { providerIconKey } from "./provider-icon";
 import { cliStateLabel, cliStateTone, providerByName } from "./setup-wizard-helpers";
 import {
   AUTH_DEFAULT_COLS,
@@ -47,15 +51,17 @@ function core() {
   return bridge().core;
 }
 
-export function SetupWizard(props: {
+export function ConnectProviderDialog(props: {
+  open: boolean;
   projectId?: string;
   providerName?: string;
   providers?: WorkspaceCatalogProvider[];
-  onBack?: () => void;
+  onClose: () => void;
   onFinish?: (provider: WorkspaceCatalogProvider) => void;
 }) {
-  const provider = createMemo(() =>
-    providerByName(props.providers ?? [], props.providerName) ?? (props.providers ?? [])[0],
+  // Keep the last provider through the shared dialog's exit and focus restoration.
+  const provider = createMemo<WorkspaceCatalogProvider | undefined>((previous) =>
+    props.open ? providerByName(props.providers ?? [], props.providerName) ?? (props.providers ?? [])[0] : previous,
   );
   const [state, setState] = createSignal<CliConnectionState>("ready");
   const [lines, setLines] = createSignal<string[]>([]);
@@ -66,6 +72,7 @@ export function SetupWizard(props: {
 
   let stopProbe: (() => void) | undefined;
   let activeSessionId: string | null = null;
+  let generation = 0;
 
   function stopAuthProbe() {
     stopProbe?.();
@@ -77,55 +84,66 @@ export function SetupWizard(props: {
     const id = activeSessionId;
     activeSessionId = null;
     setSessionId(null);
-    await closeAuthTerminal(core().terminals, id);
+    if (id) await closeAuthTerminal(core().terminals, id);
   }
 
   onCleanup(() => {
+    generation += 1;
     void disposeAuthSession();
   });
 
   async function probeCurrent() {
     const current = provider();
-    if (!current) return;
+    if (!current || !props.open) return;
+    const requestGeneration = generation;
     setBusy(true);
     try {
       const result = await probeAuthStatus(core().integrations, current.id);
+      if (requestGeneration !== generation) return;
       setAccountLabel(result.accountLabel);
       setState(result.status);
-      setLines([
-        `Probing ${current.name} CLI…`,
-        result.binaryPath ? `Binary: ${result.binaryPath}` : `Binary: ${current.binary}`,
-        result.message,
-        result.accountLabel ? `Account: ${result.accountLabel}` : "No authenticated account label detected.",
-        "Polterware never requests or stores provider tokens.",
-      ]);
+      setLines([]);
+      if (result.status === "cli-unavailable" && !docsUrl()) {
+        try {
+          const plan = await beginAuthPlan(core().integrations, current.id);
+          if (requestGeneration === generation) setDocsUrl(plan.docsUrl);
+        } catch {
+          /* the install button stays inert without a docs url */
+        }
+      }
     } catch (error: unknown) {
+      if (requestGeneration !== generation) return;
       setState("failed");
       setLines([
         `Could not probe ${current.name}.`,
         error instanceof Error ? error.message : "Probe failed.",
       ]);
     } finally {
-      setBusy(false);
+      if (requestGeneration === generation) setBusy(false);
     }
   }
 
-  createEffect((previousProviderId?: string) => {
-    const current = provider();
-    const providerId = current?.id;
-    if (!providerId) return previousProviderId;
-    if (providerId === previousProviderId) return previousProviderId;
-    void disposeAuthSession().then(() => {
-      setDocsUrl("");
-      void probeCurrent();
-    });
-    return providerId;
+  createEffect((previous?: string) => {
+    const open = props.open;
+    const providerId = provider()?.id;
+    const key = `${open}:${providerId ?? ""}`;
+    if (key === previous) return key;
+    generation += 1;
+    void disposeAuthSession();
+    if (!open || !providerId) return key;
+    setState("ready");
+    setLines([]);
+    setAccountLabel("");
+    setDocsUrl("");
+    void probeCurrent();
+    return key;
   });
 
   async function startAuthentication() {
     const current = provider();
     const projectId = props.projectId?.trim();
-    if (!current) return;
+    if (!current || !props.open) return;
+    const requestGeneration = generation;
     if (!projectId) {
       pushToast("Open a local project before starting CLI login.", "danger");
       return;
@@ -134,16 +152,14 @@ export function SetupWizard(props: {
     setBusy(true);
     setState("authenticating");
     await disposeAuthSession();
+    if (requestGeneration !== generation) return;
 
     try {
       const plan = await beginAuthPlan(core().integrations, current.id);
+      if (requestGeneration !== generation) return;
       const command = plan.authCommand || current.authCommands[0] || current.binary;
       setDocsUrl(plan.docsUrl);
-      setLines([
-        `Starting local authentication for ${current.name}`,
-        `$ ${command}`,
-        plan.message || "Complete the interactive login in the terminal below.",
-      ]);
+      setLines([]);
 
       const id = await createAuthTerminalSession({
         terminals: core().terminals,
@@ -152,6 +168,10 @@ export function SetupWizard(props: {
         cols: AUTH_DEFAULT_COLS,
         rows: AUTH_DEFAULT_ROWS,
       });
+      if (requestGeneration !== generation) {
+        await closeAuthTerminal(core().terminals, id);
+        return;
+      }
       activeSessionId = id;
       setSessionId(id);
 
@@ -161,6 +181,7 @@ export function SetupWizard(props: {
         authCommand: command,
       });
 
+      if (requestGeneration !== generation) return;
       stopProbe = startAuthProbeLoop({
         integrations: core().integrations,
         providerId: current.id,
@@ -190,7 +211,9 @@ export function SetupWizard(props: {
 
       pushToast(`Complete ${current.name} login in the terminal below.`, "default");
     } catch (error: unknown) {
+      if (requestGeneration !== generation) return;
       await disposeAuthSession();
+      if (requestGeneration !== generation) return;
       setState("failed");
       setLines([
         `Could not start authentication for ${current.name}.`,
@@ -198,23 +221,20 @@ export function SetupWizard(props: {
       ]);
       pushToast(error instanceof Error ? error.message : "Could not start CLI login.", "danger");
     } finally {
-      setBusy(false);
+      if (requestGeneration === generation) setBusy(false);
     }
   }
 
   async function refreshAndConnect() {
     const current = provider();
-    if (!current) return;
+    if (!current || !props.open) return;
+    const requestGeneration = generation;
     setBusy(true);
     try {
       const result = await probeAuthStatus(core().integrations, current.id);
+      if (requestGeneration !== generation) return;
       const label = result.accountLabel || current.name;
       setAccountLabel(result.accountLabel);
-      setLines([
-        `Refreshed ${current.name} status`,
-        result.message,
-        result.accountLabel ? `Account: ${result.accountLabel}` : "No account label yet.",
-      ]);
       if (result.status === "cli-unavailable") {
         setState("cli-unavailable");
         pushToast(`${current.binary} is not available on PATH.`, "danger");
@@ -229,16 +249,18 @@ export function SetupWizard(props: {
       setState("connected");
       pushToast(`${current.name} connection ready.`, "success");
       await disposeAuthSession();
+      if (requestGeneration !== generation) return;
       props.onFinish?.({
         ...current,
         state: "connected",
         name: label || current.name,
       });
     } catch (error: unknown) {
+      if (requestGeneration !== generation) return;
       setState("failed");
       pushToast(error instanceof Error ? error.message : "Could not refresh connection status.", "danger");
     } finally {
-      setBusy(false);
+      if (requestGeneration === generation) setBusy(false);
     }
   }
 
@@ -252,53 +274,94 @@ export function SetupWizard(props: {
     }
   }
 
-  async function handleBack() {
-    await disposeAuthSession();
-    props.onBack?.();
+  function closeDialog() {
+    generation += 1;
+    void disposeAuthSession();
+    props.onClose();
+  }
+
+  async function copyCommand() {
+    const command = provider()?.authCommands[0] || provider()?.binary;
+    if (!command) return;
+    try {
+      await navigator.clipboard.writeText(command);
+      pushToast("Login command copied.", "success");
+    } catch {
+      pushToast("Could not copy login command.", "danger");
+    }
   }
 
   return (
     <Show when={provider()}>
       {(current) => (
-        <div class="flex h-full min-h-0 flex-col">
-          <PageHeader
-            title={`Connect ${current().name}`}
-            subtitle="Local CLI authentication"
-            actions={
-              <Button size="sm" variant="texture" onClick={() => void handleBack()}>
-                Cancel
+        <Dialog
+          open={props.open}
+          title={`Connect ${current().name}`}
+          titleLeading={
+            <IconTile size={28} tone="integration" brand={[current().name, providerIconKey(current())]} seed={current().id}>
+              <NodeIcon name={providerIconKey(current())} size={16} brand={false} />
+            </IconTile>
+          }
+          size="lg"
+          onClose={closeDialog}
+          footer={
+            <>
+              <Button size="sm" variant="ghost" keepVariant disabled={busy()} aria-label="Refresh status" onClick={() => void probeCurrent()}>
+                <RefreshCw size={14} aria-hidden /> Refresh
               </Button>
-            }
-          />
-          <PageContent class="mx-auto flex w-full max-w-[900px] flex-1 flex-col gap-4 p-6">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p class="m-0 text-[13px] font-medium text-[var(--color-text-primary)]">{current().binary}</p>
-                <p class="m-0 mt-1 text-[12px] text-[var(--color-text-muted)]">
-                  {current().authCommands.join(" · ")}
-                </p>
-                <Show when={accountLabel()}>
-                  <p class="m-0 mt-1 text-[12px] text-[var(--color-text-secondary)]">{accountLabel()}</p>
+              <Show
+                when={state() !== "connected"}
+                fallback={
+                  <Button size="sm" variant="texture" textureTone="brand" disabled={busy()} onClick={() => void refreshAndConnect()}>
+                    Done
+                  </Button>
+                }
+              >
+                <Show
+                  when={state() === "cli-unavailable"}
+                  fallback={
+                    <Button
+                      size="sm"
+                      variant="texture"
+                      textureTone="brand"
+                      disabled={busy() || !props.projectId}
+                      onClick={() => void startAuthentication()}
+                    >
+                      {sessionId() ? "Restart login" : "Log in"}
+                    </Button>
+                  }
+                >
+                  <Button size="sm" variant="texture" textureTone="brand" disabled={busy()} onClick={() => void openDocs()}>
+                    Install {current().binary}
+                  </Button>
                 </Show>
-              </div>
+              </Show>
+            </>
+          }
+        >
+          <div class="flex min-h-0 flex-col gap-3">
+            <div class="flex items-center gap-2">
               <StatusChip tone={cliStateTone(state())} label={cliStateLabel(state())} />
+              <span class="min-w-0 truncate font-mono text-[12px] text-[var(--color-text-muted)]">
+                {accountLabel() || current().authCommands[0] || current().binary}
+              </span>
+              <Button size="icon" variant="ghost" class="ml-auto" aria-label="Copy login command" onClick={() => void copyCommand()}>
+                <Copy size={14} aria-hidden />
+              </Button>
             </div>
 
-            <Show
-              when={sessionId()}
-              fallback={
-                <TerminalTranscript
-                  lines={lines()}
-                  label={`${current().name} authentication transcript`}
-                  class="min-h-[320px] flex-1 rounded-[var(--radius-card)]"
-                />
-              }
-            >
+            <Show when={state() === "cli-unavailable"}>
+              <p class="m-0 text-[13px] text-[var(--color-text-secondary)]">
+                {current().binary} was not found on your PATH. Install it, then refresh.
+              </p>
+            </Show>
+            <Show when={state() === "failed" && lines().length > 0}>
+              <p class="m-0 text-[13px] text-[var(--color-text-secondary)]">{lines().join(" ")}</p>
+            </Show>
+
+            <Show when={sessionId()}>
               {(id) => (
-                <div
-                  class="min-h-[320px] flex-1 overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border-subtle)]"
-                  aria-label={`${current().name} authentication terminal`}
-                >
+                <Surface class="h-[240px] overflow-hidden rounded-[var(--radius-card)]">
                   <TerminalEmulator
                     sessionId={id()}
                     onWrite={(data) => {
@@ -309,40 +372,11 @@ export function SetupWizard(props: {
                     }}
                     onRead={(offset) => readAuthTerminalOutput(core().terminals, id(), offset)}
                   />
-                </div>
+                </Surface>
               )}
             </Show>
-
-            <p class="m-0 text-[12px] text-[var(--color-text-muted)]">
-              Credentials stay in the OS/CLI credential store. Polterware never asks for or stores provider tokens.
-              Auth output stays in memory for this session and is not written to SQLite.
-            </p>
-
-            <div class="flex flex-wrap justify-end gap-2">
-              <Show when={docsUrl()}>
-                <Button size="sm" variant="ghost" disabled={busy()} onClick={() => void openDocs()}>
-                  Open docs
-                </Button>
-              </Show>
-              <Button size="sm" variant="ghost" disabled={busy()} onClick={() => void probeCurrent()}>
-                Refresh status
-              </Button>
-              <Show when={state() !== "connected"}>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={busy() || state() === "cli-unavailable" || !props.projectId}
-                  onClick={() => void startAuthentication()}
-                >
-                  Start CLI login
-                </Button>
-              </Show>
-              <Button size="sm" variant="primary" disabled={busy()} onClick={() => void refreshAndConnect()}>
-                {state() === "connected" ? "Save connection" : "Check and connect"}
-              </Button>
-            </div>
-          </PageContent>
-        </div>
+          </div>
+        </Dialog>
       )}
     </Show>
   );

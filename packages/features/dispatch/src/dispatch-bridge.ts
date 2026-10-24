@@ -1,10 +1,14 @@
 import type { StatusTone } from "@polterware/frontend-design-system";
 import type {
   DispatchAgentView,
+  DispatchAttemptView,
+  DispatchCapacityView,
+  DispatchClassifierView,
   DispatchHistoryEventKind,
   DispatchQuotaSnapshotView,
   DispatchRunEventView,
   DispatchRunView,
+  DispatchStatRankView,
   DispatchStatsView,
   DispatchTierView,
   DispatchWatchEventView,
@@ -39,6 +43,8 @@ export type DispatchBridge = {
   }) => Promise<unknown>;
   checkTiers: (payload?: Record<string, never>) => Promise<unknown>;
   stats: (payload: { projectId: string; by?: string; since?: string }) => Promise<unknown>;
+  getClassifier: (payload?: Record<string, never>) => Promise<unknown>;
+  capacity: (payload?: { since?: string }) => Promise<unknown>;
   watchRun: (
     input: string | { id: string; afterSeq?: number },
     callback: (event: DispatchWatchEventView) => void,
@@ -67,6 +73,8 @@ export function dispatchBridge(): DispatchBridge | undefined {
     || !d.listHistory
     || !d.checkTiers
     || !d.stats
+    || !d.getClassifier
+    || !d.capacity
   ) {
     return undefined;
   }
@@ -83,6 +91,8 @@ export function dispatchBridge(): DispatchBridge | undefined {
     listHistory: d.listHistory,
     checkTiers: d.checkTiers,
     stats: d.stats,
+    getClassifier: d.getClassifier,
+    capacity: d.capacity,
     watchRun: d.watchRun ?? (() => () => {}),
   };
 }
@@ -105,6 +115,32 @@ function asOptionalNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
+/** Measured milliseconds. Missing stays unset; a real zero stays zero. */
+function asOptionalMs(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "bigint") return Number(value);
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+
+function parseAttempts(value: unknown): DispatchAttemptView[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const row = asRecord(item);
+    const durationMs = asOptionalMs(row.durationMs);
+    return [{
+      agent: asString(row.agent),
+      model: asString(row.model),
+      error: asString(row.error),
+      exitClass: asString(row.exitClass),
+      ...(durationMs !== undefined ? { durationMs } : {}),
+    }];
+  });
+}
+
 function asBoolean(value: unknown): boolean {
   return value === true;
 }
@@ -115,6 +151,8 @@ function parseRunObject(row: Record<string, unknown>): DispatchRunView | undefin
   const filesChanged = asOptionalNumber(row.filesChanged);
   const insertions = asOptionalNumber(row.insertions);
   const deletions = asOptionalNumber(row.deletions);
+  const queuedMs = asOptionalMs(row.queuedMs);
+  const runMs = asOptionalMs(row.runMs);
   return {
     id,
     projectId: asString(row.projectId),
@@ -141,6 +179,12 @@ function parseRunObject(row: Record<string, unknown>): DispatchRunView | undefin
     ...(filesChanged !== undefined ? { filesChanged } : {}),
     ...(insertions !== undefined ? { insertions } : {}),
     ...(deletions !== undefined ? { deletions } : {}),
+    attempts: parseAttempts(row.attempts),
+    resumedOf: asString(row.resumedOf),
+    parentRunId: asString(row.parentRunId),
+    ...(queuedMs !== undefined ? { queuedMs } : {}),
+    ...(runMs !== undefined ? { runMs } : {}),
+    priority: asString(row.priority),
     createdAt: asString(row.createdAt),
     startedAt: asString(row.startedAt),
     finishedAt: asString(row.finishedAt),
@@ -292,9 +336,24 @@ export function mapDispatchResult(raw: unknown): { content: string; total: numbe
   };
 }
 
+function parseStatRank(value: unknown): DispatchStatRankView {
+  const row = asRecord(value);
+  const p50Ms = asOptionalNumber(row.p50Ms);
+  const successPct = asOptionalNumber(row.successPct);
+  return {
+    key: asString(row.key),
+    runs: asNumber(row.runs),
+    samples: asNumber(row.samples),
+    ...(p50Ms !== undefined ? { p50Ms } : {}),
+    ...(successPct !== undefined ? { successPct } : {}),
+    reason: asString(row.reason),
+  };
+}
+
 export function mapDispatchStats(raw: unknown): DispatchStatsView {
   const record = asRecord(raw);
   const rows = Array.isArray(record.rows) ? record.rows : [];
+  const rankingsRaw = asRecord(record.rankings);
   return {
     by: asString(record.by),
     since: asString(record.since),
@@ -317,23 +376,109 @@ export function mapDispatchStats(raw: unknown): DispatchStatsView {
         orphans: asNumber(row.orphans),
       }];
     }),
+    rankings: {
+      mostUsedModel: parseStatRank(rankingsRaw.mostUsedModel ?? record.mostUsedModel),
+      mostUsedProvider: parseStatRank(rankingsRaw.mostUsedProvider ?? record.mostUsedProvider),
+      slowestModel: parseStatRank(rankingsRaw.slowestModel ?? record.slowestModel),
+      mostFailedModel: parseStatRank(rankingsRaw.mostFailedModel ?? record.mostFailedModel),
+    },
+  };
+}
+
+export function mapDispatchClassifier(raw: unknown): DispatchClassifierView {
+  const record = asRecord(raw);
+  const featureNames = Array.isArray(record.featureNames)
+    ? record.featureNames.map((item) => asString(item)).filter(Boolean)
+    : [];
+  const rawTiers = Array.isArray(record.tiers) ? record.tiers : [];
+  return {
+    featureSchema: asNumber(record.featureSchema, 1),
+    minSamples: asNumber(record.minSamples, 5),
+    featureNames,
+    tiers: rawTiers.flatMap((item) => {
+      const row = asRecord(item);
+      const tier = asString(row.tier);
+      if (!tier) return [];
+      const weights = Array.isArray(row.weights)
+        ? row.weights.map((w) => asNumber(w))
+        : [];
+      return [{
+        tier,
+        samples: asNumber(row.samples),
+        weights,
+      }];
+    }),
+  };
+}
+
+export function mapDispatchCapacity(raw: unknown): DispatchCapacityView {
+  const record = asRecord(raw);
+  const rawKeys = Array.isArray(record.keys) ? record.keys : [];
+  return {
+    since: asString(record.since),
+    note: asString(record.note),
+    keys: rawKeys.flatMap((item) => {
+      const row = asRecord(item);
+      const key = asString(row.key);
+      if (!key) return [];
+      const consumedPct = asOptionalNumber(row.consumedPct);
+      const leftoverPct = asOptionalNumber(row.leftoverPct);
+      return [{
+        key,
+        windows: asNumber(row.windows),
+        hitFull: asNumber(row.hitFull),
+        ...(consumedPct !== undefined ? { consumedPct } : {}),
+        ...(leftoverPct !== undefined ? { leftoverPct } : {}),
+        leftover: asString(row.leftover),
+        pace: asString(row.pace),
+      }];
+    }),
   };
 }
 
 export function dispatchStatusTone(status: string): StatusTone {
   const normalized = status.toLowerCase();
-  if (normalized === "merged" || normalized === "verified" || normalized === "completed" || normalized === "passed" || normalized === "clean" || normalized === "ok" || normalized === "low" || normalized === "high") {
+  if (
+    normalized === "merged"
+    || normalized === "verified"
+    || normalized === "completed"
+    || normalized === "passed"
+    || normalized === "clean"
+    || normalized === "ok"
+    || normalized === "low"
+    || normalized === "high"
+    || normalized === "no ritmo"
+    || normalized === "on pace"
+    || normalized === "atrasado"
+  ) {
     return "ok";
   }
-  if (normalized === "running" || normalized === "started" || normalized === "starting" || normalized === "queued" || normalized === "active") {
+  if (
+    normalized === "running"
+    || normalized === "started"
+    || normalized === "starting"
+    || normalized === "queued"
+    || normalized === "pending"
+    || normalized === "active"
+    || normalized === "verifying"
+  ) {
     return "syncing";
   }
-  if (normalized === "failed" || normalized === "error" || normalized === "blocked") {
+  if (normalized === "failed" || normalized === "error" || normalized === "blocked" || normalized === "orphaned") {
     return "danger";
   }
-  if (normalized === "cancelled" || normalized === "canceled" || normalized === "dirty" || normalized === "medium") {
+  if (
+    normalized === "cancelled"
+    || normalized === "canceled"
+    || normalized === "timed_out"
+    || normalized === "abandoned"
+    || normalized === "dirty"
+    || normalized === "medium"
+    || normalized === "adiantado"
+  ) {
     return "warn";
   }
+  if (normalized === "ready") return "ok";
   return "muted";
 }
 

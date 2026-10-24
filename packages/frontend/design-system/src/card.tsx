@@ -9,10 +9,16 @@ export function Card(props: {
   class?: string;
   /** `rings` preserves the nested card finish; `texture` shares the button frame and face. */
   variant?: "rings" | "texture";
+  /** `compact` uses the field gradient and a single rim. The default texture palette is the quieter content surface. */
+  texture?: "compact";
   ref?: HTMLDivElement | ((element: HTMLDivElement) => void);
 }) {
   return (
-    <div ref={props.ref} class={`${props.variant === "texture" ? "card-texture-framed" : "card-panel"} p-3 ${props.class ?? ""}`}>
+    <div
+      ref={props.ref}
+      data-texture={props.variant === "texture" && props.texture === "compact" ? "compact" : undefined}
+      class={`${props.variant === "texture" ? "card-texture-framed" : "card-panel"} p-3 ${props.class ?? ""}`}
+    >
       {props.children}
     </div>
   );

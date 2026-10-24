@@ -10,7 +10,7 @@ import {
   type WorkspaceContext,
 } from "./context-switchers";
 import { TitleBarFrame } from "@polterware/frontend-shell";
-import type { EnvironmentItem, ScopeNodeItem, WorkspaceScope } from "./types";
+import type { EnvironmentItem, ProjectSwitcherItem, ScopeNodeItem, WorkspaceScope } from "./types";
 
 export type TitleBarProps = {
   canGoBack: boolean;
@@ -18,8 +18,12 @@ export type TitleBarProps = {
   onBack: () => void;
   onForward: () => void;
   workspace: WorkspaceContext;
+  projects?: ProjectSwitcherItem[];
   environments?: EnvironmentItem[];
+  onSelectProject?: (projectId: string) => void;
   onSelectEnvironment?: (environmentId: string) => void;
+  onCreateProject?: () => void;
+  onOpenProjectSettings?: () => void;
   scopeNodes?: ScopeNodeItem[];
   scope?: WorkspaceScope;
   onSelectScope?: (scope: WorkspaceScope) => void;
@@ -53,8 +57,12 @@ export function TitleBar(props: TitleBarProps) {
         <div class="flex min-w-0 shrink items-center [-webkit-app-region:no-drag]">
           <WorkspaceContextBar
             context={props.workspace}
+            projects={props.projects}
             environments={props.environments}
+            onSelectProject={props.onSelectProject}
             onSelectEnvironment={props.onSelectEnvironment}
+            onCreateProject={props.onCreateProject}
+            onOpenProjectSettings={props.onOpenProjectSettings}
             scopeNodes={props.scopeNodes}
             scope={props.scope}
             onSelectScope={props.onSelectScope}

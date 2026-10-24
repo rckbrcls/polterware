@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"connectrpc.com/connect"
 
@@ -20,32 +22,67 @@ import (
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
 	"github.com/polterware/polterware/backend/platform/gen/polterware/local/v1/localv1connect"
 	"github.com/polterware/polterware/backend/providers/dispatch/adapters"
+	"github.com/polterware/polterware/backend/providers/dispatch/process"
 	"github.com/polterware/polterware/backend/providers/dispatch/worktree"
 )
 
 var _ localv1connect.DispatchServiceHandler = (*Core)(nil)
 
-var (
-	dispatchStartMu  sync.Mutex
-	dispatchCancelMu sync.Mutex
-	dispatchCancels  = map[string]context.CancelFunc{}
-	dispatchWatchMu  sync.Mutex
-)
+const dispatchWatchTick = 150 * time.Millisecond
 
-func putDispatchCancel(runID string, cancel context.CancelFunc) {
-	dispatchCancelMu.Lock()
-	defer dispatchCancelMu.Unlock()
-	dispatchCancels[runID] = cancel
+func (core *Core) initDispatchState() {
+	core.dispatchOnce.Do(func() {
+		core.dispatchCancels = map[string]context.CancelFunc{}
+		core.dispatchFinish = map[string]*sync.Mutex{}
+		core.dispatchLogOff = map[string]int64{}
+		core.dispatchLogReady = map[string]struct{}{}
+		core.dispatchFinalized = map[string]struct{}{}
+	})
 }
 
-func popDispatchCancel(runID string) (context.CancelFunc, bool) {
-	dispatchCancelMu.Lock()
-	defer dispatchCancelMu.Unlock()
-	cancel, ok := dispatchCancels[runID]
+func (core *Core) putDispatchCancel(runID string, cancel context.CancelFunc) {
+	core.initDispatchState()
+	core.dispatchCancelMu.Lock()
+	defer core.dispatchCancelMu.Unlock()
+	core.dispatchCancels[runID] = cancel
+}
+
+func (core *Core) popDispatchCancel(runID string) (context.CancelFunc, bool) {
+	core.initDispatchState()
+	core.dispatchCancelMu.Lock()
+	defer core.dispatchCancelMu.Unlock()
+	cancel, ok := core.dispatchCancels[runID]
 	if ok {
-		delete(dispatchCancels, runID)
+		delete(core.dispatchCancels, runID)
 	}
 	return cancel, ok
+}
+
+func (core *Core) dispatchRunMu(runID string) *sync.Mutex {
+	core.initDispatchState()
+	core.dispatchFinishMu.Lock()
+	defer core.dispatchFinishMu.Unlock()
+	mu, ok := core.dispatchFinish[runID]
+	if !ok {
+		mu = &sync.Mutex{}
+		core.dispatchFinish[runID] = mu
+	}
+	return mu
+}
+
+// reconcileDispatchOnBoot marks RUNNING and PENDING runs whose runner died
+// with the previous core as ORPHANED. ServeConnect calls this before accept.
+func (core *Core) reconcileDispatchOnBoot() {
+	if core == nil || core.Store == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	deps, err := core.dispatchDeps(ctx)
+	if err != nil {
+		return
+	}
+	_ = deps.Reconcile(ctx)
 }
 
 func (core *Core) dispatchStateDir() string {
@@ -146,10 +183,10 @@ func (core *Core) StartRun(ctx context.Context, request *connect.Request[localv1
 		return nil, internal(err)
 	}
 
-	dispatchStartMu.Lock()
+	core.dispatchStartMu.Lock()
 	existing, err := core.Store.ListRuns(ctx, projectID, 0, 0)
 	if err != nil {
-		dispatchStartMu.Unlock()
+		core.dispatchStartMu.Unlock()
 		return nil, internal(err)
 	}
 	for _, r := range existing {
@@ -157,7 +194,7 @@ func (core *Core) StartRun(ctx context.Context, request *connect.Request[localv1
 			continue
 		}
 		if sameDispatchDir(r.Dir, dir) || (r.Worktree != "" && sameDispatchDir(r.Worktree, dir)) {
-			dispatchStartMu.Unlock()
+			core.dispatchStartMu.Unlock()
 			return nil, invalid("another dispatch run is already active in " + dir)
 		}
 	}
@@ -175,7 +212,7 @@ func (core *Core) StartRun(ctx context.Context, request *connect.Request[localv1
 		},
 	}
 	run, err := deps.Begin(opts)
-	dispatchStartMu.Unlock()
+	core.dispatchStartMu.Unlock()
 	if err != nil {
 		return nil, invalid(err.Error())
 	}
@@ -210,35 +247,49 @@ func (core *Core) StartRun(ctx context.Context, request *connect.Request[localv1
 	}
 
 	execCtx, execCancel := context.WithCancel(context.Background())
-	putDispatchCancel(run.ID, execCancel)
+	core.putDispatchCancel(run.ID, execCancel)
 	go func(initial dispatch.Run) {
 		defer func() {
-			popDispatchCancel(initial.ID)
+			core.popDispatchCancel(initial.ID)
 			execCancel()
 		}()
-		finalRun, _ := deps.Execute(execCtx, initial)
-		finalizeDispatchRun(context.Background(), core.Store, finalRun)
+		mu := core.dispatchRunMu(initial.ID)
+		mu.Lock()
+		defer mu.Unlock()
+		current := initial
+		if latest, err := core.Store.GetRun(context.Background(), initial.ID); err == nil {
+			current = latest
+		}
+		if isTerminalDispatchStatus(current.Status) {
+			core.finalizeDispatchRun(context.Background(), current)
+			return
+		}
+		finalRun, _ := deps.Execute(execCtx, current)
+		core.finalizeDispatchRun(context.Background(), finalRun)
 	}(run)
 
 	return connect.NewResponse(&localv1.StartRunResponse{Run: dispatchRunProto(run)}), nil
 }
 
-// cancelSelfGuardStore prevents Deps.Cancel from sending SIGTERM/SIGKILL to
-// the core daemon process itself when the run was launched in-process.
-type cancelSelfGuardStore struct {
-	dispatch.Store
-	selfPID int
-}
-
-func (s cancelSelfGuardStore) GetRun(ctx context.Context, id string) (dispatch.Run, error) {
-	run, err := s.Store.GetRun(ctx, id)
+// stopForeignDispatchProcs stops the agent tree and a runner that is not this
+// process. The core's own PID is never signaled; in-process runs end through
+// the Execute context instead.
+func (core *Core) stopForeignDispatchProcs(ctx context.Context, run dispatch.Run) error {
+	owner := run.PID
+	if owner == os.Getpid() {
+		owner = 0
+	}
+	if run.AgentPID <= 0 && owner <= 0 {
+		return nil
+	}
+	tree, err := process.Capture(run.AgentPID)
 	if err != nil {
-		return run, err
+		return err
 	}
-	if run.PID == s.selfPID {
-		run.PID = 0
+	if err := tree.Include(owner, run.ProcStart); err != nil {
+		return err
 	}
-	return run, nil
+	return tree.Stop(ctx, 5*time.Second)
 }
 
 func (core *Core) CancelRun(ctx context.Context, request *connect.Request[localv1.CancelRunRequest]) (*connect.Response[localv1.CancelRunResponse], error) {
@@ -246,29 +297,62 @@ func (core *Core) CancelRun(ctx context.Context, request *connect.Request[localv
 	if id == "" {
 		return nil, invalid("run id is required")
 	}
-	execCancel, hadCancel := popDispatchCancel(id)
+	execCancel, hadCancel := core.popDispatchCancel(id)
 	if hadCancel {
 		execCancel()
 	}
 
-	deps, err := core.dispatchDeps(ctx)
-	if err != nil {
-		return nil, internal(err)
-	}
-	deps.Store = cancelSelfGuardStore{Store: core.Store, selfPID: os.Getpid()}
-
-	run, err := deps.Cancel(ctx, id)
+	run, err := core.Store.GetRun(ctx, id)
 	if errors.Is(err, dispatch.ErrUnknownRun) || errors.Is(err, sql.ErrNoRows) {
 		return nil, connect.NewError(connect.CodeNotFound, err)
 	}
 	if err != nil {
-		if hadCancel && run.Status == dispatch.StatusCancelled {
-			err = nil
-		} else {
+		return nil, internal(err)
+	}
+
+	selfOwned := hadCancel || run.PID == os.Getpid()
+	if !selfOwned {
+		deps, derr := core.dispatchDeps(ctx)
+		if derr != nil {
+			return nil, internal(derr)
+		}
+		run, err = deps.Cancel(ctx, id)
+		if errors.Is(err, dispatch.ErrUnknownRun) || errors.Is(err, sql.ErrNoRows) {
+			return nil, connect.NewError(connect.CodeNotFound, err)
+		}
+		if err != nil {
+			return nil, invalid(err.Error())
+		}
+		if !isTerminalDispatchStatus(run.Status) {
+			run.Status = dispatch.StatusCancelled
+			if run.Error == "" {
+				run.Error = "cancelled"
+			}
+			run.FinishedAt = time.Now().UTC()
+			if err := core.Store.SaveRun(ctx, run); err != nil {
+				return nil, internal(err)
+			}
+		}
+		core.finalizeDispatchRun(ctx, run)
+		return connect.NewResponse(&localv1.CancelRunResponse{Run: dispatchRunProto(run)}), nil
+	}
+
+	alreadyTerminal := isTerminalDispatchStatus(run.Status)
+	if alreadyTerminal && !hadCancel {
+		return nil, invalid(fmt.Sprintf("run %s already %s", run.ID, run.Status))
+	}
+	if !alreadyTerminal {
+		if err := core.stopForeignDispatchProcs(ctx, run); err != nil {
 			return nil, invalid(err.Error())
 		}
 	}
 
+	mu := core.dispatchRunMu(id)
+	mu.Lock()
+	defer mu.Unlock()
+	if latest, lerr := core.Store.GetRun(ctx, id); lerr == nil {
+		run = latest
+	}
 	if !isTerminalDispatchStatus(run.Status) {
 		run.Status = dispatch.StatusCancelled
 		if run.Error == "" {
@@ -278,8 +362,10 @@ func (core *Core) CancelRun(ctx context.Context, request *connect.Request[localv
 		if err := core.Store.SaveRun(ctx, run); err != nil {
 			return nil, internal(err)
 		}
+	} else if run.Status != dispatch.StatusCancelled {
+		return nil, invalid(fmt.Sprintf("run %s already %s", run.ID, run.Status))
 	}
-	finalizeDispatchRun(ctx, core.Store, run)
+	core.finalizeDispatchRun(ctx, run)
 	return connect.NewResponse(&localv1.CancelRunResponse{Run: dispatchRunProto(run)}), nil
 }
 
@@ -395,7 +481,7 @@ func (core *Core) WatchRun(ctx context.Context, request *connect.Request[localv1
 	}
 
 	logPath := filepath.Join(core.dispatchStateDir(), "logs", id+".agent.log")
-	ticker := time.NewTicker(25 * time.Millisecond)
+	ticker := time.NewTicker(dispatchWatchTick)
 	defer ticker.Stop()
 
 	for {
@@ -450,36 +536,95 @@ func (core *Core) WatchRun(ctx context.Context, request *connect.Request[localv1
 }
 
 func (core *Core) syncAgentLogOutput(ctx context.Context, run dispatch.Run, logPath string) error {
-	b, err := os.ReadFile(logPath)
-	if err != nil || len(b) == 0 {
+	f, err := os.Open(logPath)
+	if err != nil {
 		return nil
 	}
-	dispatchWatchMu.Lock()
-	defer dispatchWatchMu.Unlock()
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil || info.Size() == 0 {
+		return nil
+	}
+	size := info.Size()
 
-	allEvents, err := core.Store.ListEvents(ctx, run.ID, 0, 0)
-	if err != nil {
+	core.initDispatchState()
+	core.dispatchWatchMu.Lock()
+	defer core.dispatchWatchMu.Unlock()
+
+	if _, ready := core.dispatchLogReady[run.ID]; !ready {
+		off, err := core.seededLogOffset(ctx, run.ID)
+		if err != nil {
+			return err
+		}
+		core.dispatchLogOff[run.ID] = off
+		core.dispatchLogReady[run.ID] = struct{}{}
+	}
+	off := core.dispatchLogOff[run.ID]
+	if off > size {
+		off = size
+	}
+	if off == size {
+		core.dispatchLogOff[run.ID] = off
+		return nil
+	}
+	if _, err := f.Seek(off, io.SeekStart); err != nil {
 		return err
 	}
-	copied := 0
-	for _, ev := range allEvents {
-		if ev.Kind == dispatch.EventOutput {
-			copied += len(ev.Text)
-		}
+	buf := make([]byte, size-off)
+	n, err := io.ReadFull(f, buf)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
+		return err
 	}
-	if len(b) <= copied {
+	emit := completeRunePrefix(buf[:n])
+	if len(emit) == 0 {
 		return nil
 	}
-	chunk := string(b[copied:])
-	return core.Store.AppendEvent(ctx, dispatch.RunEvent{
+	if err := core.Store.AppendEvent(ctx, dispatch.RunEvent{
 		RunID:     run.ID,
 		ProjectID: run.ProjectID,
 		Kind:      dispatch.EventOutput,
 		Agent:     run.Agent,
 		Tier:      run.Tier,
-		Text:      chunk,
+		Text:      string(emit),
 		At:        time.Now().UTC(),
-	})
+	}); err != nil {
+		return err
+	}
+	core.dispatchLogOff[run.ID] = off + int64(len(emit))
+	return nil
+}
+
+func (core *Core) seededLogOffset(ctx context.Context, runID string) (int64, error) {
+	events, err := core.Store.ListEvents(ctx, runID, 0, 0)
+	if err != nil {
+		return 0, err
+	}
+	var n int64
+	for _, ev := range events {
+		if ev.Kind == dispatch.EventOutput {
+			n += int64(len(ev.Text))
+		}
+	}
+	return n, nil
+}
+
+// completeRunePrefix drops a trailing incomplete UTF-8 sequence so a chunk
+// never splits a rune. Invalid but complete bytes are kept.
+func completeRunePrefix(b []byte) []byte {
+	if len(b) == 0 || utf8.Valid(b) {
+		return b
+	}
+	max := utf8.UTFMax - 1
+	if max > len(b) {
+		max = len(b)
+	}
+	for n := 1; n <= max; n++ {
+		tail := b[len(b)-n:]
+		if utf8.RuneStart(tail[0]) && !utf8.FullRune(tail) {
+			return b[:len(b)-n]
+		}
+	}
+	return b
 }
 
 func (core *Core) ListWorktrees(ctx context.Context, request *connect.Request[localv1.ListWorktreesRequest]) (*connect.Response[localv1.ListWorktreesResponse], error) {
@@ -671,7 +816,91 @@ func (core *Core) Stats(ctx context.Context, request *connect.Request[localv1.St
 		Since:    report.Since,
 		InFlight: int32(report.InFlight),
 		Rows:     rows,
+		Rankings: &localv1.DispatchStatsRankings{
+			MostUsedModel:    dispatchStatRankProto(report.Rankings.MostUsedModel),
+			MostUsedProvider: dispatchStatRankProto(report.Rankings.MostUsedProvider),
+			SlowestModel:     dispatchStatRankProto(report.Rankings.SlowestModel),
+			MostFailedModel:  dispatchStatRankProto(report.Rankings.MostFailedModel),
+		},
 	}), nil
+}
+
+func (core *Core) GetClassifier(_ context.Context, _ *connect.Request[localv1.GetClassifierRequest]) (*connect.Response[localv1.GetClassifierResponse], error) {
+	dir := core.dispatchStateDir()
+	path := ""
+	if dir != "" {
+		path = filepath.Join(dir, "classifier.json")
+	}
+	model, _ := dispatch.LoadClassifier(path)
+	tiers := make([]*localv1.DispatchClassifierTier, 0, 3)
+	for _, tier := range []adapters.Tier{adapters.TierEasy, adapters.TierNormal, adapters.TierHard} {
+		tm := model.Tiers[tier]
+		tiers = append(tiers, &localv1.DispatchClassifierTier{
+			Tier:    string(tier),
+			Samples: tm.Samples,
+			Weights: append([]float64(nil), tm.Weights[:]...),
+		})
+	}
+	return connect.NewResponse(&localv1.GetClassifierResponse{
+		FeatureSchema: int32(model.FeatureSchema),
+		MinSamples:    int32(dispatch.MinSamples),
+		FeatureNames:  dispatch.FeatureNames(),
+		Tiers:         tiers,
+	}), nil
+}
+
+func (core *Core) Capacity(_ context.Context, request *connect.Request[localv1.CapacityRequest]) (*connect.Response[localv1.CapacityResponse], error) {
+	now := time.Now().UTC()
+	since, err := parseQuotaSince(request.Msg.GetSince(), now)
+	if err != nil {
+		return nil, invalid(err.Error())
+	}
+	report, err := dispatch.CapacityFromStore(core.Store, since, now)
+	if err != nil {
+		return nil, internal(err)
+	}
+	keys := make([]*localv1.DispatchCapacityKey, 0, len(report.Keys))
+	for _, k := range report.Keys {
+		item := &localv1.DispatchCapacityKey{
+			Key:      k.Key,
+			Windows:  int32(k.Windows),
+			HitFull:  int32(k.HitFull),
+			Leftover: k.Leftover,
+			Pace:     k.Pace,
+		}
+		if k.ConsumedPct != nil {
+			v := *k.ConsumedPct
+			item.ConsumedPct = &v
+		}
+		if k.LeftoverPct != nil {
+			v := *k.LeftoverPct
+			item.LeftoverPct = &v
+		}
+		keys = append(keys, item)
+	}
+	return connect.NewResponse(&localv1.CapacityResponse{
+		Since: report.Since,
+		Note:  report.Note,
+		Keys:  keys,
+	}), nil
+}
+
+func dispatchStatRankProto(r dispatch.StatRank) *localv1.DispatchStatRank {
+	out := &localv1.DispatchStatRank{
+		Key:     r.Key,
+		Runs:    int32(r.Runs),
+		Samples: int32(r.Samples),
+		Reason:  r.Reason,
+	}
+	if r.P50Ms != nil {
+		v := *r.P50Ms
+		out.P50Ms = &v
+	}
+	if r.SuccessPct != nil {
+		v := *r.SuccessPct
+		out.SuccessPct = &v
+	}
+	return out
 }
 
 func (core *Core) probeAgentsAndQuota(ctx context.Context, filterAgent string, now time.Time) {
@@ -765,22 +994,30 @@ func (core *Core) probeAgentsAndQuota(ctx context.Context, filterAgent string, n
 	}
 }
 
-func finalizeDispatchRun(ctx context.Context, store dispatch.Store, run dispatch.Run) {
-	if latest, err := store.GetRun(ctx, run.ID); err == nil {
-		if latest.Status == dispatch.StatusCancelled && run.Status != dispatch.StatusCancelled {
-			run.Status = dispatch.StatusCancelled
-			if latest.Error != "" {
-				run.Error = latest.Error
-			}
-			_ = store.SaveRun(ctx, run)
-		}
+func (core *Core) finalizeDispatchRun(ctx context.Context, run dispatch.Run) {
+	if core == nil || core.Store == nil || run.ID == "" {
+		return
+	}
+	core.initDispatchState()
+	core.dispatchWatchMu.Lock()
+	defer core.dispatchWatchMu.Unlock()
+	if _, done := core.dispatchFinalized[run.ID]; done {
+		return
+	}
+	store := core.Store
+	if latest, err := store.GetRun(ctx, run.ID); err == nil && isTerminalDispatchStatus(latest.Status) {
+		run = latest
+	}
+	events, _ := store.ListEvents(ctx, run.ID, 0, 0)
+	if dispatchTerminalRecorded(events) {
+		_ = saveRunWorktree(ctx, store, run)
+		core.dispatchFinalized[run.ID] = struct{}{}
+		delete(core.dispatchLogOff, run.ID)
+		delete(core.dispatchLogReady, run.ID)
+		return
 	}
 	_ = saveRunWorktree(ctx, store, run)
 
-	dispatchWatchMu.Lock()
-	defer dispatchWatchMu.Unlock()
-
-	events, _ := store.ListEvents(ctx, run.ID, 0, 0)
 	hasKind := func(kind string) bool {
 		for _, ev := range events {
 			if ev.Kind == kind {
@@ -832,6 +1069,18 @@ func finalizeDispatchRun(ctx context.Context, store dispatch.Store, run dispatch
 			At:        now,
 		})
 	}
+	core.dispatchFinalized[run.ID] = struct{}{}
+	delete(core.dispatchLogOff, run.ID)
+	delete(core.dispatchLogReady, run.ID)
+}
+
+func dispatchTerminalRecorded(events []dispatch.RunEvent) bool {
+	for _, ev := range events {
+		if ev.Kind == dispatch.EventFailed {
+			return true
+		}
+	}
+	return false
 }
 
 func saveRunWorktree(ctx context.Context, store dispatch.Store, run dispatch.Run) error {
@@ -929,6 +1178,10 @@ func dispatchRunProto(run dispatch.Run) *localv1.DispatchRun {
 		StartedAt:    formatDispatchTime(run.StartedAt),
 		FinishedAt:   formatDispatchTime(run.FinishedAt),
 		MergeSha:     run.MergeSHA,
+		ResumedOf:    run.ResumedOf,
+		ParentRunId:  run.ParentRunID,
+		Priority:     dispatchPriority(run),
+		Attempts:     dispatchAttemptsProto(run.Attempts),
 	}
 	if run.FilesChanged != nil {
 		v := int32(*run.FilesChanged)
@@ -942,8 +1195,47 @@ func dispatchRunProto(run dispatch.Run) *localv1.DispatchRun {
 		v := int32(*run.Deletions)
 		out.Deletions = &v
 	}
+	if run.QueuedMs != nil {
+		v := *run.QueuedMs
+		out.QueuedMs = &v
+	}
+	if run.RunMs != nil {
+		v := *run.RunMs
+		out.RunMs = &v
+	}
 	if run.MergedAt != nil && !run.MergedAt.IsZero() {
 		out.MergedAt = formatDispatchTime(*run.MergedAt)
+	}
+	return out
+}
+
+func dispatchPriority(run dispatch.Run) string {
+	if run.Resolved != nil && run.Resolved.Priority != "" {
+		return run.Resolved.Priority
+	}
+	if run.Requested != nil {
+		return run.Requested.Priority
+	}
+	return ""
+}
+
+func dispatchAttemptsProto(attempts []dispatch.Attempt) []*localv1.DispatchAttempt {
+	if len(attempts) == 0 {
+		return nil
+	}
+	out := make([]*localv1.DispatchAttempt, 0, len(attempts))
+	for _, attempt := range attempts {
+		item := &localv1.DispatchAttempt{
+			Agent:     attempt.Agent,
+			Model:     attempt.Model,
+			Error:     attempt.Error,
+			ExitClass: attempt.ExitClass,
+		}
+		if attempt.DurationMs != nil {
+			ms := *attempt.DurationMs
+			item.DurationMs = &ms
+		}
+		out = append(out, item)
 	}
 	return out
 }

@@ -1,0 +1,28 @@
+.pw-project-crumb:hover > .pw-switcher-trigger,
+.pw-project-crumb:focus-within > .pw-switcher-trigger {
+  background: var(--color-surface-hover);
+}
+
+.pw-project-crumb-settings {
+  position: absolute;
+  inset: 0 0 0 auto;
+  z-index: 1;
+  display: flex;
+  width: 64px;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 2px;
+  border-radius: 0 var(--radius-item) var(--radius-item) 0;
+  background: var(--color-surface-hover);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.pw-project-crumb:hover > .pw-project-crumb-settings,
+.pw-project-crumb:focus-within > .pw-project-crumb-settings {
+  visibility: visible;
+}
+
+.pw-project-crumb-settings .pw-button {
+  pointer-events: auto;
+}

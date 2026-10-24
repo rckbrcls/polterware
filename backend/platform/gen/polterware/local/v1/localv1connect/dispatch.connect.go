@@ -69,6 +69,12 @@ const (
 	DispatchServiceCheckTiersProcedure = "/polterware.local.v1.DispatchService/CheckTiers"
 	// DispatchServiceStatsProcedure is the fully-qualified name of the DispatchService's Stats RPC.
 	DispatchServiceStatsProcedure = "/polterware.local.v1.DispatchService/Stats"
+	// DispatchServiceGetClassifierProcedure is the fully-qualified name of the DispatchService's
+	// GetClassifier RPC.
+	DispatchServiceGetClassifierProcedure = "/polterware.local.v1.DispatchService/GetClassifier"
+	// DispatchServiceCapacityProcedure is the fully-qualified name of the DispatchService's Capacity
+	// RPC.
+	DispatchServiceCapacityProcedure = "/polterware.local.v1.DispatchService/Capacity"
 )
 
 // DispatchServiceClient is a client for the polterware.local.v1.DispatchService service.
@@ -86,6 +92,8 @@ type DispatchServiceClient interface {
 	ListHistory(context.Context, *connect.Request[v1.ListHistoryRequest]) (*connect.Response[v1.ListHistoryResponse], error)
 	CheckTiers(context.Context, *connect.Request[v1.CheckTiersRequest]) (*connect.Response[v1.CheckTiersResponse], error)
 	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
+	GetClassifier(context.Context, *connect.Request[v1.GetClassifierRequest]) (*connect.Response[v1.GetClassifierResponse], error)
+	Capacity(context.Context, *connect.Request[v1.CapacityRequest]) (*connect.Response[v1.CapacityResponse], error)
 }
 
 // NewDispatchServiceClient constructs a client for the polterware.local.v1.DispatchService service.
@@ -177,6 +185,18 @@ func NewDispatchServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(dispatchServiceMethods.ByName("Stats")),
 			connect.WithClientOptions(opts...),
 		),
+		getClassifier: connect.NewClient[v1.GetClassifierRequest, v1.GetClassifierResponse](
+			httpClient,
+			baseURL+DispatchServiceGetClassifierProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("GetClassifier")),
+			connect.WithClientOptions(opts...),
+		),
+		capacity: connect.NewClient[v1.CapacityRequest, v1.CapacityResponse](
+			httpClient,
+			baseURL+DispatchServiceCapacityProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("Capacity")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -195,6 +215,8 @@ type dispatchServiceClient struct {
 	listHistory   *connect.Client[v1.ListHistoryRequest, v1.ListHistoryResponse]
 	checkTiers    *connect.Client[v1.CheckTiersRequest, v1.CheckTiersResponse]
 	stats         *connect.Client[v1.StatsRequest, v1.StatsResponse]
+	getClassifier *connect.Client[v1.GetClassifierRequest, v1.GetClassifierResponse]
+	capacity      *connect.Client[v1.CapacityRequest, v1.CapacityResponse]
 }
 
 // ListRuns calls polterware.local.v1.DispatchService.ListRuns.
@@ -262,6 +284,16 @@ func (c *dispatchServiceClient) Stats(ctx context.Context, req *connect.Request[
 	return c.stats.CallUnary(ctx, req)
 }
 
+// GetClassifier calls polterware.local.v1.DispatchService.GetClassifier.
+func (c *dispatchServiceClient) GetClassifier(ctx context.Context, req *connect.Request[v1.GetClassifierRequest]) (*connect.Response[v1.GetClassifierResponse], error) {
+	return c.getClassifier.CallUnary(ctx, req)
+}
+
+// Capacity calls polterware.local.v1.DispatchService.Capacity.
+func (c *dispatchServiceClient) Capacity(ctx context.Context, req *connect.Request[v1.CapacityRequest]) (*connect.Response[v1.CapacityResponse], error) {
+	return c.capacity.CallUnary(ctx, req)
+}
+
 // DispatchServiceHandler is an implementation of the polterware.local.v1.DispatchService service.
 type DispatchServiceHandler interface {
 	ListRuns(context.Context, *connect.Request[v1.ListRunsRequest]) (*connect.Response[v1.ListRunsResponse], error)
@@ -277,6 +309,8 @@ type DispatchServiceHandler interface {
 	ListHistory(context.Context, *connect.Request[v1.ListHistoryRequest]) (*connect.Response[v1.ListHistoryResponse], error)
 	CheckTiers(context.Context, *connect.Request[v1.CheckTiersRequest]) (*connect.Response[v1.CheckTiersResponse], error)
 	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
+	GetClassifier(context.Context, *connect.Request[v1.GetClassifierRequest]) (*connect.Response[v1.GetClassifierResponse], error)
+	Capacity(context.Context, *connect.Request[v1.CapacityRequest]) (*connect.Response[v1.CapacityResponse], error)
 }
 
 // NewDispatchServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -364,6 +398,18 @@ func NewDispatchServiceHandler(svc DispatchServiceHandler, opts ...connect.Handl
 		connect.WithSchema(dispatchServiceMethods.ByName("Stats")),
 		connect.WithHandlerOptions(opts...),
 	)
+	dispatchServiceGetClassifierHandler := connect.NewUnaryHandler(
+		DispatchServiceGetClassifierProcedure,
+		svc.GetClassifier,
+		connect.WithSchema(dispatchServiceMethods.ByName("GetClassifier")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dispatchServiceCapacityHandler := connect.NewUnaryHandler(
+		DispatchServiceCapacityProcedure,
+		svc.Capacity,
+		connect.WithSchema(dispatchServiceMethods.ByName("Capacity")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/polterware.local.v1.DispatchService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DispatchServiceListRunsProcedure:
@@ -392,6 +438,10 @@ func NewDispatchServiceHandler(svc DispatchServiceHandler, opts ...connect.Handl
 			dispatchServiceCheckTiersHandler.ServeHTTP(w, r)
 		case DispatchServiceStatsProcedure:
 			dispatchServiceStatsHandler.ServeHTTP(w, r)
+		case DispatchServiceGetClassifierProcedure:
+			dispatchServiceGetClassifierHandler.ServeHTTP(w, r)
+		case DispatchServiceCapacityProcedure:
+			dispatchServiceCapacityHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -451,4 +501,12 @@ func (UnimplementedDispatchServiceHandler) CheckTiers(context.Context, *connect.
 
 func (UnimplementedDispatchServiceHandler) Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.Stats is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) GetClassifier(context.Context, *connect.Request[v1.GetClassifierRequest]) (*connect.Response[v1.GetClassifierResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.GetClassifier is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) Capacity(context.Context, *connect.Request[v1.CapacityRequest]) (*connect.Response[v1.CapacityResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.Capacity is not implemented"))
 }

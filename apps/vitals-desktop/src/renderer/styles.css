@@ -413,7 +413,6 @@ main.vitals-main {
 }
 
 .vitals-sensor .vitals-bar {
-  height: 4px;
   margin-top: 2px;
 }
 
@@ -508,28 +507,6 @@ main.vitals-main {
 .vitals-iface[data-active="true"] {
   background: var(--color-surface-selected);
   color: var(--color-text-primary);
-}
-
-.vitals-bar {
-  height: 6px;
-  overflow: hidden;
-  border-radius: var(--radius-control);
-  background: var(--color-surface-active);
-}
-
-.vitals-bar > span {
-  display: block;
-  height: 100%;
-  border-radius: var(--radius-control);
-  background: var(--color-chart-cyan);
-}
-
-.vitals-bar > span[data-level="warn"] {
-  background: var(--color-chart-amber);
-}
-
-.vitals-bar > span[data-level="hot"] {
-  background: var(--color-chart-red);
 }
 
 .vitals-chart {

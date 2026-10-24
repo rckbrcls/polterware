@@ -33,6 +33,20 @@ message DispatchRun {
   string finished_at = 28;
   string merged_at = 29;
   string merge_sha = 30;
+  repeated DispatchAttempt attempts = 31;
+  string resumed_of = 32;
+  string parent_run_id = 33;
+  optional int64 queued_ms = 34;
+  optional int64 run_ms = 35;
+  string priority = 36;
+}
+
+message DispatchAttempt {
+  string agent = 1;
+  string model = 2;
+  string error = 3;
+  string exit_class = 4;
+  optional int64 duration_ms = 5;
 }
 
 message DispatchRunEvent {
@@ -225,11 +239,63 @@ message DispatchStatsRow {
   int32 orphans = 9;
 }
 
+message DispatchStatRank {
+  string key = 1;
+  int32 runs = 2;
+  int32 samples = 3;
+  optional int64 p50_ms = 4;
+  optional double success_pct = 5;
+  string reason = 6;
+}
+
+message DispatchStatsRankings {
+  DispatchStatRank most_used_model = 1;
+  DispatchStatRank most_used_provider = 2;
+  DispatchStatRank slowest_model = 3;
+  DispatchStatRank most_failed_model = 4;
+}
+
 message StatsResponse {
   string by = 1;
   string since = 2;
   int32 in_flight = 3;
   repeated DispatchStatsRow rows = 4;
+  DispatchStatsRankings rankings = 5;
+}
+
+message GetClassifierRequest {}
+
+message DispatchClassifierTier {
+  string tier = 1;
+  uint64 samples = 2;
+  repeated double weights = 3;
+}
+
+message GetClassifierResponse {
+  int32 feature_schema = 1;
+  int32 min_samples = 2;
+  repeated string feature_names = 3;
+  repeated DispatchClassifierTier tiers = 4;
+}
+
+message CapacityRequest {
+  string since = 1;
+}
+
+message DispatchCapacityKey {
+  string key = 1;
+  int32 windows = 2;
+  int32 hit_full = 3;
+  optional double consumed_pct = 4;
+  optional double leftover_pct = 5;
+  string leftover = 6;
+  string pace = 7;
+}
+
+message CapacityResponse {
+  string since = 1;
+  string note = 2;
+  repeated DispatchCapacityKey keys = 3;
 }
 
 service DispatchService {
@@ -246,4 +312,6 @@ service DispatchService {
   rpc ListHistory(ListHistoryRequest) returns (ListHistoryResponse);
   rpc CheckTiers(CheckTiersRequest) returns (CheckTiersResponse);
   rpc Stats(StatsRequest) returns (StatsResponse);
+  rpc GetClassifier(GetClassifierRequest) returns (GetClassifierResponse);
+  rpc Capacity(CapacityRequest) returns (CapacityResponse);
 }

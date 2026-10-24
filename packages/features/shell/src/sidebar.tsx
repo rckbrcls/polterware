@@ -6,16 +6,19 @@ import {
   type JSX,
 } from "solid-js";
 import {
-  Badge,
+  CountBadge,
   Briefcase06Icon,
   ChartRelationshipIcon,
   createFluidHover,
   FluidHoverHighlight,
+  Gauge,
   History,
   Inbox,
   Layers,
+  ListOrdered,
   Route,
   Settings,
+  ShieldCheck,
   spring,
   type FluidHover,
 } from "@polterware/frontend-design-system";
@@ -24,7 +27,7 @@ import {
   type PlatformContext,
 } from "@polterware/frontend-platform";
 import { SidebarItem, SidebarNavFrame, SidebarSection } from "@polterware/frontend-shell";
-import type { NavItem } from "./route";
+import type { NavItem, NavSectionId } from "./route";
 import { HelpMenu } from "./help-menu";
 import { HelpTopicDialog } from "./help-topic-dialog";
 import type { HelpTopicId } from "./help-topics";
@@ -33,15 +36,19 @@ import type { HelpTopicId } from "./help-topics";
  * Sidebar glyphs — Hugeicons outline set tuned for operator IA.
  * Sidebar glyphs stay within the curated Hugeicons set.
  */
-const icons = {
+const icons: Record<string, (p: { size?: number; class?: string }) => JSX.Element> = {
   inbox: (p) => <Inbox size={p.size ?? 14} class={p.class} />,
   atlas: (p) => <ChartRelationshipIcon size={p.size ?? 14} class={p.class} />,
   work: (p) => <Briefcase06Icon size={p.size ?? 14} class={p.class} />,
   truth: (p) => <Layers size={p.size ?? 14} class={p.class} />,
   dispatch: (p) => <Route size={p.size ?? 14} class={p.class} />,
+  runs: (p) => <Route size={p.size ?? 14} class={p.class} />,
+  routing: (p) => <ListOrdered size={p.size ?? 14} class={p.class} />,
+  usage: (p) => <Gauge size={p.size ?? 14} class={p.class} />,
   activity: (p) => <History size={p.size ?? 14} class={p.class} />,
+  integrations: (p) => <ShieldCheck size={p.size ?? 14} class={p.class} />,
   settings: (p) => <Settings size={p.size ?? 14} class={p.class} />,
-} satisfies Record<string, (p: { size?: number; class?: string }) => JSX.Element>;
+};
 
 /** A count shown after a sidebar label; hidden at zero. */
 export type SidebarCount = { count: number; tone?: "danger" | "muted"; label?: string };
@@ -49,7 +56,7 @@ export type SidebarCount = { count: number; tone?: "danger" | "muted"; label?: s
 export function SidebarNav(props: {
   items: NavItem[];
   activeId: string;
-  onSelect: (id: string) => void;
+  onSelect: (section: NavSectionId, tab?: string) => void;
   platform?: PlatformContext;
   counts?: Partial<Record<string, SidebarCount>>;
 }) {
@@ -107,7 +114,7 @@ export function SidebarNav(props: {
                   index={(groupOffsets()[groupIndex] ?? 0) + index}
                   active={props.activeId === item().id}
                   count={props.counts?.[item().id]}
-                  onSelect={() => props.onSelect(item().id)}
+                  onSelect={() => props.onSelect(item().section, item().tab)}
                 />
               )}
             </Index>
@@ -126,7 +133,10 @@ function SidebarNavItem(props: {
   count?: SidebarCount;
   onSelect: () => void;
 }) {
-  const renderIcon = () => icons[props.item.id] ?? icons.atlas!;
+  const renderIcon = () =>
+    (props.item.icon ? icons[props.item.icon] : undefined)
+    ?? icons[props.item.section]
+    ?? icons.atlas!;
   return (
     <SidebarItem
       nav
@@ -138,13 +148,12 @@ function SidebarNavItem(props: {
       trailing={
         <Show when={props.count?.count}>
           {(count) => (
-            <Badge
+            <CountBadge
+              count={count()}
               class="pw-sidebar-item-count"
-              tone={props.count?.tone ?? "muted"}
-              aria-label={props.count?.label ?? `${count()} items`}
-            >
-              {count()}
-            </Badge>
+              tone={props.count?.tone === "danger" ? "danger" : "neutral"}
+              ariaLabel={props.count?.label ?? `${count()} items`}
+            />
           )}
         </Show>
       }

@@ -54,6 +54,10 @@ func (d Deps) selectCandidates(o Options) ([]Candidate, []string) {
 }
 
 func (d Deps) selectCandidatesWith(ctx context.Context, o Options) ([]Candidate, []string) {
+	return d.selectCandidatesCool(ctx, o, storeCooldowns(ctx, d.Store, d.now()))
+}
+
+func (d Deps) selectCandidatesCool(ctx context.Context, o Options, cool map[string]time.Time) ([]Candidate, []string) {
 	f := o.Filters
 	var entries []tieredEntry
 	var rejected []string
@@ -140,7 +144,6 @@ func (d Deps) selectCandidatesWith(ctx context.Context, o Options) ([]Candidate,
 	}
 	var cs []Candidate
 	seen := map[string]bool{}
-	cool := storeCooldowns(ctx, d.Store, d.now())
 	for _, e := range entries {
 		label := e.Agent + "/" + e.Model
 		reject := func(reason string) { rejected = append(rejected, label+": "+reason) }

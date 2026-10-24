@@ -134,10 +134,13 @@ test("allows only the named shared fade-edge material gradient", () => {
     "--material-fade-edge-top: linear-gradient(to top, color-mix(in srgb, var(--color-surface) 50%, transparent), transparent);";
   const sharedToolbarFill =
     "--material-fade-edge-toolbar-trail: linear-gradient(to bottom, var(--color-surface), transparent);";
+  const sharedInlineStart =
+    "--material-fade-edge-inline-start: linear-gradient(to right, transparent, #000 var(--inline-fade-start));";
 
   assert.deepEqual(inspectSource(sharedBottomFade, MATERIALS_FILE), []);
   assert.deepEqual(inspectSource(sharedTopFade, MATERIALS_FILE), []);
   assert.deepEqual(inspectSource(sharedToolbarFill, MATERIALS_FILE), []);
+  assert.deepEqual(inspectSource(sharedInlineStart, MATERIALS_FILE), []);
   assert.notDeepEqual(inspectSource(sharedTopFade, PRODUCT_FILE), []);
   assert.notDeepEqual(
     inspectSource(

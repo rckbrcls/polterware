@@ -128,21 +128,13 @@
 }
 
 .pw-sidebar-item-count {
+  --count-badge-size: 18px;
+  --count-badge-padding: 0 6px;
+  --count-badge-radius: var(--radius-item);
+  --count-badge-font-size: 10px;
+  box-sizing: border-box;
   flex-shrink: 0;
-  padding: 1px 7px;
   font-variant-numeric: tabular-nums;
-}
-
-.pw-sidebar-item-count[data-tone="danger"] {
-  border-color: transparent;
-  background: var(--color-status-danger-background);
-  color: var(--color-status-danger-foreground);
-}
-
-.pw-sidebar-item-count[data-tone="warn"] {
-  border-color: transparent;
-  background: var(--color-status-warning-background);
-  color: var(--color-status-warning-foreground);
 }
 
 .pw-sidebar-item--footer {
