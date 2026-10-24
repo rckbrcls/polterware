@@ -15,7 +15,7 @@ import (
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
 )
 
-const inboxUsage = `usage: polterware inbox [--scope <node>] [--exact] [--project <id>]
+const inboxUsage = `usage: polterware inbox [--scope <node>[,<node>]] [--exact] [--project <id>]
        polterware inbox <id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore | verify | reject [--agent name] [--project <id>]`
 
 // runInbox lists the project's Inbox, or applies one action to one item.
@@ -50,7 +50,7 @@ func runInbox(dbPath string, args []string) error {
 		return err
 	}
 	if len(positional) == 0 {
-		res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{ProjectId: project.Id, Query: polter.QueryInbox, ScopeNode: *scope.node, ScopeExact: *scope.exact}))
+		res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{ProjectId: project.Id, Query: polter.QueryInbox, ScopeNodes: scope.nodes(), ScopeExact: *scope.exact}))
 		if err != nil {
 			return err
 		}

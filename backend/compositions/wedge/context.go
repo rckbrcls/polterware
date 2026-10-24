@@ -16,9 +16,11 @@ type ContextInput struct {
 	EntityID    string
 	TokenBudget int
 	AgentRunID  string
-	// ScopeNodeID and ScopeExact narrow the package to one Atlas node.
-	ScopeNodeID string
-	ScopeExact  bool
+	// ScopeNodeID and ScopeNodeIDs narrow the package to those Atlas nodes
+	// (union). ScopeExact leaves ancestors out of every node.
+	ScopeNodeID  string
+	ScopeNodeIDs []string
+	ScopeExact   bool
 }
 
 // CompileContext syncs the project model, compiles context, and optionally appends an AgentRun context step.
@@ -32,12 +34,13 @@ func CompileContext(store *storepkg.Store, in ContextInput) (contextpkg.Package,
 	}
 	_, _ = store.SyncProjectModel(in.ProjectID)
 	pkg, err := store.CompileContext(contextpkg.Request{
-		ProjectID:   in.ProjectID,
-		Query:       in.Query,
-		EntityID:    in.EntityID,
-		TokenBudget: budget,
-		ScopeNodeID: in.ScopeNodeID,
-		ScopeExact:  in.ScopeExact,
+		ProjectID:    in.ProjectID,
+		Query:        in.Query,
+		EntityID:     in.EntityID,
+		TokenBudget:  budget,
+		ScopeNodeID:  in.ScopeNodeID,
+		ScopeNodeIDs: in.ScopeNodeIDs,
+		ScopeExact:   in.ScopeExact,
 	})
 	if err != nil {
 		return contextpkg.Package{}, err

@@ -7,8 +7,10 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/polterware/polterware/backend/compositions/wedge"
 	"github.com/polterware/polterware/backend/domains/agentrun"
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
+	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
 func (core *Core) ListAgentRuns(_ context.Context, request *connect.Request[localv1.ListAgentRunsRequest]) (*connect.Response[localv1.ListAgentRunsResponse], error) {
@@ -59,7 +61,27 @@ func (core *Core) ListChanges(_ context.Context, request *connect.Request[localv
 		}
 		actorKind = normalized
 	}
-	rows, err := core.Store.ListChanges(request.Msg.ProjectId, actorKind, int(request.Msg.Limit))
+	resolved, err := wedge.LoadNodeScopes(core.Store, request.Msg.ProjectId, wedge.ScopeRefs(request.Msg.ScopeNode, request.Msg.ScopeNodes), request.Msg.ScopeExact)
+	if err != nil {
+		return nil, invalid(err.Error())
+	}
+	var rows []storepkg.ChangeRow
+	if resolved.Set == nil {
+		rows, err = core.Store.ListChanges(request.Msg.ProjectId, actorKind, int(request.Msg.Limit))
+	} else {
+		rows, err = core.Store.ListAllChanges(request.Msg.ProjectId, actorKind)
+		if err == nil {
+			index, indexErr := wedge.EntityScopeIndex(core.Store, request.Msg.ProjectId)
+			if indexErr != nil {
+				return nil, internal(indexErr)
+			}
+			rows = wedge.FilterChangesByScope(resolved, index, rows)
+			limit := storepkg.ChangeLimit(int(request.Msg.Limit))
+			if len(rows) > limit {
+				rows = rows[:limit]
+			}
+		}
+	}
 	if err != nil {
 		return nil, internal(err)
 	}

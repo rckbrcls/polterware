@@ -451,11 +451,13 @@ func (x *SaveKnowledgeResponse) GetItem() *KnowledgeItem {
 }
 
 type ListKnowledgeRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Kind          string                 `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
-	ScopeNode     string                 `protobuf:"bytes,3,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
-	ScopeExact    bool                   `protobuf:"varint,4,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId  string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Kind       string                 `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
+	ScopeNode  string                 `protobuf:"bytes,3,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
+	ScopeExact bool                   `protobuf:"varint,4,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	// scope_nodes is merged with scope_node. The list is the union.
+	ScopeNodes    []string `protobuf:"bytes,5,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -516,6 +518,13 @@ func (x *ListKnowledgeRequest) GetScopeExact() bool {
 		return x.ScopeExact
 	}
 	return false
+}
+
+func (x *ListKnowledgeRequest) GetScopeNodes() []string {
+	if x != nil {
+		return x.ScopeNodes
+	}
+	return nil
 }
 
 type ListKnowledgeResponse struct {
@@ -1101,7 +1110,7 @@ const file_polterware_local_v1_knowledge_proto_rawDesc = "" +
 	"\x04item\x18\x01 \x01(\v2\".polterware.local.v1.KnowledgeItemR\x04item\x12;\n" +
 	"\x06change\x18\x02 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"O\n" +
 	"\x15SaveKnowledgeResponse\x126\n" +
-	"\x04item\x18\x01 \x01(\v2\".polterware.local.v1.KnowledgeItemR\x04item\"\x89\x01\n" +
+	"\x04item\x18\x01 \x01(\v2\".polterware.local.v1.KnowledgeItemR\x04item\"\xaa\x01\n" +
 	"\x14ListKnowledgeRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x12\n" +
@@ -1109,7 +1118,9 @@ const file_polterware_local_v1_knowledge_proto_rawDesc = "" +
 	"\n" +
 	"scope_node\x18\x03 \x01(\tR\tscopeNode\x12\x1f\n" +
 	"\vscope_exact\x18\x04 \x01(\bR\n" +
-	"scopeExact\"Q\n" +
+	"scopeExact\x12\x1f\n" +
+	"\vscope_nodes\x18\x05 \x03(\tR\n" +
+	"scopeNodes\"Q\n" +
 	"\x15ListKnowledgeResponse\x128\n" +
 	"\x05items\x18\x01 \x03(\v2\".polterware.local.v1.KnowledgeItemR\x05items\"e\n" +
 	"\x16DeleteKnowledgeRequest\x12\x0e\n" +

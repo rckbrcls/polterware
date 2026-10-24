@@ -59,13 +59,16 @@ message PolterDiagnostic {
 
 // ListWorkCards returns active cards with their tasks, open or answered
 // questions, and active invariants, ordered by position.
-// Scope fields on a request narrow the read to one Atlas node (id or path),
-// its descendants and, unless scope_exact, its ancestors. Empty is the whole
-// project. Unscoped entities stay visible under any scope.
+// Scope fields on a request narrow the read to one or more Atlas nodes (id or
+// path). Each node contributes itself, its descendants and, unless scope_exact,
+// its ancestors; the read keeps the union. scope_node is the legacy single
+// node and is merged with scope_nodes. Empty is the whole project. Unscoped
+// entities stay visible under any scope.
 message ListWorkCardsRequest {
   string project_id = 1;
   string scope_node = 2;
   bool scope_exact = 3;
+  repeated string scope_nodes = 4;
 }
 message ListWorkCardsResponse { repeated WorkCard cards = 1; }
 
@@ -110,6 +113,8 @@ message QueryPolterRequest {
   string query = 2;
   string scope_node = 3;
   bool scope_exact = 4;
+  // scope_nodes is merged with scope_node. The answer is the union.
+  repeated string scope_nodes = 5;
 }
 message QueryPolterResponse { string text = 1; }
 
@@ -173,6 +178,8 @@ message ListInboxRequest {
   string project_id = 1;
   string scope_node = 2;
   bool scope_exact = 3;
+  // scope_nodes is merged with scope_node. The inbox is the union.
+  repeated string scope_nodes = 4;
 }
 
 // SetScope assigns an entity to an Atlas node, or clears it when node is empty.

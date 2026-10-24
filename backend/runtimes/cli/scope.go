@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"connectrpc.com/connect"
 
@@ -15,17 +16,42 @@ import (
 const scopeUsage = `usage: polterware scope <decision|fact|evidence|item> <id> [<node path>] [--project <id>]
        (an empty node clears the scope; item is a derived Drift or Inbox item key)`
 
-// scopeFlags are the flags that narrow a read to one Atlas node.
+// scopeList accepts repeated --scope flags and comma-separated nodes.
+type scopeList []string
+
+func (s *scopeList) String() string { return strings.Join(*s, ",") }
+
+func (s *scopeList) Set(value string) error {
+	for _, part := range strings.Split(value, ",") {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			*s = append(*s, part)
+		}
+	}
+	return nil
+}
+
+// scopeFlags are the flags that narrow a read to one or more Atlas nodes.
 type scopeFlags struct {
-	node  *string
+	raw   *scopeList
 	exact *bool
 }
 
-// addScopeFlags registers --scope and --exact on flags.
+// nodes returns the parsed nodes. Empty means the whole project.
+func (s scopeFlags) nodes() []string {
+	if s.raw == nil || len(*s.raw) == 0 {
+		return nil
+	}
+	return append([]string(nil), (*s.raw)...)
+}
+
+// addScopeFlags registers repeatable --scope and --exact on flags.
 func addScopeFlags(flags *flag.FlagSet) scopeFlags {
+	raw := &scopeList{}
+	flags.Var(raw, "scope", "Atlas node path, slug, or id; repeat or separate with commas (default: whole project)")
 	return scopeFlags{
-		node:  flags.String("scope", "", "Atlas node path, slug, or id to narrow the read (default: whole project)"),
-		exact: flags.Bool("exact", false, "with --scope, leave out the node's ancestors"),
+		raw:   raw,
+		exact: flags.Bool("exact", false, "with --scope, leave out each node's ancestors"),
 	}
 }
 

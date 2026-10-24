@@ -113,9 +113,19 @@ func (n NodeScope) MatchesPath(path string) bool {
 	return false
 }
 
-// LoadScope resolves scope against the project's Atlas. An inactive scope
+// LoadScope resolves one node against the project's Atlas. An inactive scope
 // returns a NodeScope whose Set is nil and matches everything.
 func (s *Store) LoadScope(projectID string, scope atlas.Scope) (NodeScope, error) {
+	var ids []string
+	if scope.NodeID != "" {
+		ids = []string{scope.NodeID}
+	}
+	return s.LoadScopes(projectID, atlas.MultiScope{NodeIDs: ids, Exact: scope.Exact})
+}
+
+// LoadScopes resolves several nodes against the project's Atlas. The set is
+// the union of each node's scope. An inactive scope matches everything.
+func (s *Store) LoadScopes(projectID string, scope atlas.MultiScope) (NodeScope, error) {
 	if !scope.Active() {
 		return NodeScope{}, nil
 	}
@@ -123,7 +133,7 @@ func (s *Store) LoadScope(projectID string, scope atlas.Scope) (NodeScope, error
 	if err != nil {
 		return NodeScope{}, err
 	}
-	return NodeScope{Set: atlas.ResolveScope(nodes, scope), Nodes: nodes}, nil
+	return NodeScope{Set: atlas.ResolveScopes(nodes, scope), Nodes: nodes}, nil
 }
 
 // AtlasNodes returns every Atlas node of the project, removed ones included.

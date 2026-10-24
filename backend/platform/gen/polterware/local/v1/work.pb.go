@@ -465,14 +465,17 @@ func (x *PolterDiagnostic) GetMessage() string {
 
 // ListWorkCards returns active cards with their tasks, open or answered
 // questions, and active invariants, ordered by position.
-// Scope fields on a request narrow the read to one Atlas node (id or path),
-// its descendants and, unless scope_exact, its ancestors. Empty is the whole
-// project. Unscoped entities stay visible under any scope.
+// Scope fields on a request narrow the read to one or more Atlas nodes (id or
+// path). Each node contributes itself, its descendants and, unless scope_exact,
+// its ancestors; the read keeps the union. scope_node is the legacy single
+// node and is merged with scope_nodes. Empty is the whole project. Unscoped
+// entities stay visible under any scope.
 type ListWorkCardsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	ScopeNode     string                 `protobuf:"bytes,2,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
 	ScopeExact    bool                   `protobuf:"varint,3,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	ScopeNodes    []string               `protobuf:"bytes,4,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -526,6 +529,13 @@ func (x *ListWorkCardsRequest) GetScopeExact() bool {
 		return x.ScopeExact
 	}
 	return false
+}
+
+func (x *ListWorkCardsRequest) GetScopeNodes() []string {
+	if x != nil {
+		return x.ScopeNodes
+	}
+	return nil
 }
 
 type ListWorkCardsResponse struct {
@@ -850,11 +860,13 @@ func (x *LintPolterResponse) GetDiagnostics() []*PolterDiagnostic {
 // "handoff <slug>", "oracle <path>", or "atlas" in text.
 // "status" is the short session-start summary.
 type QueryPolterRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Query         string                 `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
-	ScopeNode     string                 `protobuf:"bytes,3,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
-	ScopeExact    bool                   `protobuf:"varint,4,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId  string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Query      string                 `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
+	ScopeNode  string                 `protobuf:"bytes,3,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
+	ScopeExact bool                   `protobuf:"varint,4,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	// scope_nodes is merged with scope_node. The answer is the union.
+	ScopeNodes    []string `protobuf:"bytes,5,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -915,6 +927,13 @@ func (x *QueryPolterRequest) GetScopeExact() bool {
 		return x.ScopeExact
 	}
 	return false
+}
+
+func (x *QueryPolterRequest) GetScopeNodes() []string {
+	if x != nil {
+		return x.ScopeNodes
+	}
+	return nil
 }
 
 type QueryPolterResponse struct {
@@ -1418,10 +1437,12 @@ func (x *RoutedInboxItem) GetAction() string {
 // ListInbox derives the project's Inbox: open items (blocking first), then
 // deferred ones. Reading it writes nothing.
 type ListInboxRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	ScopeNode     string                 `protobuf:"bytes,2,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
-	ScopeExact    bool                   `protobuf:"varint,3,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId  string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	ScopeNode  string                 `protobuf:"bytes,2,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
+	ScopeExact bool                   `protobuf:"varint,3,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	// scope_nodes is merged with scope_node. The inbox is the union.
+	ScopeNodes    []string `protobuf:"bytes,4,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1475,6 +1496,13 @@ func (x *ListInboxRequest) GetScopeExact() bool {
 		return x.ScopeExact
 	}
 	return false
+}
+
+func (x *ListInboxRequest) GetScopeNodes() []string {
+	if x != nil {
+		return x.ScopeNodes
+	}
+	return nil
 }
 
 // SetScope assigns an entity to an Atlas node, or clears it when node is empty.
@@ -3912,14 +3940,16 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x10PolterDiagnostic\x12\x12\n" +
 	"\x04line\x18\x01 \x01(\x05R\x04line\x12\x1a\n" +
 	"\bseverity\x18\x02 \x01(\tR\bseverity\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"u\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"\x96\x01\n" +
 	"\x14ListWorkCardsRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x1d\n" +
 	"\n" +
 	"scope_node\x18\x02 \x01(\tR\tscopeNode\x12\x1f\n" +
 	"\vscope_exact\x18\x03 \x01(\bR\n" +
-	"scopeExact\"L\n" +
+	"scopeExact\x12\x1f\n" +
+	"\vscope_nodes\x18\x04 \x03(\tR\n" +
+	"scopeNodes\"L\n" +
 	"\x15ListWorkCardsResponse\x123\n" +
 	"\x05cards\x18\x01 \x03(\v2\x1d.polterware.local.v1.WorkCardR\x05cards\"\xe1\x01\n" +
 	"\x12ApplyPolterRequest\x12\x1d\n" +
@@ -3944,7 +3974,7 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\"]\n" +
 	"\x12LintPolterResponse\x12G\n" +
-	"\vdiagnostics\x18\x01 \x03(\v2%.polterware.local.v1.PolterDiagnosticR\vdiagnostics\"\x89\x01\n" +
+	"\vdiagnostics\x18\x01 \x03(\v2%.polterware.local.v1.PolterDiagnosticR\vdiagnostics\"\xaa\x01\n" +
 	"\x12QueryPolterRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x14\n" +
@@ -3952,7 +3982,9 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\n" +
 	"scope_node\x18\x03 \x01(\tR\tscopeNode\x12\x1f\n" +
 	"\vscope_exact\x18\x04 \x01(\bR\n" +
-	"scopeExact\")\n" +
+	"scopeExact\x12\x1f\n" +
+	"\vscope_nodes\x18\x05 \x03(\tR\n" +
+	"scopeNodes\")\n" +
 	"\x13QueryPolterResponse\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\"\xfc\x01\n" +
 	"\x13WriteHandoffRequest\x12\x1d\n" +
@@ -3993,14 +4025,16 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\rscope_node_id\x18\v \x01(\tR\vscopeNodeId\"]\n" +
 	"\x0fRoutedInboxItem\x122\n" +
 	"\x04item\x18\x01 \x01(\v2\x1e.polterware.local.v1.InboxItemR\x04item\x12\x16\n" +
-	"\x06action\x18\x02 \x01(\tR\x06action\"q\n" +
+	"\x06action\x18\x02 \x01(\tR\x06action\"\x92\x01\n" +
 	"\x10ListInboxRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x1d\n" +
 	"\n" +
 	"scope_node\x18\x02 \x01(\tR\tscopeNode\x12\x1f\n" +
 	"\vscope_exact\x18\x03 \x01(\bR\n" +
-	"scopeExact\"h\n" +
+	"scopeExact\x12\x1f\n" +
+	"\vscope_nodes\x18\x04 \x03(\tR\n" +
+	"scopeNodes\"h\n" +
 	"\x0fSetScopeRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x12\n" +

@@ -580,8 +580,14 @@ type ListChangesRequest struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	// Optional filter: "human" | "agent". Empty lists both.
-	ActorKind     string `protobuf:"bytes,2,opt,name=actor_kind,json=actorKind,proto3" json:"actor_kind,omitempty"`
-	Limit         int32  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	ActorKind string `protobuf:"bytes,2,opt,name=actor_kind,json=actorKind,proto3" json:"actor_kind,omitempty"`
+	Limit     int32  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	// scope_node and scope_nodes narrow the history to changes whose subjects
+	// carry a scope_node_id inside that Atlas scope (union). scope_node is merged
+	// with scope_nodes. A change with no scoped subject stays visible.
+	ScopeNode     string   `protobuf:"bytes,4,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
+	ScopeExact    bool     `protobuf:"varint,5,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	ScopeNodes    []string `protobuf:"bytes,6,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -635,6 +641,27 @@ func (x *ListChangesRequest) GetLimit() int32 {
 		return x.Limit
 	}
 	return 0
+}
+
+func (x *ListChangesRequest) GetScopeNode() string {
+	if x != nil {
+		return x.ScopeNode
+	}
+	return ""
+}
+
+func (x *ListChangesRequest) GetScopeExact() bool {
+	if x != nil {
+		return x.ScopeExact
+	}
+	return false
+}
+
+func (x *ListChangesRequest) GetScopeNodes() []string {
+	if x != nil {
+		return x.ScopeNodes
+	}
+	return nil
 }
 
 type ListChangesResponse struct {
@@ -1367,13 +1394,19 @@ const file_polterware_local_v1_agentrun_proto_rawDesc = "" +
 	"\fpayload_json\x18\t \x01(\tR\vpayloadJson\x12\x1d\n" +
 	"\n" +
 	"created_at\x18\n" +
-	" \x01(\tR\tcreatedAt\"h\n" +
+	" \x01(\tR\tcreatedAt\"\xc9\x01\n" +
 	"\x12ListChangesRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x1d\n" +
 	"\n" +
 	"actor_kind\x18\x02 \x01(\tR\tactorKind\x12\x14\n" +
-	"\x05limit\x18\x03 \x01(\x05R\x05limit\"S\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x1d\n" +
+	"\n" +
+	"scope_node\x18\x04 \x01(\tR\tscopeNode\x12\x1f\n" +
+	"\vscope_exact\x18\x05 \x01(\bR\n" +
+	"scopeExact\x12\x1f\n" +
+	"\vscope_nodes\x18\x06 \x03(\tR\n" +
+	"scopeNodes\"S\n" +
 	"\x13ListChangesResponse\x12<\n" +
 	"\achanges\x18\x01 \x03(\v2\".polterware.local.v1.ProjectChangeR\achanges\"\xa5\x01\n" +
 	"\n" +

@@ -297,7 +297,7 @@ func (core *Core) ListKnowledge(_ context.Context, request *connect.Request[loca
 	if err != nil {
 		return nil, internal(err)
 	}
-	resolved, err := wedge.LoadNodeScope(core.Store, request.Msg.ProjectId, request.Msg.ScopeNode, request.Msg.ScopeExact)
+	resolved, err := wedge.LoadNodeScopes(core.Store, request.Msg.ProjectId, wedge.ScopeRefs(request.Msg.ScopeNode, request.Msg.ScopeNodes), request.Msg.ScopeExact)
 	if err != nil {
 		return nil, invalid(err.Error())
 	}

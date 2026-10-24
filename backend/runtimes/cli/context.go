@@ -36,7 +36,7 @@ func runOracle(dbPath string, args []string) error {
 	}
 	query := fmt.Sprintf("oracle %s zoom:%s budget:%d", question, *zoom, *budget)
 	res, err := c.Work.QueryPolter(context.Background(), connect.NewRequest(&localv1.QueryPolterRequest{
-		ProjectId: project.Id, Query: query, ScopeNode: *scope.node, ScopeExact: *scope.exact,
+		ProjectId: project.Id, Query: query, ScopeNodes: scope.nodes(), ScopeExact: *scope.exact,
 	}))
 	if err != nil {
 		return err

@@ -20,7 +20,7 @@ func (core *Core) ListInbox(_ context.Context, request *connect.Request[localv1.
 	if request.Msg.ProjectId == "" {
 		return nil, invalid("project id is required")
 	}
-	scope, err := wedge.ResolveScopeRef(core.Store, request.Msg.ProjectId, request.Msg.ScopeNode, request.Msg.ScopeExact)
+	scope, err := wedge.ResolveScopeRefs(core.Store, request.Msg.ProjectId, wedge.ScopeRefs(request.Msg.ScopeNode, request.Msg.ScopeNodes), request.Msg.ScopeExact)
 	if err != nil {
 		return nil, invalid(err.Error())
 	}

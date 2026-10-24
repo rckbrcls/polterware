@@ -58,7 +58,7 @@ func (s *Server) polterQuery(args map[string]any) (string, error) {
 	if query == "" {
 		query = polter.QueryCards
 	}
-	scope, err := wedge.ResolveScopeRef(s.Store, projectID, stringFrom(args["scope"]), boolFrom(args["scope_exact"]))
+	scope, err := wedge.ResolveScopeRefs(s.Store, projectID, scopeRefsFrom(args["scope"]), boolFrom(args["scope_exact"]))
 	if err != nil {
 		return "", err
 	}

@@ -99,6 +99,8 @@ message ListFactsRequest {
   string entity_id = 2;
   string scope_node = 3;
   bool scope_exact = 4;
+  // scope_nodes is merged with scope_node. The list is the union.
+  repeated string scope_nodes = 5;
 }
 
 message ListFactsResponse {
@@ -127,6 +129,8 @@ message ListEvidenceRequest {
   string project_id = 1;
   string scope_node = 2;
   bool scope_exact = 3;
+  // scope_nodes is merged with scope_node. The list is the union.
+  repeated string scope_nodes = 4;
 }
 
 message ListEvidenceResponse {

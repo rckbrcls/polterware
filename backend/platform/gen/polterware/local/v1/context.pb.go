@@ -206,14 +206,16 @@ func (x *ContextItem) GetEvidence() []*ContextEvidenceRef {
 }
 
 type CompileContextRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Query         string                 `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
-	EntityId      string                 `protobuf:"bytes,3,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
-	TokenBudget   int32                  `protobuf:"varint,4,opt,name=token_budget,json=tokenBudget,proto3" json:"token_budget,omitempty"`
-	AgentRunId    string                 `protobuf:"bytes,5,opt,name=agent_run_id,json=agentRunId,proto3" json:"agent_run_id,omitempty"`
-	ScopeNode     string                 `protobuf:"bytes,6,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
-	ScopeExact    bool                   `protobuf:"varint,7,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId   string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Query       string                 `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
+	EntityId    string                 `protobuf:"bytes,3,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
+	TokenBudget int32                  `protobuf:"varint,4,opt,name=token_budget,json=tokenBudget,proto3" json:"token_budget,omitempty"`
+	AgentRunId  string                 `protobuf:"bytes,5,opt,name=agent_run_id,json=agentRunId,proto3" json:"agent_run_id,omitempty"`
+	ScopeNode   string                 `protobuf:"bytes,6,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
+	ScopeExact  bool                   `protobuf:"varint,7,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	// scope_nodes is merged with scope_node. The package keeps the union.
+	ScopeNodes    []string `protobuf:"bytes,8,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -295,6 +297,13 @@ func (x *CompileContextRequest) GetScopeExact() bool {
 		return x.ScopeExact
 	}
 	return false
+}
+
+func (x *CompileContextRequest) GetScopeNodes() []string {
+	if x != nil {
+		return x.ScopeNodes
+	}
+	return nil
 }
 
 type CompileContextResponse struct {
@@ -818,7 +827,7 @@ const file_polterware_local_v1_context_proto_rawDesc = "" +
 	"\x06source\x18\x06 \x01(\tR\x06source\x12\x12\n" +
 	"\x04path\x18\a \x01(\tR\x04path\x12\x18\n" +
 	"\areasons\x18\b \x03(\tR\areasons\x12C\n" +
-	"\bevidence\x18\t \x03(\v2'.polterware.local.v1.ContextEvidenceRefR\bevidence\"\xee\x01\n" +
+	"\bevidence\x18\t \x03(\v2'.polterware.local.v1.ContextEvidenceRefR\bevidence\"\x8f\x02\n" +
 	"\x15CompileContextRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x14\n" +
@@ -830,7 +839,9 @@ const file_polterware_local_v1_context_proto_rawDesc = "" +
 	"\n" +
 	"scope_node\x18\x06 \x01(\tR\tscopeNode\x12\x1f\n" +
 	"\vscope_exact\x18\a \x01(\bR\n" +
-	"scopeExact\"\x84\x02\n" +
+	"scopeExact\x12\x1f\n" +
+	"\vscope_nodes\x18\b \x03(\tR\n" +
+	"scopeNodes\"\x84\x02\n" +
 	"\x16CompileContextResponse\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x14\n" +
