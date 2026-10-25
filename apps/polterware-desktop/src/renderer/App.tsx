@@ -548,6 +548,10 @@ export function App() {
       .environments.filter((environment) => selected.has(environment.id))
       .map((environment) => ({ id: environment.id, name: environment.name }));
   });
+  const scopeEnvironmentCatalog = createMemo(() => {
+    const projectId = route().projectId ?? workspace().settings.projectId;
+    return workspace().environments.filter((environment) => environment.projectId === projectId);
+  });
   const activeScopePath = createMemo(() => {
     const selected = scopeTokens().filter((token) => token.key !== "env");
     if (selected.length !== 1) return "";
@@ -869,6 +873,9 @@ export function App() {
           });
         }}
         scopeNodes={scopeNodes()}
+        scopeTokens={scopeTokens()}
+        scopeEnvironments={scopeEnvironmentCatalog()}
+        onScopeTokensChange={applyScopeTokens}
         activeScopePath={activeScopePath()}
         onSetScope={(id, path) => {
           void persistKnowledgeScope(currentProjectId(), id, path)
@@ -1161,9 +1168,6 @@ export function App() {
       route={route}
       projects={workspace().projects}
       environments={workspace().environments}
-      scopeNodes={scopeNodes()}
-      scopeTokens={scopeTokens()}
-      onScopeTokensChange={applyScopeTokens}
       onNavigate={navigateSection}
       onProjectSelect={selectProject}
       onCreateProject={() => setCreateProjectOpen(true)}
@@ -1210,6 +1214,10 @@ export function App() {
             inbox={workspace().inbox}
             loading={loading() || !workspace().extensionsReady}
             onResolve={resolveInboxItem}
+            scopeTokens={scopeTokens()}
+            scopeNodes={scopeNodes()}
+            scopeEnvironments={scopeEnvironmentCatalog()}
+            onScopeTokensChange={applyScopeTokens}
           />
         </Match>
 
@@ -1236,6 +1244,10 @@ export function App() {
             onSelect={(id) => applyRoute(setSelectedNode(route(), id), "silent")}
             environments={workspace().settingsEnvironments.map((e) => ({ id: e.id, label: e.name, kind: e.kind, protected: e.protection === "strict" }))}
             integrations={workspace().integrations}
+            scopeTokens={scopeTokens()}
+            scopeNodes={scopeNodes()}
+            scopeEnvironments={scopeEnvironmentCatalog()}
+            onScopeTokensChange={applyScopeTokens}
             onDeploysChange={async (nodeId, deploys) => {
               const projectId = currentProjectId();
               if (!projectId) throw new Error("No project selected.");
@@ -1323,6 +1335,10 @@ export function App() {
           <TruthFactsPage
             projectId={currentProjectId()}
             scopeNodes={scopeNodeIdList()}
+            scopeTokens={scopeTokens()}
+            scopeCatalogNodes={scopeNodes()}
+            scopeEnvironments={scopeEnvironmentCatalog()}
+            onScopeTokensChange={applyScopeTokens}
             loadFacts={loadFacts}
             loadEvidence={loadCanonEvidence}
             tab="facts"
@@ -1402,6 +1418,10 @@ export function App() {
           <ActivityPage
             projectId={currentProjectId()}
             scopeNodes={scopeNodeIdList()}
+            scopeTokens={scopeTokens()}
+            scopeCatalogNodes={scopeNodes()}
+            scopeEnvironments={scopeEnvironmentCatalog()}
+            onScopeTokensChange={applyScopeTokens}
             loadChanges={loadChanges}
           />
         </Match>

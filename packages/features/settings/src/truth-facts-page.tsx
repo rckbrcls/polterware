@@ -1,7 +1,8 @@
 import { createSignal } from "solid-js";
-import { EntityDetailHost } from "@polterware/feature-shell";
+import { EntityDetailHost, scopeFilterMenuGroups, scopeFilterPills, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
 import {
   FilterPopover,
+  ActiveFilterBar,
   PageContent,
   PageToolbar,
   Plus,
@@ -32,6 +33,10 @@ export function TruthFactsPage(props: {
   tabsLabel: string;
   onTabChange?: (tab: string) => void;
   justifyChange: CanonJustifyChange;
+  scopeTokens?: readonly ScopeFilterToken[];
+  scopeCatalogNodes?: readonly ScopeNodeItem[];
+  scopeEnvironments?: readonly EnvironmentItem[];
+  onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
 }) {
   const [query, setQuery] = createSignal("");
   const [truthClasses, setTruthClasses] = createSignal<string[]>([]);
@@ -77,9 +82,21 @@ export function TruthFactsPage(props: {
           <FilterPopover
             ariaLabel="Fact filters"
             title="Filter facts"
-            active={truthClasses().length > 0}
-            onClear={() => setTruthClasses([])}
-            groups={groups()}
+            active={truthClasses().length > 0 || (props.scopeTokens?.length ?? 0) > 0}
+            onClear={() => {
+              setTruthClasses([]);
+              props.onScopeTokensChange?.([]);
+            }}
+            groups={[
+              ...scopeFilterMenuGroups({
+                tokens: props.scopeTokens ?? [],
+                nodes: props.scopeCatalogNodes ?? [],
+                environments: props.scopeEnvironments ?? [],
+                allowEnv: false,
+                onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
+              }),
+              ...groups(),
+            ]}
           />
           <ToolbarIconButton
             label="New fact"
@@ -90,6 +107,10 @@ export function TruthFactsPage(props: {
           </ToolbarIconButton>
         </PageToolbar.Actions>
       </PageToolbar.Root>
+      <ActiveFilterBar
+        items={scopeFilterPills(props.scopeTokens ?? [], (tokens) => props.onScopeTokensChange?.(tokens))}
+        onClear={() => props.onScopeTokensChange?.([])}
+      />
       <PageContent class="flex min-h-0 flex-1 flex-col p-0">
         <CanonFactsPanel
           projectId={props.projectId}

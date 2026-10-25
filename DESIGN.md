@@ -33,7 +33,7 @@ Integrations is one sidebar route in its own CONNECT section after Dispatch. Its
 
 Settings is a dialog with a grouped rail and one concern per page: Project (General, Repositories, Environments, Danger zone — archive project), Agents (MCP server, Agent setup, Hooks, AI skill, Oracle, Compile context, Drift check), and App (Shortcuts, Appearance, Local core, Privacy, Danger zone — reset local store). Every rail entry and entity or shortcut list row uses a Hugeicons Free Stroke Rounded icon.
 
-The title bar contains history controls, one ghost project switcher, one environment kind switcher, a scope token filter (`system:`, `domain:`, `component:`, and `env:` on Atlas, Truth Evidence, and Activity), Commander, and a Help menu. Node tokens are one union of Atlas nodes (a parent includes its children) and always include ancestors (non-exact); exact scope remains a CLI/MCP capability. The filter is hidden on the Projects home screen. There are no unrelated title-bar actions.
+The title bar contains history controls, Home (Projects), drag space, and Commander. Project switching happens on the Projects screen, not in the title bar. Scoped pages edit one shared scope selection from their PageToolbar filter menu, which offers grouped `system:`, `domain:`, `component:`, and, on Structure, Truth Evidence, and Activity, `env:` tokens. Active scope tokens render as removable filters below the toolbar. Node tokens are one union of Atlas nodes (a parent includes its children) and always include ancestors (non-exact); exact scope remains a CLI/MCP capability. There are no unrelated title-bar actions.
 
 ## Shared primitives
 

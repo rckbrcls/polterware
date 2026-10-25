@@ -21,7 +21,7 @@ Polterware's category is **Project Context & Change Intelligence for AI Coding**
 
 ## Current product boundary
 
-Polterware is both the umbrella and the main local-first app (`apps/polterware-desktop`), alongside Polterware Notes and Polterware Vitals. Polterware's first version is a local SQLite-backed Desktop with project surfaces Inbox, Work, Structure, Canvas, Truth, Dispatch, Integrations, and Activity. A Projects screen (home button in the title bar) comes before entering a project. Settings is fixed in the sidebar footer and holds Project, Agents, and App preferences. Inbox is the default route.
+Polterware is both the umbrella and the main local-first app (`apps/polterware-desktop`), alongside Polterware Notes and Polterware Vitals. Polterware's first version is a local SQLite-backed Desktop with project surfaces Inbox, Work, Structure, Canvas, Truth, Dispatch, Integrations, and Activity. Project switching happens on the Projects screen, reached through the Home button in the title bar, before entering a project. Settings is fixed in the sidebar footer and holds Project, Agents, and App preferences. Inbox is the default route.
 
 The umbrella is an ecosystem, not a list: apps and tools live under Polterware only when they can integrate with the others. See [`docs/ecosystem.md`](docs/ecosystem.md) for the admission criteria and the current roster.
 
@@ -69,9 +69,9 @@ The monorepo also hosts Polterware Notes, a separate local-first app with its ow
   - Agents: MCP server, Agent setup, Hooks, AI skill, Oracle, Compile context, Drift check
   - App: Shortcuts, Appearance, Local core, Privacy, Danger zone (reset local store)
 
-Scope is a global filter, not a surface: the title bar scope filter takes repeatable tokens (`system:`, `domain:`, `component:`, and `env:` on Structure, Truth Evidence, and Activity). Node tokens are one union sent as `scope_nodes` (a parent includes its children; ancestors stay included because the read is non-exact). It narrows Work cards (through their component), Decisions, Facts, Evidence, Inbox/Drift, Activity, the Context Compiler, `polterware query|status|inbox|oracle --scope <node> [--exact]`, and the MCP `scope` argument. An entity has one optional scope (`scope_node_id`); no scope means the whole project and stays visible under any filter. Decisions take `scope:` in Polter; derived Inbox/Drift items are scoped with `polterware scope item <key> <node>`. The filter is hidden on the Projects home screen.
+Scope is a global filter, not a surface: each scoped page edits the one shared selection from its PageToolbar filter menu, with repeatable tokens (`system:`, `domain:`, `component:`, and `env:` on Structure, Truth Evidence, and Activity). Node tokens are one union sent as `scope_nodes` (a parent includes its children; ancestors stay included because the read is non-exact). It narrows Work cards (through their component), Decisions, Facts, Evidence, Inbox/Drift, Activity, the Context Compiler, `polterware query|status|inbox|oracle --scope <node> [--exact]`, and the MCP `scope` argument. An entity has one optional scope (`scope_node_id`); no scope means the whole project and stays visible under any filter. Decisions take `scope:` in Polter; derived Inbox/Drift items are scoped with `polterware scope item <key> <node>`.
 
-Keep project and environment switchers, Commander, history controls, and Settings. Do not introduce additional product surfaces without an approved decision.
+Keep history controls, the Home button, Commander, and Settings. Project switching happens on the Projects screen; do not introduce additional product surfaces without an approved decision.
 
 ## UI law
 

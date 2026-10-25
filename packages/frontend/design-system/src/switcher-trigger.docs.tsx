@@ -6,7 +6,7 @@ export default {
   name: "SwitcherTrigger",
   group: "Buttons",
   summary:
-    "Flat text trigger for the title bar switchers (project, environment, scope). It opens a popover; the label truncates and may be followed by a StatusChip.",
+    "Flat text trigger for compact project and environment switchers. It opens a popover; the label truncates and may be followed by a StatusChip.",
   exports: ["SwitcherTrigger"],
   examples: [
     {

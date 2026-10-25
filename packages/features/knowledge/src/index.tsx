@@ -25,6 +25,10 @@ import {
   EntityDetailHost,
   expandedDetail,
   openDetail,
+  scopeFilterMenuGroups,
+  scopeFilterPills,
+  type EnvironmentItem,
+  type ScopeFilterToken,
   type ScopeNodeItem,
   type WorkspaceVerdict,
   type WorkspaceCanonEntity,
@@ -206,6 +210,9 @@ export function KnowledgeView(props: {
   onArchive?: (id: string) => void;
   onRemoveCard?: (slug: string) => void;
   onSetCardStage?: (slug: string, stage: WorkStage) => Promise<boolean> | void;
+  scopeTokens?: readonly ScopeFilterToken[];
+  scopeEnvironments?: readonly EnvironmentItem[];
+  onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
 }) {
   const [selectedBoardId, setSelectedBoardId] = createSignal("");
   createEffect(on(() => props.boardProjectId, () => setSelectedBoardId("")));
@@ -749,9 +756,21 @@ export function KnowledgeView(props: {
             <FilterPopover
               ariaLabel={filterPopoverProps().ariaLabel}
               title={filterPopoverProps().title}
-              active={filterPopoverProps().active}
-              onClear={filterPopoverProps().onClear}
-              groups={filterPopoverProps().groups}
+              active={filterPopoverProps().active || (props.scopeTokens?.length ?? 0) > 0}
+              onClear={() => {
+                filterPopoverProps().onClear();
+                props.onScopeTokensChange?.([]);
+              }}
+              groups={[
+                ...scopeFilterMenuGroups({
+                  tokens: props.scopeTokens ?? [],
+                  nodes: props.scopeNodes ?? [],
+                  environments: props.scopeEnvironments ?? [],
+                  allowEnv: evidenceTab(),
+                  onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
+                }),
+                ...filterPopoverProps().groups,
+              ]}
             />
             <Show when={tab() === "board"}>
               <Show when={props.boardProjectId || "work"} keyed>
@@ -781,8 +800,14 @@ export function KnowledgeView(props: {
         </PageToolbar.Root>
 
         <ActiveFilterBar
-          items={activeFilterPills()}
-          onClear={filterPopoverProps().onClear}
+          items={[
+            ...scopeFilterPills(props.scopeTokens ?? [], (tokens) => props.onScopeTokensChange?.(tokens)),
+            ...activeFilterPills(),
+          ]}
+          onClear={() => {
+            filterPopoverProps().onClear();
+            props.onScopeTokensChange?.([]);
+          }}
         />
 
         <Show when={libraryTab()}>

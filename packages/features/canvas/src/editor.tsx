@@ -213,7 +213,7 @@ export function CanvasEditor(props: {
     <PageToolbar.Root class="items-center">
       <PageToolbar.Leading class="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="ghost" disabled={leaving()} onClick={() => void back()}><ChevronLeft size={14} />Canvases</Button>
-        <Input aria-label="Canvas name" class="w-56" value={name()} onInput={(e) => { setName(e.currentTarget.value); schedule(); }} />
+        <div class="w-56 shrink-0"><Input aria-label="Canvas name" value={name()} onInput={(e) => { setName(e.currentTarget.value); schedule(); }} /></div>
         <StatusChip tone="muted" label={props.definition.label} />
         <StatusChip tone={state() === "error" ? "danger" : "muted"} label={state() === "pending" ? "Unsaved" : state() === "saving" ? "Saving…" : state() === "error" ? "Not saved" : "Saved"} />
       </PageToolbar.Leading>

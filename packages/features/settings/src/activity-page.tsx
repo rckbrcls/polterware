@@ -6,9 +6,10 @@ import {
   type DispatchRunEventView,
   type DispatchRunView,
 } from "@polterware/feature-dispatch";
-import { EntityDetailHost } from "@polterware/feature-shell";
+import { EntityDetailHost, scopeFilterMenuGroups, scopeFilterPills, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
 import {
   FilterPopover,
+  ActiveFilterBar,
   PageContent,
   PageToolbar,
   Tabs,
@@ -30,6 +31,10 @@ export function ActivityPage(props: {
     projectId: string,
     filter: { actorKind?: string; limit?: number },
   ) => Promise<unknown>;
+  scopeTokens?: readonly ScopeFilterToken[];
+  scopeCatalogNodes?: readonly ScopeNodeItem[];
+  scopeEnvironments?: readonly EnvironmentItem[];
+  onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
 }) {
   const [busy, setBusy] = createSignal(false);
   const [changes, setChanges] = createSignal<ProjectChangeRow[]>([]);
@@ -252,16 +257,30 @@ export function ActivityPage(props: {
           <FilterPopover
             ariaLabel="Activity filters"
             title="Filter activity"
-            active={dispatchTierFilter() !== "" || dispatchAgentFilter() !== ""}
+            active={dispatchTierFilter() !== "" || dispatchAgentFilter() !== "" || (props.scopeTokens?.length ?? 0) > 0}
             onClear={() => {
               setDispatchTierFilter("");
               setDispatchAgentFilter("");
+              props.onScopeTokensChange?.([]);
               void refreshDispatchHistory("", "");
             }}
-            groups={dispatchFilterGroups()}
+            groups={[
+              ...scopeFilterMenuGroups({
+                tokens: props.scopeTokens ?? [],
+                nodes: props.scopeCatalogNodes ?? [],
+                environments: props.scopeEnvironments ?? [],
+                allowEnv: true,
+                onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
+              }),
+              ...dispatchFilterGroups(),
+            ]}
           />
         </PageToolbar.Actions>
       </PageToolbar.Root>
+      <ActiveFilterBar
+        items={scopeFilterPills(props.scopeTokens ?? [], (tokens) => props.onScopeTokensChange?.(tokens))}
+        onClear={() => props.onScopeTokensChange?.([])}
+      />
       <PageContent class="flex min-h-0 flex-1 flex-col p-0">
         <AgentRunHistoryCard
           changes={changes()}

@@ -15,6 +15,7 @@ import {
   type ScopeFilterNode,
   type ScopeFilterToken,
 } from "./scope-filter";
+import { scopeFilterMenuSections, toggleScopeFilterMenuToken } from "./scope-filter-menu-state";
 
 const nodes: ScopeFilterNode[] = [
   { id: "sys", parentId: "", level: "system", title: "Polterware", path: "polterware" },
@@ -150,5 +151,24 @@ describe("scope node and environment matching", () => {
     expect(scopeFilterAllowsEnv("activity", "all")).toBe(true);
     expect(scopeFilterAllowsEnv("truth", "facts")).toBe(false);
     expect(scopeFilterAllowsEnv("inbox", "all")).toBe(false);
+  });
+});
+
+describe("scope filter menu groups", () => {
+  it("keeps one shared multi-selection and only exposes environments where allowed", () => {
+    const sections = scopeFilterMenuSections({
+      nodes,
+      environments,
+      allowEnv: true,
+    });
+    expect(sections.map((section) => section.label)).toEqual(["System", "Domain", "Component", "Environment"]);
+    expect(toggleScopeFilterMenuToken([{ key: "domain", value: "Auth", id: "auth" }], {
+      key: "domain", value: "Billing", id: "billing",
+    }, true)).toEqual([
+      { key: "domain", value: "Auth", id: "auth" },
+      { key: "domain", value: "Billing", id: "billing" },
+    ]);
+    expect(scopeFilterMenuSections({ nodes, environments, allowEnv: false })
+      .map((section) => section.label)).toEqual(["System", "Domain", "Component"]);
   });
 });

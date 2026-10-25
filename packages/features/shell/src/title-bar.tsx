@@ -1,4 +1,3 @@
-import { Show } from "solid-js";
 import {
   Button,
   ChevronLeft,
@@ -7,14 +6,7 @@ import {
   Search,
 } from "@polterware/frontend-design-system";
 import { createShortcutLabel } from "@polterware/frontend-state";
-import {
-  WorkspaceContextBar,
-  type WorkspaceContext,
-} from "./context-switchers";
 import { TitleBarFrame } from "@polterware/frontend-shell";
-import { ScopeFilterBar } from "./scope-filter-bar";
-import type { ScopeFilterToken } from "./scope-filter";
-import type { EnvironmentItem, ProjectSwitcherItem, ScopeNodeItem } from "./types";
 
 export type TitleBarProps = {
   canGoBack: boolean;
@@ -22,19 +14,6 @@ export type TitleBarProps = {
   onBack: () => void;
   onForward: () => void;
   onGoHome?: () => void;
-  workspace: WorkspaceContext;
-  projects?: ProjectSwitcherItem[];
-  environments?: EnvironmentItem[];
-  onSelectProject?: (projectId: string) => void;
-  onSelectEnvironment?: (environmentId: string) => void;
-  onCreateProject?: () => void;
-  onOpenProjectSettings?: () => void;
-  /** Replaces the old scope switcher. Hidden on the Projects home screen. */
-  showScopeFilter?: boolean;
-  scopeTokens?: readonly ScopeFilterToken[];
-  scopeNodes?: ScopeNodeItem[];
-  allowScopeEnv?: boolean;
-  onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
   onOpenCommander?: () => void;
 };
 
@@ -62,7 +41,7 @@ export function TitleBar(props: TitleBarProps) {
           </Button>
         </div>
 
-        <div class="flex min-w-0 shrink items-center gap-1 [-webkit-app-region:no-drag]">
+        <div class="flex shrink-0 items-center [-webkit-app-region:no-drag]">
           <Button
             variant="icon"
             aria-label="Home"
@@ -71,33 +50,11 @@ export function TitleBar(props: TitleBarProps) {
           >
             <House size={13} />
           </Button>
-          <WorkspaceContextBar
-            context={props.workspace}
-            projects={props.projects}
-            environments={props.environments}
-            onSelectProject={props.onSelectProject}
-            onSelectEnvironment={props.onSelectEnvironment}
-            onCreateProject={props.onCreateProject}
-            onOpenProjectSettings={props.onOpenProjectSettings}
-          />
         </div>
 
-        <Show
-          when={props.showScopeFilter}
-          fallback={<div class="min-w-3 flex-1" aria-hidden />}
-        >
-          <ScopeFilterBar
-            tokens={props.scopeTokens ?? []}
-            nodes={props.scopeNodes ?? []}
-            environments={(props.environments ?? []).filter(
-              (environment) => environment.projectId === props.workspace.projectId,
-            )}
-            allowEnv={props.allowScopeEnv ?? false}
-            onTokensChange={(tokens) => props.onScopeTokensChange?.(tokens)}
-          />
-        </Show>
+        <div class="min-w-3 flex-1" aria-hidden />
 
-        <div class="flex shrink-0 items-center gap-1 [-webkit-app-region:no-drag]">
+        <div class="ml-auto flex shrink-0 items-center gap-1 [-webkit-app-region:no-drag]">
           <Button
             variant="texture"
             size="icon"

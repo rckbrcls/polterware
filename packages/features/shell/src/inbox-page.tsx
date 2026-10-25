@@ -1,6 +1,7 @@
 import { For, Show, createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import {
   Button,
+  ActiveFilterBar,
   Dialog,
   DataTable,
   DropdownMenu,
@@ -33,6 +34,9 @@ import {
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
 import { EntityDetailHost } from "./entity-detail-host";
+import { scopeFilterMenuGroups, scopeFilterPills } from "./scope-filter-menu";
+import type { EnvironmentItem, ScopeNodeItem } from "./types";
+import type { ScopeFilterToken } from "./scope-filter";
 import { openDetail } from "./detail-expansion";
 import { InboxItemDetail } from "./inbox-item-detail";
 import type {
@@ -92,6 +96,10 @@ export function InboxPage(props: {
   inbox?: WorkspaceInbox;
   loading?: boolean;
   onResolve?: (item: WorkspaceInboxItem, action: WorkspaceInboxAction, answer?: string) => Promise<void>;
+  scopeTokens?: readonly ScopeFilterToken[];
+  scopeNodes?: readonly ScopeNodeItem[];
+  scopeEnvironments?: readonly EnvironmentItem[];
+  onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
 }) {
   const [kinds, setKinds] = createSignal<string[]>([]);
   const [pending, setPending] = createSignal("");
@@ -250,15 +258,29 @@ export function InboxPage(props: {
           <FilterPopover
             ariaLabel="Inbox filters"
             title="Filter inbox"
-            active={statuses().length > 0 || kinds().length > 0}
+            active={statuses().length > 0 || kinds().length > 0 || (props.scopeTokens?.length ?? 0) > 0}
             onClear={() => {
               setStatuses([]);
               setKinds([]);
+              props.onScopeTokensChange?.([]);
             }}
-            groups={filterGroups()}
+            groups={[
+              ...scopeFilterMenuGroups({
+                tokens: props.scopeTokens ?? [],
+                nodes: props.scopeNodes ?? [],
+                environments: props.scopeEnvironments ?? [],
+                allowEnv: false,
+                onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
+              }),
+              ...filterGroups(),
+            ]}
           />
         </PageToolbar.Actions>
       </PageToolbar.Root>
+      <ActiveFilterBar
+        items={scopeFilterPills(props.scopeTokens ?? [], (tokens) => props.onScopeTokensChange?.(tokens))}
+        onClear={() => props.onScopeTokensChange?.([])}
+      />
       <PageContent class="p-0">
         <Show
           when={visible().length > 0}

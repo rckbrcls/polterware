@@ -1,8 +1,8 @@
 import { For, Index, Show, createEffect, createMemo, createSignal, onCleanup, untrack } from "solid-js";
-import { EntityDetailHost } from "@polterware/feature-shell";
+import { EntityDetailHost, scopeFilterMenuGroups, scopeFilterPills, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
 import {
   A11yDialog, Boxes, Button, Card, Checkbox, DetailPanel, Field, FileText, Folder, FormStack, Input,
-  IconTile, Layers, ListChecks, Network, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
+  ActiveFilterBar, FilterPopover, IconTile, Layers, ListChecks, Network, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
   Delete, Link2, Route, ScrollText, SearchBar, SegmentedControl, Select, Settings, ShieldCheck, StatusChip, TreeView, pushToast,
   type TreeViewNode,
 } from "@polterware/frontend-design-system";
@@ -101,6 +101,10 @@ export function StructureView(props: {
   integrations?: readonly WorkspaceIntegration[];
   /** Called when deploys change for a component node. */
   onDeploysChange?: (nodeId: string, deploys: { environmentId: string; provider: string; resource: string }[]) => Promise<void>;
+  scopeTokens?: readonly ScopeFilterToken[];
+  scopeNodes?: readonly ScopeNodeItem[];
+  scopeEnvironments?: readonly EnvironmentItem[];
+  onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
 }) {
   const [query, setQuery] = createSignal("");
   const [view, setView] = createSignal("tree");
@@ -219,10 +223,27 @@ export function StructureView(props: {
     <PageToolbar.Root>
       <PageToolbar.Leading><SearchBar placeholder="Search structure…" value={query()} onInput={setQuery} /></PageToolbar.Leading>
       <PageToolbar.Actions>
+        <FilterPopover
+          ariaLabel="Structure filters"
+          title="Filter structure"
+          active={(props.scopeTokens?.length ?? 0) > 0}
+          onClear={() => props.onScopeTokensChange?.([])}
+          groups={scopeFilterMenuGroups({
+            tokens: props.scopeTokens ?? [],
+            nodes: props.scopeNodes ?? [],
+            environments: props.scopeEnvironments ?? [],
+            allowEnv: true,
+            onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
+          })}
+        />
         <SegmentedControl aria-label="Structure view" options={[{ value: "tree", label: "Tree" }, { value: "cards", label: "Cards" }]} value={view()} onValueChange={(event) => setView(event.value ?? "tree")} />
         <Button size="sm" disabled={props.loading || !!props.error} onClick={props.onOpenCreate}><Plus size={14} />Add</Button>
       </PageToolbar.Actions>
     </PageToolbar.Root>
+    <ActiveFilterBar
+      items={scopeFilterPills(props.scopeTokens ?? [], (tokens) => props.onScopeTokensChange?.(tokens))}
+      onClear={() => props.onScopeTokensChange?.([])}
+    />
     <Show when={props.loading} fallback={<Show when={props.error} fallback={
       <PageContent class="pw-scroll-fade overflow-auto p-4">
         <Show when={view() === "tree"} fallback={<div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
