@@ -7,7 +7,7 @@ export type ShortcutChord = {
   alt: boolean;
 };
 
-export type ShortcutGroup = "shell" | "architecture";
+export type ShortcutGroup = "shell" | "structure";
 
 export type ShortcutCommandId =
   | "shell.toggle_commander"
@@ -15,26 +15,7 @@ export type ShortcutCommandId =
   | "shell.toggle_sidebar"
   | "shell.toggle_detail"
   | "shell.open_canvas"
-  | "architecture.tool_select"
-  | "architecture.tool_hand"
-  | "architecture.tool_connect"
-  | "architecture.add_node"
-  | "architecture.temp_hand"
-  | "architecture.delete"
-  | "architecture.open_node"
-  | "architecture.undo"
-  | "architecture.redo"
-  | "architecture.select_all"
-  | "architecture.copy"
-  | "architecture.cut"
-  | "architecture.paste"
-  | "architecture.duplicate"
-  | "architecture.save"
-  | "architecture.zoom_reset"
-  | "architecture.zoom_in"
-  | "architecture.zoom_out"
-  | "architecture.fit_document"
-  | "architecture.fit_selection";
+  | "structure.add_node";
 
 export type ShortcutCommand = {
   id: ShortcutCommandId;

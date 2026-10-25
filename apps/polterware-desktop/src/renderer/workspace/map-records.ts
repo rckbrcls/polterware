@@ -197,7 +197,7 @@ export function decisionState(status: string): DecisionState {
 }
 
 function verdictNumber(text: string): number | null {
-  const match = /\badr[\s\-_]*0*(\d+)\b/i.exec(text);
+  const match = /\b(?:verdict|adr)[\s\-_]*0*(\d+)\b/i.exec(text);
   return match ? Number(match[1]) : null;
 }
 
@@ -327,6 +327,10 @@ export function mapAtlas(raw: Record<string, unknown>): WorkspaceAtlas {
       migrationFrom: asString(item.migrationFrom),
       migrationTo: asString(item.migrationTo),
       uses: asStringArray(item.uses),
+      deploys: asObjectArray(item.deploys).map((deploy) => ({
+        id: asString(deploy.id), environmentId: asString(deploy.environmentId),
+        environment: asString(deploy.environment), provider: asString(deploy.provider), resource: asString(deploy.resource),
+      })),
     });
   }
   return { nodes, driftSlugs: asStringArray(raw.driftSlugs), historical: asBoolean(raw.historical) };

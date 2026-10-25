@@ -1,3 +1,4 @@
+import { createBrowserStructure } from "./browser-dev-structure";
 import type { PolterwareBridge } from "../preload/bridge.js";
 import { createBrowserCanvas } from "./browser-dev-canvas";
 import { emptyCorePreferences } from "../shared/core-preferences.js";
@@ -147,7 +148,7 @@ const previewEntities = [
   entity("ent-store", "component", "comp-store", "Store"),
 ];
 
-type AtlasSeed = [id: string, parentId: string, level: string, slug: string, path: string, title: string, status: string, decisions: string[], childCount: number, featureCount: number, openQuestions: number, folder: string];
+type AtlasSeed = [id: string, parentId: string, level: "system" | "domain" | "component", slug: string, path: string, title: string, status: "proposed" | "in_progress" | "delivered" | "drift", decisions: string[], childCount: number, featureCount: number, openQuestions: number, folder: string];
 
 const atlasSeeds: AtlasSeed[] = [
   ["n-sys", "", "system", "polterware", "polterware", "Polterware", "in_progress", [], 4, 0, 0, ""],
@@ -268,25 +269,7 @@ async function applyPreviewPolter(args?: { projectId?: string; text?: string; dr
     promotedDecisions.set(projectId, [...(promotedDecisions.get(projectId) ?? []), { id, projectId, kind: "verdict", title: assigned, summary: "", bodyMarkdown: "", status: "proposed", extraJson: "{}", tags: [], updatedAt: new Date().toISOString() }]);
     return { applied: true, diagnostics: [], ops: [`+ decision ${assigned} ${JSON.stringify(assigned)}`] };
   }
-  const heading = /^# ([^:\s]+):/m.exec(text);
-  const node = heading ? previewAtlas.nodes.find((item) => item.path === heading[1]) : undefined;
-  if (node) {
-    const uses = /^uses:(.*)$/m.exec(text);
-    if (uses) {
-      node.uses = uses[1]!.split(",").map((part) => part.trim()).filter(Boolean);
-    }
-    const under = /(?:^|·\s*)under:\s*([^\s·]+)/m.exec(text)?.[1];
-    const parent = under ? previewAtlas.nodes.find((item) => item.path === under) : undefined;
-    if (parent && parent.id !== node.parentId) {
-      const oldPath = node.path;
-      node.parentId = parent.id;
-      node.path = `${parent.path}/${node.slug}`;
-      for (const item of previewAtlas.nodes) {
-        item.uses = item.uses.map((path) => (path === oldPath ? node.path : path));
-      }
-    }
-  }
-  return { applied: true, diagnostics: [], ops: [] };
+  throw new Error("Unsupported Polter input.");
 }
 
 const previewAtlasHistory = [
@@ -692,6 +675,8 @@ function browserDevApi(overrides?: Record<string, unknown>): (...args: unknown[]
 }
 
 function createBrowserDevBridge(): PolterwareBridge {
+  const structure = createBrowserStructure(PREVIEW_PROJECT_ID, previewAtlas.nodes);
+  const structureCards = structuredClone(previewCards);
   // Seeded demo views; mutations live only in this bridge instance.
   let boards = ["Planning", "Delivery"].map((name, position) => ({
     id: `preview-board-${position}`, projectId: PREVIEW_PROJECT_ID, name, position,
@@ -970,10 +955,25 @@ function createBrowserDevBridge(): PolterwareBridge {
           current.forEach((board) => { board.position = boardIds.indexOf(board.id); });
           return { boards: projectBoards(projectId) };
         },
-        listCards: async (args?: ProjectArgs) => ({ cards: [...(args?.projectId === PREVIEW_PROJECT_ID ? previewCards : []), ...(promotedCards.get(args?.projectId ?? "") ?? [])] }),
+        listCards: async (args?: ProjectArgs) => ({ cards: [...(args?.projectId === PREVIEW_PROJECT_ID ? structureCards : []), ...(promotedCards.get(args?.projectId ?? "") ?? [])] }),
         listInbox: scoped(previewInbox, { items: [], openCount: 0, blockingCount: 0 }),
-        listAtlas: scoped(previewAtlas, { nodes: [], driftSlugs: [], historical: false }),
-        apply: applyPreviewPolter,
+        listAtlas: async (args?: ProjectArgs) => structure.list(args?.projectId ?? ""),
+        apply: async (args?: { projectId?: string; text?: string; dryRun?: boolean }) => {
+          if (/^# [^#]/m.test(args?.text ?? "")) {
+            if (![PREVIEW_PROJECT_ID, "browser-empty"].includes(args?.projectId ?? "")) throw new Error("Project not found.");
+            const projectId = args!.projectId!;
+            const before = structure.list(projectId).nodes;
+            const result = structure.apply(projectId, args?.text ?? "", args?.dryRun);
+            if (!args?.dryRun) {
+              const after = new Map(structure.list(projectId).nodes.map((node) => [node.id, node.path]));
+              const moved = new Map(before.filter((node) => after.get(node.id) !== node.path).map((node) => [node.path, after.get(node.id)!]));
+              const cards = [...(projectId === PREVIEW_PROJECT_ID ? structureCards : []), ...(promotedCards.get(projectId) ?? [])];
+              for (const card of cards) if (typeof card.under === "string" && moved.has(card.under)) card.under = moved.get(card.under)!;
+            }
+            return result;
+          }
+          return applyPreviewPolter(args);
+        },
         setScope: async () => ({}),
         listAtlasHistory: scoped({ entries: previewAtlasHistory }, { entries: [] }),
       }),

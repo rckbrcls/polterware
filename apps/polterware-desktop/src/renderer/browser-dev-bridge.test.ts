@@ -45,6 +45,20 @@ describe("installBrowserDevBridge", () => {
     expect(full.cards.length).toBeGreaterThanOrEqual(12);
     expect(empty.cards).toEqual([]);
   });
+  it("keeps linked Work cards under a component when Structure moves it", async () => {
+    installBrowserDevBridge();
+    const work = window.polterware.core.work;
+    const projectId = "browser-preview";
+    const before = await work.listCards({ projectId });
+    const atlas = await work.listAtlas({ projectId });
+    const component = atlas.nodes.find((node) => node.level === "component" && before.cards.some((card) => card.under === node.path))!;
+    const destination = atlas.nodes.find((node) => node.level === "system")!;
+    const linked = before.cards.filter((card) => card.under === component.path);
+    await work.apply({ projectId, text: `---\npolter: 1\nsummary: Move component\nrationale: Organize structure\n---\n\n# ${component.path}: ${component.title}\nlevel: component · under: ${destination.path}\n` });
+    const moved = (await work.listAtlas({ projectId })).nodes.find((node) => node.id === component.id)!;
+    const cards = (await work.listCards({ projectId })).cards;
+    for (const card of linked) expect(cards.find((item) => item.slug === card.slug)?.under).toBe(moved.path);
+  });
   it("provides seeded boards and keeps saved-view mutations project-local", async () => {
     installBrowserDevBridge();
     const work = window.polterware.core.work;

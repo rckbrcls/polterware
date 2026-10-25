@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SHORTCUT_CATALOG, getShortcutCommand } from "./catalog";
+import { SHORTCUT_CATALOG } from "./catalog";
 import {
   chordFromEvent,
   chordToAccelerator,
@@ -9,7 +9,7 @@ import {
   parseChord,
   serializeChord,
 } from "./chord";
-import type { ShortcutChord } from "./types";
+import type { ShortcutChord, ShortcutCommand } from "./types";
 
 function chord(partial: Partial<ShortcutChord> & Pick<ShortcutChord, "key">): ShortcutChord {
   return {
@@ -42,7 +42,10 @@ describe("shortcut chords", () => {
   });
 
   it("matches default delete aliases until overridden", () => {
-    const command = getShortcutCommand("architecture.delete")!;
+    const command: ShortcutCommand = {
+      id: "structure.add_node", label: "Test aliases", group: "structure",
+      defaultChord: chord({ key: "delete" }), defaultAliases: [chord({ key: "backspace" })],
+    };
     const deleteEvent = {
       key: "Delete",
       code: "Delete",
@@ -62,7 +65,7 @@ describe("shortcut chords", () => {
     expect(matchesChord(command, {}, deleteEvent)).toBe(true);
     expect(matchesChord(command, {}, backspaceEvent)).toBe(true);
     expect(
-      matchesChord(command, { "architecture.delete": chord({ key: "delete" }) }, backspaceEvent),
+      matchesChord(command, { "structure.add_node": chord({ key: "delete" }) }, backspaceEvent),
     ).toBe(false);
   });
 

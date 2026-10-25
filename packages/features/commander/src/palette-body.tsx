@@ -21,13 +21,11 @@ import {
   createFluidHover,
   FluidHoverHighlight,
   Gauge,
-  GitBranch,
   History,
   IconTile,
   Inbox,
   Layers,
   ListOrdered,
-  Maximize2,
   Plug,
   Plus,
   Pencil,
@@ -49,7 +47,7 @@ import "./commander.css";
 const PALETTE_TILES: Record<string, { tone: IconTileTone; icon: () => JSX.Element }> = {
   "nav.inbox": { tone: "knowledge", icon: () => <Inbox size={12} /> },
   "nav.canvas": { tone: "neutral", icon: () => <Pencil size={12} /> },
-  "nav.atlas": { tone: "architecture", icon: () => <ChartRelationshipIcon size={12} /> },
+  "nav.structure": { tone: "architecture", icon: () => <ChartRelationshipIcon size={12} /> },
   "nav.work": { tone: "execution", icon: () => <Briefcase06Icon size={12} /> },
   "nav.truth": { tone: "knowledge", icon: () => <Layers size={12} /> },
   "nav.dispatch": { tone: "execution", icon: () => <Route size={12} /> },
@@ -61,8 +59,6 @@ const PALETTE_TILES: Record<string, { tone: IconTileTone; icon: () => JSX.Elemen
   "nav.settings": { tone: "neutral", icon: () => <Settings size={12} /> },
   "action.open-sync": { tone: "execution", icon: () => <Activity size={12} /> },
   "action.create-node": { tone: "architecture", icon: () => <Plus size={12} /> },
-  "tool.connect": { tone: "architecture", icon: () => <GitBranch size={12} /> },
-  "view.fit_document": { tone: "architecture", icon: () => <Maximize2 size={12} /> },
   "action.connect-integration": { tone: "integration", icon: () => <Plug size={12} /> },
 };
 

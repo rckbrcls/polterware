@@ -134,7 +134,7 @@ export const SETTINGS_SEARCH_ENTRIES: SettingsSearchEntry[] = [
 
 /** Shortcut commands, which depend on the live shortcut catalog. */
 export function dynamicSettingsEntries(): SettingsSearchEntry[] {
-  return (["shell", "architecture"] as const).flatMap((group) =>
+  return (["shell", "structure"] as const).flatMap((group) =>
     shortcutsInGroup(group).map<SettingsSearchEntry>((command) => ({
       id: `shortcut-${command.id}`,
       tab: "shortcuts",

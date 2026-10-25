@@ -154,7 +154,7 @@ export function Shell(props: {
   workspace?: WorkspaceContext;
   projects?: ProjectSwitcherItem[];
   environments?: EnvironmentItem[];
-  /** Atlas nodes offered by the global scope filter. */
+  /** Structure nodes offered by the global scope filter. */
   scopeNodes?: ScopeNodeItem[];
   scopeTokens?: readonly ScopeFilterToken[];
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;

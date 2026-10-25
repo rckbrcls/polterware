@@ -9,10 +9,10 @@ describe("first version routes", () => {
 
   it("exposes the exact project navigation and keeps Canvas after Work", () => {
     expect(
-      ["inbox", "atlas", "work", "canvas", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "integrations", "activity"].every(isNavSectionId),
+      ["inbox", "structure", "work", "canvas", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "integrations", "activity"].every(isNavSectionId),
     ).toBe(true);
     expect(DEFAULT_NAV.map((item) => item.section)).toEqual([
-      "inbox", "activity", "work", "canvas", "atlas", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "integrations",
+      "inbox", "activity", "work", "canvas", "structure", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "integrations",
     ]);
     expect(resolveRoute("canvas")).toEqual({ section: "canvas", tab: "all" });
     expect(DEFAULT_TABS.canvas).toBe("all");
@@ -27,7 +27,7 @@ describe("first version routes", () => {
     expect(isNavSectionId("knowledge")).toBe(false);
     expect(isNavSectionId("operations")).toBe(false);
     expect(isNavSectionId("terminal")).toBe(false);
-    expect(SECTION_TABS.atlas?.map((tab) => tab.id)).toEqual(["map", "components", "relations"]);
+    expect(SECTION_TABS.structure?.map((tab) => tab.id)).toEqual(["all"]);
     expect(SECTION_TABS.work?.map((tab) => tab.id)).toEqual(["board", "specs"]);
     expect(SECTION_TABS.truth?.map((tab) => tab.id)).toEqual(["decisions", "facts", "evidence"]);
     expect(SECTION_TABS.dispatch?.map((tab) => tab.id)).toEqual(["runs", "agents"]);
@@ -65,22 +65,25 @@ describe("first version routes", () => {
     });
   });
 
-  it("falls back unknown routes to Inbox and condemned routes to Atlas", () => {
+  it("falls back unknown routes to Inbox and retired routes to Structure", () => {
     expect(resolveRoute("unknown")).toEqual({ section: "inbox", tab: "all" });
-    expect(resolveRoute("operations")).toEqual({ section: "atlas", tab: "map" });
-    expect(resolveRoute("terminal")).toEqual({ section: "atlas", tab: "map" });
+    expect(resolveRoute("operations")).toEqual({ section: "structure", tab: "all" });
+    expect(resolveRoute("terminal")).toEqual({ section: "structure", tab: "all" });
   });
 
-  it("sends the retired Canvas tab id to the Map", () => {
-    expect(resolveRoute("atlas", "canvas")).toEqual({ section: "atlas", tab: "map" });
-    expect(resolveRoute("atlas", "hierarchy")).toEqual({ section: "atlas", tab: "map" });
-    expect(resolveRoute("atlas", "views")).toEqual({ section: "atlas", tab: "map" });
+  it("resolves Atlas aliases and retired tabs to Structure", () => {
+    expect(isNavSectionId("atlas")).toBe(false);
+    expect(resolveRoute("atlas")).toEqual({ section: "structure", tab: "all" });
+    expect(resolveRoute("atlas", "relations")).toEqual({ section: "structure", tab: "all" });
+    expect(resolveRoute("structure", "canvas")).toEqual({ section: "structure", tab: "all" });
+    expect(resolveRoute("structure", "hierarchy")).toEqual({ section: "structure", tab: "all" });
+    expect(resolveRoute("structure", "views")).toEqual({ section: "structure", tab: "all" });
   });
 
   it("maps pre-Atlas sections to their new homes", () => {
-    expect(resolveRoute("architecture", "views")).toEqual({ section: "atlas", tab: "map" });
-    expect(resolveRoute("architecture", "components")).toEqual({ section: "atlas", tab: "components" });
-    expect(resolveRoute("resources", "nodes")).toEqual({ section: "atlas", tab: "components" });
+    expect(resolveRoute("architecture", "views")).toEqual({ section: "structure", tab: "all" });
+    expect(resolveRoute("architecture", "components")).toEqual({ section: "structure", tab: "all" });
+    expect(resolveRoute("resources", "nodes")).toEqual({ section: "structure", tab: "all" });
     expect(resolveRoute("knowledge")).toEqual({ section: "work", tab: "specs" });
     expect(resolveRoute("knowledge", "specs")).toEqual({ section: "work", tab: "specs" });
     expect(resolveRoute("knowledge", "library")).toEqual({ section: "truth", tab: "decisions" });
