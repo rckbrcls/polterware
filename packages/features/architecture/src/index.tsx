@@ -3,7 +3,7 @@ import { EntityDetailHost } from "@polterware/feature-shell";
 import {
   A11yDialog, Boxes, Button, Card, Checkbox, DetailPanel, Field, FileText, Folder, FormStack, Input,
   IconTile, Layers, ListChecks, Network, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
-  Delete, Link2, Route, SearchBar, SegmentedControl, Select, Settings, StatusChip, TreeView, pushToast,
+  Delete, Link2, Route, ScrollText, SearchBar, SegmentedControl, Select, Settings, ShieldCheck, StatusChip, TreeView, pushToast,
   type TreeViewNode,
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
@@ -37,7 +37,20 @@ function KindIcon(props: { kind: StructureKind | "project"; size?: number }) {
   return <Show when={props.kind === "component"} fallback={<Show when={props.kind === "domain"} fallback={<Layers size={size()} aria-hidden />}><Folder size={size()} aria-hidden /></Show>}><Boxes size={size()} aria-hidden /></Show>;
 }
 const kindLabel = (kind: string) => kind.charAt(0).toUpperCase() + kind.slice(1);
-const countLabel = (counts: Counts) => `${counts.work}W · ${counts.decisions}D · ${counts.facts}F`;
+
+function countTitle(count: number, singular: string) {
+  return `${count} ${singular}${count === 1 ? "" : "s"}`;
+}
+
+function RecordCounts(props: { counts: Counts }) {
+  return <Show when={props.counts.work || props.counts.decisions || props.counts.facts}>
+    <span class="flex flex-wrap items-center gap-2 text-[var(--color-text-muted)]">
+      <Show when={props.counts.work > 0}><span class="inline-flex items-center gap-1" aria-label={countTitle(props.counts.work, "Work card")} title={countTitle(props.counts.work, "Work card")}><ListChecks size={14} aria-hidden="true" /><span>{props.counts.work}</span></span></Show>
+      <Show when={props.counts.decisions > 0}><span class="inline-flex items-center gap-1" aria-label={countTitle(props.counts.decisions, "Decision")} title={countTitle(props.counts.decisions, "Decision")}><ShieldCheck size={14} aria-hidden="true" /><span>{props.counts.decisions}</span></span></Show>
+      <Show when={props.counts.facts > 0}><span class="inline-flex items-center gap-1" aria-label={countTitle(props.counts.facts, "Fact")} title={countTitle(props.counts.facts, "Fact")}><ScrollText size={14} aria-hidden="true" /><span>{props.counts.facts}</span></span></Show>
+    </span>
+  </Show>;
+}
 
 function StructureCard(props: {
   id: string;
@@ -57,7 +70,7 @@ function StructureCard(props: {
       </span>
       <span class="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-text-muted)]">
         <span>{kindLabel(props.kind)}</span>
-        <span>{countLabel(props.counts)}</span>
+        <RecordCounts counts={props.counts} />
       </span>
     </button>
   </Card>;
@@ -119,11 +132,11 @@ export function StructureView(props: {
   const projectSelected = () => selectedId() === PROJECT_ID;
   const toTreeNode = (item: StructureTreeItem): TreeViewNode => ({
     id: item.node.id, label: item.node.title, icon: <KindIcon kind={item.node.level} size={14} />,
-    trailing: <span class="flex items-center gap-2 text-xs text-[var(--color-text-muted)]"><span>{kindLabel(item.node.level)}</span><span>{countLabel(props.counts[item.node.id] ?? { work: 0, decisions: 0, facts: 0 })}</span></span>,
+    trailing: <span class="flex items-center gap-2 text-xs text-[var(--color-text-muted)]"><span>{kindLabel(item.node.level)}</span><RecordCounts counts={props.counts[item.node.id] ?? { work: 0, decisions: 0, facts: 0 }} /></span>,
     children: item.children.map(toTreeNode),
   });
   const treeNodes = createMemo<TreeViewNode[]>(() => [{ id: PROJECT_ID, label: props.projectName, icon: <KindIcon kind="project" size={14} />,
-    trailing: <span class="flex items-center gap-2 text-xs text-[var(--color-text-muted)]"><span>Project</span><span>{countLabel(props.projectCounts)}</span></span>, children: tree().map(toTreeNode) }]);
+    trailing: <span class="flex items-center gap-2 text-xs text-[var(--color-text-muted)]"><span>Project</span><RecordCounts counts={props.projectCounts} /></span>, children: tree().map(toTreeNode) }]);
   const open = (id: string) => props.onOpenNode(id);
 
   // Environment options for the deploys dialog

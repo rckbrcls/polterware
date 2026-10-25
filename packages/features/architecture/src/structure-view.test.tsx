@@ -24,6 +24,10 @@ describe("Structure collection", () => {
   it("searches a nested node, opens its shared detail and keeps the same target in Cards", async () => {
     const { host, open } = mount();
     expect(detailPanelStore.getState().open).toBe(false);
+    expect(host.querySelector('[title="2 Work cards"]')).not.toBeNull();
+    expect(host.querySelector('[title="1 Decision"]')).not.toBeNull();
+    expect(host.querySelector('[title="3 Facts"]')).not.toBeNull();
+    expect(host.querySelector('[title="0 Work cards"]')).toBeNull();
     const search = host.querySelector<HTMLInputElement>('[role="searchbox"]')!;
     search.value = "api";
     search.dispatchEvent(new Event("input", { bubbles: true }));
@@ -42,6 +46,9 @@ describe("Structure collection", () => {
     await tick();
     const card = host.querySelector<HTMLElement>('[data-detail-target-id="api"]')!;
     card.click();
+    expect(card.querySelector('[aria-label="2 Work cards"]')).not.toBeNull();
+    expect(card.querySelector('[aria-label="1 Decision"]')).not.toBeNull();
+    expect(card.querySelector('[aria-label="3 Facts"]')).not.toBeNull();
     expect(open).toHaveBeenLastCalledWith("api");
     expect(detailPanelStore.getState().activeTarget?.entityId).toBe("api");
   });
