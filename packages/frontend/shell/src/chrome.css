@@ -53,6 +53,11 @@
   padding: 0 8px 8px 0;
 }
 
+/* No sidebar before the frame (Projects home): keep the gutter symmetric. */
+.pw-shell-root:not(:has(.pw-shell-sidebar)) .pw-shell-main-frame {
+  padding-left: 8px;
+}
+
 .pw-shell-main-frame--opaque {
   background: transparent !important;
 }

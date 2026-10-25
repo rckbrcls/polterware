@@ -1204,6 +1204,10 @@ export function App() {
             unavailable={bootstrapped() && !workspace().available}
             message={workspace().healthMessage}
             onOpenProject={selectProject}
+            onOpenProjectSettings={(projectId) => {
+              selectProject(projectId);
+              applyRoute(openDialog(route(), { type: "project-settings" }), "silent");
+            }}
             onCreateProject={() => setCreateProjectOpen(true)}
           />
         }
