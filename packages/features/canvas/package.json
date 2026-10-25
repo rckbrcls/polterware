@@ -5,7 +5,9 @@
   "type": "module",
   "main": "./src/index.tsx",
   "exports": {
-    ".": "./src/index.tsx"
+    ".": "./src/index.tsx",
+    "./promotion": "./src/promotion.ts",
+    "./model": "./src/model.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

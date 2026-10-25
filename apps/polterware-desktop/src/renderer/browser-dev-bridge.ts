@@ -225,12 +225,39 @@ const previewLayout = {
 /** The preview layout lives in memory so a map edit survives a workspace refresh. */
 const previewLayoutState = { bodyJson: JSON.stringify(previewLayout), revision: 3 };
 
+const promotedCards = new Map<string, Record<string, unknown>[]>();
+const promotedDecisions = new Map<string, Record<string, unknown>[]>();
+
 /**
- * Enough of `work.apply` for the Atlas map: a node block that moves it (under:)
+ * Enough of `work.apply` for canvas promotions and the Atlas map: a node block that moves it (under:)
  * or replaces its uses:. Everything else is ignored, like the rest of this bridge.
  */
-function applyPreviewPolter(args?: { projectId?: string; text?: string }): Promise<Record<string, never>> {
-  const text = args?.projectId === PREVIEW_PROJECT_ID ? args.text ?? "" : "";
+async function applyPreviewPolter(args?: { projectId?: string; text?: string; dryRun?: boolean }): Promise<Record<string, unknown>> {
+  const projectId = args?.projectId ?? "";
+  if (![PREVIEW_PROJECT_ID, "browser-empty"].includes(projectId)) throw new Error("Project not found.");
+  const text = args?.text ?? "";
+  const card = /^## ([a-z0-9]+(?:-[a-z0-9]+)*): (.+)$/m.exec(text);
+  const decision = /^### new: (.+)$/m.exec(text);
+  if (card || decision) {
+    if (!/^polter: 1$/m.test(text) || !/^summary: .+$/m.test(text) || !/^rationale: .+$/m.test(text)) throw new Error("Promotion needs Polter v1, summary and rationale.");
+    const id = `promoted-${crypto.randomUUID()}`;
+    const title = (card?.[2] ?? decision?.[1] ?? "").trim();
+    if (card) {
+      const cards = [...(projectId === PREVIEW_PROJECT_ID ? previewCards : []), ...(promotedCards.get(projectId) ?? [])];
+      if (cards.some((item) => item.slug === card[1])) throw new Error("That Work card slug already exists.");
+      if (!/^stage: shape$/m.test(text)) throw new Error("Canvas Work cards start in Shape.");
+      if (args?.dryRun) return { applied: false, diagnostics: [], ops: [`+ card ${card[1]} ${JSON.stringify(title)} [shape]`] };
+      promotedCards.set(projectId, [...(promotedCards.get(projectId) ?? []), { id, projectId, slug: card[1], title, stage: "shape", status: "active", kind: "feature", intent: "", owner: "", under: "", decisions: [], tasks: [], questions: [], invariants: [], updatedAt: new Date().toISOString() }]);
+      return { applied: true, diagnostics: [], ops: [`+ card ${card[1]} ${JSON.stringify(title)} [shape]`] };
+    }
+    if (!/^status: proposed$/m.test(text)) throw new Error("Canvas Decisions start Proposed.");
+    const decisions = [...(projectId === PREVIEW_PROJECT_ID ? previewKnowledge : []), ...(promotedDecisions.get(projectId) ?? [])];
+    const number = 1 + Math.max(0, ...decisions.map((item) => Number(/Verdict[ -]0*(\d+)/i.exec(String(item.title))?.[1] ?? 0)));
+    const assigned = `Verdict ${String(number).padStart(4, "0")}: ${title}`;
+    if (args?.dryRun) return { applied: false, diagnostics: [], ops: [`+ decision ${assigned} ${JSON.stringify(assigned)}`] };
+    promotedDecisions.set(projectId, [...(promotedDecisions.get(projectId) ?? []), { id, projectId, kind: "verdict", title: assigned, summary: "", bodyMarkdown: "", status: "proposed", extraJson: "{}", tags: [], updatedAt: new Date().toISOString() }]);
+    return { applied: true, diagnostics: [], ops: [`+ decision ${assigned} ${JSON.stringify(assigned)}`] };
+  }
   const heading = /^# ([^:\s]+):/m.exec(text);
   const node = heading ? previewAtlas.nodes.find((item) => item.path === heading[1]) : undefined;
   if (node) {
@@ -249,7 +276,7 @@ function applyPreviewPolter(args?: { projectId?: string; text?: string }): Promi
       }
     }
   }
-  return Promise.resolve({});
+  return { applied: true, diagnostics: [], ops: [] };
 }
 
 const previewAtlasHistory = [
@@ -737,7 +764,7 @@ function createBrowserDevBridge(): PolterwareBridge {
       }),
       canvas: createBrowserCanvas(),
       knowledge: browserDevApi({
-        list: scoped({ items: previewKnowledge }, { items: [] }),
+        list: async (args?: ProjectArgs) => ({ items: [...(args?.projectId === PREVIEW_PROJECT_ID ? previewKnowledge : []), ...(promotedDecisions.get(args?.projectId ?? "") ?? [])] }),
         listLinks: scoped({ links: previewLinks }, { links: [] }),
       }),
       canon: browserDevApi({
@@ -934,7 +961,7 @@ function createBrowserDevBridge(): PolterwareBridge {
           current.forEach((board) => { board.position = boardIds.indexOf(board.id); });
           return { boards: projectBoards(projectId) };
         },
-        listCards: scoped({ cards: previewCards }, { cards: [] }),
+        listCards: async (args?: ProjectArgs) => ({ cards: [...(args?.projectId === PREVIEW_PROJECT_ID ? previewCards : []), ...(promotedCards.get(args?.projectId ?? "") ?? [])] }),
         listInbox: scoped(previewInbox, { items: [], openCount: 0, blockingCount: 0 }),
         listAtlas: scoped(previewAtlas, { nodes: [], driftSlugs: [], historical: false }),
         apply: applyPreviewPolter,
