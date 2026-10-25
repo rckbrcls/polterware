@@ -24,6 +24,7 @@
     "@connectrpc/connect-node": "^2.2.0",
     "@polterware/contracts": "workspace:*",
     "@polterware/feature-architecture": "workspace:*",
+    "@polterware/feature-canvas": "workspace:*",
     "@polterware/feature-commander": "workspace:*",
     "@polterware/feature-dispatch": "workspace:*",
     "@polterware/feature-integrations": "workspace:*",

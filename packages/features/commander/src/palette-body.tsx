@@ -30,6 +30,7 @@ import {
   Maximize2,
   Plug,
   Plus,
+  Pencil,
   Route,
   Search,
   Settings,
@@ -47,6 +48,7 @@ import "./commander.css";
 
 const PALETTE_TILES: Record<string, { tone: IconTileTone; icon: () => JSX.Element }> = {
   "nav.inbox": { tone: "knowledge", icon: () => <Inbox size={12} /> },
+  "nav.canvas": { tone: "neutral", icon: () => <Pencil size={12} /> },
   "nav.atlas": { tone: "architecture", icon: () => <ChartRelationshipIcon size={12} /> },
   "nav.work": { tone: "execution", icon: () => <Briefcase06Icon size={12} /> },
   "nav.truth": { tone: "knowledge", icon: () => <Layers size={12} /> },

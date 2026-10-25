@@ -9,6 +9,7 @@ export type NavSectionId =
   | "inbox"
   | "atlas"
   | "work"
+  | "canvas"
   | "truth"
   | "dispatch"
   | "dispatch-routing"
@@ -92,6 +93,7 @@ export const DEFAULT_TABS = {
   inbox: "all",
   atlas: "map",
   work: "board",
+  canvas: "all",
   truth: "decisions",
   dispatch: "runs",
   "dispatch-routing": "tiers",
@@ -104,6 +106,7 @@ export const DEFAULT_TABS = {
 export const SECTION_TABS = {
   // Route id only — Inbox is a flat page (no tab rail).
   inbox: [{ id: "all", label: "All" }],
+  canvas: [{ id: "all", label: "All" }],
   atlas: [
     { id: "map", label: "Map" },
     { id: "components", label: "Components" },
@@ -145,6 +148,7 @@ const NAV_SECTIONS = {
   inbox: true,
   atlas: true,
   work: true,
+  canvas: true,
   truth: true,
   dispatch: true,
   "dispatch-routing": true,

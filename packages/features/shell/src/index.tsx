@@ -5,6 +5,7 @@ import type { PlatformContext } from "@polterware/frontend-platform";
 import { MainFrame, ShellRoot } from "@polterware/frontend-shell";
 import type { ClientRoute, NavItem, ShellStatus } from "./route";
 import { DEFAULT_TABS, isHomeRoute, isNavSectionId } from "./route";
+import { DEFAULT_NAV } from "./navigation";
 import { SidebarNav, SidebarSettingsItem, type SidebarCount } from "./sidebar";
 import { MainSurface } from "./main-surface";
 import { TitleBar } from "./title-bar";
@@ -119,17 +120,7 @@ export {
   CATALOG_PROVIDER_MOCKS,
 } from "./workspace-mocks";
 
-export const DEFAULT_NAV: NavItem[] = [
-  { id: "inbox", section: "inbox", label: "Inbox", group: "Now", icon: "inbox" },
-  { id: "activity", section: "activity", label: "Activity", group: "Now", icon: "activity" },
-  { id: "work", section: "work", label: "Work", group: "Project", icon: "work" },
-  { id: "atlas", section: "atlas", label: "Atlas", group: "Project", icon: "atlas" },
-  { id: "truth", section: "truth", label: "Truth", group: "Project", icon: "truth" },
-  { id: "dispatch", section: "dispatch", label: "Runs", group: "Dispatch", icon: "runs" },
-  { id: "dispatch-routing", section: "dispatch-routing", label: "Routing", group: "Dispatch", icon: "routing" },
-  { id: "dispatch-usage", section: "dispatch-usage", label: "Usage", group: "Dispatch", icon: "usage" },
-  { id: "integrations", section: "integrations", label: "Integrations", group: "Connect", icon: "integrations" },
-];
+export { DEFAULT_NAV } from "./navigation";
 
 function workspaceFromRoute(
   route: ClientRoute | undefined,

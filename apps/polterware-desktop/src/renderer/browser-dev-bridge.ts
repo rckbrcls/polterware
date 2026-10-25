@@ -1,4 +1,5 @@
 import type { PolterwareBridge } from "../preload/bridge.js";
+import { createBrowserCanvas } from "./browser-dev-canvas";
 import { emptyCorePreferences } from "../shared/core-preferences.js";
 import type { CoreStatus } from "../shared/core-status.js";
 import { emptyQuitPreferences } from "../shared/quit-preferences.js";
@@ -734,6 +735,7 @@ function createBrowserDevBridge(): PolterwareBridge {
           return { layout: { ...previewLayoutState } };
         },
       }),
+      canvas: createBrowserCanvas(),
       knowledge: browserDevApi({
         list: scoped({ items: previewKnowledge }, { items: [] }),
         listLinks: scoped({ links: previewLinks }, { links: [] }),

@@ -1,0 +1,3 @@
+.pw-canvas-editor { background: var(--color-app-background); touch-action: none; }
+.pw-canvas-selected { outline: 1px solid var(--color-text-primary); outline-offset: -1px; border-radius: var(--radius-card); }
+.pw-canvas-text { background: var(--color-surface-subtle); }

@@ -36,6 +36,12 @@ export const SHORTCUT_CATALOG: readonly ShortcutCommand[] = [
     defaultChord: chord({ key: "j", mod: true }),
   },
   {
+    id: "shell.open_canvas",
+    label: "Open Canvas",
+    group: "shell",
+    defaultChord: chord({ key: "c", mod: true, shift: true }),
+  },
+  {
     id: "architecture.tool_select",
     label: "Select tool",
     group: "architecture",
