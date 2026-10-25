@@ -40,7 +40,7 @@ Category: **Project Context & Change Intelligence for AI Coding.** Polterware ke
 10. **Light enforcement.** Claude Code `PreToolUse` advisories ("this file is governed by decision X", "adding a dependency needs a decision"). Advisory first.
 11. **Engineering packs** that generate Inbox *questions*, never rules.
 12. **Similarity beyond word sets.** Add an FTS5 index when a ranked-search consumer needs it. Add local embeddings (`sqlite-vec`, small local model, opt-in download) only if measured misses are material.
-13. **Weak spots to close:** Atlas timeline by commit is weak for rebased history (no per-batch commit stamp); Atlas › Views and some toasts still say "Architecture"; automatic challenge from a decision review trigger; decision status chips on the Atlas canvas; importing projected Verdict files.
+13. **Weak spots to close:** Structure timeline by commit is weak for rebased history (no per-batch commit stamp); automatic challenge from a decision review trigger; decision status chips on Canvas nodes; importing projected Verdict files.
 
 ## Cloud (needs an Verdict before any code)
 
@@ -108,7 +108,7 @@ Change evidence:
 - Per run: base, head, diff summary (files, additions, deletions), touched paths, commits, and verify result, stored as Evidence on the card and linked to the AgentRun.
 - Commit ↔ card linking: explicit reference first (trailer or branch name), then touched paths against the card's components. Inferred links stay `inferred` until confirmed.
 - Delivered means merged: a card moves to Delivered when its branch is an ancestor of the target branch, not when an agent says so. Squash and rebase merges need patch-id or tree comparison, since ancestry is lost.
-- Rebased history: stamp commits per batch so the Atlas timeline survives rewrites (closes the weak spot already listed under Local).
+- Rebased history: stamp commits per batch so the Structure timeline survives rewrites (closes the weak spot already listed under Local).
 
 Drift with Git:
 
@@ -143,7 +143,7 @@ Open: branch naming scheme and whether it is configurable; where worktrees live 
 
 ## Product questions still open
 
-1. Who creates the upper Atlas levels (System, Domain): by hand, imported from code, or agent-suggested and human-approved?
+1. Who creates the upper Structure levels (System, Domain): by hand, imported from code, or agent-suggested and human-approved?
 2. Should the default route flip from Inbox to Work?
 3. Work state per feature, per branch, or per session? (Leaning: per feature, branches linked.)
 
@@ -152,7 +152,6 @@ Open: branch naming scheme and whether it is configurable; where worktrees live 
 Small, independent polish items, using the existing `--ease-standard`, `--ease-enter`, `--duration-fast`, and `--duration-control` tokens (see the `polter-fluid-motion` skill). Verify each against current code before starting; file paths from earlier plans may have moved.
 
 1. Shared presence motion (`MotionPresence`, Ark-backed) and an animated `DataTable.SelectionToolbar` that stops mounting and unmounting instantly. Everything below depends on it.
-2. Canvas toolbar menus moved onto the shared anchored dropdown instead of eight native `<details>` panels.
-3. Notification "Mark all as read" animates into the empty state instead of applying synchronously.
-4. Integration setup wizard bridges the credential-method swap (Assume Role ↔ Access Key fields).
-5. Inline validation errors (Configure Component dialog) get restrained presence instead of an instant mount.
+2. Notification "Mark all as read" animates into the empty state instead of applying synchronously.
+3. Integration setup wizard bridges the credential-method swap (Assume Role ↔ Access Key fields).
+4. Inline validation errors in dialogs get restrained presence instead of an instant mount.

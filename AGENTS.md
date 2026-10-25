@@ -15,13 +15,13 @@
 
 ## Product positioning
 
-Polterware's category is **Project Context & Change Intelligence for AI Coding**: every agent and person reads the same evidence-backed project state, and drift from declared intent is flagged. The shipped wedge is Canon facts/evidence, deterministic import, Context Compiler, stable MCP reads, Drift, AgentRun, audited MCP writes, CLI, Unified Change History, the Polter format with Work cards, the Atlas, the Inbox, and the decision lifecycle. Integrations remain as evidence/Connect UI only.
+Polterware's category is **Project Context & Change Intelligence for AI Coding**: every agent and person reads the same evidence-backed project state, and drift from declared intent is flagged. The shipped wedge is Canon facts/evidence, deterministic import, Context Compiler, stable MCP reads, Drift, AgentRun, audited MCP writes, CLI, Unified Change History, the Polter format with Work cards, Structure, Canvas, the Inbox, and the decision lifecycle. Integrations remain as evidence/Connect UI only.
 
 [`docs/future.md`](docs/future.md) is the only planning document and lists what is **not** implemented (Cloud, Jev, enrichment backlog, research). It is direction, not shipped behavior; never present its items as shipped. The code, this file, `polterware --help`, and `polterware format` describe what exists.
 
 ## Current product boundary
 
-Polterware is both the umbrella and the main local-first app (`apps/polterware-desktop`), alongside Polterware Notes and Polterware Vitals. Polterware's first version is a local SQLite-backed Desktop with project surfaces Inbox, Work, Atlas, Truth, Dispatch, Integrations, and Activity. Settings is fixed in the sidebar footer and holds Project, Agents, and App preferences. Inbox is the default route.
+Polterware is both the umbrella and the main local-first app (`apps/polterware-desktop`), alongside Polterware Notes and Polterware Vitals. Polterware's first version is a local SQLite-backed Desktop with project surfaces Inbox, Work, Structure, Canvas, Truth, Dispatch, Integrations, and Activity. A Projects screen (home button in the title bar) comes before entering a project. Settings is fixed in the sidebar footer and holds Project, Agents, and App preferences. Inbox is the default route.
 
 The umbrella is an ecosystem, not a list: apps and tools live under Polterware only when they can integrate with the others. See [`docs/ecosystem.md`](docs/ecosystem.md) for the admission criteria and the current roster.
 
@@ -50,15 +50,17 @@ The monorepo also hosts Polterware Notes, a separate local-first app with its ow
 
 - Inbox: flat page of derived items — Decision (open card questions), Drift (warning/conflict findings), Verify (facts with no evidence); count in the sidebar, also in `polterware status` and `polterware inbox`
 - Work: Board, Specs
+  - Several boards: a board is a saved view (`work_boards`) over the same cards, grouped by stage by default; the card stage lifecycle stays canonical.
   - The Polterware store, not Polter text, is the source of truth; `.pw.md` files are input only.
   - Board groups Work cards (`work_cards`) by stage (Shape, Plan, Build, Verify, Delivered). The Desktop reads through `WorkService.ListWorkCards` and writes Polter text through `WorkService.ApplyPolter`; agents use `polterware apply`.
   - Specs is a table of the same cards. The five-document Spec / Plan / Tasks / Clarify / Checklist model and the Constitution document are removed; project-wide principles are pinned Decisions.
-- Atlas: Map, Components (nodes: system, domain, component; a feature is a Work card shown in the node detail)
+- Structure: registry of the project tree (nodes: system, domain, component; a feature is a Work card shown in the node detail). Tree and Cards views with the global DetailPanel; a component lists and edits its deploy targets per environment (provider from the integration catalog plus a resource name, `deploys:` in Polter). A provider whose CLI is not connected raises an Inbox Verify item. `atlas` stays as a route alias.
+- Canvas: many canvases per project, each with a type (architecture, roadmap, flow, brainstorm, ideas, free). Typed canvases validate shapes and edges; free has no rules; notes and text are allowed everywhere. A canvas is a typed graph with layout stored separately; agents read it (`polterware canvas ls|show`, MCP `polter.query` kind `canvas`) only when it is marked agent-visible, and unreferenced content is labeled unverified. Free items can be promoted to Work cards, Decisions, and Facts.
 - Truth: Decisions, Facts, Evidence
   - Decisions is one list of Verdicts with a lifecycle state filter (Active, Challenged, Proposed, Superseded; all states shown by default). A Decision has a scope: a Principle applies to the whole project and stays pinned on top (`extra_json.scope = "principle"`).
   - Facts are statements about the project (declared, observed, inferred, or verified); each lists the evidence that backs it.
   - Evidence is one list of `source`, `doc`, and `runbook` items with a kind filter. Sources are registered project-relative paths (`kind = source`); Import from project root runs `ImportProjectSources` for the MVP file set. Generic filesystem indexing beyond that set is not shipped.
-  - Resources are Atlas components; there is no separate Inventory surface.
+  - Resources are Structure components; there is no separate Inventory surface.
 - Dispatch: sidebar section with three routes. Runs holds Runs and Agents. Routing holds Tiers and Learning. Usage holds Stats. Agents show quota and pace per agent. Worktree info lives on the run card. A dispatch run is a core-executed delegation in `backend/domains/dispatch`. It may reference an AgentRun id and a Work card slug, and it is not itself an AgentRun. CLI (`polterware dispatch`) and the TUI read it through the core. There is no Dispatch MCP tool. Live output stays on Runs. Quota comes only from the CLIs' official protocols; unknown usage stays unknown.
 - Integrations: one sidebar route after Dispatch, with Connected and Catalog tabs (**KEEP** — evidence + Connect UI).
 - Activity: flat page with the Unified Change History of justified changes across every surface, plus dispatch history entries (started, verified, merged, failed), filterable by person, agent, and tier. It has no data of its own. Opening a dispatch entry shows a summary, not the live log.
@@ -67,7 +69,7 @@ The monorepo also hosts Polterware Notes, a separate local-first app with its ow
   - Agents: MCP server, Agent setup, Hooks, AI skill, Oracle, Compile context, Drift check
   - App: Shortcuts, Appearance, Local core, Privacy, Danger zone (reset local store)
 
-Scope is a global filter, not a surface: the title bar scope filter takes repeatable tokens (`system:`, `domain:`, `component:`, and `env:` on Atlas, Truth Evidence, and Activity). Node tokens are one union sent as `scope_nodes` (a parent includes its children; ancestors stay included because the read is non-exact). It narrows Work cards (through their component), Decisions, Facts, Evidence, Inbox/Drift, Activity, the Context Compiler, `polterware query|status|inbox|oracle --scope <node> [--exact]`, and the MCP `scope` argument. An entity has one optional scope (`scope_node_id`); no scope means the whole project and stays visible under any filter. Decisions take `scope:` in Polter; derived Inbox/Drift items are scoped with `polterware scope item <key> <node>`. The filter is hidden on the Projects home screen.
+Scope is a global filter, not a surface: the title bar scope filter takes repeatable tokens (`system:`, `domain:`, `component:`, and `env:` on Structure, Truth Evidence, and Activity). Node tokens are one union sent as `scope_nodes` (a parent includes its children; ancestors stay included because the read is non-exact). It narrows Work cards (through their component), Decisions, Facts, Evidence, Inbox/Drift, Activity, the Context Compiler, `polterware query|status|inbox|oracle --scope <node> [--exact]`, and the MCP `scope` argument. An entity has one optional scope (`scope_node_id`); no scope means the whole project and stays visible under any filter. Decisions take `scope:` in Polter; derived Inbox/Drift items are scoped with `polterware scope item <key> <node>`. The filter is hidden on the Projects home screen.
 
 Keep project and environment switchers, Commander, history controls, and Settings. Do not introduce additional product surfaces without an approved decision.
 
