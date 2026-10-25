@@ -5,7 +5,7 @@ describe("Desktop core composition", () => {
     const { readFileSync } = await import("node:fs");
     const { join } = await import("node:path");
     const source = readFileSync(join(import.meta.dirname, "App.tsx"), "utf8");
-    for (const surface of ["ArchitectureView", "KnowledgeView", "IntegrationsView", "SettingsView"]) {
+    for (const surface of ["StructureView", "KnowledgeView", "IntegrationsView", "SettingsView"]) {
       expect(source).toContain(surface);
     }
     expect(source).not.toContain("OperationsView");
@@ -16,7 +16,7 @@ describe("Desktop core composition", () => {
     const { readFileSync } = await import("node:fs");
     const { join } = await import("node:path");
     const source = readFileSync(join(import.meta.dirname, "App.tsx"), "utf8");
-    expect(source).toMatch(/import \{[^}]*\bArchitectureView\b[^}]*\} from "@polterware\/feature-architecture"/);
+    expect(source).toMatch(/import \{[^}]*\bStructureView\b[^}]*\} from "@polterware\/feature-architecture"/);
     expect(source).toContain("lazy(() =>");
     expect(source).toContain("<Suspense");
     expect(source).toContain('import("@polterware/feature-knowledge")');
@@ -34,7 +34,7 @@ describe("Desktop core composition", () => {
     const persist = readFileSync(join(import.meta.dirname, "workspace/persist.ts"), "utf8");
     expect(source).toContain("loadWorkspaceShell");
     expect(source).toContain("loadWorkspaceExtensions");
-    expect(source).toContain("persistView");
+    expect(source).toContain("persistAtlasCreateNode");
     expect(source).toContain("persistKnowledgeCreate");
         expect(source).toContain("persistEnvironment");
     expect(source).toContain("persistEnvironmentDefault");
@@ -43,7 +43,7 @@ describe("Desktop core composition", () => {
     expect(persist).toContain("syncConnection");
     expect(persist).not.toContain("Metadata refreshed from the local store.");
     expect(source).toContain("projectId={currentProjectId()}");
-    expect(source).toContain('fixtureMode="off"');
+    expect(source).toContain("nodes={filterStructureNodes(workspace().atlas.nodes, scopeNodeIdList()).map");
     expect(source).not.toContain("PROJECT_SWITCHER_FIXTURES");
     expect(source).not.toContain("RESOURCE_FIXTURES");
     expect(source).not.toContain('fixtureMode="force"');

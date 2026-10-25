@@ -20,9 +20,9 @@ export type SearchHit = {
 };
 
 export const SEARCH_HITS: SearchHit[] = [
-  { id: "h1", category: "Atlas", title: "Payment Service", subtitle: "Service · Production", section: "atlas", entityKind: "arch-node", entityId: "payment" },
-  { id: "h2", category: "Atlas", title: "Payment flow", subtitle: "System map", section: "atlas", tab: "map" },
-  { id: "h3", category: "Atlas", title: "payment-service", subtitle: "Component · AWS · Healthy", section: "atlas", tab: "map", entityKind: "resource", entityId: "payment-service" },
+  { id: "h1", category: "Structure", title: "Payment Service", subtitle: "Service · Production", section: "structure", entityKind: "arch-node", entityId: "payment" },
+  { id: "h2", category: "Structure", title: "Payment flow", subtitle: "System", section: "structure" },
+  { id: "h3", category: "Structure", title: "payment-service", subtitle: "Component · AWS · Healthy", section: "structure", entityKind: "resource", entityId: "payment-service" },
   { id: "h5", category: "Work", title: "Payment flow", subtitle: "card · Build", section: "work", tab: "board", entityKind: "card", entityId: "payment-flow" },
   { id: "h6", category: "Truth", title: "Verdict 0004", subtitle: "verdict · Product positioning", section: "truth", tab: "decisions", entityKind: "verdict", entityId: "verdict-0004" },
 ];
@@ -91,7 +91,7 @@ export function SearchResultsPage(props: {
     for (const h of base) c.set(h.category, (c.get(h.category) ?? 0) + 1);
     return c;
   });
-  const cats = () => ["all", "Atlas", "Work", "Truth"];
+  const cats = () => ["all", "Structure", "Work", "Truth"];
 
   return (
     <div class="flex h-full min-h-0 flex-col">
@@ -117,7 +117,7 @@ export function SearchResultsPage(props: {
         {filtered().length === 0 ? (
           <p class="text-center text-[13px] text-[var(--color-text-muted)]">No results — refine your query</p>
         ) : (
-          <For each={["Atlas", "Work", "Truth"]}>
+          <For each={["Structure", "Work", "Truth"]}>
             {(cat) => {
               const items = () => filtered().filter((h) => h.category === cat);
               if (!items().length) return null;

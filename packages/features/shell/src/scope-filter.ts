@@ -42,9 +42,9 @@ export function isScopeFilterKey(value: string): value is ScopeFilterKey {
   return (SCOPE_FILTER_KEYS as readonly string[]).includes(value);
 }
 
-/** Atlas, Truth Evidence, and Activity are the screens with an environment narrowing. */
+/** Structure, Truth Evidence, and Activity are the screens with an environment narrowing. */
 export function scopeFilterAllowsEnv(section: string, tab = ""): boolean {
-  if (section === "atlas" || section === "activity") return true;
+  if (section === "structure" || section === "activity") return true;
   return section === "truth" && tab === "evidence";
 }
 

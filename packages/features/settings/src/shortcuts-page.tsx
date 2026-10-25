@@ -7,9 +7,9 @@ import {
 import { SettingsSection } from "./settings-section";
 import { ShortcutRow } from "./shortcut-row";
 
-const GROUPS: ShortcutGroup[] = ["shell", "architecture"];
+const GROUPS: ShortcutGroup[] = ["shell", "structure"];
 
-/** Editable keyboard shortcuts for Shell and Architecture. */
+/** Editable keyboard shortcuts for Shell and Structure. */
 export function ShortcutsPage() {
   const [recordingId, setRecordingId] = createSignal<string | null>(null);
 
@@ -17,7 +17,7 @@ export function ShortcutsPage() {
     <div class="flex flex-col gap-6">
       <SettingsSection
         title="Shortcuts"
-        description="Shortcuts apply on this computer. Architecture chords work when the canvas is focused and you are not typing in a field. Escape cancels recording and stays reserved for dialogs."
+        description="Shortcuts apply on this computer. Structure chords work on Structure when you are not typing in a field. Escape cancels recording and stays reserved for dialogs."
       >
         <For each={GROUPS}>
           {(group) => (

@@ -232,7 +232,8 @@ export type WorkspaceAtlasNode = {
   /** Both empty unless the node is moving between designs. */
   migrationFrom: string;
   migrationTo: string;
-  /** Node paths this node depends on; the map draws them as edges. */
+  deploys?: { id: string; environmentId: string; environment: string; provider: string; resource: string }[];
+  /** Node paths this node depends on. */
   uses?: string[];
 };
 

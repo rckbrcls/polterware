@@ -23,6 +23,7 @@ describe("mapAtlas", () => {
           folder: "src/core",
           migrationFrom: "REST",
           migrationTo: "Connect",
+          deploys: [{ id: "deploy-1", environmentId: "prod", environment: "Production", provider: "aws", resource: "api-prod" }],
         },
         { id: "n2", level: "folder", status: "proposed", title: "Dropped" },
         { id: "n3", level: "domain", status: "mystery", title: "Dropped" },
@@ -44,6 +45,7 @@ describe("mapAtlas", () => {
       migrationTo: "Connect",
     });
     expect(atlas.nodes[0]?.invariants).toEqual([{ id: "i1", text: "One core process" }]);
+    expect(atlas.nodes[0]?.deploys).toEqual([{ id: "deploy-1", environmentId: "prod", environment: "Production", provider: "aws", resource: "api-prod" }]);
     expect(atlas.driftSlugs).toEqual(["git-import"]);
   });
 

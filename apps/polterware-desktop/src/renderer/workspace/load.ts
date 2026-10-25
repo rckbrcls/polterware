@@ -64,6 +64,7 @@ export type WorkspaceSnapshot = {
   layoutBody: string;
   layoutRevision: number;
   rawKnowledge: Record<string, unknown>[];
+  structureFacts: { id: string; entityId: string; scopeNodeId: string }[];
 };
 
 /** Extension-domain fields merged after the Architecture shell paints. */
@@ -81,6 +82,7 @@ export type WorkspaceExtensions = Pick<
   | "integrationResources"
   | "syncRuns"
   | "rawKnowledge"
+  | "structureFacts"
 >;
 
 type ProjectMetadata = {
@@ -116,6 +118,7 @@ export function emptyWorkspaceExtensions(): WorkspaceExtensions {
     integrationResources: [],
     syncRuns: [],
     rawKnowledge: [],
+    structureFacts: [],
   };
 }
 
@@ -197,12 +200,7 @@ export async function loadWorkBoards(projectId: string): Promise<WorkspaceWorkBo
 
 /** Atlas nodes for the canvas. A failed read keeps the page usable with no nodes. */
 export async function loadAtlas(projectId: string, asOf = "", api = core()): Promise<WorkspaceAtlas> {
-  try {
-    return mapAtlas(asRecord(await api.work.listAtlas({ projectId, asOf })));
-  } catch (error) {
-    console.warn("Atlas read failed.", error);
-    return emptyAtlas();
-  }
+  return mapAtlas(asRecord(await api.work.listAtlas({ projectId, asOf })));
 }
 
 /** Change batches that touched the Atlas. A failed read leaves the timeline with only Now. */
@@ -338,6 +336,7 @@ export async function loadWorkspaceExtensions(
     api.integrations.listSyncRuns({ projectId }),
     environmentsPromise,
     loadWorkBoards(projectId),
+    api.canon.listFacts({ projectId, ...scopeArgs() }),
   ]);
   const [
     knowledgeRes,
@@ -394,6 +393,7 @@ export async function loadWorkspaceExtensions(
     integrationResources,
     syncRuns,
     rawKnowledge: knowledgeItems,
+    structureFacts: asObjectArray(asRecord(settled[12]).facts).map((fact) => ({ id: asString(fact.id), entityId: asString(fact.entityId), scopeNodeId: asString(fact.scopeNodeId) })),
   };
 }
 

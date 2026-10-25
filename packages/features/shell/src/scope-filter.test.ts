@@ -145,7 +145,7 @@ describe("scope node and environment matching", () => {
   });
 
   it("offers env only on Atlas, Truth Evidence, and Activity", () => {
-    expect(scopeFilterAllowsEnv("atlas", "map")).toBe(true);
+    expect(scopeFilterAllowsEnv("structure", "all")).toBe(true);
     expect(scopeFilterAllowsEnv("truth", "evidence")).toBe(true);
     expect(scopeFilterAllowsEnv("activity", "all")).toBe(true);
     expect(scopeFilterAllowsEnv("truth", "facts")).toBe(false);

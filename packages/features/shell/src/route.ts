@@ -7,7 +7,7 @@ import {
 /** Project surfaces. Dispatch is three routes (Runs, Routing, Usage), with tabs on Runs and Routing. Settings is a dialog, not a section. */
 export type NavSectionId =
   | "inbox"
-  | "atlas"
+  | "structure"
   | "work"
   | "canvas"
   | "truth"
@@ -91,7 +91,7 @@ const DEFAULT_SECTION = "inbox" as const satisfies NavSectionId;
 
 export const DEFAULT_TABS = {
   inbox: "all",
-  atlas: "map",
+  structure: "all",
   work: "board",
   canvas: "all",
   truth: "decisions",
@@ -107,11 +107,7 @@ export const SECTION_TABS = {
   // Route id only — Inbox is a flat page (no tab rail).
   inbox: [{ id: "all", label: "All" }],
   canvas: [{ id: "all", label: "All" }],
-  atlas: [
-    { id: "map", label: "Map" },
-    { id: "components", label: "Components" },
-    { id: "relations", label: "Relations" },
-  ],
+  structure: [{ id: "all", label: "All" }],
   work: [
     { id: "board", label: "Board" },
     { id: "specs", label: "List" },
@@ -146,7 +142,7 @@ export const SECTION_TABS = {
 
 const NAV_SECTIONS = {
   inbox: true,
-  atlas: true,
+  structure: true,
   work: true,
   canvas: true,
   truth: true,
@@ -199,7 +195,7 @@ export function resolveRoute(
   let section = rawSection.toLowerCase();
   let tab = rawTab;
 
-  // Removed surfaces (Ops / Terminal / Nodes) redirect to Atlas.
+  // Removed surfaces (Ops / Terminal / Nodes) redirect to Structure.
   if (
     section === "ops" ||
     section === "operations" ||
@@ -207,12 +203,13 @@ export function resolveRoute(
     section === "search" ||
     section === "logs"
   ) {
-    section = "atlas";
-    tab = "map";
+    section = "structure";
+    tab = "all";
   }
-  // Pre-Atlas sections map onto their new homes.
+  if (section === "atlas") section = "structure";
+  // Pre-Structure sections map onto their new homes.
   if (section === "architecture") {
-    section = "atlas";
+    section = "structure";
   }
   if (
     section === "resources" ||
@@ -220,9 +217,9 @@ export function resolveRoute(
     section === "nodes" ||
     section === "processes"
   ) {
-    // Resources are Atlas components now.
-    section = "atlas";
-    tab = "components";
+    // Resources are Structure components now.
+    section = "structure";
+    tab = "all";
   }
   if (section === "knowledge") {
     if (tab === "sources" || tab === "docs" || tab === "runbooks") {

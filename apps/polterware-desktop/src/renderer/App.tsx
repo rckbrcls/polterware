@@ -40,7 +40,7 @@ import {
   type WorkspaceInboxAction,
   type WorkspaceInboxItem,
 } from "@polterware/feature-shell";
-import { ArchitectureView } from "@polterware/feature-architecture";
+import { StructureView, STRUCTURE_SCOPE, filterStructureNodes } from "@polterware/feature-architecture";
 import { CanvasWorkspace } from "./canvas-workspace";
 import type { WorkBoardAction } from "@polterware/feature-knowledge";
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
@@ -100,7 +100,6 @@ import { shouldOpenCreateProject } from "./workspace/first-project";
 import {
   persistCreatedProject,
   persistDeleteEnvironment,
-  persistDeleteView,
   persistArchiveProject,
   persistEnvironment,
   persistEnvironmentDefault,
@@ -114,11 +113,9 @@ import {
   persistKnowledgeScope,
   persistKnowledgeDelete,
   persistKnowledgeSourcePath,
-  persistLayout,
   persistAddProjectRepo,
   persistProjectSettings,
   persistRemoveProjectRepo,
-  persistView,
   persistDecisionAction,
   persistWorkCreateCard,
   persistWorkBoardCreate,
@@ -137,7 +134,6 @@ import {
   resetLocalStore,
 } from "./workspace/persist";
 
-const SYSTEM_ID = "sys-local";
 const PLATFORM_CONTEXT = bootstrapPlatform();
 
 /**
@@ -196,6 +192,7 @@ export function App() {
   const [importSourcesBusy, setImportSourcesBusy] = createSignal(false);
   const [workspace, setWorkspace] = createSignal<WorkspaceSnapshot>(emptyWorkspace());
   const [loading, setLoading] = createSignal(true);
+  const [structureError, setStructureError] = createSignal("");
 
   async function refreshWorkspace(
     projectId = route().projectId ?? "",
@@ -206,10 +203,11 @@ export function App() {
       return;
     }
     try {
+      setStructureError("");
       const shell = await loadWorkspaceShell(projectId, catalog);
       if (loadedProjectId && loadedProjectId !== projectId) return;
       // Same project: keep the loaded extensions until the fresh ones land, so the
-      // Atlas map never merges against an empty node list and loses its layout.
+      // Structure keeps the loaded registry visible during refresh.
       setWorkspace((current) =>
         current.extensionsReady && current.settings.projectId === projectId
           ? { ...shell, ...pickWorkspaceExtensions(current), extensionsReady: true }
@@ -242,6 +240,7 @@ export function App() {
           extensionsReady: true,
         }));
       } catch (error) {
+        setStructureError(error instanceof Error ? error.message : "Could not load Structure.");
         pushToast(
           error instanceof Error ? error.message : "Could not load workspace extensions.",
           "danger",
@@ -328,6 +327,9 @@ export function App() {
         event.preventDefault();
         handlePaletteCommand("nav.canvas");
         return;
+      }
+      if (route().section === "structure" && !route().dialog && !(event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable=true], [role=dialog]")) && matchesShortcut("structure.add_node", event)) {
+        event.preventDefault(); handlePaletteCommand("action.create-node"); return;
       }
       if (!matchesShortcut("shell.toggle_commander", event)) return;
       event.preventDefault();
@@ -505,7 +507,7 @@ export function App() {
     if (id === "action.create-node") {
       const base = routeWithProject(route());
       if (!base) return;
-      applyRoute(openDialog(goSection(base, "atlas"), { type: "arch-node-create" }));
+      applyRoute(openDialog(goSection(base, "structure"), { type: "arch-node-create" }));
       return;
     }
     if (id === "action.connect-integration") {
@@ -529,6 +531,14 @@ export function App() {
       title: node.title,
     })),
   );
+  const structureCounts = createMemo(() => Object.fromEntries(workspace().atlas.nodes.map((node) => {
+    const entityIds = new Set(workspace().canonEntities.filter((entity) => entity.refId === node.id || entity.refId === node.path).map((entity) => entity.id));
+    return [node.id, {
+      work: workspace().workCards.filter((card) => card.under === node.path).length,
+      decisions: workspace().verdicts.filter((decision) => decision.scopeNodeId === node.id || decision.governs.includes(node.path) || decision.entityLinks.some((link) => entityIds.has(link.entityId))).length,
+      facts: workspace().structureFacts.filter((fact) => fact.scopeNodeId === node.id || entityIds.has(fact.entityId)).length,
+    }];
+  })));
   const scopeNodeIdList = createMemo(() => scopeNodeIds(scopeTokens(), scopeNodes()));
   const scopeEnvironments = createMemo(() => {
     const selected = new Set(environmentIds(scopeTokens()));
@@ -766,8 +776,8 @@ export function App() {
         onOpenCard={(slug) => activateDetail(cardScopeId(), slug, "card")}
         onOpenEntity={(_entityId, refId, kind) => {
           if (kind === "component") {
-            applyRoute(setTab(goSection(route(), "atlas"), "map"));
-            activateDetail("architecture:canvas", refId, "arch-node");
+            applyRoute(goSection(route(), "structure"));
+            activateDetail(STRUCTURE_SCOPE, refId, "arch-node");
           }
         }}
         onLinkEntity={(knowledgeId, entityId, kind) => {
@@ -1022,8 +1032,8 @@ export function App() {
           })}
         onOpenComponent={(id) =>
           navigateToDetail(
-            setTab(goSection(route(), "atlas"), "map"),
-            "architecture:canvas",
+            goSection(route(), "structure"),
+            STRUCTURE_SCOPE,
             id,
             "arch-node",
           )
@@ -1206,70 +1216,31 @@ export function App() {
           <Show when={currentProjectId()} keyed>{(projectId) => <CanvasWorkspace projectId={projectId} workspace={workspace()} onReload={() => refreshWorkspace(projectId)} />}</Show>
         </Match>
 
-        <Match when={route().section === "atlas"}>
-          <ArchitectureView
-            systems={[{ id: SYSTEM_ID, name: workspace().settings.name || "Polterware" }]}
-            resources={workspace().integrationResources.filter((resource) =>
-              matchesEnvironment(
-                resource.environment ? [resource.environment] : [],
-                scopeEnvironments(),
-              ),
-            ).map((resource) => ({
-              id: resource.id,
-              name: resource.name,
-              type: resource.kind,
-              source: workspace().integrations.find((item) => item.id === resource.integrationId)?.provider,
-              environmentLabel: resource.environment === "All" ? undefined : resource.environment,
-              systemId: SYSTEM_ID,
-            }))}
-            layoutBody={workspace().layoutBody}
-            layoutRevision={workspace().layoutRevision}
-            dataSource="empty"
-            fixtureMode="off"
-            loading={loading()}
-            inspector={{
-              knowledge: (() => {
-                const nodeId = route().selectedNodeId;
-                if (!nodeId) return [];
-                const entity = workspace().canonEntities.find(
-                  (item) => item.kind === "component" && item.refId === nodeId,
-                );
-                if (!entity) return [];
-                const linked = [
-                  ...workspace().evidence,
-                  ...workspace().verdicts,
-                ].flatMap((item) =>
-                  item.entityLinks.some((link) => link.entityId === entity.id)
-                    ? [{ id: item.id, title: item.title, body: "summary" in item ? item.summary : "" }]
-                    : [],
-                );
-                return linked;
-              })(),
-            }}
-            tab={route().tab}
-            search={route().search}
-            selectedNodeId={route().selectedNodeId}
-            views={workspace().views.filter((view) =>
-              matchesEnvironment(view.environments, scopeEnvironments()),
-            )}
+        <Match when={route().section === "structure"}>
+          <StructureView
+            projectName={workspace().settings.name || "Project"}
+            projectDescription={workspace().settings.description}
+            projectRepository={workspace().settings.repository}
+            nodes={filterStructureNodes(workspace().atlas.nodes, scopeNodeIdList()).map((node) => ({ ...node, deploys: node.deploys?.filter((deploy) =>
+              matchesEnvironment([deploy.environmentId, deploy.environment], scopeEnvironments())) }))}
+            counts={structureCounts()}
+            registryNodes={workspace().atlas.nodes}
+            projectCounts={{ work: workspace().workCards.length, decisions: workspace().verdicts.length, facts: workspace().structureFacts.length }}
+            error={structureError() || (!workspace().available ? workspace().healthMessage : undefined)}
+            loading={!structureError() && workspace().available && (loading() || !workspace().extensionsReady)}
             createDialogOpen={route().dialog?.type === "arch-node-create"}
+            onOpenCreate={() => applyRoute(openDialog(route(), { type: "arch-node-create" }), "silent")}
+            onCloseCreate={() => applyRoute(closeDialog(route()), "silent")}
+            onOpenNode={(id) => activateDetail(STRUCTURE_SCOPE, id, "arch-node")}
             onSelect={(id) => applyRoute(setSelectedNode(route(), id), "silent")}
-            onOpenNode={(id) => activateDetail("architecture:canvas", id, "arch-node")}
-            onTabChange={(tab) => applyRoute(setTab(route(), tab))}
-            onCreateNode={() =>
-              applyRoute(openDialog(route(), { type: "arch-node-create" }), "silent")
-            }
-            onCloseCreateNode={() => applyRoute(closeDialog(route()), "silent")}
-            atlasNodes={workspace().atlas.nodes}
-            cards={workspace().workCards}
-            onReparentNode={async (nodeId, parentId) => {
+            onMove={async (nodeId, parentId) => {
               const nodes = workspace().atlas.nodes;
               const node = nodes.find((item) => item.id === nodeId);
               const parent = nodes.find((item) => item.id === parentId);
-              if (!node || !parent) throw new Error("Missing atlas node.");
+              if (!node || !parent) throw new Error("Missing structure node.");
               const from = nodes.find((item) => item.id === node.parentId);
               const change = await justifyChange({
-                title: "Move atlas node",
+                title: "Move structure node",
                 defaultSummary:
                   parent.level === "system" && from
                     ? `Move ${node.title} out of ${from.title}`
@@ -1286,121 +1257,26 @@ export function App() {
               });
               await refreshWorkspace(currentProjectId());
             }}
-            onConnectNodes={async (sourceId, targetId) => {
+            onUses={async (nodeId, targetIds) => {
               const nodes = workspace().atlas.nodes;
-              const source = nodes.find((item) => item.id === sourceId);
-              const target = nodes.find((item) => item.id === targetId);
-              if (!source || !target) throw new Error("Missing atlas node.");
-              const uses = source.uses ?? [];
-              if (uses.includes(target.path)) return;
-              const change = await justifyChange({
-                title: "Connect atlas nodes",
-                defaultSummary: `${source.title} uses ${target.title}`,
-              });
-              if (!change) return;
-              await persistAtlasUses({
-                projectId: currentProjectId(),
-                path: source.path,
-                title: source.title,
-                level: source.level,
-                uses: [...uses, target.path],
-                change,
-              });
+              const source = nodes.find((node) => node.id === nodeId);
+              if (!source) throw new Error("Missing structure node.");
+              const change = await justifyChange({ title: "Update dependencies", defaultSummary: `Update dependencies of ${source.title}` });
+              if (!change) throw new Error("Cancelled.");
+              await persistAtlasUses({ projectId: currentProjectId(), path: source.path, title: source.title, level: source.level,
+                uses: nodes.filter((node) => targetIds.includes(node.id)).map((node) => node.path), change });
               await refreshWorkspace(currentProjectId());
             }}
-            onDisconnectNodes={async (sourceId, targetId) => {
+            onCreate={async (draft) => {
               const nodes = workspace().atlas.nodes;
-              const source = nodes.find((item) => item.id === sourceId);
-              const target = nodes.find((item) => item.id === targetId);
-              if (!source || !target) throw new Error("Missing atlas node.");
-              const change = await justifyChange({
-                title: "Remove atlas connection",
-                defaultSummary: `${source.title} no longer uses ${target.title}`,
-              });
-              // Model edges stay drawn until uses: changes, so a cancel needs no undo.
-              if (!change) return;
-              await persistAtlasUses({
-                projectId: currentProjectId(),
-                path: source.path,
-                title: source.title,
-                level: source.level,
-                uses: (source.uses ?? []).filter((path) => path !== target.path),
-                change,
-              });
+              const parent = nodes.find((node) => node.id === draft.parentId);
+              const change = await justifyChange({ title: "Add structure node", defaultSummary: `Add ${draft.title}${parent ? ` under ${parent.title}` : ""}` });
+              if (!change) throw new Error("Cancelled.");
+              await persistAtlasCreateNode({ projectId: currentProjectId(), heading: uniqueAtlasSlug(nodes, draft.title), title: draft.title,
+                level: draft.level, under: parent?.path, change });
               await refreshWorkspace(currentProjectId());
+              pushToast("Structure node added.", "success");
             }}
-            onCreateNestedNode={async (parentId) => {
-              const nodes = workspace().atlas.nodes;
-              const parent = parentId ? nodes.find((item) => item.id === parentId) : undefined;
-              const level = !parent ? "system" : parent.level === "system" ? "domain" : "component";
-              const title = level === "system" ? "New system" : level === "domain" ? "New domain" : "New component";
-              const heading = uniqueAtlasSlug(nodes, title);
-              const change = await justifyChange({
-                title: "Add atlas node",
-                defaultSummary: parent ? `Add ${title} under ${parent.title}` : `Add ${title}`,
-              });
-              if (!change) return;
-              try {
-                await persistAtlasCreateNode({
-                  projectId: currentProjectId(),
-                  heading,
-                  title,
-                  level,
-                  under: parent?.path,
-                  change,
-                });
-                await refreshWorkspace(currentProjectId());
-                pushToast("Card added to the map.", "success");
-              } catch (error: unknown) {
-                pushToast(error instanceof Error ? error.message : "Could not add the card.", "danger");
-              }
-            }}
-            onSubmitCreateNode={(result) => {
-              applyRoute(closeDialog(route()), "silent");
-              if (!result.ok) {
-                pushToast(result.error || "Could not save architecture node.", "danger");
-                return;
-              }
-              pushToast("Architecture node saved to the local canvas.", "success");
-            }}
-            onSaveLayout={async (bodyJson, expectedRevision) => {
-              const result = await persistLayout(currentProjectId(), bodyJson, expectedRevision);
-              setWorkspace((current) => {
-                if (
-                  current.layoutBody === bodyJson &&
-                  current.layoutRevision === result.revision
-                ) {
-                  return current;
-                }
-                return {
-                  ...current,
-                  layoutBody: bodyJson,
-                  layoutRevision: result.revision,
-                };
-              });
-              return result;
-            }}
-            onSaveView={(draft) =>
-              persistView({
-                projectId: currentProjectId(),
-                ...draft,
-              }).then(async () => {
-                pushToast("View saved locally.", "success");
-                await refreshWorkspace(currentProjectId());
-              }).catch((error: unknown) => {
-                pushToast(error instanceof Error ? error.message : "Could not save view.", "danger");
-                throw error;
-              })
-            }
-            onDeleteView={(id) =>
-              persistDeleteView(id).then(async () => {
-                pushToast("View deleted.", "success");
-                await refreshWorkspace(currentProjectId());
-              }).catch((error: unknown) => {
-                pushToast(error instanceof Error ? error.message : "Could not delete view.", "danger");
-                throw error;
-              })
-            }
           />
         </Match>
 

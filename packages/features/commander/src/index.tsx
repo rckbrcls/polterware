@@ -20,8 +20,8 @@ export function CommanderView(props: { onCommand?: (id: string) => void }) {
       <p class="m-0 text-[13px] text-[var(--color-text-muted)]">
         Commander is available via the configured Commander shortcut as a command palette.
       </p>
-      <Button size="sm" class="mt-2" onClick={() => props.onCommand?.("nav.atlas")}>
-        Open Atlas
+      <Button size="sm" class="mt-2" onClick={() => props.onCommand?.("nav.structure")}>
+        Open Structure
       </Button>
     </section>
   );
