@@ -34,13 +34,13 @@ describe("Structure collection", () => {
     await tick();
     expect(open).toHaveBeenCalledWith("api");
     expect(detailPanelStore.getState().open).toBe(true);
-    expect(host.textContent).toContain("No deploy target yet.");
-    expect(host.textContent).toContain("Not recorded");
-    expect(host.textContent).toContain("2 Work cards");
+    expect(host.textContent).toContain("No deploy targets yet.");
+    expect(host.textContent).not.toContain("Not recorded");
+    expect(host.textContent).toContain("2 Work");
     const cards = [...host.querySelectorAll<HTMLElement>('[data-scope="segment-group"][data-part="item"]')].find((item) => item.textContent === "Cards")!;
     cards.click();
     await tick();
-    const card = host.querySelector<HTMLButtonElement>('[data-detail-target-id="api"]')!;
+    const card = host.querySelector<HTMLElement>('[data-detail-target-id="api"]')!;
     card.click();
     expect(open).toHaveBeenLastCalledWith("api");
     expect(detailPanelStore.getState().activeTarget?.entityId).toBe("api");
