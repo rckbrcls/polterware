@@ -108,6 +108,10 @@ export function StructureView(props: {
   const selectedId = () => target()?.scopeId === STRUCTURE_SCOPE ? target()?.entityId : undefined;
   const selectedValue = createMemo<string[]>(() => { const id = selectedId(); return id ? [id] : []; }, [], { equals: sameIds });
   const selected = createMemo(() => props.nodes.find((node) => node.id === selectedId()));
+  const componentNode = createMemo(() => {
+    const node = selected();
+    return node?.level === "component" ? node : undefined;
+  });
   const selectedCounts = () => selectedId() === PROJECT_ID ? props.projectCounts : props.counts[selectedId() ?? ""] ?? { work: 0, decisions: 0, facts: 0 };
   const registry = () => props.registryNodes ?? props.nodes;
   const parents = () => structureParents(registry(), moveOpen() ? selected()?.level ?? kind() : kind(), moveOpen() ? selected()?.id : undefined);
@@ -221,7 +225,7 @@ export function StructureView(props: {
       <DetailPanel.Content><DetailPanel.Header /><DetailPanel.Body layout="record"><DetailPanel.Main>
         <DetailPanel.Title title={projectSelected() ? props.projectName : selected()!.title} icon={<KindIcon kind={projectSelected() ? "project" : selected()!.level} />} />
         <Show when={projectSelected() ? props.projectDescription : selected()?.intent}>{(description) => <DetailPanel.Section title="Description" icon={<FileText size={14} />}><p class="text-sm text-[var(--color-text-secondary)]">{description()}</p></DetailPanel.Section>}</Show>
-        <Show when={selected()?.level === "component"}>{(node) => <DetailPanel.Section title="Deploys" icon={<Boxes size={14} />} aside={<Button variant="ghost" size="sm" onClick={() => openDeploysDialog(node())}>Edit deploys</Button>}>
+        <Show when={componentNode()}>{(node) => <DetailPanel.Section title="Deploys" icon={<Boxes size={14} />} aside={<Button variant="ghost" size="sm" onClick={() => openDeploysDialog(node())}>Edit deploys</Button>}>
           <Show when={node().deploys && node().deploys!.length > 0} fallback={<p class="text-sm text-[var(--color-text-muted)]">No deploy targets yet.</p>}>
             <ul class="flex flex-col gap-2"><For each={node().deploys!}>{(deploy) => <li class="flex flex-wrap items-center gap-2 text-sm"><StatusChip tone="muted" label={deploy.provider} /><span class="text-[var(--color-text-secondary)]">{deploy.environment || deploy.environmentId}</span><span>{deploy.resource}</span><Show when={!isProviderConnected(deploy.provider)}><StatusChip tone="warn" label="CLI not connected" /></Show></li>}</For></ul>
           </Show>
@@ -230,7 +234,7 @@ export function StructureView(props: {
         <Show when={selected()}>{(node) => <DetailPanel.Section title="Structure" icon={<Network size={14} />} aside={<div class="flex items-center gap-1"><Button variant="ghost" size="icon" disabled={node().level === "system"} aria-label="Move node" onClick={() => { setParent(node().parentId); setFormError(""); setMoveOpen(true); }}><Route size={14} /></Button><Button variant="ghost" size="icon" aria-label="Edit dependencies" onClick={() => { setUseTargets(registry().filter((item) => node().uses?.includes(item.path)).map((item) => item.id)); setFormError(""); setUsesOpen(true); }}><Link2 size={14} /></Button></div>}>
           <DetailPanel.Properties>
             <DetailPanel.Property label="Parent" value={registry().find((item) => item.id === node().parentId)?.title} />
-            <DetailPanel.Property label="Dependencies" value={node().uses?.length ? `${node().uses.length} linked` : undefined} />
+            <DetailPanel.Property label="Dependencies" value={(node().uses?.length ?? 0) > 0 ? `${node().uses?.length ?? 0} linked` : undefined} />
           </DetailPanel.Properties>
         </DetailPanel.Section>}</Show>
       </DetailPanel.Main><DetailPanel.Rail aria-label="Structure properties"><DetailPanel.Section title="Properties" icon={<Settings size={14} />}><DetailPanel.Properties>
