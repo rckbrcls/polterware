@@ -56,6 +56,6 @@ describe("Structure collection", () => {
     const { host } = mount({ error: "Core unavailable" });
     expect(host.querySelector('[role="searchbox"]')).not.toBeNull();
     expect(host.textContent).toContain("Core unavailable");
-    expect([...host.querySelectorAll("button")].find((button) => button.textContent === "Add")?.disabled).toBe(true);
+    expect(host.querySelector<HTMLButtonElement>('button[aria-label="Add node"]')?.disabled).toBe(true);
   });
 });

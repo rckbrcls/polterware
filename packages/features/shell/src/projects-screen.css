@@ -5,6 +5,11 @@
   flex-direction: column;
 }
 
+/* Search lines up with the first card; the grid inset is 16px. */
+.pw-projects > .pw-page-toolbar {
+  padding-left: 16px;
+}
+
 .pw-projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -21,10 +26,10 @@
 .pw-projects-card {
   display: flex;
   min-width: 0;
-  flex-direction: column;
+  align-items: center;
   gap: 12px;
   height: 100%;
-  padding: 16px;
+  padding: 8px 12px;
   cursor: pointer;
 }
 
@@ -37,16 +42,9 @@
 .pw-projects-card-copy {
   display: flex;
   min-width: 0;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: 6px;
-}
-
-.pw-projects-meta {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
+  gap: 2px;
 }
 
 .pw-projects-card-description {
@@ -54,9 +52,8 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
-}
-
-.pw-projects-card-affordance {
-  flex: 0 0 auto;
+  margin: 0;
   color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.3;
 }

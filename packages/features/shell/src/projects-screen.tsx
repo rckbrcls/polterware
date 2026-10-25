@@ -1,6 +1,5 @@
 import { For, Show, createMemo, createSignal } from "solid-js";
 import {
-  ChevronRight,
   auroraForId,
   Button,
   Card,
@@ -13,8 +12,7 @@ import {
   PageToolbar,
   Plus,
   SearchBar,
-  StatusChip,
-  type StatusTone,
+  ToolbarIconButton,
 } from "@polterware/frontend-design-system";
 import type { ProjectSwitcherItem } from "./types";
 import "./projects-screen.css";
@@ -30,23 +28,19 @@ export type ProjectsScreenProps = {
   onCreateProject: () => void;
 };
 
-function statusPresentation(status: NonNullable<ProjectSwitcherItem["status"]>): { label: string; tone: StatusTone } {
-  if (status === "paused") return { label: "Paused", tone: "warn" };
-  if (status === "archived") return { label: "Archived", tone: "muted" };
-  return { label: "Active", tone: "ok" };
-}
-
-function activityLabel(value: string | undefined): string | undefined {
-  const text = value?.trim();
-  if (!text || text === "—") return undefined;
-  return text;
+function secondaryLine(project: ProjectSwitcherItem): { text: string; title?: string } | undefined {
+  const description = project.description?.trim();
+  if (description) return { text: description };
+  const path = project.directory?.trim();
+  if (path) return { text: path, title: path };
+  return undefined;
 }
 
 function ProjectCard(props: {
   project: ProjectSwitcherItem;
   onOpen: (projectId: string) => void;
 }) {
-  const activity = activityLabel(props.project.lastActivity);
+  const secondary = () => secondaryLine(props.project);
 
   function activate() {
     props.onOpen(props.project.projectId);
@@ -68,42 +62,24 @@ function ProjectCard(props: {
         };
       }}
     >
-      <div class="flex min-w-0 items-start gap-3">
-        <IconTile
-          size={28}
-          tone="architecture"
-          aurora={auroraForId(props.project.projectId)}
-          seed={props.project.projectId}
-        >
-          <Folder size={14} />
-        </IconTile>
-        <div class="pw-projects-card-copy flex-1">
-          <h2 class="truncate text-[14px] font-medium text-[var(--color-text-primary)]">
-            {props.project.name}
-          </h2>
-          <Show when={props.project.description}>
-            <p class="pw-projects-card-description text-[13px] text-[var(--color-text-secondary)]">
-              {props.project.description}
+      <IconTile
+        size={28}
+        tone="architecture"
+        aurora={auroraForId(props.project.projectId)}
+        seed={props.project.projectId}
+      >
+        <Folder size={14} />
+      </IconTile>
+      <div class="pw-projects-card-copy">
+        <h2 class="truncate text-[14px] font-medium text-[var(--color-text-primary)]">
+          {props.project.name}
+        </h2>
+        <Show when={secondary()}>
+          {(line) => (
+            <p class="pw-projects-card-description" title={line().title}>
+              {line().text}
             </p>
-          </Show>
-        </div>
-        <ChevronRight class="pw-projects-card-affordance" size={14} aria-hidden="true" />
-      </div>
-      <div class="pw-projects-meta">
-        <Show when={props.project.status}>
-          {(status) => {
-            const item = statusPresentation(status());
-            return <StatusChip tone={item.tone}>{item.label}</StatusChip>;
-          }}
-        </Show>
-        <span class="text-[12px] text-[var(--color-text-muted)]">{props.project.environmentSummary}</span>
-        <Show when={props.project.directory}>
-          <span class="min-w-0 flex-1 truncate text-[12px] text-[var(--color-text-muted)]" title={props.project.directory}>
-            {props.project.directory}
-          </span>
-        </Show>
-        <Show when={activity}>
-          <span class="shrink-0 text-[12px] text-[var(--color-text-muted)]">Updated {activity}</span>
+          )}
         </Show>
       </div>
     </Card>
@@ -121,8 +97,7 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
   return (
     <div class="pw-projects">
       <PageToolbar.Root>
-        <PageToolbar.Leading class="gap-2">
-          <span class="pw-page-toolbar-title">Projects</span>
+        <PageToolbar.Leading>
           <SearchBar
             placeholder="Search projects"
             aria-label="Search projects by name"
@@ -131,10 +106,9 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
           />
         </PageToolbar.Leading>
         <PageToolbar.Actions>
-          <Button size="sm" variant="texture" textureTone="brand" onClick={() => props.onCreateProject()}>
+          <ToolbarIconButton label="New project" onClick={() => props.onCreateProject()}>
             <Plus size={14} />
-            New project
-          </Button>
+          </ToolbarIconButton>
         </PageToolbar.Actions>
       </PageToolbar.Root>
       <PageContent class="pw-scroll-fade">

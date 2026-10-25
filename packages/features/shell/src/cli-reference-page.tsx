@@ -9,6 +9,7 @@ import {
   PageContent,
   PageToolbar,
   pushToast,
+  ToolbarIconButton,
 } from "@polterware/frontend-design-system";
 import {
   CLI_COMMANDS,
@@ -355,15 +356,9 @@ export function CliReferencePage() {
           <span class="pw-page-toolbar-title">CLI reference</span>
         </PageToolbar.Leading>
         <PageToolbar.Actions>
-          <Button
-            size="sm"
-            variant="texture"
-            textureTone="neutral"
-            onClick={() => void copyText(cliReferenceMarkdown(), "Reference")}
-          >
+          <ToolbarIconButton label="Copy reference" onClick={() => void copyText(cliReferenceMarkdown(), "Reference")}>
             <Copy size={14} />
-            Copy reference
-          </Button>
+          </ToolbarIconButton>
         </PageToolbar.Actions>
       </PageToolbar.Root>
       <PageContent class="overflow-auto px-4 py-8">

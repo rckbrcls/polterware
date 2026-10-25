@@ -1,6 +1,8 @@
 import { Show, createEffect, createMemo, createSignal, on, onCleanup } from "solid-js";
 import {
   ActiveFilterBar,
+  Button,
+  ChevronLeft,
   FileText,
   FilterMark,
   FilterPopover,
@@ -73,7 +75,8 @@ import { LibraryTable } from "./library-table";
 import { libraryStatusTone } from "./knowledge-document-helpers";
 import { WorkCardsEmpty, workCardsFilterEmpty } from "./knowledge-empty";
 import { WorkBoard } from "./work-board";
-import { WorkBoardPicker } from "./work-board-picker";
+import { WorkBoardList } from "./work-board-picker";
+import { backToWorkBoards, initialWorkBoardNavigation, openWorkBoard } from "./work-board-navigation";
 import { selectedWorkBoard, type WorkBoardAction } from "./work-boards";
 import { WorkCardDetail } from "./work-card-detail";
 import { WORK_STAGES, cardTaskProgress, workStageLabel, workStageTone } from "./work-stage";
@@ -214,12 +217,13 @@ export function KnowledgeView(props: {
   scopeEnvironments?: readonly EnvironmentItem[];
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
 }) {
-  const [selectedBoardId, setSelectedBoardId] = createSignal("");
-  createEffect(on(() => props.boardProjectId, () => setSelectedBoardId("")));
-  const selectedBoard = createMemo(() => selectedWorkBoard(props.workBoards ?? [], selectedBoardId()));
+  const [boardNavigation, setBoardNavigation] = createSignal(initialWorkBoardNavigation());
+  createEffect(on(() => props.boardProjectId, () => setBoardNavigation(initialWorkBoardNavigation())));
+  const selectedBoard = createMemo(() => selectedWorkBoard(props.workBoards ?? [], boardNavigation().selectedId));
   const tab = () => normalizeTab(props.tab);
   /** Board and Specs both list Work cards and share the card detail. */
   const cardTab = () => tab() === "board" || tab() === "specs";
+  const boardList = () => tab() === "board" && !boardNavigation().isOpen;
   const libraryTab = () => tab() === "library";
   const evidenceTab = () => tab() === "evidence";
   const railItems = () => props.tabs ?? TABS;
@@ -346,7 +350,7 @@ export function KnowledgeView(props: {
           entityId: item.id,
           entityKind: "evidence",
         }))
-      : tab() === "board"
+      : tab() === "board" && boardNavigation().isOpen
         ? cards().map((card) => ({
             scopeId: scope,
             entityId: card.slug,
@@ -708,6 +712,15 @@ export function KnowledgeView(props: {
 
   const hasLibraryItems = createMemo(() => allLibraryRows().length > 0);
 
+  function changeTab(next: string) {
+    setLibraryFilters({ ...EMPTY_LIBRARY_FILTERS });
+    setEvidenceFilters({ ...EMPTY_EVIDENCE_LIST_FILTERS });
+    setCardFilters({ ...EMPTY_CARD_LIST_FILTERS });
+    setCreateOpen(false);
+    setEvidenceAddOpen(false);
+    props.onTabChange?.(next);
+  }
+
   // A page-kind entity named by the route replaces the list, like a Notes note route.
   const pageRoute = () => {
     const target = expandedDetail();
@@ -718,30 +731,34 @@ export function KnowledgeView(props: {
     <EntityDetailHost>
     <Show when={!props.loading} fallback={<PageLoading layout="table" label="Loading knowledge…" />}>
       <Show when={!pageRoute()}>
+      <Show
+        when={boardList()}
+        fallback={
       <div class="flex h-full min-h-0 flex-col">
         <PageToolbar.Root>
+          <Show when={tab() === "board" && boardNavigation().isOpen}>
+            <PageToolbar.Leading class="gap-1">
+              <Button variant="ghost" size="icon" aria-label="All boards" onClick={() => setBoardNavigation((current) => backToWorkBoards(current))}>
+                <ChevronLeft size={14} />
+              </Button>
+              <span class="pw-page-toolbar-title">{selectedBoard().name}</span>
+            </PageToolbar.Leading>
+          </Show>
           <Show
             when={railItems().length > 1}
             fallback={
-              <PageToolbar.Leading>
+              <Show when={!(tab() === "board" && boardNavigation().isOpen)}><PageToolbar.Leading>
                 <span class="pw-page-toolbar-title">
                   {props.tabsLabel ?? railItems()[0]?.label ?? "Knowledge"}
                 </span>
-              </PageToolbar.Leading>
+              </PageToolbar.Leading></Show>
             }
           >
             <PageToolbar.Tabs>
               <Tabs
                 items={[...railItems()]}
                 value={props.activeTab ?? tab()}
-                onChange={(next) => {
-                  setLibraryFilters({ ...EMPTY_LIBRARY_FILTERS });
-                  setEvidenceFilters({ ...EMPTY_EVIDENCE_LIST_FILTERS });
-                  setCardFilters({ ...EMPTY_CARD_LIST_FILTERS });
-                  setCreateOpen(false);
-                  setEvidenceAddOpen(false);
-                  props.onTabChange?.(next);
-                }}
+                onChange={changeTab}
                 aria-label={props.tabsLabel ?? "Knowledge"}
               />
             </PageToolbar.Tabs>
@@ -772,17 +789,6 @@ export function KnowledgeView(props: {
                 ...filterPopoverProps().groups,
               ]}
             />
-            <Show when={tab() === "board"}>
-              <Show when={props.boardProjectId || "work"} keyed>
-                {(_projectId) => <WorkBoardPicker
-                  boards={props.workBoards ?? []}
-                  selectedId={selectedBoard().id}
-                  onSelect={setSelectedBoardId}
-                  onAction={props.onBoardAction}
-                  disabled={props.loading || Boolean(props.error)}
-                />}
-              </Show>
-            </Show>
             <Show when={cardTab() ? props.onCreateCard : evidenceTab() ? canAddEvidence() : props.onCreate}>
               <ToolbarIconButton
                 label={createLabel()}
@@ -950,6 +956,21 @@ export function KnowledgeView(props: {
           </PageContent>
         </Show>
       </div>
+        }
+      >
+        <WorkBoardList
+          boards={props.workBoards ?? []}
+          cardCount={(props.workCards ?? []).length}
+          tabs={railItems()}
+          activeTab={props.activeTab ?? tab()}
+          tabsLabel={props.tabsLabel ?? "Work"}
+          onTabChange={changeTab}
+          onOpen={(id) => setBoardNavigation(openWorkBoard(id))}
+          onDelete={() => setBoardNavigation(initialWorkBoardNavigation())}
+          onAction={props.onBoardAction}
+          disabled={props.loading || Boolean(props.error)}
+        />
+      </Show>
       </Show>
 
       <Show when={verdict()}>

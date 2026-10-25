@@ -22,7 +22,6 @@ import { CanvasNode } from "./node-renderer";
 import { StructurePicker } from "./structure-picker";
 import "./canvas.css";
 
-export const AGENT_HINT = "Agents read only shared canvases. Content without references is unverified.";
 
 function toolOptions() {
   return [

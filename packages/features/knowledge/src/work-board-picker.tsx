@@ -1,39 +1,67 @@
 import { Show, createMemo, createSignal } from "solid-js";
 import {
-  A11yDialog, ArrowDown, ArrowUp, Button, DropdownMenu, DropdownMenuContent,
-  DropdownMenuItem, DropdownMenuTrigger, Field, Input, MoreHorizontal, Pencil,
-  Plus, Select, Delete, buttonClassName, pushToast,
+  A11yDialog,
+  Button,
+  DataTable,
+  Delete,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Field,
+  FolderKanban,
+  Input,
+  MoreHorizontal,
+  PageContent,
+  PageToolbar,
+  Pencil,
+  Plus,
+  Tabs,
+  ToolbarIconButton,
+  buttonClassName,
+  pushToast,
+  type TabItem,
 } from "@polterware/frontend-design-system";
 import type { WorkspaceWorkBoard } from "@polterware/feature-shell";
-import { moveWorkBoard, selectedWorkBoard, workBoardOptions, type WorkBoardAction } from "./work-boards";
+import { DEFAULT_WORK_BOARD, orderWorkBoards, type WorkBoardAction } from "./work-boards";
 
-export function WorkBoardPicker(props: {
+type WorkBoardListRow = Pick<WorkspaceWorkBoard, "id" | "name"> & {
+  key: string;
+};
+
+export function WorkBoardList(props: {
   boards: readonly WorkspaceWorkBoard[];
-  selectedId: string;
-  onSelect: (id: string) => void;
+  cardCount: number;
+  tabs: readonly TabItem[];
+  activeTab: string;
+  tabsLabel: string;
+  onTabChange: (tab: string) => void;
+  onOpen: (id: string) => void;
+  onDelete: () => void;
   onAction?: (action: WorkBoardAction) => Promise<string | null>;
   disabled?: boolean;
 }) {
-  const selected = createMemo(() => selectedWorkBoard(props.boards, props.selectedId));
   const [dialog, setDialog] = createSignal<"create" | "rename" | "delete" | null>(null);
-  const [targetId, setTargetId] = createSignal("");
-  const [targetName, setTargetName] = createSignal("");
+  const [target, setTarget] = createSignal<WorkBoardListRow>();
   const [name, setName] = createSignal("");
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal("");
-  const disabled = () => props.disabled || busy();
+  const rows = createMemo<WorkBoardListRow[]>(() => [
+    { ...DEFAULT_WORK_BOARD, key: "default" },
+    ...orderWorkBoards(props.boards).map((board) => ({ id: board.id, name: board.name, key: board.id })),
+  ]);
+  const disabled = () => Boolean(props.disabled || busy());
   const nameError = () => {
     const value = name().trim();
     if (!value) return "Enter a board name.";
     if ([...value].length > 80) return "Use at most 80 characters.";
-    if (props.boards.some((board) => board.id !== targetId() && board.name === value)) return "A board already uses this name.";
+    if (props.boards.some((board) => board.id !== target()?.id && board.name === value)) return "A board already uses this name.";
     return "";
   };
 
-  function open(kind: "create" | "rename" | "delete") {
-    setTargetId(kind === "create" ? "" : selected().id);
-    setTargetName(selected().name);
-    setName(kind === "create" ? "" : selected().name);
+  function openDialog(kind: "create" | "rename" | "delete", board?: WorkBoardListRow) {
+    setTarget(board);
+    setName(kind === "create" ? "" : board?.name ?? "");
     setError("");
     setDialog(kind);
   }
@@ -44,10 +72,10 @@ export function WorkBoardPicker(props: {
     setError("");
     try {
       const id = await props.onAction(action);
-      if (id !== null) {
-        props.onSelect(id);
-        setDialog(null);
-      }
+      if (id === null) return;
+      setDialog(null);
+      if (action.kind === "create") props.onOpen(id);
+      if (action.kind === "delete") props.onDelete();
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Could not save the board.";
       setError(message);
@@ -59,39 +87,60 @@ export function WorkBoardPicker(props: {
 
   function submit() {
     const kind = dialog();
+    const board = target();
     if (!kind || (kind !== "delete" && nameError())) return;
     if (kind === "create") void run({ kind, name: name().trim() });
-    else if (targetId()) void run(kind === "delete"
-      ? { kind, id: targetId() }
-      : { kind, id: targetId(), name: name().trim() });
-  }
-
-  function move(direction: -1 | 1) {
-    const boardIds = moveWorkBoard(props.boards, selected().id, direction);
-    if (boardIds) void run({ kind: "reorder", id: selected().id, boardIds });
+    else if (board) void run(kind === "delete"
+      ? { kind, id: board.id }
+      : { kind, id: board.id, name: name().trim() });
   }
 
   return (
-    <>
-      <Select
-        class="w-44" size="sm" aria-label="Work board"
-        options={workBoardOptions(props.boards)} value={selected().id}
-        onChange={props.onSelect} disabled={disabled()}
-      />
-      <Show when={props.onAction && selected().id}>
-        <DropdownMenu>
-          <DropdownMenuTrigger aria-label="Board actions" disabled={disabled()} class={buttonClassName("ghost", "icon")}>
-            <MoreHorizontal size={14} />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem value="create" onSelect={() => open("create")}><Plus size={14} />New board</DropdownMenuItem>
-            <DropdownMenuItem value="rename" onSelect={() => open("rename")}><Pencil size={14} />Rename board</DropdownMenuItem>
-            <DropdownMenuItem value="earlier" disabled={!moveWorkBoard(props.boards, selected().id, -1)} onSelect={() => move(-1)}><ArrowUp size={14} />Move earlier</DropdownMenuItem>
-            <DropdownMenuItem value="later" disabled={!moveWorkBoard(props.boards, selected().id, 1)} onSelect={() => move(1)}><ArrowDown size={14} />Move later</DropdownMenuItem>
-            <DropdownMenuItem value="delete" danger onSelect={() => open("delete")}><Delete size={14} />Delete board</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </Show>
+    <div class="flex h-full min-h-0 flex-col">
+      <PageToolbar.Root>
+        <PageToolbar.Tabs>
+          <Tabs items={[...props.tabs]} value={props.activeTab} onChange={props.onTabChange} aria-label={props.tabsLabel} />
+        </PageToolbar.Tabs>
+        <PageToolbar.Actions>
+          <ToolbarIconButton label="New board" disabled={disabled() || !props.onAction} onClick={() => openDialog("create")}>
+            <Plus size={14} />
+          </ToolbarIconButton>
+        </PageToolbar.Actions>
+      </PageToolbar.Root>
+
+      <PageContent class="p-0">
+        <DataTable.Root rows={rows()} getRowId={(board) => board.key} columnWidthsKey="work-boards">
+          <DataTable.Table aria-label="Work boards">
+            <DataTable.Header>
+              <DataTable.ColumnHeader<WorkBoardListRow> id="name" minWidth={240}>Board</DataTable.ColumnHeader>
+              <DataTable.ColumnHeader<WorkBoardListRow> id="cards" width="8rem" align="right">Cards</DataTable.ColumnHeader>
+              <DataTable.ColumnHeader<WorkBoardListRow> id="actions" width="44px" align="right" sortable={false} resizable={false}><span class="sr-only">Actions</span></DataTable.ColumnHeader>
+            </DataTable.Header>
+            <DataTable.Body<WorkBoardListRow>>
+              {(board) => (
+                <DataTable.Row row={board} rowId={board.key} onActivate={() => props.onOpen(board.id)} aria-label={`Open board ${board.name}`}>
+                  <DataTable.PrimaryCell icon={<FolderKanban size={16} />} iconTone="knowledge" iconSeed={board.key} title={board.name} />
+                  <DataTable.Cell align="right" class="tabular-nums text-[var(--color-text-muted)]">{props.cardCount}</DataTable.Cell>
+                  <DataTable.Cell align="right" onClick={(event) => event.stopPropagation()}>
+                    <Show when={board.id}>
+                      <DropdownMenu positioning={{ placement: "bottom-end" }}>
+                        <DropdownMenuTrigger aria-label={`Actions for ${board.name}`} disabled={disabled()} class={buttonClassName("ghost", "icon")}>
+                          <MoreHorizontal size={14} />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent class="min-w-40">
+                          <DropdownMenuItem value="rename" onSelect={() => openDialog("rename", board)}><Pencil size={14} />Rename board</DropdownMenuItem>
+                          <DropdownMenuItem value="delete" danger onSelect={() => openDialog("delete", board)}><Delete size={14} />Delete board</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </Show>
+                  </DataTable.Cell>
+                </DataTable.Row>
+              )}
+            </DataTable.Body>
+          </DataTable.Table>
+        </DataTable.Root>
+      </PageContent>
+
       <A11yDialog
         open={dialog() !== null}
         size="sm"
@@ -110,12 +159,12 @@ export function WorkBoardPicker(props: {
             <Input value={name()} disabled={busy()} onInput={(event) => setName(event.currentTarget.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); submit(); } }} />
           </Field>
         }>
-          <p class="text-sm text-[var(--color-text-primary)]">Delete “{targetName()}”? Work cards stay in the project.</p>
+          <p class="text-sm text-[var(--color-text-primary)]">Delete “{target()?.name}”? Work cards stay in the project.</p>
         </Show>
         <Show when={error() || (name().trim() && dialog() !== "delete" && nameError())}>
           <p role="alert" class="text-sm text-[var(--color-danger)]">{error() || nameError()}</p>
         </Show>
       </A11yDialog>
-    </>
+    </div>
   );
 }

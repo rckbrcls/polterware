@@ -5,8 +5,9 @@ import {
   Input, MoreHorizontal, Network, PageEmpty, PageError, PageLoading,
   PageToolbar, Pencil, PinOff, Plus, Route, SchemeIcon, SearchBar, Select,
   StatusChip, StickyNote, Workflow, buttonClassName,
+  ToolbarIconButton,
 } from "@polterware/frontend-design-system";
-import { CanvasEditor, AGENT_HINT } from "./editor";
+import { CanvasEditor } from "./editor";
 import { toDocument, type CanvasPort, type CanvasRecord, type CanvasType } from "./model";
 import type { ArchitectureDocument } from "@polterware/frontend-canvas";
 export type { CanvasPort, CanvasRecord, CanvasPatch, CanvasType } from "./model";
@@ -89,9 +90,8 @@ function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: 
   return <Show when={selected()} keyed fallback={<div class="flex h-full min-h-0 flex-col">
     <PageToolbar.Root>
       <PageToolbar.Leading><SearchBar placeholder="Search canvases" value={query()} onInput={setQuery} aria-label="Search canvases" /></PageToolbar.Leading>
-      <PageToolbar.Actions><Button size="sm" variant="primary" disabled={busy() || !data()?.types.length} onClick={() => showDialog("create")}><Plus size={14} />New canvas</Button></PageToolbar.Actions>
+      <PageToolbar.Actions><ToolbarIconButton label="New canvas" disabled={busy() || !data()?.types.length} onClick={() => showDialog("create")}><Plus size={14} /></ToolbarIconButton></PageToolbar.Actions>
     </PageToolbar.Root>
-    <p class="px-4 py-2 text-xs text-[var(--color-text-muted)]">{AGENT_HINT}</p>
     <Show when={data.loading}><PageLoading layout="table" label="Loading canvases and available types…" /></Show>
     <Show when={data()?.loadError}><PageError message={data()!.loadError} onRetry={() => void refetch()} /></Show>
     <Show when={error() && !dialog()}><PageError message={error()} onRetry={() => { setError(""); void refetch(); }} /></Show>

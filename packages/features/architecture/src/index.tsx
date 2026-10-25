@@ -5,6 +5,7 @@ import {
   ActiveFilterBar, FilterPopover, IconTile, Layers, ListChecks, Network, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
   Delete, Link2, Route, ScrollText, SearchBar, SegmentedControl, Select, Settings, ShieldCheck, StatusChip, TreeView, pushToast,
   type TreeViewNode,
+  ToolbarIconButton,
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
 import { buildStructureTree, flattenStructureTree, structureParents, type StructureKind, type StructureNode, type StructureTreeItem } from "./structure-tree";
@@ -237,7 +238,7 @@ export function StructureView(props: {
           })}
         />
         <SegmentedControl aria-label="Structure view" options={[{ value: "tree", label: "Tree" }, { value: "cards", label: "Cards" }]} value={view()} onValueChange={(event) => setView(event.value ?? "tree")} />
-        <Button size="sm" disabled={props.loading || !!props.error} onClick={props.onOpenCreate}><Plus size={14} />Add</Button>
+        <ToolbarIconButton label="Add node" disabled={props.loading || !!props.error} onClick={props.onOpenCreate}><Plus size={14} /></ToolbarIconButton>
       </PageToolbar.Actions>
     </PageToolbar.Root>
     <ActiveFilterBar
