@@ -34,12 +34,12 @@ export type ProjectSwitcherItem = {
   refId?: string;
 };
 
-/** The global scope filter: one Atlas node path, or empty for the whole project. */
+/** One Atlas node path. Knowledge editors still store a single path. */
 export type WorkspaceScope = {
   node: string;
 };
 
-/** One Atlas node offered by the scope switcher. */
+/** One Atlas node offered by the scope filter. */
 export type ScopeNodeItem = {
   id: string;
   parentId: string;

@@ -111,10 +111,10 @@ function truthTone(truthClass: string): "ok" | "warn" | "muted" | "syncing" {
 }
 
 type CanonBridge = {
-  listFacts: (payload: { projectId: string; entityId?: string }) => Promise<unknown>;
+  listFacts: (payload: { projectId: string; entityId?: string; scopeNodes?: string[] }) => Promise<unknown>;
   getFact: (payload: { id: string }) => Promise<unknown>;
   upsertFact: (payload: Record<string, unknown>) => Promise<unknown>;
-  listEvidence: (payload: { projectId: string }) => Promise<unknown>;
+  listEvidence: (payload: { projectId: string; scopeNodes?: string[] }) => Promise<unknown>;
   upsertEvidence: (payload: Record<string, unknown>) => Promise<unknown>;
   linkEvidenceToFact: (payload: Record<string, unknown>) => Promise<unknown>;
 };
@@ -168,6 +168,10 @@ const FACTS_SCOPE = "truth:facts";
 /** Agents → Facts: list/inspect Canon facts and evidence; mutate with change envelope. */
 export function CanonFactsPanel(props: {
   projectId: string;
+  /** Expanded Atlas node ids. Empty leaves the lists unscoped. */
+  scopeNodes?: readonly string[];
+  loadFacts?: (projectId: string) => Promise<unknown>;
+  loadEvidence?: (projectId: string) => Promise<unknown>;
   query: string;
   truthClasses: readonly string[];
   /** Bumped by the page toolbar's add button. */
@@ -221,19 +225,32 @@ export function CanonFactsPanel(props: {
     }
   };
 
+  let refreshTicket = 0;
   const refresh = async () => {
+    const ticket = ++refreshTicket;
     const bridge = canonBridge();
     const projectId = props.projectId.trim();
-    if (!bridge || !projectId) {
+    const loadFacts = props.loadFacts;
+    const loadEvidence = props.loadEvidence;
+    if ((!bridge && !loadFacts) || !projectId) {
       setFacts([]);
       setDetail(undefined);
       setSelectedId("");
       setProjectEvidence([]);
+      props.onBusyChange(false);
       return;
     }
+    const scopeNodes = [...(props.scopeNodes ?? [])];
+    const scoped = scopeNodes.length > 0 ? { scopeNodes } : {};
     props.onBusyChange(true);
     try {
-      const listResponse = asRecord(await bridge.listFacts({ projectId }));
+      const listResponse = asRecord(
+        await (loadFacts
+          ? loadFacts(projectId)
+          : bridge
+            ? bridge.listFacts({ projectId, ...scoped })
+            : { facts: [] }),
+      );
       const nextFacts = (Array.isArray(listResponse.facts) ? listResponse.facts : []).flatMap(
         (item) => {
           const row = mapFact(item);
@@ -241,7 +258,14 @@ export function CanonFactsPanel(props: {
         },
       );
       setFacts(nextFacts);
-      const evidenceResponse = asRecord(await bridge.listEvidence({ projectId }));
+      const evidenceResponse = asRecord(
+        await (loadEvidence
+          ? loadEvidence(projectId)
+          : bridge
+            ? bridge.listEvidence({ projectId, ...scoped })
+            : { evidence: [] }),
+      );
+      if (ticket !== refreshTicket) return;
       setProjectEvidence(
         (Array.isArray(evidenceResponse.evidence) ? evidenceResponse.evidence : []).flatMap(
           (item) => {
@@ -259,7 +283,7 @@ export function CanonFactsPanel(props: {
     } catch (error: unknown) {
       pushToast(error instanceof Error ? error.message : "Could not load facts.", "danger");
     } finally {
-      props.onBusyChange(false);
+      if (ticket === refreshTicket) props.onBusyChange(false);
     }
   };
 
@@ -332,6 +356,7 @@ export function CanonFactsPanel(props: {
 
   createEffect(() => {
     props.projectId;
+    (props.scopeNodes ?? []).join("\0");
     void refresh();
   });
 

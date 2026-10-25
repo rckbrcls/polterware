@@ -145,17 +145,39 @@ export function emptyAtlas(): WorkspaceAtlas {
 }
 
 /**
- * The global scope the Desktop reads under: an Atlas node path, or empty for the
- * whole project. Loaders read it so every refresh path stays scoped.
+ * Atlas node ids the Desktop reads under. Empty means the whole project.
+ * Loaders spread this so every refresh path stays scoped. A parent id is
+ * already expanded to itself and its children by the caller.
  */
-let activeScope: { node: string } = { node: "" };
+let activeScopeNodeIds: string[] = [];
 
-export function setActiveScope(scope: { node: string }): void {
-  activeScope = { node: scope.node };
+export function setActiveScope(scope: { nodeIds: readonly string[] }): void {
+  activeScopeNodeIds = scope.nodeIds.filter((id) => id !== "");
 }
 
-function scopeArgs(): { scopeNode?: string } {
-  return activeScope.node ? { scopeNode: activeScope.node } : {};
+/** Repeated `scope_nodes`. Omitted when the project is unscoped. */
+export function scopeArgs(): { scopeNodes?: string[] } {
+  return activeScopeNodeIds.length > 0 ? { scopeNodes: [...activeScopeNodeIds] } : {};
+}
+
+export async function loadFacts(projectId: string) {
+  return core().canon.listFacts({ projectId, ...scopeArgs() });
+}
+
+export async function loadCanonEvidence(projectId: string) {
+  return core().canon.listEvidence({ projectId, ...scopeArgs() });
+}
+
+export async function loadChanges(
+  projectId: string,
+  extra: { actorKind?: string; limit?: number } = {},
+) {
+  return core().context.listChanges({
+    projectId,
+    limit: extra.limit ?? 50,
+    ...(extra.actorKind ? { actorKind: extra.actorKind } : {}),
+    ...scopeArgs(),
+  });
 }
 
 /** Work cards only — the slice a Work change event refreshes. */

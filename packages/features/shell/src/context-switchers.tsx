@@ -1,5 +1,5 @@
 import { For, Show, createMemo, createSignal, onCleanup } from "solid-js";
-import { Box, Button, Folder, IconTile, Layers, Plus, Settings } from "@polterware/frontend-design-system";
+import { Button, Folder, IconTile, Plus, Settings } from "@polterware/frontend-design-system";
 import {
   MenuItem,
   MenuList,
@@ -9,13 +9,7 @@ import {
   StatusChip,
   SwitcherTrigger,
 } from "@polterware/frontend-design-system";
-import type {
-  EnvironmentItem,
-  EnvironmentKind,
-  ProjectSwitcherItem,
-  ScopeNodeItem,
-  WorkspaceScope,
-} from "./types";
+import type { EnvironmentItem, EnvironmentKind, ProjectSwitcherItem } from "./types";
 import { ENVIRONMENT_FIXTURES, PROJECT_SWITCHER_FIXTURES } from "./fixtures";
 import { PopoverSearchField } from "@polterware/frontend-shell";
 import "./context-switchers.css";
@@ -25,9 +19,7 @@ export type WorkspaceContext = {
   environmentId: string;
 };
 
-type MenuId = "project" | "env" | "scope" | null;
-
-export const WHOLE_PROJECT_SCOPE: WorkspaceScope = { node: "" };
+type MenuId = "project" | "env" | null;
 
 function kindLabel(kind: EnvironmentKind): string {
   return kind.toUpperCase();
@@ -47,15 +39,11 @@ export function WorkspaceContextBar(props: {
   onSelectEnvironment?: (environmentId: string) => void;
   onCreateProject?: () => void;
   onOpenProjectSettings?: () => void;
-  scopeNodes?: ScopeNodeItem[];
-  scope?: WorkspaceScope;
-  onSelectScope?: (scope: WorkspaceScope) => void;
 }) {
   const [openMenu, setOpenMenu] = createSignal<MenuId>(null);
   const [query, setQuery] = createSignal("");
   let projectTrigger: HTMLButtonElement | undefined;
   let environmentTrigger: HTMLButtonElement | undefined;
-  let scopeTrigger: HTMLButtonElement | undefined;
 
   const projects = () => props.projects ?? PROJECT_SWITCHER_FIXTURES;
   const environments = () => props.environments ?? ENVIRONMENT_FIXTURES;
@@ -86,18 +74,6 @@ export function WorkspaceContextBar(props: {
     const normalized = query().trim().toLowerCase();
     if (!normalized) return projects();
     return projects().filter((project) => project.name.toLowerCase().includes(normalized));
-  });
-  const scope = () => props.scope ?? WHOLE_PROJECT_SCOPE;
-  const scopeNodes = () => props.scopeNodes ?? [];
-  const currentScopeNode = createMemo(() => scopeNodes().find((node) => node.path === scope().node));
-  const filteredDomains = createMemo(() => {
-    const normalized = query().trim().toLowerCase();
-    const domains = scopeNodes().filter((node) => node.level === "domain");
-    if (!normalized) return domains;
-    return domains.filter(
-      (node) =>
-        node.title.toLowerCase().includes(normalized) || node.path.toLowerCase().includes(normalized),
-    );
   });
   const projectEnvironments = createMemo(() =>
     environments().filter((environment) => environment.projectId === props.context.projectId),
@@ -165,75 +141,6 @@ export function WorkspaceContextBar(props: {
           )}
         </Show>
       </SwitcherTrigger>
-
-      <Show when={scopeNodes().length > 0}>
-        <span class="text-[11px] text-[var(--color-text-disabled)]" aria-hidden>
-          /
-        </span>
-
-        <SwitcherTrigger
-          ref={(element) => {
-            scopeTrigger = element;
-          }}
-          aria-label={`Filter by scope: ${currentScopeNode()?.title ?? "All"}`}
-          aria-expanded={openMenu() === "scope"}
-          onClick={() => setOpenMenu((current) => (current === "scope" ? null : "scope"))}
-        >
-          <span class="truncate">{currentScopeNode()?.title ?? "All"}</span>
-        </SwitcherTrigger>
-      </Show>
-
-      <Popover
-        open={openMenu() === "scope"}
-        onClose={close}
-        title="Filter by scope"
-        width={320}
-        placement="bottom-start"
-        anchorRef={() => scopeTrigger}
-      >
-        <PopoverSearchField
-          placeholder="Find domain…"
-          value={query()}
-          onInput={setQuery}
-          autofocus
-        />
-        <MenuList class="min-h-0 flex-1 overflow-auto p-2">
-          <MenuItem
-            class="gap-2 py-2 text-[13.5px]"
-            selected={scope().node === ""}
-            onClick={() => {
-              props.onSelectScope?.(WHOLE_PROJECT_SCOPE);
-              closeAfterAcknowledge();
-            }}
-          >
-            <IconTile size={20} tone="neutral" seed="scope-all">
-              <Layers size={12} />
-            </IconTile>
-            <span class="min-w-0 flex-1 truncate text-[var(--color-text-primary)]">All</span>
-            <SelectionCheck checked={scope().node === ""} size={15} />
-          </MenuItem>
-          <For each={filteredDomains()}>
-            {(node) => (
-              <MenuItem
-                class="gap-2 py-2 text-[13.5px]"
-                selected={node.path === scope().node}
-                onClick={() => {
-                  props.onSelectScope?.({ node: node.path });
-                  closeAfterAcknowledge();
-                }}
-              >
-                <IconTile size={20} tone="architecture" seed={node.id}>
-                  <Box size={12} />
-                </IconTile>
-                <span class="min-w-0 flex-1 truncate text-[var(--color-text-primary)]">
-                  {node.title}
-                </span>
-                <SelectionCheck checked={node.path === scope().node} size={15} />
-              </MenuItem>
-            )}
-          </For>
-        </MenuList>
-      </Popover>
 
       <Popover
         open={openMenu() === "project"}

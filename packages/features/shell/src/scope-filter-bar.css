@@ -1,0 +1,34 @@
+.pw-scope-filter {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 4px;
+}
+
+.pw-scope-filter .pw-active-filter-bar {
+  min-width: 0;
+  margin: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.pw-scope-filter .pw-active-filter-bar__pills {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.pw-scope-filter-suggestions {
+  display: flex;
+  max-height: 280px;
+  flex-direction: column;
+  gap: 2px;
+  overflow: auto;
+  padding: 8px;
+}
+
+.pw-scope-filter-suggestion {
+  justify-content: flex-start;
+  width: 100%;
+  gap: 6px;
+}
