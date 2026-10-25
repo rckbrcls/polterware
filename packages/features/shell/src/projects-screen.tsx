@@ -1,6 +1,6 @@
 import { For, Show, createMemo, createSignal } from "solid-js";
 import {
-  ArrowRight,
+  ChevronRight,
   auroraForId,
   Button,
   Card,
@@ -87,7 +87,7 @@ function ProjectCard(props: {
             </p>
           </Show>
         </div>
-        <ArrowRight class="pw-projects-card-affordance" size={14} aria-hidden="true" />
+        <ChevronRight class="pw-projects-card-affordance" size={14} aria-hidden="true" />
       </div>
       <div class="pw-projects-meta">
         <Show when={props.project.status}>
