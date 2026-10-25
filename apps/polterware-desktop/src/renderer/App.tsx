@@ -3,10 +3,14 @@ import {
   Shell,
   CliReferencePage,
   InboxPage,
+  ProjectsScreen,
   CreateProjectDialog,
   createDefaultRoute,
+  createHomeRoute,
+  goHome,
   goSection,
   enterProject,
+  isHomeRoute,
   setTab,
   openDialog,
   closeDialog,
@@ -169,7 +173,7 @@ function dispatchTabsLabel(section: string): string {
 }
 
 export function App() {
-  const initialRoute = createDefaultRoute("inbox", PLATFORM_CONTEXT);
+  const initialRoute = createHomeRoute();
   const [route, setRoute] = createSignal<ClientRoute>(initialRoute);
   const [history, setHistory] = createSignal<ClientRoute[]>([historySnapshot(initialRoute)]);
   const [historyIndex, setHistoryIndex] = createSignal(0);
@@ -254,25 +258,27 @@ export function App() {
         setBootstrapped(true);
         return;
       }
-      const preferredId =
-        (route().projectId && listed.projects.some((project) => project.projectId === route().projectId)
-          ? route().projectId
-          : undefined)
-        ?? listed.projects[0]?.projectId;
-      if (!preferredId) {
+      const current = route();
+      const linkedId = !isHomeRoute(current) && current.projectId && listed.projects.some((project) => project.projectId === current.projectId)
+        ? current.projectId
+        : undefined;
+      if (!linkedId) {
+        setWorkspace({
+          ...emptyWorkspace(),
+          available: true,
+          projects: listed.projects,
+          environments: listed.environments,
+        });
+        if (!isHomeRoute(current)) applyRoute(goHome(current), "replace");
         setLoading(false);
         setBootstrapped(true);
         return;
       }
-      if (route().projectId !== preferredId) {
-        const environment = listed.environments.find((item) => item.projectId === preferredId);
-        applyRoute(
-          enterProject(route(), preferredId, { environmentId: environment?.id }),
-          "replace",
-        );
-      }
-      loadedProjectId = preferredId;
-      await refreshWorkspace(preferredId, listed);
+      const environment = listed.environments.find((item) => item.projectId === linkedId);
+      const entered = enterProject(current, linkedId, { environmentId: environment?.id });
+      applyRoute(setTab(goSection(entered, current.section), current.tab), "replace");
+      loadedProjectId = linkedId;
+      await refreshWorkspace(linkedId, listed);
       setBootstrapped(true);
     } catch (error) {
       setWorkspace({
@@ -399,9 +405,26 @@ export function App() {
   });
   onCleanup(() => setDetailExpandHandler(undefined));
 
+  /** Commander and other section jumps enter a project when the Projects screen is open. */
+  function routeWithProject(current: ClientRoute): ClientRoute | undefined {
+    if (!isHomeRoute(current) && current.projectId) return current;
+    const projectId = workspace().projects.find((project) => project.status !== "archived")?.projectId
+      ?? workspace().projects[0]?.projectId;
+    if (!projectId) return undefined;
+    const environment = workspace().environments.find((item) => item.projectId === projectId);
+    return enterProject(current, projectId, { environmentId: environment?.id });
+  }
+
   function navigateSection(section: string, tab?: string) {
-    const next = goSection(route(), section);
+    const base = routeWithProject(route());
+    if (!base) return;
+    const next = goSection(base, section);
     applyRoute(tab ? setTab(next, tab) : next);
+  }
+
+  function goProjectsHome() {
+    if (isHomeRoute(route())) return;
+    applyRoute(goHome(route()));
   }
 
   /** Evidence opens in the Evidence list; Verdicts open in the Decisions list. */
@@ -460,12 +483,18 @@ export function App() {
       return;
     }
     if (id === "action.create-node") {
-      applyRoute(openDialog(goSection(route(), "atlas"), { type: "arch-node-create" }));
+      const base = routeWithProject(route());
+      if (!base) return;
+      applyRoute(openDialog(goSection(base, "atlas"), { type: "arch-node-create" }));
       return;
     }
     if (id === "action.connect-integration") {
-      const target = route().section === "integrations" ? route() : setTab(goSection(route(), "integrations"), "catalog");
-      applyRoute(openDialog(target, { type: "connect-integration" }), route().section === "integrations" ? "silent" : "push");
+      const current = route();
+      const base = routeWithProject(current);
+      if (!base) return;
+      const onIntegrations = !isHomeRoute(current) && current.section === "integrations";
+      const target = onIntegrations ? base : setTab(goSection(base, "integrations"), "catalog");
+      applyRoute(openDialog(target, { type: "connect-integration" }), onIntegrations ? "silent" : "push");
     }
   }
 
@@ -1040,6 +1069,7 @@ export function App() {
               loadedProjectId = "";
               setCreateProjectOpen(true);
               setWorkspace({ ...emptyWorkspace(), available: true, projects: [] });
+              applyRoute(goHome(route()), "replace");
             }
           }).catch((error: unknown) => {
             pushToast(error instanceof Error ? error.message : "Could not archive project.", "danger");
@@ -1072,6 +1102,7 @@ export function App() {
       canGoForward={historyIndex() < history().length - 1}
       onBack={goBack}
       onForward={goForward}
+      onGoHome={goProjectsHome}
       status={{ dataMode: dataMode() }}
       platform={PLATFORM_CONTEXT}
       navCounts={{
@@ -1083,6 +1114,19 @@ export function App() {
       }}
     >
       <Suspense fallback={<PageLoading layout="page" label="Loading…" />}>
+      <Show
+        when={!isHomeRoute(route())}
+        fallback={
+          <ProjectsScreen
+            projects={workspace().projects}
+            loading={!bootstrapped()}
+            unavailable={bootstrapped() && !workspace().available}
+            message={workspace().healthMessage}
+            onOpenProject={selectProject}
+            onCreateProject={() => setCreateProjectOpen(true)}
+          />
+        }
+      >
       <Switch>
         <Match when={route().section === "inbox"}>
           <InboxPage
@@ -1393,6 +1437,7 @@ export function App() {
           <CliReferencePage />
         </Match>
       </Switch>
+      </Show>
       </Suspense>
 
       <Show when={settingsDialogTab()}>

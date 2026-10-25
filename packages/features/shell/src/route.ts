@@ -58,6 +58,8 @@ export type DialogState =
 export type ClientRoute = {
   section: string;
   tab: string;
+  /** Projects screen. No project is entered, so the section switch stays hidden. */
+  home?: boolean;
   projectId?: string;
   environmentId?: string;
   search?: string;
@@ -294,10 +296,30 @@ export function createDefaultRoute(
   const resolved = resolveRoute(section, undefined, platform);
   return {
     ...resolved,
+    home: false,
     projectId: "proj-polter",
     environmentId: "env-polter-prod",
     dialog: null,
   };
+}
+
+/** Launch route: the Projects screen, before any project is entered. */
+export function createHomeRoute(): ClientRoute {
+  return {
+    section: DEFAULT_SECTION,
+    tab: DEFAULT_TABS[DEFAULT_SECTION],
+    home: true,
+    dialog: null,
+  };
+}
+
+export function isHomeRoute(route: Pick<ClientRoute, "home">): boolean {
+  return route.home === true;
+}
+
+/** Leave the open project and return to the Projects screen. */
+export function goHome(_route: ClientRoute): ClientRoute {
+  return createHomeRoute();
 }
 
 export function enterProject(
@@ -309,6 +331,7 @@ export function enterProject(
   return {
     ...route,
     ...resolved,
+    home: false,
     projectId,
     environmentId: options?.environmentId ?? route.environmentId,
     dialog: null,
@@ -326,6 +349,7 @@ export function goSection(
   return {
     ...route,
     ...resolved,
+    home: false,
     dialog: null,
     selectedNodeId: null,
     search: undefined,
@@ -342,6 +366,7 @@ export function setTab(
   return {
     ...route,
     ...resolveRoute(route.section, tab, platform),
+    home: false,
     dialog: null,
     selectedNodeId: null,
     expandedDetail: null,

@@ -35,6 +35,11 @@ import {
   parseJsonObject,
 } from "./format";
 
+function projectStatus(value: string): ProjectSwitcherItem["status"] | undefined {
+  if (value === "active" || value === "paused" || value === "archived") return value;
+  return undefined;
+}
+
 export function mapProjects(
   projects: Record<string, unknown>[],
   environments: EnvironmentItem[],
@@ -44,14 +49,20 @@ export function mapProjects(
     const projectId = asString(project.id);
     const projectEnvs = environments.filter((item) => item.projectId === projectId);
     const defaultEnv = projectEnvs.find((item) => item.kind === "production") ?? projectEnvs[0];
+    const description = asString(project.description);
+    const updatedAt = asString(project.updatedAt);
+    const status = projectStatus(asString(project.status));
+    const createdAt = asString(project.createdAt);
     return {
       projectId,
       name: asString(project.name, projectId),
       directory: asString(project.rootPath),
       environmentSummary: defaultEnv?.name ?? "No environments",
       isCurrent: projectId === currentProjectId,
-      status: "active" as const,
-      createdAt: formatInstant(asString(project.createdAt)),
+      ...(description ? { description } : {}),
+      ...(status ? { status } : {}),
+      ...(createdAt ? { createdAt: formatInstant(createdAt) } : {}),
+      ...(updatedAt ? { lastActivity: formatInstant(updatedAt) } : {}),
     };
   });
 }

@@ -2,6 +2,7 @@ import {
   Button,
   ChevronLeft,
   ChevronRight,
+  House,
   Search,
 } from "@polterware/frontend-design-system";
 import { createShortcutLabel } from "@polterware/frontend-state";
@@ -17,6 +18,7 @@ export type TitleBarProps = {
   canGoForward: boolean;
   onBack: () => void;
   onForward: () => void;
+  onGoHome?: () => void;
   workspace: WorkspaceContext;
   projects?: ProjectSwitcherItem[];
   environments?: EnvironmentItem[];
@@ -54,7 +56,15 @@ export function TitleBar(props: TitleBarProps) {
           </Button>
         </div>
 
-        <div class="flex min-w-0 shrink items-center [-webkit-app-region:no-drag]">
+        <div class="flex min-w-0 shrink items-center gap-1 [-webkit-app-region:no-drag]">
+          <Button
+            variant="icon"
+            aria-label="Home"
+            title="Projects"
+            onClick={() => props.onGoHome?.()}
+          >
+            <House size={13} />
+          </Button>
           <WorkspaceContextBar
             context={props.workspace}
             projects={props.projects}

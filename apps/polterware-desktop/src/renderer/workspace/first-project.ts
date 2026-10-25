@@ -1,6 +1,6 @@
 /**
- * When the local core responds and no projects exist, the Desktop opens the
- * create-project dialog instead of Architecture with an empty workspace.
+ * When the local core responds and no projects exist, the Projects screen
+ * opens the create-project dialog.
  */
 export function shouldOpenCreateProject(input: {
   coreAvailable: boolean;

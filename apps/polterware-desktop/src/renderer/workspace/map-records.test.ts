@@ -61,6 +61,28 @@ describe("mapProjects", () => {
     const [project] = mapProjects([{ id: "p2", name: "B" }], environments, undefined);
     expect(project?.environmentSummary).toBe("Other");
   });
+
+  it("keeps description, status, and last activity only when the record has them", () => {
+    const [project] = mapProjects(
+      [{
+        id: "p1",
+        name: "Alpha",
+        rootPath: "/work/alpha",
+        description: "Workspace",
+        status: "active",
+        updatedAt: "2026-03-01T15:04:00Z",
+      }],
+      environments,
+    );
+    expect(project).toMatchObject({ description: "Workspace", status: "active" });
+    expect(project?.lastActivity && project.lastActivity !== "—").toBeTruthy();
+
+    const [bare] = mapProjects([{ id: "p9", name: "Bare", status: "nope" }], []);
+    expect(bare?.description).toBeUndefined();
+    expect(bare?.status).toBeUndefined();
+    expect(bare?.lastActivity).toBeUndefined();
+    expect(bare?.environmentSummary).toBe("No environments");
+  });
 });
 
 describe("mapSettingsEnvironments", () => {

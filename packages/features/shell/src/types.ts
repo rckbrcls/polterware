@@ -23,10 +23,13 @@ export type ProjectSwitcherItem = {
   environmentSummary: string;
   isCurrent: boolean;
   /** Optional table/card display fields (fixture or live). */
+  description?: string;
   status?: "active" | "paused" | "archived";
   compute?: string;
   region?: string;
   createdAt?: string;
+  /** Formatted `updatedAt` when the project record has one. */
+  lastActivity?: string;
   /** Secondary id under project name in table view. */
   refId?: string;
 };
