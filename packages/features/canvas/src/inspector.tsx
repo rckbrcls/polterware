@@ -1,4 +1,4 @@
-import { For, Show, createMemo, createSignal } from "solid-js";
+import { For, Show, createMemo, createSignal, type JSX } from "solid-js";
 import { A11yDialog, Button, DataTable, DetailPanel, Field, FormStack, GitBranch, Input, Link2, ListChecks, ScrollText, ShieldCheck, StatusChip } from "@polterware/frontend-design-system";
 import { buildRef, canPromote, kindLabel, readRef, referenceState, type CanvasRef, type StoreEntity } from "./references";
 import { deriveSlug, PromotionAppliedError, promotionText, type PromotionInput, type PromotionKind } from "./promotion";
@@ -12,6 +12,8 @@ export function NodeInspector(props: {
   node: ArchNode; entities: readonly StoreEntity[]; canvasName: string;
   onLink: (ref?: CanvasRef) => void;
   promote?: (input: PromotionInput) => Promise<StoreEntity>;
+  structureRequired?: boolean;
+  children?: JSX.Element;
 }) {
   const [search, setSearch] = createSignal("");
   const [promotion, setPromotion] = createSignal<PromotionKind>();
@@ -22,7 +24,7 @@ export function NodeInspector(props: {
   const [error, setError] = createSignal("");
   const ref = () => readRef(props.node);
   const state = () => referenceState(ref(), props.entities);
-  const matches = createMemo(() => props.entities.filter((entity) => entity.kind !== "evidence" && `${kindLabel(entity.kind)} ${entity.title} ${entity.slug ?? ""}`.toLowerCase().includes(search().toLowerCase())));
+  const matches = createMemo(() => props.entities.filter((entity) => (props.structureRequired ? entity.kind === "node" : entity.kind !== "evidence") && `${kindLabel(entity.kind)} ${entity.title} ${entity.slug ?? ""}`.toLowerCase().includes(search().toLowerCase())));
   function open(kind: PromotionKind) {
     setTitle(props.node.name); setSlug(deriveSlug(props.node.name, props.entities.filter((e) => e.kind === kind).map((e) => e.slug ?? "")));
     setError(""); setApplied(false); setPromotion(kind);
@@ -44,14 +46,16 @@ export function NodeInspector(props: {
     <DetailPanel.Header />
     <DetailPanel.Body><DetailPanel.Main>
       <DetailPanel.Title title={ref() ? state().title : props.node.name || props.node.type} />
+      {props.children}
       <DetailPanel.Section title="Project reference" icon={<Link2 size={14} />}>
         <div class="flex items-center gap-2"><StatusChip tone={state().trust === "referenced" ? "muted" : "warn"} label={ref() ? state().trust === "referenced" ? kindLabel(ref()!.kind) : "Missing reference · Unverified" : "Unverified"} />
-          <Show when={ref()}><Button size="sm" variant="ghost" onClick={() => props.onLink()}>Unlink</Button></Show>
+          <Show when={ref() && !props.structureRequired}><Button size="sm" variant="ghost" onClick={() => props.onLink()}>Unlink</Button></Show>
         </div>
         <Show when={ref()}><p class="text-sm text-[var(--color-text-primary)]">{state().title}</p>
           <Show when={!state().entity}><p class="text-xs text-[var(--color-text-muted)]">The referenced entity is missing from the loaded project data. It may have been deleted or excluded by the current scope.</p></Show>
         </Show>
-        <Input aria-label="Search project entities" placeholder="Search cards, Decisions, Facts or Structure" value={search()} onInput={(e) => setSearch(e.currentTarget.value)} />
+        <Show when={props.structureRequired}><p class="text-xs text-[var(--color-text-muted)]">This shape requires a Structure reference. Choose another Structure node to replace it.</p></Show>
+        <Input aria-label="Search project entities" placeholder={props.structureRequired ? "Search Structure" : "Search cards, Decisions, Facts or Structure"} value={search()} onInput={(e) => setSearch(e.currentTarget.value)} />
         <div class="max-h-64 overflow-auto">
           <DataTable.Root rows={matches()} getRowId={(entity) => `${entity.kind}:${entity.id}`}>
             <DataTable.Table aria-label="Project entities">

@@ -71,7 +71,7 @@ describe("installBrowserDevBridge", () => {
     installBrowserDevBridge();
     const api = window.polterware.core.canvas;
     const projectId = "browser-preview";
-    expect((await api.listCanvases({ projectId })).canvases).toHaveLength(2);
+    expect((await api.listCanvases({ projectId })).canvases).toHaveLength(6);
     expect((await api.listCanvases({ projectId: "browser-empty" })).canvases).toEqual([]);
     expect((await api.listCanvasTypes()).types).toEqual(expect.arrayContaining([expect.objectContaining({ type: "free", unrestricted: true }), expect.objectContaining({ type: "brainstorm" })]));
     const created = await api.createCanvas({ projectId, name: "Sketch", type: "free", graph: { nodes: [], edges: [] }, layoutJson: "{}" });
@@ -85,7 +85,25 @@ describe("installBrowserDevBridge", () => {
     await expect(api.updateCanvas({ projectId, id, graph: { nodes: [{ id: "a", kind: "note" }], edges: [{ id: "ab", from: "a", to: "missing", kind: "relates" }] } })).rejects.toThrow("endpoints");
     await api.deleteCanvas({ projectId, id });
     await expect(api.getCanvas({ projectId, id })).rejects.toThrow("not found");
-    expect((await api.listCanvases({ projectId })).canvases).toHaveLength(2);
+    expect((await api.listCanvases({ projectId })).canvases).toHaveLength(6);
+  });
+
+  it("seeds a valid demonstration for every canvas type and enforces structured rules", async () => {
+    installBrowserDevBridge();
+    const api = window.polterware.core.canvas;
+    const projectId = "browser-preview";
+    const { types } = await api.listCanvasTypes();
+    const { canvases } = await api.listCanvases({ projectId });
+    const samples = canvases as { id: string; type: string; name: string; graph: { nodes: { kind: string }[] } }[];
+    expect(samples.map((canvas) => canvas.type)).toEqual((types as { type: string }[]).map((type) => type.type));
+    for (const canvas of samples) {
+      expect(canvas.graph.nodes.some((node) => node.kind !== "note")).toBe(true);
+      await expect(api.updateCanvas({ projectId, id: canvas.id, name: canvas.name })).resolves.toBeDefined();
+    }
+    const architecture = samples.find((canvas) => canvas.type === "architecture")!;
+    await expect(api.updateCanvas({ projectId, id: architecture.id, graph: { nodes: [{ id: "bad", kind: "component", ref: { kind: "fact", id: "fact" } }], edges: [] } })).rejects.toThrow("structure node");
+    const roadmap = samples.find((canvas) => canvas.type === "roadmap")!;
+    await expect(api.updateCanvas({ projectId, id: roadmap.id, graph: { nodes: [{ id: "bad", kind: "item", propsJson: '{"quarter":"  "}' }], edges: [] } })).rejects.toThrow("start and end");
   });
 
   it("previews declared Fact promotion without writing during dry-run and isolates project reads", async () => {

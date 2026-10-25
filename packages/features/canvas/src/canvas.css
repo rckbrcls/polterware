@@ -1,3 +1,5 @@
 .pw-canvas-editor { background: var(--color-app-background); touch-action: none; }
 .pw-canvas-selected { outline: 1px solid var(--color-text-primary); outline-offset: -1px; border-radius: var(--radius-card); }
 .pw-canvas-text { background: var(--color-surface-subtle); }
+.pw-canvas-diamond-content { padding: 12% 24% !important; gap: 0; }
+.pw-canvas-frame { align-items: flex-start !important; justify-content: flex-start !important; }
