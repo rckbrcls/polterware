@@ -125,6 +125,18 @@ describe("Desktop canvas interactions", () => {
     await vi.waitFor(() => expect(api.promote).toHaveBeenCalledTimes(2));
     await vi.waitFor(() => expect(vi.mocked(api.update).mock.calls.at(-1)?.[2].graph?.nodes[0]?.ref).toEqual({ kind: "card", id: "created" }));
   });
+  it("promotes a note to a Fact and persists the returned canon reference", async () => {
+    const api = port(); api.promote = vi.fn().mockResolvedValue({ kind: "fact", id: "fact-created", title: "Original", slug: "original" });
+    const host = mount(api); pointer(host, "pointerdown", 160, 160); pointer(host, "pointerup", 160, 160);
+    [...container.querySelectorAll("button")].find((button) => button.textContent?.includes("Promote to Fact"))!.click();
+    const dialog = () => document.body.querySelector('[role="dialog"]')!;
+    await vi.waitFor(() => expect(dialog()).toBeTruthy());
+    const promote = [...dialog().querySelectorAll("button")].find((button) => button.textContent === "Promote")!;
+    expect(promote.disabled).toBe(false); expect(dialog().textContent).toContain("Kind: Declared");
+    promote.click();
+    await vi.waitFor(() => expect(api.promote).toHaveBeenCalledWith("project", { kind: "fact", title: "Original", slug: "original", canvasName: "Sketch" }));
+    await vi.waitFor(() => expect(vi.mocked(api.update).mock.calls.at(-1)?.[2].graph?.nodes[0]?.ref).toEqual({ kind: "fact", id: "fact-created" }));
+  });
   it("renders load failures with retry instead of throwing or showing an empty canvas list", async () => {
     const api = port(); vi.mocked(api.list).mockRejectedValue(new Error("Core disconnected"));
     cleanup = render(() => <CanvasView projectId="project" port={api} />, container);

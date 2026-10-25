@@ -88,6 +88,25 @@ describe("installBrowserDevBridge", () => {
     expect((await api.listCanvases({ projectId })).canvases).toHaveLength(2);
   });
 
+  it("previews declared Fact promotion without writing during dry-run and isolates project reads", async () => {
+    installBrowserDevBridge();
+    const { core } = window.polterware;
+    const input = { kind: "fact" as const, title: "Canvas fact", slug: `fact-${crypto.randomUUID()}`, canvasName: "Sketch" };
+    const before = (await core.canon.listFacts({ projectId: "browser-empty" })).facts;
+    const plan = await core.work.apply({ projectId: "browser-empty", text: promotionText(input), dryRun: true });
+    expect(plan.applied).toBe(false);
+    expect((await core.canon.listFacts({ projectId: "browser-empty" })).facts).toEqual(before);
+    const result = await core.work.apply({ projectId: "browser-empty", text: promotionText(input) });
+    expect(result.applied).toBe(true);
+    const facts = (await core.canon.listFacts({ projectId: "browser-empty" })).facts as { id: string; statement: string }[];
+    const fact = facts.find((item) => item.statement === "Canvas fact")!;
+    expect(fact).toMatchObject({ id: expect.stringMatching(/^promoted-/), truthClass: "declared" });
+    expect(result.ops).toContain(`+ fact ${fact.id} "Canvas fact"`);
+    expect((await core.canon.getFact({ id: fact.id })).fact).toMatchObject(fact);
+    expect((await core.canon.listFacts({ projectId: "browser-preview" })).facts).not.toEqual(expect.arrayContaining([expect.objectContaining({ id: fact.id })]));
+    const collision = await core.work.apply({ projectId: "browser-empty", text: promotionText(input), dryRun: true });
+    expect(collision.ops).toEqual([]);
+  });
   it("applies canvas promotions with store IDs and proposed/shape defaults, isolated per project", async () => {
     installBrowserDevBridge();
     const { core } = window.polterware;

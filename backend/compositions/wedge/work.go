@@ -78,7 +78,7 @@ func polterReferences(store *storepkg.Store, snapshot work.Snapshot) (*polter.Re
 	if err != nil {
 		return nil, err
 	}
-	refs := &polter.References{Cards: snapshot.Cards, Nodes: snapshot.Nodes, Repos: snapshot.Repos, Environments: snapshot.Environments}
+	refs := &polter.References{Cards: snapshot.Cards, Nodes: snapshot.Nodes, Repos: snapshot.Repos, Environments: snapshot.Environments, Evidence: snapshot.Evidence}
 	for _, verdict := range verdicts {
 		refs.Verdicts = append(refs.Verdicts, polter.VerdictRef{ID: verdict.ID, Title: verdict.Title, Status: verdict.Status})
 	}
@@ -176,6 +176,11 @@ func ApplyPolter(store *storepkg.Store, in ApplyInput) (ApplyResult, error) {
 		actorKind,
 		tool,
 		func(run agentrun.Run) ([]string, any, error) {
+			for i := range ops {
+				if ops[i].Entity == work.EntityFact {
+					ops[i].Fields["actor"] = firstNonEmpty(in.Agent, actorKind)
+				}
+			}
 			cardIDs, err := store.ApplyWorkOps(in.ProjectID, run.ID, result.BatchID, ops)
 			return cardIDs, nil, err
 		},

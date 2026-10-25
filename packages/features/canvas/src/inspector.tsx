@@ -1,7 +1,7 @@
 import { For, Show, createMemo, createSignal } from "solid-js";
 import { A11yDialog, Button, DataTable, DetailPanel, Field, FormStack, GitBranch, Input, Link2, ListChecks, ScrollText, ShieldCheck, StatusChip } from "@polterware/frontend-design-system";
 import { buildRef, canPromote, kindLabel, readRef, referenceState, type CanvasRef, type StoreEntity } from "./references";
-import { deriveSlug, FACT_PROMOTION_GAP, PromotionAppliedError, promotionText, type PromotionInput, type PromotionKind } from "./promotion";
+import { deriveSlug, PromotionAppliedError, promotionText, type PromotionInput, type PromotionKind } from "./promotion";
 import type { ArchNode } from "@polterware/frontend-canvas";
 
 export function EntityIcon(props: { kind: string }) {
@@ -24,7 +24,7 @@ export function NodeInspector(props: {
   const state = () => referenceState(ref(), props.entities);
   const matches = createMemo(() => props.entities.filter((entity) => entity.kind !== "evidence" && `${kindLabel(entity.kind)} ${entity.title} ${entity.slug ?? ""}`.toLowerCase().includes(search().toLowerCase())));
   function open(kind: PromotionKind) {
-    setTitle(props.node.name); setSlug(deriveSlug(props.node.name, props.entities.filter((e) => e.kind === "card").map((e) => e.slug ?? "")));
+    setTitle(props.node.name); setSlug(deriveSlug(props.node.name, props.entities.filter((e) => e.kind === kind).map((e) => e.slug ?? "")));
     setError(""); setApplied(false); setPromotion(kind);
   }
   async function submit() {
@@ -69,11 +69,11 @@ export function NodeInspector(props: {
       </DetailPanel.Section></Show>
     </DetailPanel.Main></DetailPanel.Body>
     <A11yDialog open={!!promotion()} title={`Promote to ${kindLabel(promotion() ?? "card")}`} onClose={() => { if (!busy()) setPromotion(undefined); }} dismissible={!busy()}
-      footer={<><Button variant="ghost" disabled={busy()} onClick={() => setPromotion(undefined)}>Cancel</Button><Button disabled={busy() || applied() || !title().trim() || promotion() === "fact"} onClick={() => void submit()}>{busy() ? "Promoting…" : "Promote"}</Button></>}>
+      footer={<><Button variant="ghost" disabled={busy()} onClick={() => setPromotion(undefined)}>Cancel</Button><Button disabled={busy() || applied() || !title().trim()} onClick={() => void submit()}>{busy() ? "Promoting…" : "Promote"}</Button></>}>
       <FormStack>
         <Field label="Title"><Input aria-label="Promotion title" disabled={busy() || applied()} value={title()} onInput={(e) => setTitle(e.currentTarget.value)} /></Field>
-        <Show when={promotion() === "card"}><Field label="Slug"><Input aria-label="Promotion slug" disabled={busy() || applied()} value={slug()} onInput={(e) => setSlug(e.currentTarget.value)} /></Field></Show>
-        <p class="text-xs text-[var(--color-text-muted)]">{promotion() === "card" ? "Stage: Shape" : promotion() === "decision" ? "Status: Proposed. The core assigns a Verdict number." : FACT_PROMOTION_GAP}</p>
+        <Show when={promotion() === "card" || promotion() === "fact"}><Field label="Slug"><Input aria-label="Promotion slug" disabled={busy() || applied()} value={slug()} onInput={(e) => setSlug(e.currentTarget.value)} /></Field></Show>
+        <p class="text-xs text-[var(--color-text-muted)]">{promotion() === "card" ? "Stage: Shape" : promotion() === "decision" ? "Status: Proposed. The core assigns a Verdict number." : "Kind: Declared"}</p>
       </FormStack>
       <Show when={error()}><p role="alert" class="mt-3 text-sm text-[var(--color-danger)]">{error()}</p></Show>
     </A11yDialog>

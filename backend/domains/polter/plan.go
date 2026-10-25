@@ -52,6 +52,7 @@ func PlanAs(doc Document, snapshot work.Snapshot, holder string) ([]work.Op, []D
 		}
 	}
 	p.planDecisions(doc)
+	p.planFacts(doc)
 	return p.ops, p.diags
 }
 
@@ -1016,7 +1017,7 @@ func Summarize(ops []work.Op) string {
 		counts[op.Entity]++
 	}
 	var parts []string
-	for _, entity := range []string{work.EntityCard, work.EntityTask, work.EntityQuestion, work.EntityInvariant, work.EntityHandoff, work.EntityClaim, work.EntityNode} {
+	for _, entity := range []string{work.EntityCard, work.EntityTask, work.EntityQuestion, work.EntityInvariant, work.EntityHandoff, work.EntityClaim, work.EntityNode, work.EntityDecision, work.EntityFact} {
 		if n := counts[entity]; n > 0 {
 			noun := entity
 			if n > 1 {
