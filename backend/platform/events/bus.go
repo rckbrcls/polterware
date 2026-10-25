@@ -18,7 +18,6 @@ const (
 	KindKnowledge    = "knowledge"
 	KindCanon        = "canon"
 	KindAgentRuns    = "agent_runs"
-	KindArchitecture = "architecture"
 	KindIntegrations = "integrations"
 	KindCanvas       = "canvas"
 )
@@ -51,10 +50,6 @@ var tableKinds = map[string]string{
 	"agent_runs":                KindAgentRuns,
 	"agent_run_steps":           KindAgentRuns,
 	"agent_tool_calls":          KindAgentRuns,
-	"architecture_layouts":      KindArchitecture,
-	"architecture_views":        KindArchitecture,
-	"architecture_view_members": KindArchitecture,
-	"resources":                 KindArchitecture,
 	"integration_connections":   KindIntegrations,
 	"integration_resources":     KindIntegrations,
 	"integration_sync_runs":     KindIntegrations,

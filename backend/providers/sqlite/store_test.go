@@ -341,21 +341,6 @@ func TestSaveAndListKnowledge(t *testing.T) {
 	}
 }
 
-func TestUpdateLayoutRejectsStaleRevision(t *testing.T) {
-	store := seededStore(t)
-	current, err := store.GetLayout(demoseed.ProjectID)
-	if err != nil {
-		t.Skipf("seed has no layout: %v", err)
-	}
-	if _, err := store.UpdateLayout(demoseed.ProjectID, current.Revision+41, current.BodyJSON); err == nil {
-		t.Fatal("a stale expected revision must be rejected")
-	}
-	after, _ := store.GetLayout(demoseed.ProjectID)
-	if after.Revision != current.Revision {
-		t.Fatalf("revision moved from %d to %d after a rejected update", current.Revision, after.Revision)
-	}
-}
-
 func TestStoreHealthStartsHealthy(t *testing.T) {
 	quarantined, _, err := newStore(t).StoreHealth()
 	if err != nil || quarantined {

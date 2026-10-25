@@ -1,7 +1,6 @@
 package sqlite
 
 import (
-	"database/sql"
 	"encoding/json"
 	"strings"
 	"time"
@@ -169,22 +168,10 @@ func (s *Store) DeleteCanonRelationshipsMissing(projectID, source string, keepID
 	return err
 }
 
-// SyncProjectModel projects architecture nodes, environments, and canvas edges into Canon.
+// SyncProjectModel projects environments into Canon.
 func (s *Store) SyncProjectModel(projectID string) (int, error) {
-	layout, err := s.GetLayout(projectID)
-	if err != nil && err != sql.ErrNoRows {
-		return 0, err
-	}
-	layoutBody := ""
-	if err == nil {
-		layoutBody = layout.BodyJSON
-	}
-	count, err := s.syncArchitectureLayout(projectID, layoutBody, false)
-	if err != nil {
-		return 0, err
-	}
-
 	now := time.Now().UTC()
+	count := 0
 	envs, err := s.ListEnvironments(projectID)
 	if err != nil {
 		return 0, err
@@ -204,72 +191,6 @@ func (s *Store) SyncProjectModel(projectID string) (int, error) {
 		count++
 	}
 	if err := s.DeleteCanonEntitiesMissingRefs(projectID, canon.RefEnvironment, keepEnvs); err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-func (s *Store) syncArchitectureLayout(projectID, layoutBody string, onlyIfChanged bool) (int, error) {
-	now := time.Now().UTC()
-	count := 0
-	var keepNodes []string
-	for _, node := range canon.ParseLayoutNodes(layoutBody) {
-		entity, err := canon.NewEntity(projectID, canon.KindComponent, canon.RefArchitectureNode, node.ID, node.Title, canon.TruthDeclared, canon.SourceArchitectureLayout, "system")
-		if err != nil {
-			return 0, err
-		}
-		entity.ObservedAt = now
-		entity.UpdatedAt = now
-		if onlyIfChanged {
-			err = s.upsertCanonEntityIfChanged(entity)
-		} else {
-			err = s.UpsertCanonEntity(entity)
-		}
-		if err != nil {
-			return 0, err
-		}
-		keepNodes = append(keepNodes, node.ID)
-		count++
-	}
-	if err := s.DeleteCanonEntitiesMissingRefs(projectID, canon.RefArchitectureNode, keepNodes); err != nil {
-		return 0, err
-	}
-
-	keepRelIDs := []string{}
-	nodeSet := make(map[string]struct{}, len(keepNodes))
-	for _, id := range keepNodes {
-		nodeSet[id] = struct{}{}
-	}
-	for _, edge := range canon.ParseLayoutEdges(layoutBody) {
-		if _, ok := nodeSet[edge.SourceNodeID]; !ok {
-			continue
-		}
-		if _, ok := nodeSet[edge.TargetNodeID]; !ok {
-			continue
-		}
-		subjectID := canon.EntityID(projectID, canon.RefArchitectureNode, edge.SourceNodeID)
-		objectID := canon.EntityID(projectID, canon.RefArchitectureNode, edge.TargetNodeID)
-		truth := canon.TruthDeclared
-		if !edge.Evidence {
-			truth = canon.TruthInferred
-		}
-		rel, err := canon.NewRelationship(projectID, subjectID, edge.Predicate, objectID, truth, canon.SourceArchitectureLayout, "system")
-		if err != nil {
-			return 0, err
-		}
-		rel.ObservedAt = now
-		if onlyIfChanged {
-			err = s.upsertCanonRelationshipIfChanged(rel)
-		} else {
-			err = s.UpsertCanonRelationship(rel)
-		}
-		if err != nil {
-			return 0, err
-		}
-		keepRelIDs = append(keepRelIDs, rel.ID)
-		count++
-	}
-	if err := s.DeleteCanonRelationshipsMissing(projectID, canon.SourceArchitectureLayout, keepRelIDs); err != nil {
 		return 0, err
 	}
 	return count, nil

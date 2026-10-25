@@ -18,7 +18,6 @@ type InitInput struct {
 	RootPath string
 }
 
-// InitProject saves the project, seeds empty layout/settings, and creates a default local environment when none exist.
 func InitProject(store *storepkg.Store, in InitInput) (projects.Project, error) {
 	name := strings.TrimSpace(in.Name)
 	rootPath := strings.TrimSpace(in.RootPath)
@@ -45,11 +44,6 @@ func InitProject(store *storepkg.Store, in InitInput) (projects.Project, error) 
 	}
 	if err := store.SaveProject(project); err != nil {
 		return projects.Project{}, err
-	}
-	if _, err := store.GetLayout(project.ID); err != nil {
-		if _, err := store.UpdateLayout(project.ID, 0, `{"nodes":[],"edges":[]}`); err != nil {
-			return projects.Project{}, err
-		}
 	}
 	if _, err := store.GetProjectSettings(project.ID); err != nil {
 		if err := store.SaveProjectSettings(projects.Settings{ProjectID: project.ID}); err != nil {

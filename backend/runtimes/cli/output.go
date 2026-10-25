@@ -73,7 +73,7 @@ func usage() {
   polterware [-db path] handoff [--card <slug>] [--note "..."] [--project <id>]
   polterware [-db path] task claim|done|release <slug>#T2 [--agent name] [--project <id>]
   polterware [-db path] decision list [state] | show <verdict> | propose "<title>" | activate <verdict> | challenge <verdict> --reason "..." | supersede <verdict> (--by <verdict> | --title "...") | trigger <verdict> "..." [--project <id>]
-  polterware [-db path] feature new "<intent>" [--title "..."] [--under <node>] [--architecture] [--project <id>]
+  polterware [-db path] feature new "<intent>" [--title "..."] [--under <node>] [--project <id>]
   polterware [-db path] feature shape <slug> | contract <slug> [--accept] | plan <slug> [--approve] [--project <id>]
   polterware [-db path] verify <slug|slug#T2> [--project <id>]   (exit 1 when a check fails)
   polterware [-db path] inbox [<id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore | verify | reject] [--agent name] [--scope <node>[,<node>]] [--exact] [--project <id>]

@@ -111,13 +111,12 @@ func seedKnowledgeLinks(store *storepkg.Store) error {
 		refID       string
 		predicate   string
 	}
+	// Links to environment entities (which are synced by SyncProjectModel)
 	specs := []linkSpec{
-		{knowledgeID: "doc-architecture", refKind: canon.RefArchitectureNode, refID: "n-gw", predicate: canon.PredDocuments},
-		{knowledgeID: "doc-architecture", refKind: canon.RefArchitectureNode, refID: "n-pg", predicate: canon.PredDocuments},
-		{knowledgeID: "doc-database", refKind: canon.RefArchitectureNode, refID: "n-pg", predicate: canon.PredDocuments},
-		{knowledgeID: "rb-service", refKind: canon.RefArchitectureNode, refID: "n-gw", predicate: canon.PredOperates},
-		{knowledgeID: "rb-database", refKind: canon.RefArchitectureNode, refID: "n-pg", predicate: canon.PredOperates},
-		{knowledgeID: "verdict-sqlite-local", refKind: canon.RefArchitectureNode, refID: "n-pg", predicate: canon.PredRelatedTo},
+		{knowledgeID: "doc-database", refKind: canon.RefEnvironment, refID: EnvProductionID, predicate: canon.PredDocuments},
+		{knowledgeID: "rb-service", refKind: canon.RefEnvironment, refID: EnvProductionID, predicate: canon.PredOperates},
+		{knowledgeID: "rb-database", refKind: canon.RefEnvironment, refID: EnvProductionID, predicate: canon.PredOperates},
+		{knowledgeID: "verdict-sqlite-local", refKind: canon.RefEnvironment, refID: EnvProductionID, predicate: canon.PredRelatedTo},
 	}
 	for _, spec := range specs {
 		entity, err := store.GetCanonEntityByRef(ProjectID, spec.refKind, spec.refID)

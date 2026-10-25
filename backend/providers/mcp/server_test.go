@@ -161,48 +161,6 @@ func TestDriftCheckNarrow(t *testing.T) {
 	if result.Findings == nil {
 		t.Fatal("findings must be a slice, got nil")
 	}
-
-	// Put an inferred DEPENDS_ON involving n-pg (Verdict-linked) into the layout so Sync keeps it.
-	layout, err := server.Store.GetLayout(demoseed.ProjectID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	body := strings.Replace(layout.BodyJSON,
-		`{"id":"e6","from":"n-gw","to":"n-pg","kind":"related","evidence":true}`,
-		`{"id":"e6","from":"n-gw","to":"n-pg","kind":"depends_on","evidence":false}`,
-		1,
-	)
-	if body == layout.BodyJSON {
-		t.Fatal("failed to patch layout edge e6")
-	}
-	if _, err := server.Store.UpdateLayout(demoseed.ProjectID, layout.Revision, body); err != nil {
-		t.Fatal(err)
-	}
-
-	pg, err := server.Store.GetCanonEntityByRef(demoseed.ProjectID, canon.RefArchitectureNode, "n-pg")
-	if err != nil {
-		t.Fatal(err)
-	}
-	text, err = server.callTool(ToolDriftCheck, map[string]any{
-		"project_id": demoseed.ProjectID,
-		"entity_id":  pg.ID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := json.Unmarshal([]byte(text), &result); err != nil {
-		t.Fatal(err)
-	}
-	found := false
-	for _, f := range result.Findings {
-		if f.Type == drift.TypeEdgeDecisionConflict {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Fatalf("expected edge_decision_conflict after layout patch, got %+v", result.Findings)
-	}
 }
 
 func TestUnknownAndLegacyToolsRejected(t *testing.T) {
