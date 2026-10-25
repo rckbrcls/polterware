@@ -6,7 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/architecture"
 	"github.com/polterware/polterware/backend/domains/integrations"
 	"github.com/polterware/polterware/backend/domains/knowledge"
 	"github.com/polterware/polterware/backend/domains/projects"
@@ -206,33 +205,6 @@ func (s *Store) DeleteEnvironment(id, projectID string) error {
 	return nil
 }
 
-func (s *Store) GetLayout(projectID string) (architecture.Layout, error) {
-	var layout architecture.Layout
-	err := s.DB.QueryRow(`SELECT id,project_id,revision,body_json FROM architecture_layouts WHERE project_id=?`, projectID).
-		Scan(&layout.ID, &layout.ProjectID, &layout.Revision, &layout.BodyJSON)
-	return layout, err
-}
-
-func (s *Store) UpdateLayout(projectID string, expectedRevision int64, body string) (architecture.Layout, error) {
-	current, err := s.GetLayout(projectID)
-	if errors.Is(err, sql.ErrNoRows) {
-		current = architecture.Layout{ID: "layout-" + projectID, ProjectID: projectID, Revision: 0, BodyJSON: `{"nodes":[],"edges":[]}`}
-	} else if err != nil {
-		return current, err
-	}
-	updated, err := architecture.UpdateLayout(current, expectedRevision, body)
-	if err != nil {
-		return current, err
-	}
-	_, err = s.DB.Exec(`INSERT INTO architecture_layouts(id,project_id,revision,body_json) VALUES(?,?,?,?)
-		ON CONFLICT(project_id) DO UPDATE SET revision=excluded.revision,body_json=excluded.body_json`, updated.ID, updated.ProjectID, updated.Revision, updated.BodyJSON)
-	if err != nil {
-		return updated, err
-	}
-	_, _ = s.syncArchitectureLayout(projectID, updated.BodyJSON, true)
-	return updated, nil
-}
-
 func (s *Store) SaveKnowledge(item knowledge.Item) error {
 	tags, _ := json.Marshal(item.Tags)
 	if item.ExtraJSON == "" {
@@ -349,10 +321,7 @@ func (s *Store) Reset() error {
 		"node_deployments",
 		"integration_sync_runs",
 		"integration_resources",
-		"architecture_view_members",
 		"knowledge_items",
-		"architecture_views",
-		"architecture_layouts",
 		"canvases",
 		"project_settings",
 		"integration_connections",

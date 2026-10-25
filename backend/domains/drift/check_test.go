@@ -37,15 +37,15 @@ func TestCheckEdgeDecisionConflict(t *testing.T) {
 		Relationships: []RelationshipRef{
 			{
 				ID: "rel-1", SubjectEntityID: "ent-a", ObjectEntityID: "ent-b",
-				Predicate: "DEPENDS_ON", TruthClass: "inferred", Source: "architecture_layout",
+				Predicate: "DEPENDS_ON", TruthClass: "inferred", Source: "canon",
 			},
 			{
 				ID: "rel-2", SubjectEntityID: "ent-a", ObjectEntityID: "ent-c",
-				Predicate: "DEPENDS_ON", TruthClass: "declared", Source: "architecture_layout",
+				Predicate: "DEPENDS_ON", TruthClass: "declared", Source: "canon",
 			},
 			{
 				ID: "rel-3", SubjectEntityID: "ent-a", ObjectEntityID: "ent-d",
-				Predicate: "RELATED_TO", TruthClass: "inferred", Source: "architecture_layout",
+				Predicate: "RELATED_TO", TruthClass: "inferred", Source: "canon",
 			},
 		},
 		AcceptedVerdicts: []AcceptedVerdict{
@@ -147,7 +147,7 @@ func TestCheckEntityFilter(t *testing.T) {
 		Relationships: []RelationshipRef{
 			{
 				ID: "rel-1", SubjectEntityID: "ent-keep", ObjectEntityID: "ent-b",
-				Predicate: "CALLS", TruthClass: "inferred", Source: "architecture_layout",
+				Predicate: "CALLS", TruthClass: "inferred", Source: "canon",
 			},
 		},
 		AcceptedVerdicts: []AcceptedVerdict{

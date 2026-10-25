@@ -111,8 +111,6 @@ func ServeConnect(listener net.Listener, core *Core) *http.Server {
 	register(path, handler)
 	path, handler = localv1connect.NewProjectServiceHandler(core, options...)
 	register(path, handler)
-	path, handler = localv1connect.NewArchitectureServiceHandler(core, options...)
-	register(path, handler)
 	path, handler = localv1connect.NewKnowledgeServiceHandler(core, options...)
 	register(path, handler)
 	path, handler = localv1connect.NewWorkServiceHandler(core, options...)
@@ -174,11 +172,6 @@ func (core *Core) SaveProject(_ context.Context, request *connect.Request[localv
 	if err := core.Store.SaveProject(project); err != nil {
 		return nil, internal(err)
 	}
-	if _, err := core.Store.GetLayout(project.ID); err != nil {
-		if _, err := core.Store.UpdateLayout(project.ID, 0, `{"nodes":[],"edges":[]}`); err != nil {
-			return nil, internal(err)
-		}
-	}
 	if _, err := core.Store.GetProjectSettings(project.ID); err != nil {
 		if err := core.Store.SaveProjectSettings(projects.Settings{ProjectID: project.ID}); err != nil {
 			return nil, internal(err)
@@ -236,22 +229,6 @@ func (core *Core) DeleteEnvironment(_ context.Context, request *connect.Request[
 		return nil, invalid(err.Error())
 	}
 	return connect.NewResponse(&localv1.DeleteEnvironmentResponse{}), nil
-}
-
-func (core *Core) GetLayout(_ context.Context, request *connect.Request[localv1.GetLayoutRequest]) (*connect.Response[localv1.GetLayoutResponse], error) {
-	item, err := core.Store.GetLayout(request.Msg.ProjectId)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeNotFound, err)
-	}
-	return connect.NewResponse(&localv1.GetLayoutResponse{Layout: &localv1.Layout{Id: item.ID, ProjectId: item.ProjectID, Revision: item.Revision, BodyJson: item.BodyJSON}}), nil
-}
-
-func (core *Core) UpdateLayout(_ context.Context, request *connect.Request[localv1.UpdateLayoutRequest]) (*connect.Response[localv1.UpdateLayoutResponse], error) {
-	item, err := core.Store.UpdateLayout(request.Msg.ProjectId, request.Msg.ExpectedRevision, request.Msg.BodyJson)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, err)
-	}
-	return connect.NewResponse(&localv1.UpdateLayoutResponse{Layout: &localv1.Layout{Id: item.ID, ProjectId: item.ProjectID, Revision: item.Revision, BodyJson: item.BodyJSON}}), nil
 }
 
 func (core *Core) SaveKnowledge(_ context.Context, request *connect.Request[localv1.SaveKnowledgeRequest]) (*connect.Response[localv1.SaveKnowledgeResponse], error) {

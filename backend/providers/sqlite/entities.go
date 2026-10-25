@@ -1,10 +1,6 @@
 package sqlite
 
 import (
-	"encoding/json"
-	"time"
-
-	"github.com/polterware/polterware/backend/domains/architecture"
 	"github.com/polterware/polterware/backend/domains/integrations"
 	"github.com/polterware/polterware/backend/domains/projects"
 )
@@ -23,82 +19,6 @@ func (s *Store) GetProjectSettings(projectID string) (projects.Settings, error) 
 		Scan(&item.ProjectID, &item.Description, &defaultEnv, &item.Repository)
 	item.DefaultEnvironmentID = defaultEnv
 	return item, err
-}
-
-func (s *Store) SaveView(view architecture.View) error {
-	if view.UpdatedAt == "" {
-		view.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
-	}
-	environments, _ := json.Marshal(view.Environments)
-	tags, _ := json.Marshal(view.Tags)
-	tx, err := s.DB.Begin()
-	if err != nil {
-		return err
-	}
-	if _, err := tx.Exec(`INSERT INTO architecture_views(id,project_id,name,description,owner,purpose,notes,filter_summary,environments_json,tags_json,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)
-		ON CONFLICT(id) DO UPDATE SET project_id=excluded.project_id,name=excluded.name,description=excluded.description,owner=excluded.owner,purpose=excluded.purpose,notes=excluded.notes,filter_summary=excluded.filter_summary,environments_json=excluded.environments_json,tags_json=excluded.tags_json,updated_at=excluded.updated_at`,
-		view.ID, view.ProjectID, view.Name, view.Description, view.Owner, view.Purpose, view.Notes, view.FilterSummary, string(environments), string(tags), view.UpdatedAt); err != nil {
-		_ = tx.Rollback()
-		return err
-	}
-	if _, err := tx.Exec(`DELETE FROM architecture_view_members WHERE view_id=?`, view.ID); err != nil {
-		_ = tx.Rollback()
-		return err
-	}
-	for _, member := range view.Members {
-		if _, err := tx.Exec(`INSERT INTO architecture_view_members(view_id,node_id,name,type,layer) VALUES(?,?,?,?,?)`, view.ID, member.NodeID, member.Name, member.Type, member.Layer); err != nil {
-			_ = tx.Rollback()
-			return err
-		}
-	}
-	return tx.Commit()
-}
-
-func (s *Store) ListViews(projectID string) ([]architecture.View, error) {
-	rows, err := s.DB.Query(`SELECT id,project_id,name,description,owner,purpose,notes,filter_summary,environments_json,tags_json,updated_at FROM architecture_views WHERE project_id=? ORDER BY name`, projectID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var result []architecture.View
-	for rows.Next() {
-		var item architecture.View
-		var environments, tags string
-		if err := rows.Scan(&item.ID, &item.ProjectID, &item.Name, &item.Description, &item.Owner, &item.Purpose, &item.Notes, &item.FilterSummary, &environments, &tags, &item.UpdatedAt); err != nil {
-			return nil, err
-		}
-		_ = json.Unmarshal([]byte(environments), &item.Environments)
-		_ = json.Unmarshal([]byte(tags), &item.Tags)
-		members, err := s.listViewMembers(item.ID)
-		if err != nil {
-			return nil, err
-		}
-		item.Members = members
-		result = append(result, item)
-	}
-	return result, rows.Err()
-}
-
-func (s *Store) DeleteView(id string) error {
-	_, err := s.DB.Exec(`DELETE FROM architecture_views WHERE id=?`, id)
-	return err
-}
-
-func (s *Store) listViewMembers(viewID string) ([]architecture.ViewMember, error) {
-	rows, err := s.DB.Query(`SELECT node_id,name,type,layer FROM architecture_view_members WHERE view_id=? ORDER BY name`, viewID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var result []architecture.ViewMember
-	for rows.Next() {
-		var item architecture.ViewMember
-		if err := rows.Scan(&item.NodeID, &item.Name, &item.Type, &item.Layer); err != nil {
-			return nil, err
-		}
-		result = append(result, item)
-	}
-	return result, rows.Err()
 }
 
 func (s *Store) SaveIntegrationResource(resource integrations.Resource) error {

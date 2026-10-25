@@ -25,14 +25,14 @@ func TestCanonKnowledgeSearchAndContext(t *testing.T) {
 	if count == 0 {
 		t.Fatal("expected entities")
 	}
-	hits, err := store.SearchKnowledge(demoseed.ProjectID, "architecture", "", 10)
+	hits, err := store.SearchKnowledge(demoseed.ProjectID, "database", "", 10)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(hits) == 0 {
 		t.Fatal("expected fts hits")
 	}
-	links, err := store.ListKnowledgeLinks(demoseed.ProjectID, "doc-architecture", "")
+	links, err := store.ListKnowledgeLinks(demoseed.ProjectID, "doc-database", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestCanonKnowledgeSearchAndContext(t *testing.T) {
 	}
 	pkg, err := store.CompileContext(contextpkg.Request{
 		ProjectID:   demoseed.ProjectID,
-		Query:       "architecture",
+		Query:       "database",
 		TokenBudget: 800,
 	})
 	if err != nil {

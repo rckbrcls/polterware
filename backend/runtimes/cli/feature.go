@@ -14,7 +14,7 @@ import (
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
 )
 
-const featureUsage = `usage: polterware feature new "<intent>" [--title "..."] [--under <node>] [--architecture]
+const featureUsage = `usage: polterware feature new "<intent>" [--title "..."] [--under <node>]
        polterware feature shape <slug>
        polterware feature contract <slug> [--accept]
        polterware feature plan <slug> [--approve]`
@@ -31,12 +31,11 @@ func runFeature(dbPath string, args []string) error {
 	flags.SetOutput(os.Stderr)
 	projectID := flags.String("project", "", "project id (default: project containing the cwd)")
 	var title, under *string
-	var architecture, pass *bool
+	var pass *bool
 	switch action {
 	case "new":
 		title = flags.String("title", "", "card title (default: the intent's first sentence)")
 		under = flags.String("under", "", "component path the feature lives under")
-		architecture = flags.Bool("architecture", false, "mark the card as an Architecture Change")
 	case polter.FeatureStepContract:
 		pass = flags.Bool("accept", false, "accept the contract and move the card to plan")
 	case polter.FeatureStepPlan:
@@ -67,7 +66,7 @@ func runFeature(dbPath string, args []string) error {
 	switch {
 	case action == "new":
 		res, err := c.Work.CreateFeature(ctx, connect.NewRequest(&localv1.CreateFeatureRequest{
-			ProjectId: project.Id, Intent: positional[0], Title: *title, Under: *under, Kind: cardKind(*architecture),
+			ProjectId: project.Id, Intent: positional[0], Title: *title, Under: *under,
 			SessionId: sessionID, SessionLabel: label,
 		}))
 		if diags, ok := polterDiagnostics(err); ok {
@@ -150,11 +149,4 @@ func stripLines(diags []polter.Diagnostic) []polter.Diagnostic {
 		diags[i].Line = 0
 	}
 	return diags
-}
-
-func cardKind(architecture bool) string {
-	if architecture {
-		return "architecture"
-	}
-	return ""
 }

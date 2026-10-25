@@ -7,7 +7,6 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/polterware/polterware/backend/domains/architecture"
 	"github.com/polterware/polterware/backend/domains/integrations"
 	"github.com/polterware/polterware/backend/domains/projects"
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
@@ -36,37 +35,6 @@ func (core *Core) SaveProjectSettings(_ context.Context, request *connect.Reques
 		return nil, internal(err)
 	}
 	return connect.NewResponse(&localv1.SaveProjectSettingsResponse{Settings: settingsProto(settings)}), nil
-}
-
-func (core *Core) ListViews(_ context.Context, request *connect.Request[localv1.ListViewsRequest]) (*connect.Response[localv1.ListViewsResponse], error) {
-	items, err := core.Store.ListViews(request.Msg.ProjectId)
-	if err != nil {
-		return nil, internal(err)
-	}
-	result := make([]*localv1.ArchitectureView, 0, len(items))
-	for _, item := range items {
-		result = append(result, viewProto(item))
-	}
-	return connect.NewResponse(&localv1.ListViewsResponse{Views: result}), nil
-}
-
-func (core *Core) SaveView(_ context.Context, request *connect.Request[localv1.SaveViewRequest]) (*connect.Response[localv1.SaveViewResponse], error) {
-	item := request.Msg.GetView()
-	if item == nil || item.Id == "" || item.ProjectId == "" || item.Name == "" {
-		return nil, invalid("view id, project id, and name are required")
-	}
-	view := viewFromProto(item)
-	if err := core.Store.SaveView(view); err != nil {
-		return nil, internal(err)
-	}
-	return connect.NewResponse(&localv1.SaveViewResponse{View: viewProto(view)}), nil
-}
-
-func (core *Core) DeleteView(_ context.Context, request *connect.Request[localv1.DeleteViewRequest]) (*connect.Response[localv1.DeleteViewResponse], error) {
-	if err := core.Store.DeleteView(request.Msg.Id); err != nil {
-		return nil, internal(err)
-	}
-	return connect.NewResponse(&localv1.DeleteViewResponse{}), nil
 }
 
 func (core *Core) ListIntegrationResources(_ context.Context, request *connect.Request[localv1.ListIntegrationResourcesRequest]) (*connect.Response[localv1.ListIntegrationResourcesResponse], error) {
@@ -147,22 +115,6 @@ func (core *Core) BeginCliAuth(_ context.Context, request *connect.Request[local
 
 func settingsProto(item projects.Settings) *localv1.ProjectSettings {
 	return &localv1.ProjectSettings{ProjectId: item.ProjectID, Description: item.Description, DefaultEnvironmentId: item.DefaultEnvironmentID, Repository: item.Repository}
-}
-
-func viewFromProto(item *localv1.ArchitectureView) architecture.View {
-	members := make([]architecture.ViewMember, 0, len(item.Members))
-	for _, member := range item.Members {
-		members = append(members, architecture.ViewMember{NodeID: member.NodeId, Name: member.Name, Type: member.Type, Layer: member.Layer})
-	}
-	return architecture.View{ID: item.Id, ProjectID: item.ProjectId, Name: item.Name, Description: item.Description, Owner: item.Owner, Purpose: item.Purpose, Notes: item.Notes, FilterSummary: item.FilterSummary, Environments: item.Environments, Tags: item.Tags, UpdatedAt: item.UpdatedAt, Members: members}
-}
-
-func viewProto(item architecture.View) *localv1.ArchitectureView {
-	members := make([]*localv1.ArchitectureViewMember, 0, len(item.Members))
-	for _, member := range item.Members {
-		members = append(members, &localv1.ArchitectureViewMember{NodeId: member.NodeID, Name: member.Name, Type: member.Type, Layer: member.Layer})
-	}
-	return &localv1.ArchitectureView{Id: item.ID, ProjectId: item.ProjectID, Name: item.Name, Description: item.Description, Owner: item.Owner, Purpose: item.Purpose, Notes: item.Notes, FilterSummary: item.FilterSummary, Environments: item.Environments, Tags: item.Tags, UpdatedAt: item.UpdatedAt, Members: members}
 }
 
 func integrationResourceProto(item integrations.Resource) *localv1.IntegrationResource {
