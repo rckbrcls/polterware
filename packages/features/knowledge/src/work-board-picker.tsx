@@ -2,7 +2,7 @@ import { Show, createMemo, createSignal } from "solid-js";
 import {
   A11yDialog, ArrowDown, ArrowUp, Button, DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuTrigger, Field, Input, MoreHorizontal, Pencil,
-  Plus, Select, Delete, buttonClassName,
+  Plus, Select, Delete, buttonClassName, pushToast,
 } from "@polterware/frontend-design-system";
 import type { WorkspaceWorkBoard } from "@polterware/feature-shell";
 import { moveWorkBoard, selectedWorkBoard, workBoardOptions, type WorkBoardAction } from "./work-boards";
@@ -49,7 +49,9 @@ export function WorkBoardPicker(props: {
         setDialog(null);
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not save the board.");
+      const message = cause instanceof Error ? cause.message : "Could not save the board.";
+      setError(message);
+      pushToast(message, "danger");
     } finally {
       setBusy(false);
     }
@@ -82,6 +84,7 @@ export function WorkBoardPicker(props: {
             <MoreHorizontal size={14} />
           </DropdownMenuTrigger>
           <DropdownMenuContent>
+            <DropdownMenuItem value="create" onSelect={() => open("create")}><Plus size={14} />New board</DropdownMenuItem>
             <DropdownMenuItem value="rename" onSelect={() => open("rename")}><Pencil size={14} />Rename board</DropdownMenuItem>
             <DropdownMenuItem value="earlier" disabled={!moveWorkBoard(props.boards, selected().id, -1)} onSelect={() => move(-1)}><ArrowUp size={14} />Move earlier</DropdownMenuItem>
             <DropdownMenuItem value="later" disabled={!moveWorkBoard(props.boards, selected().id, 1)} onSelect={() => move(1)}><ArrowDown size={14} />Move later</DropdownMenuItem>
@@ -89,10 +92,6 @@ export function WorkBoardPicker(props: {
           </DropdownMenuContent>
         </DropdownMenu>
       </Show>
-      <Show when={props.onAction}>
-        <Button size="sm" variant="ghost" disabled={disabled()} onClick={() => open("create")}><Plus size={14} />New board</Button>
-      </Show>
-      <Show when={error() && !dialog()}><span role="alert" class="text-[12px] text-[var(--color-danger)]">{error()}</span></Show>
       <A11yDialog
         open={dialog() !== null}
         size="sm"
@@ -111,10 +110,10 @@ export function WorkBoardPicker(props: {
             <Input value={name()} disabled={busy()} onInput={(event) => setName(event.currentTarget.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); submit(); } }} />
           </Field>
         }>
-          <p>Delete “{targetName()}”? Work cards stay in the project.</p>
+          <p class="text-sm text-[var(--color-text-primary)]">Delete “{targetName()}”? Work cards stay in the project.</p>
         </Show>
         <Show when={error() || (name().trim() && dialog() !== "delete" && nameError())}>
-          <p role="alert" class="text-[12px] text-[var(--color-danger)]">{error() || nameError()}</p>
+          <p role="alert" class="text-sm text-[var(--color-danger)]">{error() || nameError()}</p>
         </Show>
       </A11yDialog>
     </>

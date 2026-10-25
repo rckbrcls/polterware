@@ -1,5 +1,7 @@
 import { For, Show, createMemo, createSignal } from "solid-js";
 import {
+  ArrowRight,
+  auroraForId,
   Button,
   Card,
   Folder,
@@ -38,6 +40,74 @@ function activityLabel(value: string | undefined): string | undefined {
   const text = value?.trim();
   if (!text || text === "—") return undefined;
   return text;
+}
+
+function ProjectCard(props: {
+  project: ProjectSwitcherItem;
+  onOpen: (projectId: string) => void;
+}) {
+  const activity = activityLabel(props.project.lastActivity);
+
+  function activate() {
+    props.onOpen(props.project.projectId);
+  }
+
+  return (
+    <Card
+      variant="texture"
+      class="pw-projects-card"
+      ref={(element) => {
+        element.tabIndex = 0;
+        element.setAttribute("role", "button");
+        element.setAttribute("aria-label", `Open ${props.project.name}`);
+        element.onclick = activate;
+        element.onkeydown = (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          activate();
+        };
+      }}
+    >
+      <div class="flex min-w-0 items-start gap-3">
+        <IconTile
+          size={28}
+          tone="architecture"
+          aurora={auroraForId(props.project.projectId)}
+          seed={props.project.projectId}
+        >
+          <Folder size={14} />
+        </IconTile>
+        <div class="pw-projects-card-copy flex-1">
+          <h2 class="truncate text-[14px] font-medium text-[var(--color-text-primary)]">
+            {props.project.name}
+          </h2>
+          <Show when={props.project.description}>
+            <p class="pw-projects-card-description text-[13px] text-[var(--color-text-secondary)]">
+              {props.project.description}
+            </p>
+          </Show>
+        </div>
+        <ArrowRight class="pw-projects-card-affordance" size={14} aria-hidden="true" />
+      </div>
+      <div class="pw-projects-meta">
+        <Show when={props.project.status}>
+          {(status) => {
+            const item = statusPresentation(status());
+            return <StatusChip tone={item.tone}>{item.label}</StatusChip>;
+          }}
+        </Show>
+        <span class="text-[12px] text-[var(--color-text-muted)]">{props.project.environmentSummary}</span>
+        <Show when={props.project.directory}>
+          <span class="min-w-0 flex-1 truncate text-[12px] text-[var(--color-text-muted)]" title={props.project.directory}>
+            {props.project.directory}
+          </span>
+        </Show>
+        <Show when={activity}>
+          <span class="shrink-0 text-[12px] text-[var(--color-text-muted)]">Updated {activity}</span>
+        </Show>
+      </div>
+    </Card>
+  );
 }
 
 export function ProjectsScreen(props: ProjectsScreenProps) {
@@ -103,52 +173,7 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
             >
               <ul class="pw-projects-grid" aria-label="Projects">
                 <For each={filtered()}>
-                  {(project) => {
-                    const activity = activityLabel(project.lastActivity);
-                    return (
-                      <li>
-                        <Card class="pw-projects-card">
-                          <div class="flex min-w-0 items-start gap-3">
-                            <IconTile size={28} tone="architecture" seed={project.projectId}>
-                              <Folder size={14} />
-                            </IconTile>
-                            <div class="pw-projects-card-copy flex-1">
-                              <h2 class="truncate text-[14px] font-medium text-[var(--color-text-primary)]">
-                                {project.name}
-                              </h2>
-                              <Show when={project.description}>
-                                <p class="text-[13px] text-[var(--color-text-secondary)]">{project.description}</p>
-                              </Show>
-                            </div>
-                          </div>
-                          <div class="pw-projects-meta">
-                            <div class="pw-projects-meta-row">
-                              <Show when={project.status}>
-                                {(status) => {
-                                  const item = statusPresentation(status());
-                                  return <StatusChip tone={item.tone}>{item.label}</StatusChip>;
-                                }}
-                              </Show>
-                              <span class="text-[12px] text-[var(--color-text-muted)]">{project.environmentSummary}</span>
-                            </div>
-                            <Show when={project.directory}>
-                              <p class="truncate text-[12px] text-[var(--color-text-muted)]" title={project.directory}>
-                                {project.directory}
-                              </p>
-                            </Show>
-                            <Show when={activity}>
-                              <p class="text-[12px] text-[var(--color-text-muted)]">Updated {activity}</p>
-                            </Show>
-                          </div>
-                          <div class="mt-auto flex justify-end">
-                            <Button size="sm" variant="texture" onClick={() => props.onOpenProject(project.projectId)}>
-                              Open
-                            </Button>
-                          </div>
-                        </Card>
-                      </li>
-                    );
-                  }}
+                  {(project) => <li><ProjectCard project={project} onOpen={props.onOpenProject} /></li>}
                 </For>
               </ul>
             </Show>
