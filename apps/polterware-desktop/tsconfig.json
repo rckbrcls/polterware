@@ -13,6 +13,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "paths": {
+      "@polterware/feature-canvas": ["../../packages/features/canvas/src/index.tsx"],
       "@/*": [
         "./src/renderer/*"
       ]

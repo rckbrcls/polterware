@@ -66,4 +66,25 @@ describe("installBrowserDevBridge", () => {
     expect((await work.listBoards({ projectId: "browser-empty" })).boards).toEqual([]);
   });
 
+  it("provides isolated demo canvases and persists independent graph, layout, name and sharing updates", async () => {
+    installBrowserDevBridge();
+    const api = window.polterware.core.canvas;
+    const projectId = "browser-preview";
+    expect((await api.listCanvases({ projectId })).canvases).toHaveLength(2);
+    expect((await api.listCanvases({ projectId: "browser-empty" })).canvases).toEqual([]);
+    expect((await api.listCanvasTypes()).types).toEqual(expect.arrayContaining([expect.objectContaining({ type: "free", unrestricted: true }), expect.objectContaining({ type: "brainstorm" })]));
+    const created = await api.createCanvas({ projectId, name: "Sketch", type: "free", graph: { nodes: [], edges: [] }, layoutJson: "{}" });
+    const id = (created.canvas as { id: string }).id;
+    await api.updateCanvas({ projectId, id, agentVisible: true });
+    await api.updateCanvas({ projectId, id, name: "Renamed", layoutJson: '{"nodes":{}}' });
+    const loaded = await api.getCanvas({ projectId, id });
+    expect(loaded.canvas).toMatchObject({ name: "Renamed", agentVisible: true, graph: { nodes: [], edges: [] }, layoutJson: '{"nodes":{}}' });
+    await expect(api.getCanvas({ projectId: "browser-empty", id })).rejects.toThrow("not found");
+    await expect(api.updateCanvas({ projectId, id, name: "" })).rejects.toThrow("name");
+    await expect(api.updateCanvas({ projectId, id, graph: { nodes: [{ id: "a", kind: "note" }], edges: [{ id: "ab", from: "a", to: "missing", kind: "relates" }] } })).rejects.toThrow("endpoints");
+    await api.deleteCanvas({ projectId, id });
+    await expect(api.getCanvas({ projectId, id })).rejects.toThrow("not found");
+    expect((await api.listCanvases({ projectId })).canvases).toHaveLength(2);
+  });
+
 });

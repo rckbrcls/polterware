@@ -90,6 +90,19 @@ describe("createPolterwareBridge", () => {
     }
   });
 
+  it("routes CanvasService operations through declared IPC channels and preserves optional fields", async () => {
+    const invoke = vi.fn().mockResolvedValue({});
+    const bridge = createPolterwareBridge({ invoke });
+    const methods = ["listCanvases", "getCanvas", "createCanvas", "updateCanvas", "deleteCanvas", "listCanvasTypes"] as const;
+    for (const method of methods) {
+      const payload = { projectId: "project", id: "canvas", agentVisible: false, layoutJson: "{}" };
+      await bridge.core.canvas[method](payload);
+      expect(invoke).toHaveBeenLastCalledWith(IPC_CHANNELS.core[method], payload);
+    }
+    invoke.mockRejectedValueOnce(new Error("invalid canvas graph: nodes[0]: kind is not allowed"));
+    await expect(bridge.core.canvas.updateCanvas({ projectId: "project", id: "canvas" })).rejects.toThrow("nodes[0]");
+  });
+
   it("subscribes to Commander focus events and returns an unsubscribe function", () => {
     const invoke = vi.fn().mockResolvedValue([]);
     const listeners = new Map<string, (...args: unknown[]) => void>();

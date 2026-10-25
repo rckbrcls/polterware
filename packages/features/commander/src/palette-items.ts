@@ -11,8 +11,9 @@ export type PaletteItem = {
 
 export const DEFAULT_PALETTE_ITEMS: PaletteItem[] = [
   { id: "nav.inbox", label: "Inbox", group: "Navigation" },
-  { id: "nav.atlas", label: "Atlas", group: "Navigation" },
   { id: "nav.work", label: "Work", group: "Navigation" },
+  { id: "nav.canvas", label: "Canvas", group: "Navigation", shortcutId: "shell.open_canvas" },
+  { id: "nav.atlas", label: "Atlas", group: "Navigation" },
   { id: "nav.truth", label: "Truth", group: "Navigation" },
   { id: "nav.dispatch", label: "Dispatch Runs", group: "Navigation" },
   { id: "nav.dispatch-routing", label: "Dispatch Routing", group: "Navigation" },

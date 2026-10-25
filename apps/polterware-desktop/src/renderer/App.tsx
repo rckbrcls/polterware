@@ -41,6 +41,7 @@ import {
   type WorkspaceInboxItem,
 } from "@polterware/feature-shell";
 import { ArchitectureView } from "@polterware/feature-architecture";
+import { CanvasView } from "@polterware/feature-canvas";
 import type { WorkBoardAction } from "@polterware/feature-knowledge";
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
 import { hydrateAppearancePreferences, hydrateShortcutPreferences } from "@polterware/feature-settings/boot";
@@ -114,6 +115,7 @@ import {
   persistKnowledgeDelete,
   persistKnowledgeSourcePath,
   persistLayout,
+  canvasPersistence,
   persistAddProjectRepo,
   persistProjectSettings,
   persistRemoveProjectRepo,
@@ -323,6 +325,11 @@ export function App() {
     void hydrateShortcutPreferences();
     void hydrateAppearancePreferences();
     const onKeyDown = (event: KeyboardEvent) => {
+      if (matchesShortcut("shell.open_canvas", event) && !route().home) {
+        event.preventDefault();
+        handlePaletteCommand("nav.canvas");
+        return;
+      }
       if (!matchesShortcut("shell.toggle_commander", event)) return;
       event.preventDefault();
       setPaletteOpen((open) => !open);
@@ -1194,6 +1201,10 @@ export function App() {
             loading={loading() || !workspace().extensionsReady}
             onResolve={resolveInboxItem}
           />
+        </Match>
+
+        <Match when={route().section === "canvas"}>
+          <CanvasView projectId={currentProjectId()} port={canvasPersistence} />
         </Match>
 
         <Match when={route().section === "atlas"}>

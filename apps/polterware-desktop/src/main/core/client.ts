@@ -2,6 +2,7 @@ import { createClient, type Client, type Interceptor, type Transport } from "@co
 import { createConnectTransport } from "@connectrpc/connect-node";
 import {
   ArchitectureService,
+  CanvasService,
   AgentRunService,
   ChangeService,
   ContextService,
@@ -27,6 +28,7 @@ export type CoreClients = {
   maintenance: Client<typeof MaintenanceService>;
   projects: Client<typeof ProjectService>;
   architecture: Client<typeof ArchitectureService>;
+  canvas: Client<typeof CanvasService>;
   knowledge: Client<typeof KnowledgeService>;
   work: Client<typeof WorkService>;
   canon: Client<typeof ProjectModelService>;
@@ -53,6 +55,7 @@ export function createCoreClients(endpoint: string, token: string): CoreClients 
     maintenance: createClient(MaintenanceService, transport),
     projects: createClient(ProjectService, transport),
     architecture: createClient(ArchitectureService, transport),
+    canvas: createClient(CanvasService, transport),
     knowledge: createClient(KnowledgeService, transport),
     work: createClient(WorkService, transport),
     canon: createClient(ProjectModelService, transport),

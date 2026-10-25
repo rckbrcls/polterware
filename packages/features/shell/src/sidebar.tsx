@@ -15,6 +15,7 @@ import {
   History,
   Inbox,
   Layers,
+  Pencil,
   ListOrdered,
   Route,
   Settings,
@@ -39,6 +40,7 @@ import type { HelpTopicId } from "./help-topics";
 const icons: Record<string, (p: { size?: number; class?: string }) => JSX.Element> = {
   inbox: (p) => <Inbox size={p.size ?? 14} class={p.class} />,
   atlas: (p) => <ChartRelationshipIcon size={p.size ?? 14} class={p.class} />,
+  canvas: (p) => <Pencil size={p.size ?? 14} class={p.class} />,
   work: (p) => <Briefcase06Icon size={p.size ?? 14} class={p.class} />,
   truth: (p) => <Layers size={p.size ?? 14} class={p.class} />,
   dispatch: (p) => <Route size={p.size ?? 14} class={p.class} />,

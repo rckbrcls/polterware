@@ -355,6 +355,9 @@ importers:
       '@polterware/feature-architecture':
         specifier: workspace:*
         version: link:../../packages/features/architecture
+      '@polterware/feature-canvas':
+        specifier: workspace:*
+        version: link:../../packages/features/canvas
       '@polterware/feature-commander':
         specifier: workspace:*
         version: link:../../packages/features/commander
@@ -565,6 +568,31 @@ importers:
       motion:
         specifier: ^13.4.4
         version: 13.4.4(react@19.2.5)
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+    devDependencies:
+      '@types/node':
+        specifier: ^24.13.6
+        version: 24.13.6
+      jsdom:
+        specifier: ^30.1.1
+        version: 30.1.1(@noble/hashes@2.4.0)
+      vite-plugin-solid:
+        specifier: ^2.11.14
+        version: 2.11.14(solid-js@1.9.15)(supports-color@8.1.1)(vite@8.3.4(@types/node@24.13.6)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@24.13.6)(jsdom@30.1.1(@noble/hashes@2.4.0))(msw@2.14.6(@types/node@24.13.6)(typescript@7.0.2))(vite@8.3.4(@types/node@24.13.6)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/features/canvas:
+    dependencies:
+      '@polterware/frontend-canvas':
+        specifier: workspace:*
+        version: link:../../frontend/canvas
+      '@polterware/frontend-design-system':
+        specifier: workspace:*
+        version: link:../../frontend/design-system
       solid-js:
         specifier: ^1.9.15
         version: 1.9.15

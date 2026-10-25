@@ -10,10 +10,39 @@ import { asNumber, asObjectArray, asRecord, asString } from "./format";
 import type { WorkspaceSnapshot } from "./load";
 import { mapFeatureReview } from "./map-feature-review";
 import { uniqueCardSlug } from "@polterware/feature-knowledge";
+import { readCanvas, readTypes, type CanvasPort } from "@polterware/feature-canvas";
 
 function core() {
   return window.polterware.core;
 }
+
+/** Canvas writes use the same audited change envelope as the other surfaces. */
+export const canvasPersistence: CanvasPort = {
+  async list(projectId) {
+    const response = asRecord(await core().canvas.listCanvases({ projectId }));
+    return asObjectArray(response.canvases).map(readCanvas);
+  },
+  async get(projectId, id) {
+    const response = asRecord(await core().canvas.getCanvas({ projectId, id }));
+    return readCanvas(response.canvas);
+  },
+  async types() { return readTypes(await core().canvas.listCanvasTypes({})); },
+  async create(projectId, name, type) {
+    const response = asRecord(await core().canvas.createCanvas({ projectId, name, type, agentVisible: false,
+      graph: { nodes: [], edges: [] }, layoutJson: "{}",
+      change: { summary: `Create canvas: ${name}`, rationale: "Start a local canvas for visual exploration." } }));
+    return readCanvas(response.canvas);
+  },
+  async update(projectId, id, patch) {
+    const response = asRecord(await core().canvas.updateCanvas({ projectId, id, ...patch,
+      change: { summary: "Update canvas", rationale: "Save canvas edits from the Desktop editor." } }));
+    return readCanvas(response.canvas);
+  },
+  async remove(projectId, id) {
+    await core().canvas.deleteCanvas({ projectId, id,
+      change: { summary: "Delete canvas", rationale: "Remove a canvas after operator confirmation." } });
+  },
+};
 
 function changePayload(change: ChangeEnvelope) {
   return {

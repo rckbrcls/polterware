@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_NAV } from "./navigation";
 import { DEFAULT_TABS, SECTION_TABS, closeDialog, createDefaultRoute, createHomeRoute, enterProject, goHome, goSection, historySnapshot, isHomeRoute, openDialog, routesEqual, setTab, ensureRouteAvailable, isNavSectionId, resolveRoute } from "./route";
 
 describe("first version routes", () => {
@@ -6,10 +7,16 @@ describe("first version routes", () => {
     expect(createDefaultRoute()).toMatchObject({ section: "inbox", tab: "all" });
   });
 
-  it("exposes only the Atlas project surfaces", () => {
+  it("exposes the exact project navigation and keeps Canvas after Work", () => {
     expect(
-      ["inbox", "atlas", "work", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "integrations", "activity"].every(isNavSectionId),
+      ["inbox", "atlas", "work", "canvas", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "integrations", "activity"].every(isNavSectionId),
     ).toBe(true);
+    expect(DEFAULT_NAV.map((item) => item.section)).toEqual([
+      "inbox", "activity", "work", "canvas", "atlas", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "integrations",
+    ]);
+    expect(resolveRoute("canvas")).toEqual({ section: "canvas", tab: "all" });
+    expect(DEFAULT_TABS.canvas).toBe("all");
+    expect(SECTION_TABS.canvas.map((tab) => tab.id)).toEqual(["all"]);
     expect(isNavSectionId("decisions")).toBe(false);
     expect(isNavSectionId("reality")).toBe(false);
     expect(isNavSectionId("settings")).toBe(false);

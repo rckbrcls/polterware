@@ -71,6 +71,7 @@ export default defineConfig({
       alias: {
         "@": resolve(rootDir, "src/renderer"),
         "@polterware/contracts": resolve(rootDir, "../../packages/contracts/src/index.ts"),
+        "@polterware/feature-canvas": resolve(rootDir, "../../packages/features/canvas/src/index.tsx"),
         "@polterware/feature-shell": resolve(rootDir, "../../packages/features/shell/src/index.tsx"),
         // Subpath before package root alias so Vite does not treat /icons as a file suffix.
         "@polterware/feature-architecture/icons": resolve(

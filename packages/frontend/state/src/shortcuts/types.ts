@@ -14,6 +14,7 @@ export type ShortcutCommandId =
   | "shell.toggle_commander_global"
   | "shell.toggle_sidebar"
   | "shell.toggle_detail"
+  | "shell.open_canvas"
   | "architecture.tool_select"
   | "architecture.tool_hand"
   | "architecture.tool_connect"
