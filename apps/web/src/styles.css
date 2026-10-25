@@ -35,11 +35,10 @@ p { line-height: 1.6; }
 /* Depth for the product window, which starts tilted back and lies flat on scroll. */
 .showcase { padding-bottom: 48px; perspective: 1600px; }
 /* The frame is cut at the point where the fade turns solid, so the hidden part of the prototype takes no room. */
-.showcase-frame { position: relative; transform-origin: 50% 0; max-height: 580px; overflow: hidden; border-radius: calc(var(--radius-surface) + 8px) calc(var(--radius-surface) + 8px) 0 0; }
+.showcase-frame { position: relative; transform-origin: 50% 0; max-height: 580px; overflow: hidden; border-radius: calc(var(--radius-surface) + 8px) calc(var(--radius-surface) + 8px) 0 0; -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%); mask-image: linear-gradient(to bottom, #000 55%, transparent 100%); }
 /* The picture fades into the page at its own lower edge, so it moves with the prototype. */
 /* Start at `settle()`'s first keyframe so the server-rendered paint does not snap when the script takes over. */
 @media (prefers-reduced-motion: no-preference) { .showcase-frame { transform: scale(0.92) rotateX(14deg); } }
-.showcase-frame::after { content: ""; position: absolute; inset: auto 0 0; height: 45%; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--color-site-background) 70%); }
 .feature-visual .mk-vitals { box-shadow: 0 24px 64px var(--color-shadow); }
 
 /* Section dividers run the full page width, past the centred container. */

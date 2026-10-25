@@ -56,8 +56,8 @@
 .notes-sidebar .pw-tree__row > :not(.pw-tree__text, .pw-tree__trailing) { flex: none; }
 
 /* Per-Space open button: shown on hover or keyboard focus, at the row's right edge. */
-.notes-space-open { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--color-text-muted); cursor: pointer; opacity: 0; }
-.pw-tree__row:hover .notes-space-open, .notes-space-open:focus-visible { opacity: 1; }
+.notes-space-open { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--color-text-muted); cursor: pointer; visibility: hidden; }
+.pw-tree__row:hover .notes-space-open, .notes-space-open:focus-visible { visibility: visible; }
 .notes-space-open:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
 
 /* Note properties float over the page instead of reserving a column; the lift matches surface-panel-float. */
