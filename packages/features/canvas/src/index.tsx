@@ -8,12 +8,14 @@ import { toDocument, type CanvasPort, type CanvasRecord, type CanvasType } from 
 import type { ArchitectureDocument } from "@polterware/frontend-canvas";
 export type { CanvasPort, CanvasRecord, CanvasPatch, CanvasType } from "./model";
 export { readCanvas, readTypes } from "./model";
+export type { StoreEntity } from "./references";
+import { referenceState, type StoreEntity } from "./references";
 
-export function CanvasView(props: { projectId: string; port: CanvasPort }) {
-  return <Show when={props.projectId} keyed>{(projectId) => <CanvasProject projectId={projectId} port={props.port} />}</Show>;
+export function CanvasView(props: { projectId: string; port: CanvasPort; entities?: readonly StoreEntity[] }) {
+  return <Show when={props.projectId} keyed>{(projectId) => <CanvasProject projectId={projectId} port={props.port} entities={props.entities} />}</Show>;
 }
 
-function CanvasProject(props: { projectId: string; port: CanvasPort }) {
+function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: readonly StoreEntity[] }) {
   const [data, { refetch }] = createResource(async () => {
     try {
       const [canvases, types] = await Promise.all([props.port.list(props.projectId), props.port.types()]);
@@ -78,6 +80,7 @@ function CanvasProject(props: { projectId: string; port: CanvasPort }) {
                 <Button variant="ghost" size="sm" disabled={busy()} class="min-w-0 truncate" onClick={() => void open(canvas.id)}>{canvas.name}</Button>
                 <StatusChip tone="muted" label={loaded().types.find((type) => type.type === canvas.type)?.label ?? canvas.type} />
               </div>
+              <Show when={canvas.graph.nodes.some((node) => referenceState(node.ref, props.entities ?? []).trust === "unverified")}><StatusChip tone="warn" label="Unverified content" /></Show>
               <SwitchRow label="Agent-visible" checked={canvas.agentVisible} disabled={busy()} onCheckedChange={(value) => void run(async () => { await props.port.update(props.projectId, canvas.id, { agentVisible: value }); await refetch(); })} />
               <div class="flex gap-2"><Button size="sm" variant="ghost" disabled={busy()} onClick={() => showDialog("rename", canvas)}><Pencil size={14} />Rename</Button>
                 <Button size="sm" variant="ghost" disabled={busy()} onClick={() => showDialog("delete", canvas)}><Delete size={14} />Delete</Button></div>
@@ -94,5 +97,5 @@ function CanvasProject(props: { projectId: string; port: CanvasPort }) {
       </FormStack>}><p class="text-sm text-[var(--color-text-primary)]">Delete “{target()?.name}” and its shapes? This cannot be undone.</p></Show>
       <Show when={error()}><p role="alert" class="mt-3 text-sm text-[var(--color-danger)]">{error()}</p></Show>
     </A11yDialog>
-  </div>}>{(value) => <CanvasEditor canvas={value.canvas} document={value.document} definition={value.definition} port={props.port} onBack={() => { setSelected(undefined); void refetch(); }} />}</Show>;
+  </div>}>{(value) => <CanvasEditor canvas={value.canvas} document={value.document} definition={value.definition} port={props.port} entities={props.entities} onBack={() => { setSelected(undefined); void refetch(); }} />}</Show>;
 }

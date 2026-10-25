@@ -10,7 +10,8 @@ import { asNumber, asObjectArray, asRecord, asString } from "./format";
 import type { WorkspaceSnapshot } from "./load";
 import { mapFeatureReview } from "./map-feature-review";
 import { uniqueCardSlug } from "@polterware/feature-knowledge";
-import { readCanvas, readTypes, type CanvasPort } from "@polterware/feature-canvas";
+import { readCanvas, readTypes, type CanvasPort } from "@polterware/feature-canvas/model";
+import { promotionText, assertApplied, createdDecisionTitle, PromotionAppliedError } from "@polterware/feature-canvas/promotion";
 
 function core() {
   return window.polterware.core;
@@ -37,6 +38,38 @@ export const canvasPersistence: CanvasPort = {
     const response = asRecord(await core().canvas.updateCanvas({ projectId, id, ...patch,
       change: { summary: "Update canvas", rationale: "Save canvas edits from the Desktop editor." } }));
     return readCanvas(response.canvas);
+  },
+  async promote(projectId, input) {
+    const text = promotionText(input);
+    if (input.kind === "card") {
+      const cards = asObjectArray(asRecord(await core().work.listCards({ projectId })).cards);
+      if (cards.some((card) => card.slug === input.slug)) throw new Error("That Work card slug already exists. Choose another slug.");
+      // Removed cards are absent from listCards, but still own their slug in Polter.
+      const plan = asRecord(await core().work.apply({ projectId, text, dryRun: true }));
+      const errors = asObjectArray(plan.diagnostics).filter((item) => item.severity === "error");
+      if (errors.length) throw new Error(errors.map((item) => asString(item.message)).join("\n"));
+      if (!Array.isArray(plan.ops) || !plan.ops.some((op) => typeof op === "string" && op.startsWith(`+ card ${input.slug} `))) {
+        throw new Error("That slug already belongs to a Work card, including removed cards. Choose another slug.");
+      }
+    }
+    const response = asRecord(await core().work.apply({ projectId, text,
+      change: { summary: `Promote canvas item: ${input.title}`, rationale: `Promoted from canvas ${input.canvasName}.` } }));
+    assertApplied(response);
+    try {
+      if (input.kind === "card") {
+        const cards = asObjectArray(asRecord(await core().work.listCards({ projectId })).cards);
+        const card = cards.find((item) => item.slug === input.slug);
+        if (!card || !asString(card.id)) throw new Error("The new Work card was not returned.");
+        return { kind: "card", id: asString(card.id), title: asString(card.title), slug: asString(card.slug) };
+      }
+      const title = createdDecisionTitle(response.ops);
+      const items = asObjectArray(asRecord(await core().knowledge.list({ projectId })).items);
+      const decision = items.find((item) => item.kind === "verdict" && item.title === title);
+      if (!decision || !asString(decision.id)) throw new Error("The new Decision was not returned.");
+      return { kind: "decision", id: asString(decision.id), title: asString(decision.title) };
+    } catch (error) {
+      throw new PromotionAppliedError(`The entity was created, but could not be linked. Reload project data and link it using the picker. ${error instanceof Error ? error.message : String(error)}`);
+    }
   },
   async remove(projectId, id) {
     await core().canvas.deleteCanvas({ projectId, id,

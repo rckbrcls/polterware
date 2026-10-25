@@ -6,19 +6,21 @@ import {
   type ArchitectureDocument, type Point,
 } from "@polterware/frontend-canvas";
 import {
-  Button, Card, Input, PageToolbar, Select, StatusChip, StickyNote, SwitchRow,
+  Button, Card, DetailPanel, Input, PageToolbar, Select, StatusChip, StickyNote, SwitchRow,
   Plus, Delete, Undo2, Redo2, Maximize2, MinusSignIcon, ChevronLeft, pushToast,
 } from "@polterware/frontend-design-system";
 import { createAutosave, type SaveState } from "./autosave";
 import { connectNodes, edgePalette, insertNode, nodePalette, removeSelection, resizeNode, serializeCanvas,
   type CanvasPort, type CanvasRecord, type CanvasType } from "./model";
+import { EntityIcon, NodeInspector } from "./inspector";
+import { readRef, referenceState, setReference, type StoreEntity } from "./references";
 import "./canvas.css";
 
 export const AGENT_HINT = "Agents read only shared canvases. Content without references is unverified.";
 
 export function CanvasEditor(props: {
   canvas: CanvasRecord; definition: CanvasType; document: ArchitectureDocument; port: CanvasPort;
-  onBack: () => void;
+  onBack: () => void; entities?: readonly StoreEntity[];
 }) {
   const canvas = props.canvas;
   const [doc, setDoc] = createSignal(props.document);
@@ -139,7 +141,7 @@ export function CanvasEditor(props: {
     if (mod && event.key.toLowerCase() === "z") { event.preventDefault(); undo(event.shiftKey); }
     else if (event.key === "Delete" || event.key === "Backspace") { event.preventDefault(); deleteSelected(); }
     else if (event.key === "Escape") { setTool("select"); setConnectFrom(undefined); setSelection(emptySelection()); }
-    else if (event.key === "Enter" && selected()) { event.preventDefault(); setEditing(selected()!.id); }
+    else if (event.key === "Enter" && selected() && !readRef(selected()!)) { event.preventDefault(); setEditing(selected()!.id); }
     else if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key) && selected()) {
       event.preventDefault(); const step = event.shiftKey ? 40 : 10;
       const dx = event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0;
@@ -164,7 +166,8 @@ export function CanvasEditor(props: {
     if (await save.flush()) props.onBack();
     setLeaving(false);
   }
-  return <div class="flex h-full min-h-0 flex-col">
+  return <DetailPanel.Root open={!!selected()} expandable={false} shortcuts={false} dismissOnOutsideClick={false} activeEntityId={selected()?.id} onOpenChange={(open) => { if (!open) setSelection(emptySelection()); }} class="h-full min-h-0">
+    <DetailPanel.Collection><div class="flex h-full min-h-0 flex-col">
     <PageToolbar.Root>
       <Button size="sm" variant="ghost" disabled={leaving()} onClick={() => void back()}><ChevronLeft size={14} />Canvases</Button>
       <Input aria-label="Canvas name" class="w-48" value={name()} onInput={(e) => { setName(e.currentTarget.value); schedule(); }} />
@@ -190,7 +193,7 @@ export function CanvasEditor(props: {
       <Button size="icon" variant="ghost" aria-label="Zoom in" onClick={() => zoom(1.25)}><Plus size={14} /></Button>
       <Button size="icon" variant="ghost" aria-label="Fit canvas" onClick={fit}><Maximize2 size={14} /></Button>
       <Button size="sm" variant="ghost" disabled={!doc().nodes.length} onClick={() => { const layout = layoutSync({ nodes: doc().nodes, mode: "horizontal" }); change(setNodePositions(doc(), new Map(layout.nodes.map((n) => [n.id, n])))); fit(); }}>Arrange</Button>
-      <Select aria-label="Select shape or edge" class="w-44" value={selection().nodeIds[0] ?? selection().relationshipIds[0] ?? ""} onChange={(id) => setSelection({ ...emptySelection(), ...(doc().nodes.some((n) => n.id === id) ? { nodeIds: [id] } : { relationshipIds: id ? [id] : [] }) })} options={[{ value: "", label: "No selection" }, ...doc().nodes.map((node) => ({ value: node.id, label: node.name || node.type })), ...doc().relationships.map((edge) => ({ value: edge.id, label: `Edge: ${edge.type}` }))]} />
+      <Select aria-label="Select shape or edge" class="w-44" value={selection().nodeIds[0] ?? selection().relationshipIds[0] ?? ""} onChange={(id) => setSelection({ ...emptySelection(), ...(doc().nodes.some((n) => n.id === id) ? { nodeIds: [id] } : { relationshipIds: id ? [id] : [] }) })} options={[{ value: "", label: "No selection" }, ...doc().nodes.map((node) => ({ value: node.id, label: readRef(node) ? referenceState(readRef(node), props.entities ?? []).title : node.name || node.type })), ...doc().relationships.map((edge) => ({ value: edge.id, label: `Edge: ${edge.type}` }))]} />
     </div>
     <p class="px-4 pb-2 text-xs text-[var(--color-text-muted)]">{tool() === "connect" ? (connectFrom() ? "Choose the target shape." : "Choose the source shape, then the target.") : "Drag shapes to move. Drag empty space to pan; scroll to pan, Ctrl/⌘ + scroll to zoom. Double-click a label or press Enter to edit. Arrow keys move the selection."}</p>
     <Show when={props.definition.rules.length}><p class="px-4 pb-2 text-xs text-[var(--color-text-muted)]">{props.definition.rules.join(" ")}</p></Show>
@@ -206,14 +209,18 @@ export function CanvasEditor(props: {
             return <g><path d={pointsToSvgPath(route())} fill="none" stroke={selection().relationshipIds.includes(edge.id) ? "var(--color-text-primary)" : "var(--color-text-muted)"} stroke-width="2" />
               <Show when={route().length}><text x={route()[Math.floor(route().length / 2)]!.x} y={route()[Math.floor(route().length / 2)]!.y - 8} fill="var(--color-text-muted)" font-size="12">{edge.type}</text></Show></g>;
           }}</For>
-          <Index each={doc().nodes}>{(node) => <g onDblClick={() => { setEditing(node().id); }}>
+          <Index each={doc().nodes}>{(node) => <g onDblClick={() => { if (!readRef(node())) setEditing(node().id); }}>
             <Show when={node().type === "ellipse"}><ellipse cx={node().x + node().width / 2} cy={node().y + node().height / 2} rx={node().width / 2} ry={node().height / 2} fill="var(--color-surface-subtle)" stroke={selection().nodeIds.includes(node().id) ? "var(--color-text-primary)" : "var(--color-border-subtle)"} /></Show>
             <foreignObject x={node().x} y={node().y} width={node().width} height={node().height}>
               <div class="h-full" classList={{ "pw-canvas-selected": selection().nodeIds.includes(node().id), "pw-canvas-text": node().type === "text" }}>
-                <Show when={node().type !== "ellipse" && node().type !== "text"} fallback={<div class="flex h-full items-center justify-center p-3"><NodeLabel node={node()} editing={editing() === node().id} onInput={(name) => change(updateNode(doc(), node().id, { name }), "eventually")} onDone={finishLabel} /></div>}>
-                  <Card class="flex h-full items-center justify-center gap-2 !p-3">
+                <Show when={node().type !== "ellipse" && node().type !== "text"} fallback={<div class="flex h-full flex-col items-center justify-center gap-1 p-3"><Show when={readRef(node())}>{(ref) => <EntityIcon kind={ref().kind} />}</Show>
+                    <Show when={referenceState(readRef(node()), props.entities ?? []).trust === "unverified"}><StatusChip tone="warn" label={readRef(node()) ? "Missing · Unverified" : "Unverified"} /></Show>
+                    <NodeLabel node={{ name: readRef(node()) ? referenceState(readRef(node()), props.entities ?? []).title : node().name }} editing={editing() === node().id && !readRef(node())} onInput={(name) => change(updateNode(doc(), node().id, { name }), "eventually")} onDone={finishLabel} /></div>}>
+                  <Card class="flex h-full flex-col items-center justify-center gap-1 !p-3">
                     <Show when={node().type === "note"}><StickyNote size={14} /></Show>
-                    <NodeLabel node={node()} editing={editing() === node().id} onInput={(name) => change(updateNode(doc(), node().id, { name }), "eventually")} onDone={finishLabel} />
+                    <Show when={readRef(node())}>{(ref) => <EntityIcon kind={ref().kind} />}</Show>
+                    <Show when={referenceState(readRef(node()), props.entities ?? []).trust === "unverified"}><StatusChip tone="warn" label={readRef(node()) ? "Missing · Unverified" : "Unverified"} /></Show>
+                    <NodeLabel node={{ name: readRef(node()) ? referenceState(readRef(node()), props.entities ?? []).title : node().name }} editing={editing() === node().id && !readRef(node())} onInput={(name) => change(updateNode(doc(), node().id, { name }), "eventually")} onDone={finishLabel} />
                   </Card>
                 </Show>
               </div>
@@ -223,7 +230,11 @@ export function CanvasEditor(props: {
         </g>
       </svg>
     </div>
-  </div>;
+  </div></DetailPanel.Collection>
+    <Show when={selected()?.id} keyed>{(id) => <DetailPanel.Content><NodeInspector node={selected()!} entities={props.entities ?? []} canvasName={name()}
+      onLink={(ref) => change(setReference(doc(), id, ref))}
+      promote={props.port.promote ? (input) => props.port.promote!(canvas.projectId, input) : undefined} /></DetailPanel.Content>}</Show>
+  </DetailPanel.Root>;
 }
 
 function NodeLabel(props: { node: { name: string }; editing: boolean; onInput: (name: string) => void; onDone: () => void }) {

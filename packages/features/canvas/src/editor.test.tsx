@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createSignal } from "solid-js";
+import type { StoreEntity } from "./references";
 import { render } from "solid-js/web";
 import { CanvasEditor } from "./editor";
 import { CanvasView } from "./index";
@@ -19,8 +21,8 @@ function port(): CanvasPort {
   return { list: vi.fn().mockResolvedValue([canvas]), get: vi.fn().mockResolvedValue(canvas), types: vi.fn().mockResolvedValue([definition]),
     create: vi.fn().mockResolvedValue(canvas), update: vi.fn().mockResolvedValue(canvas), remove: vi.fn().mockResolvedValue(undefined) };
 }
-function mount(api: CanvasPort, onBack = vi.fn()) {
-  cleanup = render(() => <CanvasEditor canvas={canvas} definition={definition} document={toDocument(canvas)} port={api} onBack={onBack} />, container);
+function mount(api: CanvasPort, onBack = vi.fn(), entities: readonly StoreEntity[] = []) {
+  cleanup = render(() => <CanvasEditor canvas={canvas} definition={definition} document={toDocument(canvas)} port={api} entities={entities} onBack={onBack} />, container);
   const host = container.querySelector<HTMLDivElement>('[aria-label="Canvas editor"]')!;
   host.setPointerCapture = vi.fn(); host.hasPointerCapture = () => true; host.releasePointerCapture = vi.fn();
   return host;
@@ -84,6 +86,44 @@ describe("Desktop canvas interactions", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(api.update).toHaveBeenCalledTimes(2); expect(onBack).toHaveBeenCalledOnce();
     expect(JSON.parse(vi.mocked(api.update).mock.calls[1]![2].layoutJson!).nodes.a.x).toBe(120);
+  });
+  it("links existing entities, persists the real ref and unlinks without losing the local label", async () => {
+    vi.useFakeTimers(); const api = port(); const host = mount(api, vi.fn(), [{ kind: "card", id: "real-card-id", title: "Store card" }]);
+    pointer(host, "pointerdown", 160, 160); pointer(host, "pointerup", 160, 160);
+    container.querySelector<HTMLElement>('[aria-label="Link Work card: Store card"]')!.click();
+    await vi.advanceTimersByTimeAsync(500);
+    expect(vi.mocked(api.update).mock.calls.at(-1)![2].graph?.nodes[0]).toMatchObject({ label: "Original", ref: { kind: "card", id: "real-card-id" } });
+    expect(host.textContent).toContain("Store card");
+    [...container.querySelectorAll("button")].find((button) => button.textContent === "Unlink")!.click();
+    await vi.advanceTimersByTimeAsync(500);
+    expect(vi.mocked(api.update).mock.calls.at(-1)![2].graph?.nodes[0]).toEqual(canvas.graph.nodes[0]);
+    expect(host.textContent).toContain("Original");
+  });
+  it("updates a linked title on renderer reload and displays missing entities as unverified", () => {
+    const linked = { ...canvas, graph: { ...canvas.graph, nodes: [{ ...canvas.graph.nodes[0]!, ref: { kind: "fact", id: "fact-1" } }] } };
+    const [entities, setEntities] = createSignal<StoreEntity[]>([{ kind: "fact", id: "fact-1", title: "Initial fact" }]);
+    cleanup = render(() => <CanvasEditor canvas={linked} definition={definition} document={toDocument(linked)} port={port()} entities={entities()} onBack={vi.fn()} />, container);
+    expect(container.textContent).toContain("Initial fact");
+    setEntities([{ kind: "fact", id: "fact-1", title: "Renamed fact" }]);
+    expect(container.textContent).toContain("Renamed fact");
+    setEntities([]);
+    expect(container.textContent).toContain("Missing Fact");
+    expect(container.textContent).toContain("Unverified");
+  });
+  it("keeps ApplyPolter errors in the promotion dialog and links only after explicit success", async () => {
+    const api = port(); api.promote = vi.fn().mockRejectedValueOnce(new Error("Server validation refused")).mockResolvedValueOnce({ kind: "card", id: "created", title: "Original", slug: "original" });
+    const host = mount(api); pointer(host, "pointerdown", 160, 160); pointer(host, "pointerup", 160, 160);
+    [...container.querySelectorAll("button")].find((button) => button.textContent?.includes("Promote to Work card"))!.click();
+    expect(api.promote).not.toHaveBeenCalled();
+    const dialog = () => document.body.querySelector('[role="dialog"]')!;
+    const promote = () => [...dialog().querySelectorAll("button")].find((button) => button.textContent === "Promote")!;
+    await vi.waitFor(() => expect(dialog()).toBeTruthy());
+    expect(dialog().querySelector<HTMLInputElement>('[aria-label="Promotion slug"]')!.value).toBe("original");
+    promote().click();
+    await vi.waitFor(() => expect(dialog().textContent).toContain("Server validation refused"));
+    promote().click();
+    await vi.waitFor(() => expect(api.promote).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(vi.mocked(api.update).mock.calls.at(-1)?.[2].graph?.nodes[0]?.ref).toEqual({ kind: "card", id: "created" }));
   });
   it("renders load failures with retry instead of throwing or showing an empty canvas list", async () => {
     const api = port(); vi.mocked(api.list).mockRejectedValue(new Error("Core disconnected"));

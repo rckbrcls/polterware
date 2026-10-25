@@ -23,6 +23,7 @@ export type CanvasPort = {
   create(projectId: string, name: string, type: string): Promise<CanvasRecord>;
   update(projectId: string, id: string, patch: CanvasPatch): Promise<CanvasRecord>;
   remove(projectId: string, id: string): Promise<void>;
+  promote?(projectId: string, input: import("./promotion").PromotionInput): Promise<import("./references").StoreEntity>;
 };
 
 type ObjectValue = Record<string, unknown>;

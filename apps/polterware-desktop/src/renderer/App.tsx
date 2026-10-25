@@ -41,7 +41,7 @@ import {
   type WorkspaceInboxItem,
 } from "@polterware/feature-shell";
 import { ArchitectureView } from "@polterware/feature-architecture";
-import { CanvasView } from "@polterware/feature-canvas";
+import { CanvasWorkspace } from "./canvas-workspace";
 import type { WorkBoardAction } from "@polterware/feature-knowledge";
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
 import { hydrateAppearancePreferences, hydrateShortcutPreferences } from "@polterware/feature-settings/boot";
@@ -115,7 +115,6 @@ import {
   persistKnowledgeDelete,
   persistKnowledgeSourcePath,
   persistLayout,
-  canvasPersistence,
   persistAddProjectRepo,
   persistProjectSettings,
   persistRemoveProjectRepo,
@@ -1204,7 +1203,7 @@ export function App() {
         </Match>
 
         <Match when={route().section === "canvas"}>
-          <CanvasView projectId={currentProjectId()} port={canvasPersistence} />
+          <Show when={currentProjectId()} keyed>{(projectId) => <CanvasWorkspace projectId={projectId} workspace={workspace()} onReload={() => refreshWorkspace(projectId)} />}</Show>
         </Match>
 
         <Match when={route().section === "atlas"}>

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it } from "vitest";
+import { promotionText } from "@polterware/feature-canvas/promotion";
 import { installBrowserDevBridge } from "./browser-dev-bridge";
 
 describe("installBrowserDevBridge", () => {
@@ -87,4 +88,21 @@ describe("installBrowserDevBridge", () => {
     expect((await api.listCanvases({ projectId })).canvases).toHaveLength(2);
   });
 
+  it("applies canvas promotions with store IDs and proposed/shape defaults, isolated per project", async () => {
+    installBrowserDevBridge();
+    const { core } = window.polterware;
+    const slug = `promotion-${crypto.randomUUID()}`;
+    const input = { kind: "card" as const, title: "Canvas idea", slug, canvasName: "Sketch" };
+    const planned = await core.work.apply({ projectId: "browser-empty", text: promotionText(input), dryRun: true });
+    expect(planned.applied).toBe(false);
+    expect((await core.work.listCards({ projectId: "browser-empty" })).cards).not.toEqual(expect.arrayContaining([expect.objectContaining({ slug })]));
+    const result = await core.work.apply({ projectId: "browser-empty", text: promotionText(input) });
+    expect(result.applied).toBe(true);
+    const created = (await core.work.listCards({ projectId: "browser-empty" })).cards as { id: string; slug: string; stage: string }[];
+    expect(created.find((item) => item.slug === slug)).toMatchObject({ id: expect.stringMatching(/^promoted-/), stage: "shape" });
+    expect((await core.work.listCards({ projectId: "browser-preview" })).cards).not.toEqual(expect.arrayContaining([expect.objectContaining({ slug })]));
+    await expect(core.work.apply({ projectId: "browser-empty", text: promotionText(input) })).rejects.toThrow("already exists");
+    await core.work.apply({ projectId: "browser-empty", text: promotionText({ ...input, kind: "decision" }) });
+    expect((await core.knowledge.list({ projectId: "browser-empty" })).items).toEqual(expect.arrayContaining([expect.objectContaining({ kind: "verdict", title: expect.stringContaining("Canvas idea"), status: "proposed" })]));
+  });
 });
