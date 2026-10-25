@@ -19,7 +19,7 @@ import {
   type DragMotion,
   type FluidHover,
 } from "@polterware/frontend-design-system";
-import type { WorkStage, WorkspaceWorkCard } from "@polterware/feature-shell";
+import type { WorkStage, WorkspaceWorkCard, WorkspaceWorkBoard } from "@polterware/feature-shell";
 import { WORK_STAGES, cardTaskProgress } from "./work-stage";
 import { DRAG_DEAD_ZONE, columnAt, type ColumnSpan } from "./work-board-drag";
 import "./work-board.css";
@@ -60,6 +60,8 @@ type BoardDrag = {
  */
 export function WorkBoard(props: {
   cards: readonly WorkspaceWorkCard[];
+  /** Saved views currently all use WORK_STAGES; config does not define columns. */
+  selectedBoard?: Pick<WorkspaceWorkBoard, "id" | "name">;
   activeSlug?: string | null;
   onActivate: (slug: string) => void;
   /** Persist a stage change; resolve `false` when it was cancelled or failed. */
@@ -177,7 +179,7 @@ export function WorkBoard(props: {
   };
 
   return (
-    <div ref={board} class="pw-work-board" role="list" aria-label="Work board" {...hover.handlers}>
+    <div ref={board} class="pw-work-board" role="list" aria-label={props.selectedBoard?.name ?? "Default board"} data-board-id={props.selectedBoard?.id ?? ""} {...hover.handlers}>
       {/* A card changing stage keeps its slug: the marker follows it without a spring. */}
       <FluidHoverHighlight
         class="pw-work-board-active"

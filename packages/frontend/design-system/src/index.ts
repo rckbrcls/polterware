@@ -5,7 +5,7 @@ import { installSpringCssProperties } from "./spring-css";
 /* Spring tiers as CSS custom properties (--spring-<tier>-*), sampled from springs.ts. */
 if (typeof document !== "undefined") installSpringCssProperties();
 
-export { Button, LinkButton } from "./button";
+export { Button, LinkButton, buttonClassName } from "./button";
 export type { ButtonProps, ButtonVariant, ButtonSize, ButtonTone, LinkButtonProps } from "./button";
 export { Badge } from "./badge";
 export { CountBadge } from "./count-badge";

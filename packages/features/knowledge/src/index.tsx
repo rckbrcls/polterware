@@ -1,4 +1,4 @@
-import { Show, createEffect, createMemo, createSignal, onCleanup } from "solid-js";
+import { Show, createEffect, createMemo, createSignal, on, onCleanup } from "solid-js";
 import {
   ActiveFilterBar,
   FileText,
@@ -30,6 +30,7 @@ import {
   type WorkspaceCanonEntity,
   type WorkspaceEvidence,
   type WorkspaceWorkCard,
+  type WorkspaceWorkBoard,
   type WorkStage,
 } from "@polterware/feature-shell";
 import { createDetailPanelSelector, detailDisplayFor, detailPanelStore } from "@polterware/frontend-state";
@@ -68,6 +69,8 @@ import { LibraryTable } from "./library-table";
 import { libraryStatusTone } from "./knowledge-document-helpers";
 import { WorkCardsEmpty, workCardsFilterEmpty } from "./knowledge-empty";
 import { WorkBoard } from "./work-board";
+import { WorkBoardPicker } from "./work-board-picker";
+import { selectedWorkBoard, type WorkBoardAction } from "./work-boards";
 import { WorkCardDetail } from "./work-card-detail";
 import { WORK_STAGES, cardTaskProgress, workStageLabel, workStageTone } from "./work-stage";
 
@@ -78,6 +81,7 @@ export {
   knowledgeTemplateById,
   knowledgeTemplatesForKind,
 } from "./create-templates";
+export type { WorkBoardAction } from "./work-boards";
 export type { DecisionAction } from "./decision-detail";
 export type { NewEvidenceInput } from "./add-evidence-dialog";
 export { WORK_STAGES, workStageLabel } from "./work-stage";
@@ -153,6 +157,9 @@ export function KnowledgeView(props: {
   verdicts?: WorkspaceVerdict[];
   evidence?: WorkspaceEvidence[];
   workCards?: WorkspaceWorkCard[];
+  workBoards?: WorkspaceWorkBoard[];
+  boardProjectId?: string;
+  onBoardAction?: (action: WorkBoardAction) => Promise<string | null>;
   entities?: WorkspaceCanonEntity[];
   /** Content mode: board, specs, library, or evidence. */
   tab?: string;
@@ -200,6 +207,9 @@ export function KnowledgeView(props: {
   onRemoveCard?: (slug: string) => void;
   onSetCardStage?: (slug: string, stage: WorkStage) => Promise<boolean> | void;
 }) {
+  const [selectedBoardId, setSelectedBoardId] = createSignal("");
+  createEffect(on(() => props.boardProjectId, () => setSelectedBoardId("")));
+  const selectedBoard = createMemo(() => selectedWorkBoard(props.workBoards ?? [], selectedBoardId()));
   const tab = () => normalizeTab(props.tab);
   /** Board and Specs both list Work cards and share the card detail. */
   const cardTab = () => tab() === "board" || tab() === "specs";
@@ -743,6 +753,17 @@ export function KnowledgeView(props: {
               onClear={filterPopoverProps().onClear}
               groups={filterPopoverProps().groups}
             />
+            <Show when={tab() === "board"}>
+              <Show when={props.boardProjectId || "work"} keyed>
+                {(_projectId) => <WorkBoardPicker
+                  boards={props.workBoards ?? []}
+                  selectedId={selectedBoard().id}
+                  onSelect={setSelectedBoardId}
+                  onAction={props.onBoardAction}
+                  disabled={props.loading || Boolean(props.error)}
+                />}
+              </Show>
+            </Show>
             <Show when={cardTab() ? props.onCreateCard : evidenceTab() ? canAddEvidence() : props.onCreate}>
               <ToolbarIconButton
                 label={createLabel()}
@@ -829,6 +850,7 @@ export function KnowledgeView(props: {
             >
               <Show when={cards().length > 0} fallback={workCardsFilterEmpty()}>
                 <WorkBoard
+                  selectedBoard={selectedBoard()}
                   cards={cards()}
                   activeSlug={
                     activeTarget()?.scopeId === "knowledge:board"

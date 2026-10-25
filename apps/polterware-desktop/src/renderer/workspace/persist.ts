@@ -735,3 +735,25 @@ export async function persistLinkEvidenceToFact(input: {
 export async function resetLocalStore(): Promise<void> {
   await core().health.resetLocalStore({});
 }
+
+/** Board config currently declares only its format version; stages stay canonical. */
+export async function persistWorkBoardCreate(projectId: string, name: string, change: ChangeEnvelope): Promise<string> {
+  const response = asRecord(await core().work.createBoard({
+    projectId, name, configJson: '{"version":1}', change: changePayload(change),
+  }));
+  const id = asString(asRecord(response.board).id);
+  if (!id) throw new Error("The core returned no board.");
+  return id;
+}
+
+export async function persistWorkBoardRename(projectId: string, id: string, name: string, change: ChangeEnvelope): Promise<void> {
+  await core().work.updateBoard({ projectId, id, name, change: changePayload(change) });
+}
+
+export async function persistWorkBoardDelete(projectId: string, id: string, change: ChangeEnvelope): Promise<void> {
+  await core().work.deleteBoard({ projectId, id, change: changePayload(change) });
+}
+
+export async function persistWorkBoardsReorder(projectId: string, boardIds: string[], change: ChangeEnvelope): Promise<void> {
+  await core().work.reorderBoards({ projectId, boardIds, change: changePayload(change) });
+}

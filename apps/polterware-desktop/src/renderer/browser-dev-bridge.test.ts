@@ -44,4 +44,26 @@ describe("installBrowserDevBridge", () => {
     expect(full.cards.length).toBeGreaterThanOrEqual(12);
     expect(empty.cards).toEqual([]);
   });
+  it("provides seeded boards and keeps saved-view mutations project-local", async () => {
+    installBrowserDevBridge();
+    const work = window.polterware.core.work;
+    const projectId = "browser-preview";
+    const listed = await work.listBoards({ projectId });
+    expect(listed.boards).toHaveLength(2);
+    expect((await work.listBoards({ projectId: "browser-empty" })).boards).toEqual([]);
+    const created = await work.createBoard({ projectId, name: "Review", configJson: '{"version":1}' });
+    expect(created.board).toMatchObject({ name: "Review", position: 2, configJson: '{"version":1}' });
+    const id = (created.board as { id: string }).id;
+    const renamed = await work.updateBoard({ projectId, id, name: "Release" });
+    expect(renamed.board).toMatchObject({ id, name: "Release" });
+    const ids = (listed.boards as { id: string }[]).map((board) => board.id);
+    const reordered = await work.reorderBoards({ projectId, boardIds: [id, ...ids] });
+    expect((reordered.boards as { id: string }[]).map((board) => board.id)).toEqual([id, ...ids]);
+    await expect(work.reorderBoards({ projectId, boardIds: [id, id] })).rejects.toThrow();
+    await expect(work.deleteBoard({ projectId: "browser-empty", id })).rejects.toThrow();
+    await work.deleteBoard({ projectId, id });
+    expect((await work.listBoards({ projectId })).boards).toHaveLength(2);
+    expect((await work.listBoards({ projectId: "browser-empty" })).boards).toEqual([]);
+  });
+
 });
