@@ -32,7 +32,26 @@ const DETAIL_PANEL_PATH =
   "packages/frontend/design-system/src/detail-panel.css";
 const SHARED_MATERIALS_PATH =
   "packages/frontend/design-system/src/materials.css";
-const DESKTOP_WINDOW_PATH = "apps/polterware-desktop/src/main/window.ts";
+// Native Electron desktop windows use transparent under-window vibrancy chrome on macOS.
+const DESKTOP_WINDOW_PATHS = new Set([
+  "apps/polterware-desktop/src/main/window.ts",
+  "apps/vitals-desktop/src/main/window.ts",
+]);
+// Procedural canvas avatar artwork renders 2D canvas shading, highlights, wear, and bake-in presence.
+const CANVAS_AVATAR_PATHS = new Set([
+  "packages/frontend/bot-avatars/src/BotAvatar.tsx",
+  "packages/frontend/bot-avatars/src/color.ts",
+  "packages/frontend/bot-avatars/src/draw.ts",
+  "packages/frontend/bot-avatars/src/mesh.ts",
+  "packages/frontend/bot-avatars/src/plastic.ts",
+  "packages/frontend/bot-avatars/src/wear.ts",
+]);
+// Edge-fading containers and scrollers use CSS mask-image linear gradients with transparent stops on opaque content.
+const MASK_FADE_PATHS = new Set([
+  "apps/web/src/styles.css",
+  "packages/features/notes-shell/src/shell.css",
+  "packages/frontend/design-system/src/markdown-editor.css",
+]);
 const CANVAS_HOST_PATH =
   "packages/features/architecture/src/canvas/architecture-canvas-host.tsx";
 const ALPHA_TOKEN_DECLARATIONS = new Map([
@@ -97,11 +116,11 @@ const RULES = [
   },
   {
     id: "transparent-color-mix",
-    pattern: /color-mix\([\s\S]{0,500}?transparent[\s\S]{0,500}?\)/gi,
+    pattern: /color-mix\([^;{}]{0,500}?transparent[^;{}]{0,500}?\)/gi,
   },
   {
     id: "transparent-gradient",
-    pattern: /(?:linear|radial|conic)-gradient\([\s\S]{0,500}?transparent[\s\S]{0,500}?\)/gi,
+    pattern: /(?:linear|radial|conic)-gradient\([^;{}]{0,500}?transparent[^;{}]{0,500}?\)/gi,
   },
   {
     id: "transparent-window",
@@ -153,9 +172,26 @@ function isAllowed(relativePath, ruleId, match, excerpt) {
   }
 
   if (
-    relativePath === DESKTOP_WINDOW_PATH &&
+    DESKTOP_WINDOW_PATHS.has(relativePath) &&
     ((ruleId === "alpha-hex" && DESKTOP_WINDOW_ALPHA_HEX.has(match.toLowerCase())) ||
       ruleId === "transparent-window")
+  ) {
+    return true;
+  }
+
+  if (
+    CANVAS_AVATAR_PATHS.has(relativePath) &&
+    (ruleId === "legacy-alpha-color" ||
+      ruleId === "modern-alpha-color" ||
+      ruleId === "element-opacity")
+  ) {
+    return true;
+  }
+
+  if (
+    MASK_FADE_PATHS.has(relativePath) &&
+    ruleId === "transparent-gradient" &&
+    /(?:-webkit-)?mask-image\s*:/.test(excerpt)
   ) {
     return true;
   }

@@ -5,6 +5,9 @@ import { inspectSource } from "./check-ui-opacity.mjs";
 const PRODUCT_FILE = "packages/features/example/src/example.tsx";
 const BUTTON_FILE = "packages/frontend/design-system/src/button.css";
 const WINDOW_FILE = "apps/polterware-desktop/src/main/window.ts";
+const VITALS_WINDOW_FILE = "apps/vitals-desktop/src/main/window.ts";
+const BOT_AVATAR_FILE = "packages/frontend/bot-avatars/src/draw.ts";
+const MASK_FADE_FILE = "packages/frontend/design-system/src/markdown-editor.css";
 const CANVAS_FILE =
   "packages/features/architecture/src/canvas/architecture-canvas-host.tsx";
 const BASE_TOKENS_FILE = "packages/configuration/tailwind/base.css";
@@ -149,4 +152,34 @@ test("allows only the named shared fade-edge material gradient", () => {
     ),
     [],
   );
+});
+
+test("allows native Vitals window transparency for macOS vibrancy", () => {
+  const source = `transparent: true,\nbackgroundColor: "#00000000",`;
+
+  assert.deepEqual(inspectSource(source, VITALS_WINDOW_FILE), []);
+});
+
+test("allows canvas avatar art alpha blending in bot-avatars", () => {
+  const source = `seg(a1, a0, 5, 'rgba(0,0,0,0.2)', 3.5);`;
+
+  assert.deepEqual(inspectSource(source, BOT_AVATAR_FILE), []);
+  assert.notDeepEqual(inspectSource(source, PRODUCT_FILE), []);
+});
+
+test("allows mask-image linear gradients with transparent stops on scrollers", () => {
+  const maskSource = `mask-image: linear-gradient(to bottom, #000 28px, transparent);`;
+  const bgSource = `background: linear-gradient(to bottom, #000 28px, transparent);`;
+
+  assert.deepEqual(inspectSource(maskSource, MASK_FADE_FILE), []);
+  assert.notDeepEqual(inspectSource(bgSource, MASK_FADE_FILE), []);
+});
+
+test("does not flag opaque gradients followed by transparent properties", () => {
+  const source = `
+    .row { background: linear-gradient(to bottom, #262626, #3b3b3b); }
+    .btn { background: transparent; }
+  `;
+
+  assert.deepEqual(inspectSource(source, PRODUCT_FILE), []);
 });

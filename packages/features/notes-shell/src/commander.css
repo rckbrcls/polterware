@@ -113,7 +113,7 @@ input.notes-commander__input.notes-commander__input:focus-visible {
 
 .notes-commander__row:disabled {
   cursor: default;
-  opacity: 0.6;
+  color: var(--color-text-disabled);
 }
 
 .notes-commander__icon {
