@@ -8,6 +8,8 @@ import {
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
 import { buildStructureTree, flattenStructureTree, structureParents, type StructureKind, type StructureNode, type StructureTreeItem } from "./structure-tree";
+import type { ProjectEnvironment } from "./domain/project-environments";
+import type { WorkspaceIntegration } from "@polterware/feature-shell";
 
 export type { ArchViewCard } from "./extra-fixtures";
 export { filterStructureNodes } from "./structure-tree";
@@ -16,6 +18,19 @@ export const STRUCTURE_SCOPE = "structure:nodes";
 const PROJECT_ID = "structure:project";
 type Counts = { work: number; decisions: number; facts: number };
 export type StructureDraft = { title: string; level: StructureKind; parentId: string };
+
+// Nine catalog providers from the integrations catalog
+const CATALOG_PROVIDERS = [
+  { id: "github", name: "GitHub" },
+  { id: "gitlab", name: "GitLab" },
+  { id: "aws", name: "AWS" },
+  { id: "google-cloud", name: "Google Cloud" },
+  { id: "azure", name: "Azure" },
+  { id: "vercel", name: "Vercel" },
+  { id: "supabase", name: "Supabase" },
+  { id: "terraform", name: "Terraform" },
+  { id: "docker", name: "Docker" },
+] as const;
 
 function KindIcon(props: { kind: StructureKind | "project" }) {
   return <Show when={props.kind === "component"} fallback={<Show when={props.kind === "domain"} fallback={<Layers size={16} aria-hidden />}><Folder size={16} aria-hidden /></Show>}><Boxes size={16} aria-hidden /></Show>;
@@ -41,6 +56,12 @@ export function StructureView(props: {
   onUses: (nodeId: string, targetIds: string[]) => Promise<void>;
   onOpenNode: (id: string) => void;
   onSelect: (id: string) => void;
+  /** Project environments for the environment select. */
+  environments?: readonly ProjectEnvironment[];
+  /** Integration connections for provider connection status. */
+  integrations?: readonly WorkspaceIntegration[];
+  /** Called when deploys change for a component node. */
+  onDeploysChange?: (nodeId: string, deploys: { environmentId: string; provider: string; resource: string }[]) => Promise<void>;
 }) {
   const [query, setQuery] = createSignal("");
   const [view, setView] = createSignal("tree");
@@ -53,6 +74,8 @@ export function StructureView(props: {
   const [usesOpen, setUsesOpen] = createSignal(false);
   const [useTargets, setUseTargets] = createSignal<string[]>([]);
   const [formError, setFormError] = createSignal("");
+  const [deploysOpen, setDeploysOpen] = createSignal(false);
+  const [editingDeploys, setEditingDeploys] = createSignal<{ environmentId: string; provider: string; resource: string }[]>([]);
   const target = createDetailPanelSelector((state) => state.activeTarget);
   const tree = createMemo(() => buildStructureTree(props.nodes, query()));
   const visible = createMemo(() => flattenStructureTree(tree()));
@@ -71,6 +94,53 @@ export function StructureView(props: {
   const treeNodes = createMemo<TreeViewNode[]>(() => [{ id: PROJECT_ID, label: props.projectName, icon: <KindIcon kind="project" />,
     trailing: <span class="text-xs text-[var(--color-text-muted)]">Project</span>, children: tree().map(toTreeNode) }]);
   const open = (id: string) => props.onOpenNode(id);
+
+  // Environment options for the deploys dialog
+  const environmentOptions = () => (props.environments ?? []).map((env) => ({ value: env.id, label: env.label }));
+  // Provider options from the catalog
+  const providerOptions = () => CATALOG_PROVIDERS.map((p) => ({ value: p.id, label: p.name }));
+  // Check if a provider is connected (status !== "connected" means not connected)
+  const isProviderConnected = (providerId: string) => {
+    const integration = props.integrations?.find((i) => i.providerId === providerId);
+    return integration?.status === "connected";
+  };
+  // Format deploys for the Polter deploys: line
+  const formatDeploysLine = (deploys: { environmentId: string; provider: string; resource: string }[]) => {
+    return deploys.map((d) => `${d.environmentId}=${d.provider}:${d.resource}`).join(", ");
+  };
+  // Memo for deploys count to avoid TypeScript issues with accessor in JSX
+  const deploysCount = createMemo(() => editingDeploys().length);
+  // Open deploys dialog for a component node
+  const openDeploysDialog = (node: StructureNode) => {
+    setEditingDeploys((node.deploys ?? []).map((d) => ({ environmentId: d.environmentId, provider: d.provider, resource: d.resource })));
+    setFormError("");
+    setDeploysOpen(true);
+  };
+  // Add a new deploy row
+  const addDeployRow = () => {
+    setEditingDeploys((current) => [...current, { environmentId: "", provider: "", resource: "" }]);
+  };
+  // Remove a deploy row
+  const removeDeployRow = (index: number) => {
+    setEditingDeploys((current) => current.filter((_, i) => i !== index));
+  };
+  // Save deploys via onDeploysChange
+  const saveDeploys = async () => {
+    const node = selected();
+    if (!node || node.level !== "component" || !props.onDeploysChange) return;
+    setBusy(true);
+    setFormError("");
+    try {
+      await props.onDeploysChange(node.id, editingDeploys());
+      setDeploysOpen(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save deploys.";
+      setFormError(message);
+      pushToast(message, "danger");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   createEffect(() => {
     const targets = [PROJECT_ID, ...visible().map((node) => node.id)].map((entityId) => ({ scopeId: STRUCTURE_SCOPE, entityId, entityKind: "arch-node" }));
@@ -130,9 +200,25 @@ export function StructureView(props: {
         </DetailPanel.Properties></DetailPanel.Section>
         <DetailPanel.Section title="Description" icon={<FileText size={14} />}><p class="text-sm text-[var(--color-text-secondary)]">{(projectSelected() ? props.projectDescription : selected()?.intent) || "No description yet."}</p></DetailPanel.Section>
         <DetailPanel.Section title="Deploys" icon={<Boxes size={14} />}>
-          <Show when={selected()?.deploys?.length} fallback={<p class="text-sm text-[var(--color-text-muted)]">No deploy target yet.</p>}>
-            <ul class="flex flex-col gap-3"><For each={selected()?.deploys}>{(deploy) => <li class="flex flex-wrap items-center gap-2 text-sm"><span>{deploy.environment || deploy.environmentId}</span><StatusChip tone="muted" label={deploy.provider} /><span>{deploy.resource}</span></li>}</For></ul>
-          </Show>
+          {(() => {
+            const node = selected();
+            if (node && node.level === "component") {
+              return (
+                <>
+                  <div class="flex items-center justify-between mb-2">
+                    <Show when={node.deploys && node.deploys.length > 0} fallback={<p class="text-sm text-[var(--color-text-muted)]">No deploy target yet.</p>}>
+                      <ul class="flex flex-col gap-2"><For each={node.deploys!}>{(deploy) => <li class="flex flex-wrap items-center gap-2 text-sm"><span>{deploy.environment || deploy.environmentId}</span><StatusChip tone="muted" label={deploy.provider} /><span>{deploy.resource}</span>{!isProviderConnected(deploy.provider) && <StatusChip tone="warn" label="CLI not connected" />}</li>}</For></ul>
+                    </Show>
+                    <Button variant="ghost" size="sm" onClick={() => openDeploysDialog(node)}>Edit deploys</Button>
+                  </div>
+                </>
+              );
+            }
+            if (node && node.level !== "component" && !projectSelected()) {
+              return <p class="text-sm text-[var(--color-text-muted)]">Deploys are only available for components.</p>;
+            }
+            return null;
+          })()}
         </DetailPanel.Section>
         <DetailPanel.Section title="Linked records" icon={<ListChecks size={14} />}><NodeCounts counts={selectedCounts()} /></DetailPanel.Section>
         <Show when={selected()}>{(node) => <DetailPanel.Section title="Structure" icon={<Scale size={14} />}>
@@ -155,6 +241,38 @@ export function StructureView(props: {
     <A11yDialog open={usesOpen()} title="Dependencies" dismissible={!busy()} onClose={() => { if (!busy()) setUsesOpen(false); }} footer={<><Button variant="ghost" disabled={busy()} onClick={() => setUsesOpen(false)}>Cancel</Button><Button disabled={busy()} onClick={() => void save(() => props.onUses(selected()!.id, useTargets()), () => setUsesOpen(false))}>{busy() ? "Saving…" : "Save"}</Button></>}>
       <Show when={registry().some((node) => node.id !== selectedId())} fallback={<p class="text-sm text-[var(--color-text-muted)]">No other structure nodes yet.</p>}><FormStack><For each={registry().filter((node) => node.id !== selectedId())}>{(node) => <Checkbox label={node.title} checked={useTargets().includes(node.id)} onCheckedChange={(event) => setUseTargets((ids) => event.checked === true ? [...ids, node.id] : ids.filter((id) => id !== node.id))} />}</For></FormStack></Show>
       <Show when={formError()}><p role="alert">{formError()}</p></Show>
+    </A11yDialog>
+    <A11yDialog open={deploysOpen()} title="Edit deploys" dismissible={!busy()} onClose={() => { if (!busy()) setDeploysOpen(false); }} footer={<>
+      <Button variant="ghost" disabled={busy()} onClick={() => setDeploysOpen(false)}>Cancel</Button>
+      <Button disabled={busy() || deploysCount() === 0} onClick={() => void saveDeploys()}>{busy() ? "Saving…" : "Save"}</Button>
+    </>}>
+      <FormStack>
+        <Show when={deploysCount() > 0} fallback={
+          <p class="text-sm text-[var(--color-text-muted)]">No deploys configured yet.</p>
+        }>
+          <For each={editingDeploys()}>
+            {(deploy) => {
+              const index = editingDeploys().indexOf(deploy);
+              return (
+                <div class="flex flex-wrap items-center gap-2 mb-3">
+                  <Field label="Environment" class="flex-1 min-w-[140px]">
+                    <Select value={deploy.environmentId} options={environmentOptions()} onChange={(value) => setEditingDeploys((current) => current.map((d, i) => i === index ? { ...d, environmentId: value } : d))} placeholder="Select environment" />
+                  </Field>
+                  <Field label="Provider" class="flex-1 min-w-[140px]">
+                    <Select value={deploy.provider} options={providerOptions()} onChange={(value) => setEditingDeploys((current) => current.map((d, i) => i === index ? { ...d, provider: value } : d))} placeholder="Select provider" />
+                  </Field>
+                  <Field label="Resource" class="flex-1 min-w-[140px]">
+                    <Input value={deploy.resource} onInput={(event) => setEditingDeploys((current) => current.map((d, i) => i === index ? { ...d, resource: event.currentTarget.value } : d))} placeholder="Resource name" />
+                  </Field>
+                  <Button variant="ghost" size="icon" onClick={() => removeDeployRow(index)} aria-label="Remove deploy"><span class="sr-only">Remove</span>×</Button>
+                </div>
+              );
+            }}
+          </For>
+        </Show>
+        <Button variant="ghost" size="sm" onClick={addDeployRow}><Plus size={14} />Add deploy</Button>
+        <Show when={formError()}><p role="alert">{formError()}</p></Show>
+      </FormStack>
     </A11yDialog>
   </EntityDetailHost>;
 }

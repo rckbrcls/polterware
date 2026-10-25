@@ -367,6 +367,25 @@ export async function persistAtlasUses(input: {
   await applyPolter(input.projectId, `${text}uses: ${input.uses.join(", ")}\n`, input.change);
 }
 
+/**
+ * Replace an Atlas node's `deploys:` list (environment=provider:resource links).
+ * An empty list clears it. The heading is the node's current path.
+ */
+export async function persistAtlasUpdateDeploys(input: {
+  projectId: string;
+  path: string;
+  title: string;
+  level: string;
+  deploys: readonly { environmentId: string; provider: string; resource: string }[];
+  change: ChangeEnvelope;
+}): Promise<void> {
+  const text = atlasNodeText({ heading: input.path, title: input.title, level: input.level });
+  const deploysLine = input.deploys.length > 0
+    ? `deploys: ${input.deploys.map((d) => `${d.environmentId}=${d.provider}:${d.resource}`).join(", ")}\n`
+    : "deploys:\n";
+  await applyPolter(input.projectId, `${text}${deploysLine}`, input.change);
+}
+
 async function applyPolter(projectId: string, text: string, change: ChangeEnvelope): Promise<void> {
   await core().work.apply({ projectId, text, change: changePayload(change) });
 }

@@ -31,11 +31,18 @@ export function createBrowserStructure(seedProjectId: string, seed: readonly Par
       const usesText = metadata("uses");
       const uses = usesText === undefined ? undefined : usesText.split(",").map((path) => path.trim()).filter(Boolean);
       if (uses?.some((path) => path === existing?.path || !nodes.some((node) => node.path === path))) throw new Error("Unknown dependency or self dependency.");
+      const deploysText = metadata("deploys");
+      const deploys = deploysText === undefined ? undefined : deploysText.split(",").map((part) => {
+        const [env, rest] = part.trim().split("=");
+        const [provider, resource] = rest?.split(":") ?? [];
+        return { id: `deploy-${crypto.randomUUID()}`, environmentId: env?.trim() ?? "", environment: env?.trim() ?? "", provider: provider?.trim() ?? "", resource: resource?.trim() ?? "" };
+      }).filter((d) => d.environmentId && d.provider && d.resource);
       if (dryRun) return { applied: false, diagnostics: [], ops: [`${existing ? "~" : "+"} node ${nextPath}`] };
       if (existing) {
         const oldPath = existing.path;
         existing.title = heading[2]!.trim();
         if (uses) existing.uses = uses;
+        if (deploys !== undefined) existing.deploys = deploys;
         if (under !== undefined) {
           existing.parentId = parent?.id ?? "";
           const rewrite = (path: string) => path === oldPath || path.startsWith(`${oldPath}/`) ? nextPath + path.slice(oldPath.length) : path;
