@@ -283,3 +283,12 @@ export type WorkspaceInbox = {
   openCount: number;
   blockingCount: number;
 };
+
+/** A saved Work view; the implicit default board has no stored row. */
+export type WorkspaceWorkBoard = {
+  id: string;
+  projectId: string;
+  name: string;
+  position: number;
+  configJson: string;
+};

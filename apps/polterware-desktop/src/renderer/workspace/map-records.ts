@@ -22,6 +22,7 @@ import type {
   AtlasLevel,
   AtlasStatus,
   WorkspaceWorkCard,
+  WorkspaceWorkBoard,
   WorkStage,
 } from "@polterware/feature-shell";
 import {
@@ -522,4 +523,14 @@ function asFreshness(value: string): WorkspaceIntegration["freshness"] {
 function asSyncResult(value: string): WorkspaceIntegrationSyncRun["result"] {
   if (value === "partial" || value === "failed" || value === "running") return value;
   return "success";
+}
+
+export function mapWorkBoards(rows: Record<string, unknown>[]): WorkspaceWorkBoard[] {
+  return rows.map((row) => ({
+    id: asString(row.id),
+    projectId: asString(row.projectId),
+    name: asString(row.name),
+    position: asNumber(row.position),
+    configJson: asString(row.configJson),
+  }));
 }

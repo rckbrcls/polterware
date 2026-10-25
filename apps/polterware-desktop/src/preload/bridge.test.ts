@@ -75,6 +75,21 @@ describe("createPolterwareBridge", () => {
     expect(invoke).toHaveBeenCalledWith(IPC_CHANNELS.core.getStoreHealth, undefined);
   });
 
+  it("routes every board operation through its declared Work IPC channel", async () => {
+    const invoke = vi.fn().mockResolvedValue({});
+    const bridge = createPolterwareBridge({ invoke });
+    const calls = [
+      ["listBoards", "listWorkBoards"], ["createBoard", "createWorkBoard"],
+      ["updateBoard", "updateWorkBoard"], ["deleteBoard", "deleteWorkBoard"],
+      ["reorderBoards", "reorderWorkBoards"],
+    ] as const;
+    for (const [method, channel] of calls) {
+      const payload = { projectId: "project", id: "board", boardIds: ["board"] };
+      await bridge.core.work[method](payload);
+      expect(invoke).toHaveBeenLastCalledWith(IPC_CHANNELS.core[channel], payload);
+    }
+  });
+
   it("subscribes to Commander focus events and returns an unsubscribe function", () => {
     const invoke = vi.fn().mockResolvedValue([]);
     const listeners = new Map<string, (...args: unknown[]) => void>();

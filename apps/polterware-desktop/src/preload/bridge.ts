@@ -126,6 +126,11 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         deleteLink: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.deleteKnowledgeLink, payload),
       },
       work: {
+        listBoards: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listWorkBoards, payload),
+        createBoard: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.createWorkBoard, payload),
+        updateBoard: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.updateWorkBoard, payload),
+        deleteBoard: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.deleteWorkBoard, payload),
+        reorderBoards: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.reorderWorkBoards, payload),
         listCards: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listWorkCards, payload),
         listAtlas: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listAtlas, payload),
         listAtlasHistory: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listAtlasHistory, payload),

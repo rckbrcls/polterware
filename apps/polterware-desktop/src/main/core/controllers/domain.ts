@@ -64,6 +64,11 @@ export function createCoreDomainControllers(
     listKnowledgeLinks: async (input?: JsonObject) => toJsonObject(await clients.knowledge.listKnowledgeLinks(requestMessage(input))),
     saveKnowledgeLink: async (input?: JsonObject) => toJsonObject(await clients.knowledge.saveKnowledgeLink(requestMessage(input))),
     deleteKnowledgeLink: async (input?: JsonObject) => toJsonObject(await clients.knowledge.deleteKnowledgeLink(requestMessage(input))),
+    listWorkBoards: async (input?: JsonObject) => toJsonObject(await clients.work.listWorkBoards(requestMessage(input))),
+    createWorkBoard: async (input?: JsonObject) => toJsonObject(await clients.work.createWorkBoard(requestMessage(input))),
+    updateWorkBoard: async (input?: JsonObject) => toJsonObject(await clients.work.updateWorkBoard(requestMessage(input))),
+    deleteWorkBoard: async (input?: JsonObject) => toJsonObject(await clients.work.deleteWorkBoard(requestMessage(input))),
+    reorderWorkBoards: async (input?: JsonObject) => toJsonObject(await clients.work.reorderWorkBoards(requestMessage(input))),
     listWorkCards: async (input?: JsonObject) => toJsonObject(await clients.work.listWorkCards(requestMessage(input))),
     listAtlas: async (input?: JsonObject) => toJsonObject(await clients.work.listAtlas(requestMessage(input))),
     listAgentSessions: async (input?: JsonObject) =>

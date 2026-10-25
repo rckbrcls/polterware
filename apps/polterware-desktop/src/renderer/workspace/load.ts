@@ -14,6 +14,7 @@ import type {
   WorkspaceAtlas,
   WorkspaceAtlasHistoryEntry,
   WorkspaceWorkCard,
+  WorkspaceWorkBoard,
 } from "@polterware/feature-shell";
 import { asNumber, asObjectArray, asRecord, asString } from "./format";
 import {
@@ -34,6 +35,7 @@ import {
   mapInbox,
   mapAtlas,
   mapWorkCards,
+  mapWorkBoards,
   mapViews,
 } from "./map-records";
 
@@ -50,6 +52,7 @@ export type WorkspaceSnapshot = {
   evidence: WorkspaceEvidence[];
   verdicts: WorkspaceVerdict[];
   workCards: WorkspaceWorkCard[];
+  workBoards: WorkspaceWorkBoard[];
   atlas: WorkspaceAtlas;
   inbox: WorkspaceInbox;
   canonEntities: WorkspaceCanonEntity[];
@@ -69,6 +72,7 @@ export type WorkspaceExtensions = Pick<
   | "evidence"
   | "verdicts"
   | "workCards"
+  | "workBoards"
   | "atlas"
   | "inbox"
   | "canonEntities"
@@ -103,6 +107,7 @@ export function emptyWorkspaceExtensions(): WorkspaceExtensions {
     evidence: [],
     verdicts: [],
     workCards: [],
+    workBoards: [],
     atlas: emptyAtlas(),
     inbox: emptyInbox(),
     canonEntities: [],
@@ -183,6 +188,11 @@ export async function loadChanges(
 /** Work cards only — the slice a Work change event refreshes. */
 export async function loadWorkCards(projectId: string): Promise<WorkspaceWorkCard[]> {
   return mapWorkCards(asObjectArray(asRecord(await core().work.listCards({ projectId, ...scopeArgs() })).cards));
+}
+
+/** Saved views are project-wide; card scope remains applied by loadWorkCards. */
+export async function loadWorkBoards(projectId: string): Promise<WorkspaceWorkBoard[]> {
+  return mapWorkBoards(asObjectArray(asRecord(await core().work.listBoards({ projectId })).boards));
 }
 
 /** Atlas nodes for the canvas. A failed read keeps the page usable with no nodes. */
@@ -327,6 +337,7 @@ export async function loadWorkspaceExtensions(
     api.integrations.listResources({ projectId }),
     api.integrations.listSyncRuns({ projectId }),
     environmentsPromise,
+    loadWorkBoards(projectId),
   ]);
   const [
     knowledgeRes,
@@ -341,6 +352,7 @@ export async function loadWorkspaceExtensions(
     syncRunsRes,
   ] = settled;
   const environments: EnvironmentItem[] = settled[10];
+  const workBoards: WorkspaceWorkBoard[] = settled[11];
 
   const projectEnvironments = environments.filter((item) => item.projectId === projectId);
 
@@ -373,6 +385,7 @@ export async function loadWorkspaceExtensions(
     evidence,
     verdicts,
     workCards,
+    workBoards,
     atlas,
     inbox,
     canonEntities,

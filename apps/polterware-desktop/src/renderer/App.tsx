@@ -41,6 +41,7 @@ import {
   type WorkspaceInboxItem,
 } from "@polterware/feature-shell";
 import { ArchitectureView } from "@polterware/feature-architecture";
+import type { WorkBoardAction } from "@polterware/feature-knowledge";
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
 import { hydrateAppearancePreferences, hydrateShortcutPreferences } from "@polterware/feature-settings/boot";
 import type { ProjectSettingsPageId } from "@polterware/feature-settings";
@@ -79,6 +80,7 @@ import {
   emptyWorkspace,
   loadProjects,
   loadWorkCards,
+  loadWorkBoards,
   loadAtlas,
   loadCanonEvidence,
   loadChanges,
@@ -118,6 +120,10 @@ import {
   persistView,
   persistDecisionAction,
   persistWorkCreateCard,
+  persistWorkBoardCreate,
+  persistWorkBoardRename,
+  persistWorkBoardDelete,
+  persistWorkBoardsReorder,
   persistFeatureAdvance,
   persistFeatureCreate,
   persistFeatureLine,
@@ -344,13 +350,14 @@ export function App() {
         setWorkspace((current) => ({ ...current, ...extensions, extensionsReady: true }));
       },
       refreshWork: async (projectId) => {
-        const [workCards, atlas, inbox] = await Promise.all([
+        const [workCards, atlas, inbox, workBoards] = await Promise.all([
           loadWorkCards(projectId),
           loadAtlas(projectId),
           loadInbox(projectId),
+          loadWorkBoards(projectId),
         ]);
         if (currentProjectId() !== projectId) return;
-        setWorkspace((current) => ({ ...current, workCards, atlas, inbox }));
+        setWorkspace((current) => ({ ...current, workCards, atlas, inbox, workBoards }));
       },
       onError: (error) => {
         console.warn("Live refresh failed.", error);
@@ -678,6 +685,29 @@ export function App() {
     }
   }
 
+  async function changeWorkBoard(action: WorkBoardAction): Promise<string | null> {
+    const projectId = currentProjectId();
+    const board = action.kind === "create" ? undefined : workspace().workBoards.find((item) => item.id === action.id);
+    if (action.kind !== "create" && !board) throw new Error("This board is no longer available.");
+    const summary = action.kind === "create" ? `Create board: ${action.name}`
+      : action.kind === "rename" ? `Rename board: ${board?.name} to ${action.name}`
+      : action.kind === "delete" ? `Delete board: ${board?.name}` : "Reorder Work boards";
+    const change = await justifyChange({ title: "Change Work board", defaultSummary: summary });
+    if (!change) return null;
+    let selectedId = action.kind === "create" ? "" : action.id;
+    switch (action.kind) {
+      case "create": selectedId = await persistWorkBoardCreate(projectId, action.name, change); break;
+      case "rename": await persistWorkBoardRename(projectId, action.id, action.name, change); break;
+      case "delete": await persistWorkBoardDelete(projectId, action.id, change); selectedId = ""; break;
+      case "reorder": await persistWorkBoardsReorder(projectId, action.boardIds, change); break;
+    }
+    const workBoards = await loadWorkBoards(projectId);
+    if (currentProjectId() !== projectId) return null;
+    setWorkspace((current) => ({ ...current, workBoards }));
+    pushToast("Board changes saved locally.", "success");
+    return selectedId;
+  }
+
   /** Knowledge content hosted by Work and Truth with their own tab rails. */
   function KnowledgeSurface(surface: {
     tab: string;
@@ -690,6 +720,9 @@ export function App() {
         verdicts={workspace().verdicts}
         evidence={workspace().evidence}
         workCards={workspace().workCards}
+        workBoards={workspace().workBoards}
+        boardProjectId={currentProjectId()}
+        onBoardAction={changeWorkBoard}
         entities={workspace().canonEntities}
         tab={surface.tab}
         tabs={surface.tabs}

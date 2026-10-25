@@ -654,6 +654,21 @@ function browserDevApi(overrides?: Record<string, unknown>): (...args: unknown[]
 }
 
 function createBrowserDevBridge(): PolterwareBridge {
+  // Seeded demo views; mutations live only in this bridge instance.
+  let boards = ["Planning", "Delivery"].map((name, position) => ({
+    id: `preview-board-${position}`, projectId: PREVIEW_PROJECT_ID, name, position,
+    configJson: '{"version":1}', createdAt: "2026-09-20T12:00:00.000Z", updatedAt: "2026-09-20T12:00:00.000Z",
+  }));
+  let nextBoard = boards.length;
+  function projectBoards(projectId: string) {
+    return boards.filter((board) => board.projectId === projectId).sort((a, b) => a.position - b.position);
+  }
+  function boardName(name: string, projectId: string, exceptId = "") {
+    const value = name.trim();
+    if (!value || [...value].length > 80) throw new Error("Use a board name with 1 to 80 characters.");
+    if (projectBoards(projectId).some((board) => board.id !== exceptId && board.name === value)) throw new Error("A board already uses this name.");
+    return value;
+  }
   const appearance = { version: 1, reduceTransparency: true as const };
   const shortcuts = { version: 1, overrides: {} as Record<string, string> };
 
@@ -888,6 +903,35 @@ function createBrowserDevBridge(): PolterwareBridge {
         watchRun: () => unsubscribe,
       }),
       work: browserDevApi({
+        listBoards: async ({ projectId }: { projectId: string }) => ({ boards: projectBoards(projectId) }),
+        createBoard: async ({ projectId, name }: { projectId: string; name: string }) => {
+          const board = {
+            id: `preview-board-${nextBoard++}`, projectId, name: boardName(name, projectId),
+            position: projectBoards(projectId).length, configJson: '{"version":1}',
+            createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+          };
+          boards.push(board);
+          return { board };
+        },
+        updateBoard: async ({ projectId, id, name }: { projectId: string; id: string; name: string }) => {
+          const board = boards.find((item) => item.id === id && item.projectId === projectId);
+          if (!board) throw new Error("Board not found.");
+          board.name = boardName(name, projectId, id);
+          board.updatedAt = new Date().toISOString();
+          return { board };
+        },
+        deleteBoard: async ({ projectId, id }: { projectId: string; id: string }) => {
+          if (!boards.some((board) => board.id === id && board.projectId === projectId)) throw new Error("Board not found.");
+          boards = boards.filter((board) => board.id !== id || board.projectId !== projectId);
+          projectBoards(projectId).forEach((board, position) => { board.position = position; });
+          return {};
+        },
+        reorderBoards: async ({ projectId, boardIds }: { projectId: string; boardIds: string[] }) => {
+          const current = projectBoards(projectId);
+          if (boardIds.length !== current.length || new Set(boardIds).size !== current.length || current.some((board) => !boardIds.includes(board.id))) throw new Error("Board order must list each board once.");
+          current.forEach((board) => { board.position = boardIds.indexOf(board.id); });
+          return { boards: projectBoards(projectId) };
+        },
         listCards: scoped({ cards: previewCards }, { cards: [] }),
         listInbox: scoped(previewInbox, { items: [], openCount: 0, blockingCount: 0 }),
         listAtlas: scoped(previewAtlas, { nodes: [], driftSlugs: [], historical: false }),
