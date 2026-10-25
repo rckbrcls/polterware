@@ -133,58 +133,6 @@ async function syncEnvironmentDefaultFlags(
   }
 }
 
-export async function persistLayout(
-  projectId: string,
-  bodyJson: string,
-  expectedRevision: number,
-): Promise<{ revision: number }> {
-  const response = asRecord(await core().architecture.updateLayout({
-    projectId,
-    expectedRevision,
-    bodyJson,
-  }));
-  return { revision: asNumber(asRecord(response.layout).revision) };
-}
-
-export async function persistView(input: {
-  projectId: string;
-  id?: string;
-  name: string;
-  description?: string;
-  owner?: string;
-  purpose?: string;
-  notes?: string;
-  filterSummary?: string;
-  environments?: string[];
-  tags?: string[];
-  members: Array<{ nodeId: string; name: string; type?: string; layer?: string }>;
-}): Promise<void> {
-  await core().architecture.saveView({
-    view: {
-      id: input.id ?? newId("view"),
-      projectId: input.projectId,
-      name: input.name,
-      description: input.description ?? "",
-      owner: input.owner ?? "",
-      purpose: input.purpose ?? "",
-      notes: input.notes ?? "",
-      filterSummary: input.filterSummary ?? "",
-      environments: input.environments ?? [],
-      tags: input.tags ?? [],
-      members: input.members.map((member) => ({
-        nodeId: member.nodeId,
-        name: member.name,
-        type: member.type ?? "",
-        layer: member.layer ?? "",
-      })),
-    },
-  });
-}
-
-export async function persistDeleteView(id: string): Promise<void> {
-  await core().architecture.deleteView({ id });
-}
-
 export async function persistKnowledgeBody(
   workspace: WorkspaceSnapshot,
   projectId: string,

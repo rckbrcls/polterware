@@ -1,4 +1,3 @@
-import type { ArchViewCard } from "@polterware/feature-architecture";
 import type { ProjectEnvironment, ProjectGeneralSettings, ProjectRepository } from "@polterware/feature-settings";
 import type {
   EnvironmentItem,
@@ -36,7 +35,6 @@ import {
   mapAtlas,
   mapWorkCards,
   mapWorkBoards,
-  mapViews,
 } from "./map-records";
 
 export type WorkspaceSnapshot = {
@@ -60,9 +58,6 @@ export type WorkspaceSnapshot = {
   integrations: WorkspaceIntegration[];
   integrationResources: WorkspaceIntegrationResource[];
   syncRuns: WorkspaceIntegrationSyncRun[];
-  views: ArchViewCard[];
-  layoutBody: string;
-  layoutRevision: number;
   rawKnowledge: Record<string, unknown>[];
   structureFacts: { id: string; entityId: string; scopeNodeId: string }[];
 };
@@ -134,9 +129,6 @@ export function emptyWorkspace(): WorkspaceSnapshot {
     settings: emptySettings,
     repositories: [],
     ...emptyWorkspaceExtensions(),
-    views: [],
-    layoutBody: "",
-    layoutRevision: 0,
   };
 }
 
@@ -277,11 +269,9 @@ export async function loadWorkspaceShell(
   const metadataPromise: Promise<ProjectMetadata> = catalog
     ? Promise.resolve(catalog)
     : loadProjectMetadata(api);
-  const [healthRes, settingsRes, layoutRes, viewsRes, reposRes] = await Promise.all([
+  const [healthRes, settingsRes, reposRes] = await Promise.all([
     api.health.getStoreHealth(),
     api.projects.getSettings({ projectId }),
-    api.architecture.getLayout({ projectId }).catch(() => ({})),
-    api.architecture.listViews({ projectId }),
     api.projects.listRepos({ projectId }).catch(() => ({ repos: [] })),
   ] as const);
 
@@ -289,14 +279,12 @@ export async function loadWorkspaceShell(
   const health = asRecord(healthRes);
   const { rawProjects, rawEnvironments, environments } = metadata;
   const currentEnvRecords = rawEnvironments.filter((item) => asString(item.projectId) === projectId);
-  const layout = asRecord(asRecord(layoutRes).layout);
   const projects = mapProjects(rawProjects, environments, projectId);
   const settings = mapSettings(
     asRecord(asRecord(settingsRes).settings),
     rawProjects.find((item) => asString(item.id) === projectId),
   );
   const settingsEnvironments = mapSettingsEnvironments(currentEnvRecords);
-  const views = mapViews(asObjectArray(asRecord(viewsRes).views));
 
   return {
     available: true,
@@ -309,9 +297,6 @@ export async function loadWorkspaceShell(
     settings,
     repositories: mapProjectRepos(asObjectArray(asRecord(reposRes).repos)),
     ...emptyWorkspaceExtensions(),
-    views,
-    layoutBody: asString(layout.bodyJson),
-    layoutRevision: asNumber(layout.revision),
   };
 }
 

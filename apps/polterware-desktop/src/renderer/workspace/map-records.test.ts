@@ -14,7 +14,6 @@ import {
   mapSettings,
   mapSettingsEnvironments,
   mapSyncRuns,
-  mapViews,
 } from "./map-records";
 
 const environments = [
@@ -270,17 +269,5 @@ describe("integrations mappers", () => {
     ]);
     expect(ok).toMatchObject({ integrationId: "c1", result: "partial", imported: 3, changed: 1 });
     expect(bad).toMatchObject({ result: "success", imported: 0 });
-  });
-});
-
-describe("mapViews", () => {
-  it("counts members and omits empty optional fields", () => {
-    const [full, bare] = mapViews([
-      { id: "v1", name: "Core", members: [{ nodeId: "n1", name: "API", type: "api" }, { nodeId: "n2", name: "DB" }], tags: ["core"], owner: "Platform" },
-      { id: "v2", name: "Empty" },
-    ]);
-    expect(full).toMatchObject({ id: "v1", nodeCount: 2, tags: ["core"], owner: "Platform" });
-    expect(full?.members?.[1]).toEqual({ id: "n2", name: "DB", type: undefined, layer: undefined });
-    expect(bare).toMatchObject({ nodeCount: 0, members: undefined, owner: undefined, purpose: undefined });
   });
 });

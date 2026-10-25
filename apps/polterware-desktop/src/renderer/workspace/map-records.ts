@@ -1,4 +1,3 @@
-import type { ArchViewCard } from "@polterware/feature-architecture";
 import type { ProjectEnvironment, ProjectGeneralSettings, ProjectRepository, ProtectionLevel } from "@polterware/feature-settings";
 import type {
   EnvironmentItem,
@@ -463,31 +462,6 @@ export function mapSyncRuns(items: Record<string, unknown>[]): WorkspaceIntegrat
     changed: asNumber(item.changed),
     message: asString(item.message),
   }));
-}
-
-export function mapViews(items: Record<string, unknown>[]): ArchViewCard[] {
-  return items.map((item) => {
-    const members = asObjectArray(item.members).map((member) => ({
-      id: asString(member.nodeId),
-      name: asString(member.name),
-      type: asString(member.type) || undefined,
-      layer: asString(member.layer) || undefined,
-    }));
-    return {
-      id: asString(item.id),
-      name: asString(item.name),
-      description: asString(item.description),
-      nodeCount: members.length,
-      updated: formatInstant(asString(item.updatedAt)),
-      owner: asString(item.owner) || undefined,
-      environments: asStringArray(item.environments),
-      tags: asStringArray(item.tags),
-      purpose: asString(item.purpose) || undefined,
-      members: members.length > 0 ? members : undefined,
-      notes: asString(item.notes) || undefined,
-      filterSummary: asString(item.filterSummary) || undefined,
-    };
-  });
 }
 
 function isEnvironmentKind(value: string): value is EnvironmentKind {

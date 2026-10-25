@@ -46,23 +46,6 @@ const previewRepos = [
   { id: "repo-web", name: "polterware-web", path: "/preview/repos/polterware-web" },
 ];
 
-const view = (id: string, name: string, description: string, owner: string, environments: string[], tags: string[], purpose: string, members: [string, string, string, string][]) => ({
-  id, name, description, updatedAt: "2026-09-20T12:00:00.000Z", owner, environments, tags, purpose,
-  notes: "Maintained by hand for the browser preview.",
-  members: members.map(([nodeId, memberName, type, layer]) => ({ nodeId, name: memberName, type, layer })),
-});
-
-const previewViews = [
-  view("view-runtime", "Runtime topology", "How requests reach the data layer.", "Platform", ["Production"], ["runtime"], "Explain the request path.", [
-    ["res-web", "Web app", "service", "edge"], ["res-api", "Core API", "service", "application"], ["res-db", "Primary database", "database", "data"]]),
-  view("view-data", "Data stores", "Everything that persists state.", "Data", ["Production", "Staging"], ["data"], "Track stateful systems.", [
-    ["res-db", "Primary database", "database", "data"], ["res-cache", "Session cache", "cache", "data"], ["res-stg-db", "Staging database", "database", "data"]]),
-  view("view-delivery", "Delivery pipeline", "From commit to deploy.", "Platform", ["Local", "Staging"], ["ci"], "Show how changes ship.", [
-    ["res-runner", "CI runner", "compute", "delivery"], ["res-bucket", "Artifact bucket", "storage", "delivery"], ["res-stg-api", "Staging API", "service", "application"]]),
-  view("view-async", "Async work", "Queues and workers.", "Platform", ["Production"], ["jobs"], "Understand background processing.", [
-    ["res-queue", "Job queue", "queue", "application"], ["res-api", "Core API", "service", "application"]]),
-];
-
 const knowledgeItem = (
   id: string, kind: string, title: string, summary: string, body: string, owner: string,
   status: string, tags: string[], updatedAt: string, extra: Record<string, unknown> = {},
@@ -189,42 +172,6 @@ const previewAtlas = {
   driftSlugs: ["api"],
   historical: false,
 };
-
-const previewLayoutNodes = [
-  "comp-cli",
-  "comp-core",
-  "comp-desktop",
-  "comp-api",
-  "comp-store",
-  "comp-atlas",
-  "comp-mcp",
-].map((id, index) => ({
-  id,
-  name: id,
-  type: "service",
-  origin: "manual",
-  state: "observed",
-  x: 40 + index * 24,
-  y: 40,
-  width: 188,
-  height: 56,
-  zIndex: 1,
-}));
-
-const previewLayout = {
-  formatVersion: 1,
-  id: "browser-preview-layout",
-  systemId: "sys-local",
-  nodes: previewLayoutNodes,
-  // Atlas edges come from the nodes' uses: (previewUses), not from the layout.
-  relationships: [],
-  boundaries: [],
-  preferences: { edgeRouting: "orthogonal" },
-  viewport: { x: 64, y: 32, zoom: 0.85 },
-};
-
-/** The preview layout lives in memory so a map edit survives a workspace refresh. */
-const previewLayoutState = { bodyJson: JSON.stringify(previewLayout), revision: 3 };
 
 const promotedCards = new Map<string, Record<string, unknown>[]>();
 const promotedFacts = new Map<string, Record<string, unknown>[]>();
@@ -742,20 +689,6 @@ function createBrowserDevBridge(): PolterwareBridge {
           settings: previewSettings.find((item) => item.projectId === args?.projectId) ?? previewSettings[1],
         }),
         listRepos: scoped({ repos: previewRepos }, { repos: [] }),
-      }),
-      architecture: browserDevApi({
-        listViews: scoped({ views: previewViews }, { views: [] }),
-        getLayout: async (args?: ProjectArgs) =>
-          args?.projectId === PREVIEW_PROJECT_ID
-            ? { layout: { ...previewLayoutState } }
-            : { layout: { bodyJson: "{}", revision: 0 } },
-        updateLayout: async (args?: ProjectArgs & { bodyJson?: string }) => {
-          if (args?.projectId === PREVIEW_PROJECT_ID && args.bodyJson) {
-            previewLayoutState.bodyJson = args.bodyJson;
-            previewLayoutState.revision += 1;
-          }
-          return { layout: { ...previewLayoutState } };
-        },
       }),
       canvas: createBrowserCanvas(),
       knowledge: browserDevApi({

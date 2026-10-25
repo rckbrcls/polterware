@@ -109,13 +109,6 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         addRepo: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.addProjectRepo, payload),
         removeRepo: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.removeProjectRepo, payload),
       },
-      architecture: {
-        getLayout: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.getLayout, payload),
-        updateLayout: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.updateLayout, payload),
-        listViews: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listViews, payload),
-        saveView: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.saveView, payload),
-        deleteView: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.deleteView, payload),
-      },
       canvas: {
         listCanvases: (payload: JsonObject = {}) => coreCall(ipc, IPC_CHANNELS.core.listCanvases, payload),
         getCanvas: (payload: JsonObject = {}) => coreCall(ipc, IPC_CHANNELS.core.getCanvas, payload),
