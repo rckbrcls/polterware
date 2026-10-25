@@ -150,4 +150,14 @@ describe("Desktop canvas interactions", () => {
     expect(container.querySelector('[aria-label="Actions for Sketch"]')).toBeTruthy();
     expect(container.textContent).toContain("Agent-visible");
   });
+  it("formats updated timestamps and leaves verified canvas content unflagged", async () => {
+    const updated = { ...canvas, updatedAt: "2026-09-20T12:00:00.000Z", graph: { ...canvas.graph,
+      nodes: [{ ...canvas.graph.nodes[0]!, ref: { kind: "fact" as const, id: "fact-1" } }],
+    } };
+    const api = port(); vi.mocked(api.list).mockResolvedValue([updated]); vi.mocked(api.get).mockResolvedValue(updated);
+    cleanup = render(() => <CanvasView projectId="project" port={api} entities={[{ kind: "fact", id: "fact-1", title: "Verified fact" }]} />, container);
+    await vi.waitFor(() => expect(container.querySelector('table[aria-label="Canvases"]')).toBeTruthy());
+    expect(container.textContent).not.toContain(updated.updatedAt);
+    expect([...container.querySelectorAll(".pw-status-chip")].map((chip) => chip.textContent)).not.toContain("Unverified");
+  });
 });
