@@ -27,8 +27,12 @@ import {
   routesEqual,
   SECTION_TABS,
   type ClientRoute,
+  environmentIds,
+  matchesEnvironment,
+  scopeNodeIds,
+  serializeScopeFilter,
+  type ScopeFilterToken,
   type ScopeNodeItem,
-  type WorkspaceScope,
   type EnvironmentItem,
   type FeatureFlowStep,
   type ProjectSettingsTabId,
@@ -76,6 +80,9 @@ import {
   loadProjects,
   loadWorkCards,
   loadAtlas,
+  loadCanonEvidence,
+  loadChanges,
+  loadFacts,
   loadInbox,
   loadWorkspaceExtensions,
   setActiveScope,
@@ -498,8 +505,8 @@ export function App() {
     }
   }
 
-  /** The global scope: an Atlas node path, or empty for the whole project. */
-  const [scope, setScope] = createSignal<WorkspaceScope>({ node: "" });
+  /** Scope tokens. Node tokens become scope_nodes; env tokens narrow on the client. */
+  const [scopeTokens, setScopeTokens] = createSignal<ScopeFilterToken[]>([]);
   const scopeNodes = createMemo<ScopeNodeItem[]>(() =>
     workspace().atlas.nodes.map((node) => ({
       id: node.id,
@@ -509,28 +516,28 @@ export function App() {
       title: node.title,
     })),
   );
+  const scopeNodeIdList = createMemo(() => scopeNodeIds(scopeTokens(), scopeNodes()));
+  const scopeEnvironments = createMemo(() => {
+    const selected = new Set(environmentIds(scopeTokens()));
+    if (selected.size === 0) return [];
+    return workspace()
+      .environments.filter((environment) => selected.has(environment.id))
+      .map((environment) => ({ id: environment.id, name: environment.name }));
+  });
+  const activeScopePath = createMemo(() => {
+    const selected = scopeTokens().filter((token) => token.key !== "env");
+    if (selected.length !== 1) return "";
+    return scopeNodes().find((node) => node.id === selected[0]?.id)?.path ?? "";
+  });
 
-  async function selectScope(next: WorkspaceScope) {
-    setActiveScope(next);
-    setScope(next);
-    const projectId = currentProjectId();
-    try {
-      const [workCards, inbox, extensions] = await Promise.all([
-        loadWorkCards(projectId),
-        loadInbox(projectId),
-        loadWorkspaceExtensions(projectId, { environments: workspace().environments }),
-      ]);
-      if (currentProjectId() !== projectId || scope() !== next) return;
-      setWorkspace((current) => ({ ...current, ...extensions, workCards, inbox }));
-    } catch (error) {
-      pushToast(error instanceof Error ? error.message : "Could not apply the scope.", "danger");
-    }
-  }
+  createEffect(() => {
+    setActiveScope({ nodeIds: scopeNodeIdList() });
+  });
 
   function selectProject(projectId: string) {
-    if (scope().node !== "") {
-      setActiveScope({ node: "" });
-      setScope({ node: "" });
+    if (scopeTokens().length > 0) {
+      setActiveScope({ nodeIds: [] });
+      setScopeTokens([]);
     }
     const environment =
       workspace().environments.find((item) => item.projectId === projectId) ?? workspace().environments[0];
@@ -542,6 +549,26 @@ export function App() {
   }
 
   const currentProjectId = () => route().projectId ?? workspace().settings.projectId;
+
+  async function reloadScoped(projectId: string, stamp: string) {
+    try {
+      const [workCards, inbox, extensions] = await Promise.all([
+        loadWorkCards(projectId),
+        loadInbox(projectId),
+        loadWorkspaceExtensions(projectId, { environments: workspace().environments }),
+      ]);
+      if (currentProjectId() !== projectId || serializeScopeFilter(scopeTokens()) !== stamp) return;
+      setWorkspace((current) => ({ ...current, ...extensions, workCards, inbox }));
+    } catch (error) {
+      pushToast(error instanceof Error ? error.message : "Could not apply the scope.", "danger");
+    }
+  }
+
+  function applyScopeTokens(next: ScopeFilterToken[]) {
+    setActiveScope({ nodeIds: scopeNodeIds(next, scopeNodes()) });
+    setScopeTokens(next);
+    void reloadScoped(currentProjectId(), serializeScopeFilter(next));
+  }
 
   const dataMode = () => {
     if (!workspace().available) return "offline" as const;
@@ -792,7 +819,7 @@ export function App() {
           });
         }}
         scopeNodes={scopeNodes()}
-        activeScopePath={scope().node}
+        activeScopePath={activeScopePath()}
         onSetScope={(id, path) => {
           void persistKnowledgeScope(currentProjectId(), id, path)
             .then(() => refreshWorkspace(currentProjectId()))
@@ -1085,8 +1112,8 @@ export function App() {
       projects={workspace().projects}
       environments={workspace().environments}
       scopeNodes={scopeNodes()}
-      scope={scope()}
-      onSelectScope={(next) => void selectScope(next)}
+      scopeTokens={scopeTokens()}
+      onScopeTokensChange={applyScopeTokens}
       onNavigate={navigateSection}
       onProjectSelect={selectProject}
       onCreateProject={() => setCreateProjectOpen(true)}
@@ -1139,7 +1166,12 @@ export function App() {
         <Match when={route().section === "atlas"}>
           <ArchitectureView
             systems={[{ id: SYSTEM_ID, name: workspace().settings.name || "Polterware" }]}
-            resources={workspace().integrationResources.map((resource) => ({
+            resources={workspace().integrationResources.filter((resource) =>
+              matchesEnvironment(
+                resource.environment ? [resource.environment] : [],
+                scopeEnvironments(),
+              ),
+            ).map((resource) => ({
               id: resource.id,
               name: resource.name,
               type: resource.kind,
@@ -1174,7 +1206,9 @@ export function App() {
             tab={route().tab}
             search={route().search}
             selectedNodeId={route().selectedNodeId}
-            views={workspace().views}
+            views={workspace().views.filter((view) =>
+              matchesEnvironment(view.environments, scopeEnvironments()),
+            )}
             createDialogOpen={route().dialog?.type === "arch-node-create"}
             onSelect={(id) => applyRoute(setSelectedNode(route(), id), "silent")}
             onOpenNode={(id) => activateDetail("architecture:canvas", id, "arch-node")}
@@ -1356,6 +1390,9 @@ export function App() {
         <Match when={route().section === "truth" && route().tab === "facts"}>
           <TruthFactsPage
             projectId={currentProjectId()}
+            scopeNodes={scopeNodeIdList()}
+            loadFacts={loadFacts}
+            loadEvidence={loadCanonEvidence}
             tab="facts"
             tabs={[...SECTION_TABS.truth]}
             tabsLabel="Truth"
@@ -1430,7 +1467,11 @@ export function App() {
         </Match>
 
         <Match when={route().section === "activity"}>
-          <ActivityPage projectId={currentProjectId()} />
+          <ActivityPage
+            projectId={currentProjectId()}
+            scopeNodes={scopeNodeIdList()}
+            loadChanges={loadChanges}
+          />
         </Match>
 
         <Match when={route().section === "cli"}>

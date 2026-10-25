@@ -24,6 +24,7 @@ export type AgentsBridge = {
     projectId: string;
     actorKind?: string;
     limit?: number;
+    scopeNodes?: string[];
   }) => Promise<unknown>;
   getAgentRun: (payload: { id: string }) => Promise<unknown>;
 };
@@ -61,6 +62,7 @@ export function agentsBridge(): AgentsBridge | undefined {
             projectId: string;
             actorKind?: string;
             limit?: number;
+            scopeNodes?: string[];
           }) => Promise<unknown>;
           getAgentRun?: (payload: { id: string }) => Promise<unknown>;
         };

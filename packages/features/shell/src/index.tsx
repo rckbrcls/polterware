@@ -9,8 +9,9 @@ import { SidebarNav, SidebarSettingsItem, type SidebarCount } from "./sidebar";
 import { MainSurface } from "./main-surface";
 import { TitleBar } from "./title-bar";
 import { type WorkspaceContext } from "./context-switchers";
-import type { EnvironmentItem, ProjectSwitcherItem, ScopeNodeItem, WorkspaceScope } from "./types";
+import type { EnvironmentItem, ProjectSwitcherItem, ScopeNodeItem } from "./types";
 import { ENVIRONMENT_FIXTURES } from "./fixtures";
+import { scopeFilterAllowsEnv, type ScopeFilterToken } from "./scope-filter";
 
 export type {
   ClientRoute,
@@ -81,6 +82,31 @@ export { TerminalTranscript } from "./terminal-transcript";
 export { CreateProjectDialog } from "./create-project-dialog";
 export { ProjectSwitcher } from "./project-switcher";
 export { WorkspaceContextBar } from "./context-switchers";
+export { ScopeFilterBar } from "./scope-filter-bar";
+export {
+  SCOPE_FILTER_KEYS,
+  dedupeParsedScopeTokens,
+  dedupeScopeTokens,
+  environmentIds,
+  isScopeFilterKey,
+  matchesEnvironment,
+  parseScopeFilter,
+  resolveScopeToken,
+  scopeFilterAllowsEnv,
+  scopeNodeIds,
+  serializeScopeFilter,
+  splitScopeFilterInput,
+  suggestScopeFilter,
+} from "./scope-filter";
+export type {
+  ParsedScopeToken,
+  ScopeFilterCatalog,
+  ScopeFilterEnvironment,
+  ScopeFilterKey,
+  ScopeFilterNode,
+  ScopeFilterSuggestion,
+  ScopeFilterToken,
+} from "./scope-filter";
 export {
   PROJECT_SWITCHER_FIXTURES,
   ENVIRONMENT_FIXTURES,
@@ -139,8 +165,8 @@ export function Shell(props: {
   environments?: EnvironmentItem[];
   /** Atlas nodes offered by the global scope filter. */
   scopeNodes?: ScopeNodeItem[];
-  scope?: WorkspaceScope;
-  onSelectScope?: (scope: WorkspaceScope) => void;
+  scopeTokens?: readonly ScopeFilterToken[];
+  onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
   status?: ShellStatus;
   navItems?: NavItem[];
   navCounts?: Partial<Record<string, SidebarCount>>;
@@ -154,6 +180,11 @@ export function Shell(props: {
 }) {
   const [localWorkspace, setLocalWorkspace] = createSignal<WorkspaceContext | null>(null);
   const atHome = () => (props.route ? isHomeRoute(props.route()) : false);
+  const allowScopeEnv = () => {
+    const current = props.route?.();
+    if (!current || isHomeRoute(current)) return false;
+    return scopeFilterAllowsEnv(current.section, current.tab ?? "");
+  };
 
   createEffect(() => {
     if (atHome()) setLocalWorkspace(null);
@@ -210,9 +241,11 @@ export function Shell(props: {
         onSelectEnvironment={selectEnvironment}
         onCreateProject={() => props.onCreateProject?.()}
         onOpenProjectSettings={() => props.onOpenProjectSettings?.()}
+        showScopeFilter={Boolean(props.route) && !atHome()}
+        scopeTokens={props.scopeTokens}
         scopeNodes={props.scopeNodes}
-        scope={props.scope}
-        onSelectScope={props.onSelectScope}
+        allowScopeEnv={allowScopeEnv()}
+        onScopeTokensChange={props.onScopeTokensChange}
         onOpenCommander={() => props.onOpenCommander?.()}
       />
 

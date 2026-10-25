@@ -22,7 +22,15 @@ import { AgentRunHistoryCard, type ChangeActorFilter } from "./agent-run-history
 const DEFAULT_TIERS = ["easy", "normal", "hard"] as const;
 
 /** Activity: the Unified Change History of justified project-model changes, across every surface. */
-export function ActivityPage(props: { projectId: string }) {
+export function ActivityPage(props: {
+  projectId: string;
+  /** Expanded Atlas node ids. Empty leaves the change list unscoped. */
+  scopeNodes?: readonly string[];
+  loadChanges?: (
+    projectId: string,
+    filter: { actorKind?: string; limit?: number },
+  ) => Promise<unknown>;
+}) {
   const [busy, setBusy] = createSignal(false);
   const [changes, setChanges] = createSignal<ProjectChangeRow[]>([]);
   const [dispatchEvents, setDispatchEvents] = createSignal<DispatchRunEventView[]>([]);
@@ -101,32 +109,43 @@ export function ActivityPage(props: { projectId: string }) {
     }
   };
 
+  let refreshTicket = 0;
   const refresh = async (filterOverride?: ChangeActorFilter) => {
+    const ticket = ++refreshTicket;
     const bridge = agentsBridge();
     const dBridge = dispatchBridge();
     const projectId = props.projectId.trim();
-    if ((!bridge && !dBridge) || !projectId) {
+    if ((!bridge && !dBridge && !props.loadChanges) || !projectId) {
       setChanges([]);
       setDispatchEvents([]);
       setRunDetail(undefined);
       setDispatchRunDetail(undefined);
       setSelectedStepId("");
       setSelectedDispatchEventId("");
+      setBusy(false);
       return;
     }
     setBusy(true);
     try {
       const filter = filterOverride ?? actorFilter();
+      const request = {
+        limit: 50,
+        ...(filter === "all" ? {} : { actorKind: filter }),
+      };
+      const scopeNodes = [...(props.scopeNodes ?? [])];
       const [rawChanges] = await Promise.all([
-        bridge
-          ? bridge.listChanges({
-              projectId,
-              limit: 50,
-              ...(filter === "all" ? {} : { actorKind: filter }),
-            })
-          : Promise.resolve({ changes: [] }),
+        props.loadChanges
+          ? props.loadChanges(projectId, request)
+          : bridge
+            ? bridge.listChanges({
+                projectId,
+                ...request,
+                ...(scopeNodes.length > 0 ? { scopeNodes } : {}),
+              })
+            : Promise.resolve({ changes: [] }),
         refreshDispatchHistory(),
       ]);
+      if (ticket !== refreshTicket) return;
       const nextChanges = mapProjectChanges(rawChanges);
       setChanges(nextChanges);
       // Keep the user's selection across refreshes; never auto-open the first change.
@@ -138,7 +157,7 @@ export function ActivityPage(props: { projectId: string }) {
     } catch (error: unknown) {
       pushToast(error instanceof Error ? error.message : "Could not load change history.", "danger");
     } finally {
-      setBusy(false);
+      if (ticket === refreshTicket) setBusy(false);
     }
   };
 
@@ -192,14 +211,16 @@ export function ActivityPage(props: { projectId: string }) {
   // The page stays mounted across project switches: drop the previous project's rows and reload.
   createEffect(
     on(
-      () => props.projectId,
-      () => {
-        setChanges([]);
-        setDispatchEvents([]);
-        setSelectedStepId("");
-        setSelectedDispatchEventId("");
-        setRunDetail(undefined);
-        setDispatchRunDetail(undefined);
+      () => [props.projectId, (props.scopeNodes ?? []).join("\0")] as const,
+      (next, prev) => {
+        if (!prev || next[0] !== prev[0]) {
+          setChanges([]);
+          setDispatchEvents([]);
+          setSelectedStepId("");
+          setSelectedDispatchEventId("");
+          setRunDetail(undefined);
+          setDispatchRunDetail(undefined);
+        }
         void refresh();
       },
       { defer: true },

@@ -24,6 +24,9 @@ const TRUTH_CLASSES = [
 /** Truth → Facts: Canon facts and their evidence. */
 export function TruthFactsPage(props: {
   projectId: string;
+  scopeNodes?: readonly string[];
+  loadFacts?: (projectId: string) => Promise<unknown>;
+  loadEvidence?: (projectId: string) => Promise<unknown>;
   tab: string;
   tabs: TabItem[];
   tabsLabel: string;
@@ -90,6 +93,9 @@ export function TruthFactsPage(props: {
       <PageContent class="flex min-h-0 flex-1 flex-col p-0">
         <CanonFactsPanel
           projectId={props.projectId}
+          scopeNodes={props.scopeNodes}
+          loadFacts={props.loadFacts}
+          loadEvidence={props.loadEvidence}
           query={query()}
           truthClasses={truthClasses()}
           createToken={createToken()}
