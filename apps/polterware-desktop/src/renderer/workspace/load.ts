@@ -202,13 +202,29 @@ export function pickWorkspaceExtensions(snapshot: WorkspaceSnapshot): WorkspaceE
 async function loadProjectMetadata(api = core()): Promise<ProjectMetadata> {
   const listed = asRecord(await api.projects.list());
   const rawProjects = asObjectArray(listed.projects);
-  const environmentResults = await Promise.all(rawProjects.map(async (project) => {
-    const listedEnvs = asRecord(await api.projects.listEnvironments({ projectId: asString(project.id) }));
-    return asObjectArray(listedEnvs.environments);
+  const details = await Promise.all(rawProjects.map(async (project) => {
+    const projectId = asString(project.id);
+    const environmentsPromise = api.projects.listEnvironments({ projectId });
+    const settingsPromise = api.projects.getSettings({ projectId }).catch((error: unknown) => {
+      console.warn("Project description read failed.", error);
+      return null;
+    });
+    const listedEnvs = asRecord(await environmentsPromise);
+    const settingsValue = await settingsPromise;
+    let description = asString(project.description);
+    if (settingsValue) {
+      const fromSettings = asString(asRecord(asRecord(settingsValue).settings).description);
+      if (fromSettings) description = fromSettings;
+    }
+    return { environments: asObjectArray(listedEnvs.environments), description };
   }));
-  const rawEnvironments = environmentResults.flat();
+  const described = rawProjects.map((project, index) => {
+    const description = details[index]?.description;
+    return description ? { ...project, description } : project;
+  });
+  const rawEnvironments = details.flatMap((item) => item.environments);
   const environments = mapEnvironments(rawEnvironments);
-  return { rawProjects, rawEnvironments, environments };
+  return { rawProjects: described, rawEnvironments, environments };
 }
 
 export async function loadProjects(currentProjectId?: string): Promise<ProjectCatalog> {

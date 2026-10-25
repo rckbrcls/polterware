@@ -7,8 +7,24 @@ const PREVIEW_PROJECT_ID = "browser-preview";
 const EMPTY_PROJECT_ID = "browser-empty";
 
 const previewProjects = [
-  { id: PREVIEW_PROJECT_ID, name: "Browser preview", rootPath: "/preview", createdAt: "2026-01-01T00:00:00.000Z" },
-  { id: EMPTY_PROJECT_ID, name: "Empty project", rootPath: "/empty", createdAt: "2026-01-02T00:00:00.000Z" },
+  {
+    id: PREVIEW_PROJECT_ID,
+    name: "Browser preview",
+    rootPath: "/preview",
+    description: "Sample project with data in every surface.",
+    status: "active",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-09-20T12:00:00.000Z",
+  },
+  {
+    id: EMPTY_PROJECT_ID,
+    name: "Empty project",
+    rootPath: "/empty",
+    description: "",
+    status: "active",
+    createdAt: "2026-01-02T00:00:00.000Z",
+    updatedAt: "2026-01-02T00:00:00.000Z",
+  },
 ];
 
 const previewEnvironments = [

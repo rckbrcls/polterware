@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_TABS, SECTION_TABS, closeDialog, createDefaultRoute, enterProject, historySnapshot, openDialog, routesEqual, setTab, isNavSectionId, resolveRoute } from "./route";
+import { DEFAULT_TABS, SECTION_TABS, closeDialog, createDefaultRoute, createHomeRoute, enterProject, goHome, goSection, historySnapshot, isHomeRoute, openDialog, routesEqual, setTab, ensureRouteAvailable, isNavSectionId, resolveRoute } from "./route";
 
 describe("first version routes", () => {
   it("opens Inbox", () => {
@@ -101,6 +101,47 @@ describe("first version routes", () => {
     expect(resolveRoute("dispatch-agents", "tiers")).toEqual({ section: "dispatch-routing", tab: "tiers" });
     expect(resolveRoute("dispatch-routing")).toEqual({ section: "dispatch-routing", tab: "tiers" });
     expect(resolveRoute("dispatch-usage")).toEqual({ section: "dispatch-usage", tab: "stats" });
+  });
+
+  it("opens the Projects screen before a project is entered", () => {
+    const home = createHomeRoute();
+    expect(isHomeRoute(home)).toBe(true);
+    expect(home.projectId).toBeUndefined();
+    expect(home.environmentId).toBeUndefined();
+    expect(home).toMatchObject({ home: true, section: "inbox", tab: "all", dialog: null });
+    expect(ensureRouteAvailable(home)).toMatchObject({ home: true, section: "inbox", tab: "all" });
+    expect(isNavSectionId("home")).toBe(false);
+    expect(isNavSectionId("projects")).toBe(false);
+  });
+
+  it("enters a project from home and returns without one", () => {
+    const home = createHomeRoute();
+    const entered = enterProject(home, "project-two", {
+      environmentId: "local",
+      section: "truth",
+      tab: "facts",
+    });
+    expect(isHomeRoute(entered)).toBe(false);
+    expect(entered).toMatchObject({
+      home: false,
+      projectId: "project-two",
+      environmentId: "local",
+      section: "truth",
+      tab: "facts",
+    });
+    expect(goSection(entered, "dispatch")).toMatchObject({
+      home: false,
+      projectId: "project-two",
+      section: "dispatch",
+      tab: "runs",
+    });
+    expect(resolveRoute("integrations-catalog")).toEqual({ section: "integrations", tab: "catalog" });
+    const back = goHome(entered);
+    expect(isHomeRoute(back)).toBe(true);
+    expect(back.projectId).toBeUndefined();
+    expect(back.environmentId).toBeUndefined();
+    expect(back.dialog).toBeNull();
+    expect(back.expandedDetail).toBeUndefined();
   });
 
   it("keeps Agents in Settings and resolves Integrations links to its tabs", () => {

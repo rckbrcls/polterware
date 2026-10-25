@@ -22,8 +22,21 @@ describe("installBrowserDevBridge", () => {
     const { core } = window.polterware;
     const listed = await core.projects.list();
     expect(listed.projects).toEqual([
-      expect.objectContaining({ id: "browser-preview", name: "Browser preview" }),
-      expect.objectContaining({ id: "browser-empty", name: "Empty project" }),
+      expect.objectContaining({
+        id: "browser-preview",
+        name: "Browser preview",
+        rootPath: "/preview",
+        description: "Sample project with data in every surface.",
+        status: "active",
+        updatedAt: "2026-09-20T12:00:00.000Z",
+      }),
+      expect.objectContaining({
+        id: "browser-empty",
+        name: "Empty project",
+        rootPath: "/empty",
+        status: "active",
+        updatedAt: "2026-01-02T00:00:00.000Z",
+      }),
     ]);
 
     const full = await core.work.listCards({ projectId: "browser-preview" });

@@ -1,10 +1,10 @@
 import type { JSX } from "solid-js";
-import { createMemo, createSignal } from "solid-js";
+import { Show, createEffect, createMemo, createSignal } from "solid-js";
 import { ResizableSidebar, ToastRegion } from "@polterware/frontend-design-system";
 import type { PlatformContext } from "@polterware/frontend-platform";
 import { MainFrame, ShellRoot } from "@polterware/frontend-shell";
 import type { ClientRoute, NavItem, ShellStatus } from "./route";
-import { DEFAULT_TABS, isNavSectionId } from "./route";
+import { DEFAULT_TABS, isHomeRoute, isNavSectionId } from "./route";
 import { SidebarNav, SidebarSettingsItem, type SidebarCount } from "./sidebar";
 import { MainSurface } from "./main-surface";
 import { TitleBar } from "./title-bar";
@@ -39,8 +39,11 @@ export type {
 export type { WorkspaceContext } from "./context-switchers";
 export {
   createDefaultRoute,
+  createHomeRoute,
+  goHome,
   goSection,
   enterProject,
+  isHomeRoute,
   setTab,
   openDialog,
   closeDialog,
@@ -72,6 +75,7 @@ export type { SidebarCount } from "./sidebar";
 export { TitleBar } from "./title-bar";
 export { CliReferencePage } from "./cli-reference-page";
 export { InboxPage } from "./inbox-page";
+export { ProjectsScreen } from "./projects-screen";
 export { TerminalEmulator } from "./terminal-emulator";
 export { TerminalTranscript } from "./terminal-transcript";
 export { CreateProjectDialog } from "./create-project-dialog";
@@ -105,6 +109,9 @@ function workspaceFromRoute(
   route: ClientRoute | undefined,
   environments: readonly EnvironmentItem[],
 ): WorkspaceContext {
+  if (route && isHomeRoute(route)) {
+    return { projectId: "", environmentId: route.environmentId ?? "" };
+  }
   const projectId = route?.projectId ?? environments[0]?.projectId ?? "proj-polter";
   const environment =
     environments.find((item) => item.id === route?.environmentId) ??
@@ -142,9 +149,15 @@ export function Shell(props: {
   canGoForward?: boolean;
   onBack?: () => void;
   onForward?: () => void;
+  onGoHome?: () => void;
   children: JSX.Element;
 }) {
   const [localWorkspace, setLocalWorkspace] = createSignal<WorkspaceContext | null>(null);
+  const atHome = () => (props.route ? isHomeRoute(props.route()) : false);
+
+  createEffect(() => {
+    if (atHome()) setLocalWorkspace(null);
+  });
 
   const currentSection = () => props.route?.().section ?? props.panel?.() ?? "inbox";
   const items = () => props.navItems ?? DEFAULT_NAV;
@@ -189,6 +202,7 @@ export function Shell(props: {
         canGoForward={Boolean(props.canGoForward)}
         onBack={() => props.onBack?.()}
         onForward={() => props.onForward?.()}
+        onGoHome={() => props.onGoHome?.()}
         workspace={workspace()}
         projects={props.projects}
         environments={props.environments}
@@ -203,39 +217,48 @@ export function Shell(props: {
       />
 
       <div class="flex min-h-0 flex-1">
-        <ResizableSidebar
-          class="pw-shell-sidebar"
-          defaultWidth={232}
-          minWidth={184}
-          maxWidth={320}
-          collapseThreshold={112}
-          storageKey="polterware.shell.sidebar.sizes"
-          ariaLabel="Project navigation"
-          sidebar={
-            <div class="flex h-full min-h-0 flex-col pt-2">
-              <div class="flex min-h-0 flex-1 flex-col">
-                <SidebarNav
-                  items={items()}
-                  activeId={activeId()}
-                  onSelect={select}
-                  platform={props.platform}
-                  counts={props.navCounts}
-                />
-              </div>
-              <div class="mt-auto px-2 py-3">
-                <SidebarSettingsItem
-                  onOpenCliReference={props.onOpenCliReference}
-                  active={props.settingsOpen}
-                  onSelect={() => props.onOpenSettings?.()}
-                />
-              </div>
-            </div>
+        <Show
+          when={!atHome()}
+          fallback={
+            <MainFrame>
+              <MainSurface>{props.children}</MainSurface>
+            </MainFrame>
           }
         >
-          <MainFrame>
-            <MainSurface>{props.children}</MainSurface>
-          </MainFrame>
-        </ResizableSidebar>
+          <ResizableSidebar
+            class="pw-shell-sidebar"
+            defaultWidth={232}
+            minWidth={184}
+            maxWidth={320}
+            collapseThreshold={112}
+            storageKey="polterware.shell.sidebar.sizes"
+            ariaLabel="Project navigation"
+            sidebar={
+              <div class="flex h-full min-h-0 flex-col pt-2">
+                <div class="flex min-h-0 flex-1 flex-col">
+                  <SidebarNav
+                    items={items()}
+                    activeId={activeId()}
+                    onSelect={select}
+                    platform={props.platform}
+                    counts={props.navCounts}
+                  />
+                </div>
+                <div class="mt-auto px-2 py-3">
+                  <SidebarSettingsItem
+                    onOpenCliReference={props.onOpenCliReference}
+                    active={props.settingsOpen}
+                    onSelect={() => props.onOpenSettings?.()}
+                  />
+                </div>
+              </div>
+            }
+          >
+            <MainFrame>
+              <MainSurface>{props.children}</MainSurface>
+            </MainFrame>
+          </ResizableSidebar>
+        </Show>
       </div>
 
       <ToastRegion />
