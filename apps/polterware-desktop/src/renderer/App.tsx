@@ -130,6 +130,7 @@ import {
   persistAtlasCreateNode,
   persistAtlasMoveNode,
   persistAtlasUses,
+  persistAtlasUpdateDeploys,
   persistWorkSetStage,
   resetLocalStore,
 } from "./workspace/persist";
@@ -1233,6 +1234,18 @@ export function App() {
             onCloseCreate={() => applyRoute(closeDialog(route()), "silent")}
             onOpenNode={(id) => activateDetail(STRUCTURE_SCOPE, id, "arch-node")}
             onSelect={(id) => applyRoute(setSelectedNode(route(), id), "silent")}
+            environments={workspace().settingsEnvironments.map((e) => ({ id: e.id, label: e.name, kind: e.kind, protected: e.protection === "strict" }))}
+            integrations={workspace().integrations}
+            onDeploysChange={async (nodeId, deploys) => {
+              const projectId = currentProjectId();
+              if (!projectId) throw new Error("No project selected.");
+              const node = workspace().atlas.nodes.find((n) => n.id === nodeId);
+              if (!node) throw new Error("Structure node not found.");
+              const change = await justifyChange({ title: "Update deploys", defaultSummary: `Update deploys for ${node.title}` });
+              if (!change) throw new Error("Cancelled.");
+              await persistAtlasUpdateDeploys({ projectId, path: node.path, title: node.title, level: node.level, deploys, change });
+              await refreshWorkspace(projectId);
+            }}
             onMove={async (nodeId, parentId) => {
               const nodes = workspace().atlas.nodes;
               const node = nodes.find((item) => item.id === nodeId);
