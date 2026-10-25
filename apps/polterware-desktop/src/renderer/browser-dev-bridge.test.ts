@@ -50,13 +50,16 @@ describe("installBrowserDevBridge", () => {
     const work = window.polterware.core.work;
     const projectId = "browser-preview";
     const before = await work.listCards({ projectId });
-    const atlas = await work.listAtlas({ projectId });
-    const component = atlas.nodes.find((node) => node.level === "component" && before.cards.some((card) => card.under === node.path))!;
+    type TestNode = { id: string; level: string; path: string; title: string };
+    type TestCard = { slug: string; under: string };
+    const atlas = (await work.listAtlas({ projectId })) as unknown as { nodes: TestNode[] };
+    const cardsBefore = before.cards as unknown as TestCard[];
+    const component = atlas.nodes.find((node) => node.level === "component" && cardsBefore.some((card) => card.under === node.path))!;
     const destination = atlas.nodes.find((node) => node.level === "system")!;
-    const linked = before.cards.filter((card) => card.under === component.path);
+    const linked = cardsBefore.filter((card) => card.under === component.path);
     await work.apply({ projectId, text: `---\npolter: 1\nsummary: Move component\nrationale: Organize structure\n---\n\n# ${component.path}: ${component.title}\nlevel: component · under: ${destination.path}\n` });
-    const moved = (await work.listAtlas({ projectId })).nodes.find((node) => node.id === component.id)!;
-    const cards = (await work.listCards({ projectId })).cards;
+    const moved = ((await work.listAtlas({ projectId })) as unknown as { nodes: TestNode[] }).nodes.find((node) => node.id === component.id)!;
+    const cards = (await work.listCards({ projectId })).cards as unknown as TestCard[];
     for (const card of linked) expect(cards.find((item) => item.slug === card.slug)?.under).toBe(moved.path);
   });
   it("provides seeded boards and keeps saved-view mutations project-local", async () => {
