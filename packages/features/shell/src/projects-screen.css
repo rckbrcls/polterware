@@ -7,11 +7,14 @@
 
 .pw-projects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 12px;
   align-content: start;
-  margin: 0;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
   padding: 16px;
+  box-sizing: border-box;
   list-style: none;
 }
 
@@ -21,6 +24,14 @@
   flex-direction: column;
   gap: 12px;
   height: 100%;
+  padding: 16px;
+  cursor: pointer;
+}
+
+.pw-projects-card:hover,
+.pw-projects-card:focus-visible {
+  --tx-face-top: var(--color-surface-hover);
+  --tx-face-bottom: var(--color-surface-hover);
 }
 
 .pw-projects-card-copy {
@@ -33,13 +44,19 @@
 .pw-projects-meta {
   display: flex;
   min-width: 0;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.pw-projects-meta-row {
-  display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.pw-projects-card-description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.pw-projects-card-affordance {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
 }
