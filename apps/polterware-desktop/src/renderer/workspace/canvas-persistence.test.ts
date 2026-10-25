@@ -4,7 +4,7 @@ import { canvasPersistence } from "./persist";
 vi.mock("@polterware/feature-knowledge", () => ({ uniqueCardSlug: vi.fn() }));
 const input = { kind: "card" as const, title: "A card", slug: "a-card", canvasName: "Sketch" };
 function bridge() {
-  const core = { work: { listCards: vi.fn<(args: unknown) => Promise<unknown>>().mockResolvedValue({ cards: [] }), apply: vi.fn<(args: unknown) => Promise<unknown>>().mockResolvedValue({ applied: true, ops: ['+ card a-card "A card" [shape]'], diagnostics: [] }) }, knowledge: { list: vi.fn<(args: unknown) => Promise<unknown>>().mockResolvedValue({ items: [] }) } };
+  const core = { work: { listCards: vi.fn<(args: unknown) => Promise<unknown>>().mockResolvedValue({ cards: [] }), apply: vi.fn<(args: unknown) => Promise<unknown>>().mockResolvedValue({ applied: true, ops: ['+ card a-card "A card" [shape]'], diagnostics: [] }) }, canon: { listFacts: vi.fn<(args: unknown) => Promise<unknown>>().mockResolvedValue({ facts: [] }) }, knowledge: { list: vi.fn<(args: unknown) => Promise<unknown>>().mockResolvedValue({ items: [] }) } };
   window.polterware = { core } as unknown as Window["polterware"];
   return core;
 }
@@ -35,6 +35,22 @@ describe("canvas ApplyPolter promotions", () => {
     core.work.apply.mockResolvedValueOnce({ applied: true, ops: ['+ decision Verdict 0005: A card "Verdict 0005: A card"'], diagnostics: [] });
     core.knowledge.list.mockResolvedValue({ items: [{ id: "old", kind: "verdict", title: "Verdict 0004: A card" }, { id: "new-id", kind: "verdict", title: "Verdict 0005: A card" }] });
     expect(await canvasPersistence.promote!("p", { ...input, kind: "decision" })).toEqual({ kind: "decision", id: "new-id", title: "Verdict 0005: A card" });
+  });
+  it("promotes a declared Fact and links the exact canon ID, even with duplicate statements", async () => {
+    const core = bridge();
+    core.work.apply.mockResolvedValueOnce({ applied: false, ops: ['+ fact dry-id "A card"'], diagnostics: [] })
+      .mockResolvedValueOnce({ applied: true, ops: ['+ fact fact-new "A card"'], diagnostics: [] });
+    core.canon.listFacts.mockResolvedValueOnce({ facts: [{ id: "old", statement: "A card" }, { id: "fact-new", statement: "A card" }] });
+    expect(await canvasPersistence.promote!("p", { ...input, kind: "fact" })).toEqual({ kind: "fact", id: "fact-new", title: "A card", slug: "a-card" });
+    expect(core.work.apply.mock.calls[1]![0]).toMatchObject({ text: expect.stringContaining("kind: declared"), change: { rationale: "promoted from canvas Sketch" } });
+  });
+  it("refuses Fact slug collisions and prevents duplicate creation after a read failure", async () => {
+    const core = bridge();
+    core.work.apply.mockResolvedValueOnce({ applied: false, ops: [], diagnostics: [] });
+    await expect(canvasPersistence.promote!("p", { ...input, kind: "fact" })).rejects.toThrow("already belongs to a Fact");
+    core.work.apply.mockResolvedValue({ applied: true, ops: ['+ fact fact-new "A card"'], diagnostics: [] });
+    await expect(canvasPersistence.promote!("p", { ...input, kind: "fact" })).rejects.toThrow("entity was created");
+    expect(core.work.apply).toHaveBeenCalledTimes(3);
   });
   it("marks post-creation read errors as already applied so the dialog prevents duplicate writes", async () => {
     const core = bridge(); core.work.listCards.mockResolvedValueOnce({ cards: [] }).mockRejectedValueOnce(new Error("Disconnected"));

@@ -1,14 +1,14 @@
 ---
 name: polter
-description: Create or update Polterware Work cards (roadmap items, tasks, open questions, invariants) in Polter format with polterware apply. Use when planning work, recording tasks or decisions-in-progress, or moving a card between stages in a project tracked by Polterware.
+description: Create or update Polterware Work cards (roadmap items, tasks, open questions, invariants), Decisions, and canon Facts in Polter format with polterware apply. Use when planning work, recording tasks or decisions-in-progress, or moving a card between stages in a project tracked by Polterware.
 ---
 
 # Polter format
 
-Write Work cards as Polter text and apply them with the `polterware` CLI. The Polterware store is the source of truth; a `.pw.md` file is only input.
+Write Work cards, Decisions, and canon Facts as Polter text and apply them with the `polterware` CLI. The Polterware store is the source of truth; a `.pw.md` file is only input.
 
 ```markdown
-Polter format v1: markdown that writes Polterware Work cards.
+Polter format v1: markdown that writes Work cards, Atlas nodes, Decisions, and canon Facts.
 
 ---
 polter: 1
@@ -40,10 +40,14 @@ status: active · trigger: multi-user sync · supersedes: Verdict-0003 · reason
 
 Verdict body: context, decision, consequences.
 
+#### local-authority: One local core owns SQLite.
+kind: declared · scope: core · evidence: ev-existing-id
+
 Rules:
 - `## slug: Title` is a card; the lowercase-kebab slug is its identity.
 - `# path: Title` is an Atlas node. level: system, domain, or component. under: names the parent path. A component may also sit directly under its system (outside any domain). A different under: on an existing node moves it and rewrites descendant paths. uses: lists the node paths it depends on (comma separated; empty clears); the map draws them as edges. deploys: lists env=provider:resource links (comma separated; a present line replaces them, empty clears). A card under: names a component path once any component exists. repo: names a checkout from `polterware repo add` (empty is the project root); path: is a folder inside it, not the node path. migrating: old design -> new design marks a node in transition (empty clears it).
 - `### ref: Title` is an Verdict lifecycle block. `new` proposes one (a number is assigned); an Verdict number or id changes an existing one. States: proposed → active → challenged → active or superseded. `status: challenged` needs a reason:; `trigger:` is the review condition; `scope:` is the Atlas node path the decision applies to (omit for the whole project); `supersedes: Verdict-0003` on the newer decision marks the older one superseded. Decisions are never removed. The body is plain text: no # lines.
+- `#### slug: Statement` creates a canon Fact or updates it by its lowercase-kebab slug; an existing Fact id can replace the slug. Omit the heading statement on updates to keep it. `kind:` is declared (default on create), observed, inferred, or verified. `scope:` names an Atlas node path (empty clears; omit for the whole project on create). `evidence:` lists existing canon evidence ids, comma separated (a present line replaces links, empty clears). Omitted fields stay unchanged. Plan output uses the Fact id. Facts have no body text.
 - Stages: shape, plan, build, verify, delivered.
 - `kind: architecture` marks a card as an Architecture Change (default feature). Its under: names the node it changes; set `migrating:` on that node while the change is in flight, and clear it when the card is delivered.
 - Tasks: [ ] open, [x] done, [-] dropped; T<n>, `[repo: api]`, and a trailing `scope` glob are optional. A scope may carry its checkout: `api:src/auth/*`.

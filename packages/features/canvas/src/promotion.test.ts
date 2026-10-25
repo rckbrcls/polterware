@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { assertApplied, createdDecisionTitle, deriveSlug, promotionText } from "./promotion";
+import { assertApplied, createdDecisionTitle, createdFactId, deriveSlug, promotionText } from "./promotion";
 const input = { kind: "card" as const, title: "Local core", slug: "local-core", canvasName: "Sketch" };
 describe("canvas promotion Polter", () => {
   it("derives deterministic valid slugs and avoids existing card identities", () => {
@@ -20,13 +20,21 @@ describe("canvas promotion Polter", () => {
     expect(codec).toContain('DecisionNewRef = "new"');
     expect(codec).toContain('"stage", "owner", "under", "decisions", "status", "kind"');
   });
-  it("prevents heading/frontmatter injection and rejects invalid slugs or unsupported Facts", () => {
+  it("prevents heading/frontmatter injection and rejects invalid slugs for cards and Facts", () => {
     const text = promotionText({ ...input, title: "A\n### new: B", canvasName: "Sketch\n---\n## injected" });
     expect(text.match(/^### /gm)).toBeNull();
     expect(text.match(/^---$/gm)).toHaveLength(2);
     expect(() => promotionText({ ...input, slug: "bad\nstage: delivered" })).toThrow("slug");
     expect(() => promotionText({ ...input, title: " " })).toThrow("Title");
-    expect(() => promotionText({ ...input, kind: "fact" })).toThrow("Polter v1");
+    expect(() => promotionText({ ...input, kind: "fact", slug: "bad\nkind: verified" })).toThrow("slug");
+  });
+  it("emits declared Facts and resolves their exact created ID", () => {
+    const text = promotionText({ ...input, kind: "fact" });
+    expect(text).toContain("#### local-core: Local core\nkind: declared\n");
+    expect(text).toContain("rationale: promoted from canvas Sketch\n");
+    expect(readFileSync("../../../backend/domains/polter/facts_test.go", "utf8")).toContain("#### local-core: Local core");
+    expect(createdFactId(['+ fact fact-123 "Local core"'])).toBe("fact-123");
+    expect(() => createdFactId([])).toThrow("identity");
   });
   it("surfaces diagnostics and reads the server-assigned Decision identity", () => {
     expect(() => assertApplied({ applied: false, diagnostics: [{ severity: "error", message: "Core refused" }] })).toThrow("Core refused");

@@ -52,6 +52,12 @@ func (s *Store) LoadWorkSnapshot(projectID string) (work.Snapshot, error) {
 	if snapshot.Decisions, err = s.loadDecisions(projectID); err != nil {
 		return snapshot, err
 	}
+	if snapshot.Facts, err = s.loadPolterFacts(projectID); err != nil {
+		return snapshot, err
+	}
+	if snapshot.Evidence, err = s.ListCanonEvidence(projectID); err != nil {
+		return snapshot, err
+	}
 	if len(snapshot.Cards) == 0 {
 		snapshot.Nodes, err = s.loadAtlasNodes(projectID)
 		return snapshot, err
@@ -265,6 +271,9 @@ func applyWorkOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 	}
 	if op.Entity == work.EntityNode {
 		return applyAtlasOp(tx, projectID, op, now)
+	}
+	if op.Entity == work.EntityFact {
+		return applyFactOp(tx, projectID, op, now)
 	}
 	if op.Entity == work.EntityDecision {
 		return applyDecisionOp(tx, projectID, op, now)

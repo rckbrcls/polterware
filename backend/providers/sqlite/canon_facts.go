@@ -8,11 +8,18 @@ import (
 )
 
 func (s *Store) UpsertCanonFact(fact canon.Fact) error {
+	return upsertCanonFact(s.DB, fact)
+}
+
+// upsertCanonFact also accepts the Work transaction so facts and audit ops commit together.
+func upsertCanonFact(db interface {
+	Exec(string, ...any) (sql.Result, error)
+}, fact canon.Fact) error {
 	var entityID any
 	if fact.EntityID != "" {
 		entityID = fact.EntityID
 	}
-	_, err := s.DB.Exec(`INSERT INTO canon_facts(
+	_, err := db.Exec(`INSERT INTO canon_facts(
 		id,project_id,statement,truth_class,source,actor,observed_at,entity_id,created_at,updated_at
 	) VALUES(?,?,?,?,?,?,?,?,?,?)
 	ON CONFLICT(id) DO UPDATE SET

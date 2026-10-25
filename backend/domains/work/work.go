@@ -10,6 +10,7 @@ import (
 	"unicode"
 
 	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/decision"
 	"golang.org/x/text/unicode/norm"
 )
@@ -209,6 +210,16 @@ type Snapshot struct {
 	Environments []NamedEnvironment
 	// Decisions are the project's Verdicts with their lifecycle state.
 	Decisions []decision.Decision
+	Facts     []Fact
+	Evidence  []canon.Evidence
+}
+
+// Fact is a canon fact with its Polter identity, scope path and evidence links.
+type Fact struct {
+	canon.Fact
+	Slug     string
+	Scope    string
+	Evidence []string
 }
 
 // NamedEnvironment is a project environment a deploys: line can name.
@@ -259,6 +270,7 @@ const (
 	EntityClaim     = "claim"
 	EntityNode      = "node"
 	EntityDecision  = "decision"
+	EntityFact      = "fact"
 	EntityBoard     = "board"
 
 	OpCreate = "create"

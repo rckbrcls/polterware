@@ -226,6 +226,7 @@ const previewLayout = {
 const previewLayoutState = { bodyJson: JSON.stringify(previewLayout), revision: 3 };
 
 const promotedCards = new Map<string, Record<string, unknown>[]>();
+const promotedFacts = new Map<string, Record<string, unknown>[]>();
 const promotedDecisions = new Map<string, Record<string, unknown>[]>();
 
 /**
@@ -238,10 +239,11 @@ async function applyPreviewPolter(args?: { projectId?: string; text?: string; dr
   const text = args?.text ?? "";
   const card = /^## ([a-z0-9]+(?:-[a-z0-9]+)*): (.+)$/m.exec(text);
   const decision = /^### new: (.+)$/m.exec(text);
-  if (card || decision) {
+  const fact = /^#### ([a-z0-9]+(?:-[a-z0-9]+)*): (.+)$/m.exec(text);
+  if (card || decision || fact) {
     if (!/^polter: 1$/m.test(text) || !/^summary: .+$/m.test(text) || !/^rationale: .+$/m.test(text)) throw new Error("Promotion needs Polter v1, summary and rationale.");
     const id = `promoted-${crypto.randomUUID()}`;
-    const title = (card?.[2] ?? decision?.[1] ?? "").trim();
+    const title = (card?.[2] ?? fact?.[2] ?? decision?.[1] ?? "").trim();
     if (card) {
       const cards = [...(projectId === PREVIEW_PROJECT_ID ? previewCards : []), ...(promotedCards.get(projectId) ?? [])];
       if (cards.some((item) => item.slug === card[1])) throw new Error("That Work card slug already exists.");
@@ -249,6 +251,14 @@ async function applyPreviewPolter(args?: { projectId?: string; text?: string; dr
       if (args?.dryRun) return { applied: false, diagnostics: [], ops: [`+ card ${card[1]} ${JSON.stringify(title)} [shape]`] };
       promotedCards.set(projectId, [...(promotedCards.get(projectId) ?? []), { id, projectId, slug: card[1], title, stage: "shape", status: "active", kind: "feature", intent: "", owner: "", under: "", decisions: [], tasks: [], questions: [], invariants: [], updatedAt: new Date().toISOString() }]);
       return { applied: true, diagnostics: [], ops: [`+ card ${card[1]} ${JSON.stringify(title)} [shape]`] };
+    }
+    if (fact) {
+      const facts = promotedFacts.get(projectId) ?? [];
+      if (facts.some((item) => item.slug === fact[1])) return { applied: false, diagnostics: [], ops: [] };
+      if (!/^kind: declared$/m.test(text)) throw new Error("Canvas Facts start Declared.");
+      if (args?.dryRun) return { applied: false, diagnostics: [], ops: [`+ fact ${id} ${JSON.stringify(title)}`] };
+      promotedFacts.set(projectId, [...facts, { id, projectId, slug: fact[1], statement: title, truthClass: "declared", source: "polter", actor: "human", entityId: "", observedAt: new Date().toISOString(), updatedAt: new Date().toISOString() }]);
+      return { applied: true, diagnostics: [], ops: [`+ fact ${id} ${JSON.stringify(title)}`] };
     }
     if (!/^status: proposed$/m.test(text)) throw new Error("Canvas Decisions start Proposed.");
     const decisions = [...(projectId === PREVIEW_PROJECT_ID ? previewKnowledge : []), ...(promotedDecisions.get(projectId) ?? [])];
@@ -770,12 +780,11 @@ function createBrowserDevBridge(): PolterwareBridge {
       canon: browserDevApi({
         listEntities: scoped({ entities: previewEntities }, { entities: [] }),
         listFacts: async (args?: ProjectArgs & { entityId?: string }) => ({
-          facts: args?.projectId === PREVIEW_PROJECT_ID
-            ? previewFacts.filter((fact) => !args.entityId || fact.entityId === args.entityId)
-            : [],
+          facts: [...(args?.projectId === PREVIEW_PROJECT_ID ? previewFacts : []), ...(promotedFacts.get(args?.projectId ?? "") ?? [])]
+            .filter((fact) => !args?.entityId || fact.entityId === args.entityId),
         }),
         getFact: async (args?: { id?: string }) => {
-          const fact = previewFacts.find((item) => item.id === args?.id);
+          const fact = [...previewFacts, ...[...promotedFacts.values()].flat()].find((item) => item.id === args?.id);
           const ids = previewFactSeeds.find((seed) => seed[0] === args?.id)?.[6] ?? [];
           return { fact, evidence: previewCanonEvidence.filter((item) => ids.includes(item.id)) };
         },

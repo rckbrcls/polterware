@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
@@ -26,6 +27,7 @@ type References struct {
 	// Environments are the project's environments. deploys: names one by id
 	// or by name.
 	Environments []work.NamedEnvironment
+	Evidence     []canon.Evidence
 	// Git is the local repository view used to hint on handoff mismatches.
 	// Nil skips that check.
 	Git *GitView
@@ -46,6 +48,7 @@ func Lint(text string, refs *References) (Document, []Diagnostic) {
 	doc, diags := Decode(text)
 	if refs != nil {
 		diags = append(diags, checkReferences(doc, *refs)...)
+		diags = append(diags, checkFactEvidence(doc, refs.Evidence)...)
 		diags = append(diags, CheckGraph(doc, refs.Nodes, refs.Cards)...)
 		diags = append(diags, CheckRepos(doc, refs.Repos)...)
 		diags = append(diags, CheckDeploys(doc, refs.Environments)...)

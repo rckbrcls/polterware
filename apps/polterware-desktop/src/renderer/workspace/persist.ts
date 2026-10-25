@@ -11,7 +11,7 @@ import type { WorkspaceSnapshot } from "./load";
 import { mapFeatureReview } from "./map-feature-review";
 import { uniqueCardSlug } from "@polterware/feature-knowledge";
 import { readCanvas, readTypes, type CanvasPort } from "@polterware/feature-canvas/model";
-import { promotionText, assertApplied, createdDecisionTitle, PromotionAppliedError } from "@polterware/feature-canvas/promotion";
+import { promotionText, assertApplied, createdDecisionTitle, createdFactId, PromotionAppliedError } from "@polterware/feature-canvas/promotion";
 
 function core() {
   return window.polterware.core;
@@ -52,8 +52,16 @@ export const canvasPersistence: CanvasPort = {
         throw new Error("That slug already belongs to a Work card, including removed cards. Choose another slug.");
       }
     }
+    if (input.kind === "fact") {
+      const plan = asRecord(await core().work.apply({ projectId, text, dryRun: true }));
+      const errors = asObjectArray(plan.diagnostics).filter((item) => item.severity === "error");
+      if (errors.length) throw new Error(errors.map((item) => asString(item.message)).join("\n"));
+      if (!Array.isArray(plan.ops) || !plan.ops.some((op) => typeof op === "string" && op.startsWith("+ fact "))) {
+        throw new Error("That slug already belongs to a Fact. Choose another slug.");
+      }
+    }
     const response = asRecord(await core().work.apply({ projectId, text,
-      change: { summary: `Promote canvas item: ${input.title}`, rationale: `Promoted from canvas ${input.canvasName}.` } }));
+      change: { summary: `Promote canvas item: ${input.title}`, rationale: input.kind === "fact" ? `promoted from canvas ${input.canvasName.replace(/\s+/g, " ").trim()}` : `Promoted from canvas ${input.canvasName}.` } }));
     assertApplied(response);
     try {
       if (input.kind === "card") {
@@ -61,6 +69,13 @@ export const canvasPersistence: CanvasPort = {
         const card = cards.find((item) => item.slug === input.slug);
         if (!card || !asString(card.id)) throw new Error("The new Work card was not returned.");
         return { kind: "card", id: asString(card.id), title: asString(card.title), slug: asString(card.slug) };
+      }
+      if (input.kind === "fact") {
+        const id = createdFactId(response.ops);
+        const facts = asObjectArray(asRecord(await core().canon.listFacts({ projectId })).facts);
+        const fact = facts.find((item) => item.id === id);
+        if (!fact) throw new Error("The new Fact was not returned.");
+        return { kind: "fact", id, title: asString(fact.statement), slug: input.slug };
       }
       const title = createdDecisionTitle(response.ops);
       const items = asObjectArray(asRecord(await core().knowledge.list({ projectId })).items);

@@ -34,6 +34,18 @@ func Format(doc Document) string {
 		b.WriteString("\n")
 		writeDecision(&b, dec)
 	}
+	for _, fact := range doc.Facts {
+		fmt.Fprintf(&b, "\n#### %s", fact.Ref)
+		if fact.Statement != "" {
+			fmt.Fprintf(&b, ": %s", fact.Statement)
+		}
+		b.WriteString("\n")
+		for _, key := range FactMetaKeys {
+			if value, ok := fact.MetaValue(key); ok {
+				fmt.Fprintf(&b, "%s: %s\n", key, value)
+			}
+		}
+	}
 	return b.String()
 }
 
