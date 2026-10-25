@@ -1,7 +1,10 @@
-import { For, Show, createResource, createSignal } from "solid-js";
+import { Show, createMemo, createResource, createSignal } from "solid-js";
 import {
-  A11yDialog, Button, Card, Field, FormStack, IconTile, Input, PageToolbar,
-  Pencil, Plus, Select, StatusChip, SwitchRow, Delete,
+  A11yDialog, Button, DataTable, Delete, DropdownMenu, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuTrigger, Eye, Field, FormStack, IconTile,
+  Input, MoreHorizontal, Network, PageEmpty, PageError, PageLoading,
+  PageToolbar, Pencil, PinOff, Plus, Route, SchemeIcon, SearchBar, Select,
+  StatusChip, StickyNote, Workflow, buttonClassName,
 } from "@polterware/frontend-design-system";
 import { CanvasEditor, AGENT_HINT } from "./editor";
 import { toDocument, type CanvasPort, type CanvasRecord, type CanvasType } from "./model";
@@ -13,6 +16,10 @@ import { referenceState, type StoreEntity } from "./references";
 
 export function CanvasView(props: { projectId: string; port: CanvasPort; entities?: readonly StoreEntity[] }) {
   return <Show when={props.projectId} keyed>{(projectId) => <CanvasProject projectId={projectId} port={props.port} entities={props.entities} />}</Show>;
+}
+
+function CanvasTypeIcon(props: { type: string }) {
+  return <Show when={props.type === "architecture"} fallback={<Show when={props.type === "roadmap"} fallback={<Show when={props.type === "flow"} fallback={<Show when={props.type === "brainstorm"} fallback={<SchemeIcon size={14} />}><StickyNote size={14} /></Show>}><Workflow size={14} /></Show>}><Route size={14} /></Show>}><Network size={14} /></Show>;
 }
 
 function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: readonly StoreEntity[] }) {
@@ -31,6 +38,15 @@ function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: 
   const [type, setType] = createSignal("");
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal("");
+  const [query, setQuery] = createSignal("");
+  const visibleCanvases = createMemo(() => {
+    const needle = query().trim().toLowerCase();
+    if (!needle) return data()?.canvases ?? [];
+    return (data()?.canvases ?? []).filter((canvas) => {
+      const label = data()?.types.find((type) => type.type === canvas.type)?.label ?? canvas.type;
+      return `${canvas.name} ${label}`.toLowerCase().includes(needle);
+    });
+  });
   async function run(action: () => Promise<void>) {
     setBusy(true); setError("");
     try { await action(); }
@@ -64,28 +80,50 @@ function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: 
     });
   }
   return <Show when={selected()} keyed fallback={<div class="flex h-full min-h-0 flex-col">
-    <PageToolbar.Root><PageToolbar.Actions>
-      <Button size="sm" disabled={busy() || !data()?.types.length} onClick={() => showDialog("create")}><Plus size={14} />Create canvas</Button>
-    </PageToolbar.Actions></PageToolbar.Root>
-    <Show when={data.loading}><p role="status" class="p-4 text-sm text-[var(--color-text-muted)]">Loading canvases and available types…</p></Show>
-    <Show when={data()?.loadError}><div role="alert" class="p-4 text-sm text-[var(--color-danger)]">{data()?.loadError} <Button variant="ghost" size="sm" onClick={() => void refetch()}>Retry</Button></div></Show>
-    <Show when={error() && !dialog()}><p role="alert" class="p-4 text-sm text-[var(--color-danger)]">{error()}</p></Show>
-    <Show when={data()?.loadError === "" && data()}>{(loaded) => <div class="pw-scroll-fade min-h-0 overflow-auto p-4">
-      <p class="mb-4 text-xs text-[var(--color-text-muted)]">{AGENT_HINT}</p>
-      <Show when={loaded().types.length} fallback={<p class="text-sm text-[var(--color-text-muted)]">The core reported no canvas types. Creation is unavailable.</p>}>
-        <Show when={loaded().canvases.length} fallback={<p class="text-sm text-[var(--color-text-muted)]">No canvases yet. Create a canvas to sketch ideas or connect shapes.</p>}>
-          <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <For each={loaded().canvases}>{(canvas) => <Card class="flex flex-col gap-3">
-              <div class="flex items-center gap-2"><IconTile size={24} tone="neutral"><Pencil size={14} /></IconTile>
-                <Button variant="ghost" size="sm" disabled={busy()} class="min-w-0 truncate" onClick={() => void open(canvas.id)}>{canvas.name}</Button>
-                <StatusChip tone="muted" label={loaded().types.find((type) => type.type === canvas.type)?.label ?? canvas.type} />
-              </div>
-              <Show when={canvas.graph.nodes.some((node) => referenceState(node.ref, props.entities ?? []).trust === "unverified")}><StatusChip tone="warn" label="Unverified content" /></Show>
-              <SwitchRow label="Agent-visible" checked={canvas.agentVisible} disabled={busy()} onCheckedChange={(value) => void run(async () => { await props.port.update(props.projectId, canvas.id, { agentVisible: value }); await refetch(); })} />
-              <div class="flex gap-2"><Button size="sm" variant="ghost" disabled={busy()} onClick={() => showDialog("rename", canvas)}><Pencil size={14} />Rename</Button>
-                <Button size="sm" variant="ghost" disabled={busy()} onClick={() => showDialog("delete", canvas)}><Delete size={14} />Delete</Button></div>
-            </Card>}</For>
-          </div>
+    <PageToolbar.Root>
+      <PageToolbar.Leading><SearchBar placeholder="Search canvases" value={query()} onInput={setQuery} aria-label="Search canvases" /></PageToolbar.Leading>
+      <PageToolbar.Actions><Button size="sm" variant="primary" disabled={busy() || !data()?.types.length} onClick={() => showDialog("create")}><Plus size={14} />New canvas</Button></PageToolbar.Actions>
+    </PageToolbar.Root>
+    <p class="px-4 py-2 text-xs text-[var(--color-text-muted)]">{AGENT_HINT}</p>
+    <Show when={data.loading}><PageLoading layout="table" label="Loading canvases and available types…" /></Show>
+    <Show when={data()?.loadError}><PageError message={data()!.loadError} onRetry={() => void refetch()} /></Show>
+    <Show when={error() && !dialog()}><PageError message={error()} onRetry={() => { setError(""); void refetch(); }} /></Show>
+    <Show when={data()?.loadError === "" && data()}>{(loaded) => <div class="min-h-0 flex-1 overflow-auto">
+      <Show when={loaded().types.length} fallback={<PageEmpty title="Canvas types are unavailable" description="The core reported no canvas types, so creation is unavailable." />}>
+        <Show when={visibleCanvases().length} fallback={<PageEmpty title={query() ? "No canvases match this search" : "No canvases yet"} description={query() ? "Try a different canvas name or type." : "Create a canvas to sketch ideas or connect shapes."} action={!query() ? <Button size="sm" onClick={() => showDialog("create")}><Plus size={14} />New canvas</Button> : undefined} />}>
+          <DataTable.Root rows={visibleCanvases()} getRowId={(canvas) => canvas.id} columnWidthsKey="canvases">
+            <DataTable.Table aria-label="Canvases">
+              <DataTable.Header>
+                <DataTable.ColumnHeader<CanvasRecord> id="name" minWidth={240}>Name</DataTable.ColumnHeader>
+                <DataTable.ColumnHeader<CanvasRecord> id="type" width="9rem">Type</DataTable.ColumnHeader>
+                <DataTable.ColumnHeader<CanvasRecord> id="agentVisible" width="9rem">Agent-visible</DataTable.ColumnHeader>
+                <DataTable.ColumnHeader<CanvasRecord> id="unverified" width="10rem" sortable={false}>Unverified</DataTable.ColumnHeader>
+                <Show when={loaded().canvases.some((canvas) => canvas.updatedAt)}><DataTable.ColumnHeader<CanvasRecord> id="updatedAt" width="10rem">Updated</DataTable.ColumnHeader></Show>
+                <DataTable.ColumnHeader<CanvasRecord> id="actions" width="44px" align="right" sortable={false} resizable={false}><span class="sr-only">Actions</span></DataTable.ColumnHeader>
+              </DataTable.Header>
+              <DataTable.Body<CanvasRecord>>{(canvas) => {
+                const definition = () => loaded().types.find((type) => type.type === canvas.type);
+                const unverified = () => canvas.graph.nodes.some((node) => referenceState(node.ref, props.entities ?? []).trust === "unverified");
+                return <DataTable.Row row={canvas} rowId={canvas.id} onActivate={() => void open(canvas.id)} aria-label={`Open canvas ${canvas.name}`}>
+                  <DataTable.Cell leading={<IconTile size={24} tone="neutral" seed={canvas.id}><CanvasTypeIcon type={canvas.type} /></IconTile>}><span class="font-medium">{canvas.name}</span></DataTable.Cell>
+                  <DataTable.Cell>{definition()?.label ?? canvas.type}</DataTable.Cell>
+                  <DataTable.Cell><StatusChip tone="muted" label={canvas.agentVisible ? "Visible" : "Private"} /></DataTable.Cell>
+                  <DataTable.Cell><Show when={unverified()}><StatusChip tone="warn" label="Unverified" /></Show></DataTable.Cell>
+                  <Show when={loaded().canvases.some((item) => item.updatedAt)}><DataTable.Cell class="text-[var(--color-text-muted)]">{canvas.updatedAt || "—"}</DataTable.Cell></Show>
+                  <DataTable.Cell align="right" onClick={(event: MouseEvent) => event.stopPropagation()}>
+                    <DropdownMenu positioning={{ placement: "bottom-end" }}><DropdownMenuTrigger aria-label={`Actions for ${canvas.name}`} disabled={busy()} class={buttonClassName("ghost", "icon")}><MoreHorizontal size={14} /></DropdownMenuTrigger>
+                      <DropdownMenuContent class="min-w-40">
+                        <DropdownMenuItem value="open" onSelect={() => void open(canvas.id)}><SchemeIcon size={14} />Open</DropdownMenuItem>
+                        <DropdownMenuItem value="rename" onSelect={() => showDialog("rename", canvas)}><Pencil size={14} />Rename</DropdownMenuItem>
+                        <DropdownMenuItem value="agent-visible" onSelect={() => void run(async () => { await props.port.update(props.projectId, canvas.id, { agentVisible: !canvas.agentVisible }); await refetch(); })}>{canvas.agentVisible ? <PinOff size={14} /> : <Eye size={14} />}{canvas.agentVisible ? "Hide from agents" : "Make agent-visible"}</DropdownMenuItem>
+                        <DropdownMenuItem value="delete" danger onSelect={() => showDialog("delete", canvas)}><Delete size={14} />Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </DataTable.Cell>
+                </DataTable.Row>;
+              }}</DataTable.Body>
+            </DataTable.Table>
+          </DataTable.Root>
         </Show>
       </Show>
     </div>}</Show>

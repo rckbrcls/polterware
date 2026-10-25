@@ -143,4 +143,11 @@ describe("Desktop canvas interactions", () => {
     await vi.waitFor(() => expect(container.querySelector('[role="alert"]')?.textContent).toContain("Core disconnected"));
     expect(container.textContent).not.toContain("No canvases yet");
   });
+  it("renders canvases as an operational table with search and row actions", async () => {
+    cleanup = render(() => <CanvasView projectId="project" port={port()} />, container);
+    await vi.waitFor(() => expect(container.querySelector('table[aria-label="Canvases"]')).toBeTruthy());
+    expect(container.querySelector('[aria-label="Search canvases"]')).toBeTruthy();
+    expect(container.querySelector('[aria-label="Actions for Sketch"]')).toBeTruthy();
+    expect(container.textContent).toContain("Agent-visible");
+  });
 });

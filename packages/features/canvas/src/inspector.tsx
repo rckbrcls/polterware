@@ -1,5 +1,5 @@
 import { For, Show, createMemo, createSignal, type JSX } from "solid-js";
-import { A11yDialog, Button, DataTable, DetailPanel, Field, FormStack, GitBranch, Input, Link2, ListChecks, ScrollText, ShieldCheck, StatusChip } from "@polterware/frontend-design-system";
+import { A11yDialog, ArrowUp, Button, DataTable, DetailPanel, Field, FormStack, GitBranch, Input, Link2, ListChecks, ScrollText, ShieldCheck, StatusChip } from "@polterware/frontend-design-system";
 import { buildRef, canPromote, kindLabel, readRef, referenceState, type CanvasRef, type StoreEntity } from "./references";
 import { deriveSlug, PromotionAppliedError, promotionText, type PromotionInput, type PromotionKind } from "./promotion";
 import type { ArchNode } from "@polterware/frontend-canvas";
@@ -68,8 +68,8 @@ export function NodeInspector(props: {
           <Show when={!matches().length}><p class="text-xs text-[var(--color-text-muted)]">No matching project entities.</p></Show>
         </div>
       </DetailPanel.Section>
-      <Show when={canPromote(props.node)}><DetailPanel.Section title="Promote">
-        <div class="flex flex-col items-start gap-2"><For each={["card", "decision", "fact"] as const}>{(kind) => <Button size="sm" variant="ghost" disabled={!props.promote} onClick={() => open(kind)}><EntityIcon kind={kind} />Promote to {kindLabel(kind)}</Button>}</For></div>
+      <Show when={canPromote(props.node)}><DetailPanel.Section title="Promote" icon={<ArrowUp size={14} />}>
+        <div class="flex flex-col items-start gap-1"><For each={["card", "decision", "fact"] as const}>{(kind) => <Button size="sm" variant="ghost" disabled={!props.promote} onClick={() => open(kind)}><EntityIcon kind={kind} />Promote to {kindLabel(kind)}</Button>}</For></div>
       </DetailPanel.Section></Show>
     </DetailPanel.Main></DetailPanel.Body>
     <A11yDialog open={!!promotion()} title={`Promote to ${kindLabel(promotion() ?? "card")}`} onClose={() => { if (!busy()) setPromotion(undefined); }} dismissible={!busy()}
