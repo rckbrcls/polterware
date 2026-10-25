@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createMemo, createSignal, onCleanup, untrack } from "solid-js";
+import { For, Index, Show, createEffect, createMemo, createSignal, onCleanup, untrack } from "solid-js";
 import { EntityDetailHost } from "@polterware/feature-shell";
 import {
   A11yDialog, Boxes, Button, Card, Checkbox, DetailPanel, Field, FileText, Folder, FormStack, Input,
@@ -104,10 +104,6 @@ export function StructureView(props: {
     const integration = props.integrations?.find((i) => i.providerId === providerId);
     return integration?.status === "connected";
   };
-  // Format deploys for the Polter deploys: line
-  const formatDeploysLine = (deploys: { environmentId: string; provider: string; resource: string }[]) => {
-    return deploys.map((d) => `${d.environmentId}=${d.provider}:${d.resource}`).join(", ");
-  };
   // Memo for deploys count to avoid TypeScript issues with accessor in JSX
   const deploysCount = createMemo(() => editingDeploys().length);
   // Open deploys dialog for a component node
@@ -121,6 +117,13 @@ export function StructureView(props: {
     setEditingDeploys((current) => [...current, { environmentId: "", provider: "", resource: "" }]);
   };
   // Remove a deploy row
+  const patchDeploy = (index: number, patch: Partial<{ environmentId: string; provider: string; resource: string }>) => {
+    setEditingDeploys((current) => {
+      const row = current[index];
+      if (!row || Object.entries(patch).every(([key, value]) => row[key as keyof typeof row] === value)) return current;
+      return current.map((d, i) => i === index ? { ...d, ...patch } : d);
+    });
+  };
   const removeDeployRow = (index: number) => {
     setEditingDeploys((current) => current.filter((_, i) => i !== index));
   };
@@ -128,10 +131,12 @@ export function StructureView(props: {
   const saveDeploys = async () => {
     const node = selected();
     if (!node || node.level !== "component" || !props.onDeploysChange) return;
+    const rows = editingDeploys();
+    if (rows.some((d) => !d.environmentId || !d.provider || !d.resource.trim())) { setFormError("Fill environment, provider and resource on every row, or remove the row."); return; }
     setBusy(true);
     setFormError("");
     try {
-      await props.onDeploysChange(node.id, editingDeploys());
+      await props.onDeploysChange(node.id, rows.map((d) => ({ ...d, resource: d.resource.trim() })));
       setDeploysOpen(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not save deploys.";
@@ -244,31 +249,28 @@ export function StructureView(props: {
     </A11yDialog>
     <A11yDialog open={deploysOpen()} title="Edit deploys" dismissible={!busy()} onClose={() => { if (!busy()) setDeploysOpen(false); }} footer={<>
       <Button variant="ghost" disabled={busy()} onClick={() => setDeploysOpen(false)}>Cancel</Button>
-      <Button disabled={busy() || deploysCount() === 0} onClick={() => void saveDeploys()}>{busy() ? "Saving…" : "Save"}</Button>
+      <Button disabled={busy()} onClick={() => void saveDeploys()}>{busy() ? "Saving…" : "Save"}</Button>
     </>}>
       <FormStack>
         <Show when={deploysCount() > 0} fallback={
           <p class="text-sm text-[var(--color-text-muted)]">No deploys configured yet.</p>
         }>
-          <For each={editingDeploys()}>
-            {(deploy) => {
-              const index = editingDeploys().indexOf(deploy);
-              return (
-                <div class="flex flex-wrap items-center gap-2 mb-3">
-                  <Field label="Environment" class="flex-1 min-w-[140px]">
-                    <Select value={deploy.environmentId} options={environmentOptions()} onChange={(value) => setEditingDeploys((current) => current.map((d, i) => i === index ? { ...d, environmentId: value } : d))} placeholder="Select environment" />
-                  </Field>
-                  <Field label="Provider" class="flex-1 min-w-[140px]">
-                    <Select value={deploy.provider} options={providerOptions()} onChange={(value) => setEditingDeploys((current) => current.map((d, i) => i === index ? { ...d, provider: value } : d))} placeholder="Select provider" />
-                  </Field>
-                  <Field label="Resource" class="flex-1 min-w-[140px]">
-                    <Input value={deploy.resource} onInput={(event) => setEditingDeploys((current) => current.map((d, i) => i === index ? { ...d, resource: event.currentTarget.value } : d))} placeholder="Resource name" />
-                  </Field>
-                  <Button variant="ghost" size="icon" onClick={() => removeDeployRow(index)} aria-label="Remove deploy"><span class="sr-only">Remove</span>×</Button>
-                </div>
-              );
-            }}
-          </For>
+          <Index each={editingDeploys()}>
+            {(deploy, index) => (
+              <div class="flex flex-wrap items-center gap-2 mb-3">
+                <Field label="Environment" class="flex-1 min-w-[140px]">
+                  <Select value={deploy().environmentId} options={environmentOptions()} onChange={(value) => patchDeploy(index, { environmentId: value })} placeholder="Select environment" />
+                </Field>
+                <Field label="Provider" class="flex-1 min-w-[140px]">
+                  <Select value={deploy().provider} options={providerOptions()} onChange={(value) => patchDeploy(index, { provider: value })} placeholder="Select provider" />
+                </Field>
+                <Field label="Resource" class="flex-1 min-w-[140px]">
+                  <Input value={deploy().resource} onInput={(event) => patchDeploy(index, { resource: event.currentTarget.value })} placeholder="Resource name" />
+                </Field>
+                <Button variant="ghost" size="icon" onClick={() => removeDeployRow(index)} aria-label="Remove deploy"><span class="sr-only">Remove</span>×</Button>
+              </div>
+            )}
+          </Index>
         </Show>
         <Button variant="ghost" size="sm" onClick={addDeployRow}><Plus size={14} />Add deploy</Button>
         <Show when={formError()}><p role="alert">{formError()}</p></Show>
