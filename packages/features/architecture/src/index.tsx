@@ -80,6 +80,7 @@ export function StructureView(props: {
   const tree = createMemo(() => buildStructureTree(props.nodes, query()));
   const visible = createMemo(() => flattenStructureTree(tree()));
   const selectedId = () => target()?.scopeId === STRUCTURE_SCOPE ? target()?.entityId : undefined;
+  const selectedValue = createMemo<string[]>(() => { const id = selectedId(); return id ? [id] : []; }, [], { equals: sameIds });
   const selected = createMemo(() => props.nodes.find((node) => node.id === selectedId()));
   const selectedCounts = () => selectedId() === PROJECT_ID ? props.projectCounts : props.counts[selectedId() ?? ""] ?? { work: 0, decisions: 0, facts: 0 };
   const registry = () => props.registryNodes ?? props.nodes;
@@ -152,7 +153,7 @@ export function StructureView(props: {
     detailPanelStore.getState().registerCollection({ scopeId: STRUCTURE_SCOPE, status: props.loading ? "loading" : props.error ? "error" : "ready", targets, selectFirst: false });
   });
   onCleanup(() => detailPanelStore.getState().unregisterCollection(STRUCTURE_SCOPE));
-  createEffect(() => { const id = selectedId(); if (id) props.onSelect(id); });
+  createEffect(() => { const id = selectedId(); if (id) untrack(() => props.onSelect(id)); });
   createEffect(() => {
     if (query().trim()) setExpanded([PROJECT_ID, ...visible().map((node) => node.id)]);
   });
@@ -189,7 +190,7 @@ export function StructureView(props: {
             <NodeCounts counts={props.counts[node.id] ?? { work: 0, decisions: 0, facts: 0 }} />
           </Card></Button>}</For>
         </div>}>
-          <TreeView label="Project structure" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded(event.expandedValue)} selectedValue={selectedId() ? [selectedId()!] : []} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} />
+          <TreeView label="Project structure" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)} selectedValue={selectedValue()} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} />
         </Show>
         <Show when={!visible().length}><PageEmpty title={query().trim() ? "No matching nodes" : "No structure nodes yet"} description={query().trim() ? "Try another name, kind or path." : "Add a system, then organize its domains and components."} /></Show>
       </PageContent>
@@ -277,6 +278,10 @@ export function StructureView(props: {
       </FormStack>
     </A11yDialog>
   </EntityDetailHost>;
+}
+
+function sameIds(a: readonly string[], b: readonly string[]) {
+  return a.length === b.length && a.every((id, index) => id === b[index]);
 }
 
 function NodeCounts(props: { counts: Counts }) {
