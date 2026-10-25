@@ -7,8 +7,8 @@ import {
 } from "@polterware/frontend-canvas";
 import {
   Button, ConnectIcon, DetailPanel, Field, Hand, Input, MousePointer2, PageToolbar,
-  SegmentedControl, Select, StatusChip, SwitchRow, Plus, Delete, Undo2, Redo2,
-  Maximize2, MinusSignIcon, ChevronLeft, Route, pushToast,
+  SegmentedControl, Select, StatusChip, Switch, Tooltip, Plus, Delete, Undo2, Redo2,
+  Maximize2, MinusSignIcon, ChevronLeft, HelpCircle, Route, pushToast,
 } from "@polterware/frontend-design-system";
 import { createAutosave, type SaveState } from "./autosave";
 import { connectNodes, insertNode, removeSelection, resizeNode, serializeCanvas,
@@ -24,11 +24,13 @@ import "./canvas.css";
 
 export const AGENT_HINT = "Agents read only shared canvases. Content without references is unverified.";
 
-const TOOL_OPTIONS = [
-  { value: "select", label: <><MousePointer2 size={14} />Select</> },
-  { value: "pan", label: <><Hand size={14} />Pan</> },
-  { value: "connect", label: <><ConnectIcon size={14} />Connect</> },
-] as unknown as Array<{ value: string; label: string }>;
+function toolOptions() {
+  return [
+  { value: "select", label: <Tooltip.Root><Tooltip.Trigger asChild={(triggerProps) => <span {...triggerProps({ "aria-label": "Select" })} class="inline-flex"><MousePointer2 size={14} /><span class="sr-only">Select</span></span>} /><Tooltip.Content>Select</Tooltip.Content></Tooltip.Root> },
+  { value: "pan", label: <Tooltip.Root><Tooltip.Trigger asChild={(triggerProps) => <span {...triggerProps({ "aria-label": "Pan" })} class="inline-flex"><Hand size={14} /><span class="sr-only">Pan</span></span>} /><Tooltip.Content>Pan</Tooltip.Content></Tooltip.Root> },
+  { value: "connect", label: <Tooltip.Root><Tooltip.Trigger asChild={(triggerProps) => <span {...triggerProps({ "aria-label": "Connect" })} class="inline-flex"><ConnectIcon size={14} /><span class="sr-only">Connect</span></span>} /><Tooltip.Content>Connect</Tooltip.Content></Tooltip.Root> },
+  ] as unknown as Array<{ value: string; label: string }>;
+}
 
 export function CanvasEditor(props: {
   canvas: CanvasRecord; definition: CanvasType; document: ArchitectureDocument; port: CanvasPort;
@@ -208,15 +210,15 @@ export function CanvasEditor(props: {
   }
   return <DetailPanel.Root open={!!selected() || !!selectedEdge()} expandable={false} shortcuts={false} dismissOnOutsideClick={false} activeEntityId={selected()?.id ?? selectedEdge()?.id} onOpenChange={(open) => { if (!open) setSelection(emptySelection()); }} class="h-full min-h-0">
     <DetailPanel.Collection><div class="flex h-full min-h-0 flex-col">
-    <PageToolbar.Root>
+    <PageToolbar.Root class="items-center">
       <PageToolbar.Leading class="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="ghost" disabled={leaving()} onClick={() => void back()}><ChevronLeft size={14} />Canvases</Button>
-        <Input aria-label="Canvas name" class="w-48" value={name()} onInput={(e) => { setName(e.currentTarget.value); schedule(); }} />
+        <Input aria-label="Canvas name" class="w-56" value={name()} onInput={(e) => { setName(e.currentTarget.value); schedule(); }} />
         <StatusChip tone="muted" label={props.definition.label} />
         <StatusChip tone={state() === "error" ? "danger" : "muted"} label={state() === "pending" ? "Unsaved" : state() === "saving" ? "Saving…" : state() === "error" ? "Not saved" : "Saved"} />
-        <SegmentedControl aria-label="Canvas tool" value={tool()} onValueChange={(details) => { if (details.value) { setTool(details.value); setConnectFrom(undefined); } }} options={TOOL_OPTIONS} />
       </PageToolbar.Leading>
       <PageToolbar.Actions class="flex-wrap">
+      <SegmentedControl aria-label="Canvas tool" class="[&_.pw-segmented__item]:w-8 [&_.pw-segmented__item]:px-0" value={tool()} onValueChange={(details) => { if (details.value) { setTool(details.value); setConnectFrom(undefined); } }} options={toolOptions()} />
       <Select aria-label="Shape kind" class="w-36" value={kind()} onChange={setKind} options={behavior.palette().map((value) => ({ value, label: value }))} />
       <Button size="sm" disabled={!kind()} onClick={() => add()}><Plus size={14} />Add shape</Button>
       <Show when={behavior.structureReferences}><Button size="sm" onClick={() => { setStructureKind(undefined); setStructurePicker(true); }}><Plus size={14} />Add from Structure</Button></Show>
@@ -231,12 +233,18 @@ export function CanvasEditor(props: {
       <Button size="icon" variant="ghost" aria-label="Zoom in" onClick={() => zoom(1.25)}><Plus size={14} /></Button>
       <Button size="icon" variant="ghost" aria-label="Fit canvas" onClick={fit}><Maximize2 size={14} /></Button>
       <Button size="sm" variant="ghost" disabled={!doc().nodes.length} onClick={() => { if (behavior.layout) change(behavior.layout(doc())); else { const layout = layoutSync({ nodes: doc().nodes, mode: "horizontal" }); change(setNodePositions(doc(), new Map(layout.nodes.map((n) => [n.id, n])))); } fit(); }}>Arrange</Button>
-      <Select aria-label="Select shape or edge" class="w-44" value={selection().nodeIds[0] ?? selection().relationshipIds[0] ?? ""} onChange={(id) => setSelection({ ...emptySelection(), ...(doc().nodes.some((n) => n.id === id) ? { nodeIds: [id] } : { relationshipIds: id ? [id] : [] }) })} options={[{ value: "", label: "No selection" }, ...doc().nodes.map((node) => ({ value: node.id, label: readRef(node) ? referenceState(readRef(node), props.entities ?? []).title : node.name || node.type })), ...doc().relationships.map((edge) => ({ value: edge.id, label: `Edge: ${edge.type}` }))]} />
-        <SwitchRow label="Agent-visible" checked={agentVisible()} onCheckedChange={(value) => { setAgentVisible(value); schedule(); }} />
+        <div class="inline-flex items-center gap-1.5 whitespace-nowrap text-xs text-[var(--color-text-secondary)]">
+          <span>Agent-visible</span>
+          <Switch size="sm" aria-label="Agent-visible" checked={agentVisible()} onCheckedChange={(value) => { setAgentVisible(value); schedule(); }} />
+        </div>
       </PageToolbar.Actions>
     </PageToolbar.Root>
     <div class="flex flex-wrap items-center gap-2 px-4 py-2 text-xs text-[var(--color-text-muted)]">
-      <span>{AGENT_HINT} {tool() === "connect" ? (connectFrom() ? "Choose the target shape." : "Choose the source shape, then the target.") : "Drag shapes to move. Drag empty space to pan; scroll to pan, Ctrl/⌘ + scroll to zoom. Double-click a label or press Enter to edit. Arrow keys move the selection."} {props.definition.rules.join(" ")}</span>
+      <span>{tool() === "connect" ? (connectFrom() ? "Select a target shape." : "Select a source shape, then a target.") : "Drag to move · Scroll to pan · Ctrl/⌘+scroll to zoom"}</span>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild={(triggerProps) => <Button {...triggerProps({ "aria-label": "Canvas type rules" })} size="icon" variant="ghost"><HelpCircle size={14} /></Button>} />
+        <Tooltip.Content>{props.definition.rules.length ? props.definition.rules.join(" ") : "No additional type rules."}</Tooltip.Content>
+      </Tooltip.Root>
       <For each={behavior.hints(doc())}>{(hint) => <StatusChip tone="warn" label={hint} />}</For>
     </div>
     <Show when={error()}><div role="alert" class="flex flex-wrap items-center gap-2 px-4 py-2 text-sm text-[var(--color-danger)]"><span>{error()}</span><Button size="sm" variant="ghost" onClick={() => void save.flush()}>Retry save</Button></div></Show>

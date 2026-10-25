@@ -14,6 +14,13 @@ export { readCanvas, readTypes } from "./model";
 export type { StoreEntity } from "./references";
 import { referenceState, type StoreEntity } from "./references";
 
+// Matches the date presentation used by Dispatch tables while retaining malformed values for diagnosis.
+function formatUpdated(value: string): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+}
+
 export function CanvasView(props: { projectId: string; port: CanvasPort; entities?: readonly StoreEntity[] }) {
   return <Show when={props.projectId} keyed>{(projectId) => <CanvasProject projectId={projectId} port={props.port} entities={props.entities} />}</Show>;
 }
@@ -109,7 +116,7 @@ function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: 
                   <DataTable.Cell>{definition()?.label ?? canvas.type}</DataTable.Cell>
                   <DataTable.Cell><StatusChip tone="muted" label={canvas.agentVisible ? "Visible" : "Private"} /></DataTable.Cell>
                   <DataTable.Cell><Show when={unverified()}><StatusChip tone="warn" label="Unverified" /></Show></DataTable.Cell>
-                  <Show when={loaded().canvases.some((item) => item.updatedAt)}><DataTable.Cell class="text-[var(--color-text-muted)]">{canvas.updatedAt || "—"}</DataTable.Cell></Show>
+                  <Show when={loaded().canvases.some((item) => item.updatedAt)}><DataTable.Cell class="text-[var(--color-text-muted)]">{formatUpdated(canvas.updatedAt)}</DataTable.Cell></Show>
                   <DataTable.Cell align="right" onClick={(event: MouseEvent) => event.stopPropagation()}>
                     <DropdownMenu positioning={{ placement: "bottom-end" }}><DropdownMenuTrigger aria-label={`Actions for ${canvas.name}`} disabled={busy()} class={buttonClassName("ghost", "icon")}><MoreHorizontal size={14} /></DropdownMenuTrigger>
                       <DropdownMenuContent class="min-w-40">
