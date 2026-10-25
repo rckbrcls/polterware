@@ -2,7 +2,7 @@ import type { ArchitectureDocument } from "@polterware/frontend-canvas";
 import type { GraphNode } from "./model";
 
 export type RefKind = "card" | "decision" | "fact" | "node" | "evidence";
-export type StoreEntity = { kind: RefKind; id: string; title: string; slug?: string };
+export type StoreEntity = { kind: RefKind; id: string; title: string; slug?: string; level?: string };
 export type CanvasRef = NonNullable<GraphNode["ref"]>;
 export const kindLabel = (kind: string) => ({ card: "Work card", decision: "Decision", fact: "Fact", node: "Structure", evidence: "Evidence" })[kind] ?? kind;
 export function buildRef(entity: StoreEntity): CanvasRef {

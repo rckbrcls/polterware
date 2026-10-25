@@ -3,17 +3,22 @@ import {
   canRedo, canUndo, commit, createHistory, documentBounds, emptySelection, fitBounds,
   historyRedo, historyUndo, hitTest, layoutSync, moveNodes, panBy, resolveRelationshipRoute,
   pointsToSvgPath, screenToDocument, selectClick, setNodePositions, updateNode, zoomAt,
-  type ArchitectureDocument, type Point,
+  type ArchNode, type ArchitectureDocument, type Point,
 } from "@polterware/frontend-canvas";
 import {
-  Button, Card, DetailPanel, Input, PageToolbar, Select, StatusChip, StickyNote, SwitchRow,
+  Button, DetailPanel, Field, Input, PageToolbar, Select, StatusChip, SwitchRow,
   Plus, Delete, Undo2, Redo2, Maximize2, MinusSignIcon, ChevronLeft, pushToast,
 } from "@polterware/frontend-design-system";
 import { createAutosave, type SaveState } from "./autosave";
-import { connectNodes, edgePalette, insertNode, nodePalette, removeSelection, resizeNode, serializeCanvas,
+import { connectNodes, insertNode, removeSelection, resizeNode, serializeCanvas,
   type CanvasPort, type CanvasRecord, type CanvasType } from "./model";
 import { EntityIcon, NodeInspector } from "./inspector";
 import { readRef, referenceState, setReference, type StoreEntity } from "./references";
+import { canvasBehavior } from "./types";
+import { annotation, properties, propertyText, withProperties } from "./types/shared";
+import { TypeInspector } from "./type-inspector";
+import { CanvasNode } from "./node-renderer";
+import { StructurePicker } from "./structure-picker";
 import "./canvas.css";
 
 export const AGENT_HINT = "Agents read only shared canvases. Content without references is unverified.";
@@ -23,12 +28,15 @@ export function CanvasEditor(props: {
   onBack: () => void; entities?: readonly StoreEntity[];
 }) {
   const canvas = props.canvas;
-  const [doc, setDoc] = createSignal(props.document);
+  const behavior = canvasBehavior(props.definition);
+  const [doc, setDoc] = createSignal(behavior.layout?.(props.document) ?? props.document);
+  const [structurePicker, setStructurePicker] = createSignal(false);
+  const [structureKind, setStructureKind] = createSignal<string>();
   const [selection, setSelection] = createSignal(emptySelection());
   const [history, setHistory] = createSignal(createHistory());
   const [tool, setTool] = createSignal("select");
-  const [kind, setKind] = createSignal(nodePalette(props.definition)[0] ?? "");
-  const [edgeKind, setEdgeKind] = createSignal(edgePalette(props.definition)[0] ?? "");
+  const [kind, setKind] = createSignal(behavior.palette()[0] ?? "");
+  const [edgeKind, setEdgeKind] = createSignal(behavior.edges()[0] ?? "");
   const [connectFrom, setConnectFrom] = createSignal<string>();
   const [editing, setEditing] = createSignal<string>();
   const [name, setName] = createSignal(canvas.name);
@@ -39,6 +47,8 @@ export function CanvasEditor(props: {
   let host!: HTMLDivElement;
   let disposed = false;
   let gesture: { pointerId: number; mode: "pan" | "move" | "resize"; start: Point; before: ArchitectureDocument; ids: string[] } | undefined;
+  const selectedEdge = createMemo(() => doc().relationships.find((edge) => edge.id === selection().relationshipIds[0]
+    && behavior.edgeFields(doc().nodes.find((node) => node.id === edge.sourceNodeId)?.type ?? "").length > 0));
   const selected = createMemo(() => doc().nodes.find((node) => node.id === selection().nodeIds[0]));
   const save = createAutosave(async (value: { document: ArchitectureDocument; name: string; agentVisible: boolean }) => {
     if (!value.name.trim()) throw new Error("Canvas name is required.");
@@ -53,7 +63,7 @@ export function CanvasEditor(props: {
   });
   function schedule() { save.schedule({ document: doc(), name: name(), agentVisible: agentVisible() }); }
   function change(next: ArchitectureDocument, mode: "immediately" | "eventually" = "immediately") {
-    const result = commit(history(), doc(), next, mode);
+    const result = commit(history(), doc(), behavior.layout?.(next) ?? next, mode);
     setHistory(result.history); setDoc(result.doc); schedule();
   }
   function finishLabel() { if (editing()) change(doc()); setEditing(undefined); }
@@ -73,7 +83,7 @@ export function CanvasEditor(props: {
     if (editing()) return;
     event.preventDefault(); host.focus();
     const start = point(event);
-    const hit = hitTest(doc(), screenToDocument(doc().viewport, start), { showPorts: false });
+    const hit = hitTest({ ...doc(), nodes: doc().nodes.map((node) => ["lane", "frame"].includes(behavior.variant(node.type)) ? { ...node, zIndex: -1 } : node) }, screenToDocument(doc().viewport, start), { showPorts: false });
     if (tool() === "connect" && event.button === 0 && hit.kind === "node") {
       if (!connectFrom()) { setConnectFrom(hit.id); setSelection({ ...emptySelection(), nodeIds: [hit.id] }); }
       else {
@@ -116,10 +126,13 @@ export function CanvasEditor(props: {
   }
   function end(event: PointerEvent, cancel = false) {
     if (!gesture || gesture.pointerId !== event.pointerId) return;
-    const before = gesture.before; const mode = gesture.mode; gesture = undefined;
+    const before = gesture.before; const mode = gesture.mode; const ids = gesture.ids; gesture = undefined;
     if (host.hasPointerCapture(event.pointerId)) host.releasePointerCapture(event.pointerId);
     if (cancel) { setDoc(before); return; }
-    if (mode !== "pan") setHistory(commit(history(), before, doc(), "immediately").history);
+    if (mode !== "pan") {
+      setDoc(mode === "move" && behavior.drop ? behavior.drop(doc(), ids) : behavior.layout?.(doc()) ?? doc());
+      setHistory(commit(history(), before, doc(), "immediately").history);
+    }
     schedule();
   }
   function zoom(factor: number) {
@@ -129,11 +142,31 @@ export function CanvasEditor(props: {
     if (!doc().nodes.length) return;
     setDoc({ ...doc(), viewport: fitBounds(doc().viewport, documentBounds(doc()), host.clientWidth, host.clientHeight) }); schedule();
   }
-  function add() {
+  function add(entity?: StoreEntity) {
+    const structural = behavior.structureReferences && !annotation(kind());
+    if (structural && !entity) { setStructureKind(kind()); setStructurePicker(true); return; }
+    const shape = entity ? structureKind() ?? entity.level! : kind();
+    if (!behavior.palette().includes(shape)) { setError("This shape is not allowed by the core."); return; }
     const p = screenToDocument(doc().viewport, { x: host.clientWidth / 2, y: host.clientHeight / 2 });
     const id = crypto.randomUUID();
-    change(insertNode(doc(), props.definition, kind(), { x: p.x - 90, y: p.y - 50 }, id));
+    let next = insertNode(doc(), props.definition, shape, { x: p.x - 90, y: p.y - 50 }, id);
+    next = { ...next, nodes: next.nodes.map((node) => node.id === id ? withProperties({ ...node,
+      ...(entity ? { name: entity.title } : {}),
+      ...behavior.initialGeometry?.(shape),
+    }, behavior.defaults(shape)) : node) };
+    if (entity) next = setReference(next, id, { kind: "node", id: entity.id });
+    change(next); setStructurePicker(false);
     setSelection({ ...emptySelection(), nodeIds: [id] }); host.focus();
+  }
+  function renderNode(node: () => ArchNode) {
+    return <g onDblClick={() => { if (!readRef(node())) setEditing(node().id); }}>
+      <CanvasNode node={node()} variant={behavior.variant(node().type)} selected={selection().nodeIds.includes(node().id)} roadmap={canvas.type === "roadmap"}>
+        <Show when={readRef(node())}>{(ref) => <EntityIcon kind={ref().kind} />}</Show>
+        <Show when={referenceState(readRef(node()), props.entities ?? []).trust === "unverified"}><StatusChip tone="warn" label={readRef(node()) ? "Missing · Unverified" : "Unverified"} /></Show>
+        <NodeLabel node={{ name: readRef(node()) ? referenceState(readRef(node()), props.entities ?? []).title : node().name }} editing={editing() === node().id && !readRef(node())} onInput={(name) => change(updateNode(doc(), node().id, { name }), "eventually")} onDone={finishLabel} />
+      </CanvasNode>
+      <Show when={selection().nodeIds.includes(node().id)}><foreignObject x={node().x + node().width - 24} y={node().y + node().height - 24} width="24" height="24"><Button size="icon" variant="ghost" class="!h-6 !w-6 cursor-se-resize" aria-label="Resize shape" onPointerDown={(event) => resize(event, node().id)}><Maximize2 size={12} /></Button></foreignObject></Show>
+    </g>;
   }
   function keydown(event: KeyboardEvent) {
     if ((event.target as HTMLElement).closest("input,textarea,button,[contenteditable=true]")) return;
@@ -166,7 +199,7 @@ export function CanvasEditor(props: {
     if (await save.flush()) props.onBack();
     setLeaving(false);
   }
-  return <DetailPanel.Root open={!!selected()} expandable={false} shortcuts={false} dismissOnOutsideClick={false} activeEntityId={selected()?.id} onOpenChange={(open) => { if (!open) setSelection(emptySelection()); }} class="h-full min-h-0">
+  return <DetailPanel.Root open={!!selected() || !!selectedEdge()} expandable={false} shortcuts={false} dismissOnOutsideClick={false} activeEntityId={selected()?.id ?? selectedEdge()?.id} onOpenChange={(open) => { if (!open) setSelection(emptySelection()); }} class="h-full min-h-0">
     <DetailPanel.Collection><div class="flex h-full min-h-0 flex-col">
     <PageToolbar.Root>
       <Button size="sm" variant="ghost" disabled={leaving()} onClick={() => void back()}><ChevronLeft size={14} />Canvases</Button>
@@ -180,9 +213,10 @@ export function CanvasEditor(props: {
     <Show when={error()}><div role="alert" class="flex items-center gap-2 px-4 py-2 text-sm text-[var(--color-danger)]"><span>{error()}</span><Button size="sm" variant="ghost" onClick={() => void save.flush()}>Retry save</Button></div></Show>
     <div class="flex flex-wrap items-center gap-2 p-2" aria-label="Canvas tools">
       <Select aria-label="Tool" class="w-28" value={tool()} onChange={(value) => { setTool(value); setConnectFrom(undefined); }} options={[{ value: "select", label: "Select" }, { value: "pan", label: "Pan" }, { value: "connect", label: "Connect" }]} />
-      <Select aria-label="Shape kind" class="w-36" value={kind()} onChange={setKind} options={nodePalette(props.definition).map((value) => ({ value, label: value }))} />
-      <Button size="sm" disabled={!kind()} onClick={add}><Plus size={14} />Add shape</Button>
-      <Show when={props.definition.unrestricted} fallback={<Select aria-label="Edge type" class="w-36" value={edgeKind()} onChange={setEdgeKind} options={edgePalette(props.definition).map((value) => ({ value, label: value }))} />}>
+      <Select aria-label="Shape kind" class="w-36" value={kind()} onChange={setKind} options={behavior.palette().map((value) => ({ value, label: value }))} />
+      <Button size="sm" disabled={!kind()} onClick={() => add()}><Plus size={14} />Add shape</Button>
+      <Show when={behavior.structureReferences}><Button size="sm" onClick={() => { setStructureKind(undefined); setStructurePicker(true); }}><Plus size={14} />Add from Structure</Button></Show>
+      <Show when={props.definition.unrestricted} fallback={<Select aria-label="Edge type" class="w-36" value={edgeKind()} onChange={setEdgeKind} options={behavior.edges().map((value) => ({ value, label: value }))} />}>
         <Input aria-label="Edge type" class="w-36" value={edgeKind()} onInput={(e) => setEdgeKind(e.currentTarget.value)} />
       </Show>
       <Button size="icon" variant="ghost" aria-label="Undo" disabled={!canUndo(history())} onClick={() => undo()}><Undo2 size={14} /></Button>
@@ -192,48 +226,50 @@ export function CanvasEditor(props: {
       <span class="text-xs text-[var(--color-text-muted)]">{Math.round(doc().viewport.zoom * 100)}%</span>
       <Button size="icon" variant="ghost" aria-label="Zoom in" onClick={() => zoom(1.25)}><Plus size={14} /></Button>
       <Button size="icon" variant="ghost" aria-label="Fit canvas" onClick={fit}><Maximize2 size={14} /></Button>
-      <Button size="sm" variant="ghost" disabled={!doc().nodes.length} onClick={() => { const layout = layoutSync({ nodes: doc().nodes, mode: "horizontal" }); change(setNodePositions(doc(), new Map(layout.nodes.map((n) => [n.id, n])))); fit(); }}>Arrange</Button>
+      <Button size="sm" variant="ghost" disabled={!doc().nodes.length} onClick={() => { if (behavior.layout) change(behavior.layout(doc())); else { const layout = layoutSync({ nodes: doc().nodes, mode: "horizontal" }); change(setNodePositions(doc(), new Map(layout.nodes.map((n) => [n.id, n])))); } fit(); }}>Arrange</Button>
       <Select aria-label="Select shape or edge" class="w-44" value={selection().nodeIds[0] ?? selection().relationshipIds[0] ?? ""} onChange={(id) => setSelection({ ...emptySelection(), ...(doc().nodes.some((n) => n.id === id) ? { nodeIds: [id] } : { relationshipIds: id ? [id] : [] }) })} options={[{ value: "", label: "No selection" }, ...doc().nodes.map((node) => ({ value: node.id, label: readRef(node) ? referenceState(readRef(node), props.entities ?? []).title : node.name || node.type })), ...doc().relationships.map((edge) => ({ value: edge.id, label: `Edge: ${edge.type}` }))]} />
     </div>
     <p class="px-4 pb-2 text-xs text-[var(--color-text-muted)]">{tool() === "connect" ? (connectFrom() ? "Choose the target shape." : "Choose the source shape, then the target.") : "Drag shapes to move. Drag empty space to pan; scroll to pan, Ctrl/⌘ + scroll to zoom. Double-click a label or press Enter to edit. Arrow keys move the selection."}</p>
     <Show when={props.definition.rules.length}><p class="px-4 pb-2 text-xs text-[var(--color-text-muted)]">{props.definition.rules.join(" ")}</p></Show>
+    <For each={behavior.hints(doc())}>{(hint) => <p role="status" class="px-4 pb-2 text-xs text-[var(--color-warning)]">{hint}</p>}</For>
     <div ref={host} class="pw-canvas-editor relative min-h-0 flex-1 overflow-hidden" tabIndex={0} role="group" aria-label="Canvas editor"
       onPointerDown={start} onPointerMove={move} onPointerUp={(event) => end(event)} onPointerCancel={(event) => end(event, true)} onKeyDown={keydown}>
       <Show when={!doc().nodes.length}><p class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-[var(--color-text-muted)]">This canvas is empty. Choose a shape and select Add shape.</p></Show>
       <svg class="h-full w-full" aria-label={name()}>
+        <defs><marker id={`canvas-arrow-${canvas.id}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" /></marker></defs>
         <g transform={`translate(${doc().viewport.x} ${doc().viewport.y}) scale(${doc().viewport.zoom})`}>
+          <Index each={doc().nodes.filter((node) => ["lane", "frame"].includes(behavior.variant(node.type)))}>{renderNode}</Index>
           <For each={doc().relationships}>{(edge) => {
             const source = () => doc().nodes.find((n) => n.id === edge.sourceNodeId);
             const target = () => doc().nodes.find((n) => n.id === edge.targetNodeId);
             const route = () => source() && target() ? resolveRelationshipRoute(source()!, target()!) : [];
-            return <g><path d={pointsToSvgPath(route())} fill="none" stroke={selection().relationshipIds.includes(edge.id) ? "var(--color-text-primary)" : "var(--color-text-muted)"} stroke-width="2" />
-              <Show when={route().length}><text x={route()[Math.floor(route().length / 2)]!.x} y={route()[Math.floor(route().length / 2)]!.y - 8} fill="var(--color-text-muted)" font-size="12">{edge.type}</text></Show></g>;
+            return <g onPointerDown={(event) => {
+              if (event.button !== 0 || tool() !== "select") return;
+              event.preventDefault(); event.stopPropagation(); host.focus();
+              setSelection({ ...emptySelection(), relationshipIds: [edge.id] });
+            }}><path d={pointsToSvgPath(route())} fill="none" stroke={selection().relationshipIds.includes(edge.id) ? "var(--color-text-primary)" : "var(--color-text-muted)"} stroke-width="2" stroke-dasharray={behavior.edgeStyle(edge.type).dashed ? "6 4" : undefined} marker-end={behavior.edgeStyle(edge.type).arrow ? `url(#canvas-arrow-${canvas.id})` : undefined} />
+              <Show when={route().length}><text x={route()[Math.floor(route().length / 2)]!.x} y={route()[Math.floor(route().length / 2)]!.y - 8} fill="var(--color-text-muted)" font-size="12">{(behavior.edgeFields(source()?.type ?? "").length && propertyText(edge, "label")) || edge.type}</text></Show></g>;
           }}</For>
-          <Index each={doc().nodes}>{(node) => <g onDblClick={() => { if (!readRef(node())) setEditing(node().id); }}>
-            <Show when={node().type === "ellipse"}><ellipse cx={node().x + node().width / 2} cy={node().y + node().height / 2} rx={node().width / 2} ry={node().height / 2} fill="var(--color-surface-subtle)" stroke={selection().nodeIds.includes(node().id) ? "var(--color-text-primary)" : "var(--color-border-subtle)"} /></Show>
-            <foreignObject x={node().x} y={node().y} width={node().width} height={node().height}>
-              <div class="h-full" classList={{ "pw-canvas-selected": selection().nodeIds.includes(node().id), "pw-canvas-text": node().type === "text" }}>
-                <Show when={node().type !== "ellipse" && node().type !== "text"} fallback={<div class="flex h-full flex-col items-center justify-center gap-1 p-3"><Show when={readRef(node())}>{(ref) => <EntityIcon kind={ref().kind} />}</Show>
-                    <Show when={referenceState(readRef(node()), props.entities ?? []).trust === "unverified"}><StatusChip tone="warn" label={readRef(node()) ? "Missing · Unverified" : "Unverified"} /></Show>
-                    <NodeLabel node={{ name: readRef(node()) ? referenceState(readRef(node()), props.entities ?? []).title : node().name }} editing={editing() === node().id && !readRef(node())} onInput={(name) => change(updateNode(doc(), node().id, { name }), "eventually")} onDone={finishLabel} /></div>}>
-                  <Card class="flex h-full flex-col items-center justify-center gap-1 !p-3">
-                    <Show when={node().type === "note"}><StickyNote size={14} /></Show>
-                    <Show when={readRef(node())}>{(ref) => <EntityIcon kind={ref().kind} />}</Show>
-                    <Show when={referenceState(readRef(node()), props.entities ?? []).trust === "unverified"}><StatusChip tone="warn" label={readRef(node()) ? "Missing · Unverified" : "Unverified"} /></Show>
-                    <NodeLabel node={{ name: readRef(node()) ? referenceState(readRef(node()), props.entities ?? []).title : node().name }} editing={editing() === node().id && !readRef(node())} onInput={(name) => change(updateNode(doc(), node().id, { name }), "eventually")} onDone={finishLabel} />
-                  </Card>
-                </Show>
-              </div>
-            </foreignObject>
-            <Show when={selection().nodeIds.includes(node().id)}><foreignObject x={node().x + node().width - 24} y={node().y + node().height - 24} width="24" height="24"><Button size="icon" variant="ghost" class="!h-6 !w-6 cursor-se-resize" aria-label="Resize shape" onPointerDown={(event) => resize(event, node().id)}><Maximize2 size={12} /></Button></foreignObject></Show>
-          </g>}</Index>
+          <Index each={doc().nodes.filter((node) => !["lane", "frame"].includes(behavior.variant(node.type)))}>{renderNode}</Index>
         </g>
       </svg>
     </div>
   </div></DetailPanel.Collection>
-    <Show when={selected()?.id} keyed>{(id) => <DetailPanel.Content><NodeInspector node={selected()!} entities={props.entities ?? []} canvasName={name()}
+    <Show when={selected()?.id} keyed>{(id) => <DetailPanel.Content><NodeInspector node={selected()!} entities={props.entities ?? []} canvasName={name()} structureRequired={behavior.structureReferences && !annotation(selected()!.type)}
       onLink={(ref) => change(setReference(doc(), id, ref))}
-      promote={props.port.promote ? (input) => props.port.promote!(canvas.projectId, input) : undefined} /></DetailPanel.Content>}</Show>
+      promote={props.port.promote ? (input) => props.port.promote!(canvas.projectId, input) : undefined}>
+      <TypeInspector node={selected()!} document={doc()} type={canvas.type} fields={behavior.fields(selected()!.type)} onApply={(values) => change(updateNode(doc(), id, withProperties(selected()!, values)))} />
+    </NodeInspector></DetailPanel.Content>}</Show>
+    <Show when={selectedEdge()}>{(edge) => <DetailPanel.Content><DetailPanel.Header /><DetailPanel.Body><DetailPanel.Main>
+      <DetailPanel.Title title={`Edge: ${edge().type}`} />
+      <Show when={behavior.edgeFields(doc().nodes.find((node) => node.id === edge().sourceNodeId)?.type ?? "").length}>
+        <DetailPanel.Section title="Arrow properties"><For each={behavior.edgeFields(doc().nodes.find((node) => node.id === edge().sourceNodeId)?.type ?? "")}>{(field) => <Field label={field.label}><Input aria-label={field.label} value={propertyText(edge(), field.key)} onInput={(event) => {
+          const value = event.currentTarget.value;
+          change({ ...doc(), relationships: doc().relationships.map((item) => item.id === edge().id ? withProperties(item, { ...properties(item), [field.key]: value }) : item) }, "eventually");
+        }} /></Field>}</For></DetailPanel.Section>
+      </Show>
+    </DetailPanel.Main></DetailPanel.Body></DetailPanel.Content>}</Show>
+    <Show when={behavior.structureReferences}><StructurePicker open={structurePicker()} entities={props.entities ?? []} onClose={() => setStructurePicker(false)} onAdd={add} /></Show>
   </DetailPanel.Root>;
 }
 

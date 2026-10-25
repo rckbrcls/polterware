@@ -6,26 +6,44 @@ export function createBrowserCanvas(): PolterwareBridge["core"]["canvas"] {
   const definition = (type: string, label: string, nodeKinds: string[], edgeKinds: string[], rules: string[] = []) => ({
     type, label, nodeKinds: [...nodeKinds, "note", "text"], edgeKinds, rules, unrestricted: type === "free",
   });
+  const annotations = "Note and text nodes are always allowed and skip structural rules.";
+  const ideaRules = ["Nodes are idea or group.", "Edges are relates or contains.", annotations];
   const types = [
     definition("free", "Free", [], []),
-    definition("architecture", "Architecture", ["system", "domain", "component", "service", "database", "queue"], ["uses", "contains"], ["Structural nodes require a reference to an Atlas node. Note and text do not."]),
-    definition("roadmap", "Roadmap", ["lane", "milestone", "item"], ["depends_on", "precedes"], ["An item requires start and end, or a quarter."]),
-    definition("flow", "Flow", ["step", "decision", "start", "end"], ["next"]),
-    definition("brainstorm", "Brainstorm", ["idea", "group"], ["relates", "contains"]),
-    definition("ideas", "Ideas", ["idea", "group"], ["relates", "contains"]),
+    definition("architecture", "Architecture", ["system", "domain", "component", "service", "database", "queue"], ["uses", "contains"], ["Nodes are system, domain, component, service, database, or queue.", "Each of those nodes refs a structure node.", "Edges are uses or contains.", annotations]),
+    definition("roadmap", "Roadmap", ["lane", "milestone", "item"], ["depends_on", "precedes"], ["Nodes are lane, milestone, or item.", "An item has start and end, or a quarter.", "Edges are depends_on or precedes.", annotations]),
+    definition("flow", "Flow", ["step", "decision", "start", "end"], ["next"], ["Nodes are step, decision, start, or end.", "Edges are next.", annotations]),
+    definition("brainstorm", "Brainstorm", ["idea", "group"], ["relates", "contains"], ideaRules),
+    definition("ideas", "Ideas", ["idea", "group"], ["relates", "contains"], ideaRules),
   ];
-  let canvases: JsonObject[] = ["free", "brainstorm"].map((type, index) => ({
-    id: `preview-canvas-${index}`, projectId: "browser-preview", name: index ? "Demo brainstorming" : "Demo sketch", type,
-    agentVisible: index === 1, graph: { nodes: [{ id: "welcome", kind: "note", label: "Demonstration only — edits last for this browser session.", propsJson: "{}" }], edges: [] },
-    layoutJson: JSON.stringify({ version: 1, nodes: { welcome: { x: 40, y: 40, width: 280, height: 120 } } }), scopeNodeId: "",
-    createdAt: "2026-09-20T12:00:00.000Z", updatedAt: "2026-09-20T12:00:00.000Z",
-  }));
+  const node = (id: string, kind: string, label: string, props: JsonObject = {}, ref?: JsonObject): JsonObject => ({ id, kind, label, propsJson: JSON.stringify(props), ...(ref ? { ref } : {}) });
+  const edge = (id: string, from: string, to: string, kind: string, props: JsonObject = {}): JsonObject => ({ id, from, to, kind, propsJson: JSON.stringify(props) });
+  const samples: Record<string, { nodes: JsonObject[]; edges: JsonObject[] }> = {
+    free: { nodes: [node("sketch", "rectangle", "A shared sketch")], edges: [] },
+    architecture: { nodes: [node("core", "component", "Core", {}, { kind: "node", id: "comp-core" }), node("cli", "component", "CLI", {}, { kind: "node", id: "comp-cli" })], edges: [edge("uses", "cli", "core", "uses")] },
+    roadmap: { nodes: [node("delivery", "lane", "Delivery"), node("build", "item", "Build", { lane: "delivery", start: "2026-10-01", end: "2026-10-15", status: "In progress" }), node("ship", "milestone", "Ship", { lane: "delivery", start: "2026-10-20", status: "Planned" })], edges: [edge("dependency", "ship", "build", "depends_on")] },
+    flow: { nodes: [node("start", "start", "Start"), node("check", "decision", "Ready?"), node("work", "step", "Revise"), node("end", "end", "Done")], edges: [edge("begin", "start", "check", "next"), edge("yes", "check", "end", "next", { label: "Yes" }), edge("no", "check", "work", "next", { label: "No" })] },
+    brainstorm: { nodes: [node("cluster", "group", "Explore"), node("idea", "idea", "Try a small experiment", { color: "yellow" })], edges: [edge("contains", "cluster", "idea", "contains")] },
+    ideas: { nodes: [node("idea", "idea", "An idea to investigate", { color: "blue" }), node("next", "idea", "A related direction", { color: "green" })], edges: [edge("related", "idea", "next", "relates")] },
+  };
+  let canvases: JsonObject[] = types.map((type, index) => {
+    const graph = samples[type.type]!;
+    const nodes = [...graph.nodes, node("welcome", "note", "Demonstration only — edits last for this browser session.")];
+    return {
+      id: `preview-canvas-${index}`, projectId: "browser-preview", name: `Demo ${type.label.toLowerCase()}`, type: type.type,
+      agentVisible: type.type === "brainstorm", graph: { ...graph, nodes },
+      layoutJson: JSON.stringify({ version: 1, nodes: Object.fromEntries(nodes.map((node, i) => [String(node.id), {
+        x: 40 + (i % 3) * 300, y: 40 + Math.floor(i / 3) * 220, width: node.kind === "group" ? 640 : node.kind === "decision" ? 240 : 280, height: node.kind === "group" ? 300 : node.kind === "decision" ? 180 : 120,
+      }])) }), scopeNodeId: "", createdAt: "2026-09-20T12:00:00.000Z", updatedAt: "2026-09-20T12:00:00.000Z",
+    };
+  });
   const clone = <T,>(value: T): T => structuredClone(value);
   function find(args: JsonObject) {
     const canvas = canvases.find((item) => item.id === args.id && item.projectId === args.projectId);
     if (!canvas) throw new Error("Canvas not found in this project.");
     return canvas;
   }
+  const propSet = (value: unknown) => value !== undefined && value !== null && (typeof value !== "string" || !!value.trim());
   function validate(canvas: JsonObject) {
     if (!String(canvas.name ?? "").trim()) throw new Error("Canvas name is required.");
     const type = types.find((type) => type.type === canvas.type);
@@ -38,10 +56,14 @@ export function createBrowserCanvas(): PolterwareBridge["core"]["canvas"] {
       if (!node.id || ids.has(String(node.id))) throw new Error(`nodes[${index}]: unique id is required`);
       ids.add(String(node.id));
       if (!node.kind || (!type.unrestricted && !type.nodeKinds.includes(String(node.kind)))) throw new Error(`nodes[${index}]: kind is not allowed`);
+      if (node.ref) {
+        const ref = node.ref as JsonObject;
+        if (!["card", "decision", "fact", "evidence", "node"].includes(String(ref.kind)) || !ref.id) throw new Error(`nodes[${index}]: invalid reference`);
+      }
       if (node.kind === "note" || node.kind === "text" || type.unrestricted) return;
-      if (type.type === "architecture" && !(node.ref as JsonObject)?.id) throw new Error(`nodes[${index}]: requires a ref to a structure node`);
+      if (type.type === "architecture" && ((node.ref as JsonObject)?.kind !== "node" || !(node.ref as JsonObject)?.id)) throw new Error(`nodes[${index}]: requires a ref to a structure node`);
       const props = JSON.parse(String(node.propsJson || "{}"));
-      if (type.type === "roadmap" && node.kind === "item" && !props.quarter && !(props.start && props.end)) throw new Error(`nodes[${index}]: item requires start and end, or a quarter`);
+      if (type.type === "roadmap" && node.kind === "item" && !propSet(props.quarter) && !(propSet(props.start) && propSet(props.end))) throw new Error(`nodes[${index}]: item requires start and end, or a quarter`);
     });
     graph.edges.forEach((edge, index) => {
       if (!edge.id || edgeIds.has(String(edge.id))) throw new Error(`edges[${index}]: unique id is required`);
