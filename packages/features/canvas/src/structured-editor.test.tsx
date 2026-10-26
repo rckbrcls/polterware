@@ -90,7 +90,7 @@ describe("structured Desktop canvases", () => {
     const canvas = record("architecture", []);
     const entities: StoreEntity[] = [{ kind: "node", id: "core", title: "Core", level: "component" }, { kind: "fact", id: "fact", title: "A fact" }];
     const { api } = mount(canvas, ["system", "domain", "component", "service", "database", "queue"], ["uses", "contains"], entities);
-    button("Add from Structure").click();
+    container.querySelector<HTMLButtonElement>('button[aria-label="Add from Structure"]')!.click();
     await vi.waitFor(() => expect(document.body.querySelector('[role="dialog"]')).toBeTruthy());
     const row = document.body.querySelector<HTMLElement>('[aria-label="Add component: Core"]')!;
     expect(row).toBeTruthy(); row.click();

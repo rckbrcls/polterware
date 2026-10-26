@@ -64,6 +64,8 @@ The title bar contains history controls, Home (Projects), drag space, and Comman
 
 Menu rows (dropdown and context menus) always lead with a 14px Hugeicons icon before the label; this is law. Every `ContextMenu.Item` and `MenuItem` carries an icon, and a menu never mixes rows with and without icons. Only checkable rows (switches, checkmarks) and pure value lists may omit it.
 
+Toolbars and page chrome are minimalist and icon-first: actions are icon-only `Button`s (`size="icon"`; ghost for secondary, texture for navigation such as back, `ToolbarIconButton` for the primary create action) whose `aria-label` becomes the shared tooltip. Do not add visible text labels, helper lines, or status chips to a toolbar when an icon and tooltip say the same; keep text buttons for dialogs, forms, and empty states. Choices that would need a `Select` in a toolbar open from an icon `DropdownMenu`. Editors with many tools group them in a floating `Surface` dock over the canvas instead of a crowded header.
+
 Text fields (`input`, `textarea`, `select`, contenteditable, and `control-field` inputs such as steppers and time fields) never show a focus ring, on click or keyboard, in any app; focus reads through the caret and selection. Do not add `outline`, `ring` or focus `box-shadow` to a text field. Buttons, links and composite widgets keep the neutral keyboard focus outline from `accessibility.css`.
 
 Product features must not reproduce focus management, Escape behavior, outside dismissal, portals, positioning, or presence when the shared Ark-backed primitive owns it.

@@ -82,7 +82,7 @@ describe("Desktop canvas interactions", () => {
     await vi.advanceTimersByTimeAsync(500);
     expect(container.querySelector('[role="alert"]')?.textContent).toContain("nodes[0]: requires a ref");
     expect(container.textContent).toContain("Not saved");
-    [...container.querySelectorAll("button")].find((button) => button.textContent?.includes("Canvases"))!.click();
+    container.querySelector<HTMLButtonElement>('button[aria-label="Canvases"]')!.click();
     await vi.advanceTimersByTimeAsync(0);
     expect(api.update).toHaveBeenCalledTimes(2); expect(onBack).toHaveBeenCalledOnce();
     expect(JSON.parse(vi.mocked(api.update).mock.calls[1]![2].layoutJson!).nodes.a.x).toBe(120);

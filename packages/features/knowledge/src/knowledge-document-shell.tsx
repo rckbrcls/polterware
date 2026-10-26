@@ -1,6 +1,6 @@
 import type { JSX } from "solid-js";
 import { Show, createMemo } from "solid-js";
-import { AuroraCover, auroraForId, Button, ChevronLeft, DetailPanel, Input, MarkdownEditor, SidebarRightIcon, TagPicker } from "@polterware/frontend-design-system";
+import { AuroraCover, auroraForId, Button, ChevronLeft, DetailPanel, InformationCircle, Input, MarkdownEditor, TagPicker } from "@polterware/frontend-design-system";
 import { EntityDocumentCanvas, requestDetailExpanded } from "@polterware/feature-shell";
 import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
 import { KnowledgeDocumentProperties } from "./knowledge-document-properties";
@@ -59,12 +59,12 @@ export function KnowledgeDocumentShell(props: {
                 <Show when={props.status}><span role="status" aria-live="polite" class="text-xs text-[var(--color-text-muted)]">{props.status}</span></Show>
                 <Button variant="icon" data-detail-opener aria-label={propertiesOpen() ? "Hide properties" : "Show properties"}
                   aria-expanded={propertiesOpen()} title={propertiesOpen() ? "Hide properties" : "Show properties"}
-                  onClick={() => detailPanelStore.getState().toggle()}><SidebarRightIcon size={14} /></Button>
+                  onClick={() => detailPanelStore.getState().toggle()}><InformationCircle size={14} /></Button>
               </div>
             </div>
             <Show when={props.tabs}>{props.tabs}</Show>
             <Show when={props.onTitleChange} fallback={<h1 class="m-0 pl-8 text-[36px] font-semibold leading-tight text-[var(--color-text-primary)]">{props.title}</h1>}>
-              <Input aria-label="Title" placeholder="Untitled" class="!h-auto !border-0 !bg-transparent !pl-8 !pr-0 !py-1 !text-[36px] !font-semibold !leading-tight !shadow-none !outline-none !ring-0 focus:!outline-none focus-visible:!outline-none focus-visible:!shadow-none focus-visible:!ring-0 focus:!border-0"
+              <Input aria-label="Title" placeholder="Untitled" class="!h-auto !border-0 !bg-transparent !bg-none !pl-8 !pr-0 !py-1 !text-[36px] !font-semibold !leading-tight !shadow-none !outline-none !ring-0 focus:!outline-none focus-visible:!outline-none focus-visible:!shadow-none focus-visible:!ring-0 focus:!border-0"
                 id={`document-title-${entityId}`} value={props.title} onInput={event => props.onTitleChange?.(event.currentTarget.value)}
                 onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); editor?.querySelector<HTMLElement>(".ProseMirror")?.focus(); } }} />
             </Show>

@@ -736,33 +736,30 @@ export function KnowledgeView(props: {
         fallback={
       <div class="flex h-full min-h-0 flex-col">
         <PageToolbar.Root>
-          <Show when={tab() === "board" && boardNavigation().isOpen}>
-            <PageToolbar.Leading class="gap-1">
-              <Button variant="ghost" size="icon" aria-label="All boards" onClick={() => setBoardNavigation((current) => backToWorkBoards(current))}>
+          <PageToolbar.Leading class="gap-1">
+            <Show when={tab() === "board" && boardNavigation().isOpen}>
+              <Button variant="texture" size="icon" aria-label="All boards" onClick={() => setBoardNavigation((current) => backToWorkBoards(current))}>
                 <ChevronLeft size={14} />
               </Button>
-              <span class="pw-page-toolbar-title">{selectedBoard().name}</span>
-            </PageToolbar.Leading>
-          </Show>
-          <Show
-            when={railItems().length > 1}
-            fallback={
-              <Show when={!(tab() === "board" && boardNavigation().isOpen)}><PageToolbar.Leading>
+            </Show>
+            <Show
+              when={railItems().length > 1}
+              fallback={
+                <Show when={!(tab() === "board" && boardNavigation().isOpen)}>
                 <span class="pw-page-toolbar-title">
                   {props.tabsLabel ?? railItems()[0]?.label ?? "Knowledge"}
                 </span>
-              </PageToolbar.Leading></Show>
-            }
-          >
-            <PageToolbar.Tabs>
+                </Show>
+              }
+            >
               <Tabs
                 items={[...railItems()]}
                 value={props.activeTab ?? tab()}
                 onChange={changeTab}
                 aria-label={props.tabsLabel ?? "Knowledge"}
               />
-            </PageToolbar.Tabs>
-          </Show>
+            </Show>
+          </PageToolbar.Leading>
           <PageToolbar.Actions>
             <SearchBar
               placeholder={listSearch().placeholder}

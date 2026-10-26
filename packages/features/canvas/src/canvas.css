@@ -1,5 +1,8 @@
-.pw-canvas-editor { background: var(--color-app-background); touch-action: none; }
+.pw-canvas-editor { background-image: radial-gradient(circle, var(--color-border-default) 1px, var(--color-surface) 1px); touch-action: none; }
 .pw-canvas-selected { outline: 1px solid var(--color-text-primary); outline-offset: -1px; border-radius: var(--radius-card); }
 .pw-canvas-text { background: var(--color-surface-subtle); }
 .pw-canvas-diamond-content { padding: 12% 24% !important; gap: 0; }
 .pw-canvas-frame { align-items: flex-start !important; justify-content: flex-start !important; }
+.pw-canvas-dock.card-texture-framed[data-texture], .pw-canvas-zoom.card-texture-framed[data-texture] { --tx-face-radius: 999px; position: absolute; bottom: 12px; display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 999px; box-shadow: 0 8px 24px var(--color-shadow-float); }
+.pw-canvas-dock { left: 50%; transform: translateX(-50%); }
+.pw-canvas-zoom { right: 12px; }
