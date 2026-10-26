@@ -1,5 +1,5 @@
 import { Show } from "solid-js";
-import { Button, Cpu, Database, Plug, SourceCodeIcon, StatusChip, pushToast } from "@polterware/frontend-design-system";
+import { Button, Cpu, Database, Plug, RefreshCw, SourceCodeIcon, StatusChip, pushToast } from "@polterware/frontend-design-system";
 import type { McpStatusView } from "./agents-types";
 import { SettingsRow, SettingsSection } from "./settings-section";
 
@@ -23,6 +23,7 @@ export function McpStatusCard(props: {
   busy: boolean;
   onStart: () => void;
   onStop: () => void;
+  onRefresh: () => void;
 }) {
   const status = () => props.status;
   const running = () => Boolean(status()?.running);
@@ -31,6 +32,11 @@ export function McpStatusCard(props: {
     <SettingsSection
       title="MCP server"
       description="A local helper that lets MCP clients read and write this project through the core."
+      action={
+        <Button size="icon" variant="ghost" aria-label="Refresh" disabled={props.busy} onClick={() => props.onRefresh()}>
+          <RefreshCw size={14} aria-hidden />
+        </Button>
+      }
     >
       <SettingsRow icon={Plug} tone="integration" seed="mcp-helper" label="Local MCP helper">
         <Show when={status()} fallback={<StatusChip tone="muted" label="Checking" />}>

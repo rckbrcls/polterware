@@ -46,22 +46,22 @@ export function KnowledgeDocumentShell(props: {
 
   return <Show when={props.entityId} keyed>{entityId => <>
     <EntityDocumentCanvas>
-      <DetailPanel.Body class="pw-detail-panel__body--fixed h-full min-h-0">
-        <DetailPanel.Main class="flex min-w-0 min-h-0 flex-1 flex-col overflow-y-auto !p-3">
-          <div class="relative shrink-0">
+      <DetailPanel.Body class="pw-detail-panel__body--fixed h-full min-h-0 pw-knowledge-document-body">
+        <DetailPanel.Main class="relative flex min-w-0 min-h-0 flex-1 flex-col overflow-y-auto !p-3 !pt-[48px]">
+          <div class="pointer-events-none absolute inset-x-[8px] top-[8px] z-10 flex items-center justify-between gap-3 [&>*]:pointer-events-auto">
+            <Button size="icon" variant="texture" aria-label="Back" onClick={() => requestDetailExpanded(false)}><ChevronLeft size={14} /></Button>
+            <div class="flex items-center gap-2">
+              <Show when={props.status}><span role="status" aria-live="polite" class="text-xs text-[var(--color-text-muted)]">{props.status}</span></Show>
+              <Button size="icon" variant="texture" data-detail-opener aria-label={propertiesOpen() ? "Hide properties" : "Show properties"}
+                aria-expanded={propertiesOpen()} selected={propertiesOpen()}
+                onClick={() => detailPanelStore.getState().toggle()}><InformationCircle size={14} /></Button>
+            </div>
+          </div>
+          <div class="relative mx-auto w-full max-w-[720px] shrink-0">
             <AuroraCover palette={auroraForId(entityId)} seed={entityId} class="!h-28 !rounded-[var(--radius-surface)]" />
             <span class="absolute bottom-3 left-4 inline-flex text-[var(--color-bg)]" aria-hidden="true">{props.icon}</span>
           </div>
           <div class="mx-auto flex min-h-0 w-full max-w-[720px] flex-1 flex-col gap-4 pb-4 pt-4">
-            <div class="flex items-center justify-between gap-3">
-              <Button variant="icon" aria-label="Back" title="Back" onClick={() => requestDetailExpanded(false)}><ChevronLeft size={14} /></Button>
-              <div class="flex shrink-0 items-center gap-2">
-                <Show when={props.status}><span role="status" aria-live="polite" class="text-xs text-[var(--color-text-muted)]">{props.status}</span></Show>
-                <Button variant="icon" data-detail-opener aria-label={propertiesOpen() ? "Hide properties" : "Show properties"}
-                  aria-expanded={propertiesOpen()} title={propertiesOpen() ? "Hide properties" : "Show properties"}
-                  onClick={() => detailPanelStore.getState().toggle()}><InformationCircle size={14} /></Button>
-              </div>
-            </div>
             <Show when={props.tabs}>{props.tabs}</Show>
             <Show when={props.onTitleChange} fallback={<h1 class="m-0 pl-8 text-[36px] font-semibold leading-tight text-[var(--color-text-primary)]">{props.title}</h1>}>
               <Input aria-label="Title" placeholder="Untitled" class="!h-auto !border-0 !bg-transparent !bg-none !pl-8 !pr-0 !py-1 !text-[36px] !font-semibold !leading-tight !shadow-none !outline-none !ring-0 focus:!outline-none focus-visible:!outline-none focus-visible:!shadow-none focus-visible:!ring-0 focus:!border-0"
@@ -94,7 +94,7 @@ export function KnowledgeDocumentShell(props: {
 export function KnowledgeDocumentNotFound(props: { kindLabel: string; title?: string }) {
   return <EntityDocumentCanvas>
     <div class="mx-auto flex w-full max-w-[720px] flex-col gap-4 p-4">
-      <Button variant="icon" class="self-start" aria-label="Back" title="Back" onClick={() => requestDetailExpanded(false)}><ChevronLeft size={14} /></Button>
+      <Button size="icon" variant="texture" class="self-start" aria-label="Back" onClick={() => requestDetailExpanded(false)}><ChevronLeft size={14} /></Button>
       <h1 class="m-0 text-[36px] font-semibold leading-tight">{props.title ?? `${props.kindLabel} not found`}</h1>
       <p class="m-0 text-[12.5px] text-[var(--color-text-muted)]">This {props.kindLabel.toLowerCase()} is not available in the current project knowledge set. It may have been archived or the link is stale.</p>
     </div>

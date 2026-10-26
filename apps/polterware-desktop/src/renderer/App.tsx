@@ -9,6 +9,8 @@ import {
   createHomeRoute,
   goHome,
   goSection,
+  sectionMemory,
+  withSectionMemory,
   enterProject,
   isHomeRoute,
   setTab,
@@ -48,7 +50,7 @@ import { hydrateAppearancePreferences, hydrateShortcutPreferences } from "@polte
 import type { ProjectSettingsPageId } from "@polterware/feature-settings";
 import { CommandPalette } from "@polterware/feature-commander";
 import { PageLoading, pushToast, type TabItem } from "@polterware/frontend-design-system";
-import { detailDisplayFor, detailPanelStore, matchesShortcut } from "@polterware/frontend-state";
+import { detailDisplayFor, detailPanelStore, matchesShortcut, readRemembered, writeRemembered } from "@polterware/frontend-state";
 import { hideBootSplash } from "./boot-splash";
 import { bootstrapPlatform } from "./platform-bootstrap";
 
@@ -72,6 +74,9 @@ const TruthFactsPage = lazy(() =>
 );
 const DispatchPage = lazy(() =>
   import("@polterware/feature-dispatch").then((m) => ({ default: m.DispatchPage })),
+);
+const AiIntegrationsPanel = lazy(() =>
+  import("@polterware/feature-settings").then((m) => ({ default: m.AiIntegrationsPanel })),
 );
 const ActivityPage = lazy(() =>
   import("@polterware/feature-settings").then((m) => ({ default: m.ActivityPage })),
@@ -438,11 +443,25 @@ export function App() {
     return enterProject(current, projectId, { environmentId: environment?.id });
   }
 
+  // Each section remembers where the user was (tab, search, filters, selection, open detail), per project;
+  // returning through the sidebar or re-entering the project restores that place.
+  const sectionMemoryKey = (projectId: string, section: string) => `route.${projectId}.${section}`;
+  createEffect(() => {
+    const current = route();
+    if (isHomeRoute(current) || !current.projectId) return;
+    writeRemembered(sectionMemoryKey(current.projectId, current.section), sectionMemory(current));
+    writeRemembered(`section.${current.projectId}`, current.section);
+  });
+  function rememberedSection(next: ClientRoute): ClientRoute {
+    if (!next.projectId) return next;
+    return withSectionMemory(next, readRemembered(sectionMemoryKey(next.projectId, next.section), undefined), PLATFORM_CONTEXT);
+  }
+
   function navigateSection(section: string, tab?: string) {
     const base = routeWithProject(route());
     if (!base) return;
     const next = goSection(base, section);
-    applyRoute(tab ? setTab(next, tab) : next);
+    applyRoute(tab ? setTab(next, tab) : rememberedSection(next));
   }
 
   function goProjectsHome() {
@@ -491,10 +510,6 @@ export function App() {
   function handlePaletteCommand(id: string) {
     if (id === "nav.settings") {
       applyRoute(openDialog(route(), { type: "settings", tab: "general" }), "silent");
-      return;
-    }
-    if (id === "nav.agents") {
-      applyRoute(openDialog(route(), { type: "settings", tab: "agents-mcp" }), "silent");
       return;
     }
     if (id.startsWith("nav.")) {
@@ -569,11 +584,9 @@ export function App() {
     }
     const environment =
       workspace().environments.find((item) => item.projectId === projectId) ?? workspace().environments[0];
-    applyRoute(
-      enterProject(route(), projectId, {
-        environmentId: environment?.id,
-      }),
-    );
+    const section = readRemembered<string | undefined>(`section.${projectId}`, undefined);
+    const entered = enterProject(route(), projectId, { environmentId: environment?.id });
+    applyRoute(section ? rememberedSection(goSection(entered, section)) : entered);
   }
 
   const currentProjectId = () => route().projectId ?? workspace().settings.projectId;
@@ -625,7 +638,7 @@ export function App() {
   const cardScopeId = () =>
     route().section === "work" && route().tab === "board" ? "knowledge:board" : "knowledge:specs";
 
-  function createWorkCard(title: string) {
+  function createWorkCard(title: string, stage?: "shape" | "plan" | "build" | "verify" | "delivered") {
     void justifyChange({
       title: "Justify create card",
       defaultSummary: `Create card: ${title}`,
@@ -637,6 +650,7 @@ export function App() {
         title,
         change,
       }).then(async (slug) => {
+        if (stage && stage !== "shape") await persistWorkSetStage(currentProjectId(), slug, stage, change);
         await refreshWorkspace(currentProjectId());
         activateDetail(cardScopeId(), slug, "card");
         pushToast("Card saved locally.", "success");
@@ -992,7 +1006,7 @@ export function App() {
             pushToast(error instanceof Error ? error.message : "Could not create knowledge.", "danger");
           });
         }}
-        onCreateCard={(title) => createWorkCard(title)}
+        onCreateCard={(title, stage) => createWorkCard(title, stage)}
         onNewFeature={openFeatureFlow}
         onContinueFeature={continueFeatureFlow}
         onArchive={(id) => {
@@ -1178,7 +1192,6 @@ export function App() {
       onOpenSettings={() => applyRoute(openDialog(route(), { type: "settings", tab: "general" }), "silent")}
       onOpenProjectSettings={() => applyRoute(openDialog(route(), { type: "project-settings" }), "silent")}
       settingsOpen={settingsDialogTab() !== null}
-      onOpenCliReference={() => navigateSection("cli")}
       canGoBack={historyIndex() > 0}
       canGoForward={historyIndex() < history().length - 1}
       onBack={goBack}
@@ -1369,6 +1382,19 @@ export function App() {
           />
         </Match>
 
+        <Match when={route().section === "agents"}>
+          <Show when={currentProjectId()} keyed>
+            {(projectId) => (
+              <AiIntegrationsPanel
+                projectId={projectId}
+                tab={route().tab}
+                onTabChange={(next) => applyRoute(setTab(route(), next))}
+                cliPage={(tabs) => <CliReferencePage tabs={tabs} />}
+              />
+            )}
+          </Show>
+        </Match>
+
         <Match when={route().section === "integrations"}>
           <Show when={currentProjectId()} keyed>
             {(projectId) => (
@@ -1430,9 +1456,6 @@ export function App() {
           />
         </Match>
 
-        <Match when={route().section === "cli"}>
-          <CliReferencePage />
-        </Match>
       </Switch>
       </Show>
       </Suspense>

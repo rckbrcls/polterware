@@ -4,7 +4,6 @@ import {
   MenuItem,
   MenuList,
   Popover,
-  SquareTerminal,
 } from "@polterware/frontend-design-system";
 import { HELP_TOPICS, type HelpTopicId } from "./help-topics";
 
@@ -13,7 +12,6 @@ const footerIconControlClass =
 
 export function HelpMenu(props: {
   onSelectTopic: (topicId: HelpTopicId) => void;
-  onOpenCliReference?: () => void;
 }) {
   const [open, setOpen] = createSignal(false);
   let triggerRef: HTMLButtonElement | undefined;
@@ -66,20 +64,6 @@ export function HelpMenu(props: {
               );
             }}
           </For>
-          <Show when={props.onOpenCliReference}>
-            {(openCliReference) => (
-              <MenuItem
-                class="gap-2 py-2 text-[13px]"
-                onClick={() => {
-                  close();
-                  openCliReference()();
-                }}
-              >
-                <SquareTerminal size={14} class="shrink-0 text-[var(--color-text-secondary)]" />
-                <span class="truncate text-[var(--color-text-primary)]">CLI reference</span>
-              </MenuItem>
-            )}
-          </Show>
         </MenuList>
       </Popover>
     </>

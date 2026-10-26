@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file polterware/local/v1/dispatch.proto.
  */
 export const file_polterware_local_v1_dispatch: GenFile = /*@__PURE__*/
-  fileDesc("CiJwb2x0ZXJ3YXJlL2xvY2FsL3YxL2Rpc3BhdGNoLnByb3RvEhNwb2x0ZXJ3YXJlLmxvY2FsLnYxIpoGCgtEaXNwYXRjaFJ1bhIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIMCgR0aWVyGAQgASgJEg0KBWFnZW50GAUgASgJEg0KBW1vZGVsGAYgASgJEhAKCHByb3ZpZGVyGAcgASgJEg4KBmVmZm9ydBgIIAEoCRIOCgZwcm9tcHQYCSABKAkSEQoJY2FyZF9zbHVnGAogASgJEhQKDGFnZW50X3J1bl9pZBgLIAEoCRILCgNkaXIYDCABKAkSDAoEcmVwbxgNIAEoCRIQCgh3b3JrdHJlZRgOIAEoCRIOCgZicmFuY2gYDyABKAkSEAoIYmFzZV9zaGEYECABKAkSEQoJcmVhZF9vbmx5GBEgASgIEhQKDHZlcmlmaWNhdGlvbhgSIAEoCRIRCglleGl0X2NvZGUYEyABKAUSEgoKZXhpdF9jbGFzcxgUIAEoCRINCgVlcnJvchgVIAEoCRIMCgRub3RlGBYgASgJEhoKDWZpbGVzX2NoYW5nZWQYFyABKAVIAIgBARIXCgppbnNlcnRpb25zGBggASgFSAGIAQESFgoJZGVsZXRpb25zGBkgASgFSAKIAQESEgoKY3JlYXRlZF9hdBgaIAEoCRISCgpzdGFydGVkX2F0GBsgASgJEhMKC2ZpbmlzaGVkX2F0GBwgASgJEhEKCW1lcmdlZF9hdBgdIAEoCRIRCgltZXJnZV9zaGEYHiABKAkSNgoIYXR0ZW1wdHMYHyADKAsyJC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoQXR0ZW1wdBISCgpyZXN1bWVkX29mGCAgASgJEhUKDXBhcmVudF9ydW5faWQYISABKAkSFgoJcXVldWVkX21zGCIgASgDSAOIAQESEwoGcnVuX21zGCMgASgDSASIAQESEAoIcHJpb3JpdHkYJCABKAlCEAoOX2ZpbGVzX2NoYW5nZWRCDQoLX2luc2VydGlvbnNCDAoKX2RlbGV0aW9uc0IMCgpfcXVldWVkX21zQgkKB19ydW5fbXMifAoPRGlzcGF0Y2hBdHRlbXB0Eg0KBWFnZW50GAEgASgJEg0KBW1vZGVsGAIgASgJEg0KBWVycm9yGAMgASgJEhIKCmV4aXRfY2xhc3MYBCABKAkSGAoLZHVyYXRpb25fbXMYBSABKANIAIgBAUIOCgxfZHVyYXRpb25fbXMilAEKEERpc3BhdGNoUnVuRXZlbnQSCgoCaWQYASABKAkSDgoGcnVuX2lkGAIgASgJEhIKCnByb2plY3RfaWQYAyABKAkSDAoEa2luZBgEIAEoCRINCgVhZ2VudBgFIAEoCRIMCgR0aWVyGAYgASgJEgwKBHRleHQYByABKAkSCwoDc2VxGAggASgDEgoKAmF0GAkgASgJIqQBChBEaXNwYXRjaFdvcmt0cmVlEgoKAmlkGAEgASgJEhIKCnByb2plY3RfaWQYAiABKAkSDgoGcnVuX2lkGAMgASgJEhEKCWNhcmRfc2x1ZxgEIAEoCRIMCgRwYXRoGAUgASgJEg4KBmJyYW5jaBgGIAEoCRIQCghiYXNlX3NoYRgHIAEoCRIOCgZzdGF0dXMYCCABKAkSDQoFb3duZXIYCSABKAki1wEKFURpc3BhdGNoUXVvdGFTbmFwc2hvdBINCgVhZ2VudBgBIAEoCRIQCghwcm92aWRlchgCIAEoCRIOCgZ3aW5kb3cYAyABKAkSDgoGc291cmNlGAQgASgJEhIKCmNvbmZpZGVuY2UYBSABKAkSGQoMdXNlZF9wZXJjZW50GAYgASgBSACIAQESFgoOd2luZG93X21pbnV0ZXMYByABKAUSEQoJcmVzZXRzX2F0GAggASgJEhIKCnNhbXBsZWRfYXQYCSABKAlCDwoNX3VzZWRfcGVyY2VudCJ/CgxEaXNwYXRjaFRpZXISDAoEbmFtZRgBIAEoCRIQCghwcm92aWRlchgCIAEoCRINCgVhZ2VudBgDIAEoCRINCgVtb2RlbBgEIAEoCRINCgVzcGVlZBgFIAEoBRIQCghzdHJlbmd0aBgGIAEoBRIQCghwb3NpdGlvbhgHIAEoBSK4AQoNRGlzcGF0Y2hBZ2VudBIMCgRuYW1lGAEgASgJEgsKA2JpbhgCIAEoCRIQCghwcm92aWRlchgDIAEoCRIUCgxxdW90YV9zb3VyY2UYBCABKAkSEgoKY29uZmlkZW5jZRgFIAEoCRIMCgRyaXNrGAYgASgJEhkKDHVzZWRfcGVyY2VudBgHIAEoAUgAiAEBEhYKDmNvb2xkb3duX3VudGlsGAggASgJQg8KDV91c2VkX3BlcmNlbnQiRAoPTGlzdFJ1bnNSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSDQoFbGltaXQYAiABKAUSDgoGb2Zmc2V0GAMgASgFIkIKEExpc3RSdW5zUmVzcG9uc2USLgoEcnVucxgBIAMoCzIgLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hSdW4iGwoNR2V0UnVuUmVxdWVzdBIKCgJpZBgBIAEoCSI/Cg5HZXRSdW5SZXNwb25zZRItCgNydW4YASABKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoUnVuIpcBCg9TdGFydFJ1blJlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRIMCgR0aWVyGAIgASgJEg4KBnByb21wdBgDIAEoCRIRCgljYXJkX3NsdWcYBCABKAkSDQoFYWdlbnQYBSABKAkSEAoId29ya3RyZWUYBiABKAkSCwoDZGlyGAcgASgJEhEKCXJlYWRfb25seRgIIAEoCCJBChBTdGFydFJ1blJlc3BvbnNlEi0KA3J1bhgBIAEoCzIgLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hSdW4iHgoQQ2FuY2VsUnVuUmVxdWVzdBIKCgJpZBgBIAEoCSJCChFDYW5jZWxSdW5SZXNwb25zZRItCgNydW4YASABKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoUnVuIksKDVJlc3VsdFJlcXVlc3QSCgoCaWQYASABKAkSDwoHc2VjdGlvbhgCIAEoCRIOCgZvZmZzZXQYAyABKAUSDQoFbGltaXQYBCABKAUiMAoOUmVzdWx0UmVzcG9uc2USDwoHY29udGVudBgBIAEoCRINCgV0b3RhbBgCIAEoBSIwCg9XYXRjaFJ1blJlcXVlc3QSCgoCaWQYASABKAkSEQoJYWZ0ZXJfc2VxGAIgASgDIkcKEFdhdGNoUnVuUmVzcG9uc2USCwoDc2VxGAEgASgDEgwKBGtpbmQYAiABKAkSDAoEdGV4dBgDIAEoCRIKCgJhdBgEIAEoCSIqChRMaXN0V29ya3RyZWVzUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJIlEKFUxpc3RXb3JrdHJlZXNSZXNwb25zZRI4Cgl3b3JrdHJlZXMYASADKAsyJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoV29ya3RyZWUiMAoQTGlzdFF1b3RhUmVxdWVzdBINCgVhZ2VudBgBIAEoCRINCgVzaW5jZRgCIAEoCSJSChFMaXN0UXVvdGFSZXNwb25zZRI9CglzbmFwc2hvdHMYASADKAsyKi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoUXVvdGFTbmFwc2hvdCISChBMaXN0VGllcnNSZXF1ZXN0IkUKEUxpc3RUaWVyc1Jlc3BvbnNlEjAKBXRpZXJzGAEgAygLMiEucG9sdGVyd2FyZS5sb2NhbC52MS5EaXNwYXRjaFRpZXIiEwoRTGlzdEFnZW50c1JlcXVlc3QiSAoSTGlzdEFnZW50c1Jlc3BvbnNlEjIKBmFnZW50cxgBIAMoCzIiLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hBZ2VudCJkChJMaXN0SGlzdG9yeVJlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRINCgVhZ2VudBgCIAEoCRIMCgR0aWVyGAMgASgJEg0KBWxpbWl0GAQgASgFEg4KBm9mZnNldBgFIAEoBSJMChNMaXN0SGlzdG9yeVJlc3BvbnNlEjUKBmV2ZW50cxgBIAMoCzIlLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hSdW5FdmVudCITChFDaGVja1RpZXJzUmVxdWVzdCImChJDaGVja1RpZXJzUmVzcG9uc2USEAoIcHJvYmxlbXMYASADKAkiPQoMU3RhdHNSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSCgoCYnkYAiABKAkSDQoFc2luY2UYAyABKAki0gEKEERpc3BhdGNoU3RhdHNSb3cSCwoDa2V5GAEgASgJEgwKBHJ1bnMYAiABKAUSEwoLc3VjY2Vzc19wY3QYAyABKAESFQoNZmlyc3RfdHJ5X3BjdBgEIAEoARITCgZwNTBfbXMYBSABKANIAIgBARITCgZwOTBfbXMYBiABKANIAYgBARIRCglmYWxsYmFja3MYByABKAUSEwoLcmF0ZV9saW1pdHMYCCABKAUSDwoHb3JwaGFucxgJIAEoBUIJCgdfcDUwX21zQgkKB19wOTBfbXMimAEKEERpc3BhdGNoU3RhdFJhbmsSCwoDa2V5GAEgASgJEgwKBHJ1bnMYAiABKAUSDwoHc2FtcGxlcxgDIAEoBRITCgZwNTBfbXMYBCABKANIAIgBARIYCgtzdWNjZXNzX3BjdBgFIAEoAUgBiAEBEg4KBnJlYXNvbhgGIAEoCUIJCgdfcDUwX21zQg4KDF9zdWNjZXNzX3BjdCKaAgoVRGlzcGF0Y2hTdGF0c1JhbmtpbmdzEj4KD21vc3RfdXNlZF9tb2RlbBgBIAEoCzIlLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hTdGF0UmFuaxJBChJtb3N0X3VzZWRfcHJvdmlkZXIYAiABKAsyJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoU3RhdFJhbmsSPAoNc2xvd2VzdF9tb2RlbBgDIAEoCzIlLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hTdGF0UmFuaxJAChFtb3N0X2ZhaWxlZF9tb2RlbBgEIAEoCzIlLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hTdGF0UmFuayKwAQoNU3RhdHNSZXNwb25zZRIKCgJieRgBIAEoCRINCgVzaW5jZRgCIAEoCRIRCglpbl9mbGlnaHQYAyABKAUSMwoEcm93cxgEIAMoCzIlLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hTdGF0c1JvdxI8CghyYW5raW5ncxgFIAEoCzIqLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hTdGF0c1JhbmtpbmdzIhYKFEdldENsYXNzaWZpZXJSZXF1ZXN0IkgKFkRpc3BhdGNoQ2xhc3NpZmllclRpZXISDAoEdGllchgBIAEoCRIPCgdzYW1wbGVzGAIgASgEEg8KB3dlaWdodHMYAyADKAEilwEKFUdldENsYXNzaWZpZXJSZXNwb25zZRIWCg5mZWF0dXJlX3NjaGVtYRgBIAEoBRITCgttaW5fc2FtcGxlcxgCIAEoBRIVCg1mZWF0dXJlX25hbWVzGAMgAygJEjoKBXRpZXJzGAQgAygLMisucG9sdGVyd2FyZS5sb2NhbC52MS5EaXNwYXRjaENsYXNzaWZpZXJUaWVyIiAKD0NhcGFjaXR5UmVxdWVzdBINCgVzaW5jZRgBIAEoCSK9AQoTRGlzcGF0Y2hDYXBhY2l0eUtleRILCgNrZXkYASABKAkSDwoHd2luZG93cxgCIAEoBRIQCghoaXRfZnVsbBgDIAEoBRIZCgxjb25zdW1lZF9wY3QYBCABKAFIAIgBARIZCgxsZWZ0b3Zlcl9wY3QYBSABKAFIAYgBARIQCghsZWZ0b3ZlchgGIAEoCRIMCgRwYWNlGAcgASgJQg8KDV9jb25zdW1lZF9wY3RCDwoNX2xlZnRvdmVyX3BjdCJnChBDYXBhY2l0eVJlc3BvbnNlEg0KBXNpbmNlGAEgASgJEgwKBG5vdGUYAiABKAkSNgoEa2V5cxgDIAMoCzIoLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hDYXBhY2l0eUtleTLxCgoPRGlzcGF0Y2hTZXJ2aWNlElcKCExpc3RSdW5zEiQucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0UnVuc1JlcXVlc3QaJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RSdW5zUmVzcG9uc2USUQoGR2V0UnVuEiIucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRSdW5SZXF1ZXN0GiMucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRSdW5SZXNwb25zZRJXCghTdGFydFJ1bhIkLnBvbHRlcndhcmUubG9jYWwudjEuU3RhcnRSdW5SZXF1ZXN0GiUucG9sdGVyd2FyZS5sb2NhbC52MS5TdGFydFJ1blJlc3BvbnNlEloKCUNhbmNlbFJ1bhIlLnBvbHRlcndhcmUubG9jYWwudjEuQ2FuY2VsUnVuUmVxdWVzdBomLnBvbHRlcndhcmUubG9jYWwudjEuQ2FuY2VsUnVuUmVzcG9uc2USUQoGUmVzdWx0EiIucG9sdGVyd2FyZS5sb2NhbC52MS5SZXN1bHRSZXF1ZXN0GiMucG9sdGVyd2FyZS5sb2NhbC52MS5SZXN1bHRSZXNwb25zZRJZCghXYXRjaFJ1bhIkLnBvbHRlcndhcmUubG9jYWwudjEuV2F0Y2hSdW5SZXF1ZXN0GiUucG9sdGVyd2FyZS5sb2NhbC52MS5XYXRjaFJ1blJlc3BvbnNlMAESZgoNTGlzdFdvcmt0cmVlcxIpLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFdvcmt0cmVlc1JlcXVlc3QaKi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RXb3JrdHJlZXNSZXNwb25zZRJaCglMaXN0UXVvdGESJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RRdW90YVJlcXVlc3QaJi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RRdW90YVJlc3BvbnNlEloKCUxpc3RUaWVycxIlLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFRpZXJzUmVxdWVzdBomLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFRpZXJzUmVzcG9uc2USXQoKTGlzdEFnZW50cxImLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEFnZW50c1JlcXVlc3QaJy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RBZ2VudHNSZXNwb25zZRJgCgtMaXN0SGlzdG9yeRInLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEhpc3RvcnlSZXF1ZXN0GigucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0SGlzdG9yeVJlc3BvbnNlEl0KCkNoZWNrVGllcnMSJi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoZWNrVGllcnNSZXF1ZXN0GicucG9sdGVyd2FyZS5sb2NhbC52MS5DaGVja1RpZXJzUmVzcG9uc2USTgoFU3RhdHMSIS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlN0YXRzUmVxdWVzdBoiLnBvbHRlcndhcmUubG9jYWwudjEuU3RhdHNSZXNwb25zZRJmCg1HZXRDbGFzc2lmaWVyEikucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRDbGFzc2lmaWVyUmVxdWVzdBoqLnBvbHRlcndhcmUubG9jYWwudjEuR2V0Q2xhc3NpZmllclJlc3BvbnNlElcKCENhcGFjaXR5EiQucG9sdGVyd2FyZS5sb2NhbC52MS5DYXBhY2l0eVJlcXVlc3QaJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhcGFjaXR5UmVzcG9uc2VC6QEKF2NvbS5wb2x0ZXJ3YXJlLmxvY2FsLnYxQg1EaXNwYXRjaFByb3RvUAFaUWdpdGh1Yi5jb20vcG9sdGVyd2FyZS9wb2x0ZXJ3YXJlL2JhY2tlbmQvcGxhdGZvcm0vZ2VuL3BvbHRlcndhcmUvbG9jYWwvdjE7bG9jYWx2MaICA1BMWKoCE1BvbHRlcndhcmUuTG9jYWwuVjHKAhNQb2x0ZXJ3YXJlXExvY2FsXFYx4gIfUG9sdGVyd2FyZVxMb2NhbFxWMVxHUEJNZXRhZGF0YeoCFVBvbHRlcndhcmU6OkxvY2FsOjpWMWIGcHJvdG8z");
+  fileDesc("CiJwb2x0ZXJ3YXJlL2xvY2FsL3YxL2Rpc3BhdGNoLnByb3RvEhNwb2x0ZXJ3YXJlLmxvY2FsLnYxIpoGCgtEaXNwYXRjaFJ1bhIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIMCgR0aWVyGAQgASgJEg0KBWFnZW50GAUgASgJEg0KBW1vZGVsGAYgASgJEhAKCHByb3ZpZGVyGAcgASgJEg4KBmVmZm9ydBgIIAEoCRIOCgZwcm9tcHQYCSABKAkSEQoJY2FyZF9zbHVnGAogASgJEhQKDGFnZW50X3J1bl9pZBgLIAEoCRILCgNkaXIYDCABKAkSDAoEcmVwbxgNIAEoCRIQCgh3b3JrdHJlZRgOIAEoCRIOCgZicmFuY2gYDyABKAkSEAoIYmFzZV9zaGEYECABKAkSEQoJcmVhZF9vbmx5GBEgASgIEhQKDHZlcmlmaWNhdGlvbhgSIAEoCRIRCglleGl0X2NvZGUYEyABKAUSEgoKZXhpdF9jbGFzcxgUIAEoCRINCgVlcnJvchgVIAEoCRIMCgRub3RlGBYgASgJEhoKDWZpbGVzX2NoYW5nZWQYFyABKAVIAIgBARIXCgppbnNlcnRpb25zGBggASgFSAGIAQESFgoJZGVsZXRpb25zGBkgASgFSAKIAQESEgoKY3JlYXRlZF9hdBgaIAEoCRISCgpzdGFydGVkX2F0GBsgASgJEhMKC2ZpbmlzaGVkX2F0GBwgASgJEhEKCW1lcmdlZF9hdBgdIAEoCRIRCgltZXJnZV9zaGEYHiABKAkSNgoIYXR0ZW1wdHMYHyADKAsyJC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoQXR0ZW1wdBISCgpyZXN1bWVkX29mGCAgASgJEhUKDXBhcmVudF9ydW5faWQYISABKAkSFgoJcXVldWVkX21zGCIgASgDSAOIAQESEwoGcnVuX21zGCMgASgDSASIAQESEAoIcHJpb3JpdHkYJCABKAlCEAoOX2ZpbGVzX2NoYW5nZWRCDQoLX2luc2VydGlvbnNCDAoKX2RlbGV0aW9uc0IMCgpfcXVldWVkX21zQgkKB19ydW5fbXMifAoPRGlzcGF0Y2hBdHRlbXB0Eg0KBWFnZW50GAEgASgJEg0KBW1vZGVsGAIgASgJEg0KBWVycm9yGAMgASgJEhIKCmV4aXRfY2xhc3MYBCABKAkSGAoLZHVyYXRpb25fbXMYBSABKANIAIgBAUIOCgxfZHVyYXRpb25fbXMilAEKEERpc3BhdGNoUnVuRXZlbnQSCgoCaWQYASABKAkSDgoGcnVuX2lkGAIgASgJEhIKCnByb2plY3RfaWQYAyABKAkSDAoEa2luZBgEIAEoCRINCgVhZ2VudBgFIAEoCRIMCgR0aWVyGAYgASgJEgwKBHRleHQYByABKAkSCwoDc2VxGAggASgDEgoKAmF0GAkgASgJIqQBChBEaXNwYXRjaFdvcmt0cmVlEgoKAmlkGAEgASgJEhIKCnByb2plY3RfaWQYAiABKAkSDgoGcnVuX2lkGAMgASgJEhEKCWNhcmRfc2x1ZxgEIAEoCRIMCgRwYXRoGAUgASgJEg4KBmJyYW5jaBgGIAEoCRIQCghiYXNlX3NoYRgHIAEoCRIOCgZzdGF0dXMYCCABKAkSDQoFb3duZXIYCSABKAki1wEKFURpc3BhdGNoUXVvdGFTbmFwc2hvdBINCgVhZ2VudBgBIAEoCRIQCghwcm92aWRlchgCIAEoCRIOCgZ3aW5kb3cYAyABKAkSDgoGc291cmNlGAQgASgJEhIKCmNvbmZpZGVuY2UYBSABKAkSGQoMdXNlZF9wZXJjZW50GAYgASgBSACIAQESFgoOd2luZG93X21pbnV0ZXMYByABKAUSEQoJcmVzZXRzX2F0GAggASgJEhIKCnNhbXBsZWRfYXQYCSABKAlCDwoNX3VzZWRfcGVyY2VudCJ/CgxEaXNwYXRjaFRpZXISDAoEbmFtZRgBIAEoCRIQCghwcm92aWRlchgCIAEoCRINCgVhZ2VudBgDIAEoCRINCgVtb2RlbBgEIAEoCRINCgVzcGVlZBgFIAEoBRIQCghzdHJlbmd0aBgGIAEoBRIQCghwb3NpdGlvbhgHIAEoBSK4AQoNRGlzcGF0Y2hBZ2VudBIMCgRuYW1lGAEgASgJEgsKA2JpbhgCIAEoCRIQCghwcm92aWRlchgDIAEoCRIUCgxxdW90YV9zb3VyY2UYBCABKAkSEgoKY29uZmlkZW5jZRgFIAEoCRIMCgRyaXNrGAYgASgJEhkKDHVzZWRfcGVyY2VudBgHIAEoAUgAiAEBEhYKDmNvb2xkb3duX3VudGlsGAggASgJQg8KDV91c2VkX3BlcmNlbnQiRAoPTGlzdFJ1bnNSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSDQoFbGltaXQYAiABKAUSDgoGb2Zmc2V0GAMgASgFIkIKEExpc3RSdW5zUmVzcG9uc2USLgoEcnVucxgBIAMoCzIgLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hSdW4iGwoNR2V0UnVuUmVxdWVzdBIKCgJpZBgBIAEoCSI/Cg5HZXRSdW5SZXNwb25zZRItCgNydW4YASABKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoUnVuIqICCg9TdGFydFJ1blJlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRIMCgR0aWVyGAIgASgJEg4KBnByb21wdBgDIAEoCRIRCgljYXJkX3NsdWcYBCABKAkSDQoFYWdlbnQYBSABKAkSEAoId29ya3RyZWUYBiABKAkSCwoDZGlyGAcgASgJEhEKCXJlYWRfb25seRgIIAEoCBIQCghwcm92aWRlchgJIAEoCRINCgVtb2RlbBgKIAEoCRIOCgZlZmZvcnQYCyABKAkSEAoIcHJpb3JpdHkYDCABKAkSDQoFcmVsYXgYDSABKAgSEQoJbm9fdmVyaWZ5GA4gASgIEhMKC3RpbWVvdXRfc2VjGA8gASgFEg8KB3Byb2ZpbGUYECABKAkiQQoQU3RhcnRSdW5SZXNwb25zZRItCgNydW4YASABKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoUnVuIh4KEENhbmNlbFJ1blJlcXVlc3QSCgoCaWQYASABKAkiQgoRQ2FuY2VsUnVuUmVzcG9uc2USLQoDcnVuGAEgASgLMiAucG9sdGVyd2FyZS5sb2NhbC52MS5EaXNwYXRjaFJ1biJLCg1SZXN1bHRSZXF1ZXN0EgoKAmlkGAEgASgJEg8KB3NlY3Rpb24YAiABKAkSDgoGb2Zmc2V0GAMgASgFEg0KBWxpbWl0GAQgASgFIjAKDlJlc3VsdFJlc3BvbnNlEg8KB2NvbnRlbnQYASABKAkSDQoFdG90YWwYAiABKAUiMAoPV2F0Y2hSdW5SZXF1ZXN0EgoKAmlkGAEgASgJEhEKCWFmdGVyX3NlcRgCIAEoAyJHChBXYXRjaFJ1blJlc3BvbnNlEgsKA3NlcRgBIAEoAxIMCgRraW5kGAIgASgJEgwKBHRleHQYAyABKAkSCgoCYXQYBCABKAkiKgoUTGlzdFdvcmt0cmVlc1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCSJRChVMaXN0V29ya3RyZWVzUmVzcG9uc2USOAoJd29ya3RyZWVzGAEgAygLMiUucG9sdGVyd2FyZS5sb2NhbC52MS5EaXNwYXRjaFdvcmt0cmVlIjAKEExpc3RRdW90YVJlcXVlc3QSDQoFYWdlbnQYASABKAkSDQoFc2luY2UYAiABKAkiUgoRTGlzdFF1b3RhUmVzcG9uc2USPQoJc25hcHNob3RzGAEgAygLMioucG9sdGVyd2FyZS5sb2NhbC52MS5EaXNwYXRjaFF1b3RhU25hcHNob3QiEgoQTGlzdFRpZXJzUmVxdWVzdCJFChFMaXN0VGllcnNSZXNwb25zZRIwCgV0aWVycxgBIAMoCzIhLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hUaWVyIhMKEUxpc3RBZ2VudHNSZXF1ZXN0IkgKEkxpc3RBZ2VudHNSZXNwb25zZRIyCgZhZ2VudHMYASADKAsyIi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoQWdlbnQiZAoSTGlzdEhpc3RvcnlSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSDQoFYWdlbnQYAiABKAkSDAoEdGllchgDIAEoCRINCgVsaW1pdBgEIAEoBRIOCgZvZmZzZXQYBSABKAUiTAoTTGlzdEhpc3RvcnlSZXNwb25zZRI1CgZldmVudHMYASADKAsyJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoUnVuRXZlbnQiEwoRQ2hlY2tUaWVyc1JlcXVlc3QiJgoSQ2hlY2tUaWVyc1Jlc3BvbnNlEhAKCHByb2JsZW1zGAEgAygJIj0KDFN0YXRzUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEgoKAmJ5GAIgASgJEg0KBXNpbmNlGAMgASgJItIBChBEaXNwYXRjaFN0YXRzUm93EgsKA2tleRgBIAEoCRIMCgRydW5zGAIgASgFEhMKC3N1Y2Nlc3NfcGN0GAMgASgBEhUKDWZpcnN0X3RyeV9wY3QYBCABKAESEwoGcDUwX21zGAUgASgDSACIAQESEwoGcDkwX21zGAYgASgDSAGIAQESEQoJZmFsbGJhY2tzGAcgASgFEhMKC3JhdGVfbGltaXRzGAggASgFEg8KB29ycGhhbnMYCSABKAVCCQoHX3A1MF9tc0IJCgdfcDkwX21zIpgBChBEaXNwYXRjaFN0YXRSYW5rEgsKA2tleRgBIAEoCRIMCgRydW5zGAIgASgFEg8KB3NhbXBsZXMYAyABKAUSEwoGcDUwX21zGAQgASgDSACIAQESGAoLc3VjY2Vzc19wY3QYBSABKAFIAYgBARIOCgZyZWFzb24YBiABKAlCCQoHX3A1MF9tc0IOCgxfc3VjY2Vzc19wY3QimgIKFURpc3BhdGNoU3RhdHNSYW5raW5ncxI+Cg9tb3N0X3VzZWRfbW9kZWwYASABKAsyJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoU3RhdFJhbmsSQQoSbW9zdF91c2VkX3Byb3ZpZGVyGAIgASgLMiUucG9sdGVyd2FyZS5sb2NhbC52MS5EaXNwYXRjaFN0YXRSYW5rEjwKDXNsb3dlc3RfbW9kZWwYAyABKAsyJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoU3RhdFJhbmsSQAoRbW9zdF9mYWlsZWRfbW9kZWwYBCABKAsyJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoU3RhdFJhbmsisAEKDVN0YXRzUmVzcG9uc2USCgoCYnkYASABKAkSDQoFc2luY2UYAiABKAkSEQoJaW5fZmxpZ2h0GAMgASgFEjMKBHJvd3MYBCADKAsyJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoU3RhdHNSb3cSPAoIcmFua2luZ3MYBSABKAsyKi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoU3RhdHNSYW5raW5ncyIWChRHZXRDbGFzc2lmaWVyUmVxdWVzdCJIChZEaXNwYXRjaENsYXNzaWZpZXJUaWVyEgwKBHRpZXIYASABKAkSDwoHc2FtcGxlcxgCIAEoBBIPCgd3ZWlnaHRzGAMgAygBIpcBChVHZXRDbGFzc2lmaWVyUmVzcG9uc2USFgoOZmVhdHVyZV9zY2hlbWEYASABKAUSEwoLbWluX3NhbXBsZXMYAiABKAUSFQoNZmVhdHVyZV9uYW1lcxgDIAMoCRI6CgV0aWVycxgEIAMoCzIrLnBvbHRlcndhcmUubG9jYWwudjEuRGlzcGF0Y2hDbGFzc2lmaWVyVGllciIgCg9DYXBhY2l0eVJlcXVlc3QSDQoFc2luY2UYASABKAkivQEKE0Rpc3BhdGNoQ2FwYWNpdHlLZXkSCwoDa2V5GAEgASgJEg8KB3dpbmRvd3MYAiABKAUSEAoIaGl0X2Z1bGwYAyABKAUSGQoMY29uc3VtZWRfcGN0GAQgASgBSACIAQESGQoMbGVmdG92ZXJfcGN0GAUgASgBSAGIAQESEAoIbGVmdG92ZXIYBiABKAkSDAoEcGFjZRgHIAEoCUIPCg1fY29uc3VtZWRfcGN0Qg8KDV9sZWZ0b3Zlcl9wY3QiZwoQQ2FwYWNpdHlSZXNwb25zZRINCgVzaW5jZRgBIAEoCRIMCgRub3RlGAIgASgJEjYKBGtleXMYAyADKAsyKC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRpc3BhdGNoQ2FwYWNpdHlLZXkirgEKDFJvdXRlUmVxdWVzdBIMCgR0aWVyGAEgASgJEhAKCHByb3ZpZGVyGAIgASgJEg0KBW1vZGVsGAMgASgJEg4KBmVmZm9ydBgEIAEoCRINCgVhZ2VudBgFIAEoCRIQCghwcmlvcml0eRgGIAEoCRINCgVyZWxheBgHIAEoCBIRCglyZWFkX29ubHkYCCABKAgSCwoDZGlyGAkgASgJEg8KB3Byb2ZpbGUYCiABKAkidQoPQ2xhc3NpZnlSZXF1ZXN0EgwKBHRpZXIYASABKAkSDgoGcHJvbXB0GAIgASgJEgsKA2RpchgDIAEoCRIRCglyZWFkX29ubHkYBCABKAgSDwoHZXhwbGFpbhgFIAEoCBITCgtyZXNldF9tb2RlbBgGIAEoCCIeChBWZXJpZnlSdW5SZXF1ZXN0EgoKAmlkGAEgASgJIj8KD01lcmdlUnVuUmVxdWVzdBIKCgJpZBgBIAEoCRINCgVmb3JjZRgCIAEoCBIRCglub192ZXJpZnkYAyABKAgiLAoPQ2xlYW5SdW5SZXF1ZXN0EgoKAmlkGAEgASgJEg0KBWZvcmNlGAIgASgIIh8KEVJlY292ZXJSdW5SZXF1ZXN0EgoKAmlkGAEgASgJIloKDUNvbmZpZ1JlcXVlc3QSDgoGYWN0aW9uGAEgASgJEgsKA2RpchgCIAEoCRIPCgdwcm9qZWN0GAMgASgIEgsKA2tleRgEIAEoCRIOCgZ2YWx1ZXMYBSADKAkiLwoQU3ViYWdlbnRzUmVxdWVzdBIOCgZhY3Rpb24YASABKAkSCwoDZGlyGAIgASgJIikKDVJvdXRlUmVzcG9uc2USCgoCb2sYASABKAgSDAoEanNvbhgCIAEoCSIsChBDbGFzc2lmeVJlc3BvbnNlEgoKAm9rGAEgASgIEgwKBGpzb24YAiABKAkiLQoRVmVyaWZ5UnVuUmVzcG9uc2USCgoCb2sYASABKAgSDAoEanNvbhgCIAEoCSIsChBNZXJnZVJ1blJlc3BvbnNlEgoKAm9rGAEgASgIEgwKBGpzb24YAiABKAkiLAoQQ2xlYW5SdW5SZXNwb25zZRIKCgJvaxgBIAEoCBIMCgRqc29uGAIgASgJIi4KElJlY292ZXJSdW5SZXNwb25zZRIKCgJvaxgBIAEoCBIMCgRqc29uGAIgASgJIioKDkNvbmZpZ1Jlc3BvbnNlEgoKAm9rGAEgASgIEgwKBGpzb24YAiABKAkiLQoRU3ViYWdlbnRzUmVzcG9uc2USCgoCb2sYASABKAgSDAoEanNvbhgCIAEoCTK2EAoPRGlzcGF0Y2hTZXJ2aWNlElcKCExpc3RSdW5zEiQucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0UnVuc1JlcXVlc3QaJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RSdW5zUmVzcG9uc2USUQoGR2V0UnVuEiIucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRSdW5SZXF1ZXN0GiMucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRSdW5SZXNwb25zZRJXCghTdGFydFJ1bhIkLnBvbHRlcndhcmUubG9jYWwudjEuU3RhcnRSdW5SZXF1ZXN0GiUucG9sdGVyd2FyZS5sb2NhbC52MS5TdGFydFJ1blJlc3BvbnNlEloKCUNhbmNlbFJ1bhIlLnBvbHRlcndhcmUubG9jYWwudjEuQ2FuY2VsUnVuUmVxdWVzdBomLnBvbHRlcndhcmUubG9jYWwudjEuQ2FuY2VsUnVuUmVzcG9uc2USUQoGUmVzdWx0EiIucG9sdGVyd2FyZS5sb2NhbC52MS5SZXN1bHRSZXF1ZXN0GiMucG9sdGVyd2FyZS5sb2NhbC52MS5SZXN1bHRSZXNwb25zZRJZCghXYXRjaFJ1bhIkLnBvbHRlcndhcmUubG9jYWwudjEuV2F0Y2hSdW5SZXF1ZXN0GiUucG9sdGVyd2FyZS5sb2NhbC52MS5XYXRjaFJ1blJlc3BvbnNlMAESZgoNTGlzdFdvcmt0cmVlcxIpLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFdvcmt0cmVlc1JlcXVlc3QaKi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RXb3JrdHJlZXNSZXNwb25zZRJaCglMaXN0UXVvdGESJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RRdW90YVJlcXVlc3QaJi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RRdW90YVJlc3BvbnNlEloKCUxpc3RUaWVycxIlLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFRpZXJzUmVxdWVzdBomLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFRpZXJzUmVzcG9uc2USXQoKTGlzdEFnZW50cxImLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEFnZW50c1JlcXVlc3QaJy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RBZ2VudHNSZXNwb25zZRJgCgtMaXN0SGlzdG9yeRInLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEhpc3RvcnlSZXF1ZXN0GigucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0SGlzdG9yeVJlc3BvbnNlEl0KCkNoZWNrVGllcnMSJi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoZWNrVGllcnNSZXF1ZXN0GicucG9sdGVyd2FyZS5sb2NhbC52MS5DaGVja1RpZXJzUmVzcG9uc2USTgoFU3RhdHMSIS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlN0YXRzUmVxdWVzdBoiLnBvbHRlcndhcmUubG9jYWwudjEuU3RhdHNSZXNwb25zZRJmCg1HZXRDbGFzc2lmaWVyEikucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRDbGFzc2lmaWVyUmVxdWVzdBoqLnBvbHRlcndhcmUubG9jYWwudjEuR2V0Q2xhc3NpZmllclJlc3BvbnNlElcKCENhcGFjaXR5EiQucG9sdGVyd2FyZS5sb2NhbC52MS5DYXBhY2l0eVJlcXVlc3QaJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhcGFjaXR5UmVzcG9uc2USTgoFUm91dGUSIS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlJvdXRlUmVxdWVzdBoiLnBvbHRlcndhcmUubG9jYWwudjEuUm91dGVSZXNwb25zZRJXCghDbGFzc2lmeRIkLnBvbHRlcndhcmUubG9jYWwudjEuQ2xhc3NpZnlSZXF1ZXN0GiUucG9sdGVyd2FyZS5sb2NhbC52MS5DbGFzc2lmeVJlc3BvbnNlEloKCVZlcmlmeVJ1bhIlLnBvbHRlcndhcmUubG9jYWwudjEuVmVyaWZ5UnVuUmVxdWVzdBomLnBvbHRlcndhcmUubG9jYWwudjEuVmVyaWZ5UnVuUmVzcG9uc2USVwoITWVyZ2VSdW4SJC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLk1lcmdlUnVuUmVxdWVzdBolLnBvbHRlcndhcmUubG9jYWwudjEuTWVyZ2VSdW5SZXNwb25zZRJXCghDbGVhblJ1bhIkLnBvbHRlcndhcmUubG9jYWwudjEuQ2xlYW5SdW5SZXF1ZXN0GiUucG9sdGVyd2FyZS5sb2NhbC52MS5DbGVhblJ1blJlc3BvbnNlEl0KClJlY292ZXJSdW4SJi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlJlY292ZXJSdW5SZXF1ZXN0GicucG9sdGVyd2FyZS5sb2NhbC52MS5SZWNvdmVyUnVuUmVzcG9uc2USUQoGQ29uZmlnEiIucG9sdGVyd2FyZS5sb2NhbC52MS5Db25maWdSZXF1ZXN0GiMucG9sdGVyd2FyZS5sb2NhbC52MS5Db25maWdSZXNwb25zZRJaCglTdWJhZ2VudHMSJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlN1YmFnZW50c1JlcXVlc3QaJi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlN1YmFnZW50c1Jlc3BvbnNlQukBChdjb20ucG9sdGVyd2FyZS5sb2NhbC52MUINRGlzcGF0Y2hQcm90b1ABWlFnaXRodWIuY29tL3BvbHRlcndhcmUvcG9sdGVyd2FyZS9iYWNrZW5kL3BsYXRmb3JtL2dlbi9wb2x0ZXJ3YXJlL2xvY2FsL3YxO2xvY2FsdjGiAgNQTFiqAhNQb2x0ZXJ3YXJlLkxvY2FsLlYxygITUG9sdGVyd2FyZVxMb2NhbFxWMeICH1BvbHRlcndhcmVcTG9jYWxcVjFcR1BCTWV0YWRhdGHqAhVQb2x0ZXJ3YXJlOjpMb2NhbDo6VjFiBnByb3RvMw");
 
 /**
  * @generated from message polterware.local.v1.DispatchRun
@@ -632,6 +632,46 @@ export type StartRunRequest = Message<"polterware.local.v1.StartRunRequest"> & {
    * @generated from field: bool read_only = 8;
    */
   readOnly: boolean;
+
+  /**
+   * @generated from field: string provider = 9;
+   */
+  provider: string;
+
+  /**
+   * @generated from field: string model = 10;
+   */
+  model: string;
+
+  /**
+   * @generated from field: string effort = 11;
+   */
+  effort: string;
+
+  /**
+   * @generated from field: string priority = 12;
+   */
+  priority: string;
+
+  /**
+   * @generated from field: bool relax = 13;
+   */
+  relax: boolean;
+
+  /**
+   * @generated from field: bool no_verify = 14;
+   */
+  noVerify: boolean;
+
+  /**
+   * @generated from field: int32 timeout_sec = 15;
+   */
+  timeoutSec: number;
+
+  /**
+   * @generated from field: string profile = 16;
+   */
+  profile: string;
 };
 
 /**
@@ -1382,6 +1422,448 @@ export const CapacityResponseSchema: GenMessage<CapacityResponse> = /*@__PURE__*
   messageDesc(file_polterware_local_v1_dispatch, 41);
 
 /**
+ * @generated from message polterware.local.v1.RouteRequest
+ */
+export type RouteRequest = Message<"polterware.local.v1.RouteRequest"> & {
+  /**
+   * @generated from field: string tier = 1;
+   */
+  tier: string;
+
+  /**
+   * @generated from field: string provider = 2;
+   */
+  provider: string;
+
+  /**
+   * @generated from field: string model = 3;
+   */
+  model: string;
+
+  /**
+   * @generated from field: string effort = 4;
+   */
+  effort: string;
+
+  /**
+   * @generated from field: string agent = 5;
+   */
+  agent: string;
+
+  /**
+   * @generated from field: string priority = 6;
+   */
+  priority: string;
+
+  /**
+   * @generated from field: bool relax = 7;
+   */
+  relax: boolean;
+
+  /**
+   * @generated from field: bool read_only = 8;
+   */
+  readOnly: boolean;
+
+  /**
+   * @generated from field: string dir = 9;
+   */
+  dir: string;
+
+  /**
+   * @generated from field: string profile = 10;
+   */
+  profile: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.RouteRequest.
+ * Use `create(RouteRequestSchema)` to create a new message.
+ */
+export const RouteRequestSchema: GenMessage<RouteRequest> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 42);
+
+/**
+ * @generated from message polterware.local.v1.ClassifyRequest
+ */
+export type ClassifyRequest = Message<"polterware.local.v1.ClassifyRequest"> & {
+  /**
+   * @generated from field: string tier = 1;
+   */
+  tier: string;
+
+  /**
+   * @generated from field: string prompt = 2;
+   */
+  prompt: string;
+
+  /**
+   * @generated from field: string dir = 3;
+   */
+  dir: string;
+
+  /**
+   * @generated from field: bool read_only = 4;
+   */
+  readOnly: boolean;
+
+  /**
+   * @generated from field: bool explain = 5;
+   */
+  explain: boolean;
+
+  /**
+   * @generated from field: bool reset_model = 6;
+   */
+  resetModel: boolean;
+};
+
+/**
+ * Describes the message polterware.local.v1.ClassifyRequest.
+ * Use `create(ClassifyRequestSchema)` to create a new message.
+ */
+export const ClassifyRequestSchema: GenMessage<ClassifyRequest> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 43);
+
+/**
+ * @generated from message polterware.local.v1.VerifyRunRequest
+ */
+export type VerifyRunRequest = Message<"polterware.local.v1.VerifyRunRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.VerifyRunRequest.
+ * Use `create(VerifyRunRequestSchema)` to create a new message.
+ */
+export const VerifyRunRequestSchema: GenMessage<VerifyRunRequest> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 44);
+
+/**
+ * @generated from message polterware.local.v1.MergeRunRequest
+ */
+export type MergeRunRequest = Message<"polterware.local.v1.MergeRunRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: bool force = 2;
+   */
+  force: boolean;
+
+  /**
+   * @generated from field: bool no_verify = 3;
+   */
+  noVerify: boolean;
+};
+
+/**
+ * Describes the message polterware.local.v1.MergeRunRequest.
+ * Use `create(MergeRunRequestSchema)` to create a new message.
+ */
+export const MergeRunRequestSchema: GenMessage<MergeRunRequest> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 45);
+
+/**
+ * @generated from message polterware.local.v1.CleanRunRequest
+ */
+export type CleanRunRequest = Message<"polterware.local.v1.CleanRunRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: bool force = 2;
+   */
+  force: boolean;
+};
+
+/**
+ * Describes the message polterware.local.v1.CleanRunRequest.
+ * Use `create(CleanRunRequestSchema)` to create a new message.
+ */
+export const CleanRunRequestSchema: GenMessage<CleanRunRequest> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 46);
+
+/**
+ * @generated from message polterware.local.v1.RecoverRunRequest
+ */
+export type RecoverRunRequest = Message<"polterware.local.v1.RecoverRunRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.RecoverRunRequest.
+ * Use `create(RecoverRunRequestSchema)` to create a new message.
+ */
+export const RecoverRunRequestSchema: GenMessage<RecoverRunRequest> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 47);
+
+/**
+ * @generated from message polterware.local.v1.ConfigRequest
+ */
+export type ConfigRequest = Message<"polterware.local.v1.ConfigRequest"> & {
+  /**
+   * get, set, allow-add, allow-rm, deny-add, or deny-rm.
+   *
+   * @generated from field: string action = 1;
+   */
+  action: string;
+
+  /**
+   * @generated from field: string dir = 2;
+   */
+  dir: string;
+
+  /**
+   * @generated from field: bool project = 3;
+   */
+  project: boolean;
+
+  /**
+   * @generated from field: string key = 4;
+   */
+  key: string;
+
+  /**
+   * @generated from field: repeated string values = 5;
+   */
+  values: string[];
+};
+
+/**
+ * Describes the message polterware.local.v1.ConfigRequest.
+ * Use `create(ConfigRequestSchema)` to create a new message.
+ */
+export const ConfigRequestSchema: GenMessage<ConfigRequest> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 48);
+
+/**
+ * @generated from message polterware.local.v1.SubagentsRequest
+ */
+export type SubagentsRequest = Message<"polterware.local.v1.SubagentsRequest"> & {
+  /**
+   * list, init, or check.
+   *
+   * @generated from field: string action = 1;
+   */
+  action: string;
+
+  /**
+   * @generated from field: string dir = 2;
+   */
+  dir: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.SubagentsRequest.
+ * Use `create(SubagentsRequestSchema)` to create a new message.
+ */
+export const SubagentsRequestSchema: GenMessage<SubagentsRequest> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 49);
+
+/**
+ * ok is false when the operation ran but reports a failure; json is its body.
+ *
+ * @generated from message polterware.local.v1.RouteResponse
+ */
+export type RouteResponse = Message<"polterware.local.v1.RouteResponse"> & {
+  /**
+   * @generated from field: bool ok = 1;
+   */
+  ok: boolean;
+
+  /**
+   * @generated from field: string json = 2;
+   */
+  json: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.RouteResponse.
+ * Use `create(RouteResponseSchema)` to create a new message.
+ */
+export const RouteResponseSchema: GenMessage<RouteResponse> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 50);
+
+/**
+ * ok is false when the operation ran but reports a failure; json is its body.
+ *
+ * @generated from message polterware.local.v1.ClassifyResponse
+ */
+export type ClassifyResponse = Message<"polterware.local.v1.ClassifyResponse"> & {
+  /**
+   * @generated from field: bool ok = 1;
+   */
+  ok: boolean;
+
+  /**
+   * @generated from field: string json = 2;
+   */
+  json: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.ClassifyResponse.
+ * Use `create(ClassifyResponseSchema)` to create a new message.
+ */
+export const ClassifyResponseSchema: GenMessage<ClassifyResponse> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 51);
+
+/**
+ * ok is false when the operation ran but reports a failure; json is its body.
+ *
+ * @generated from message polterware.local.v1.VerifyRunResponse
+ */
+export type VerifyRunResponse = Message<"polterware.local.v1.VerifyRunResponse"> & {
+  /**
+   * @generated from field: bool ok = 1;
+   */
+  ok: boolean;
+
+  /**
+   * @generated from field: string json = 2;
+   */
+  json: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.VerifyRunResponse.
+ * Use `create(VerifyRunResponseSchema)` to create a new message.
+ */
+export const VerifyRunResponseSchema: GenMessage<VerifyRunResponse> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 52);
+
+/**
+ * ok is false when the operation ran but reports a failure; json is its body.
+ *
+ * @generated from message polterware.local.v1.MergeRunResponse
+ */
+export type MergeRunResponse = Message<"polterware.local.v1.MergeRunResponse"> & {
+  /**
+   * @generated from field: bool ok = 1;
+   */
+  ok: boolean;
+
+  /**
+   * @generated from field: string json = 2;
+   */
+  json: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.MergeRunResponse.
+ * Use `create(MergeRunResponseSchema)` to create a new message.
+ */
+export const MergeRunResponseSchema: GenMessage<MergeRunResponse> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 53);
+
+/**
+ * ok is false when the operation ran but reports a failure; json is its body.
+ *
+ * @generated from message polterware.local.v1.CleanRunResponse
+ */
+export type CleanRunResponse = Message<"polterware.local.v1.CleanRunResponse"> & {
+  /**
+   * @generated from field: bool ok = 1;
+   */
+  ok: boolean;
+
+  /**
+   * @generated from field: string json = 2;
+   */
+  json: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.CleanRunResponse.
+ * Use `create(CleanRunResponseSchema)` to create a new message.
+ */
+export const CleanRunResponseSchema: GenMessage<CleanRunResponse> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 54);
+
+/**
+ * ok is false when the operation ran but reports a failure; json is its body.
+ *
+ * @generated from message polterware.local.v1.RecoverRunResponse
+ */
+export type RecoverRunResponse = Message<"polterware.local.v1.RecoverRunResponse"> & {
+  /**
+   * @generated from field: bool ok = 1;
+   */
+  ok: boolean;
+
+  /**
+   * @generated from field: string json = 2;
+   */
+  json: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.RecoverRunResponse.
+ * Use `create(RecoverRunResponseSchema)` to create a new message.
+ */
+export const RecoverRunResponseSchema: GenMessage<RecoverRunResponse> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 55);
+
+/**
+ * ok is false when the operation ran but reports a failure; json is its body.
+ *
+ * @generated from message polterware.local.v1.ConfigResponse
+ */
+export type ConfigResponse = Message<"polterware.local.v1.ConfigResponse"> & {
+  /**
+   * @generated from field: bool ok = 1;
+   */
+  ok: boolean;
+
+  /**
+   * @generated from field: string json = 2;
+   */
+  json: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.ConfigResponse.
+ * Use `create(ConfigResponseSchema)` to create a new message.
+ */
+export const ConfigResponseSchema: GenMessage<ConfigResponse> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 56);
+
+/**
+ * ok is false when the operation ran but reports a failure; json is its body.
+ *
+ * @generated from message polterware.local.v1.SubagentsResponse
+ */
+export type SubagentsResponse = Message<"polterware.local.v1.SubagentsResponse"> & {
+  /**
+   * @generated from field: bool ok = 1;
+   */
+  ok: boolean;
+
+  /**
+   * @generated from field: string json = 2;
+   */
+  json: string;
+};
+
+/**
+ * Describes the message polterware.local.v1.SubagentsResponse.
+ * Use `create(SubagentsResponseSchema)` to create a new message.
+ */
+export const SubagentsResponseSchema: GenMessage<SubagentsResponse> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_dispatch, 57);
+
+/**
  * @generated from service polterware.local.v1.DispatchService
  */
 export const DispatchService: GenService<{
@@ -1504,6 +1986,70 @@ export const DispatchService: GenService<{
     methodKind: "unary";
     input: typeof CapacityRequestSchema;
     output: typeof CapacityResponseSchema;
+  },
+  /**
+   * @generated from rpc polterware.local.v1.DispatchService.Route
+   */
+  route: {
+    methodKind: "unary";
+    input: typeof RouteRequestSchema;
+    output: typeof RouteResponseSchema;
+  },
+  /**
+   * @generated from rpc polterware.local.v1.DispatchService.Classify
+   */
+  classify: {
+    methodKind: "unary";
+    input: typeof ClassifyRequestSchema;
+    output: typeof ClassifyResponseSchema;
+  },
+  /**
+   * @generated from rpc polterware.local.v1.DispatchService.VerifyRun
+   */
+  verifyRun: {
+    methodKind: "unary";
+    input: typeof VerifyRunRequestSchema;
+    output: typeof VerifyRunResponseSchema;
+  },
+  /**
+   * @generated from rpc polterware.local.v1.DispatchService.MergeRun
+   */
+  mergeRun: {
+    methodKind: "unary";
+    input: typeof MergeRunRequestSchema;
+    output: typeof MergeRunResponseSchema;
+  },
+  /**
+   * @generated from rpc polterware.local.v1.DispatchService.CleanRun
+   */
+  cleanRun: {
+    methodKind: "unary";
+    input: typeof CleanRunRequestSchema;
+    output: typeof CleanRunResponseSchema;
+  },
+  /**
+   * @generated from rpc polterware.local.v1.DispatchService.RecoverRun
+   */
+  recoverRun: {
+    methodKind: "unary";
+    input: typeof RecoverRunRequestSchema;
+    output: typeof RecoverRunResponseSchema;
+  },
+  /**
+   * @generated from rpc polterware.local.v1.DispatchService.Config
+   */
+  config: {
+    methodKind: "unary";
+    input: typeof ConfigRequestSchema;
+    output: typeof ConfigResponseSchema;
+  },
+  /**
+   * @generated from rpc polterware.local.v1.DispatchService.Subagents
+   */
+  subagents: {
+    methodKind: "unary";
+    input: typeof SubagentsRequestSchema;
+    output: typeof SubagentsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_polterware_local_v1_dispatch, 0);

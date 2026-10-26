@@ -75,6 +75,28 @@ const (
 	// DispatchServiceCapacityProcedure is the fully-qualified name of the DispatchService's Capacity
 	// RPC.
 	DispatchServiceCapacityProcedure = "/polterware.local.v1.DispatchService/Capacity"
+	// DispatchServiceRouteProcedure is the fully-qualified name of the DispatchService's Route RPC.
+	DispatchServiceRouteProcedure = "/polterware.local.v1.DispatchService/Route"
+	// DispatchServiceClassifyProcedure is the fully-qualified name of the DispatchService's Classify
+	// RPC.
+	DispatchServiceClassifyProcedure = "/polterware.local.v1.DispatchService/Classify"
+	// DispatchServiceVerifyRunProcedure is the fully-qualified name of the DispatchService's VerifyRun
+	// RPC.
+	DispatchServiceVerifyRunProcedure = "/polterware.local.v1.DispatchService/VerifyRun"
+	// DispatchServiceMergeRunProcedure is the fully-qualified name of the DispatchService's MergeRun
+	// RPC.
+	DispatchServiceMergeRunProcedure = "/polterware.local.v1.DispatchService/MergeRun"
+	// DispatchServiceCleanRunProcedure is the fully-qualified name of the DispatchService's CleanRun
+	// RPC.
+	DispatchServiceCleanRunProcedure = "/polterware.local.v1.DispatchService/CleanRun"
+	// DispatchServiceRecoverRunProcedure is the fully-qualified name of the DispatchService's
+	// RecoverRun RPC.
+	DispatchServiceRecoverRunProcedure = "/polterware.local.v1.DispatchService/RecoverRun"
+	// DispatchServiceConfigProcedure is the fully-qualified name of the DispatchService's Config RPC.
+	DispatchServiceConfigProcedure = "/polterware.local.v1.DispatchService/Config"
+	// DispatchServiceSubagentsProcedure is the fully-qualified name of the DispatchService's Subagents
+	// RPC.
+	DispatchServiceSubagentsProcedure = "/polterware.local.v1.DispatchService/Subagents"
 )
 
 // DispatchServiceClient is a client for the polterware.local.v1.DispatchService service.
@@ -94,6 +116,14 @@ type DispatchServiceClient interface {
 	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
 	GetClassifier(context.Context, *connect.Request[v1.GetClassifierRequest]) (*connect.Response[v1.GetClassifierResponse], error)
 	Capacity(context.Context, *connect.Request[v1.CapacityRequest]) (*connect.Response[v1.CapacityResponse], error)
+	Route(context.Context, *connect.Request[v1.RouteRequest]) (*connect.Response[v1.RouteResponse], error)
+	Classify(context.Context, *connect.Request[v1.ClassifyRequest]) (*connect.Response[v1.ClassifyResponse], error)
+	VerifyRun(context.Context, *connect.Request[v1.VerifyRunRequest]) (*connect.Response[v1.VerifyRunResponse], error)
+	MergeRun(context.Context, *connect.Request[v1.MergeRunRequest]) (*connect.Response[v1.MergeRunResponse], error)
+	CleanRun(context.Context, *connect.Request[v1.CleanRunRequest]) (*connect.Response[v1.CleanRunResponse], error)
+	RecoverRun(context.Context, *connect.Request[v1.RecoverRunRequest]) (*connect.Response[v1.RecoverRunResponse], error)
+	Config(context.Context, *connect.Request[v1.ConfigRequest]) (*connect.Response[v1.ConfigResponse], error)
+	Subagents(context.Context, *connect.Request[v1.SubagentsRequest]) (*connect.Response[v1.SubagentsResponse], error)
 }
 
 // NewDispatchServiceClient constructs a client for the polterware.local.v1.DispatchService service.
@@ -197,6 +227,54 @@ func NewDispatchServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(dispatchServiceMethods.ByName("Capacity")),
 			connect.WithClientOptions(opts...),
 		),
+		route: connect.NewClient[v1.RouteRequest, v1.RouteResponse](
+			httpClient,
+			baseURL+DispatchServiceRouteProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("Route")),
+			connect.WithClientOptions(opts...),
+		),
+		classify: connect.NewClient[v1.ClassifyRequest, v1.ClassifyResponse](
+			httpClient,
+			baseURL+DispatchServiceClassifyProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("Classify")),
+			connect.WithClientOptions(opts...),
+		),
+		verifyRun: connect.NewClient[v1.VerifyRunRequest, v1.VerifyRunResponse](
+			httpClient,
+			baseURL+DispatchServiceVerifyRunProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("VerifyRun")),
+			connect.WithClientOptions(opts...),
+		),
+		mergeRun: connect.NewClient[v1.MergeRunRequest, v1.MergeRunResponse](
+			httpClient,
+			baseURL+DispatchServiceMergeRunProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("MergeRun")),
+			connect.WithClientOptions(opts...),
+		),
+		cleanRun: connect.NewClient[v1.CleanRunRequest, v1.CleanRunResponse](
+			httpClient,
+			baseURL+DispatchServiceCleanRunProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("CleanRun")),
+			connect.WithClientOptions(opts...),
+		),
+		recoverRun: connect.NewClient[v1.RecoverRunRequest, v1.RecoverRunResponse](
+			httpClient,
+			baseURL+DispatchServiceRecoverRunProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("RecoverRun")),
+			connect.WithClientOptions(opts...),
+		),
+		config: connect.NewClient[v1.ConfigRequest, v1.ConfigResponse](
+			httpClient,
+			baseURL+DispatchServiceConfigProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("Config")),
+			connect.WithClientOptions(opts...),
+		),
+		subagents: connect.NewClient[v1.SubagentsRequest, v1.SubagentsResponse](
+			httpClient,
+			baseURL+DispatchServiceSubagentsProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("Subagents")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -217,6 +295,14 @@ type dispatchServiceClient struct {
 	stats         *connect.Client[v1.StatsRequest, v1.StatsResponse]
 	getClassifier *connect.Client[v1.GetClassifierRequest, v1.GetClassifierResponse]
 	capacity      *connect.Client[v1.CapacityRequest, v1.CapacityResponse]
+	route         *connect.Client[v1.RouteRequest, v1.RouteResponse]
+	classify      *connect.Client[v1.ClassifyRequest, v1.ClassifyResponse]
+	verifyRun     *connect.Client[v1.VerifyRunRequest, v1.VerifyRunResponse]
+	mergeRun      *connect.Client[v1.MergeRunRequest, v1.MergeRunResponse]
+	cleanRun      *connect.Client[v1.CleanRunRequest, v1.CleanRunResponse]
+	recoverRun    *connect.Client[v1.RecoverRunRequest, v1.RecoverRunResponse]
+	config        *connect.Client[v1.ConfigRequest, v1.ConfigResponse]
+	subagents     *connect.Client[v1.SubagentsRequest, v1.SubagentsResponse]
 }
 
 // ListRuns calls polterware.local.v1.DispatchService.ListRuns.
@@ -294,6 +380,46 @@ func (c *dispatchServiceClient) Capacity(ctx context.Context, req *connect.Reque
 	return c.capacity.CallUnary(ctx, req)
 }
 
+// Route calls polterware.local.v1.DispatchService.Route.
+func (c *dispatchServiceClient) Route(ctx context.Context, req *connect.Request[v1.RouteRequest]) (*connect.Response[v1.RouteResponse], error) {
+	return c.route.CallUnary(ctx, req)
+}
+
+// Classify calls polterware.local.v1.DispatchService.Classify.
+func (c *dispatchServiceClient) Classify(ctx context.Context, req *connect.Request[v1.ClassifyRequest]) (*connect.Response[v1.ClassifyResponse], error) {
+	return c.classify.CallUnary(ctx, req)
+}
+
+// VerifyRun calls polterware.local.v1.DispatchService.VerifyRun.
+func (c *dispatchServiceClient) VerifyRun(ctx context.Context, req *connect.Request[v1.VerifyRunRequest]) (*connect.Response[v1.VerifyRunResponse], error) {
+	return c.verifyRun.CallUnary(ctx, req)
+}
+
+// MergeRun calls polterware.local.v1.DispatchService.MergeRun.
+func (c *dispatchServiceClient) MergeRun(ctx context.Context, req *connect.Request[v1.MergeRunRequest]) (*connect.Response[v1.MergeRunResponse], error) {
+	return c.mergeRun.CallUnary(ctx, req)
+}
+
+// CleanRun calls polterware.local.v1.DispatchService.CleanRun.
+func (c *dispatchServiceClient) CleanRun(ctx context.Context, req *connect.Request[v1.CleanRunRequest]) (*connect.Response[v1.CleanRunResponse], error) {
+	return c.cleanRun.CallUnary(ctx, req)
+}
+
+// RecoverRun calls polterware.local.v1.DispatchService.RecoverRun.
+func (c *dispatchServiceClient) RecoverRun(ctx context.Context, req *connect.Request[v1.RecoverRunRequest]) (*connect.Response[v1.RecoverRunResponse], error) {
+	return c.recoverRun.CallUnary(ctx, req)
+}
+
+// Config calls polterware.local.v1.DispatchService.Config.
+func (c *dispatchServiceClient) Config(ctx context.Context, req *connect.Request[v1.ConfigRequest]) (*connect.Response[v1.ConfigResponse], error) {
+	return c.config.CallUnary(ctx, req)
+}
+
+// Subagents calls polterware.local.v1.DispatchService.Subagents.
+func (c *dispatchServiceClient) Subagents(ctx context.Context, req *connect.Request[v1.SubagentsRequest]) (*connect.Response[v1.SubagentsResponse], error) {
+	return c.subagents.CallUnary(ctx, req)
+}
+
 // DispatchServiceHandler is an implementation of the polterware.local.v1.DispatchService service.
 type DispatchServiceHandler interface {
 	ListRuns(context.Context, *connect.Request[v1.ListRunsRequest]) (*connect.Response[v1.ListRunsResponse], error)
@@ -311,6 +437,14 @@ type DispatchServiceHandler interface {
 	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
 	GetClassifier(context.Context, *connect.Request[v1.GetClassifierRequest]) (*connect.Response[v1.GetClassifierResponse], error)
 	Capacity(context.Context, *connect.Request[v1.CapacityRequest]) (*connect.Response[v1.CapacityResponse], error)
+	Route(context.Context, *connect.Request[v1.RouteRequest]) (*connect.Response[v1.RouteResponse], error)
+	Classify(context.Context, *connect.Request[v1.ClassifyRequest]) (*connect.Response[v1.ClassifyResponse], error)
+	VerifyRun(context.Context, *connect.Request[v1.VerifyRunRequest]) (*connect.Response[v1.VerifyRunResponse], error)
+	MergeRun(context.Context, *connect.Request[v1.MergeRunRequest]) (*connect.Response[v1.MergeRunResponse], error)
+	CleanRun(context.Context, *connect.Request[v1.CleanRunRequest]) (*connect.Response[v1.CleanRunResponse], error)
+	RecoverRun(context.Context, *connect.Request[v1.RecoverRunRequest]) (*connect.Response[v1.RecoverRunResponse], error)
+	Config(context.Context, *connect.Request[v1.ConfigRequest]) (*connect.Response[v1.ConfigResponse], error)
+	Subagents(context.Context, *connect.Request[v1.SubagentsRequest]) (*connect.Response[v1.SubagentsResponse], error)
 }
 
 // NewDispatchServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -410,6 +544,54 @@ func NewDispatchServiceHandler(svc DispatchServiceHandler, opts ...connect.Handl
 		connect.WithSchema(dispatchServiceMethods.ByName("Capacity")),
 		connect.WithHandlerOptions(opts...),
 	)
+	dispatchServiceRouteHandler := connect.NewUnaryHandler(
+		DispatchServiceRouteProcedure,
+		svc.Route,
+		connect.WithSchema(dispatchServiceMethods.ByName("Route")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dispatchServiceClassifyHandler := connect.NewUnaryHandler(
+		DispatchServiceClassifyProcedure,
+		svc.Classify,
+		connect.WithSchema(dispatchServiceMethods.ByName("Classify")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dispatchServiceVerifyRunHandler := connect.NewUnaryHandler(
+		DispatchServiceVerifyRunProcedure,
+		svc.VerifyRun,
+		connect.WithSchema(dispatchServiceMethods.ByName("VerifyRun")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dispatchServiceMergeRunHandler := connect.NewUnaryHandler(
+		DispatchServiceMergeRunProcedure,
+		svc.MergeRun,
+		connect.WithSchema(dispatchServiceMethods.ByName("MergeRun")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dispatchServiceCleanRunHandler := connect.NewUnaryHandler(
+		DispatchServiceCleanRunProcedure,
+		svc.CleanRun,
+		connect.WithSchema(dispatchServiceMethods.ByName("CleanRun")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dispatchServiceRecoverRunHandler := connect.NewUnaryHandler(
+		DispatchServiceRecoverRunProcedure,
+		svc.RecoverRun,
+		connect.WithSchema(dispatchServiceMethods.ByName("RecoverRun")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dispatchServiceConfigHandler := connect.NewUnaryHandler(
+		DispatchServiceConfigProcedure,
+		svc.Config,
+		connect.WithSchema(dispatchServiceMethods.ByName("Config")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dispatchServiceSubagentsHandler := connect.NewUnaryHandler(
+		DispatchServiceSubagentsProcedure,
+		svc.Subagents,
+		connect.WithSchema(dispatchServiceMethods.ByName("Subagents")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/polterware.local.v1.DispatchService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DispatchServiceListRunsProcedure:
@@ -442,6 +624,22 @@ func NewDispatchServiceHandler(svc DispatchServiceHandler, opts ...connect.Handl
 			dispatchServiceGetClassifierHandler.ServeHTTP(w, r)
 		case DispatchServiceCapacityProcedure:
 			dispatchServiceCapacityHandler.ServeHTTP(w, r)
+		case DispatchServiceRouteProcedure:
+			dispatchServiceRouteHandler.ServeHTTP(w, r)
+		case DispatchServiceClassifyProcedure:
+			dispatchServiceClassifyHandler.ServeHTTP(w, r)
+		case DispatchServiceVerifyRunProcedure:
+			dispatchServiceVerifyRunHandler.ServeHTTP(w, r)
+		case DispatchServiceMergeRunProcedure:
+			dispatchServiceMergeRunHandler.ServeHTTP(w, r)
+		case DispatchServiceCleanRunProcedure:
+			dispatchServiceCleanRunHandler.ServeHTTP(w, r)
+		case DispatchServiceRecoverRunProcedure:
+			dispatchServiceRecoverRunHandler.ServeHTTP(w, r)
+		case DispatchServiceConfigProcedure:
+			dispatchServiceConfigHandler.ServeHTTP(w, r)
+		case DispatchServiceSubagentsProcedure:
+			dispatchServiceSubagentsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -509,4 +707,36 @@ func (UnimplementedDispatchServiceHandler) GetClassifier(context.Context, *conne
 
 func (UnimplementedDispatchServiceHandler) Capacity(context.Context, *connect.Request[v1.CapacityRequest]) (*connect.Response[v1.CapacityResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.Capacity is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) Route(context.Context, *connect.Request[v1.RouteRequest]) (*connect.Response[v1.RouteResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.Route is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) Classify(context.Context, *connect.Request[v1.ClassifyRequest]) (*connect.Response[v1.ClassifyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.Classify is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) VerifyRun(context.Context, *connect.Request[v1.VerifyRunRequest]) (*connect.Response[v1.VerifyRunResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.VerifyRun is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) MergeRun(context.Context, *connect.Request[v1.MergeRunRequest]) (*connect.Response[v1.MergeRunResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.MergeRun is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) CleanRun(context.Context, *connect.Request[v1.CleanRunRequest]) (*connect.Response[v1.CleanRunResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.CleanRun is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) RecoverRun(context.Context, *connect.Request[v1.RecoverRunRequest]) (*connect.Response[v1.RecoverRunResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.RecoverRun is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) Config(context.Context, *connect.Request[v1.ConfigRequest]) (*connect.Response[v1.ConfigResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.Config is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) Subagents(context.Context, *connect.Request[v1.SubagentsRequest]) (*connect.Response[v1.SubagentsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.Subagents is not implemented"))
 }

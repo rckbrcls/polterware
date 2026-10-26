@@ -222,14 +222,21 @@ export function SettingsSection(props: {
   title: string;
   description?: string;
   variant?: "card" | "stack";
+  /** Sits at the end of the heading row, e.g. a refresh icon button. */
+  action?: JSX.Element;
   children: JSX.Element;
 }) {
   return (
     <section id={settingsSectionId(props.title)} class="flex scroll-mt-2 flex-col gap-2">
-      <div class="px-1">
-        <h3 class="m-0 text-[12px] font-medium text-[var(--color-text-muted)]">{props.title}</h3>
-        <Show when={props.description}>
-          <p class="m-0 mt-0.5 text-[11.5px] text-[var(--color-text-muted)]">{props.description}</p>
+      <div class="flex items-center justify-between gap-2 px-1">
+        <div class="min-w-0">
+          <h3 class="m-0 text-[12px] font-medium text-[var(--color-text-muted)]">{props.title}</h3>
+          <Show when={props.description}>
+            <p class="m-0 mt-0.5 text-[11.5px] text-[var(--color-text-muted)]">{props.description}</p>
+          </Show>
+        </div>
+        <Show when={props.action}>
+          <div class="-my-2 shrink-0">{props.action}</div>
         </Show>
       </div>
       <Show when={props.variant === "stack"} fallback={<Card class="flex flex-col gap-4 !p-4">{props.children}</Card>}>

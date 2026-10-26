@@ -5,6 +5,7 @@ import { installSpringCssProperties } from "./spring-css";
 /* Spring tiers as CSS custom properties (--spring-<tier>-*), sampled from springs.ts. */
 if (typeof document !== "undefined") installSpringCssProperties();
 
+export { PolterMascot } from "./mascot";
 export { Button, LinkButton, buttonClassName } from "./button";
 export type { ButtonProps, ButtonVariant, ButtonSize, ButtonTone, LinkButtonProps } from "./button";
 export { Badge } from "./badge";
@@ -44,6 +45,7 @@ export type {
   TemplateCardGridProps,
   TemplateCardProps,
 } from "./template-card";
+export { EmptyBot, type EmptyBotMood } from "./empty-bot";
 export { PageLoading, PageEmpty, PageError, FixtureBanner, PageOffline, PageForbidden } from "./feedback";
 export { Skeleton, PageSkeleton } from "./skeleton";
 export type { SkeletonProps, PageSkeletonProps, PageSkeletonLayout } from "./skeleton";
@@ -51,6 +53,8 @@ export { ToastRegion, pushToast } from "./toast";
 export type { ToastItem } from "./toast";
 export { PageHeader, PageContent, PageToolbar } from "./page";
 export type { PageToolbarRootProps, PageToolbarSlotProps } from "./page";
+export { TextureButtonGroup } from "./texture-button-group";
+export type { TextureButtonGroupItem } from "./texture-button-group";
 export { ToolbarIconButton } from "./toolbar-icon-button";
 export type { ToolbarIconButtonProps } from "./toolbar-icon-button";
 export { SearchBar } from "./search-bar";

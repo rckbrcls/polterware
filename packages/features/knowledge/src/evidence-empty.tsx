@@ -29,8 +29,8 @@ export function EvidenceEmpty(props: {
         when={props.onCreateFromTemplate}
         fallback={
           <PageEmpty
-            title="No evidence yet."
-            description="Write a markdown note or register a file, then tag it: runbook, documentation, source."
+            title="No evidence yet"
+            mood="sleeping"
             action={
               props.onImport || props.onCreate ? (
                 <div class="flex flex-wrap items-center justify-center gap-2">
@@ -42,25 +42,14 @@ export function EvidenceEmpty(props: {
           />
         }
       >
-        <div class="flex w-full max-w-3xl flex-col items-center gap-6">
-          <Show when={props.onImport}>
-            <PageEmpty
-              title="Import known project files"
-              description="Scans the project root for go.mod, package.json, agent docs, Docker, OpenAPI, and Terraform."
-              action={importAction()}
-            />
-          </Show>
-          <KnowledgeTemplateGrid
-            kind="evidence"
-            showLabel={false}
-            onSelect={(template) => props.onCreateFromTemplate?.(template)}
-          />
-        </div>
+        <PageEmpty title="No evidence yet" mood="sleeping" action={importAction()}>
+          <KnowledgeTemplateGrid kind="evidence" showLabel={false} limit={3} onSelect={(template) => props.onCreateFromTemplate?.(template)} />
+        </PageEmpty>
       </Show>
     </div>
   );
 }
 
 export function evidenceFilterEmpty() {
-  return <PageEmpty title="No evidence matches" description="Try another search or clear active filters." />;
+  return <PageEmpty title="No matches" mood="lost" />;
 }

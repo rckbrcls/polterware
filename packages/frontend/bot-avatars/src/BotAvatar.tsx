@@ -13,7 +13,7 @@ import { draw, LIGHT_DEFAULTS, OVERSCAN, RISE, type DrawConfig } from "./draw";
 import { Sim, restPose, type JumpConfig } from "./engine";
 import { bakesPending, hurry, onLanded, stockLights, takeMissed, warmPlastic, type FurStyle } from "./plastic";
 import { botAvatarPresets, stateLabels } from "./presets";
-import { SHAPE_PARTS, SHAPE_PATHS } from "./shapes";
+import { SHAPE_PART_COLORS, SHAPE_PARTS, SHAPE_PATHS } from "./shapes";
 import { pointer, subscribe } from "./ticker";
 import type { BotAvatarProps, BotAvatarShading, BotAvatarState } from "./types";
 
@@ -238,6 +238,7 @@ export function BotAvatar(props: BotAvatarProps) {
         length: clamp(local.whirlLength ?? 1, 0.4, 1.6),
         tilt: clamp(local.whirlTilt ?? 1, 0.5, 1.8),
       },
+      partsColors: !customPath ? SHAPE_PART_COLORS[type] : undefined,
       parts: typeof Path2D !== "undefined" && part ? partPaths(part) : undefined,
       wear: {
         hat: local.hat ?? "none",

@@ -116,7 +116,7 @@ export function EntityDetailHost(props: EntityDetailHostProps) {
         <Show when={(collectionStatus() === "ready" || collectionStatus() === "idle") && !activeTarget()}>
           <DetailPanel.Content>
             <DetailPanel.Body layout="document">
-              <PageEmpty title="No selection" description="Select an item to see its details." />
+              <PageEmpty title="Nothing selected" mood="lost" />
             </DetailPanel.Body>
           </DetailPanel.Content>
         </Show>

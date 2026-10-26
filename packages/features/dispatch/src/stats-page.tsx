@@ -35,7 +35,7 @@ export function DispatchTable<T>(props: {
     onCleanup(() => observer.disconnect());
   });
   return (
-    <div ref={container} class="w-full min-w-0 max-w-full">
+    <div ref={container} class="h-full w-full min-w-0 max-w-full">
       <For each={[compact()]}>
         {(narrow) => (
           <DataTable.Root
@@ -177,6 +177,7 @@ export function DispatchStatsPage(props: {
 
   return (
     <PageContent class="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4">
+        <Show when={stats().rows.length > 0}>
         <div class="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <RankingCard
             title="Most used model"
@@ -203,6 +204,7 @@ export function DispatchStatsPage(props: {
             }
           />
         </div>
+        </Show>
 
         <Show when={stats().rows.length > 0}>
           <Show
@@ -267,10 +269,8 @@ export function DispatchStatsPage(props: {
               <DataTable.ColumnHeader<DispatchStatsRowView>
                 id="runs"
                 align="right"
-                resizable={false}
                 width="4.25rem"
                 minWidth={56}
-                maxWidth={72}
                 sortBy={(row) => row.runs}
               >
                 Runs
@@ -278,10 +278,8 @@ export function DispatchStatsPage(props: {
               <DataTable.ColumnHeader<DispatchStatsRowView>
                 id="success"
                 align="right"
-                resizable={false}
                 width="5.25rem"
                 minWidth={84}
-                maxWidth={96}
                 sortBy={(row) => row.successPct}
               >
                 Success
@@ -290,10 +288,8 @@ export function DispatchStatsPage(props: {
                 <DataTable.ColumnHeader<DispatchStatsRowView>
                   id="firstTry"
                   align="right"
-                  resizable={false}
                   width="5.25rem"
                   minWidth={84}
-                  maxWidth={96}
                   sortBy={(row) => row.firstTryPct}
                 >
                   First try
@@ -301,10 +297,8 @@ export function DispatchStatsPage(props: {
                 <DataTable.ColumnHeader<DispatchStatsRowView>
                   id="p50"
                   align="right"
-                  resizable={false}
                   width="6rem"
                   minWidth={96}
-                  maxWidth={112}
                   sortBy={(row) => row.p50Ms ?? -1}
                 >
                   p50
@@ -312,10 +306,8 @@ export function DispatchStatsPage(props: {
                 <DataTable.ColumnHeader<DispatchStatsRowView>
                   id="p90"
                   align="right"
-                  resizable={false}
                   width="6rem"
                   minWidth={96}
-                  maxWidth={112}
                   sortBy={(row) => row.p90Ms ?? -1}
                 >
                   p90
@@ -323,10 +315,8 @@ export function DispatchStatsPage(props: {
                 <DataTable.ColumnHeader<DispatchStatsRowView>
                   id="fallbacks"
                   align="right"
-                  resizable={false}
                   width="5.5rem"
                   minWidth={88}
-                  maxWidth={104}
                   sortBy={(row) => row.fallbacks}
                 >
                   Fallbacks
@@ -334,10 +324,8 @@ export function DispatchStatsPage(props: {
                 <DataTable.ColumnHeader<DispatchStatsRowView>
                   id="rateLimits"
                   align="right"
-                  resizable={false}
                   width="6rem"
                   minWidth={96}
-                  maxWidth={112}
                   sortBy={(row) => row.rateLimits}
                 >
                   Rate limits
@@ -345,10 +333,8 @@ export function DispatchStatsPage(props: {
                 <DataTable.ColumnHeader<DispatchStatsRowView>
                   id="orphans"
                   align="right"
-                  resizable={false}
                   width="5rem"
                   minWidth={80}
-                  maxWidth={96}
                   sortBy={(row) => row.orphans}
                 >
                   Orphans
@@ -401,8 +387,8 @@ export function DispatchStatsPage(props: {
             </DataTable.Body>
             <DataTable.Empty>
               <PageEmpty
-                title="No statistics in this window"
-                description="Completed dispatch runs in the selected period appear here."
+                title="No stats yet"
+                mood="sleeping"
               />
             </DataTable.Empty>
           </DataTable.Table>

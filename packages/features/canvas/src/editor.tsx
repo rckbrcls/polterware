@@ -1,4 +1,4 @@
-import { For, Index, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
+import { For, Index, Show, createEffect, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 import {
   canRedo, canUndo, commit, createHistory, documentBounds, emptySelection, fitBounds,
   historyRedo, historyUndo, hitTest, layoutSync, moveNodes, panBy, resolveRelationshipRoute,
@@ -8,7 +8,7 @@ import {
 import {
   Button, ConnectIcon, DetailPanel, DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuTrigger, Eye, Field, Hand, Input, LayoutDashboard, MousePointer2, Network, PageToolbar,
-  Card, SegmentedControl, StatusChip, Tooltip, Plus, Delete, Undo2, Redo2, buttonClassName,
+  Card, StatusChip, Tooltip, Plus, Delete, Undo2, Redo2, buttonClassName,
   Maximize2, MinusSignIcon, ChevronLeft, HelpCircle, Route, pushToast,
 } from "@polterware/frontend-design-system";
 import { createAutosave, type SaveState } from "./autosave";
@@ -24,13 +24,11 @@ import { StructurePicker } from "./structure-picker";
 import "./canvas.css";
 
 
-function toolOptions() {
-  return [
-  { value: "select", label: <Tooltip.Root><Tooltip.Trigger asChild={(triggerProps) => <span {...triggerProps({ "aria-label": "Select" })} class="inline-flex"><MousePointer2 size={14} /><span class="sr-only">Select</span></span>} /><Tooltip.Content>Select</Tooltip.Content></Tooltip.Root> },
-  { value: "pan", label: <Tooltip.Root><Tooltip.Trigger asChild={(triggerProps) => <span {...triggerProps({ "aria-label": "Pan" })} class="inline-flex"><Hand size={14} /><span class="sr-only">Pan</span></span>} /><Tooltip.Content>Pan</Tooltip.Content></Tooltip.Root> },
-  { value: "connect", label: <Tooltip.Root><Tooltip.Trigger asChild={(triggerProps) => <span {...triggerProps({ "aria-label": "Connect" })} class="inline-flex"><ConnectIcon size={14} /><span class="sr-only">Connect</span></span>} /><Tooltip.Content>Connect</Tooltip.Content></Tooltip.Root> },
-  ] as unknown as Array<{ value: string; label: string }>;
-}
+const tools = [
+  { value: "select", label: "Select", icon: () => <MousePointer2 size={14} /> },
+  { value: "pan", label: "Pan", icon: () => <Hand size={14} /> },
+  { value: "connect", label: "Connect", icon: () => <ConnectIcon size={14} /> },
+];
 
 export function CanvasEditor(props: {
   canvas: CanvasRecord; definition: CanvasType; document: ArchitectureDocument; port: CanvasPort;
@@ -202,18 +200,33 @@ export function CanvasEditor(props: {
     onCleanup(() => host.removeEventListener("wheel", wheel));
   });
   // Keep the captured project/canvas identity when navigation unmounts this editor.
+  // The dotted grid is painted on the panel root so it also runs under the header; it stays anchored to the canvas viewport.
+  const [hostOffset, setHostOffset] = createSignal({ x: 0, y: 0 });
+  onMount(() => {
+    const root = host.closest<HTMLElement>(".pw-detail-panel-root");
+    if (!root) return;
+    const measure = () => { const a = root.getBoundingClientRect(), b = host.getBoundingClientRect(); setHostOffset({ x: b.left - a.left, y: b.top - a.top }); };
+    const observer = new ResizeObserver(measure);
+    observer.observe(root); observer.observe(host); measure();
+    onCleanup(() => observer.disconnect());
+    createEffect(() => {
+      const { x, y, zoom } = doc().viewport, offset = hostOffset();
+      root.style.setProperty("--canvas-grid-size", `${24 * zoom}px`);
+      root.style.setProperty("--canvas-grid-position", `${offset.x + x}px ${offset.y + y}px`);
+    });
+  });
   onCleanup(() => { disposed = true; void save.flush(); });
   async function back() {
     finishLabel(); setLeaving(true);
     if (await save.flush()) props.onBack();
     setLeaving(false);
   }
-  return <DetailPanel.Root open={!!selected() || !!selectedEdge()} expandable={false} shortcuts={false} dismissOnOutsideClick={false} activeEntityId={selected()?.id ?? selectedEdge()?.id} onOpenChange={(open) => { if (!open) setSelection(emptySelection()); }} class="h-full min-h-0">
+  return <DetailPanel.Root open={!!selected() || !!selectedEdge()} expandable={false} shortcuts={false} dismissOnOutsideClick={false} activeEntityId={selected()?.id ?? selectedEdge()?.id} onOpenChange={(open) => { if (!open) setSelection(emptySelection()); }} class="pw-canvas-surface h-full min-h-0">
     <DetailPanel.Collection><div class="flex h-full min-h-0 flex-col">
     <PageToolbar.Root class="items-center">
       <PageToolbar.Leading class="flex items-center gap-2">
         <Button variant="texture" size="icon" aria-label="Canvases" disabled={leaving()} onClick={() => void back()}><ChevronLeft size={14} /></Button>
-        <div class="w-56 shrink-0"><Input aria-label="Canvas name" value={name()} onInput={(e) => { setName(e.currentTarget.value); schedule(); }} /></div>
+        <div class="w-56 shrink-0"><Input aria-label="Canvas name" class="!rounded-full !px-3" value={name()} onInput={(e) => { setName(e.currentTarget.value); schedule(); }} /></div>
         <span role="status" class="whitespace-nowrap text-xs" classList={{ "text-[var(--color-danger)]": state() === "error", "text-[var(--color-text-muted)]": state() !== "error" }}>{state() === "pending" ? "Unsaved" : state() === "saving" ? "Saving…" : state() === "error" ? "Not saved" : "Saved"}</span>
       </PageToolbar.Leading>
       <PageToolbar.Actions class="flex items-center gap-1">
@@ -230,7 +243,7 @@ export function CanvasEditor(props: {
     </PageToolbar.Root>
     <Show when={error()}><div role="alert" class="flex flex-wrap items-center gap-2 px-4 py-2 text-sm text-[var(--color-danger)]"><span>{error()}</span><Button size="sm" variant="ghost" onClick={() => void save.flush()}>Retry save</Button></div></Show>
     <div class="relative flex min-h-0 flex-1 flex-col">
-    <div ref={host} class="pw-canvas-editor relative min-h-0 flex-1 overflow-hidden" tabIndex={0} role="group" aria-label="Canvas editor" style={{ "background-size": `${24 * doc().viewport.zoom}px ${24 * doc().viewport.zoom}px`, "background-position": `${doc().viewport.x}px ${doc().viewport.y}px` }}
+    <div ref={host} class="pw-canvas-editor relative min-h-0 flex-1 overflow-hidden" tabIndex={0} role="group" aria-label="Canvas editor"
       onPointerDown={start} onPointerMove={move} onPointerUp={(event) => end(event)} onPointerCancel={(event) => end(event, true)} onKeyDown={keydown}>
       <Show when={!doc().nodes.length}><p class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-[var(--color-text-muted)]">This canvas is empty. Add a shape from the toolbar below.</p></Show>
       <svg class="h-full w-full" aria-label={name()}>
@@ -253,11 +266,12 @@ export function CanvasEditor(props: {
       </svg>
     </div>
     <div class="pointer-events-none absolute left-3 top-3 flex flex-wrap items-center gap-2">
-      <Show when={tool() === "connect"}><span class="text-xs text-[var(--color-text-muted)]">{connectFrom() ? "Select a target shape." : "Select a source shape, then a target."}</span></Show>
       <For each={behavior.hints(doc())}>{(hint) => <StatusChip tone="warn" label={hint} />}</For>
     </div>
+    <Card variant="texture" texture="compact" class="pw-canvas-rail"><div role="toolbar" aria-label="Canvas tool" class="flex items-center gap-1">
+      <For each={tools}>{(item) => <Button size="icon" variant={tool() === item.value ? "texture" : "ghost"} aria-label={item.label} aria-pressed={tool() === item.value} onClick={() => { setTool(item.value); setConnectFrom(undefined); }}>{item.icon()}</Button>}</For>
+    </div></Card>
     <Card variant="texture" texture="compact" class="pw-canvas-dock">
-      <SegmentedControl aria-label="Canvas tool" class="[&_.pw-segmented__item]:w-8 [&_.pw-segmented__item]:px-0" value={tool()} onValueChange={(details) => { if (details.value) { setTool(details.value); setConnectFrom(undefined); } }} options={toolOptions()} />
       <DropdownMenu positioning={{ placement: "top" }}>
         <DropdownMenuTrigger aria-label="Add shape" title="Add shape" class={buttonClassName("ghost", "icon")}><Plus size={14} /></DropdownMenuTrigger>
         <DropdownMenuContent class="min-w-40">

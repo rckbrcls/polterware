@@ -66,6 +66,8 @@ export interface DrawConfig {
       depth; a list draws each piece as its own solid */
   parts?: Path2D | Path2D[];
   partsDepth?: number;
+  /** a colour per part, in order; a part without one wears the body's colour */
+  partsColors?: (string | undefined)[];
   /** the resolved surface: the whirl is white on dark, black on light */
   theme?: 'dark' | 'light';
   /** the device pixel ratio the context is scaled by: with it given the
@@ -295,7 +297,7 @@ export function draw(ctx: CanvasRenderingContext2D, box: number, pose: Pose, cfg
   /* the light's direction on screen: a unit vector toward the source */
   const la = ((cfg.light ?? lit.light) * Math.PI) / 180;
   const lx = Math.sin(la), ly = -Math.cos(la);
-  const pal = palette(cfg.color, shadow, highlight);
+  const bodyPal = palette(cfg.color, shadow, highlight);
 
   const cy0 = Math.cos(pose.yaw), sy = Math.sin(pose.yaw);
   const cp0 = Math.cos(pose.pitch), sp = Math.sin(pose.pitch);
@@ -324,7 +326,7 @@ export function draw(ctx: CanvasRenderingContext2D, box: number, pose: Pose, cfg
      then the body over them. A plush toy's antennae are moulded plastic:
      a pile on a rod that thin is all fringe, so parts take the plastic
      when the body is fabric (`plush` false) */
-  const drawSolid = (path: Path2D, key: string, halfDepth: number, plush = true): boolean => {
+  const drawSolid = (path: Path2D, key: string, halfDepth: number, plush = true, pal = bodyPal): boolean => {
     /* the lit gradient, in the body's own space: light from the upper left */
     let lit: CanvasGradient | string = pal.near;
     let capFill: CanvasGradient | string = pal.base;
@@ -436,7 +438,15 @@ export function draw(ctx: CanvasRenderingContext2D, box: number, pose: Pose, cfg
   /* each piece rounds on its own: two antennae inflated as one shape
      would be scaled toward the middle between them, slice by slice */
   const parts = cfg.parts ? (Array.isArray(cfg.parts) ? cfg.parts : [cfg.parts]) : [];
-  for (let i = 0; i < parts.length; i++) drawSolid(parts[i], Array.isArray(cfg.parts) ? `${key}:parts${i}/${parts.length}` : `${key}:parts`, halfDepth * (cfg.partsDepth ?? 0.4), false);
+  const partPals = new Map<string, Palette>();
+  const partPal = (i: number): Palette => {
+    const color = cfg.partsColors?.[i];
+    if (!color) return bodyPal;
+    let p = partPals.get(color);
+    if (!p) { p = palette(color, shadow, highlight); partPals.set(color, p); }
+    return p;
+  };
+  for (let i = 0; i < parts.length; i++) drawSolid(parts[i], Array.isArray(cfg.parts) ? `${key}:parts${i}/${parts.length}` : `${key}:parts`, halfDepth * (cfg.partsDepth ?? 0.4), false, partPal(i));
   const plasticDone = drawSolid(cfg.path, key, halfDepth);
 
   /* the face: each feature sits on a sphere behind the front cap, so a

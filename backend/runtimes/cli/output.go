@@ -81,7 +81,10 @@ func usage() {
   polterware [-db path] setup [doctor] | claude [--uninstall | --enable | --disable | --skill-only] | codex [--uninstall] [--project <id>]
   polterware [-db path] hooks [list] | enable|disable <status|stop|lint|session|all>
   polterware [-db path] hook session-start [--label name] | session-end | lint | status | stop   (Claude Code hooks; JSON on stdin)
-  polterware [-db path] dispatch run --tier <tier> [--card <slug>] [--agent <name>] [--worktree <dir>] <prompt> | ls | status <id> | result <id> | cancel <id> | tiers [--check] | stats | agents [--json] [--compact]
+  polterware [-db path] run [--tier <tier>] [--as <profile>] [--card <slug>] [--agent <name>] [--provider <p>] [--model <m>] [--effort <e>] [--priority <p>] [--relax] [--readonly] [--no-verify] [--timeout <dur>] [--dir <repo>] <prompt|->
+  polterware [-db path] wait <id> [--timeout <dur>] | result <id> [--section ...] | cancel <id> | runs | merge <id> [--force] [--no-verify] | clean <id> [--force] | recover <id> | verify run <id> | verify --init
+  polterware [-db path] route|classify [filters] | tiers [--check] | usage [--by ...] [--since ...] | agents | doctor | subagents [--init|--check] | config get|set|allow|deny [--project] | skill install|show|refresh | update
+  polterware [-db path] hooks enable|disable dispatch   (SessionStart hint that points agents at the delegation skill)
   polterware [-db path] serve [--listen addr] [--token token]   (local core server for the Desktop)
   polterware [-db path] mcp                                     (MCP server over stdio for coding agents)
 `)

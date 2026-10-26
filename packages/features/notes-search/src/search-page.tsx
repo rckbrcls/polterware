@@ -168,7 +168,7 @@ export function SearchPage(props: { store?: SearchStore }) {
         <Show when={store.searchState() === "queued"}><PageLoading label="Searching notes" /></Show>
         <Show when={store.loadState() !== "unavailable" && store.loadState() !== "failed" && store.searchState() !== "failed" && store.searchState() !== "unavailable"}>
           <Show when={store.emptyQuery()}>
-            <PageEmpty title="Search notes" description="Search words in titles, content, checklists, tags, and Spaces.">
+            <PageEmpty title="Search notes">
               <Show when={store.recent().length}>
                 <div class="flex flex-wrap justify-center gap-2" role="group" aria-label="Recent searches">
                   <For each={store.recent()}>{item => <FilterChip onClick={() => store.applyRecent(item)}>{item}</FilterChip>}</For>
@@ -177,7 +177,7 @@ export function SearchPage(props: { store?: SearchStore }) {
             </PageEmpty>
           </Show>
           <Show when={store.noResults()}>
-            <PageEmpty title="No results" description="Try another query or clear your filters." />
+            <PageEmpty title="No results" />
           </Show>
           <Show when={store.visibleHits().length}>
             <DataTable.Root rows={store.visibleHits()} getRowId={row => row.noteId ?? ""} activeRowId={store.activeId() ?? undefined} onActiveRowChange={id => store.setActiveId(id)} estimateRowHeight={56} columnWidthsKey="search">

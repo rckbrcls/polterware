@@ -27,6 +27,14 @@ type dispatchStartRequest struct {
 	Worktree     string
 	Dir          string
 	ReadOnly     bool
+	Provider     string
+	Model        string
+	Effort       string
+	Priority     string
+	Relax        bool
+	NoVerify     bool
+	TimeoutSec   int
+	Profile      string
 	Prompt       string
 	SessionID    string
 	SessionLabel string
@@ -247,14 +255,22 @@ func (c *connectDispatchClient) GetRun(ctx context.Context, id string) (dispatch
 
 func (c *connectDispatchClient) StartRun(ctx context.Context, req dispatchStartRequest) (dispatch.Run, error) {
 	res, err := c.svc.StartRun(ctx, connect.NewRequest(&localv1.StartRunRequest{
-		ProjectId: req.ProjectID,
-		Tier:      req.Tier,
-		Prompt:    req.Prompt,
-		CardSlug:  req.CardSlug,
-		Agent:     req.Agent,
-		Worktree:  req.Worktree,
-		Dir:       req.Dir,
-		ReadOnly:  req.ReadOnly,
+		ProjectId:  req.ProjectID,
+		Tier:       req.Tier,
+		Prompt:     req.Prompt,
+		CardSlug:   req.CardSlug,
+		Agent:      req.Agent,
+		Worktree:   req.Worktree,
+		Dir:        req.Dir,
+		ReadOnly:   req.ReadOnly,
+		Provider:   req.Provider,
+		Model:      req.Model,
+		Effort:     req.Effort,
+		Priority:   req.Priority,
+		Relax:      req.Relax,
+		NoVerify:   req.NoVerify,
+		TimeoutSec: int32(req.TimeoutSec),
+		Profile:    req.Profile,
 	}))
 	if err != nil {
 		return dispatch.Run{}, wrapDispatchError(err)

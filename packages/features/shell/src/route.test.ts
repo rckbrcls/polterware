@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_NAV } from "./navigation";
-import { DEFAULT_TABS, SECTION_TABS, closeDialog, createDefaultRoute, createHomeRoute, enterProject, goHome, goSection, historySnapshot, isHomeRoute, openDialog, routesEqual, setTab, ensureRouteAvailable, isNavSectionId, resolveRoute } from "./route";
+import { DEFAULT_TABS, SECTION_TABS, closeDialog, createDefaultRoute, createHomeRoute, enterProject, goHome, goSection, historySnapshot, isHomeRoute, openDialog, routesEqual, setTab, ensureRouteAvailable, isNavSectionId, resolveRoute, sectionMemory, withSectionMemory } from "./route";
 
 describe("first version routes", () => {
   it("opens Inbox", () => {
@@ -9,10 +9,10 @@ describe("first version routes", () => {
 
   it("exposes the exact project navigation and keeps Canvas after Work", () => {
     expect(
-      ["inbox", "structure", "work", "canvas", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "integrations", "activity"].every(isNavSectionId),
+      ["inbox", "structure", "work", "canvas", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "integrations", "agents", "activity"].every(isNavSectionId),
     ).toBe(true);
     expect(DEFAULT_NAV.map((item) => item.section)).toEqual([
-      "inbox", "activity", "work", "canvas", "structure", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "integrations",
+      "inbox", "activity", "work", "canvas", "structure", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "integrations", "agents",
     ]);
     expect(resolveRoute("canvas")).toEqual({ section: "canvas", tab: "all" });
     expect(DEFAULT_TABS.canvas).toBe("all");
@@ -20,7 +20,6 @@ describe("first version routes", () => {
     expect(isNavSectionId("decisions")).toBe(false);
     expect(isNavSectionId("reality")).toBe(false);
     expect(isNavSectionId("settings")).toBe(false);
-    expect(isNavSectionId("agents")).toBe(false);
     expect(isNavSectionId("integrations-connected")).toBe(false);
     expect(isNavSectionId("integrations-catalog")).toBe(false);
     expect(isNavSectionId("architecture")).toBe(false);
@@ -154,11 +153,25 @@ describe("first version routes", () => {
     expect(back.expandedDetail).toBeUndefined();
   });
 
-  it("keeps Agents in Settings and resolves Integrations links to its tabs", () => {
-    expect(resolveRoute("agents", "access")).toEqual({ section: "inbox", tab: "all" });
+  it("gives Agents its own route and resolves Integrations links to its tabs", () => {
+    expect(resolveRoute("agents", "access")).toEqual({ section: "agents", tab: "agents" });
     expect(resolveRoute("integrations")).toEqual({ section: "integrations", tab: "connected" });
     expect(resolveRoute("integrations", "catalog")).toEqual({ section: "integrations", tab: "catalog" });
     expect(resolveRoute("integrations-connected")).toEqual({ section: "integrations", tab: "connected" });
     expect(resolveRoute("integrations-catalog")).toEqual({ section: "integrations", tab: "catalog" });
+  });
+});
+
+describe("section memory", () => {
+  it("restores the tab, search, filters and open detail a section was left with", () => {
+    const entered = enterProject(createHomeRoute(), "proj-1");
+    const left = { ...setTab(goSection(entered, "truth"), "evidence"), search: "auth", filters: { kind: ["doc"] }, expandedDetail: { scopeId: "knowledge:evidence", entityId: "ev-1", entityKind: "evidence" } };
+    const restored = withSectionMemory(goSection(goSection(left, "work"), "truth"), sectionMemory(left));
+    expect(restored).toMatchObject({ section: "truth", tab: "evidence", search: "auth", filters: { kind: ["doc"] }, expandedDetail: { entityId: "ev-1" } });
+  });
+
+  it("falls back to the default tab when the remembered one no longer exists", () => {
+    const route = goSection(enterProject(createHomeRoute(), "proj-1"), "truth");
+    expect(withSectionMemory(route, { ...sectionMemory(route), tab: "removed" }).tab).toBe(DEFAULT_TABS.truth);
   });
 });

@@ -65,6 +65,24 @@
   gap: 8px;
 }
 
+.pw-work-column__add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border: 1px dashed var(--color-border);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.pw-work-column__add:hover,
+.pw-work-column__add:focus-visible {
+  color: var(--color-text-primary);
+  background: var(--color-surface-hover);
+}
+
 /*
  * Layers, bottom to top: each card's `.card-panel` surface (moved to a `::before` at
  * z-index -1), the active card's travelling marker, then card content (positioned cards

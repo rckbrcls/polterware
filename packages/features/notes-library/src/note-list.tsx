@@ -267,7 +267,7 @@ export function NoteCollection(props: NoteCollectionProps) {
     <Show when={store.loading() && !store.rows().length}><PageLoading label="Loading notes" /></Show>
     <Show when={!store.loadError() && (!store.loading() || store.rows().length)}>
       <Show when={mode() === "space" || displayRows().length || (props.folderItems?.length ?? 0) > 0} fallback={narrowed()
-        ? <PageEmpty title="No matching notes" description="Create a note or change your filters." />
+        ? <PageEmpty title="No matching notes" />
         : <div class="flex h-full min-h-[200px] w-full items-center justify-center p-8"><TemplateCardGrid label="Start from a template" items={templateItems()} /></div>}>
         <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 pb-6 pt-6">
           <Show when={selection().size > 0}>

@@ -151,10 +151,8 @@ export function DispatchLearningPage() {
                       <DataTable.ColumnHeader<FailureFeatureRow>
                         id="weight"
                         align="right"
-                        resizable={false}
                         width="5.5rem"
                         minWidth={88}
-                        maxWidth={96}
                         sortBy={(row) => row.weight}
                       >
                         Weight
@@ -176,8 +174,8 @@ export function DispatchLearningPage() {
                     </DataTable.Body>
                     <DataTable.Empty>
                       <PageEmpty
-                        title="No positive failure weights"
-                        description="No features currently raise predicted failure."
+                        title="Nothing risky"
+                        mood="sleeping"
                       />
                     </DataTable.Empty>
                   </DataTable.Table>

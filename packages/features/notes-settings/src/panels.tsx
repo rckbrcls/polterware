@@ -328,7 +328,7 @@ export function AgentsActivityPanel() {
         <Show when={store.activityState() === "queued"}><p class="m-0 text-[12px] text-[var(--color-text-muted)]">Loading activity…</p></Show>
         <Show when={store.activityError()}><p class="m-0 text-[12px] text-[var(--color-danger)]" role="alert">{store.activityError()}</p></Show>
         <Show when={store.activityState() === "live" && store.activity().length === 0}>
-          <PageEmpty title="No agent writes" description="MCP clients have not changed anything yet." />
+          <PageEmpty title="No agent writes" />
         </Show>
         <Show when={store.activity().length > 0}>
           <DataTable.Root rows={store.activity()} getRowId={row => row.id ?? ""} virtualized={false} estimateRowHeight={44} columnWidthsKey="activity">

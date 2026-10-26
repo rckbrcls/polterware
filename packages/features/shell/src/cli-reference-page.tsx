@@ -259,13 +259,15 @@ const TOC: readonly TocEntry[] = [
 ];
 
 // Offset from the scroller's top edge at which a section counts as current.
-const ACTIVE_OFFSET = 32;
+/** Height of the toolbar that floats over the scroll area. */
+const TOOLBAR_OVERLAP = 48;
+const ACTIVE_OFFSET = 32 + TOOLBAR_OVERLAP;
 // Space kept above a section after navigating to it.
-const SCROLL_MARGIN = 16;
+const SCROLL_MARGIN = 16 + TOOLBAR_OVERLAP;
 
 function OnThisPage(props: { activeId: string; onNavigate: (id: string) => void }) {
   return (
-    <nav aria-label="On this page" class="sticky top-0 hidden self-start lg:block">
+    <nav aria-label="On this page" class="sticky top-14 hidden self-start lg:block">
       <ul class="m-0 grid list-none gap-0.5 p-0">
         <For each={TOC}>
           {(entry) => {
@@ -299,7 +301,7 @@ function OnThisPage(props: { activeId: string; onNavigate: (id: string) => void 
   );
 }
 
-export function CliReferencePage() {
+export function CliReferencePage(props: { tabs?: JSX.Element }) {
   const [activeId, setActiveId] = createSignal(FIRST_SECTION);
   let layout: HTMLDivElement | undefined;
 
@@ -350,18 +352,28 @@ export function CliReferencePage() {
   });
 
   return (
-    <div class="flex h-full min-h-0 flex-col">
+    <div class="relative flex h-full min-h-0 flex-col">
+      {/* The toolbar floats over the scroll area so the page has no header band. */}
+      <div class="pointer-events-none absolute inset-x-0 top-0 z-10 [&_button]:pointer-events-auto [&_[role=tablist]]:pointer-events-auto">
       <PageToolbar.Root>
-        <PageToolbar.Leading>
-          <span class="pw-page-toolbar-title">CLI reference</span>
-        </PageToolbar.Leading>
+        <Show
+          when={props.tabs}
+          fallback={
+            <PageToolbar.Leading>
+              <span class="pw-page-toolbar-title">CLI reference</span>
+            </PageToolbar.Leading>
+          }
+        >
+          <PageToolbar.Tabs>{props.tabs}</PageToolbar.Tabs>
+        </Show>
         <PageToolbar.Actions>
           <ToolbarIconButton label="Copy reference" onClick={() => void copyText(cliReferenceMarkdown(), "Reference")}>
             <Copy size={14} />
           </ToolbarIconButton>
         </PageToolbar.Actions>
       </PageToolbar.Root>
-      <PageContent class="overflow-auto px-4 py-8">
+      </div>
+      <PageContent class="pw-scroll-fade overflow-auto px-4 pb-8 pt-[72px]">
         <div
           ref={layout}
           class="grid w-full gap-10 lg:grid-cols-[180px_minmax(0,1fr)]"

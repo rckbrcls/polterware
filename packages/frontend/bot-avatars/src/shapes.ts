@@ -25,7 +25,13 @@ export const SHAPE_PATHS: Record<BotAvatarType, string> = {
 };
 
 /** Thin parts (antennae) drawn with a fraction of the body's depth. */
+/** Colours for a type's parts, in order (stalk, ball); a type without an entry keeps its body colour. */
+export const SHAPE_PART_COLORS: Partial<Record<BotAvatarType, (string | undefined)[]>> = {
+  ghost: ['#8f8f8f', '#4ade80'],
+};
+
 export const SHAPE_PARTS: Partial<Record<BotAvatarType, string>> = {
   droid: 'M47.5 14H52.5V32H47.5ZM43 11A7 7 0 1 1 57 11A7 7 0 1 1 43 11Z',
+  ghost: 'M47.5 9H52.5V20H47.5ZM44 7A6 6 0 1 1 56 7A6 6 0 1 1 44 7Z',
   mech: 'M19.5 32L24.5 32L17 13L12 13ZM75.5 32L80.5 32L88 13L83 13ZM10 11.5A4.5 4.5 0 1 1 19 11.5A4.5 4.5 0 1 1 10 11.5ZM81 11.5A4.5 4.5 0 1 1 90 11.5A4.5 4.5 0 1 1 81 11.5Z',
 };

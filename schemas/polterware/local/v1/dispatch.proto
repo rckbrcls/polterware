@@ -133,6 +133,14 @@ message StartRunRequest {
   string worktree = 6;
   string dir = 7;
   bool read_only = 8;
+  string provider = 9;
+  string model = 10;
+  string effort = 11;
+  string priority = 12;
+  bool relax = 13;
+  bool no_verify = 14;
+  int32 timeout_sec = 15;
+  string profile = 16;
 }
 
 message StartRunResponse {
@@ -298,6 +306,110 @@ message CapacityResponse {
   repeated DispatchCapacityKey keys = 3;
 }
 
+message RouteRequest {
+  string tier = 1;
+  string provider = 2;
+  string model = 3;
+  string effort = 4;
+  string agent = 5;
+  string priority = 6;
+  bool relax = 7;
+  bool read_only = 8;
+  string dir = 9;
+  string profile = 10;
+}
+
+message ClassifyRequest {
+  string tier = 1;
+  string prompt = 2;
+  string dir = 3;
+  bool read_only = 4;
+  bool explain = 5;
+  bool reset_model = 6;
+}
+
+message VerifyRunRequest {
+  string id = 1;
+}
+
+message MergeRunRequest {
+  string id = 1;
+  bool force = 2;
+  bool no_verify = 3;
+}
+
+message CleanRunRequest {
+  string id = 1;
+  bool force = 2;
+}
+
+message RecoverRunRequest {
+  string id = 1;
+}
+
+message ConfigRequest {
+  // get, set, allow-add, allow-rm, deny-add, or deny-rm.
+  string action = 1;
+  string dir = 2;
+  bool project = 3;
+  string key = 4;
+  repeated string values = 5;
+}
+
+message SubagentsRequest {
+  // list, init, or check.
+  string action = 1;
+  string dir = 2;
+}
+
+// ok is false when the operation ran but reports a failure; json is its body.
+message RouteResponse {
+  bool ok = 1;
+  string json = 2;
+}
+
+// ok is false when the operation ran but reports a failure; json is its body.
+message ClassifyResponse {
+  bool ok = 1;
+  string json = 2;
+}
+
+// ok is false when the operation ran but reports a failure; json is its body.
+message VerifyRunResponse {
+  bool ok = 1;
+  string json = 2;
+}
+
+// ok is false when the operation ran but reports a failure; json is its body.
+message MergeRunResponse {
+  bool ok = 1;
+  string json = 2;
+}
+
+// ok is false when the operation ran but reports a failure; json is its body.
+message CleanRunResponse {
+  bool ok = 1;
+  string json = 2;
+}
+
+// ok is false when the operation ran but reports a failure; json is its body.
+message RecoverRunResponse {
+  bool ok = 1;
+  string json = 2;
+}
+
+// ok is false when the operation ran but reports a failure; json is its body.
+message ConfigResponse {
+  bool ok = 1;
+  string json = 2;
+}
+
+// ok is false when the operation ran but reports a failure; json is its body.
+message SubagentsResponse {
+  bool ok = 1;
+  string json = 2;
+}
+
 service DispatchService {
   rpc ListRuns(ListRunsRequest) returns (ListRunsResponse);
   rpc GetRun(GetRunRequest) returns (GetRunResponse);
@@ -314,4 +426,12 @@ service DispatchService {
   rpc Stats(StatsRequest) returns (StatsResponse);
   rpc GetClassifier(GetClassifierRequest) returns (GetClassifierResponse);
   rpc Capacity(CapacityRequest) returns (CapacityResponse);
+  rpc Route(RouteRequest) returns (RouteResponse);
+  rpc Classify(ClassifyRequest) returns (ClassifyResponse);
+  rpc VerifyRun(VerifyRunRequest) returns (VerifyRunResponse);
+  rpc MergeRun(MergeRunRequest) returns (MergeRunResponse);
+  rpc CleanRun(CleanRunRequest) returns (CleanRunResponse);
+  rpc RecoverRun(RecoverRunRequest) returns (RecoverRunResponse);
+  rpc Config(ConfigRequest) returns (ConfigResponse);
+  rpc Subagents(SubagentsRequest) returns (SubagentsResponse);
 }

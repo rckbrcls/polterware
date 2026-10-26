@@ -16,14 +16,15 @@ import (
 	"github.com/polterware/polterware/backend/domains/dispatch"
 )
 
-const dispatchUsage = `usage: polterware dispatch run --tier <easy|normal|hard> [--card <slug>] [--agent <name>] [--worktree <dir>] [--json] [--compact] <prompt>
+const dispatchUsage = `usage: polterware dispatch run [--tier <easy|normal|hard>] [--as <profile>] [--card <slug>] [--agent <name>] [--provider <p>] [--model <m>] [--effort <e>] [--priority <p>] [--relax] [--readonly] [--no-verify] [--timeout <dur>] [--dir <repo>] [--worktree <dir>] [--json] [--compact] <prompt|->
        polterware dispatch ls [--json] [--compact]
        polterware dispatch status <id> [--json] [--compact]
        polterware dispatch result <id> [--section summary|agent|verification|files|attempts|meta|output] [--offset <n>] [--limit <n>] [--json] [--compact]
        polterware dispatch cancel <id> [--json] [--compact]
        polterware dispatch tiers [--check] [--json] [--compact]
        polterware dispatch stats [--json] [--compact]
-       polterware dispatch agents [--json] [--compact]`
+       polterware dispatch agents [--json] [--compact]
+` + dispatchOpsUsage
 
 type dispatchRunSummary struct {
 	ID           string            `json:"id"`
@@ -74,6 +75,36 @@ func runDispatch(dbPath string, args []string) error {
 		return runDispatchStats(dbPath, rest)
 	case "agents":
 		return runDispatchAgents(dbPath, rest)
+	case "wait":
+		return runDispatchWait(dbPath, rest)
+	case "route":
+		return runDispatchRoute(dbPath, rest)
+	case "classify":
+		return runDispatchClassify(dbPath, rest)
+	case "config":
+		return runDispatchConfig(dbPath, rest)
+	case "doctor":
+		return runDispatchDoctor(dbPath, rest)
+	case "verify":
+		return runDispatchVerify(dbPath, rest)
+	case "merge":
+		return runDispatchMerge(dbPath, rest)
+	case "clean":
+		return runDispatchClean(dbPath, rest)
+	case "recover":
+		return runDispatchRecover(dbPath, rest)
+	case "subagents":
+		return runDispatchSubagents(dbPath, rest)
+	case "on":
+		return runDispatchOn(dbPath)
+	case "off":
+		return runDispatchOff(dbPath)
+	case "hook":
+		return runDispatchHook(dbPath)
+	case "skill":
+		return runDispatchSkill(rest)
+	case "update":
+		return runDispatchUpdate(rest)
 	default:
 		return errors.New(dispatchUsage)
 	}
@@ -86,6 +117,16 @@ func runDispatchRun(dbPath string, args []string) error {
 	card := flags.String("card", "", "optional Work card slug")
 	agent := flags.String("agent", "", "optional agent pin")
 	worktree := flags.String("worktree", "", "optional worktree path")
+	provider := flags.String("provider", "", "restrict to a provider")
+	model := flags.String("model", "", "restrict to a model")
+	effort := flags.String("effort", "", "restrict to an effort: low|medium|high|xhigh")
+	priority := flags.String("priority", "", "speed|balanced|quality")
+	relax := flags.Bool("relax", false, "fall back to tier routing when filters match nothing")
+	readOnly := flags.Bool("readonly", false, "run read-only")
+	noVerify := flags.Bool("no-verify", false, "skip verification")
+	timeout := flags.Duration("timeout", 0, "per-attempt timeout (0 = default)")
+	profile := flags.String("as", "", "subagent profile")
+	dir := flags.String("dir", "", "repository (default: current directory)")
 	projectID := flags.String("project", "", "project id (default: project containing the cwd)")
 	asJSON := flags.Bool("json", false, "print one JSON object")
 	compact := flags.Bool("compact", false, "compact output")
@@ -93,10 +134,18 @@ func runDispatchRun(dbPath string, args []string) error {
 	if err != nil {
 		return err
 	}
-	if !validDispatchTier(*tier) {
+	pinned := *profile != "" || *model != "" || *provider != "" || *agent != ""
+	if *tier == "" && !pinned {
+		return errors.New(dispatchUsage)
+	}
+	if *tier != "" && !validDispatchTier(*tier) {
 		return errors.New(dispatchUsage)
 	}
 	prompt, err := readDispatchPrompt(positional)
+	if err != nil {
+		return err
+	}
+	wd, err := dispatchWD(*dir)
 	if err != nil {
 		return err
 	}
@@ -110,6 +159,16 @@ func runDispatchRun(dbPath string, args []string) error {
 		CardSlug:     strings.TrimSpace(*card),
 		Agent:        strings.TrimSpace(*agent),
 		Worktree:     strings.TrimSpace(*worktree),
+		Dir:          wd,
+		ReadOnly:     *readOnly,
+		Provider:     strings.TrimSpace(*provider),
+		Model:        strings.TrimSpace(*model),
+		Effort:       strings.TrimSpace(*effort),
+		Priority:     strings.TrimSpace(*priority),
+		Relax:        *relax,
+		NoVerify:     *noVerify,
+		TimeoutSec:   int(timeout.Seconds()),
+		Profile:      strings.TrimSpace(*profile),
 		Prompt:       prompt,
 		SessionID:    os.Getenv(envSession),
 		SessionLabel: os.Getenv(envAgentLabel),

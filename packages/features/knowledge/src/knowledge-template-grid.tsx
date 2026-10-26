@@ -23,10 +23,12 @@ export function KnowledgeTemplateGrid(props: {
   kind: KnowledgeTemplateKind | "evidence";
   label?: string;
   showLabel?: boolean;
+  /** Show only the first few templates. */
+  limit?: number;
   onSelect: (template: KnowledgeCreateTemplate) => void;
 }) {
   const items = (): TemplateCardGridItem[] =>
-    (props.kind === "evidence" ? evidenceTemplates() : knowledgeTemplatesForKind(props.kind)).map((template) => ({
+    (props.kind === "evidence" ? evidenceTemplates() : knowledgeTemplatesForKind(props.kind)).slice(0, props.limit ?? Infinity).map((template) => ({
       id: template.id,
       title: template.title,
       description: template.description,

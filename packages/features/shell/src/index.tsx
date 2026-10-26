@@ -66,6 +66,8 @@ export {
   ensureRouteAvailable,
   requiredCapabilityForSection,
   sectionAvailable,
+  sectionMemory,
+  withSectionMemory,
 } from "./route";
 export { MainSurface, PageHeader, PageContent } from "./main-surface";
 export { EntityDetailHost, type EntityDetailHostProps } from "./entity-detail-host";
@@ -149,7 +151,6 @@ export function Shell(props: {
   onOpenSettings?: () => void;
   /** True while the Settings dialog is open. */
   settingsOpen?: boolean;
-  onOpenCliReference?: () => void;
   workspace?: WorkspaceContext;
   projects?: ProjectSwitcherItem[];
   environments?: EnvironmentItem[];
@@ -247,7 +248,6 @@ export function Shell(props: {
                 </div>
                 <div class="mt-auto px-2 py-3">
                   <SidebarSettingsItem
-                    onOpenCliReference={props.onOpenCliReference}
                     active={props.settingsOpen}
                     onSelect={() => props.onOpenSettings?.()}
                   />

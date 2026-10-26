@@ -37,6 +37,9 @@ func runHook(dbPath string, args []string) error {
 	if len(args) == 0 {
 		return errors.New("usage: polterware hook session-start [--label name] | session-end | lint | status | stop")
 	}
+	if args[0] == "dispatch" {
+		return runDispatchHook(dbPath)
+	}
 	if !hookEnabled(dbPath, args[0]) {
 		return nil
 	}

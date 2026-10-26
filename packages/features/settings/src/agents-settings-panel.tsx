@@ -1,5 +1,5 @@
 import { Match, Switch, Show, createEffect, createSignal, on } from "solid-js";
-import { Button, RefreshCw, pushToast } from "@polterware/frontend-design-system";
+import { Button, pushToast } from "@polterware/frontend-design-system";
 import type {
   AgentSetupView,
   CompilePreviewResult,
@@ -209,11 +209,6 @@ export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSetti
     if (props.tab === "mcp") void refreshMcp();
   });
 
-  const refreshCurrent = () => {
-    if (props.tab === "mcp") void refreshMcp();
-    else void refreshSetup();
-  };
-
   return (
     <div class="flex flex-col gap-6 text-[12.5px]">
       <Switch>
@@ -223,6 +218,7 @@ export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSetti
             busy={mcpBusy()}
             onStart={() => startMcp()}
             onStop={() => stopMcp()}
+            onRefresh={() => void refreshMcp()}
           />
         </Match>
         <Match when={props.tab === "setup" || props.tab === "hooks"}>
@@ -231,6 +227,7 @@ export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSetti
             setup={setupView()}
             loaded={setupLoaded()}
             onToggle={(name, enabled) => void toggleHook(name, enabled)}
+            onRefresh={() => void refreshSetup()}
           />
         </Match>
         <Match when={props.tab === "skill"}>
@@ -280,14 +277,6 @@ export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSetti
           </SettingsSection>
         </Match>
       </Switch>
-      <Show when={props.tab === "mcp" || props.tab === "setup" || props.tab === "hooks"}>
-        <div class="flex justify-end">
-          <Button size="sm" variant="ghost" disabled={props.tab === "mcp" && mcpBusy()} onClick={refreshCurrent}>
-            <RefreshCw size={14} aria-hidden />
-            Refresh
-          </Button>
-        </div>
-      </Show>
     </div>
   );
 }

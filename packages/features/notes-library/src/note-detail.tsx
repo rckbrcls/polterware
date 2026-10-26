@@ -44,10 +44,10 @@ export function NoteDetail(props: NoteDetailProps) {
     <Show when={pending()}><PageLoading label="Loading note" /></Show>
     <Show when={error()}><PageError title="Note unavailable" message={error()} onRetry={() => { setError(""); void store.load(props.noteId, true).catch(value => setError(errorText(value))); }} /></Show>
     <Show when={store.deleting().has(props.noteId)}>
-      <PageEmpty title="Deletion queued" description="Undo within 8 seconds to keep this note and its related data." />
+      <PageEmpty title="Deletion queued" />
       <UndoNotice store={store} />
     </Show>
-    <Show when={!current() && !pending() && !error() && !store.deleting().has(props.noteId)}><PageEmpty title="Note removed" description="Open another note to continue." /></Show>
+    <Show when={!current() && !pending() && !error() && !store.deleting().has(props.noteId)}><PageEmpty title="Note removed" /></Show>
     <Show when={!store.deleting().has(props.noteId) && current()}>{note => <NotePageBody note={note()} store={store} sections={sections()} onDelete={() => setConfirmDelete(true)} edit={edit} />}</Show>
     <A11yDialog open={confirmDelete()} title="Delete note?" size="sm" onClose={() => setConfirmDelete(false)} footer={<><Button variant="secondary" onClick={() => setConfirmDelete(false)}>Cancel</Button><Button variant="danger" onClick={() => void remove()}>Delete</Button></>}>
       <p>Deletion is queued for 8 seconds. Undo cancels it and preserves the note and all its related data.</p>

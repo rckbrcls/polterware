@@ -349,6 +349,13 @@ importers:
       '@connectrpc/connect-node':
         specifier: ^2.2.0
         version: 2.2.0(@bufbuild/protobuf@2.15.0)(@connectrpc/connect@2.2.0(@bufbuild/protobuf@2.15.0))
+    devDependencies:
+      '@electron-toolkit/utils':
+        specifier: ^4.0.0
+        version: 4.0.0(electron@44.4.5(supports-color@8.1.1))
+      '@fontsource-variable/inter':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@polterware/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -385,22 +392,12 @@ importers:
       '@polterware/frontend-state':
         specifier: workspace:*
         version: link:../../packages/frontend/state
-      '@tanstack/solid-virtual':
-        specifier: 3.13.40
-        version: 3.13.40(solid-js@1.9.15)
-      solid-js:
-        specifier: ^1.9.15
-        version: 1.9.15
-    devDependencies:
-      '@electron-toolkit/utils':
-        specifier: ^4.0.0
-        version: 4.0.0(electron@44.4.5(supports-color@8.1.1))
-      '@fontsource-variable/inter':
-        specifier: ^5.3.0
-        version: 5.3.0
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@7.3.6(@types/node@24.13.6)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@tanstack/solid-virtual':
+        specifier: 3.13.40
+        version: 3.13.40(solid-js@1.9.15)
       '@types/node':
         specifier: ^24.13.6
         version: 24.13.6
@@ -419,6 +416,9 @@ importers:
       jsdom:
         specifier: ^30.1.1
         version: 30.1.1(@noble/hashes@2.4.0)
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
@@ -1075,6 +1075,9 @@ importers:
       '@hugeicons/core-free-icons':
         specifier: ^4.3.5
         version: 4.3.5
+      '@polterware/bot-avatars':
+        specifier: workspace:*
+        version: link:../bot-avatars
       '@polterware/frontend-state':
         specifier: workspace:*
         version: link:../state

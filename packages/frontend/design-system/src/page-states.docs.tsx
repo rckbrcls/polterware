@@ -50,7 +50,6 @@ export default {
         <PageEmpty
           illustration={<EmptyIllustration><span class="text-[28px]">○</span></EmptyIllustration>}
           title="No decisions yet"
-          description="Capture a decision to give this project durable context."
           action={<Button size="sm">Create decision</Button>}
         />
         // #endregion

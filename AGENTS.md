@@ -21,7 +21,7 @@ Polterware's category is **Project Context & Change Intelligence for AI Coding**
 
 ## Current product boundary
 
-Polterware is both the umbrella and the main local-first app (`apps/polterware-desktop`), alongside Polterware Notes and Polterware Vitals. Polterware's first version is a local SQLite-backed Desktop with project surfaces Inbox, Work, Structure, Canvas, Truth, Dispatch, Integrations, and Activity. Project switching happens on the Projects screen, reached through the Home button in the title bar, before entering a project. Settings is fixed in the sidebar footer and holds Project, Agents, and App preferences. Inbox is the default route.
+Polterware is both the umbrella and the main local-first app (`apps/polterware-desktop`), alongside Polterware Notes and Polterware Vitals. Polterware's first version is a local SQLite-backed Desktop with project surfaces Inbox, Work, Structure, Canvas, Truth, Dispatch, Platforms, Core, and Activity. Project switching happens on the Projects screen, reached through the Home button in the title bar, before entering a project. Settings is fixed in the sidebar footer and holds Project, Agents, and App preferences. Inbox is the default route.
 
 The umbrella is an ecosystem, not a list: apps and tools live under Polterware only when they can integrate with the others. See [`docs/ecosystem.md`](docs/ecosystem.md) for the admission criteria and the current roster.
 
@@ -29,7 +29,7 @@ The Desktop supports multiple local projects and environments. It has no hosted 
 
 - Integrations: detect CLI binaries, start provider authentication commands in a core-owned PTY, optionally open provider documentation through Main `openExternal`, and probe connection status. Credentials stay in the OS/CLI credential store. **KEEP** as evidence/Connect path (not a provider console).
 
-The integration catalog contains exactly GitHub, GitLab, AWS, Google Cloud, Azure, Vercel, Supabase, Terraform, and Docker. Do not add placeholders or app-owned provider-token fields, and never persist provider credentials in SQLite. Raw PTY output is not guaranteed to be sanitized; do not describe it as redacted.
+The System group has two routes: Platforms (platform CLIs, section id `integrations`, Connected and Catalog tabs) and Core (the coding agent CLIs Dispatch routes to, plus MCP, setup, hooks, and the skill). Never persist provider credentials in SQLite or add app-owned provider-token fields. Raw PTY output is not guaranteed to be sanitized; do not describe it as redacted.
 
 ## Polterware Notes (second app)
 
@@ -61,8 +61,9 @@ The monorepo also hosts Polterware Notes, a separate local-first app with its ow
   - Facts are statements about the project (declared, observed, inferred, or verified); each lists the evidence that backs it.
   - Evidence is one list of `source`, `doc`, and `runbook` items with a kind filter. Sources are registered project-relative paths (`kind = source`); Import from project root runs `ImportProjectSources` for the MVP file set. Generic filesystem indexing beyond that set is not shipped.
   - Resources are Structure components; there is no separate Inventory surface.
-- Dispatch: sidebar section with three routes. Runs holds Runs and Agents. Routing holds Tiers and Learning. Usage holds Stats. Agents show quota and pace per agent. Worktree info lives on the run card. A dispatch run is a core-executed delegation in `backend/domains/dispatch`. It may reference an AgentRun id and a Work card slug, and it is not itself an AgentRun. CLI (`polterware dispatch`) and the TUI read it through the core. There is no Dispatch MCP tool. Live output stays on Runs. Quota comes only from the CLIs' official protocols; unknown usage stays unknown.
-- Integrations: one sidebar route after Dispatch, with Connected and Catalog tabs (**KEEP** — evidence + Connect UI).
+- Dispatch: sidebar section with three routes. Runs holds Runs and Agents. Routing holds Tiers and Learning. Usage holds Stats. Agents show quota and pace per agent. Worktree info lives on the run card. A dispatch run is a core-executed delegation in `backend/domains/dispatch`. Every delegation starts a linked AgentRun (the audited session its agent writes under, shown in Activity) and may reference a Work card slug. The CLI exposes the commands directly (`polterware run|wait|result|cancel|runs|merge|clean|recover|route|classify|tiers|usage|agents|doctor|subagents|config|skill`, `verify run <id>`, `hooks enable dispatch`; `polterware dispatch ...` stays as a legacy alias) and the TUI reads it through the core. There is no Dispatch MCP tool. Live output stays on Runs. Quota comes only from the CLIs' official protocols; unknown usage stays unknown.
+- Platforms: sidebar route after Dispatch (section id `integrations`) with Connected and Catalog tabs for platform CLIs (**KEEP** — evidence + Connect UI).
+- Core: sidebar route (section id `agents`) after Platforms, the hub for the backend, with Agents (setup checks, hooks, skill), Server (MCP helper, local core), and CLI reference tabs. The Help menu no longer has a CLI reference entry.
 - Activity: flat page with the Unified Change History of justified changes across every surface, plus dispatch history entries (started, verified, merged, failed), filterable by person, agent, and tier. It has no data of its own. Opening a dispatch entry shows a summary, not the live log.
 - Settings (dialog with a grouped rail):
   - Project: General, Repositories, Environments, Danger zone (archive project)

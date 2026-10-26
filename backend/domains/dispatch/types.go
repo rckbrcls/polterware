@@ -1,6 +1,6 @@
 // Package dispatch is the execution engine for delegated coding runs.
-// A dispatch run is not an AgentRun. It is a delegation executed by the core
-// and may reference an AgentRun id and a Work card slug.
+// A dispatch run is a delegation executed by the core. The core links it to an
+// AgentRun (its audited session) and it may reference a Work card slug.
 package dispatch
 
 import (
@@ -70,7 +70,7 @@ type Attempt struct {
 	DurationMs *int64
 }
 
-// Run is one delegated execution. It is not an AgentRun record.
+// Run is one delegated execution, linked to an AgentRun by AgentRunID.
 //
 // Tier fields:
 //   - RequestedTier is the caller's tier before classification; it is empty

@@ -6,7 +6,7 @@ const feature: NotesFeature = {
   routes: [...SHELL_ROUTES, { path: "/space/:id", title: "Space" }].map(route => ({
     path: route.path, title: route.title,
     component: () => <><PageHeader title={route.title} subtitle={<StatusChip tone="muted" label="Unavailable" />} />
-      <PageEmpty title={`${route.title} is unavailable`} description="This feature has not registered a route yet." /></>,
+      <PageEmpty title={`${route.title} is unavailable`} /></>,
   })),
 };
 export default feature;

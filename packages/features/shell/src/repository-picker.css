@@ -1,7 +1,6 @@
 /* Create-project repository surface — tall empty invite; filled path row. */
 
 .pw-repository-picker {
-  --tx-face-radius: calc(var(--radius-control) - 2px);
   appearance: none;
   display: flex;
   width: 100%;

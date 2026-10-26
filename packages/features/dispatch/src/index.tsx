@@ -14,7 +14,6 @@ import {
   Field,
   FileDiff,
   FileText,
-  FilterPopover,
   Folder,
   Gauge,
   GitBranch,
@@ -26,6 +25,7 @@ import {
   Play,
   ProgressBar,
   Route,
+  RefreshCw,
   Select,
   SegmentDisplay,
   Settings,
@@ -817,44 +817,41 @@ export function DispatchPage(props: {
                 <Play size={14} />
               </ToolbarIconButton>
             </Show>
+            <Show when={activeTab() === "agents"}>
+              <Button
+                size="icon"
+                variant="texture"
+                class="!rounded-full"
+                aria-label="Scan for installed agents"
+                disabled={busy()}
+                onClick={() => void refresh().then(() => pushToast("Scanned for installed agents.", "success"))}
+              >
+                <RefreshCw size={14} aria-hidden />
+              </Button>
+            </Show>
             <Show when={activeTab() === "stats"}>
-              <FilterPopover
-                ariaLabel="Stats filters"
-                title="Filter stats"
-                active={statsBy() !== "day" || statsSince() !== "7d"}
-                onClear={() => {
-                  setStatsBy("day");
-                  setStatsSince("7d");
-                }}
-                groups={[
-                  {
-                    id: "group-by",
-                    label: "Group by",
-                    selectionMode: "single",
-                    options: DISPATCH_STATS_BY_OPTIONS.map((option) => ({
-                      id: option.value,
-                      label: option.label,
-                      checked: statsBy() === option.value,
-                      onCheckedChange: (checked: boolean) => {
-                        if (checked) setStatsBy(option.value);
-                      },
-                    })),
-                  },
-                  {
-                    id: "since",
-                    label: "Since",
-                    selectionMode: "single",
-                    options: DISPATCH_STATS_SINCE_OPTIONS.map((option) => ({
-                      id: option.value,
-                      label: option.label,
-                      checked: statsSince() === option.value,
-                      onCheckedChange: (checked: boolean) => {
-                        if (checked) setStatsSince(option.value);
-                      },
-                    })),
-                  },
-                ]}
-              />
+              <div class="w-44">
+                <Select
+                  size="sm"
+                  class="!rounded-full !px-4"
+                  aria-label="Group stats by"
+                  title="Group by"
+                  value={statsBy()}
+                  options={DISPATCH_STATS_BY_OPTIONS}
+                  onChange={setStatsBy}
+                />
+              </div>
+              <div class="w-44">
+                <Select
+                  size="sm"
+                  class="!rounded-full !px-4"
+                  aria-label="Stats since"
+                  title="Since"
+                  value={statsSince()}
+                  options={DISPATCH_STATS_SINCE_OPTIONS}
+                  onChange={setStatsSince}
+                />
+              </div>
               <Show when={statsInFlight() > 0}>
                 <StatusChip tone="syncing" label={`${statsInFlight()} in flight`} />
               </Show>
@@ -904,8 +901,8 @@ export function DispatchPage(props: {
                     }
                   >
                     <PageEmpty
-                      title="No dispatch runs yet"
-                      description="Start a run to delegate a task to a worker agent."
+                      title="No runs yet"
+                      mood="sleeping"
                     />
                   </Show>
                 }
@@ -956,7 +953,7 @@ export function DispatchPage(props: {
           <PageContent class="flex min-h-0 flex-1 flex-col overflow-auto p-4">
             <Show
               when={agentCards().length > 0}
-              fallback={<PageEmpty title="No agents registered" description="Registered worker agents and their quota snapshots appear here." />}
+              fallback={<PageEmpty title="No agents found" mood="sad" />}
             >
               <div class="grid auto-rows-fr items-stretch gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,17.5rem),1fr))]">
                 <For each={agentCards()}>
@@ -1122,7 +1119,7 @@ export function DispatchPage(props: {
 
             <Show
               when={tierCards().length > 0}
-              fallback={<PageEmpty title="No tiers configured" description="Configure dispatch tiers in the core." />}
+              fallback={<PageEmpty title="No tiers" mood="sad" />}
             >
               <div class="grid auto-rows-fr items-stretch gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,17.5rem),1fr))]">
                 <For each={tierCards()}>

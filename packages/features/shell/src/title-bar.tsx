@@ -2,8 +2,9 @@ import {
   Button,
   ChevronLeft,
   ChevronRight,
-  House,
+  Home01Icon,
   Search,
+  TextureButtonGroup,
 } from "@polterware/frontend-design-system";
 import { createShortcutLabel } from "@polterware/frontend-state";
 import { TitleBarFrame } from "@polterware/frontend-shell";
@@ -22,33 +23,23 @@ export function TitleBar(props: TitleBarProps) {
 
   return (
     <TitleBarFrame>
-        <div class="flex shrink-0 items-center [-webkit-app-region:no-drag]">
+        <div class="ml-2 flex shrink-0 items-center gap-1 [-webkit-app-region:no-drag]">
+          <TextureButtonGroup
+            label="History"
+            items={[
+              { label: "Go back", icon: <ChevronLeft size={13} />, disabled: !props.canGoBack, onClick: props.onBack },
+              { label: "Go forward", icon: <ChevronRight size={13} />, disabled: !props.canGoForward, onClick: props.onForward },
+            ]}
+          />
           <Button
-            variant="icon"
-            aria-label="Go back"
-            disabled={!props.canGoBack}
-            onClick={props.onBack}
-          >
-            <ChevronLeft size={13} />
-          </Button>
-          <Button
-            variant="icon"
-            aria-label="Go forward"
-            disabled={!props.canGoForward}
-            onClick={props.onForward}
-          >
-            <ChevronRight size={13} />
-          </Button>
-        </div>
-
-        <div class="flex shrink-0 items-center [-webkit-app-region:no-drag]">
-          <Button
-            variant="icon"
+            variant="texture"
+            size="icon"
+            class="!h-[var(--control-height-md)] !w-[var(--control-height-md)]"
             aria-label="Home"
             title="Projects"
             onClick={() => props.onGoHome?.()}
           >
-            <House size={13} />
+            <Home01Icon size={13} />
           </Button>
         </div>
 

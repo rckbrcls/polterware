@@ -33,7 +33,7 @@ export function RepositoryPicker(props: {
       type="button"
       disabled={props.disabled || picking()}
       aria-label={props["aria-label"] ?? (empty() ? "Select a project folder" : "Change project folder")}
-      class="pw-repository-picker pw-texture-button"
+      class="pw-repository-picker control-field"
       data-empty={empty() ? "true" : "false"}
       data-picking={picking() ? "true" : "false"}
       onClick={() => {

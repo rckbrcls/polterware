@@ -14,7 +14,7 @@ export function EnvironmentsEmpty(props: {
         fallback={
           <PageEmpty
             title="No environments"
-            description="This project has no environments yet."
+            mood="sleeping"
             action={
               props.onCreate ? (
                 <Button size="sm" variant="primary" onClick={() => props.onCreate?.()}>
@@ -25,10 +25,9 @@ export function EnvironmentsEmpty(props: {
           />
         }
       >
-        <EnvironmentTemplateGrid
-          showLabel={false}
-          onSelect={(template) => props.onCreateFromTemplate?.(template)}
-        />
+        <PageEmpty title="No environments" mood="sleeping">
+          <EnvironmentTemplateGrid showLabel={false} onSelect={(template) => props.onCreateFromTemplate?.(template)} />
+        </PageEmpty>
       </Show>
     </div>
   );

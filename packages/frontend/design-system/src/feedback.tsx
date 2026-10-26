@@ -1,5 +1,6 @@
 import type { JSX } from "solid-js";
 import { Button } from "./button";
+import { EmptyBot, type EmptyBotMood } from "./empty-bot";
 import { PageSkeleton, type PageSkeletonLayout } from "./skeleton";
 
 export function PageLoading(props: { label?: string; layout?: PageSkeletonLayout }) {
@@ -8,22 +9,22 @@ export function PageLoading(props: { label?: string; layout?: PageSkeletonLayout
 
 export function PageEmpty(props: {
   title?: string;
-  description?: string;
   action?: JSX.Element;
   children?: JSX.Element;
   illustration?: JSX.Element;
+  /** Bot avatar mood; defaults to sleeping. Ignored when `illustration` is set. */
+  mood?: EmptyBotMood;
 }) {
   return (
-    <div class="flex h-full min-h-[200px] flex-col items-center justify-center gap-2 p-8 text-center">
-      {props.illustration}
-      {props.title ? (
-        <p class="text-[14px] font-medium text-[var(--color-text-primary)]">{props.title}</p>
-      ) : null}
-      {props.description ? (
-        <p class="max-w-sm text-[13px] text-[var(--color-text-muted)]">{props.description}</p>
-      ) : null}
-      {props.action}
-      {props.children ? <div class="mt-4 w-full max-w-3xl">{props.children}</div> : null}
+    <div class="flex h-full min-h-[200px] w-full p-8">
+      <div class="m-auto flex flex-col items-center gap-2 text-center">
+        {props.illustration ?? <EmptyBot mood={props.mood} />}
+        {props.title ? (
+          <p class="mt-2 text-[18px] font-semibold leading-tight text-[var(--color-text-primary)]">{props.title}</p>
+        ) : null}
+        {props.action ? <div class="mt-2">{props.action}</div> : null}
+        {props.children ? <div class="mt-4 w-full max-w-3xl">{props.children}</div> : null}
+      </div>
     </div>
   );
 }

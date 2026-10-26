@@ -1,4 +1,4 @@
-import { Show, createEffect, createMemo, createSignal, on } from "solid-js";
+import { Show, createEffect, createMemo, createSignal, on, type JSX } from "solid-js";
 import {
   Button,
   DataTable,
@@ -31,7 +31,8 @@ export { IntegrationInlineDetail } from "./integration-inline-detail";
 export { ConnectProviderDialog } from "./connect-provider-dialog";
 
 function normalizeTab(value?: string): "connected" | "catalog" {
-  return value === "catalog" ? "catalog" : "connected";
+  if (value === "catalog") return value;
+  return "connected";
 }
 
 function integrationTone(status: WorkspaceIntegration["status"]): "healthy" | "danger" | "warn" | "muted" {
@@ -157,9 +158,9 @@ export function IntegrationsView(props: {
                   <DataTable.Table aria-label="Connected integrations">
                     <DataTable.Header>
                       <DataTable.ColumnHeader<WorkspaceIntegration> id="name" minWidth={240}>Integration</DataTable.ColumnHeader>
-                      <DataTable.ColumnHeader<WorkspaceIntegration> id="status" width="8rem" resizable={false}>Status</DataTable.ColumnHeader>
-                      <DataTable.ColumnHeader<WorkspaceIntegration> id="environment" width="10rem" resizable={false}>Environment</DataTable.ColumnHeader>
-                      <DataTable.ColumnHeader<WorkspaceIntegration> id="lastSync" width="10rem" resizable={false}>Last refresh</DataTable.ColumnHeader>
+                      <DataTable.ColumnHeader<WorkspaceIntegration> id="status" width="8rem">Status</DataTable.ColumnHeader>
+                      <DataTable.ColumnHeader<WorkspaceIntegration> id="environment" width="10rem">Environment</DataTable.ColumnHeader>
+                      <DataTable.ColumnHeader<WorkspaceIntegration> id="lastSync" width="10rem">Last refresh</DataTable.ColumnHeader>
                       <DataTable.ColumnHeader<WorkspaceIntegration> id="actions" width="3rem" sortable={false} resizable={false}><span class="sr-only">Actions</span></DataTable.ColumnHeader>
                     </DataTable.Header>
                     <DataTable.Body<WorkspaceIntegration>>
@@ -200,9 +201,9 @@ export function IntegrationsView(props: {
                   <DataTable.Table aria-label="CLI integration catalog">
                     <DataTable.Header>
                       <DataTable.ColumnHeader<WorkspaceCatalogProvider> id="name" width="18rem" minWidth={240}>Provider</DataTable.ColumnHeader>
-                      <DataTable.ColumnHeader<WorkspaceCatalogProvider> id="category" width="9rem" resizable={false}>Category</DataTable.ColumnHeader>
+                      <DataTable.ColumnHeader<WorkspaceCatalogProvider> id="category" width="9rem">Category</DataTable.ColumnHeader>
                       <DataTable.ColumnHeader<WorkspaceCatalogProvider> id="binary">CLI</DataTable.ColumnHeader>
-                      <DataTable.ColumnHeader<WorkspaceCatalogProvider> id="state" width="9rem" resizable={false}>State</DataTable.ColumnHeader>
+                      <DataTable.ColumnHeader<WorkspaceCatalogProvider> id="state" width="9rem">State</DataTable.ColumnHeader>
                     </DataTable.Header>
                     <DataTable.Body<WorkspaceCatalogProvider>>
                       {(provider) => (

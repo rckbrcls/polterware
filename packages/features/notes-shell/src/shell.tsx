@@ -314,7 +314,7 @@ export function NotesShell(props: { features: readonly NotesFeature[]; bridge?: 
                 <Show when={core.state() === "live"} fallback={<PageOffline title="Core offline" message="Polterware Notes cannot reach the local core. Retry to reconnect." onRetry={() => void core.refresh()} />}>
                   <Show keyed when={path()}>{(_path) => <ErrorBoundary fallback={boundary}>
                     <Show when={!hasFeatureRoute() && /^\/space\/[^/]+$/.test(normalizePath(path())) && noteCollection()} fallback={
-                      <Show when={route()} fallback={<><PageHeader title={title()} subtitle={<StatusChip tone="muted" label="Unavailable" />} /><PageEmpty title={`${title()} is unavailable`} description="This feature has not registered a route yet." /></>}>
+                      <Show when={route()} fallback={<><PageHeader title={title()} subtitle={<StatusChip tone="muted" label="Unavailable" />} /><PageEmpty title={`${title()} is unavailable`} /></>}>
                         {resolved => <Dynamic component={resolved().route.component} />}
                       </Show>
                     }>{collection => <NoteDetailHost><Dynamic component={collection()} spaceId={decodeURIComponent(normalizePath(path()).split("/")[2] ?? "")} /></NoteDetailHost>}</Show>
@@ -331,7 +331,7 @@ export function NotesShell(props: { features: readonly NotesFeature[]; bridge?: 
       <SettingsDialog open={settingsOpen()} onClose={() => setSettingsOpen(false)}
         items={settingsNav()} active={activeSettings()?.id ?? ""} onSelect={setSettingsPanel}>
         <div class="notes-settings-content text-[13px] text-[var(--color-text-secondary)]">
-          <Show when={activeSettings()} fallback={<PageEmpty title="Settings unavailable" description="Settings panels have not been registered yet." />}>
+          <Show when={activeSettings()} fallback={<PageEmpty title="Settings unavailable" />}>
             {panel => <Show keyed when={panel().id}>{(_id) => <ErrorBoundary fallback={boundary}><Dynamic component={panel().component} /></ErrorBoundary>}</Show>}
           </Show>
         </div>

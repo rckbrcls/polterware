@@ -32,3 +32,8 @@
 .pw-knowledge-path:disabled {
   cursor: default;
 }
+
+/* The document page owns its insets so the cover and top actions sit at the toolbar edge. */
+.pw-knowledge-document-body > .pw-detail-panel__record {
+  padding: 0;
+}

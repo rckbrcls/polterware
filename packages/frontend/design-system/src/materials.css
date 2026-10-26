@@ -297,6 +297,7 @@
 
 /* Shared framed texture: buttons add interaction states; cards keep a stable face. */
 .pw-texture-button,
+.pw-texture-group,
 .card-texture-framed {
   --tx-frame: #141414;
   --tx-outer-top: #5c5c5c;

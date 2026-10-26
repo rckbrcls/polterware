@@ -93,8 +93,8 @@ export function CanonLinkEvidenceDialog(props: {
               </DataTable.Body>
               <DataTable.Empty>
                 <PageEmpty
-                  title="No evidence to link"
-                  description="Create evidence first, or all project evidence is already linked."
+                  title="Nothing to link"
+                  mood="sleeping"
                 />
               </DataTable.Empty>
             </DataTable.Table>

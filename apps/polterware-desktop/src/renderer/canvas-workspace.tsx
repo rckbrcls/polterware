@@ -1,6 +1,7 @@
 import { createMemo, createResource, createSignal, Show } from "solid-js";
 import { CanvasView, type StoreEntity } from "@polterware/feature-canvas";
 import { Button } from "@polterware/frontend-design-system";
+import { readRemembered, writeRemembered } from "@polterware/frontend-state";
 import type { WorkspaceSnapshot } from "./workspace/load";
 import { canvasPersistence } from "./workspace/persist";
 import { asObjectArray, asRecord, asString } from "./workspace/format";
@@ -40,6 +41,8 @@ export function CanvasWorkspace(props: { projectId: string; workspace: Workspace
     <Show when={facts.loading}><p role="status" class="px-4 text-xs text-[var(--color-text-muted)]">Loading project Facts…</p></Show>
     <Show when={facts()?.error}><p role="alert" class="px-4 text-sm text-[var(--color-danger)]">Could not load Facts: {facts()?.error} <Button size="sm" variant="ghost" onClick={() => void refetch()}>Retry</Button></p></Show>
     <Show when={reloadError()}><p role="alert" class="px-4 text-sm text-[var(--color-danger)]">Promotion saved. Could not refresh project data: {reloadError()} <Button size="sm" variant="ghost" onClick={() => void reload()}>Retry refresh</Button></p></Show>
-    <CanvasView projectId={props.projectId} port={port} entities={entities()} />
+    <CanvasView projectId={props.projectId} port={port} entities={entities()}
+      openCanvasId={readRemembered<string | undefined>(`canvas.${props.projectId}`, undefined)}
+      onOpenCanvasChange={(id) => writeRemembered(`canvas.${props.projectId}`, id)} />
   </div>;
 }

@@ -167,7 +167,6 @@ export function MetricsDashboard(props: {
       fallback={
         <PageEmpty
           title={props.status === "disconnected" ? "Disconnected" : "Connection failed"}
-          description={props.message || "The host could not be reached."}
           illustration={
             <EmptyIllustration class="vitals-empty-illustration">
               <IconTile size={28} dimmed seed="host-unreachable">

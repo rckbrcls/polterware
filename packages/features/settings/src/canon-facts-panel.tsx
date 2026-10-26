@@ -458,7 +458,7 @@ export function CanonFactsPanel(props: {
                 >
                   <PageEmpty
                     title="No facts yet"
-                    description="Import project sources or create a declared fact. Agent MCP writes also appear here."
+                    mood="sleeping"
                   />
                 </Show>
               </DataTable.Empty>

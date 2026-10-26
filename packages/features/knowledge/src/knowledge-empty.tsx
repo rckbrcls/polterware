@@ -13,8 +13,8 @@ export function WorkCardsEmpty(props: {
         when={props.onCreateFromTemplate}
         fallback={
           <PageEmpty
-            title="No cards yet."
-            description="Agents add cards with polterware apply."
+            title="No cards yet"
+            mood="sleeping"
             action={
               props.onCreate ? (
                 <Button size="sm" variant="primary" onClick={() => props.onCreate?.()}>
@@ -25,16 +25,14 @@ export function WorkCardsEmpty(props: {
           />
         }
       >
-        <KnowledgeTemplateGrid
-          kind="card"
-          showLabel={false}
-          onSelect={(template) => props.onCreateFromTemplate?.(template)}
-        />
+        <PageEmpty title="No cards yet" mood="sleeping">
+          <KnowledgeTemplateGrid kind="card" showLabel={false} limit={3} onSelect={(template) => props.onCreateFromTemplate?.(template)} />
+        </PageEmpty>
       </Show>
     </div>
   );
 }
 
 export function workCardsFilterEmpty() {
-  return <PageEmpty title="No cards match" description="Try another search or clear active filters." />;
+  return <PageEmpty title="No matches" mood="lost" />;
 }

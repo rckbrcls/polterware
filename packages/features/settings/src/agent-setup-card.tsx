@@ -1,5 +1,5 @@
 import { For, Index, Show } from "solid-js";
-import { Bot, Button, Copy, IconTile, Skeleton, SwitchRow, StatusChip, Webhook, pushToast } from "@polterware/frontend-design-system";
+import { Bot, Button, Copy, RefreshCw, IconTile, Skeleton, SwitchRow, StatusChip, Webhook, pushToast } from "@polterware/frontend-design-system";
 import type { AgentSetupView, HookSwitchRow } from "./agents-types";
 import { SettingsRow, SettingsSection } from "./settings-section";
 
@@ -100,12 +100,19 @@ export function AgentSetupCard(props: {
   setup: AgentSetupView | undefined;
   loaded: boolean;
   onToggle: (name: string, enabled: boolean) => void;
+  onRefresh: () => void;
 }) {
+  const refresh = (
+    <Button size="icon" variant="ghost" aria-label="Refresh" onClick={() => props.onRefresh()}>
+      <RefreshCw size={14} aria-hidden />
+    </Button>
+  );
   return (
     <>
       <Show when={props.section === "setup"}>
         <SettingsSection
           title="Agent setup"
+          action={refresh}
           description="What Claude Code and Codex need to read this project. Copy a fix and run it in your terminal."
         >
           <Show
@@ -164,6 +171,7 @@ export function AgentSetupCard(props: {
       <Show when={props.section === "hooks"}>
         <SettingsSection
           title="Hooks"
+          action={refresh}
           description="Claude Code hooks shipped with the Polterware plugin."
         >
           <Show

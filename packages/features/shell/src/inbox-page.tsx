@@ -291,8 +291,8 @@ export function InboxPage(props: {
             >
               <div class="flex h-full min-h-[200px] w-full items-center justify-center p-8">
                 <PageEmpty
-                  title="Nothing needs you right now."
-                  description="Open questions, drift findings, and facts to verify collect here."
+                  title="All quiet"
+                  mood="sleeping"
                 />
               </div>
             </Show>

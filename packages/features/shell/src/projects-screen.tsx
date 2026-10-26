@@ -5,11 +5,18 @@ import {
   Card,
   ContextMenu,
   Copy,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   ExternalLink,
   Folder,
+  FolderKanban,
+  IconTile,
   MoreHorizontal,
   PageContent,
   PageEmpty,
+  TemplateCardGrid,
   PageLoading,
   PageOffline,
   PageToolbar,
@@ -17,6 +24,7 @@ import {
   SearchBar,
   Settings,
   ToolbarIconButton,
+  buttonClassName,
 } from "@polterware/frontend-design-system";
 import type { ProjectSwitcherItem } from "./types";
 import "./projects-screen.css";
@@ -53,6 +61,7 @@ type CardMenu = { project: ProjectSwitcherItem; x: number; y: number };
 function ProjectCard(props: {
   project: ProjectSwitcherItem;
   onOpen: (projectId: string) => void;
+  onOpenSettings?: (projectId: string) => void;
   onMenu: (menu: CardMenu) => void;
 }) {
   const secondary = () => secondaryLine(props.project);
@@ -68,12 +77,17 @@ function ProjectCard(props: {
         element.tabIndex = 0;
         element.setAttribute("role", "button");
         element.setAttribute("aria-label", `Open ${props.project.name}`);
-        element.onclick = activate;
+        // The menu trigger lives inside the card; stopping propagation would also starve Ark's delegated handlers.
+        const inMenu = (event: Event) => event.target instanceof Element && event.target.closest(".pw-projects-card-menu") !== null;
+        element.onclick = (event) => {
+          if (!inMenu(event)) activate();
+        };
         element.oncontextmenu = (event) => {
           event.preventDefault();
           props.onMenu({ project: props.project, x: event.clientX, y: event.clientY });
         };
         element.onkeydown = (event) => {
+          if (inMenu(event)) return;
           if (event.key !== "Enter" && event.key !== " ") return;
           event.preventDefault();
           activate();
@@ -81,24 +95,43 @@ function ProjectCard(props: {
       }}
     >
       <div class="pw-projects-card-head">
+        <IconTile size={24} seed={props.project.projectId} class="shrink-0">
+          <FolderKanban size={14} />
+        </IconTile>
         <h2 class="truncate text-[14px] font-medium text-[var(--color-text-primary)]">
           {props.project.name}
         </h2>
-        <Button
-          variant="ghost"
-          size="icon"
-          class="pw-projects-card-menu"
-          aria-label={`Actions for ${props.project.name}`}
-          aria-haspopup="menu"
-          onClick={(event) => {
-            event.stopPropagation();
-            const bounds = event.currentTarget.getBoundingClientRect();
-            props.onMenu({ project: props.project, x: bounds.left, y: bounds.bottom });
-          }}
-          onKeyDown={(event) => event.stopPropagation()}
-        >
-          <MoreHorizontal size={14} aria-hidden="true" />
-        </Button>
+        <span class="pw-projects-card-menu">
+          <DropdownMenu positioning={{ placement: "bottom-end" }}>
+            <DropdownMenuTrigger aria-label={`Actions for ${props.project.name}`} class={buttonClassName("texture", "icon")}>
+              <MoreHorizontal size={14} aria-hidden="true" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="min-w-40">
+              <DropdownMenuItem value="open" onSelect={activate}>
+                <ExternalLink size={14} aria-hidden="true" />
+                Open
+              </DropdownMenuItem>
+              <Show when={props.onOpenSettings}>
+                <DropdownMenuItem value="settings" onSelect={() => props.onOpenSettings?.(props.project.projectId)}>
+                  <Settings size={14} aria-hidden="true" />
+                  Project settings
+                </DropdownMenuItem>
+              </Show>
+              <Show when={props.project.directory?.trim()}>
+                <DropdownMenuItem
+                  value="copy-path"
+                  onSelect={() => {
+                    const path = props.project.directory?.trim();
+                    if (path) void navigator.clipboard?.writeText(path);
+                  }}
+                >
+                  <Copy size={14} aria-hidden="true" />
+                  Copy path
+                </DropdownMenuItem>
+              </Show>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </span>
       </div>
       <Show when={secondary()}>
         {(line) => (
@@ -134,15 +167,14 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
   return (
     <div class="pw-projects">
       <PageToolbar.Root>
-        <PageToolbar.Leading>
+        <PageToolbar.Leading>{null}</PageToolbar.Leading>
+        <PageToolbar.Actions>
           <SearchBar
             placeholder="Search projects"
             aria-label="Search projects by name"
             value={query()}
             onInput={setQuery}
           />
-        </PageToolbar.Leading>
-        <PageToolbar.Actions>
           <ToolbarIconButton label="New project" onClick={() => props.onCreateProject()}>
             <Plus size={14} />
           </ToolbarIconButton>
@@ -164,21 +196,27 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
                   when={props.projects.length === 0}
                   fallback={
                     <PageEmpty
-                      title="No matching projects"
-                      description="No project name matches this search."
+                      title="No matches"
+                      mood="lost"
                     />
                   }
                 >
                   <PageEmpty
                     title="No projects yet"
-                    description="Create a local project to open its workspace."
-                    action={
-                      <Button size="sm" variant="texture" textureTone="brand" onClick={() => props.onCreateProject()}>
-                        <Plus size={14} />
-                        New project
-                      </Button>
-                    }
-                  />
+                    mood="sleeping"
+                  >
+                    <TemplateCardGrid
+                      items={[
+                        {
+                          id: "local-project",
+                          title: "Local project",
+                          description: "A workspace on this machine.",
+                          icon: <FolderKanban size={16} />,
+                          onSelect: () => props.onCreateProject(),
+                        },
+                      ]}
+                    />
+                  </PageEmpty>
                 </Show>
               }
             >
@@ -186,7 +224,7 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
                 <For each={filtered()}>
                   {(project) => (
                     <li>
-                      <ProjectCard project={project} onOpen={props.onOpenProject} onMenu={setMenu} />
+                      <ProjectCard project={project} onOpen={props.onOpenProject} onOpenSettings={props.onOpenProjectSettings} onMenu={setMenu} />
                     </li>
                   )}
                 </For>

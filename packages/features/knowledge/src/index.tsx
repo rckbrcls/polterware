@@ -39,7 +39,7 @@ import {
   type WorkspaceWorkBoard,
   type WorkStage,
 } from "@polterware/feature-shell";
-import { createDetailPanelSelector, detailDisplayFor, detailPanelStore } from "@polterware/frontend-state";
+import { createDetailPanelSelector, detailDisplayFor, detailPanelStore, readRemembered, writeRemembered } from "@polterware/frontend-state";
 import { CreateKnowledgeDialog, type CreateKnowledgeKind } from "./create-knowledge-dialog";
 import { AddEvidenceDialog, type NewEvidenceInput } from "./add-evidence-dialog";
 import type { EvidenceNoteProps } from "./knowledge-document-shell";
@@ -204,7 +204,7 @@ export function KnowledgeView(props: {
   onCreateEvidence?: (input: NewEvidenceInput) => void;
   onImportProjectSources?: () => void;
   importBusy?: boolean;
-  onCreateCard?: (title: string) => void;
+  onCreateCard?: (title: string, stage?: WorkStage) => void;
   /** Opens the new-feature flow; when set it replaces the plain card dialog. */
   onNewFeature?: () => void;
   /** Reopens the flow for a card in shape or plan. */
@@ -217,13 +217,17 @@ export function KnowledgeView(props: {
   scopeEnvironments?: readonly EnvironmentItem[];
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
 }) {
-  const [boardNavigation, setBoardNavigation] = createSignal(initialWorkBoardNavigation());
-  createEffect(on(() => props.boardProjectId, () => setBoardNavigation(initialWorkBoardNavigation())));
+  // The open board is remembered per project, so leaving Work and coming back returns to it.
+  const boardMemoryKey = () => `board.${props.boardProjectId ?? ""}`;
+  const [boardNavigation, setBoardNavigation] = createSignal(readRemembered(boardMemoryKey(), initialWorkBoardNavigation()));
+  createEffect(on(() => props.boardProjectId, () => setBoardNavigation(readRemembered(boardMemoryKey(), initialWorkBoardNavigation())), { defer: true }));
+  createEffect(() => { if (props.boardProjectId) writeRemembered(boardMemoryKey(), boardNavigation()); });
   const selectedBoard = createMemo(() => selectedWorkBoard(props.workBoards ?? [], boardNavigation().selectedId));
   const tab = () => normalizeTab(props.tab);
   /** Board and Specs both list Work cards and share the card detail. */
   const cardTab = () => tab() === "board" || tab() === "specs";
-  const boardList = () => tab() === "board" && !boardNavigation().isOpen;
+  /** List only exists inside a board, so both card tabs show the board picker until one is open. */
+  const boardList = () => cardTab() && !boardNavigation().isOpen;
   const libraryTab = () => tab() === "library";
   const evidenceTab = () => tab() === "evidence";
   const railItems = () => props.tabs ?? TABS;
@@ -239,6 +243,8 @@ export function KnowledgeView(props: {
   const [bodyOverrides, setBodyOverrides] = createSignal<Record<string, string>>({});
   const [pathOverrides, setPathOverrides] = createSignal<Record<string, string>>({});
   const [createOpen, setCreateOpen] = createSignal(false);
+  // The column a card is being added to from the board; shape when added from the toolbar.
+  const [createStage, setCreateStage] = createSignal<WorkStage | undefined>();
   const [evidenceAddOpen, setEvidenceAddOpen] = createSignal(false);
   const canAddEvidence = () =>
     evidenceTab() && Boolean(props.onCreateEvidence || props.onImportProjectSources);
@@ -422,6 +428,12 @@ export function KnowledgeView(props: {
     activate(row.id, row.entityKind);
   }
 
+  const addCardTo = props.onCreateCard
+    ? (stage: WorkStage) => {
+        setCreateStage(stage);
+        setCreateOpen(true);
+      }
+    : undefined;
   const createKind = createMemo((): CreateKnowledgeKind => (cardTab() ? "card" : "verdict"));
 
   const listSearch = createMemo(() => {
@@ -737,15 +749,23 @@ export function KnowledgeView(props: {
       <div class="flex h-full min-h-0 flex-col">
         <PageToolbar.Root>
           <PageToolbar.Leading class="gap-1">
-            <Show when={tab() === "board" && boardNavigation().isOpen}>
-              <Button variant="texture" size="icon" aria-label="All boards" onClick={() => setBoardNavigation((current) => backToWorkBoards(current))}>
+            <Show when={cardTab() && boardNavigation().isOpen}>
+              <Button
+                variant="texture"
+                size="icon"
+                aria-label="All boards"
+                onClick={() => {
+                  setBoardNavigation((current) => backToWorkBoards(current));
+                  if (tab() !== "board") changeTab("board");
+                }}
+              >
                 <ChevronLeft size={14} />
               </Button>
             </Show>
             <Show
               when={railItems().length > 1}
               fallback={
-                <Show when={!(tab() === "board" && boardNavigation().isOpen)}>
+                <Show when={!(cardTab() && boardNavigation().isOpen)}>
                 <span class="pw-page-toolbar-title">
                   {props.tabsLabel ?? railItems()[0]?.label ?? "Knowledge"}
                 </span>
@@ -870,10 +890,7 @@ export function KnowledgeView(props: {
             <Show
               when={(props.workCards ?? []).length > 0}
               fallback={
-                <WorkCardsEmpty
-                  onCreate={props.onNewFeature ?? (props.onCreateCard ? () => setCreateOpen(true) : undefined)}
-                  onCreateFromTemplate={props.onCreateFromTemplate}
-                />
+                <WorkBoard selectedBoard={selectedBoard()} cards={[]} activeSlug={null} onActivate={(slug) => activate(slug, "card")} onMoveCard={props.onSetCardStage} onAddCard={addCardTo} />
               }
             >
               <Show when={cards().length > 0} fallback={workCardsFilterEmpty()}>
@@ -888,6 +905,7 @@ export function KnowledgeView(props: {
                   }
                   onActivate={(slug) => activate(slug, "card")}
                   onMoveCard={props.onSetCardStage}
+                  onAddCard={addCardTo}
                 />
               </Show>
             </Show>
@@ -958,10 +976,6 @@ export function KnowledgeView(props: {
         <WorkBoardList
           boards={props.workBoards ?? []}
           cardCount={(props.workCards ?? []).length}
-          tabs={railItems()}
-          activeTab={props.activeTab ?? tab()}
-          tabsLabel={props.tabsLabel ?? "Work"}
-          onTabChange={changeTab}
           onOpen={(id) => setBoardNavigation(openWorkBoard(id))}
           onDelete={() => setBoardNavigation(initialWorkBoardNavigation())}
           onAction={props.onBoardAction}
@@ -1038,7 +1052,7 @@ export function KnowledgeView(props: {
         kind={createKind()}
         scopeNodes={props.scopeNodes}
         defaultScopePath={props.activeScopePath}
-        onClose={() => setCreateOpen(false)}
+        onClose={() => { setCreateOpen(false); setCreateStage(undefined); }}
         onCreateFromTemplate={
           props.onCreateFromTemplate
             ? (template) => {
@@ -1048,9 +1062,10 @@ export function KnowledgeView(props: {
             : undefined
         }
         onSubmit={(title, kind, scope, scopePath) => {
-          if (kind === "card") props.onCreateCard?.(title);
+          if (kind === "card") props.onCreateCard?.(title, createStage());
           else props.onCreate?.("verdict", title, scope, scopePath);
           setCreateOpen(false);
+          setCreateStage(undefined);
         }}
       />
       <AddEvidenceDialog

@@ -157,9 +157,15 @@ func runHooks(dbPath string, args []string) error {
 		return printHooks(dbPath)
 	}
 	if len(args) != 2 || (args[0] != "enable" && args[0] != "disable") {
-		return errors.New("usage: polterware hooks [list] | enable|disable <name|all>")
+		return errors.New("usage: polterware hooks [list] | enable|disable <name|dispatch|all>")
 	}
 	enabled := args[0] == "enable"
+	if args[1] == "dispatch" {
+		if enabled {
+			return runDispatchOn(dbPath)
+		}
+		return runDispatchOff(dbPath)
+	}
 	if args[1] == "all" {
 		return setAllHooks(dbPath, enabled)
 	}

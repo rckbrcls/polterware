@@ -107,6 +107,13 @@ func runFeature(dbPath string, args []string) error {
 // runVerify prints whether a card or task is finished and exits 1 when a
 // check fails. It never writes.
 func runVerify(dbPath string, args []string) error {
+	// `verify run <id>` re-checks a delegated run; `verify --init` writes the checks file.
+	if len(args) > 0 && args[0] == "run" {
+		return runDispatch(dbPath, append([]string{"verify"}, args[1:]...))
+	}
+	if len(args) > 0 && args[0] == "--init" {
+		return runDispatch(dbPath, append([]string{"verify"}, args...))
+	}
 	const verifyUsage = "usage: polterware verify <slug|slug#T2> [--project <id>]"
 	flags := flag.NewFlagSet("verify", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)

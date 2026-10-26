@@ -18,6 +18,7 @@ import (
 	"connectrpc.com/connect"
 
 	"github.com/polterware/polterware/backend/compositions/wedge"
+	"github.com/polterware/polterware/backend/domains/agentrun"
 	"github.com/polterware/polterware/backend/domains/dispatch"
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
 	"github.com/polterware/polterware/backend/platform/gen/polterware/local/v1/localv1connect"
@@ -149,7 +150,8 @@ func (core *Core) StartRun(ctx context.Context, request *connect.Request[localv1
 		return nil, invalid("project id is required")
 	}
 	tier := adapters.Tier(strings.TrimSpace(request.Msg.GetTier()))
-	if !tier.Valid() {
+	profileName := strings.TrimSpace(request.Msg.GetProfile())
+	if !tier.Valid() && profileName == "" && request.Msg.GetModel() == "" && request.Msg.GetProvider() == "" {
 		return nil, invalid("valid tier is required (easy, normal, or hard)")
 	}
 	prompt := strings.TrimSpace(request.Msg.GetPrompt())
@@ -178,7 +180,7 @@ func (core *Core) StartRun(ctx context.Context, request *connect.Request[localv1
 		dir = abs
 	}
 
-	deps, err := core.dispatchDeps(ctx)
+	deps, err := core.dispatchDepsIn(ctx, dir)
 	if err != nil {
 		return nil, internal(err)
 	}
@@ -207,14 +209,35 @@ func (core *Core) StartRun(ctx context.Context, request *connect.Request[localv1
 		Dir:        dir,
 		ReadOnly:   request.Msg.GetReadOnly(),
 		NoWorktree: noWorktree,
+		NoVerify:   request.Msg.GetNoVerify(),
+		Timeout:    time.Duration(request.Msg.GetTimeoutSec()) * time.Second,
 		Filters: dispatch.Filters{
-			Agent: strings.TrimSpace(request.Msg.GetAgent()),
+			Agent:    strings.TrimSpace(request.Msg.GetAgent()),
+			Provider: strings.TrimSpace(request.Msg.GetProvider()),
+			Model:    strings.TrimSpace(request.Msg.GetModel()),
+			Effort:   strings.TrimSpace(request.Msg.GetEffort()),
+			Priority: strings.TrimSpace(request.Msg.GetPriority()),
+			Relax:    request.Msg.GetRelax(),
 		},
+	}
+	if profileName != "" {
+		if err := core.applyDispatchProfile(&opts, profileName); err != nil {
+			core.dispatchStartMu.Unlock()
+			return nil, invalid(err.Error())
+		}
 	}
 	run, err := deps.Begin(opts)
 	core.dispatchStartMu.Unlock()
 	if err != nil {
 		return nil, invalid(err.Error())
+	}
+	// A delegation is also an audited Run: the agent it launches writes under
+	// this AgentRun, so Activity shows one history for both.
+	if agentRun, aerr := agentrun.Start(projectID, dispatchRunTask(prompt), "dispatch", time.Now().UTC()); aerr == nil {
+		if cerr := core.Store.CreateAgentRun(agentRun); cerr == nil {
+			run.AgentRunID = agentRun.ID
+			_ = core.Store.SaveRun(ctx, run)
+		}
 	}
 
 	if reqWorktree != "" {
@@ -994,6 +1017,32 @@ func (core *Core) probeAgentsAndQuota(ctx context.Context, filterAgent string, n
 	}
 }
 
+// dispatchRunTask is the one-line task an AgentRun shows for a delegation.
+func dispatchRunTask(prompt string) string {
+	line := strings.TrimSpace(strings.SplitN(strings.TrimSpace(prompt), "\n", 2)[0])
+	if len(line) > 160 {
+		line = line[:160]
+	}
+	if line == "" {
+		line = "delegated run"
+	}
+	return line
+}
+
+// completeLinkedAgentRun closes the AgentRun a delegation started.
+func (core *Core) completeLinkedAgentRun(run dispatch.Run) {
+	if run.AgentRunID == "" {
+		return
+	}
+	linked, err := core.Store.GetAgentRun(run.AgentRunID)
+	if err != nil || linked.Status != agentrun.StatusOpen {
+		return
+	}
+	if done, err := agentrun.Complete(linked, time.Now().UTC()); err == nil {
+		_ = core.Store.UpdateAgentRun(done)
+	}
+}
+
 func (core *Core) finalizeDispatchRun(ctx context.Context, run dispatch.Run) {
 	if core == nil || core.Store == nil || run.ID == "" {
 		return
@@ -1008,6 +1057,7 @@ func (core *Core) finalizeDispatchRun(ctx context.Context, run dispatch.Run) {
 	if latest, err := store.GetRun(ctx, run.ID); err == nil && isTerminalDispatchStatus(latest.Status) {
 		run = latest
 	}
+	core.completeLinkedAgentRun(run)
 	events, _ := store.ListEvents(ctx, run.ID, 0, 0)
 	if dispatchTerminalRecorded(events) {
 		_ = saveRunWorktree(ctx, store, run)

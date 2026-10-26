@@ -238,7 +238,7 @@ export function AgentRunHistoryCard(props: {
 
   return (
     <div class="flex min-h-0 flex-1 flex-col">
-      <div class="min-h-0 flex-1 overflow-auto">
+      <div class="flex min-h-0 flex-1 flex-col overflow-auto">
         <DataTable.Root rows={mergedRows()} getRowId={(change) => change.stepId}>
           <DataTable.Table aria-label="Unified change history">
             <DataTable.Header>
@@ -336,8 +336,8 @@ export function AgentRunHistoryCard(props: {
                 }
               >
                 <PageEmpty
-                  title="No justified changes yet"
-                  description="Human Desktop saves and MCP audited writes appear here with summary and rationale."
+                  title="No changes yet"
+                  mood="sleeping"
                 />
               </Show>
             </DataTable.Empty>

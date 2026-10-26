@@ -498,3 +498,26 @@
   max-width: min(480px, calc(100vw - 32px));
   overflow-wrap: anywhere;
 }
+
+/* An empty table shows only its empty state, not the column headers. */
+.pw-data-table:has(.pw-data-table-empty) > thead {
+  display: none;
+}
+
+/* ...and centers that empty state in the space the table fills. */
+.pw-data-table-root:has(.pw-data-table-empty) {
+  height: 100%;
+}
+
+.pw-data-table-scroll:has(.pw-data-table-empty) {
+  min-height: 240px;
+}
+
+.pw-data-table-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}

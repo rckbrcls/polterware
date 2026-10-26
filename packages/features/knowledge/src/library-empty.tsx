@@ -13,7 +13,8 @@ export function LibraryEmpty(props: {
         when={props.onCreateFromTemplate}
         fallback={
           <PageEmpty
-            title="No Verdicts yet."
+            title="No Verdicts yet"
+            mood="sleeping"
             action={
               props.onCreate ? (
                 <Button size="sm" variant="primary" onClick={() => props.onCreate?.()}>
@@ -24,7 +25,9 @@ export function LibraryEmpty(props: {
           />
         }
       >
-        <KnowledgeTemplateGrid kind="verdict" showLabel={false} onSelect={(template) => props.onCreateFromTemplate?.(template)} />
+        <PageEmpty title="No Verdicts yet" mood="sleeping">
+          <KnowledgeTemplateGrid kind="verdict" showLabel={false} limit={3} onSelect={(template) => props.onCreateFromTemplate?.(template)} />
+        </PageEmpty>
       </Show>
     </div>
   );
@@ -33,8 +36,8 @@ export function LibraryEmpty(props: {
 export function libraryFilterEmpty() {
   return (
     <PageEmpty
-      title="No Verdicts match"
-      description="Try another search or clear active filters."
+      title="No matches"
+      mood="lost"
     />
   );
 }

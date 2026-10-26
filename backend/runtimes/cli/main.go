@@ -9,6 +9,29 @@ import (
 	"golang.org/x/term"
 )
 
+// delegationCommands are the delegation commands exposed at the top level; the
+// value is the name the dispatch engine knows them by.
+var delegationCommands = map[string]string{
+	"run":       "run",
+	"runs":      "ls",
+	"wait":      "wait",
+	"result":    "result",
+	"cancel":    "cancel",
+	"route":     "route",
+	"classify":  "classify",
+	"merge":     "merge",
+	"clean":     "clean",
+	"recover":   "recover",
+	"subagents": "subagents",
+	"tiers":     "tiers",
+	"usage":     "stats",
+	"agents":    "agents",
+	"doctor":    "doctor",
+	"config":    "config",
+	"skill":     "skill",
+	"update":    "update",
+}
+
 func main() {
 	dbPath := flag.String("db", defaultDB(), "sqlite path")
 	flag.Usage = usage
@@ -88,10 +111,16 @@ func main() {
 	case "hook":
 		err = runHook(*dbPath, rest)
 	case "dispatch":
+		// Legacy prefix: the commands below are the same ones without it, and the
+		// registered SessionStart hook still calls `dispatch hook`.
 		err = runDispatch(*dbPath, rest)
 	case "help", "-h", "--help":
 		usage()
 	default:
+		if sub, ok := delegationCommands[command]; ok {
+			err = runDispatch(*dbPath, append([]string{sub}, rest...))
+			break
+		}
 		fmt.Fprintf(os.Stderr, "unknown command %q\n", command)
 		usage()
 		os.Exit(2)

@@ -7,6 +7,7 @@ import {
 } from "solid-js";
 import {
   CountBadge,
+  Cpu,
   Briefcase06Icon,
   ChartRelationshipIcon,
   createFluidHover,
@@ -48,6 +49,7 @@ const icons: Record<string, (p: { size?: number; class?: string }) => JSX.Elemen
   routing: (p) => <ListOrdered size={p.size ?? 14} class={p.class} />,
   usage: (p) => <Gauge size={p.size ?? 14} class={p.class} />,
   activity: (p) => <History size={p.size ?? 14} class={p.class} />,
+  agents: (p) => <Cpu size={p.size ?? 14} class={p.class} />,
   integrations: (p) => <ShieldCheck size={p.size ?? 14} class={p.class} />,
   settings: (p) => <Settings size={p.size ?? 14} class={p.class} />,
 };
@@ -169,7 +171,6 @@ function SidebarNavItem(props: {
 export function SidebarSettingsItem(props: {
   active?: boolean;
   onSelect: () => void;
-  onOpenCliReference?: () => void;
 }) {
   const [activeTopicId, setActiveTopicId] = createSignal<HelpTopicId | null>(null);
   return (
@@ -183,7 +184,7 @@ export function SidebarSettingsItem(props: {
         >
           Settings
         </SidebarItem>
-        <HelpMenu onSelectTopic={setActiveTopicId} onOpenCliReference={props.onOpenCliReference} />
+        <HelpMenu onSelectTopic={setActiveTopicId} />
       </div>
       <HelpTopicDialog topicId={activeTopicId()} onClose={() => setActiveTopicId(null)} />
     </>

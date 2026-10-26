@@ -18,6 +18,7 @@
     "@ark-ui/solid": "^5.39.2",
     "@corvu/resizable": "0.2.5",
     "@hugeicons/core-free-icons": "^4.3.5",
+    "@polterware/bot-avatars": "workspace:*",
     "@polterware/frontend-state": "workspace:*",
     "@tanstack/solid-virtual": "3.13.40",
     "@tiptap/core": "^3.31.3",

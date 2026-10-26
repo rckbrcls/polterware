@@ -10,6 +10,7 @@ import {
   IconTile,
   FluidHoverHighlight,
   Pencil,
+  Plus,
   Popover,
   Route,
   ShieldCheck,
@@ -66,6 +67,8 @@ export function WorkBoard(props: {
   onActivate: (slug: string) => void;
   /** Persist a stage change; resolve `false` when it was cancelled or failed. */
   onMoveCard?: (slug: string, stage: WorkStage) => Promise<boolean> | void;
+  /** Start a new card directly in a column. */
+  onAddCard?: (stage: WorkStage) => void;
 }) {
   let board: HTMLDivElement | undefined;
   // A board has generous whitespace: gap clicks land only within 16px of the lit card.
@@ -237,6 +240,17 @@ export function WorkBoard(props: {
                     />
                   )}
                 </For>
+              </Show>
+              <Show when={props.onAddCard}>
+                <button
+                  type="button"
+                  class="pw-work-column__add"
+                  aria-label={`Add card to ${column().label}`}
+                  title={`Add card to ${column().label}`}
+                  onClick={() => props.onAddCard?.(column().id)}
+                >
+                  <Plus size={14} aria-hidden />
+                </button>
               </Show>
             </div>
           </section>

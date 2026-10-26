@@ -44,7 +44,8 @@
 
 .pw-projects-card-menu {
   flex: 0 0 auto;
-  margin: -6px -8px -6px 0;
+  display: inline-flex;
+  margin: -6px 0;
 }
 
 .pw-projects-card-meta {
@@ -52,7 +53,8 @@
   min-width: 0;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 12px;
+  margin-top: auto;
+  padding-top: 12px;
 }
 
 .pw-projects-card:hover,
@@ -72,7 +74,7 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
-  margin: 0;
+  margin: 6px 0 0;
   color: var(--color-text-muted);
   font-size: 13px;
   line-height: 1.3;

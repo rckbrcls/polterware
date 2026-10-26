@@ -15,12 +15,10 @@ export type NavSectionId =
   | "dispatch-routing"
   | "dispatch-usage"
   | "integrations"
+  | "agents"
   | "activity";
 
-/** Full pages reachable outside the sidebar (e.g. from the Help menu). */
-export type PageSectionId = "cli";
-
-export type SectionId = NavSectionId | PageSectionId;
+export type SectionId = NavSectionId;
 export type ProjectSettingsTabId =
   | "general"
   | "repositories"
@@ -99,8 +97,8 @@ export const DEFAULT_TABS = {
   "dispatch-routing": "tiers",
   "dispatch-usage": "stats",
   integrations: "connected",
+  agents: "agents",
   activity: "all",
-  cli: "reference",
 } satisfies Record<SectionId, string>;
 
 export const SECTION_TABS = {
@@ -136,6 +134,12 @@ export const SECTION_TABS = {
     { id: "connected", label: "Connected" },
     { id: "catalog", label: "Catalog" },
   ],
+  // The backend hub: agent CLIs with setup, hooks, and skill, the MCP helper and local core, and the CLI reference.
+  agents: [
+    { id: "agents", label: "Agents" },
+    { id: "server", label: "Server" },
+    { id: "cli", label: "CLI reference" },
+  ],
   // Route id only — Activity is a flat page (no tab rail).
   activity: [{ id: "all", label: "All" }],
 } satisfies Partial<Record<SectionId, { id: string; label: string }[]>>;
@@ -150,6 +154,7 @@ const NAV_SECTIONS = {
   "dispatch-routing": true,
   "dispatch-usage": true,
   integrations: true,
+  agents: true,
   activity: true,
 } satisfies Record<string, boolean>;
 
@@ -160,7 +165,7 @@ export function isNavSectionId(value: string): value is NavSectionId {
 }
 
 export function isSectionId(value: string): value is SectionId {
-  return isNavSectionId(value) || value === "cli";
+  return isNavSectionId(value);
 }
 
 export type ResolvedRoute = { section: SectionId; tab: string };
@@ -252,9 +257,11 @@ export function resolveRoute(
     section = "truth";
   } else if (section === "agents" && tab === "history") {
     section = "activity";
-  } else if (section === "agents") {
-    section = DEFAULT_SECTION;
-    tab = undefined;
+  }
+  // The CLI reference moved into the Core route.
+  if (section === "cli") {
+    section = "agents";
+    tab = "cli";
   }
   // Preserve deep links to the former separate Integrations routes.
   if (section === "integrations-connected" || section === "integrations-catalog") {
@@ -425,4 +432,33 @@ export function historySnapshot(route: ClientRoute): ClientRoute {
 
 export function routesEqual(a: ClientRoute, b: ClientRoute): boolean {
   return JSON.stringify(historySnapshot(a)) === JSON.stringify(historySnapshot(b));
+}
+
+/** What a section remembers about where the user was, so returning to it restores that place. */
+export type SectionMemory = Pick<ClientRoute, "tab" | "search" | "filters" | "selectedNodeId" | "expandedDetail">;
+
+export function sectionMemory(route: ClientRoute): SectionMemory {
+  return {
+    tab: route.tab,
+    search: route.search,
+    filters: route.filters,
+    selectedNodeId: route.selectedNodeId ?? null,
+    expandedDetail: route.expandedDetail ?? null,
+  };
+}
+
+export function withSectionMemory(
+  route: ClientRoute,
+  memory: SectionMemory | undefined,
+  platform?: PlatformContext,
+): ClientRoute {
+  if (!memory) return route;
+  return {
+    ...route,
+    search: memory.search,
+    filters: memory.filters,
+    selectedNodeId: memory.selectedNodeId ?? null,
+    expandedDetail: memory.expandedDetail ?? null,
+    ...resolveRoute(route.section, memory.tab, platform),
+  };
 }

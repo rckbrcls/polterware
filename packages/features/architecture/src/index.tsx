@@ -1,13 +1,13 @@
 import { For, Index, Show, createEffect, createMemo, createSignal, onCleanup, untrack } from "solid-js";
 import { EntityDetailHost, scopeFilterMenuGroups, scopeFilterPills, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
 import {
-  A11yDialog, Boxes, Button, Card, Checkbox, DetailPanel, Field, FileText, Folder, FormStack, Input,
+  A11yDialog, Boxes, Button, Card, TemplateCardGrid, Checkbox, DetailPanel, Field, FileText, Folder, FormStack, Input,
   ActiveFilterBar, FilterPopover, IconTile, Layers, ListChecks, Network, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
   Delete, Link2, Route, ScrollText, SearchBar, SegmentedControl, Select, Settings, ShieldCheck, StatusChip, TreeView, pushToast,
   type TreeViewNode,
   ToolbarIconButton,
 } from "@polterware/frontend-design-system";
-import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
+import { createDetailPanelSelector, detailPanelStore, readRemembered, writeRemembered } from "@polterware/frontend-state";
 import { buildStructureTree, flattenStructureTree, structureParents, type StructureKind, type StructureNode, type StructureTreeItem } from "./structure-tree";
 import type { ProjectEnvironment } from "./domain/project-environments";
 import type { WorkspaceIntegration } from "@polterware/feature-shell";
@@ -108,8 +108,11 @@ export function StructureView(props: {
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
 }) {
   const [query, setQuery] = createSignal("");
-  const [view, setView] = createSignal("tree");
-  const [expanded, setExpanded] = createSignal<string[]>([PROJECT_ID]);
+  // The view mode and expanded tree rows are remembered, so returning to Structure keeps the same layout.
+  const [view, setView] = createSignal(readRemembered("structure.view", "tree"));
+  const [expanded, setExpanded] = createSignal<string[]>(readRemembered("structure.expanded", [PROJECT_ID]));
+  createEffect(() => writeRemembered("structure.view", view()));
+  createEffect(() => writeRemembered("structure.expanded", expanded()));
   const [busy, setBusy] = createSignal(false);
   const [title, setTitle] = createSignal("");
   const [kind, setKind] = createSignal<StructureKind>("system");
@@ -222,8 +225,11 @@ export function StructureView(props: {
 
   return <EntityDetailHost>
     <PageToolbar.Root>
-      <PageToolbar.Leading><SearchBar placeholder="Search structure…" value={query()} onInput={setQuery} /></PageToolbar.Leading>
+      <PageToolbar.Leading class="gap-2">
+        <SegmentedControl aria-label="Structure view" options={[{ value: "tree", label: "Tree" }, { value: "cards", label: "Cards" }]} value={view()} onValueChange={(event) => setView(event.value ?? "tree")} />
+      </PageToolbar.Leading>
       <PageToolbar.Actions>
+        <SearchBar placeholder="Search structure…" value={query()} onInput={setQuery} />
         <FilterPopover
           ariaLabel="Structure filters"
           title="Filter structure"
@@ -237,7 +243,6 @@ export function StructureView(props: {
             onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
           })}
         />
-        <SegmentedControl aria-label="Structure view" options={[{ value: "tree", label: "Tree" }, { value: "cards", label: "Cards" }]} value={view()} onValueChange={(event) => setView(event.value ?? "tree")} />
         <ToolbarIconButton label="Add node" disabled={props.loading || !!props.error} onClick={props.onOpenCreate}><Plus size={14} /></ToolbarIconButton>
       </PageToolbar.Actions>
     </PageToolbar.Root>
@@ -247,13 +252,14 @@ export function StructureView(props: {
     />
     <Show when={props.loading} fallback={<Show when={props.error} fallback={
       <PageContent class="pw-scroll-fade overflow-auto p-4">
+                <Show when={visible().length} fallback={<PageEmpty title={query().trim() ? "No matches" : "No structure yet"} mood={query().trim() ? "lost" : "sleeping"} >{!query().trim() ? <TemplateCardGrid items={[{ id: "system", title: "System", description: "A top-level part of the project.", tone: "architecture", icon: <KindIcon kind="system" size={16} />, onSelect: props.onOpenCreate }]} /> : undefined}</PageEmpty>}>
         <Show when={view() === "tree"} fallback={<div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           <StructureCard id={PROJECT_ID} kind="project" title={props.projectName} counts={props.projectCounts} selected={projectSelected()} onOpen={() => open(PROJECT_ID)} />
           <For each={visible()}>{(node) => <StructureCard id={node.id} kind={node.level} title={node.title} counts={props.counts[node.id] ?? { work: 0, decisions: 0, facts: 0 }} selected={selectedId() === node.id} onOpen={() => open(node.id)} />}</For>
         </div>}>
-          <TreeView label="Project structure" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)} selectedValue={selectedValue()} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} />
+          <TreeView label="Project structure" class="[&_h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)} selectedValue={selectedValue()} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} />
         </Show>
-        <Show when={!visible().length}><PageEmpty title={query().trim() ? "No matching nodes" : "No structure nodes yet"} description={query().trim() ? "Try another name, kind or path." : "Add a system, then organize its domains and components."} action={<Show when={!query().trim()}><Button size="sm" onClick={props.onOpenCreate}><Plus size={14} />Add structure</Button></Show>} /></Show>
+        </Show>
       </PageContent>
     }><PageError message={props.error!} /></Show>}><PageLoading label="Loading structure…" /></Show>
     <Show when={selected() || projectSelected()}>

@@ -80,7 +80,7 @@ Independent hypotheses; a win on H2 does not validate H3–H5, and more restrict
 
 ## Dispatch still open
 
-The core engine, SQLite store, CLI, TUI, and Desktop surface (Runs, Routing, Usage) are shipped. Worktree info lives on the run card. A dispatch run is a core-executed delegation. It may reference an AgentRun id and a Work card slug. It is not itself an AgentRun. There is no Dispatch MCP tool. `merge`, `clean`, and `recover` stay inside the engine.
+The core engine, SQLite store, CLI, TUI, and Desktop surface (Runs, Routing, Usage) are shipped. Worktree info lives on the run card. A dispatch run is a core-executed delegation with a linked AgentRun and an optional Work card slug. There is no Dispatch MCP tool. The CLI exposes `merge`, `clean`, `recover`, `verify`, `route`, `classify`, `config`, `subagents`, `wait`, `doctor`, `on`/`off`/`hook`, `skill`, and `update`; the Desktop has no UI for them yet.
 
 Still open:
 

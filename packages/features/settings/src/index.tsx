@@ -29,6 +29,7 @@ export { SettingsRow, SettingsSection } from "./settings-section";
 export { CreateEnvironmentDialog } from "./create-environment-dialog";
 export { ShortcutsPage } from "./shortcuts-page";
 export { AgentsSettingsPanel, type AgentsSettingsTab } from "./agents-settings-panel";
+export { AiIntegrationsPanel } from "./ai-integrations-panel";
 export { TruthFactsPage } from "./truth-facts-page";
 export { ActivityPage } from "./activity-page";
 export { hydrateShortcutPreferences, persistShortcutOverrides } from "./shortcut-persist";
