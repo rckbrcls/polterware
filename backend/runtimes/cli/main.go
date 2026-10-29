@@ -68,10 +68,10 @@ func main() {
 		err = runScan(*dbPath, rest)
 	case "repo":
 		err = runRepo(*dbPath, rest)
-	case "context":
-		err = runContext(*dbPath, rest)
-	case "oracle":
-		err = runOracle(*dbPath, rest)
+	case "brief":
+		err = runBrief(*dbPath, rest)
+	case "search", "context":
+		err = runSearch(*dbPath, rest)
 	case "structure":
 		err = runStructure(*dbPath, rest)
 	case "canvas":

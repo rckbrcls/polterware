@@ -101,8 +101,6 @@ export function createCoreDomainControllers(
     upsertEvidence: async (input?: JsonObject) => toJsonObject(await clients.canon.upsertEvidence(requestMessage(input))),
     linkEvidenceToFact: async (input?: JsonObject) =>
       toJsonObject(await clients.canon.linkEvidenceToFact(requestMessage(input))),
-    compileContext: async (input?: JsonObject) => toJsonObject(await clients.context.compileContext(requestMessage(input))),
-    checkDrift: async (input?: JsonObject) => toJsonObject(await clients.context.checkDrift(requestMessage(input))),
     getAgentRun: async (input?: JsonObject) => toJsonObject(await clients.agentRuns.getAgentRun(requestMessage(input))),
     listChanges: async (input?: JsonObject) => toJsonObject(await clients.agentRuns.listChanges(requestMessage(input))),
     getAgentSetup: async (input?: JsonObject) => toJsonObject(await clients.agentRuns.getAgentSetup(requestMessage(input))),

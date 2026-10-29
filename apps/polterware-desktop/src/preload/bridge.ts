@@ -175,9 +175,6 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
           coreCall(ipc, IPC_CHANNELS.core.linkEvidenceToFact, payload),
       },
       context: {
-        compile: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.compileContext, payload),
-        checkDrift: (payload: JsonObject) =>
-          coreCall(ipc, IPC_CHANNELS.core.checkDrift, payload),
         getAgentRun: (payload: JsonObject) =>
           coreCall(ipc, IPC_CHANNELS.core.getAgentRun, payload),
         listChanges: (payload: JsonObject) =>

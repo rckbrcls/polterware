@@ -189,6 +189,10 @@ func (s *Store) DeleteEnvironment(id, projectID string) error {
 	if _, err := s.DB.Exec(`DELETE FROM environments WHERE id=? AND project_id=?`, id, projectID); err != nil {
 		return err
 	}
+	// Environment entities follow every environment write, so reads never sync.
+	if _, err := s.SyncProjectModel(projectID); err != nil {
+		return err
+	}
 	if target.IsDefault && replacement != nil {
 		replacement.IsDefault = true
 		if err := s.SaveEnvironment(*replacement); err != nil {

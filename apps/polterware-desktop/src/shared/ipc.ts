@@ -106,8 +106,6 @@ export const IPC_CHANNELS = {
     getEvidence: "core:get-evidence",
     upsertEvidence: "core:upsert-evidence",
     linkEvidenceToFact: "core:link-evidence-to-fact",
-    compileContext: "core:compile-context",
-    checkDrift: "core:check-drift",
     getAgentRun: "core:get-agent-run",
     listChanges: "core:list-changes",
     getAgentSetup: "core:get-agent-setup",

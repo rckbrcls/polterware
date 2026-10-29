@@ -96,7 +96,7 @@ func TestPolterQueryMentionsCanvas(t *testing.T) {
 		t.Fatal(err)
 	}
 	instructions, _ := result.(map[string]any)["instructions"].(string)
-	if !strings.Contains(instructions, "canvas <name|id>") || !strings.Contains(instructions, "agent-visible") {
+	if !strings.Contains(instructions, "canvas [<name|id>]") || !strings.Contains(instructions, "agent-visible") {
 		t.Fatalf("instructions missing canvas: %s", instructions)
 	}
 }

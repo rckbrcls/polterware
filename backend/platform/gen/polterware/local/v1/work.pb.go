@@ -865,8 +865,9 @@ func (x *LintPolterResponse) GetDiagnostics() []*PolterDiagnostic {
 	return nil
 }
 
-// QueryPolter answers "cards", "card <slug>", "status", "inbox",
-// "handoff <slug>", "oracle <path>", or "structure" in text.
+// QueryPolter answers the Polter query language in text: "brief <target>"
+// and "search <terms>" for agents, plus "cards", "card <slug>", "status",
+// "inbox", "handoff <slug>", "structure", and the rest of polterware format.
 // "status" is the short session-start summary.
 type QueryPolterRequest struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`

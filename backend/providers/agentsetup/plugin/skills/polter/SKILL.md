@@ -58,6 +58,7 @@ Rules:
 - A text only changes what it mentions. Remove with status: removed, [-], or a trailing [removed].
 - New feature: `polterware feature new "<intent>"`, then `feature shape|contract|plan <slug>` (`--accept` / `--approve` pass the gate); check with `polterware verify <slug>`.
 - Start with `polterware status`. End with `polterware handoff --card <slug> --note "..."`.
+- Before you work on a card, a node, or a file, read `polterware brief <slug|path|file>`: tasks, invariants, governing decisions, facts, and milestone in one read. Find anything with `polterware search <terms>`.
 - Check with `polterware lint file.pw.md`; write with `polterware apply file.pw.md [--dry-run]`.
 ```
 

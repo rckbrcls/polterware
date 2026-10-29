@@ -138,39 +138,29 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     example: "polterware repo add --project <project-id> --name api --path /path/to/api",
   },
   {
-    id: "context",
-    name: "polterware context",
-    synopsis:
-      'polterware context "<question>" [--zoom task|component|domain|system] [--budget N] [--project <id>]',
+    id: "brief",
+    name: "polterware brief",
+    synopsis: "polterware brief <card slug|Structure path|file> [--budget N] [--project <id>]",
     summary:
-      "Compile context for a question within a token budget. Alias of oracle; prints Polter text.",
+      "Read before working on a card, node, or file: open tasks and questions, the last handoff, invariants, governing decisions, scope facts, milestone, canvas links, and docs, cut to a token budget.",
     flags: [
-      {
-        name: "--zoom",
-        value: "level",
-        description: "task, component, domain, or system. Defaults to task.",
-      },
-      { name: "--budget", value: "N", description: "Token budget. Defaults to 1200." },
+      { name: "--budget", value: "N", description: "Token budget. Defaults to 1200; the lowest-priority lines are cut first." },
       PROJECT_FLAG,
     ],
-    example: 'polterware context "how does auth work?" --zoom component',
+    example: "polterware brief backend/domains/polter/brief.go",
   },
   {
-    id: "oracle",
-    name: "polterware oracle",
-    synopsis:
-      'polterware oracle "<question>" [--zoom task|component|domain|system] [--budget N] [--project <id>]',
-    summary: "Answer a question from the project's Structure and Work state within a token budget.",
+    id: "search",
+    name: "polterware search",
+    synopsis: 'polterware search "<terms>" [--budget N] [--scope <node>] [--exact] [--project <id>]',
+    summary:
+      "Find the Structure nodes, cards, decisions, docs, and facts that hold every term, one line each. polterware context is an alias.",
     flags: [
-      {
-        name: "--zoom",
-        value: "level",
-        description: "task, component, domain, or system. Defaults to task.",
-      },
       { name: "--budget", value: "N", description: "Token budget. Defaults to 1200." },
+      ...SCOPE_FLAGS,
       PROJECT_FLAG,
     ],
-    example: 'polterware oracle "what touches billing?" --zoom domain',
+    example: 'polterware search "drift"',
   },
   {
     id: "structure",
@@ -279,9 +269,9 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "query",
     name: "polterware query",
     synopsis:
-      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <decision>" | "feature <slug> [step]" | "verify <slug>" | "canvas [<name|id>]" [--scope <node>] [--exact] [--project <id>]',
+      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "brief <target>" | "search <terms>" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <decision>" | "feature <slug> [step]" | "verify <slug>" | "milestones" | "roadmap" | "canvas [<name|id>]" [--scope <node>] [--exact] [--project <id>]',
     summary:
-      "Read project state in Polter format: cards, one card, status, inbox, handoffs, Structure, decisions, feature steps, verification, or a shared canvas.",
+      "Read project state in Polter format: briefs, search, cards, one card, status, inbox, handoffs, Structure, decisions, feature steps, verification, milestones, the roadmap, or a shared canvas.",
     flags: [
       ...SCOPE_FLAGS,
       {
@@ -688,7 +678,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
 /** Sidebar and page sections: every command id appears in exactly one group. */
 export const CLI_COMMAND_GROUPS: readonly { id: string; label: string; commands: readonly string[] }[] = [
   { id: "setup", label: "Setup", commands: ["tui", "init", "scan", "repo", "setup", "hooks", "hook", "serve", "mcp", "help"] },
-  { id: "read", label: "Read", commands: ["context", "oracle", "structure", "canvas", "query", "status", "inbox", "export", "drift"] },
+  { id: "read", label: "Read", commands: ["brief", "search", "structure", "canvas", "query", "status", "inbox", "export", "drift"] },
   { id: "write", label: "Write", commands: ["apply", "lint", "format", "handoff", "task", "decision", "feature", "verify", "scope"] },
   {
     id: "delegation",

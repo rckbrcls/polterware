@@ -56,8 +56,8 @@ func usage() {
   polterware [-db path] repo list --project <id> [--json]
   polterware [-db path] repo add --project <id> --name <name> --path <dir> [--json]
   polterware [-db path] repo remove --project <id> --name <name>
-  polterware [-db path] context "<question>" [--zoom task|component|domain|system] [--budget N] [--project <id>]
-  polterware [-db path] oracle "<question>" [--zoom task|component|domain|system] [--budget N] [--project <id>]
+  polterware [-db path] brief <card slug|Structure path|file> [--budget N] [--project <id>]   (read before working on it)
+  polterware [-db path] search "<terms>" [--budget N] [--scope <node>[,<node>]] [--exact] [--project <id>]   (context is an alias)
   polterware [-db path] structure [--node <path>] [--at <point>] [--project <id>]
   polterware [-db path] structure history [--project <id>]
   polterware [-db path] canvas ls [--agents] [--scope <node>[,<node>]] [--exact] [--project <id>]
@@ -68,7 +68,7 @@ func usage() {
   polterware [-db path] apply <file|-> [--dry-run] [--project <id>] [--summary ...] [--rationale ...] [--agent-run-id ...]
   polterware [-db path] lint <file|dir|-> [--project <id>]   (silent on success)
   polterware [-db path] format                               (print the Polter format spec)
-  polterware [-db path] query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <decision>" | "feature <slug> [step]" | "verify <slug>" | "canvas [<name|id>]" [--scope <node>[,<node>]] [--exact] [--project <id>]
+  polterware [-db path] query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "brief <target>" | "search <terms>" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <decision>" | "feature <slug> [step]" | "verify <slug>" | "milestones" | "roadmap" | "canvas [<name|id>]" [--scope <node>[,<node>]] [--exact] [--project <id>]
   polterware [-db path] status [--scope <node>[,<node>]] [--exact] [--project <id>]
   polterware [-db path] handoff [--card <slug>] [--note "..."] [--project <id>]
   polterware [-db path] task claim|done|release <slug>#T2 [--agent name] [--project <id>]

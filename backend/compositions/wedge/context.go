@@ -23,7 +23,8 @@ type ContextInput struct {
 	ScopeExact   bool
 }
 
-// CompileContext syncs the project model, compiles context, and optionally appends an AgentRun context step.
+// CompileContext compiles context and optionally appends an AgentRun context
+// step. Environment entities are kept in sync by the environment writes.
 func CompileContext(store *storepkg.Store, in ContextInput) (contextpkg.Package, error) {
 	if in.ProjectID == "" {
 		return contextpkg.Package{}, fmt.Errorf("project_id is required")
@@ -32,7 +33,6 @@ func CompileContext(store *storepkg.Store, in ContextInput) (contextpkg.Package,
 	if budget == 0 {
 		budget = contextpkg.DefaultTokenBudget
 	}
-	_, _ = store.SyncProjectModel(in.ProjectID)
 	pkg, err := store.CompileContext(contextpkg.Request{
 		ProjectID:    in.ProjectID,
 		Query:        in.Query,

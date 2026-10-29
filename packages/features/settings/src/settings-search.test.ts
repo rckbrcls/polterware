@@ -23,7 +23,6 @@ describe("searchSettings", () => {
       ["archive", "project-danger", "Danger zone"],
       ["hooks", "agents-hooks", "Hooks"],
       ["download", "agents-skill", "AI skill"],
-      ["budget", "agents-compile", "Compile context"],
       ["vibrancy", "appearance", "Appearance"],
       ["reset", "app-danger", "Danger zone"],
     ]) {

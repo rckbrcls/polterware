@@ -134,7 +134,7 @@ Reports where declared intent and observed code disagree.
 
 ! A finding always names its evidence
 
-# polterware/core/context: Context compiler and Oracle
+# polterware/core/context: Context compiler, brief, and search
 level: component · under: polterware/core · decisions: Decision-0004, Decision-0008 · path: backend/domains/context · kind: service · tech: Go
 
 Packs the project graph into a budgeted context for an agent session.
@@ -185,7 +185,7 @@ The single polterware binary: commands, status TUI, serve, and mcp.
 # polterware/cli/commands: CLI commands
 level: component · under: polterware/cli · path: backend/runtimes/cli · uses: polterware/cli/coreclient, polterware/core/server, polterware/core/mcp, polterware/core/work, polterware/agents/setup · kind: cli · tech: Go
 
-Thin core clients: apply, query, status, handoff, structure, oracle, decision, feature, export.
+Thin core clients: apply, query, status, handoff, structure, brief, search, decision, feature, export.
 
 # polterware/cli/coreclient: Core client
 level: component · under: polterware/cli · path: backend/platform/coreclient · uses: polterware/contracts/generated · kind: cli · tech: Go

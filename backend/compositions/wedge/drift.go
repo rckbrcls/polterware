@@ -23,9 +23,6 @@ func CheckDrift(store *storepkg.Store, in DriftInput) (drift.Result, error) {
 	if in.ProjectID == "" {
 		return drift.Result{}, fmt.Errorf("project_id is required")
 	}
-	if _, err := store.SyncProjectModel(in.ProjectID); err != nil {
-		return drift.Result{}, err
-	}
 	input, err := assembleDriftInput(store, in.ProjectID, in.EntityID)
 	if err != nil {
 		return drift.Result{}, err

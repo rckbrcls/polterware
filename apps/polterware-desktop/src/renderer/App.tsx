@@ -659,6 +659,20 @@ export function App() {
     }
   }
 
+  /** The Inbox derives Drift on read; a re-read picks up files changed outside Polterware. */
+  async function checkDrift() {
+    const projectId = currentProjectId();
+    try {
+      const inbox = await loadInbox(projectId);
+      if (currentProjectId() !== projectId) return;
+      setWorkspace((current) => ({ ...current, inbox }));
+      const drift = inbox.items.filter((item) => item.kind === "drift" && item.state === "open").length;
+      pushToast(drift === 0 ? "No drift found." : `${drift} drift ${drift === 1 ? "item" : "items"} in the Inbox.`, drift === 0 ? "success" : "default");
+    } catch (error) {
+      pushToast(error instanceof Error ? error.message : "Could not check drift.", "danger");
+    }
+  }
+
   /** Cards open in the Board or Specs detail scope, matching the visible Work tab. */
   const cardScopeId = () =>
     route().section === "work" && route().tab === "board" ? "knowledge:board" : "knowledge:specs";
@@ -1281,6 +1295,7 @@ export function App() {
             scopeNodes={scopeNodes()}
             scopeEnvironments={scopeEnvironmentCatalog()}
             onScopeTokensChange={applyScopeTokens}
+            onCheckDrift={checkDrift}
           />
         </Match>
 

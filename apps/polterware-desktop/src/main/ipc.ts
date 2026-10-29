@@ -353,8 +353,6 @@ export function createPolterwareIpcHandlers(controllers: PolterwareIpcController
     [IPC_CHANNELS.core.getEvidence]: coreHandler(controllers, "getEvidence"),
     [IPC_CHANNELS.core.upsertEvidence]: coreHandler(controllers, "upsertEvidence"),
     [IPC_CHANNELS.core.linkEvidenceToFact]: coreHandler(controllers, "linkEvidenceToFact"),
-    [IPC_CHANNELS.core.compileContext]: coreHandler(controllers, "compileContext"),
-    [IPC_CHANNELS.core.checkDrift]: coreHandler(controllers, "checkDrift"),
     [IPC_CHANNELS.core.getAgentRun]: coreHandler(controllers, "getAgentRun"),
     [IPC_CHANNELS.core.listChanges]: coreHandler(controllers, "listChanges"),
     [IPC_CHANNELS.core.getAgentSetup]: coreHandler(controllers, "getAgentSetup"),

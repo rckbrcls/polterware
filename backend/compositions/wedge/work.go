@@ -232,8 +232,10 @@ func QueryPolterScoped(store *storepkg.Store, projectID, text string, scope stru
 			return "", err
 		}
 		return inbox.List(result), nil
-	case polter.QueryOracle:
-		return polter.Oracle(snapshot.Nodes, snapshot.Cards, query.Slug, query.Zoom, query.Budget)
+	case polter.QueryBrief:
+		return queryBrief(store, snapshot, scope, query.Slug, query.Budget)
+	case polter.QuerySearch:
+		return querySearch(store, snapshot, scope, query.Slug, query.Budget)
 	case polter.QueryDecisions:
 		return polter.EncodeDecisions(snapshot.Decisions, query.Slug), nil
 	case polter.QueryDecision:

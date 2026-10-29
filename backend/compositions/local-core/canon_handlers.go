@@ -23,7 +23,6 @@ func (core *Core) ListEntities(_ context.Context, request *connect.Request[local
 	if request.Msg.ProjectId == "" {
 		return nil, invalid("project id is required")
 	}
-	_, _ = core.Store.SyncProjectModel(request.Msg.ProjectId)
 	items, err := core.Store.ListCanonEntities(request.Msg.ProjectId, request.Msg.Kind)
 	if err != nil {
 		return nil, internal(err)
@@ -434,7 +433,6 @@ func (core *Core) CompileContext(_ context.Context, request *connect.Request[loc
 			return nil, mapAuditedErr(err)
 		}
 	} else {
-		_, _ = core.Store.SyncProjectModel(request.Msg.ProjectId)
 		pkg, err = core.Store.CompileContext(contextpkg.Request{
 			ProjectID:    request.Msg.ProjectId,
 			Query:        request.Msg.Query,

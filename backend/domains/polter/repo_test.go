@@ -111,17 +111,17 @@ func TestPlanNodeRepoAndFolder(t *testing.T) {
 	}
 }
 
-func TestOracleShowsCheckout(t *testing.T) {
+func TestBriefShowsCheckout(t *testing.T) {
 	nodes := []structure.Node{{
 		ID: "c", Path: "auth", Level: structure.LevelComponent, Title: "Auth", Status: structure.NodeActive,
 		Repo: "api", Folder: "src/auth",
 	}}
-	text, err := Oracle(nodes, nil, "auth", "component", 800)
+	text, err := Brief(BriefInput{Snapshot: work.Snapshot{Nodes: nodes}}, "auth", 800)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasPrefix(text, "# auth: Auth\nlevel: component\nrepo: api · path: src/auth\n") {
-		t.Fatalf("oracle = %s", text)
+	if !strings.HasPrefix(text, "# auth: Auth\nlevel: component · repo: api · path: src/auth\n") {
+		t.Fatalf("brief = %s", text)
 	}
 }
 

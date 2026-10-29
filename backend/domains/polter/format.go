@@ -60,13 +60,15 @@ const Spec = "Polter format v1: markdown that writes Work cards, Structure nodes
 	"- A text only changes what it mentions. Remove with status: removed, [-], or a trailing [removed].\n" +
 	"- New feature: `polterware feature new \"<intent>\"`, then `feature shape|contract|plan <slug>` (`--accept` / `--approve` pass the gate); check with `polterware verify <slug>`.\n" +
 	"- Start with `polterware status`. End with `polterware handoff --card <slug> --note \"...\"`.\n" +
+	"- Before you work on a card, a node, or a file, read `polterware brief <slug|path|file>`: tasks, invariants, governing decisions, facts, and milestone in one read. Find anything with `polterware search <terms>`.\n" +
 	"- Check with `polterware lint file.pw.md`; write with `polterware apply file.pw.md [--dry-run]`.\n"
 
 // Query is a parsed read request.
 type Query struct {
-	Kind   string
+	Kind string
+	// Slug is the card, node, or decision the query names; for brief and
+	// search it is the target or the terms.
 	Slug   string
-	Zoom   string
 	Budget int
 	// Step is the feature flow step for "feature" queries.
 	Step string
@@ -82,7 +84,8 @@ const (
 	QueryStatus    = "status"
 	QueryInbox     = "inbox"
 	QueryHandoff   = "handoff"
-	QueryOracle    = "oracle"
+	QueryBrief     = "brief"
+	QuerySearch    = "search"
 	QueryStructure = "structure"
 	QueryFeature   = "feature"
 	QueryVerify    = "verify"
@@ -94,7 +97,7 @@ const (
 	QueryRoadmap    = "roadmap"
 )
 
-const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "oracle <path>", "structure [<path>] [at <point>]", "structure history", "decisions [proposed|active|challenged|superseded]", "decision <decision>", "feature <slug> [shape|contract|plan]", "verify <slug|slug#T2>", "canvas", "canvas <name|id>", "milestones", or "roadmap"`
+const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "brief <slug|path|file>", "search <terms>", "structure [<path>] [at <point>]", "structure history", "decisions [proposed|active|challenged|superseded]", "decision <decision>", "feature <slug> [shape|contract|plan]", "verify <slug|slug#T2>", "canvas", "canvas <name|id>", "milestones", or "roadmap"`
 
 // ParseQuery parses the v1 query language.
 func ParseQuery(text string) (Query, error) {
@@ -103,8 +106,8 @@ func ParseQuery(text string) (Query, error) {
 		return Query{}, fmt.Errorf("unknown query %q: %s", strings.TrimSpace(text), queryUsage)
 	}
 	switch fields[0] {
-	case QueryOracle:
-		return parseOracleQuery(fields[1:])
+	case QueryBrief, QuerySearch:
+		return parseBudgetQuery(fields[0], fields[1:])
 	case QueryFeature:
 		switch {
 		case len(fields) == 2:
@@ -178,31 +181,27 @@ func ParseQuery(text string) (Query, error) {
 	}
 }
 
-func parseOracleQuery(fields []string) (Query, error) {
-	zoom := "task"
+// parseBudgetQuery reads "<kind> <words...> [budget:N]": the words are the
+// target or the search terms.
+func parseBudgetQuery(kind string, fields []string) (Query, error) {
 	budget := 0
-	var target []string
+	var words []string
 	for _, field := range fields {
-		switch {
-		case strings.HasPrefix(field, "zoom:"):
-			zoom = strings.TrimPrefix(field, "zoom:")
-		case strings.HasPrefix(field, "budget:"):
-			n, err := strconv.Atoi(strings.TrimPrefix(field, "budget:"))
-			if err != nil || n < 1 {
-				return Query{}, fmt.Errorf("invalid budget %q: use a positive number", field)
-			}
-			budget = n
-		default:
-			target = append(target, field)
+		if !strings.HasPrefix(field, "budget:") {
+			words = append(words, field)
+			continue
 		}
+		n, err := strconv.Atoi(strings.TrimPrefix(field, "budget:"))
+		if err != nil || n < 1 {
+			return Query{}, fmt.Errorf("invalid budget %q: use a positive number", field)
+		}
+		budget = n
 	}
-	if len(target) == 0 {
-		return Query{}, fmt.Errorf(`oracle needs a path: use "oracle <path> zoom:task budget:800"`)
+	if len(words) == 0 {
+		if kind == QuerySearch {
+			return Query{}, fmt.Errorf(`search needs terms: use "search <terms> [budget:N]"`)
+		}
+		return Query{}, fmt.Errorf(`brief needs a target: use "brief <card slug|Structure path|file path> [budget:N]"`)
 	}
-	switch zoom {
-	case "task", "component", "domain", "system":
-	default:
-		return Query{}, fmt.Errorf("unknown zoom %q: use task|component|domain|system", zoom)
-	}
-	return Query{Kind: QueryOracle, Slug: strings.Join(target, " "), Zoom: zoom, Budget: budget}, nil
+	return Query{Kind: kind, Slug: strings.Join(words, " "), Budget: budget}, nil
 }

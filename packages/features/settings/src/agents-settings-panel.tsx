@@ -1,41 +1,17 @@
 import { Match, Switch, Show, createEffect, createSignal, on } from "solid-js";
 import { Button, pushToast } from "@polterware/frontend-design-system";
-import type {
-  AgentSetupView,
-  CompilePreviewResult,
-  DriftPreviewResult,
-  McpStatusView,
-} from "./agents-types";
-import {
-  agentsBridge,
-  mapCompileResult,
-  mapDriftResult,
-  mapMcpStatus,
-  workQuery,
-} from "./agents-bridge";
+import type { AgentSetupView, McpStatusView } from "./agents-types";
+import { agentsBridge, mapMcpStatus } from "./agents-bridge";
 import { AgentSetupCard, mapAgentSetup, mapHookSwitches } from "./agent-setup-card";
-import { CompilePreviewCard } from "./compile-preview-card";
-import { DriftPreviewCard } from "./drift-preview-card";
 import { McpStatusCard } from "./mcp-status-card";
-import { OraclePreviewCard } from "./oracle-preview-card";
-import { SettingsSection } from "./settings-section";
 import { SkillCard } from "./skill-card";
 
-export type AgentsSettingsTab = "mcp" | "setup" | "hooks" | "skill" | "oracle" | "compile" | "drift";
+export type AgentsSettingsTab = "mcp" | "setup" | "hooks" | "skill";
 
-/** Agents inside the Settings dialog: MCP access and context/drift previews. */
+/** Agents inside the Settings dialog: MCP access, agent setup, hooks, and the skill. */
 export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSettingsTab }) {
   const [mcpStatus, setMcpStatus] = createSignal<McpStatusView | undefined>();
   const [mcpBusy, setMcpBusy] = createSignal(false);
-  const [query, setQuery] = createSignal("architecture");
-  const [entityId, setEntityId] = createSignal("");
-  const [budget, setBudget] = createSignal("1200");
-  const [compileBusy, setCompileBusy] = createSignal(false);
-  const [compileResult, setCompileResult] = createSignal<CompilePreviewResult | undefined>();
-  const [compileError, setCompileError] = createSignal<string | undefined>();
-  const [driftBusy, setDriftBusy] = createSignal(false);
-  const [driftResult, setDriftResult] = createSignal<DriftPreviewResult | undefined>();
-  const [driftError, setDriftError] = createSignal<string | undefined>();
 
   const [setupView, setSetupView] = createSignal<AgentSetupView | undefined>();
   const [setupLoaded, setSetupLoaded] = createSignal(false);
@@ -49,8 +25,6 @@ export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSetti
       () => {
         setSetupView(undefined);
         setSetupLoaded(false);
-        setCompileResult(undefined);
-        setDriftResult(undefined);
       },
       { defer: true },
     ),
@@ -146,65 +120,6 @@ export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSetti
       .finally(() => setMcpBusy(false));
   };
 
-  const runCompile = () => {
-    const bridge = agentsBridge();
-    const projectId = props.projectId.trim();
-    if (!bridge) {
-      setCompileError("Context compiler is unavailable in this session.");
-      return;
-    }
-    if (!projectId) {
-      setCompileError("Select a project before compiling context.");
-      return;
-    }
-    setCompileBusy(true);
-    setCompileError(undefined);
-    const tokenBudget = Number.parseInt(budget(), 10);
-    const trimmedEntityId = entityId().trim();
-    void bridge.compileContext({
-      projectId,
-      query: query().trim(),
-      ...(trimmedEntityId ? { entityId: trimmedEntityId } : {}),
-      tokenBudget: Number.isFinite(tokenBudget) && tokenBudget > 0 ? tokenBudget : 1200,
-    })
-      .then((response) => {
-        setCompileResult(mapCompileResult(response));
-      })
-      .catch((error: unknown) => {
-        setCompileResult(undefined);
-        setCompileError(error instanceof Error ? error.message : "Compile failed.");
-      })
-      .finally(() => setCompileBusy(false));
-  };
-
-  const runDrift = () => {
-    const bridge = agentsBridge();
-    const projectId = props.projectId.trim();
-    if (!bridge) {
-      setDriftError("Drift checker is unavailable in this session.");
-      return;
-    }
-    if (!projectId) {
-      setDriftError("Select a project before checking drift.");
-      return;
-    }
-    setDriftBusy(true);
-    setDriftError(undefined);
-    const trimmedEntityId = entityId().trim();
-    void bridge.checkDrift({
-      projectId,
-      ...(trimmedEntityId ? { entityId: trimmedEntityId } : {}),
-    })
-      .then((response) => {
-        setDriftResult(mapDriftResult(response));
-      })
-      .catch((error: unknown) => {
-        setDriftResult(undefined);
-        setDriftError(error instanceof Error ? error.message : "Drift check failed.");
-      })
-      .finally(() => setDriftBusy(false));
-  };
-
   createEffect(() => {
     if (props.tab === "mcp") void refreshMcp();
   });
@@ -234,48 +149,6 @@ export function AgentsSettingsPanel(props: { projectId: string; tab: AgentsSetti
           <SkillCard />
         </Match>
 
-        <Match when={props.tab === "oracle"}>
-          <SettingsSection
-            title="Oracle"
-            description="The exact text an agent receives for one node, card, or title."
-          >
-            <OraclePreviewCard projectId={props.projectId} query={workQuery()} />
-          </SettingsSection>
-        </Match>
-        <Match when={props.tab === "compile"}>
-          <SettingsSection
-            title="Compile context"
-            description="The ranked context package an agent gets for a query, within a token budget."
-          >
-            <CompilePreviewCard
-              query={query()}
-              entityId={entityId()}
-              budget={budget()}
-              busy={compileBusy()}
-              result={compileResult()}
-              error={compileError()}
-              onQueryChange={setQuery}
-              onEntityIdChange={setEntityId}
-              onBudgetChange={setBudget}
-              onCompile={() => runCompile()}
-            />
-          </SettingsSection>
-        </Match>
-        <Match when={props.tab === "drift"}>
-          <SettingsSection
-            title="Drift check"
-            description="The narrow drift checker over the project model. Findings are advisory."
-          >
-            <DriftPreviewCard
-              entityId={entityId()}
-              busy={driftBusy()}
-              result={driftResult()}
-              error={driftError()}
-              onEntityIdChange={setEntityId}
-              onCheck={() => runDrift()}
-            />
-          </SettingsSection>
-        </Match>
       </Switch>
     </div>
   );

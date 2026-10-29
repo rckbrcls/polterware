@@ -16,6 +16,7 @@ import {
   PageEmpty,
   PageLoading,
   PageToolbar,
+  RefreshCw,
   Select,
   SearchBar,
   StatusDot,
@@ -101,8 +102,20 @@ export function InboxPage(props: {
   scopeNodes?: readonly ScopeNodeItem[];
   scopeEnvironments?: readonly EnvironmentItem[];
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
+  /** Re-reads the checkout so Drift items reflect files changed outside Polterware. */
+  onCheckDrift?: () => Promise<void>;
 }) {
   const [pending, setPending] = createSignal("");
+  const [checking, setChecking] = createSignal(false);
+  async function checkDrift() {
+    if (!props.onCheckDrift || checking()) return;
+    setChecking(true);
+    try {
+      await props.onCheckDrift();
+    } finally {
+      setChecking(false);
+    }
+  }
   const [deciding, setDeciding] = createSignal<WorkspaceInboxItem | null>(null);
   const [answer, setAnswer] = createSignal("");
   const [query, setQuery] = createSignal("");
@@ -271,6 +284,11 @@ export function InboxPage(props: {
             onClausesChange={filters.onClausesChange}
             saved={filters.saved()}
           />
+          <Show when={props.onCheckDrift}>
+            <Button variant="texture" size="icon" aria-label={checking() ? "Checking drift…" : "Check drift"} disabled={checking()} onClick={() => void checkDrift()}>
+              <RefreshCw size={14} />
+            </Button>
+          </Show>
         </PageToolbar.Actions>
       </PageToolbar.Root>
       <ActiveFilterBar

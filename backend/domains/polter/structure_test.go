@@ -123,7 +123,7 @@ under: core
 	}
 }
 
-func TestOracleBudgetDropsAncestors(t *testing.T) {
+func TestBriefBudgetCutsFromTheEnd(t *testing.T) {
 	system := structure.Node{ID: "s", Path: "polterware", Level: structure.LevelSystem, Title: "Polterware", Status: structure.NodeActive}
 	domain := structure.Node{
 		ID: "d", ParentID: "s", Path: "core", Level: structure.LevelDomain, Title: "Core", Status: structure.NodeActive,
@@ -139,21 +139,19 @@ func TestOracleBudgetDropsAncestors(t *testing.T) {
 		}},
 	}
 	nodes := []structure.Node{system, domain, component}
-	full, err := Oracle(nodes, []work.Card{card}, "git-import", "task", 800)
+	in := BriefInput{Snapshot: work.Snapshot{Nodes: nodes, Cards: []work.Card{card}}}
+	full, err := Brief(in, "git-import", 800)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(full, "(from core)") || !strings.Contains(full, "Include merge commits?") || !strings.Contains(full, "domain: core") {
-		t.Fatalf("full oracle = %s", full)
+	if !strings.Contains(full, "! No network calls during scan (from core)") || !strings.Contains(full, "? Include merge commits? [blocking] (yes | no)") || strings.Contains(full, "cut to fit") {
+		t.Fatalf("full brief = %s", full)
 	}
-	tight, err := Oracle(nodes, []work.Card{card}, "git-import", "task", 40)
+	tight, err := Brief(in, "git-import", 30)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(tight, "domain: core") {
-		t.Fatalf("tight budget should drop ancestor lines: %s", tight)
-	}
-	if !strings.Contains(tight, "## git-import:") || !strings.Contains(tight, "(from core)") {
-		t.Fatalf("tight budget should keep the heading and inherited invariant: %s", tight)
+	if strings.Contains(tight, "(from core)") || !strings.HasPrefix(tight, "## git-import: Git import\nstage: build · under: core/import\n") || !strings.Contains(tight, "lines cut to fit budget:30") {
+		t.Fatalf("a tight budget keeps the heading and cuts the invariant: %s", tight)
 	}
 }

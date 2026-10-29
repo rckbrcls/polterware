@@ -7,9 +7,6 @@ import {
   Bot,
   Webhook,
   BookOpen,
-  Eye,
-  Layers,
-  GitCompare,
   Zap,
   Sun,
   Cpu,
@@ -28,7 +25,7 @@ export type SettingsScope = "project" | "app";
 /** A settings rail entry; every page has a group and a distinct icon. */
 export type SettingsTab = TabItem & {
   id: SettingsTabId;
-  group: "Project" | "Context" | "Platforms" | "Agents" | "App";
+  group: "Project" | "Platforms" | "Agents" | "App";
   tooltip: NonNullable<TabItem["tooltip"]> & { icon: typeof Folder };
 };
 
@@ -71,36 +68,6 @@ export const SETTINGS_TABS: SettingsTab[] = [
       title: "Project danger zone",
       description: "Archive the current project without deleting its local data.",
       icon: Archive,
-    },
-  },
-  {
-    id: "agents-oracle",
-    group: "Context",
-    label: "Oracle",
-    tooltip: {
-      title: "Oracle",
-      description: "Preview the exact text an agent receives for one node, card, or title.",
-      icon: Eye,
-    },
-  },
-  {
-    id: "agents-compile",
-    group: "Context",
-    label: "Compile context",
-    tooltip: {
-      title: "Compile context",
-      description: "Preview the ranked context package within a token budget.",
-      icon: Layers,
-    },
-  },
-  {
-    id: "agents-drift",
-    group: "Context",
-    label: "Drift check",
-    tooltip: {
-      title: "Drift check",
-      description: "Run the narrow drift checker over the project model.",
-      icon: GitCompare,
     },
   },
   {
@@ -225,7 +192,7 @@ export const SETTINGS_TABS: SettingsTab[] = [
   },
 ];
 
-const PROJECT_GROUPS: ReadonlySet<SettingsTab["group"]> = new Set(["Project", "Context", "Platforms"]);
+const PROJECT_GROUPS: ReadonlySet<SettingsTab["group"]> = new Set(["Project", "Platforms"]);
 
 /** Project, Context, and Platforms pages belong to the open project; the rest apply to this computer. */
 export function settingsTabScope(id: SettingsTabId): SettingsScope {
@@ -243,7 +210,6 @@ export function normalizeSettingsTab(raw?: string): SettingsTabId {
   if (current) return current.id;
   switch (raw) {
     case "agents-access": return "agents-mcp";
-    case "agents-context": return "agents-oracle";
     case "advanced": return "appearance";
     default: return "agents-mcp";
   }

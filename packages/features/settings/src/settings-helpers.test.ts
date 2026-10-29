@@ -11,15 +11,12 @@ import {
 } from "./settings-helpers";
 
 describe("settings helpers", () => {
-  it("groups the tabs as Project · Context · Platforms · Agents · App", () => {
+  it("groups the tabs as Project · Platforms · Agents · App", () => {
     expect(SETTINGS_TABS.map((tab) => tab.id)).toEqual([
       "general",
       "repositories",
       "environments",
       "project-danger",
-      "agents-oracle",
-      "agents-compile",
-      "agents-drift",
       "platforms-connected",
       "platforms-catalog",
       "agents-mcp",
@@ -35,7 +32,6 @@ describe("settings helpers", () => {
     ]);
     expect([...new Set(SETTINGS_TABS.map((tab) => tab.group))]).toEqual([
       "Project",
-      "Context",
       "Platforms",
       "Agents",
       "App",
@@ -51,9 +47,6 @@ describe("settings helpers", () => {
       "repositories",
       "environments",
       "project-danger",
-      "agents-oracle",
-      "agents-compile",
-      "agents-drift",
       "platforms-connected",
       "platforms-catalog",
     ]);
@@ -69,7 +62,6 @@ describe("settings helpers", () => {
       "App",
       "App",
     ]);
-    expect(settingsTabScope("agents-drift")).toBe("project");
     expect(settingsTabScope("platforms-catalog")).toBe("project");
     expect(settingsTabScope("agents-mcp")).toBe("app");
     expect(settingsTabScope("cli-reference")).toBe("app");
@@ -81,7 +73,8 @@ describe("settings helpers", () => {
     expect(normalizeSettingsTab("environments")).toBe("environments");
     expect(normalizeSettingsTab("shortcuts")).toBe("shortcuts");
     expect(normalizeSettingsTab("agents-access")).toBe("agents-mcp");
-    expect(normalizeSettingsTab("agents-context")).toBe("agents-oracle");
+    expect(normalizeSettingsTab("agents-context")).toBe("agents-mcp");
+    expect(normalizeSettingsTab("agents-oracle")).toBe("agents-mcp");
     expect(normalizeSettingsTab("advanced")).toBe("appearance");
     expect(normalizeSettingsTab("repositories")).toBe("repositories");
     expect(normalizeSettingsTab("integrations-catalog")).toBe("agents-mcp");
