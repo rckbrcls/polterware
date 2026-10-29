@@ -13,6 +13,7 @@ var Hooks = []Hook{
 	{"status", "Session-start status", "Adds the project status to the session context."},
 	{"stop", "Stop handoff reminder", "Reminds the agent to write a handoff before it ends."},
 	{"lint", ".pw.md lint", "Lints Polter files the agent writes."},
+	{"context", "File context", "Adds the brief of the Structure node a file belongs to when the agent first reads or edits it in a session."},
 	{"session", "Session AgentRun", "Groups the session's writes into one AgentRun."},
 }
 

@@ -355,6 +355,20 @@ message ProjectionFile {
 
 message ExportProjectionsResponse { repeated ProjectionFile files = 1; }
 
+// FileContext returns the brief of the Structure node that holds file, for the
+// context hook. A session gets each node's brief once (again when it
+// changed); session_id "" always gets it. text is empty when no node holds
+// the file or the session already has its brief.
+message FileContextRequest {
+  string project_id = 1;
+  string session_id = 2;
+  string file = 3;
+}
+message FileContextResponse {
+  string text = 1;
+  string node_path = 2;
+}
+
 // SetAgentsSync turns on or off rewriting the generated AGENTS.md block of
 // every checkout after project state changes (Decision files stay on
 // ExportProjections). Turning it on syncs at once and returns those files.
@@ -566,6 +580,7 @@ service WorkService {
   rpc SetScope(SetScopeRequest) returns (SetScopeResponse);
   rpc ExportProjections(ExportProjectionsRequest) returns (ExportProjectionsResponse);
   rpc SetAgentsSync(SetAgentsSyncRequest) returns (SetAgentsSyncResponse);
+  rpc FileContext(FileContextRequest) returns (FileContextResponse);
   rpc ReviewFeature(ReviewFeatureRequest) returns (ReviewFeatureResponse);
   rpc CreateFeature(CreateFeatureRequest) returns (CreateFeatureResponse);
   rpc AdvanceFeature(AdvanceFeatureRequest) returns (AdvanceFeatureResponse);

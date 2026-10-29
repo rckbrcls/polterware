@@ -10,7 +10,7 @@
 
 ## Work cards
 
-- Codex and other agents: run `polterware format` once for the Polter core (Work cards; `polterware format structure|decisions|facts|feature` for the rest), read with `polterware query cards`, and write Work cards with `polterware apply <file|->` (frontmatter `summary` and `rationale`). Claude Code gets the same through the `plugins/polterware` plugin (a symlink to `backend/providers/agentsetup/plugin`, which the binary embeds); `polterware setup claude|codex` installs it, and `polterware hooks enable|disable <name>` switches its hooks.
+- Codex and other agents: run `polterware format` once for the Polter core (Work cards; `polterware format structure|decisions|facts|feature` for the rest), read with `polterware query cards`, and write Work cards with `polterware apply <file|->` (frontmatter `summary` and `rationale`). Claude Code gets the same through the `plugins/polterware` plugin (a symlink to `backend/providers/agentsetup/plugin`, which the binary embeds); `polterware setup claude|codex` installs it, and `polterware hooks enable|disable <name>` switches its hooks. The `context` hook (PostToolUse on `Read|Edit|Write|MultiEdit`) adds the brief of the Structure node a file belongs to once per session, again when that brief changes (`hook_context_seen`, because the core exits when idle); `polterware status` and its SessionStart hook add a line when the installed plugin or skill is older than the binary.
 - Codex and other agents: start a session with `polterware status` and end it with `polterware handoff`.
 
 ## Product positioning

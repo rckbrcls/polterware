@@ -399,6 +399,29 @@ func TestAgentsSyncMigrationKeepsSettingsAndDefaultsOff(t *testing.T) {
 	}
 }
 
+func TestHookContextSeenMigrationCascadesWithTheProject(t *testing.T) {
+	db, err := Open(filepath.Join(t.TempDir(), "hook-context.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	migrateBefore(t, db, "0042")
+	applyMigration(t, db, "0042_hook_context_seen.sql")
+	for _, stmt := range []string{
+		`INSERT INTO projects(id,name,root_path,created_at,updated_at) VALUES('p','Project','/tmp','now','now')`,
+		`INSERT INTO hook_context_seen(session_id,project_id,node_id,brief_hash,seen_at) VALUES('s','p','n','h','now')`,
+		`DELETE FROM projects WHERE id='p'`,
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var count int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM hook_context_seen`).Scan(&count); err != nil || count != 0 {
+		t.Fatalf("rows left after the project went: %d %v", count, err)
+	}
+}
+
 func migrateBefore(t *testing.T, db *sql.DB, prefix string) {
 	t.Helper()
 	entries, err := migrationFS.ReadDir("migrations")

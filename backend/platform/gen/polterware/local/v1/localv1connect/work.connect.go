@@ -69,6 +69,8 @@ const (
 	// WorkServiceSetAgentsSyncProcedure is the fully-qualified name of the WorkService's SetAgentsSync
 	// RPC.
 	WorkServiceSetAgentsSyncProcedure = "/polterware.local.v1.WorkService/SetAgentsSync"
+	// WorkServiceFileContextProcedure is the fully-qualified name of the WorkService's FileContext RPC.
+	WorkServiceFileContextProcedure = "/polterware.local.v1.WorkService/FileContext"
 	// WorkServiceReviewFeatureProcedure is the fully-qualified name of the WorkService's ReviewFeature
 	// RPC.
 	WorkServiceReviewFeatureProcedure = "/polterware.local.v1.WorkService/ReviewFeature"
@@ -114,6 +116,7 @@ type WorkServiceClient interface {
 	SetScope(context.Context, *connect.Request[v1.SetScopeRequest]) (*connect.Response[v1.SetScopeResponse], error)
 	ExportProjections(context.Context, *connect.Request[v1.ExportProjectionsRequest]) (*connect.Response[v1.ExportProjectionsResponse], error)
 	SetAgentsSync(context.Context, *connect.Request[v1.SetAgentsSyncRequest]) (*connect.Response[v1.SetAgentsSyncResponse], error)
+	FileContext(context.Context, *connect.Request[v1.FileContextRequest]) (*connect.Response[v1.FileContextResponse], error)
 	ReviewFeature(context.Context, *connect.Request[v1.ReviewFeatureRequest]) (*connect.Response[v1.ReviewFeatureResponse], error)
 	CreateFeature(context.Context, *connect.Request[v1.CreateFeatureRequest]) (*connect.Response[v1.CreateFeatureResponse], error)
 	AdvanceFeature(context.Context, *connect.Request[v1.AdvanceFeatureRequest]) (*connect.Response[v1.AdvanceFeatureResponse], error)
@@ -220,6 +223,12 @@ func NewWorkServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(workServiceMethods.ByName("SetAgentsSync")),
 			connect.WithClientOptions(opts...),
 		),
+		fileContext: connect.NewClient[v1.FileContextRequest, v1.FileContextResponse](
+			httpClient,
+			baseURL+WorkServiceFileContextProcedure,
+			connect.WithSchema(workServiceMethods.ByName("FileContext")),
+			connect.WithClientOptions(opts...),
+		),
 		reviewFeature: connect.NewClient[v1.ReviewFeatureRequest, v1.ReviewFeatureResponse](
 			httpClient,
 			baseURL+WorkServiceReviewFeatureProcedure,
@@ -293,6 +302,7 @@ type workServiceClient struct {
 	setScope             *connect.Client[v1.SetScopeRequest, v1.SetScopeResponse]
 	exportProjections    *connect.Client[v1.ExportProjectionsRequest, v1.ExportProjectionsResponse]
 	setAgentsSync        *connect.Client[v1.SetAgentsSyncRequest, v1.SetAgentsSyncResponse]
+	fileContext          *connect.Client[v1.FileContextRequest, v1.FileContextResponse]
 	reviewFeature        *connect.Client[v1.ReviewFeatureRequest, v1.ReviewFeatureResponse]
 	createFeature        *connect.Client[v1.CreateFeatureRequest, v1.CreateFeatureResponse]
 	advanceFeature       *connect.Client[v1.AdvanceFeatureRequest, v1.AdvanceFeatureResponse]
@@ -374,6 +384,11 @@ func (c *workServiceClient) SetAgentsSync(ctx context.Context, req *connect.Requ
 	return c.setAgentsSync.CallUnary(ctx, req)
 }
 
+// FileContext calls polterware.local.v1.WorkService.FileContext.
+func (c *workServiceClient) FileContext(ctx context.Context, req *connect.Request[v1.FileContextRequest]) (*connect.Response[v1.FileContextResponse], error) {
+	return c.fileContext.CallUnary(ctx, req)
+}
+
 // ReviewFeature calls polterware.local.v1.WorkService.ReviewFeature.
 func (c *workServiceClient) ReviewFeature(ctx context.Context, req *connect.Request[v1.ReviewFeatureRequest]) (*connect.Response[v1.ReviewFeatureResponse], error) {
 	return c.reviewFeature.CallUnary(ctx, req)
@@ -435,6 +450,7 @@ type WorkServiceHandler interface {
 	SetScope(context.Context, *connect.Request[v1.SetScopeRequest]) (*connect.Response[v1.SetScopeResponse], error)
 	ExportProjections(context.Context, *connect.Request[v1.ExportProjectionsRequest]) (*connect.Response[v1.ExportProjectionsResponse], error)
 	SetAgentsSync(context.Context, *connect.Request[v1.SetAgentsSyncRequest]) (*connect.Response[v1.SetAgentsSyncResponse], error)
+	FileContext(context.Context, *connect.Request[v1.FileContextRequest]) (*connect.Response[v1.FileContextResponse], error)
 	ReviewFeature(context.Context, *connect.Request[v1.ReviewFeatureRequest]) (*connect.Response[v1.ReviewFeatureResponse], error)
 	CreateFeature(context.Context, *connect.Request[v1.CreateFeatureRequest]) (*connect.Response[v1.CreateFeatureResponse], error)
 	AdvanceFeature(context.Context, *connect.Request[v1.AdvanceFeatureRequest]) (*connect.Response[v1.AdvanceFeatureResponse], error)
@@ -537,6 +553,12 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(workServiceMethods.ByName("SetAgentsSync")),
 		connect.WithHandlerOptions(opts...),
 	)
+	workServiceFileContextHandler := connect.NewUnaryHandler(
+		WorkServiceFileContextProcedure,
+		svc.FileContext,
+		connect.WithSchema(workServiceMethods.ByName("FileContext")),
+		connect.WithHandlerOptions(opts...),
+	)
 	workServiceReviewFeatureHandler := connect.NewUnaryHandler(
 		WorkServiceReviewFeatureProcedure,
 		svc.ReviewFeature,
@@ -621,6 +643,8 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 			workServiceExportProjectionsHandler.ServeHTTP(w, r)
 		case WorkServiceSetAgentsSyncProcedure:
 			workServiceSetAgentsSyncHandler.ServeHTTP(w, r)
+		case WorkServiceFileContextProcedure:
+			workServiceFileContextHandler.ServeHTTP(w, r)
 		case WorkServiceReviewFeatureProcedure:
 			workServiceReviewFeatureHandler.ServeHTTP(w, r)
 		case WorkServiceCreateFeatureProcedure:
@@ -702,6 +726,10 @@ func (UnimplementedWorkServiceHandler) ExportProjections(context.Context, *conne
 
 func (UnimplementedWorkServiceHandler) SetAgentsSync(context.Context, *connect.Request[v1.SetAgentsSyncRequest]) (*connect.Response[v1.SetAgentsSyncResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.SetAgentsSync is not implemented"))
+}
+
+func (UnimplementedWorkServiceHandler) FileContext(context.Context, *connect.Request[v1.FileContextRequest]) (*connect.Response[v1.FileContextResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.FileContext is not implemented"))
 }
 
 func (UnimplementedWorkServiceHandler) ReviewFeature(context.Context, *connect.Request[v1.ReviewFeatureRequest]) (*connect.Response[v1.ReviewFeatureResponse], error) {

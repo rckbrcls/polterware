@@ -410,6 +410,19 @@ func (core *Core) ExportProjections(_ context.Context, request *connect.Request[
 	return connect.NewResponse(&localv1.ExportProjectionsResponse{Files: projectionFilesProto(files)}), nil
 }
 
+// FileContext serves the context hook: the brief of the node that holds a
+// file, once per session.
+func (core *Core) FileContext(_ context.Context, request *connect.Request[localv1.FileContextRequest]) (*connect.Response[localv1.FileContextResponse], error) {
+	if request.Msg.ProjectId == "" || strings.TrimSpace(request.Msg.File) == "" {
+		return nil, invalid("project id and file are required")
+	}
+	text, nodePath, err := wedge.FileContext(core.Store, request.Msg.ProjectId, request.Msg.SessionId, request.Msg.File)
+	if err != nil {
+		return nil, internal(err)
+	}
+	return connect.NewResponse(&localv1.FileContextResponse{Text: text, NodePath: nodePath}), nil
+}
+
 func (core *Core) ListMilestones(_ context.Context, request *connect.Request[localv1.ListMilestonesRequest]) (*connect.Response[localv1.ListMilestonesResponse], error) {
 	if request.Msg.ProjectId == "" {
 		return nil, invalid("project id is required")

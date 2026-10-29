@@ -81,3 +81,50 @@ stage: build · under: app/auth
 		t.Fatalf("search:\n%s", text)
 	}
 }
+
+func TestFileContextSendsEachNodeBriefOncePerSession(t *testing.T) {
+	store, err := storepkg.New(filepath.Join(t.TempDir(), "file-context.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	root := t.TempDir()
+	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", RootPath: root})
+	if err != nil {
+		t.Fatal(err)
+	}
+	apply := func(text string) {
+		t.Helper()
+		result, err := wedge.ApplyPolter(store, wedge.ApplyInput{ProjectID: project.ID, AutoStartLabel: "cli",
+			Text: "---\npolter: 1\nsummary: Map the app\nrationale: Hooks brief by file\n---\n\n" + text})
+		if err != nil || len(result.Diagnostics) > 0 {
+			t.Fatalf("apply: %v %+v", err, result.Diagnostics)
+		}
+	}
+	apply("# app: App\nlevel: system · path: src\n\n# app/web: Web\nlevel: component · under: app · path: src/web\n\n! No inline styles\n")
+	file := filepath.Join(root, "src", "web", "page.tsx")
+
+	text, node, err := wedge.FileContext(store, project.ID, "s1", file)
+	if err != nil || node != "app/web" || !strings.HasPrefix(text, "Polterware: "+file+" is under app/web.") || !strings.Contains(text, "! No inline styles") {
+		t.Fatalf("first read: %q %q %v", text, node, err)
+	}
+	if again, _, err := wedge.FileContext(store, project.ID, "s1", filepath.Join(root, "src", "web", "other.tsx")); err != nil || again != "" {
+		t.Fatalf("a second file under the same node must send nothing: %q %v", again, err)
+	}
+	if other, _, _ := wedge.FileContext(store, project.ID, "s2", file); other == "" {
+		t.Fatal("another session gets its own brief")
+	}
+	if parent, node, _ := wedge.FileContext(store, project.ID, "s1", filepath.Join(root, "src", "main.ts")); node != "app" || parent == "" {
+		t.Fatalf("a file under another node sends that node: %q %q", parent, node)
+	}
+	apply("# app/web: Web\nlevel: component · under: app · path: src/web\n\n! No inline styles\n! Server components by default\n")
+	if changed, _, _ := wedge.FileContext(store, project.ID, "s1", file); !strings.Contains(changed, "Server components by default") {
+		t.Fatalf("a changed brief is sent again: %q", changed)
+	}
+	if none, node, err := wedge.FileContext(store, project.ID, "s1", "/elsewhere/readme.md"); err != nil || none != "" || node != "" {
+		t.Fatalf("a file no node holds: %q %q %v", none, node, err)
+	}
+	if first, _, _ := wedge.FileContext(store, project.ID, "", file); first == "" {
+		t.Fatal("without a session id the brief is always sent")
+	}
+}

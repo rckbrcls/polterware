@@ -32,6 +32,12 @@
         "hooks": [
           { "type": "command", "command": "command -v polterware >/dev/null 2>&1 || exit 0; polterware hook lint" }
         ]
+      },
+      {
+        "matcher": "Read|Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "command -v polterware >/dev/null 2>&1 || exit 0; polterware hook context" }
+        ]
       }
     ]
   }

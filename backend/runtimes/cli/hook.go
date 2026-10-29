@@ -35,7 +35,7 @@ type hookInput struct {
 
 func runHook(dbPath string, args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: polterware hook session-start [--label name] | session-end | lint | status | stop")
+		return errors.New("usage: polterware hook session-start [--label name] | session-end | lint | context | status | stop")
 	}
 	if args[0] == "dispatch" {
 		return runDispatchHook(dbPath)
@@ -74,8 +74,11 @@ func runHook(dbPath string, args []string) error {
 		return hookSessionEnd(dbPath, input.SessionID)
 	case "lint":
 		return hookLint(dbPath, input)
+	case "context":
+		hookContext(dbPath, input)
+		return nil
 	default:
-		return fmt.Errorf("unknown hook %q: use session-start, session-end, lint, status, or stop", args[0])
+		return fmt.Errorf("unknown hook %q: use session-start, session-end, lint, context, status, or stop", args[0])
 	}
 }
 
@@ -157,6 +160,35 @@ func hookLint(dbPath string, input hookInput) error {
 	return exitError{code: 2}
 }
 
+// hookContext adds the brief of the Structure node that holds the file the
+// agent just read or edited, once per session (PostToolUse). A missing core,
+// project, or node leaves the session alone.
+func hookContext(dbPath string, input hookInput) {
+	file := input.ToolInput.FilePath
+	if file == "" {
+		return
+	}
+	dir := input.Cwd
+	if dir == "" {
+		dir = filepath.Dir(file)
+	}
+	c, err := dial(dbPath)
+	if err != nil {
+		return
+	}
+	project, err := resolveProjectIn(c, "", dir)
+	if err != nil {
+		return
+	}
+	res, err := c.Work.FileContext(context.Background(), connect.NewRequest(&localv1.FileContextRequest{
+		ProjectId: project.Id, SessionId: input.SessionID, File: file,
+	}))
+	if err != nil || strings.TrimSpace(res.Msg.Text) == "" {
+		return
+	}
+	_ = writeHookContext("PostToolUse", res.Msg.Text)
+}
+
 // hookStatus prints the project status as Claude Code session context.
 // A missing core or project leaves the session alone.
 func hookStatus(dbPath string, input hookInput) {
@@ -164,7 +196,7 @@ func hookStatus(dbPath string, input hookInput) {
 	if err != nil || strings.TrimSpace(text) == "" {
 		return
 	}
-	_ = writeHookContext("SessionStart", text)
+	_ = writeHookContext("SessionStart", withSetupNotices(dbPath, text))
 }
 
 // hookStop reminds the agent to write a handoff. It never blocks the session.

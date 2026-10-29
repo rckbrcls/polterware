@@ -1,9 +1,12 @@
 package wedge
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/polterware/polterware/backend/domains/canvas"
 	"github.com/polterware/polterware/backend/domains/knowledge"
@@ -147,4 +150,40 @@ func NodeForPath(store *storepkg.Store, snapshot work.Snapshot, file string) (st
 		}
 	}
 	return found, ok, nil
+}
+
+// FileContextBudget bounds the brief the context hook adds per node.
+const FileContextBudget = 400
+
+// FileContext returns the brief of the Structure node that holds file, for the
+// context hook. A session gets each node's brief once, and again only when it
+// changed; sessionID "" always gets it. No node holding the file returns "".
+func FileContext(store *storepkg.Store, projectID, sessionID, file string) (text, nodePath string, err error) {
+	snapshot, err := store.LoadWorkSnapshot(projectID)
+	if err != nil {
+		return "", "", err
+	}
+	node, ok, err := NodeForPath(store, snapshot, file)
+	if err != nil || !ok {
+		return "", "", err
+	}
+	in, err := briefInput(store, snapshot, structure.MultiScope{})
+	if err != nil {
+		return "", "", err
+	}
+	body, err := polter.Brief(in, node.Path, FileContextBudget)
+	if err != nil {
+		return "", "", err
+	}
+	if sessionID != "" {
+		sum := sha256.Sum256([]byte(body))
+		fresh, err := store.MarkHookContextSeen(sessionID, projectID, node.ID, hex.EncodeToString(sum[:8]), time.Now())
+		if err != nil {
+			return "", "", err
+		}
+		if !fresh {
+			return "", node.Path, nil
+		}
+	}
+	return "Polterware: " + strings.TrimSpace(file) + " is under " + node.Path + ". Its brief, sent once per session:\n" + body, node.Path, nil
 }

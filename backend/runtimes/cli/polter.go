@@ -15,6 +15,7 @@ import (
 
 	"github.com/polterware/polterware/backend/domains/polter"
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
+	"github.com/polterware/polterware/backend/providers/agentsetup"
 )
 
 func runApply(dbPath string, args []string) error {
@@ -186,8 +187,17 @@ func runStatus(dbPath string, args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Print(res.Msg.Text)
+	fmt.Print(withSetupNotices(dbPath, res.Msg.Text))
 	return nil
+}
+
+// withSetupNotices appends a line for each installed agent integration that
+// is older than this binary, so a stale plugin or skill is noticed.
+func withSetupNotices(dbPath, text string) string {
+	for _, notice := range agentsetup.StaleNotices(filepath.Dir(dbPath)) {
+		text = strings.TrimRight(text, "\n") + "\n" + notice + "\n"
+	}
+	return text
 }
 
 func runHandoff(dbPath string, args []string) error {

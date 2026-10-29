@@ -6,6 +6,7 @@ package agentsetup
 import (
 	"embed"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -91,4 +92,29 @@ func WriteMarketplace(dir string) error {
 		return err
 	}
 	return os.WriteFile(filepath.Join(dir, ".claude-plugin", "marketplace.json"), append(manifest, '\n'), 0o644)
+}
+
+// StaleNotices names the installed agent integrations older than this binary:
+// the Claude Code plugin in the local marketplace and the shared skill file.
+// It reads files only, so it is cheap enough for every status; an integration
+// that was never installed says nothing.
+func StaleNotices(dbDir string) []string {
+	var out []string
+	manifest := filepath.Join(MarketplaceDir(dbDir), "plugins", PluginName, ".claude-plugin", "plugin.json")
+	if body, err := os.ReadFile(manifest); err == nil {
+		var installed struct {
+			Version string `json:"version"`
+		}
+		if json.Unmarshal(body, &installed) == nil && installed.Version != EmbeddedVersion() {
+			out = append(out, fmt.Sprintf("setup: the Claude Code plugin is %s and this binary has %s; run polterware setup claude", installed.Version, EmbeddedVersion()))
+		}
+	}
+	if dir, err := SkillDir(); err == nil {
+		have, err := os.ReadFile(filepath.Join(dir, "SKILL.md"))
+		want, _ := SkillFile()
+		if err == nil && string(have) != string(want) {
+			out = append(out, "setup: the agent skill in "+dir+" differs from this binary's; run polterware setup codex")
+		}
+	}
+	return out
 }

@@ -401,7 +401,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
   {
     id: "hooks",
     name: "polterware hooks",
-    synopsis: "polterware hooks [list] | enable|disable <status|stop|lint|session|dispatch|all>",
+    synopsis: "polterware hooks [list] | enable|disable <status|stop|lint|context|session|dispatch|all>",
     summary:
       "List the plugin hooks, or switch one on or off. dispatch is a SessionStart hint that points agents at the delegation skill.",
     flags: [],
@@ -410,9 +410,9 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
   {
     id: "hook",
     name: "polterware hook",
-    synopsis: "polterware hook session-start [--label <name>] | session-end | lint | status | stop",
+    synopsis: "polterware hook session-start [--label <name>] | session-end | lint | context | status | stop",
     summary:
-      "Claude Code hook entry points (JSON on stdin), installed by the Polterware plugin. session-start makes every apply in the session join one AgentRun per project; session-end completes it; lint checks written .pw.md files and returns errors to the agent; status prints the project status as session context; stop reminds the agent to write a handoff and never blocks.",
+      "Claude Code hook entry points (JSON on stdin), installed by the Polterware plugin. session-start makes every apply in the session join one AgentRun per project; session-end completes it; lint checks written .pw.md files and returns errors to the agent; context adds the brief of the Structure node a read or edited file belongs to, once per session and again when it changes; status prints the project status as session context, with a line when the installed plugin or skill is older than the binary; stop reminds the agent to write a handoff and never blocks.",
     flags: [
       {
         name: "--label",
