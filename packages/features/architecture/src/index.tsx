@@ -107,7 +107,7 @@ function NodeDetails(props: NodeDetailsProps) {
               <Cloud size={14} aria-hidden="true" />
               <span class="flex min-w-0 flex-col">
                 <span class="truncate text-[var(--color-text-primary)]">{deploy.resource}</span>
-                <span class="truncate">{deploy.provider} · {deploy.environment || deploy.environmentId}</span>
+                <span class="truncate">{deploy.provider} / {deploy.environment || deploy.environmentId}</span>
               </span>
               <Show when={!props.isProviderConnected(deploy.provider)}><StatusChip tone="warn" label="CLI not connected" /></Show>
             </Card>

@@ -36,7 +36,7 @@ export function CardPeek(props: { card: WorkspaceWorkCard | null; onClose: () =>
                     <p class="m-0 text-[var(--color-text-primary)]">
                       <span class="mr-2 font-mono text-[12px] text-[var(--color-text-muted)]">T{task.number}</span>
                       {task.title}
-                      <Show when={task.claimHolder}>{(holder) => <span class="ml-2 text-[12px] text-[var(--color-text-muted)]">· {holder()}</span>}</Show>
+                      <Show when={task.claimHolder}>{(holder) => <span class="ml-2 text-[12px] text-[var(--color-text-muted)]">/ {holder()}</span>}</Show>
                     </p>
                   )}
                 </For>

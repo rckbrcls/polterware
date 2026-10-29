@@ -69,6 +69,6 @@ export function placeHints(def: ComponentTypeDefinition) {
     kindLabel,
     typeBlurb: def.description,
     purposePlaceholder: PURPOSE_BY_CATEGORY[def.category] ?? "What this component does here…",
-    statusLine: "Places as planned · unlinked until a resource is linked",
+    statusLine: "Places as planned / unlinked until a resource is linked",
   };
 }

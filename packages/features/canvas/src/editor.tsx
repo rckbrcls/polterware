@@ -195,7 +195,7 @@ export function CanvasEditor(props: {
       <CanvasNode node={node()} variant={behavior.variant(node().type)} selected={selection().nodeIds.includes(node().id)} linked={linkedFacts(node(), props.entities ?? [])}>
         {/* The semantic card already shows its sign in the icon tile. */}
         <Show when={!component(node().type) && !structureKind(node().type) && readRef(node())}>{(ref) => <EntityIcon kind={ref().kind} />}</Show>
-        <Show when={unverified(node())}><StatusChip tone="warn" label={readRef(node()) ? "Missing · Unverified" : "Unverified"} /></Show>
+        <Show when={unverified(node())}><StatusChip tone="warn" label={readRef(node()) ? "Missing / Unverified" : "Unverified"} /></Show>
         <NodeLabel name={readRef(node()) ? referenceState(readRef(node()), props.entities ?? []).title : node().name} style={readStyle(node())}
           editing={editing() === node().id && !readRef(node())} onInput={(name) => change(updateNode(doc(), node().id, { name }), "eventually")} onDone={finishLabel} />
       </CanvasNode>

@@ -95,7 +95,7 @@ function NodePanel(props: Parameters<typeof CanvasInspector>[0] & { id: string }
     props.change({ ...props.doc, nodes: nodes.map((item, zIndex) => ({ ...item, zIndex })) });
   };
   return <>
-    <Heading title={title()} detail={[kindLabel(linked()?.kind ?? node().type), linked()?.tech ?? propertyText(node(), "technology")].filter(Boolean).join(" · ")} />
+    <Heading title={title()} detail={[kindLabel(linked()?.kind ?? node().type), linked()?.tech ?? propertyText(node(), "technology")].filter(Boolean).join(" / ")} />
     <div class="pw-canvas-panel-tabs"><Tabs aria-label="Shape inspector" items={tabs()} value={tabs().some((item) => item.id === tab()) ? tab() : "text"} onChange={(id) => setTab(id as Tab)} /></div>
     <Body>
       <TabPanel id="canvas-style" active={tab() === "style" && library()}><FormStack class="w-full pt-3">

@@ -46,7 +46,7 @@ export function NodeInspector(props: {
     {props.children}
     <CollapsibleSection title="Project reference" icon={<Link2 size={14} />}>
       {/* Only Structure kinds must be linked; an unlinked component or drawing shape is not unverified. */}
-      <Show when={ref() || props.structureRequired}><div class="flex items-center gap-2"><StatusChip tone={state().trust === "referenced" ? "muted" : "warn"} label={ref() ? state().trust === "referenced" ? kindLabel(ref()!.kind) : "Missing reference · Unverified" : "Unverified"} />
+      <Show when={ref() || props.structureRequired}><div class="flex items-center gap-2"><StatusChip tone={state().trust === "referenced" ? "muted" : "warn"} label={ref() ? state().trust === "referenced" ? kindLabel(ref()!.kind) : "Missing reference / Unverified" : "Unverified"} />
         <Show when={ref() && !props.structureRequired}><Button size="sm" variant="ghost" onClick={() => props.onLink()}>Unlink</Button></Show>
       </div></Show>
       <Show when={ref()}><p class="text-sm text-[var(--color-text-primary)]">{state().title}</p>

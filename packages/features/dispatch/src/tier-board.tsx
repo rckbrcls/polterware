@@ -116,7 +116,7 @@ function TierCard(props: {
           {props.avatar(props.tier.agent)}
           <div class="flex min-w-0 flex-1 flex-col gap-0.5">
             <span class="pw-tier-card__model" title={props.tier.model}>{props.tier.model}</span>
-            <span class="truncate text-[11px] text-[var(--color-text-muted)]">{[props.tier.agent, props.tier.provider].filter(Boolean).join(" · ")}</span>
+            <span class="truncate text-[11px] text-[var(--color-text-muted)]">{[props.tier.agent, props.tier.provider].filter(Boolean).join(" / ")}</span>
           </div>
           <Show when={props.editable}>
             <Button variant="ghost" size="icon" aria-label={`Remove ${props.tier.agent} ${props.tier.model} from ${props.slot.tier}`} onClick={() => props.onRemove()}>
@@ -292,12 +292,12 @@ export function TierModelPalette(props: {
                       data-tier-drag-source=""
                       onPointerDown={(event) => beginPointerDrag(event, { card: cardOf(model) })}
                       onClick={() => { if (!suppressClick) props.onAdd(cardOf(model), suggestedTier(model.tier)); }}
-                      title={`${model.agent} · ${model.model}`}
+                      title={`${model.agent} / ${model.model}`}
                     >
                       {props.avatar(model.agent)}
                       <span class="flex min-w-0 flex-1 flex-col text-left">
                         <span class="truncate font-mono text-[12px] text-[var(--color-text-primary)]">{model.model}</span>
-                        <span class="truncate text-[11px] text-[var(--color-text-muted)]">{[model.provider, model.tier].filter(Boolean).join(" · ")}</span>
+                        <span class="truncate text-[11px] text-[var(--color-text-muted)]">{[model.provider, model.tier].filter(Boolean).join(" / ")}</span>
                       </span>
                     </button>
                   )}

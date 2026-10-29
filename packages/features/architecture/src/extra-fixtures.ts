@@ -58,7 +58,7 @@ export const VIEW_FIXTURES: ArchViewCard[] = [
       { id: "n-queue", name: "Event Queue", type: "Queue", layer: "Data" },
     ],
     notes: "Default system lens. Prefer Payment flow or Infrastructure when focusing a slice.",
-    filterSummary: "All components · Production",
+    filterSummary: "All components / Production",
     dataSource: "fixture",
   },
   {
@@ -80,7 +80,7 @@ export const VIEW_FIXTURES: ArchViewCard[] = [
       { id: "n-queue", name: "Event Queue", type: "Queue", layer: "Data" },
     ],
     notes: "Use when reviewing checkout incidents or settlement latency.",
-    filterSummary: "Types: gateway, service, worker, database, cache, queue · Tags: payments",
+    filterSummary: "Types: gateway, service, worker, database, cache, queue / Tags: payments",
     dataSource: "fixture",
   },
   {

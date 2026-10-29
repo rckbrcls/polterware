@@ -30,7 +30,7 @@ function SemanticCard(props: { node: ArchNode; selected: boolean; linked?: Linke
   const kind = () => props.linked?.kind ?? props.node.type;
   const technology = () => props.linked?.tech ?? propertyText(props.node, "technology");
   const icon = () => nodeIcon(kind()) ?? nodeIcon(props.node.type) ?? Box;
-  const subtitle = () => [component(kind())?.label ?? kindLabel(props.node.type), technology()].filter(Boolean).join(" · ");
+  const subtitle = () => [component(kind())?.label ?? kindLabel(props.node.type), technology()].filter(Boolean).join(" / ");
   return <g data-node-id={props.node.id} data-variant={structureKind(props.node.type) ? "structure" : "component"} data-kind={props.node.type} data-family={outline().id}>
     <ShapeSurface node={props.node} definition={outline()} style={style()} dashed={outline().dashed} />
     <Show when={outline().marks}>{(marks) => <path transform={`translate(${props.node.x} ${props.node.y})`} d={marks()(props.node.width, props.node.height)}

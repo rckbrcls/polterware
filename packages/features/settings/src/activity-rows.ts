@@ -8,7 +8,7 @@ export function dispatchEventRow(event: DispatchRunEventView): ProjectChangeRow 
     agentRunId: event.runId,
     projectId: event.projectId,
     actorKind: "agent",
-    agentLabel: event.agent ? `${event.agent}${event.tier ? ` · ${event.tier}` : ""}` : "dispatch",
+    agentLabel: event.agent ? `${event.agent}${event.tier ? ` / ${event.tier}` : ""}` : "dispatch",
     runStatus: event.kind,
     runTask: event.tier ? `Dispatch (${event.tier})` : "Dispatch",
     summary: event.text || `Dispatch ${event.kind}`,

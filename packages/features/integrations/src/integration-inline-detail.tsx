@@ -150,7 +150,7 @@ export function IntegrationInlineDetail(props: {
                   <div>
                     <p class="m-0 text-[13px]">{run.message}</p>
                     <p class="m-0 mt-1 text-[11px] text-[var(--color-text-muted)]">
-                      {run.startedAt} · {run.imported} items
+                      {run.startedAt} / {run.imported} items
                     </p>
                   </div>
                   <StatusChip tone={syncTone(run.result)} label={run.result} />

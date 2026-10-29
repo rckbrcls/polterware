@@ -142,14 +142,14 @@ function measuredDuration(ms: number | undefined): string {
 
 function routeLabel(run: DispatchRunView): string | undefined {
   const parts = [run.tier, run.effort].map((part) => part.trim()).filter(Boolean);
-  return parts.length > 0 ? parts.join(" · ") : undefined;
+  return parts.length > 0 ? parts.join(" / ") : undefined;
 }
 
 function timingLabel(run: DispatchRunView): string | undefined {
   const parts: string[] = [];
   if (run.queuedMs !== undefined) parts.push(`queue ${formatDuration(run.queuedMs)}`);
   if (run.runMs !== undefined) parts.push(`exec ${formatDuration(run.runMs)}`);
-  return parts.length > 0 ? parts.join(" · ") : undefined;
+  return parts.length > 0 ? parts.join(" / ") : undefined;
 }
 
 function modelLabel(run: DispatchRunView): string | undefined {
@@ -206,7 +206,7 @@ function shortRunId(id: string): string {
 
 function dotted(...parts: string[]): string {
   const visible = parts.map((part) => part.trim()).filter(Boolean);
-  return visible.length > 0 ? visible.join(" · ") : "—";
+  return visible.length > 0 ? visible.join(" / ") : "—";
 }
 
 function formatFiles(run: DispatchRunView): string | undefined {
@@ -1544,7 +1544,7 @@ function TranscriptLine(props: { entry: TranscriptEntry }) {
 
 /**
  * The agent that runs (or ran) the job, pinned above the transcript: its bot, animated while
- * it works, and agent · model · provider. Failed attempts before it show as quiet bots and a
+ * it works, and agent / model / provider. Failed attempts before it show as quiet bots and a
  * line each with their error.
  */
 function RunAgentBar(props: { run: DispatchRunView; attempts: readonly AgentAttemptCard[] }) {
@@ -1690,12 +1690,12 @@ function DispatchRunDetail(props: {
             </Show>
             <For each={props.resumedBy}>
               {(next) => (
-                <LinkedRunRow label={`Resumed by ${next.agent || "agent"} · ${shortRunId(next.id)}`} agent={next.agent} seed={next.id} status={next.status} onOpen={() => props.onSelect(next.id)} />
+                <LinkedRunRow label={`Resumed by ${next.agent || "agent"} / ${shortRunId(next.id)}`} agent={next.agent} seed={next.id} status={next.status} onOpen={() => props.onSelect(next.id)} />
               )}
             </For>
             <For each={props.childRuns}>
               {(child) => (
-                <LinkedRunRow label={`Child ${child.agent || "agent"} · ${shortRunId(child.id)}`} agent={child.agent} seed={child.id} status={child.status} onOpen={() => props.onSelect(child.id)} />
+                <LinkedRunRow label={`Child ${child.agent || "agent"} / ${shortRunId(child.id)}`} agent={child.agent} seed={child.id} status={child.status} onOpen={() => props.onSelect(child.id)} />
               )}
             </For>
           </div>

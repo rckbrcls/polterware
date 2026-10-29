@@ -61,7 +61,7 @@ export function SettingsView(props: {
   const tabs = () => settingsTabsFor(scope());
   const activeTab = () => SETTINGS_TABS.find((item) => item.id === tab());
   const headingFor = (item?: (typeof SETTINGS_TABS)[number]) =>
-    item && item.group !== "App" ? `${item.group} · ${item.label}` : item?.label;
+    item && item.group !== "App" ? `${item.group} / ${item.label}` : item?.label;
 
   const searchEntries = createMemo(() =>
     [...SETTINGS_SEARCH_ENTRIES, ...dynamicSettingsEntries()]

@@ -86,7 +86,7 @@ export function SettingsDialog(props: SettingsDialogProps) {
 
   const resultPath = (entry: SettingsSearchEntry) => {
     const item = itemById(entry.item);
-    const path = entry.section ? `${item?.label ?? ""} · ${entry.section}` : (item?.group ?? item?.label ?? "");
+    const path = entry.section ? `${item?.label ?? ""} / ${entry.section}` : (item?.group ?? item?.label ?? "");
     return entry.description ? `${path} — ${entry.description}` : path;
   };
 

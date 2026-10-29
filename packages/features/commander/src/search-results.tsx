@@ -20,11 +20,11 @@ export type SearchHit = {
 };
 
 export const SEARCH_HITS: SearchHit[] = [
-  { id: "h1", category: "Structure", title: "Payment Service", subtitle: "Service · Production", section: "structure", entityKind: "arch-node", entityId: "payment" },
+  { id: "h1", category: "Structure", title: "Payment Service", subtitle: "Service / Production", section: "structure", entityKind: "arch-node", entityId: "payment" },
   { id: "h2", category: "Structure", title: "Payment flow", subtitle: "System", section: "structure" },
-  { id: "h3", category: "Structure", title: "payment-service", subtitle: "Component · AWS · Healthy", section: "structure", entityKind: "resource", entityId: "payment-service" },
-  { id: "h5", category: "Milestones", title: "Payment flow", subtitle: "card · Build", section: "milestones", tab: "board", entityKind: "card", entityId: "payment-flow" },
-  { id: "h6", category: "Truth", title: "Decision 0004", subtitle: "decision · Product positioning", section: "truth", tab: "decisions", entityKind: "decision", entityId: "decision-0004" },
+  { id: "h3", category: "Structure", title: "payment-service", subtitle: "Component / AWS / Healthy", section: "structure", entityKind: "resource", entityId: "payment-service" },
+  { id: "h5", category: "Milestones", title: "Payment flow", subtitle: "card / Build", section: "milestones", tab: "board", entityKind: "card", entityId: "payment-flow" },
+  { id: "h6", category: "Truth", title: "Decision 0004", subtitle: "decision / Product positioning", section: "truth", tab: "decisions", entityKind: "decision", entityId: "decision-0004" },
 ];
 
 export function knowledgeHitsFromSearch(hits: Array<{
@@ -46,7 +46,7 @@ export function knowledgeHitsFromSearch(hits: Array<{
       id: `knowledge-${id}`,
       category,
       title,
-      subtitle: `${[kind, ...tags].join(" · ")} · ${hit.snippet || hit.item?.summary || hit.source || "knowledge"}`,
+      subtitle: `${[kind, ...tags].join(" / ")} / ${hit.snippet || hit.item?.summary || hit.source || "knowledge"}`,
       section,
       tab,
       entityKind,

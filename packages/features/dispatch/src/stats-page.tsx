@@ -378,9 +378,9 @@ export function DispatchStatsPage(props: {
                         <span class="font-mono text-[12px]">{displayKey(row.key)}</span>
                         <Show when={compact}>
                           <div class="mt-1 text-[11px] leading-4 text-[var(--color-text-muted)]">
-                            First try {row.firstTryPct.toFixed(1)}% · p50 {formatDurationMs(row.p50Ms)} · p90 {formatDurationMs(row.p90Ms)}
+                            First try {row.firstTryPct.toFixed(1)}% / p50 {formatDurationMs(row.p50Ms)} / p90 {formatDurationMs(row.p90Ms)}
                             <br />
-                            {row.fallbacks} fallbacks · {row.rateLimits} rate limits · {row.orphans} orphans
+                            {row.fallbacks} fallbacks / {row.rateLimits} rate limits / {row.orphans} orphans
                           </div>
                         </Show>
                       </div>

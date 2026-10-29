@@ -267,7 +267,7 @@ export function IntegrationsView(props: {
                         title={provider.name}
                       />
                       <DataTable.Cell>{provider.category}</DataTable.Cell>
-                      <DataTable.Cell><code>{provider.authCommands.join(" · ")}</code></DataTable.Cell>
+                      <DataTable.Cell><code>{provider.authCommands.join(" / ")}</code></DataTable.Cell>
                       <DataTable.Cell><StatusChip tone={cliStateTone(provider.state)} label={cliStateLabel(provider.state)} /></DataTable.Cell>
                     </DataTable.Row>
                   )}

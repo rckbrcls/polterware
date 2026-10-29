@@ -72,7 +72,7 @@ export function CanonLinkEvidenceDialog(props: {
                       <div class="font-medium">{row.summary || row.id}</div>
                       <div class="mt-0.5 font-mono text-[11px] text-[var(--color-text-muted)]">
                         {row.id}
-                        {row.path ? ` · ${row.path}` : ""}
+                        {row.path ? ` / ${row.path}` : ""}
                       </div>
                     </DataTable.Cell>
                     <DataTable.Cell>

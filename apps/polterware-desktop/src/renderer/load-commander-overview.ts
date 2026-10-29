@@ -138,7 +138,7 @@ export async function loadCommanderOverview(): Promise<CommanderOverviewSnapshot
           subtitle:
             cardsList.length === 0
               ? "No Work cards"
-              : `${cardsList.length} ${cardsList.length === 1 ? "card" : "cards"} · ${deliveredCount} delivered`,
+              : `${cardsList.length} ${cardsList.length === 1 ? "card" : "cards"} / ${deliveredCount} delivered`,
           tone: "knowledge",
           openCommandId: "nav.milestones",
         },
@@ -149,7 +149,7 @@ export async function loadCommanderOverview(): Promise<CommanderOverviewSnapshot
             integrations.length === 0
               ? "No connections"
               : failed > 0
-                ? `${connected} connected · ${failed} failed`
+                ? `${connected} connected / ${failed} failed`
                 : `${connected} connected`,
           tone: "integration",
           openCommandId: "nav.platforms",

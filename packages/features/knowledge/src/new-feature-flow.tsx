@@ -89,7 +89,7 @@ export function NewFeatureFlow(props: {
   const reachable = (step: FeatureFlowStep) => (step === "intent" ? !props.review : Boolean(props.review));
   const componentOptions = () => [
     { value: "", label: "Not placed yet" },
-    ...props.components.map((item) => ({ value: item.path, label: `${item.path} · ${item.title}` })),
+    ...props.components.map((item) => ({ value: item.path, label: `${item.path} / ${item.title}` })),
   ];
 
   function addLine() {
@@ -304,7 +304,7 @@ export function NewFeatureFlow(props: {
                             ...review().suggested.map((path) => ({ value: path, label: `${path} (suggested)` })),
                             ...props.components
                               .filter((item) => !review().suggested.includes(item.path))
-                              .map((item) => ({ value: item.path, label: `${item.path} · ${item.title}` })),
+                              .map((item) => ({ value: item.path, label: `${item.path} / ${item.title}` })),
                           ]}
                           disabled={props.busy || props.components.length === 0}
                           onChange={(path) => {
@@ -316,7 +316,7 @@ export function NewFeatureFlow(props: {
                   >
                     <p class="pw-feature-flow__text">
                       <span class="font-mono">{review().card.under}</span>
-                      <Show when={review().underTitle}> · {review().underTitle}</Show>
+                      <Show when={review().underTitle}> / {review().underTitle}</Show>
                     </p>
                   </Show>
                 </Section>
@@ -326,7 +326,7 @@ export function NewFeatureFlow(props: {
                       {(node) => (
                         <li class="pw-feature-flow__row">
                           <span class="font-mono">{node.path}</span>
-                          <span class="pw-feature-flow__muted">{node.level} · {node.title}</span>
+                          <span class="pw-feature-flow__muted">{node.level} / {node.title}</span>
                         </li>
                       )}
                     </For>

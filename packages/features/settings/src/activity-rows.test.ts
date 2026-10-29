@@ -28,6 +28,6 @@ describe("activity rows", () => {
   });
   it("labels a dispatch entry with its agent and tier", () => {
     const [row] = mergeActivityRows([], [event("e", "2026-10-01T10:00:00Z")]);
-    expect(row).toMatchObject({ actorKind: "agent", agentLabel: "codex · easy", runTask: "Dispatch (easy)", summary: "Dispatch started" });
+    expect(row).toMatchObject({ actorKind: "agent", agentLabel: "codex / easy", runTask: "Dispatch (easy)", summary: "Dispatch started" });
   });
 });

@@ -13,7 +13,7 @@ export function EntityLinks(props: {
     props.links.map((link) => ({
       id: link.id,
       title: link.entityTitle,
-      caption: `${link.predicate.toLowerCase()} · ${link.entityKind}`,
+      caption: `${link.predicate.toLowerCase()} / ${link.entityKind}`,
     })),
   );
 
