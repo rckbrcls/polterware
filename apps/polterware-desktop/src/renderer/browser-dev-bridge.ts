@@ -50,22 +50,22 @@ const knowledgeItem = (
   id: string, kind: string, title: string, summary: string, body: string, owner: string,
   status: string, tags: string[], updatedAt: string, extra: Record<string, unknown> = {},
 ) => {
-  const evidence = kind === "doc" || kind === "runbook" || kind === "source";
+  const doc = kind === "doc" || kind === "runbook" || kind === "source";
   return {
-    id, kind: evidence ? "evidence" : kind, title, summary, body, owner, status,
-    tags: evidence ? [kind, ...tags] : tags, updatedAt, extraJson: JSON.stringify(extra),
+    id, kind: doc ? "doc" : kind, docType: doc ? kind : "", title, summary, body, owner, status,
+    tags, updatedAt, extraJson: JSON.stringify(extra),
   };
 };
 
-const verdictExtra = (statusReason: string, reviewTrigger: string, supersededBy = "") => ({ supersededBy, reviewTrigger, statusReason });
+const decisionExtra = (statusReason: string, reviewTrigger: string, supersededBy = "") => ({ supersededBy, reviewTrigger, statusReason });
 
 const previewKnowledge = [
-  knowledgeItem("verdict-principle-local", "verdict", "Local-first truth", "One SQLite database per project.",
-    "## Decision\n\nProject state must stay useful on one machine without a hosted account.", "Platform", "active", ["principle"], "2026-09-01T09:00:00.000Z",
-    { scope: "principle" }),
-  knowledgeItem("verdict-principle-evidence", "verdict", "Evidence over opinion", "Observed facts win over inferred ones.",
-    "## Decision\n\nDeclared and observed facts take precedence over inferred knowledge.", "Platform", "active", ["principle"], "2026-09-01T09:00:00.000Z",
-    { scope: "principle" }),
+  knowledgeItem("decision-principle-local", "decision", "Local-first truth", "One SQLite database per project.",
+    "## Decision\n\nProject state must stay useful on one machine without a hosted account.", "Platform", "active", [], "2026-09-01T09:00:00.000Z",
+    { level: "principle" }),
+  knowledgeItem("decision-principle-evidence", "decision", "Evidence over opinion", "Observed facts win over inferred ones.",
+    "## Decision\n\nDeclared and observed facts take precedence over inferred knowledge.", "Platform", "active", [], "2026-09-01T09:00:00.000Z",
+    { level: "principle" }),
   knowledgeItem("doc-overview", "doc", "System overview", "How the pieces fit together.", "# Overview\n\nThe core owns storage; clients attach to it.", "Platform", "published", ["overview"], "2026-09-02T09:00:00.000Z",
     { author: "Ada", environment: "All", componentIds: ["comp-core"] }),
   knowledgeItem("doc-onboarding", "doc", "Onboarding guide", "First week checklist.", "# Onboarding\n\n1. Clone the repo.\n2. Start the core.", "Platform", "published", ["guide"], "2026-09-03T09:00:00.000Z",
@@ -78,16 +78,16 @@ const previewKnowledge = [
     { author: "Edsger", environment: "All", componentIds: ["comp-store"] }),
   knowledgeItem("doc-security", "doc", "Threat notes", "Draft threat model.", "# Threats\n\nTokens never reach SQLite.", "Security", "draft", ["security"], "2026-09-07T09:00:00.000Z",
     { author: "Margaret", environment: "Production", componentIds: ["comp-api"] }),
-  knowledgeItem("verdict-001", "verdict", "Verdict 001: Single local core", "One process opens the database.", "## Decision\n\nOnly the core opens SQLite.\n\n## Consequence\n\nClients attach over a local socket.", "Platform", "active", ["storage"], "2026-08-01T09:00:00.000Z",
-    verdictExtra("Still the simplest safe model.", "Revisit if cloud sync ships.")),
-  knowledgeItem("verdict-002", "verdict", "Verdict 002: Poll for changes", "Clients poll for updates.", "## Decision\n\nClients poll every few seconds.", "Platform", "superseded", ["sync"], "2026-08-05T09:00:00.000Z",
-    verdictExtra("Replaced by push events.", "None.", "verdict-003")),
-  knowledgeItem("verdict-003", "verdict", "Verdict 003: Push change events", "The core pushes change events.", "## Decision\n\nThe core streams change events to clients.", "Platform", "active", ["sync"], "2026-08-10T09:00:00.000Z",
-    verdictExtra("Lower latency than polling.", "Revisit if event volume grows.")),
-  knowledgeItem("verdict-004", "verdict", "Verdict 004: Markdown intent files", "Intent lives in Polter text.", "## Decision\n\nWork cards are written as Polter text.", "Product", "challenged", ["format"], "2026-08-15T09:00:00.000Z",
-    verdictExtra("Two teams report friction with the grammar.", "Review after the next format release.")),
-  knowledgeItem("verdict-005", "verdict", "Verdict 005: Signed evidence", "Evidence should be signed.", "## Decision\n\nProposal to sign imported evidence.", "Security", "proposed", ["security"], "2026-08-20T09:00:00.000Z",
-    verdictExtra("Awaiting review.", "Decide before the public beta.")),
+  knowledgeItem("decision-001", "decision", "Decision 001: Single local core", "One process opens the database.", "## Decision\n\nOnly the core opens SQLite.\n\n## Consequence\n\nClients attach over a local socket.", "Platform", "active", ["storage"], "2026-08-01T09:00:00.000Z",
+    decisionExtra("Still the simplest safe model.", "Revisit if cloud sync ships.")),
+  knowledgeItem("decision-002", "decision", "Decision 002: Poll for changes", "Clients poll for updates.", "## Decision\n\nClients poll every few seconds.", "Platform", "superseded", ["sync"], "2026-08-05T09:00:00.000Z",
+    decisionExtra("Replaced by push events.", "None.", "decision-003")),
+  knowledgeItem("decision-003", "decision", "Decision 003: Push change events", "The core pushes change events.", "## Decision\n\nThe core streams change events to clients.", "Platform", "active", ["sync"], "2026-08-10T09:00:00.000Z",
+    decisionExtra("Lower latency than polling.", "Revisit if event volume grows.")),
+  knowledgeItem("decision-004", "decision", "Decision 004: Markdown intent files", "Intent lives in Polter text.", "## Decision\n\nWork cards are written as Polter text.", "Product", "challenged", ["format"], "2026-08-15T09:00:00.000Z",
+    decisionExtra("Two teams report friction with the grammar.", "Review after the next format release.")),
+  knowledgeItem("decision-005", "decision", "Decision 005: Signed evidence", "Evidence should be signed.", "## Decision\n\nProposal to sign imported evidence.", "Security", "proposed", ["security"], "2026-08-20T09:00:00.000Z",
+    decisionExtra("Awaiting review.", "Decide before the public beta.")),
   ...[
     ["rb-restart-core", "Restart the core", "core", "high", "Recover a stuck local core."],
     ["rb-rotate-token", "Rotate the session token", "api", "critical", "Replace the bearer session token."],
@@ -139,15 +139,15 @@ const structureSeeds: StructureSeed[] = [
   ["n-product", "n-sys", "domain", "product", "polterware/product", "Product", "in_progress", [], 3, 2, 1, "apps"],
   ["n-data", "n-sys", "domain", "data", "polterware/data", "Data", "delivered", [], 2, 1, 0, "schemas"],
   ["n-agents", "n-sys", "domain", "agents", "polterware/agents", "Agents", "proposed", [], 2, 0, 1, "plugins"],
-  ["comp-core", "n-platform", "component", "core", "polterware/platform/core", "Core", "delivered", ["Verdict 001", "Verdict 003"], 0, 2, 0, "backend/runtimes"],
+  ["comp-core", "n-platform", "component", "core", "polterware/platform/core", "Core", "delivered", ["Decision 001", "Decision 003"], 0, 2, 0, "backend/runtimes"],
   ["comp-cli", "n-platform", "component", "cli", "polterware/platform/cli", "CLI", "delivered", [], 0, 1, 0, "backend/cli"],
-  ["comp-api", "n-platform", "component", "api", "polterware/platform/api", "API", "drift", ["Verdict 003"], 0, 1, 1, "backend/api"],
+  ["comp-api", "n-platform", "component", "api", "polterware/platform/api", "API", "drift", ["Decision 003"], 0, 1, 1, "backend/api"],
   ["comp-desktop", "n-product", "component", "desktop", "polterware/product/desktop", "Desktop", "in_progress", [], 0, 3, 1, "apps/polterware-desktop"],
-  ["comp-structure", "n-product", "component", "structure", "polterware/product/structure", "Structure", "in_progress", ["Verdict 004"], 0, 2, 0, "packages/features/structure"],
+  ["comp-structure", "n-product", "component", "structure", "polterware/product/structure", "Structure", "in_progress", ["Decision 004"], 0, 2, 0, "packages/features/structure"],
   ["comp-inbox", "n-product", "component", "inbox", "polterware/product/inbox", "Inbox", "delivered", [], 0, 1, 0, "packages/features/inbox"],
-  ["comp-store", "n-data", "component", "store", "polterware/data/store", "Store", "delivered", ["Verdict 001"], 0, 1, 0, "backend/store"],
+  ["comp-store", "n-data", "component", "store", "polterware/data/store", "Store", "delivered", ["Decision 001"], 0, 1, 0, "backend/store"],
   ["comp-contracts", "n-data", "component", "contracts", "polterware/data/contracts", "Contracts", "delivered", [], 0, 0, 0, "schemas"],
-  ["comp-mcp", "n-agents", "component", "mcp", "polterware/agents/mcp", "MCP bridge", "proposed", ["Verdict 005"], 0, 1, 1, "backend/mcp"],
+  ["comp-mcp", "n-agents", "component", "mcp", "polterware/agents/mcp", "MCP bridge", "proposed", ["Decision 005"], 0, 1, 1, "backend/mcp"],
   ["comp-plugin", "n-agents", "component", "plugin", "polterware/agents/plugin", "Agent plugin", "proposed", [], 0, 0, 0, "plugins/polterware"],
 ];
 
@@ -210,10 +210,10 @@ async function applyPreviewPolter(args?: { projectId?: string; text?: string; dr
     }
     if (!/^status: proposed$/m.test(text)) throw new Error("Canvas Decisions start Proposed.");
     const decisions = [...(projectId === PREVIEW_PROJECT_ID ? previewKnowledge : []), ...(promotedDecisions.get(projectId) ?? [])];
-    const number = 1 + Math.max(0, ...decisions.map((item) => Number(/Verdict[ -]0*(\d+)/i.exec(String(item.title))?.[1] ?? 0)));
-    const assigned = `Verdict ${String(number).padStart(4, "0")}: ${title}`;
+    const number = 1 + Math.max(0, ...decisions.map((item) => Number(/Decision[ -]0*(\d+)/i.exec(String(item.title))?.[1] ?? 0)));
+    const assigned = `Decision ${String(number).padStart(4, "0")}: ${title}`;
     if (args?.dryRun) return { applied: false, diagnostics: [], ops: [`+ decision ${assigned} ${JSON.stringify(assigned)}`] };
-    promotedDecisions.set(projectId, [...(promotedDecisions.get(projectId) ?? []), { id, projectId, kind: "verdict", title: assigned, summary: "", bodyMarkdown: "", status: "proposed", extraJson: "{}", tags: [], updatedAt: new Date().toISOString() }]);
+    promotedDecisions.set(projectId, [...(promotedDecisions.get(projectId) ?? []), { id, projectId, kind: "decision", title: assigned, summary: "", bodyMarkdown: "", status: "proposed", extraJson: "{}", tags: [], updatedAt: new Date().toISOString() }]);
     return { applied: true, diagnostics: [], ops: [`+ decision ${assigned} ${JSON.stringify(assigned)}`] };
   }
   throw new Error("Unsupported Polter input.");
@@ -245,7 +245,7 @@ const previewCards = cardSeeds.map(([slug, title, stage, kind, under, taskStates
   id: `card-${slug}`, slug, title, stage, kind, under,
   intent: `${title} so agents and people share one view.`,
   owner: index % 2 === 0 ? "Ada" : "Grace",
-  decisions: index % 3 === 0 ? ["Verdict 001"] : ["Verdict 003"],
+  decisions: index % 3 === 0 ? ["Decision 001"] : ["Decision 003"],
   updatedAt: `2026-09-${String(10 + index).padStart(2, "0")}T12:00:00.000Z`,
   tasks: taskStates.map((state, taskIndex) => ({
     id: `task-${slug}-${taskIndex + 1}`, number: taskIndex + 1, title: `Step ${taskIndex + 1} of ${title.toLowerCase()}`,
@@ -266,7 +266,7 @@ const inboxItem = (
 const previewInboxItems = [
   inboxItem("inb-1", "decision", true, "Ship the event stream behind a flag?", "The card asks for a decision.", ["Yes", "No"], "polterware/platform/core", "card:event-stream", "open", ["decide", "delegate", "defer"]),
   inboxItem("inb-2", "decision", true, "Who reviews agent handoff?", "Owner is unset.", ["Ada", "Grace"], "polterware/agents/mcp", "card:agent-handoff", "open", ["decide", "delegate", "defer"]),
-  inboxItem("inb-3", "decision", false, "Keep Markdown intent files?", "Verdict 004 is challenged.", ["Keep", "Replace"], "Verdict 004", "verdict:verdict-004", "open", ["decide", "defer", "ignore"]),
+  inboxItem("inb-3", "decision", false, "Keep Markdown intent files?", "Decision 004 is challenged.", ["Keep", "Replace"], "Decision 004", "decision:decision-004", "open", ["decide", "defer", "ignore"]),
   inboxItem("inb-4", "drift", false, "API returns fields not in the contract", "Warning from the last scan.", [], "polterware/platform/api", "drift:api", "open", ["fix_code", "update_intent", "ignore"]),
   inboxItem("inb-5", "drift", false, "Desktop imports a removed module", "Conflict with the structure.", [], "polterware/product/desktop", "drift:desktop", "deferred", ["fix_code", "update_intent", "defer"]),
   inboxItem("inb-6", "verify", false, "Session cache fact has no evidence", "Attach evidence or reject.", [], "Session cache", "fact:cache", "open", ["verify", "reject"]),
@@ -365,7 +365,7 @@ const previewFacts = previewFactSeeds.map(([id, statement, truthClass, entityId,
 
 const previewRunSeeds: [id: string, actorKind: string, label: string, task: string, status: string, steps: [kind: string, summary: string][]][] = [
   ["run-1", "agent", "claude-code", "Import project sources", "completed", [["import", "Registered 14 sources from the project root."], ["fact", "Added fact: The core is the only process that opens SQLite."]]],
-  ["run-2", "agent", "codex", "Split the API layer", "completed", [["work", "Moved card Split the API layer to Plan."], ["decision", "Proposed verdict: Poll for changes."]]],
+  ["run-2", "agent", "codex", "Split the API layer", "completed", [["work", "Moved card Split the API layer to Plan."], ["decision", "Proposed decision: Poll for changes."]]],
   ["run-3", "human", "Ada", "Review drift findings", "completed", [["drift", "Marked API drift as update intent."]]],
   ["run-4", "agent", "claude-code", "Verify session cache", "failed", [["fact", "Could not attach evidence: no matching file."]]],
   ["run-5", "human", "Grace", "Link runbook to Core", "completed", [["link", "Linked Deploy runbook to the Core component."]]],
@@ -739,7 +739,7 @@ function createBrowserDevBridge(): PolterwareBridge {
         setArchived: async (args?: { id?: string; archived?: boolean }) => {
           const item = previewKnowledge.find((entry) => entry.id === args?.id);
           if (!item || deletedKnowledge.has(item.id)) throw new Error("unknown knowledge item");
-          if (item.kind === "verdict") throw new Error("decisions are never archived or deleted: supersede them");
+          if (item.kind === "decision") throw new Error("decisions are never archived or deleted: supersede them");
           if (args?.archived) archivedKnowledge.set(item.id, new Date().toISOString());
           else archivedKnowledge.delete(item.id);
           return { item: { ...item, archivedAt: archivedKnowledge.get(item.id) ?? "" } };
@@ -747,7 +747,7 @@ function createBrowserDevBridge(): PolterwareBridge {
         delete: async (args?: { id?: string }) => {
           const item = previewKnowledge.find((entry) => entry.id === args?.id);
           if (!item || deletedKnowledge.has(item.id)) throw new Error("unknown knowledge item");
-          if (item.kind === "verdict") throw new Error("decisions are never archived or deleted: supersede them");
+          if (item.kind === "decision") throw new Error("decisions are never archived or deleted: supersede them");
           if (!archivedKnowledge.has(item.id)) throw new Error("archive the item before deleting it permanently");
           archivedKnowledge.delete(item.id);
           deletedKnowledge.add(item.id);

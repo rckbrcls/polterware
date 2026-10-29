@@ -1,12 +1,12 @@
 package seed
 
-// verdictsPolter proposes the repository's Verdicts in order, so the store assigns
-// Verdict-0001 through Verdict-0010. The store is their only home; bodies are the
+// decisionsPolter proposes the repository's Decisions in order, so the store assigns
+// Decision-0001 through Decision-0010. The store is their only home; bodies are the
 // decision text.
-const verdictsPolter = `---
+const decisionsPolter = `---
 polter: 1
-summary: Record the Polterware Verdicts
-rationale: Polterware manages its own decisions, so the store starts from its recorded Verdicts
+summary: Record the Polterware Decisions
+rationale: Polterware manages its own decisions, so the store starts from its recorded Decisions
 ---
 
 ### new: Open-source and Cloud boundary
@@ -43,33 +43,33 @@ System, domain, and component are Structure nodes with contract lines. A feature
 
 ### new: Checkouts on Structure nodes and projections into checkouts
 
-A node names its checkout and folder. A task may name its checkout, and a claim scope carries it, so scopes in different checkouts never overlap. Projections are written from the store and never read back: each Verdict becomes a file in its governing checkout and one generated block in each checkout AGENTS.md. Edits made in a checkout are not imported; the next export replaces them. The renderer never touches the filesystem.
+A node names its checkout and folder. A task may name its checkout, and a claim scope carries it, so scopes in different checkouts never overlap. Projections are written from the store and never read back: each Decision becomes a file in its governing checkout and one generated block in each checkout AGENTS.md. Edits made in a checkout are not imported; the next export replaces them. The renderer never touches the filesystem.
 
 ### new: Decision lifecycle
 
 Four states: proposed, active, challenged, then active or superseded. History is never deleted; a newer decision supersedes an older one. Lifecycle data stays in extra_json and every move is audited in change_ops. Moves are Polter blocks. A challenge is a person or agent call, never automatic. Active and challenged decisions govern drift checks and AGENTS.md blocks. Governed nodes are derived from decisions citations.
 `
 
-// verdictStatusPolter moves the accepted Verdicts to active. Verdict-0006 through
-// Verdict-0010 stay proposed.
-const verdictStatusPolter = `---
+// decisionStatusPolter moves the accepted Decisions to active. Decision-0006 through
+// Decision-0010 stay proposed.
+const decisionStatusPolter = `---
 polter: 1
-summary: Activate the accepted Polterware Verdicts
-rationale: Verdict-0001 through Verdict-0005 were accepted
+summary: Activate the accepted Polterware Decisions
+rationale: Decision-0001 through Decision-0005 were accepted
 ---
 
-### Verdict-0001:
+### Decision-0001:
 status: active
 
-### Verdict-0002:
+### Decision-0002:
 status: active
 
-### Verdict-0003:
+### Decision-0003:
 status: active
 
-### Verdict-0004:
+### Decision-0004:
 status: active
 
-### Verdict-0005:
+### Decision-0005:
 status: active
 `

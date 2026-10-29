@@ -21,7 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Work model (Verdict 0006): cards with tasks, questions, and invariants.
+// Work model (Decision 0006): cards with tasks, questions, and invariants.
 type WorkTask struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Id     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -2791,7 +2791,7 @@ func (x *ListStructureHistoryResponse) GetEntries() []*StructureHistoryEntry {
 	return nil
 }
 
-// ExportProjections writes Verdict files into docs/verdict/ of each governing checkout
+// ExportProjections writes Decision files into docs/decision/ of each governing checkout
 // and the generated AGENTS.md block of every checkout. The store stays the
 // source of truth; nothing is read back from the files.
 type ExportProjectionsRequest struct {
@@ -3025,7 +3025,7 @@ func (x *FeatureTouch) GetTitle() string {
 }
 
 // from is "card" or the node path that cites the decision; status is empty
-// when no Verdict matches the reference.
+// when no Decision matches the reference.
 type FeatureDecision struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ref           string                 `protobuf:"bytes,1,opt,name=ref,proto3" json:"ref,omitempty"`

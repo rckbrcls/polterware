@@ -4,7 +4,7 @@ import type {
   ProjectSwitcherItem,
   WorkspaceCatalogProvider,
   WorkspaceEvidence,
-  WorkspaceVerdict,
+  WorkspaceDecision,
   WorkspaceCanonEntity,
   WorkspaceIntegration,
   WorkspaceIntegrationResource,
@@ -17,7 +17,7 @@ import type {
 } from "@polterware/feature-shell";
 import { asNumber, asObjectArray, asRecord, asString } from "./format";
 import {
-  mapVerdicts,
+  mapDecisions,
   mapStructureHistory,
   mapConnections,
   mapEvidence,
@@ -48,7 +48,7 @@ export type WorkspaceSnapshot = {
   settings: ProjectGeneralSettings;
   repositories: ProjectRepository[];
   evidence: WorkspaceEvidence[];
-  verdicts: WorkspaceVerdict[];
+  decisions: WorkspaceDecision[];
   workCards: WorkspaceWorkCard[];
   workBoards: WorkspaceWorkBoard[];
   structure: WorkspaceStructure;
@@ -66,7 +66,7 @@ export type WorkspaceSnapshot = {
 export type WorkspaceExtensions = Pick<
   WorkspaceSnapshot,
   | "evidence"
-  | "verdicts"
+  | "decisions"
   | "workCards"
   | "workBoards"
   | "structure"
@@ -102,7 +102,7 @@ const emptySettings: ProjectGeneralSettings = {
 export function emptyWorkspaceExtensions(): WorkspaceExtensions {
   return {
     evidence: [],
-    verdicts: [],
+    decisions: [],
     workCards: [],
     workBoards: [],
     structure: emptyStructure(),
@@ -346,7 +346,7 @@ export async function loadWorkspaceExtensions(
   const canonEntities = mapCanonEntities(asObjectArray(asRecord(entitiesRes).entities));
   const linksByKnowledge = mapKnowledgeEntityLinks(asObjectArray(asRecord(linksRes).links), canonEntities);
   const evidence = mapEvidence(knowledgeItems, linksByKnowledge);
-  const verdicts = mapVerdicts(knowledgeItems, linksByKnowledge, structure.nodes);
+  const decisions = mapDecisions(knowledgeItems, linksByKnowledge, structure.nodes);
   const workCards = mapWorkCards(asObjectArray(asRecord(workRes).cards));
 
   await Promise.resolve();
@@ -367,7 +367,7 @@ export async function loadWorkspaceExtensions(
 
   return {
     evidence,
-    verdicts,
+    decisions,
     workCards,
     workBoards,
     structure,

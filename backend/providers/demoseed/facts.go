@@ -31,7 +31,7 @@ func seedFacts(store *storepkg.Store) error {
 		{canon.Fact{ID: "fact-electron", Statement: "The Desktop is an Electron app.", TruthClass: canon.TruthObserved, Source: "package.json"}, []string{"ev-package-json"}},
 		{canon.Fact{ID: "fact-sqlite", Statement: "Project state lives in a local SQLite database.", TruthClass: canon.TruthObserved, Source: "go.mod"}, []string{"ev-go-mod", "ev-commit-core"}},
 		{canon.Fact{ID: "fact-drift-check", Statement: "Drift findings are computed from declared facts.", TruthClass: canon.TruthVerified, Source: "go test", Actor: "claude-code"}, []string{"ev-test-drift"}},
-		{canon.Fact{ID: "fact-no-network", Statement: "Imports never call the network.", TruthClass: canon.TruthDeclared, Source: "Verdict 0002"}, nil},
+		{canon.Fact{ID: "fact-no-network", Statement: "Imports never call the network.", TruthClass: canon.TruthDeclared, Source: "Decision 0002"}, nil},
 		{canon.Fact{ID: "fact-redis-sessions", Statement: "Sessions are cached in Redis.", TruthClass: canon.TruthDeclared, Source: "doc-architecture"}, nil},
 		{canon.Fact{ID: "fact-webhook-queue", Statement: "Webhook retries will probably run through the event queue.", TruthClass: canon.TruthInferred, Source: "billing-webhooks"}, nil},
 	}

@@ -22,7 +22,7 @@ const (
 	ToolEvidenceLink     = "evidence.link"
 	ToolKnowledgeUpsert  = "knowledge.upsert"
 	ToolKnowledgeLink    = "knowledge.link"
-	// Polter channel (Verdict 0006): Work cards in Polter format.
+	// Polter channel (Decision 0006): Work cards in Polter format.
 	ToolPolterApply  = "polter.apply"
 	ToolPolterQuery  = "polter.query"
 	ToolPolterFormat = "polter.format"
@@ -71,7 +71,7 @@ func toolDefinitions() []map[string]any {
 				"type": "object",
 				"properties": map[string]any{
 					"project_id":  map[string]any{"type": "string"},
-					"query":       map[string]any{"type": "string", "description": "\"cards\" (default), \"card <slug>\", \"status\", \"inbox\", \"handoff <slug>\", \"decisions [state]\", \"decision <verdict>\", \"feature <slug> [shape|contract|plan]\", \"verify <slug|slug#T2>\", \"canvas\", or \"canvas <name|id>\" (agent-visible only)"},
+					"query":       map[string]any{"type": "string", "description": "\"cards\" (default), \"card <slug>\", \"status\", \"inbox\", \"handoff <slug>\", \"decisions [state]\", \"decision <decision>\", \"feature <slug> [shape|contract|plan]\", \"verify <slug|slug#T2>\", \"canvas\", or \"canvas <name|id>\" (agent-visible only)"},
 					"scope":       scopeArgumentSchema(),
 					"scope_exact": map[string]any{"type": "boolean", "description": "With scope, leave out each node's ancestors."},
 				},
@@ -135,7 +135,7 @@ func toolDefinitions() []map[string]any {
 		},
 		{
 			"name":        ToolDriftCheck,
-			"description": "Run the narrow Drift Checker: import dependency diffs, edges under accepted Verdicts without evidence, and declared-versus-observed fact conflicts. Pass agent_run_id to append a drift step on an open AgentRun.",
+			"description": "Run the narrow Drift Checker: import dependency diffs, edges under accepted Decisions without evidence, and declared-versus-observed fact conflicts. Pass agent_run_id to append a drift step on an open AgentRun.",
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": map[string]any{

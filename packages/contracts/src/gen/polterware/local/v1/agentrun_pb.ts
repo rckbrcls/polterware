@@ -344,7 +344,7 @@ export const ListChangesResponseSchema: GenMessage<ListChangesResponse> = /*@__P
   messageDesc(file_polterware_local_v1_agentrun, 9);
 
 /**
- * McpSession is one live MCP client connected to the core (Verdict 0007).
+ * McpSession is one live MCP client connected to the core (Decision 0007).
  *
  * @generated from message polterware.local.v1.McpSession
  */

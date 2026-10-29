@@ -1,4 +1,4 @@
-// Package coreclient finds, starts, and talks to the local core (Verdict 0007).
+// Package coreclient finds, starts, and talks to the local core (Decision 0007).
 // The core (`polterware serve`) is the only process that opens the SQLite
 // store; the CLI, the TUI, and the MCP bridge reach it through these helpers.
 package coreclient

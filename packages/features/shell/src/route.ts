@@ -218,7 +218,7 @@ export function resolveRoute(
     if (tab === "sources" || tab === "docs" || tab === "runbooks") {
       section = "truth";
       tab = "evidence";
-    } else if (tab === "library" || tab === "verdicts") {
+    } else if (tab === "library" || tab === "decisions") {
       section = "truth";
       tab = "decisions";
     } else {

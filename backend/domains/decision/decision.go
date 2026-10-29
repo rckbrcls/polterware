@@ -1,4 +1,4 @@
-// Package decision is the Verdict lifecycle: states, legal transitions, and the
+// Package decision is the Decision lifecycle: states, legal transitions, and the
 // supersede chain. It is pure (no store); the codec and the store share it.
 package decision
 
@@ -20,7 +20,7 @@ const (
 // States lists the lifecycle states in display order.
 var States = []string{StateActive, StateChallenged, StateProposed, StateSuperseded}
 
-// Normalize maps a stored Verdict status to a lifecycle state. Older rows use
+// Normalize maps a stored Decision status to a lifecycle state. Older rows use
 // "accepted" for what is now active; anything unknown reads as proposed.
 func Normalize(status string) string {
 	switch s := strings.ToLower(strings.TrimSpace(status)); s {
@@ -70,11 +70,34 @@ func CanTransition(from, to string) bool {
 	return false
 }
 
+// Levels. A principle applies to the whole project and is pinned above the
+// other decisions; a plain decision has no stored level.
+const (
+	LevelDecision  = "decision"
+	LevelPrinciple = "principle"
+)
+
+// ValidLevel reports whether level is a decision level.
+func ValidLevel(level string) bool {
+	return level == LevelDecision || level == LevelPrinciple
+}
+
+// StoredLevel is the level kept in extra_json: principle, or empty for a plain
+// decision.
+func StoredLevel(level string) string {
+	if strings.EqualFold(strings.TrimSpace(level), LevelPrinciple) {
+		return LevelPrinciple
+	}
+	return ""
+}
+
 // Meta is the lifecycle data kept in a knowledge item's extra_json.
 type Meta struct {
 	SupersededBy  string `json:"supersededBy,omitempty"`
 	ReviewTrigger string `json:"reviewTrigger,omitempty"`
 	StatusReason  string `json:"statusReason,omitempty"`
+	// Level is principle or empty; see StoredLevel.
+	Level string `json:"level,omitempty"`
 }
 
 // ParseMeta reads lifecycle data from extra_json; other keys are ignored.
@@ -99,6 +122,7 @@ func MergeMeta(extraJSON string, meta Meta) string {
 	set("supersededBy", meta.SupersededBy)
 	set("reviewTrigger", meta.ReviewTrigger)
 	set("statusReason", meta.StatusReason)
+	set("level", StoredLevel(meta.Level))
 	body, err := json.Marshal(fields)
 	if err != nil {
 		return "{}"
@@ -106,7 +130,7 @@ func MergeMeta(extraJSON string, meta Meta) string {
 	return string(body)
 }
 
-// Decision is one Verdict as the lifecycle sees it.
+// Decision is one Decision as the lifecycle sees it.
 type Decision struct {
 	ID     string
 	Title  string
@@ -118,11 +142,18 @@ type Decision struct {
 	Meta
 }
 
-var verdictNumber = regexp.MustCompile(`(?i)\b(?:adr|verdict)[\s\-_]*0*(\d+)\b`)
+// numbered reads a decision number from a reference ("Decision-0008") or from
+// the start of a numbered title ("Decision 0008: Title"). It also reads the
+// legacy prefixes older stores and agents used (see the pattern). The number
+// must open the value and end it or meet a separator, so free text never matches.
+var numbered = regexp.MustCompile(`(?i)^\s*(?:adr|verdict|decision)[\s\-_]*0*(\d+)\s*(?:[:.\-–—]|$)`)
 
-// Number reads the Verdict number from a title or reference ("Verdict 0008", "Verdict-8").
+// numberPrefix is the "Decision 0008: " prefix of a numbered title.
+var numberPrefix = regexp.MustCompile(`(?i)^\s*(?:adr|verdict|decision)[\s\-_]*\d+\s*[:.\-–—]?\s*`)
+
+// Number reads the decision number from a reference or a numbered title.
 func Number(value string) (int, bool) {
-	m := verdictNumber.FindStringSubmatch(value)
+	m := numbered.FindStringSubmatch(value)
 	if m == nil {
 		return 0, false
 	}
@@ -130,7 +161,17 @@ func Number(value string) (int, bool) {
 	return n, err == nil
 }
 
-// Find returns the decision that ref names by id, exact title, or Verdict number.
+// Ref renders the reference agents write for a decision number: Decision-0008.
+func Ref(number int) string {
+	return fmt.Sprintf("Decision-%04d", number)
+}
+
+// StripNumber drops the "Decision 0008: " prefix from a numbered title.
+func StripNumber(title string) string {
+	return strings.TrimSpace(numberPrefix.ReplaceAllString(title, ""))
+}
+
+// Find returns the decision that ref names by id, exact title, or Decision number.
 func Find(decisions []Decision, ref string) (Decision, bool) {
 	ref = strings.TrimSpace(ref)
 	if ref == "" {
@@ -151,7 +192,7 @@ func Find(decisions []Decision, ref string) (Decision, bool) {
 	return Decision{}, false
 }
 
-// NextNumber returns the next free Verdict number.
+// NextNumber returns the next free Decision number.
 func NextNumber(decisions []Decision) int {
 	next := 1
 	for _, d := range decisions {
@@ -162,9 +203,9 @@ func NextNumber(decisions []Decision) int {
 	return next
 }
 
-// TitleFor renders a numbered Verdict title: "Verdict 0010: Title".
+// TitleFor renders a numbered Decision title: "Decision 0010: Title".
 func TitleFor(number int, title string) string {
-	return fmt.Sprintf("Verdict %04d: %s", number, strings.TrimSpace(title))
+	return fmt.Sprintf("Decision %04d: %s", number, strings.TrimSpace(title))
 }
 
 // CheckSupersede validates that by may supersede target: distinct, both known

@@ -24,7 +24,7 @@ export const SEARCH_HITS: SearchHit[] = [
   { id: "h2", category: "Structure", title: "Payment flow", subtitle: "System", section: "structure" },
   { id: "h3", category: "Structure", title: "payment-service", subtitle: "Component · AWS · Healthy", section: "structure", entityKind: "resource", entityId: "payment-service" },
   { id: "h5", category: "Work", title: "Payment flow", subtitle: "card · Build", section: "work", tab: "board", entityKind: "card", entityId: "payment-flow" },
-  { id: "h6", category: "Truth", title: "Verdict 0004", subtitle: "verdict · Product positioning", section: "truth", tab: "decisions", entityKind: "verdict", entityId: "verdict-0004" },
+  { id: "h6", category: "Truth", title: "Decision 0004", subtitle: "decision · Product positioning", section: "truth", tab: "decisions", entityKind: "decision", entityId: "decision-0004" },
 ];
 
 export function knowledgeHitsFromSearch(hits: Array<{
@@ -37,8 +37,8 @@ export function knowledgeHitsFromSearch(hits: Array<{
     const title = hit.item?.title;
     if (!id || !title) return [];
     const tags = hit.item?.tags ?? [];
-    const kind = hit.item?.kind === "verdict" ? "verdict" : "evidence";
-    const { section, tab, category } = kind === "verdict"
+    const kind = hit.item?.kind === "decision" ? "decision" : "evidence";
+    const { section, tab, category } = kind === "decision"
       ? { section: "truth", tab: "decisions", category: "Truth" }
       : { section: "truth", tab: "evidence", category: "Truth" };
     const entityKind = kind;

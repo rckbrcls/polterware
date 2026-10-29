@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/structure"
 	contextpkg "github.com/polterware/polterware/backend/domains/context"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 )
 

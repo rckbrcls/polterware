@@ -81,7 +81,7 @@ describe("first version routes", () => {
     expect(resolveRoute("knowledge")).toEqual({ section: "work", tab: "specs" });
     expect(resolveRoute("knowledge", "specs")).toEqual({ section: "work", tab: "specs" });
     expect(resolveRoute("knowledge", "library")).toEqual({ section: "truth", tab: "decisions" });
-    expect(resolveRoute("knowledge", "verdicts")).toEqual({ section: "truth", tab: "decisions" });
+    expect(resolveRoute("knowledge", "decisions")).toEqual({ section: "truth", tab: "decisions" });
     expect(resolveRoute("knowledge", "docs")).toEqual({ section: "truth", tab: "evidence" });
     expect(resolveRoute("knowledge", "runbooks")).toEqual({ section: "truth", tab: "evidence" });
     expect(resolveRoute("knowledge", "sources")).toEqual({ section: "truth", tab: "evidence" });

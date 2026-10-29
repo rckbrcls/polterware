@@ -30,6 +30,7 @@ const evidence = {
   path: "schemas/local/v1/canon.proto",
   summary: "",
   bodyMarkdown: "",
+  docType: "source",
   tags: ["source", "contracts"],
   updatedAt: "2026-01-01",
   owner: "Ada",

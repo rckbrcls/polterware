@@ -19,6 +19,8 @@ type Item struct {
 	Title     string
 	Body      string
 	Kind      string
+	// DocType is doc, runbook, or source for a doc and empty for a decision.
+	DocType   string
 	Tags      []string
 	Summary   string
 	Owner     string
@@ -47,50 +49,60 @@ var ErrNotArchived = errors.New("archive the item before deleting it permanently
 // ErrArchived rejects an edit of an archived item, which is read-only.
 var ErrArchived = errors.New("restore the item before editing it")
 
-// Kinds. Evidence items are notes distinguished by tags (for example `doc`,
-// `runbook`, `source`); verdicts are Decisions.
+// Kinds. A decision is one Decision with its lifecycle; a doc is a document
+// that backs facts, typed by DocType.
 const (
-	KindEvidence = "evidence"
-	KindVerdict  = "verdict"
+	KindDoc      = "doc"
+	KindDecision = "decision"
+)
+
+// Doc types: a doc describes, a runbook is a procedure, and a source is a
+// registered project file.
+const (
+	DocTypeDoc     = "doc"
+	DocTypeRunbook = "runbook"
+	DocTypeSource  = "source"
 )
 
 func ValidKind(kind string) bool {
 	switch kind {
-	case KindEvidence, KindVerdict:
+	case KindDoc, KindDecision:
 		return true
 	default:
 		return false
 	}
 }
 
-// NormalizeKind maps the former evidence kinds (doc, runbook, source) to
-// `evidence` and returns the tag that preserves the old kind.
+// NormalizeKind reads a kind and the doc type it implies: a doc type names a
+// doc of that type, and a decision has no doc type.
 func NormalizeKind(kind string) (string, string) {
 	switch kind {
-	case "doc", "runbook", "source":
-		return KindEvidence, kind
+	case DocTypeDoc, DocTypeRunbook, DocTypeSource:
+		return KindDoc, kind
 	default:
 		return kind, ""
 	}
 }
 
+// DocTypeFor returns the stored doc type of kind: the given type for a doc
+// (doc when empty or unknown) and empty for a decision.
+func DocTypeFor(kind, docType string) string {
+	if kind != KindDoc {
+		return ""
+	}
+	switch docType {
+	case DocTypeRunbook, DocTypeSource:
+		return docType
+	default:
+		return DocTypeDoc
+	}
+}
+
 func NewItem(id, projectID, title, body, kind string, tags []string) (Item, error) {
-	kind, legacyTag := NormalizeKind(kind)
+	kind, docType := NormalizeKind(kind)
 	if id == "" || projectID == "" || title == "" || !ValidKind(kind) || len(body) > MaxBody {
 		return Item{}, ErrInvalid
 	}
-	if legacyTag != "" && !hasTag(tags, legacyTag) {
-		tags = append(append([]string(nil), tags...), legacyTag)
-	}
 	now := time.Now().UTC()
-	return Item{ID: id, ProjectID: projectID, Title: title, Body: body, Kind: kind, Tags: tags, ExtraJSON: "{}", CreatedAt: now, UpdatedAt: now}, nil
-}
-
-func hasTag(tags []string, tag string) bool {
-	for _, existing := range tags {
-		if existing == tag {
-			return true
-		}
-	}
-	return false
+	return Item{ID: id, ProjectID: projectID, Title: title, Body: body, Kind: kind, DocType: DocTypeFor(kind, docType), Tags: tags, ExtraJSON: "{}", CreatedAt: now, UpdatedAt: now}, nil
 }

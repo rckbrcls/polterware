@@ -4,7 +4,7 @@ import type {
   ProjectGeneralSettings,
   ProtectionLevel,
 } from "@polterware/feature-settings";
-import type { WorkspaceVerdict, WorkspaceCatalogProvider, WorkspaceFeatureReview, WorkCardKind, WorkStage } from "@polterware/feature-shell";
+import type { DocType, WorkspaceDecision, WorkspaceCatalogProvider, WorkspaceFeatureReview, WorkCardKind, WorkStage } from "@polterware/feature-shell";
 import type { ChangeEnvelope, DecisionAction, FeatureFlowLine } from "@polterware/feature-knowledge";
 import { asNumber, asObjectArray, asRecord, asString } from "./format";
 import type { WorkspaceSnapshot } from "./load";
@@ -79,7 +79,7 @@ export const canvasPersistence: CanvasPort = {
       }
       const title = createdDecisionTitle(response.ops);
       const items = asObjectArray(asRecord(await core().knowledge.list({ projectId })).items);
-      const decision = items.find((item) => item.kind === "verdict" && item.title === title);
+      const decision = items.find((item) => item.kind === "decision" && item.title === title);
       if (!decision || !asString(decision.id)) throw new Error("The new Decision was not returned.");
       return { kind: "decision", id: asString(decision.id), title: asString(decision.title) };
     } catch (error) {
@@ -217,13 +217,13 @@ export async function persistKnowledgeSourcePath(
 }
 
 /**
- * Create a knowledge item. Evidence has no type: `tags` is all that says what it is, and
- * `path` points at a project file when the item stands for one. A template's old kind
- * ("doc", "runbook", "source") only seeds a tag.
+ * Create a knowledge item: a Decision, or a doc of `docType` (doc when omitted) whose
+ * `path` points at a project file when the doc stands for one.
  */
 export async function persistKnowledgeCreate(input: {
   projectId: string;
-  kind: "evidence" | "verdict";
+  kind: "doc" | "decision";
+  docType?: DocType;
   title: string;
   body?: string;
   extraJson?: string;
@@ -231,9 +231,9 @@ export async function persistKnowledgeCreate(input: {
   path?: string;
   change: ChangeEnvelope;
 }): Promise<string> {
-  const verdict = input.kind === "verdict";
-  const id = newId(verdict ? "verdict" : "ev");
-  const defaultBody = verdict
+  const decision = input.kind === "decision";
+  const id = newId(decision ? "decision" : "doc");
+  const defaultBody = decision
     ? "## Status\n\nProposed\n\n## Context\n\n\n\n## Decision\n\n\n\n## Consequences\n\n"
     : "";
   const path = input.path?.trim();
@@ -244,15 +244,22 @@ export async function persistKnowledgeCreate(input: {
       title: input.title,
       body: input.body ?? defaultBody,
       kind: input.kind,
-      tags: verdict ? ["verdict"] : [...new Set(input.tags ?? [])],
+      docType: decision ? "" : (input.docType ?? "doc"),
+      tags: decision ? [] : [...new Set(input.tags ?? [])],
       summary: "",
       owner: "human",
-      status: verdict ? "proposed" : "",
+      status: decision ? "proposed" : "",
       extraJson: input.extraJson ?? (path ? JSON.stringify({ path }) : "{}"),
     },
     change: changePayload(input.change),
   });
   return id;
+}
+
+/** The doc type named by a tag (runbook or source), and the tags without it. */
+export function docTypeFromTags(tags: readonly string[]): { docType: DocType; tags: string[] } {
+  const docType: DocType = tags.includes("source") ? "source" : tags.includes("runbook") ? "runbook" : "doc";
+  return { docType, tags: tags.filter((tag) => tag !== "doc" && tag !== "runbook" && tag !== "source") };
 }
 
 /** Scopes a knowledge item (Decision or Evidence) to a Structure node path; an empty path clears it. */
@@ -376,12 +383,12 @@ function polterValue(value: string): string {
 }
 
 /**
- * Move an Verdict through its lifecycle as a Polter decision block. The core
+ * Move a Decision through its lifecycle as a Polter decision block. The core
  * enforces the legal transitions; a refusal comes back as the error message.
  */
 export async function persistDecisionAction(input: {
   projectId: string;
-  verdict: WorkspaceVerdict;
+  decision: WorkspaceDecision;
   action: DecisionAction;
   change: ChangeEnvelope;
 }): Promise<void> {
@@ -390,13 +397,13 @@ export async function persistDecisionAction(input: {
   switch (input.action.kind) {
     case "activate":
     case "reactivate":
-      block = `### ${input.verdict.id}\nstatus: active`;
+      block = `### ${input.decision.id}\nstatus: active`;
       break;
     case "challenge":
-      block = `### ${input.verdict.id}\nstatus: challenged · reason: ${reason}`;
+      block = `### ${input.decision.id}\nstatus: challenged · reason: ${reason}`;
       break;
     case "supersede":
-      block = `### ${input.action.byId}\nsupersedes: ${input.verdict.id} · reason: ${reason}`;
+      block = `### ${input.action.byId}\nsupersedes: ${input.decision.id} · reason: ${reason}`;
       break;
   }
   await applyPolter(input.projectId, `---\npolter: 1\n---\n\n${block}\n`, input.change);
@@ -530,7 +537,7 @@ export async function persistKnowledgeDuplicate(
 ): Promise<string | undefined> {
   const current = workspace.rawKnowledge.find((item) => asString(item.id) === itemId);
   if (!current) return undefined;
-  const id = newId(asString(current.kind) === "verdict" ? "verdict" : "ev");
+  const id = newId(asString(current.kind) === "decision" ? "decision" : "ev");
   const title = `${asString(current.title)} (copy)`;
   await core().knowledge.save({
     item: {

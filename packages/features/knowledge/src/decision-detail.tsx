@@ -5,13 +5,13 @@ import {
   Select,
   StatusChip,
 } from "@polterware/frontend-design-system";
-import type { ScopeNodeItem, WorkspaceVerdict } from "@polterware/feature-shell";
+import type { ScopeNodeItem, WorkspaceDecision } from "@polterware/feature-shell";
 import { KnowledgeDocumentProperty } from "./knowledge-document-properties";
 import { KnowledgeDocumentShell, type EvidenceNoteProps } from "./knowledge-document-shell";
 import { decisionStateTone } from "./library-row";
 import { ScopePicker, scopePathOf } from "./scope-picker";
 
-const STATE_LABEL: Record<WorkspaceVerdict["state"], string> = {
+const STATE_LABEL: Record<WorkspaceDecision["state"], string> = {
   proposed: "Proposed",
   active: "Active",
   challenged: "Challenged",
@@ -26,9 +26,9 @@ export type DecisionAction =
   | { kind: "supersede"; byId: string };
 
 export function DecisionDetail(props: {
-  verdict: WorkspaceVerdict;
-  /** Every Verdict in the project; superseding picks among the ones still in force. */
-  allVerdicts: WorkspaceVerdict[];
+  decision: WorkspaceDecision;
+  /** Every Decision in the project; superseding picks among the ones still in force. */
+  allDecisions: WorkspaceDecision[];
   bodyMarkdown: string;
   onBodyChange: (md: string) => void;
   onAction?: (action: DecisionAction) => void;
@@ -41,14 +41,14 @@ export function DecisionDetail(props: {
   note?: EvidenceNoteProps;
 }) {
   const successors = () =>
-    props.allVerdicts.filter((other) => other.id !== props.verdict.id && other.state !== "superseded");
+    props.allDecisions.filter((other) => other.id !== props.decision.id && other.state !== "superseded");
   const canSupersede = () =>
-    Boolean(props.onAction) && (props.verdict.state === "active" || props.verdict.state === "challenged") && successors().length > 0;
+    Boolean(props.onAction) && (props.decision.state === "active" || props.decision.state === "challenged") && successors().length > 0;
   return (
     <KnowledgeDocumentShell
       trail={["Truth", "Decisions"]}
-      entityId={props.verdict.id}
-      title={props.note?.title ?? props.verdict.title}
+      entityId={props.decision.id}
+      title={props.note?.title ?? props.decision.title}
       onTitleChange={props.note?.onTitleChange}
       tags={props.note?.tags}
       tagSuggestions={props.note?.tagSuggestions}
@@ -59,46 +59,46 @@ export function DecisionDetail(props: {
       properties={
         <>
           <KnowledgeDocumentProperty label="Status">
-            <StatusChip tone={decisionStateTone(props.verdict.state)}>{STATE_LABEL[props.verdict.state]}</StatusChip>
+            <StatusChip tone={decisionStateTone(props.decision.state)}>{STATE_LABEL[props.decision.state]}</StatusChip>
             <Show when={props.onAction}>
-              <Show when={props.verdict.state === "proposed"}>
+              <Show when={props.decision.state === "proposed"}>
                 <Button variant="secondary" size="sm" onClick={() => props.onAction?.({ kind: "activate" })}>Activate</Button>
               </Show>
-              <Show when={props.verdict.state === "active"}>
+              <Show when={props.decision.state === "active"}>
                 <Button variant="ghost" size="sm" onClick={() => props.onAction?.({ kind: "challenge" })}>Open review</Button>
               </Show>
-              <Show when={props.verdict.state === "challenged"}>
+              <Show when={props.decision.state === "challenged"}>
                 <Button variant="ghost" size="sm" onClick={() => props.onAction?.({ kind: "reactivate" })}>Keep active</Button>
               </Show>
             </Show>
           </KnowledgeDocumentProperty>
-          <KnowledgeDocumentProperty label="Reason" show={Boolean(props.verdict.statusReason)}>
-            {props.verdict.statusReason}
+          <KnowledgeDocumentProperty label="Reason" show={Boolean(props.decision.statusReason)}>
+            {props.decision.statusReason}
           </KnowledgeDocumentProperty>
-          <KnowledgeDocumentProperty label="Review when" show={Boolean(props.verdict.reviewTrigger)}>
-            {props.verdict.reviewTrigger}
+          <KnowledgeDocumentProperty label="Review when" show={Boolean(props.decision.reviewTrigger)}>
+            {props.decision.reviewTrigger}
           </KnowledgeDocumentProperty>
           <KnowledgeDocumentProperty label="Scope">
-            {props.verdict.scope === "principle" ? "Principle (whole project)" : "Decision"}
+            {props.decision.scope === "principle" ? "Principle (whole project)" : "Decision"}
           </KnowledgeDocumentProperty>
           <Show when={props.onScopeChange}>
             <KnowledgeDocumentProperty label="Structure scope">
               <ScopePicker
                 nodes={props.scopeNodes ?? []}
-                value={scopePathOf(props.scopeNodes ?? [], props.verdict.scopeNodeId)}
+                value={scopePathOf(props.scopeNodes ?? [], props.decision.scopeNodeId)}
                 onChange={(path) => props.onScopeChange?.(path)}
                 class="w-full min-w-0 max-w-[20rem]"
               />
             </KnowledgeDocumentProperty>
           </Show>
-          <KnowledgeDocumentProperty label="Governs" mono show={props.verdict.governs.length > 0}>
-            {props.verdict.governs.join(", ")}
+          <KnowledgeDocumentProperty label="Governs" mono show={props.decision.governs.length > 0}>
+            {props.decision.governs.join(", ")}
           </KnowledgeDocumentProperty>
-          <KnowledgeDocumentProperty label="Supersedes" show={props.verdict.supersedes.length > 0}>
-            {props.verdict.supersedes.join(", ")}
+          <KnowledgeDocumentProperty label="Supersedes" show={props.decision.supersedes.length > 0}>
+            {props.decision.supersedes.join(", ")}
           </KnowledgeDocumentProperty>
-          <KnowledgeDocumentProperty label="Superseded by" show={Boolean(props.verdict.supersededBy)}>
-            {props.verdict.supersededBy}
+          <KnowledgeDocumentProperty label="Superseded by" show={Boolean(props.decision.supersededBy)}>
+            {props.decision.supersededBy}
           </KnowledgeDocumentProperty>
           <KnowledgeDocumentProperty label="Supersede with" show={canSupersede()}>
             <Select

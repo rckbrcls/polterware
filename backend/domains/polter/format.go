@@ -19,7 +19,7 @@ const Spec = "Polter format v1: markdown that writes Work cards, Structure nodes
 	"---\n" +
 	"\n" +
 	"## git-import: Git metadata import\n" +
-	"stage: plan · owner: erick · under: core/import · decisions: Verdict-0007\n" +
+	"stage: plan · owner: erick · under: core/import · decisions: Decision-0007\n" +
 	"\n" +
 	"Intent paragraph: what we want and why.\n" +
 	"\n" +
@@ -38,9 +38,9 @@ const Spec = "Polter format v1: markdown that writes Work cards, Structure nodes
 	"touched: backend/import.go, docs/spec.md\n" +
 	"\n" +
 	"### new: Local SQLite authority\n" +
-	"status: active · trigger: multi-user sync · supersedes: Verdict-0003 · reason: why\n" +
+	"status: active · trigger: multi-user sync · supersedes: Decision-0003 · reason: why\n" +
 	"\n" +
-	"Verdict body: context, decision, consequences.\n" +
+	"Decision body: context, decision, consequences.\n" +
 	"\n" +
 	"#### local-authority: One local core owns SQLite.\n" +
 	"kind: declared · scope: core · evidence: ev-existing-id\n" +
@@ -48,7 +48,7 @@ const Spec = "Polter format v1: markdown that writes Work cards, Structure nodes
 	"Rules:\n" +
 	"- `## slug: Title` is a card; the lowercase-kebab slug is its identity.\n" +
 	"- `# path: Title` is a Structure node. level: system, domain, or component. under: names the parent path. A component may also sit directly under its system (outside any domain). A different under: on an existing node moves it and rewrites descendant paths. uses: lists the node paths it depends on (comma separated; empty clears); the map draws them as edges. deploys: lists env=provider:resource links (comma separated; a present line replaces them, empty clears). A card under: names a component path once any component exists. repo: names a checkout from `polterware repo add` (empty is the project root); path: is a folder inside it, not the node path. migrating: old design -> new design marks a node in transition (empty clears it).\n" +
-	"- `### ref: Title` is an Verdict lifecycle block. `new` proposes one (a number is assigned); an Verdict number or id changes an existing one. States: proposed → active → challenged → active or superseded. `status: challenged` needs a reason:; `trigger:` is the review condition; `scope:` is the Structure node path the decision applies to (omit for the whole project); `supersedes: Verdict-0003` on the newer decision marks the older one superseded. Decisions are never removed. The body is plain text: no # lines.\n" +
+	"- `### ref: Title` is a Decision lifecycle block. `new` proposes one (a number is assigned); a ref such as `Decision-0003` or an id changes an existing one. States: proposed → active → challenged → active or superseded. `status: challenged` needs a reason:; `level: principle` pins it for the whole project; `trigger:` is the review condition; `scope:` is the Structure node path the decision applies to (omit for the whole project); `supersedes: Decision-0003` on the newer decision marks the older one superseded. Decisions are never removed. The body is plain text: no # lines.\n" +
 	"- `#### slug: Statement` creates a canon Fact or updates it by its lowercase-kebab slug; an existing Fact id can replace the slug. Omit the heading statement on updates to keep it. `kind:` is declared (default on create), observed, inferred, or verified. `scope:` names a Structure node path (empty clears; omit for the whole project on create). `evidence:` lists existing canon evidence ids, comma separated (a present line replaces links, empty clears). Omitted fields stay unchanged. Plan output uses the Fact id. Facts have no body text.\n" +
 	"- Stages: shape, plan, build, verify, delivered.\n" +
 	"- `kind: architecture` marks a card as an Architecture Change (default feature). Its under: names the node it changes; set `migrating:` on that node while the change is in flight, and clear it when the card is delivered.\n" +
@@ -76,22 +76,22 @@ type Query struct {
 }
 
 const (
-	QueryCards   = "cards"
-	QueryCard    = "card"
-	QueryStatus  = "status"
-	QueryInbox   = "inbox"
-	QueryHandoff = "handoff"
-	QueryOracle  = "oracle"
-	QueryStructure   = "structure"
-	QueryFeature = "feature"
-	QueryVerify  = "verify"
+	QueryCards     = "cards"
+	QueryCard      = "card"
+	QueryStatus    = "status"
+	QueryInbox     = "inbox"
+	QueryHandoff   = "handoff"
+	QueryOracle    = "oracle"
+	QueryStructure = "structure"
+	QueryFeature   = "feature"
+	QueryVerify    = "verify"
 
 	QueryDecisions = "decisions"
 	QueryDecision  = "decision"
 	QueryCanvas    = "canvas"
 )
 
-const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "oracle <path>", "structure [<path>] [at <point>]", "structure history", "decisions [proposed|active|challenged|superseded]", "decision <verdict>", "feature <slug> [shape|contract|plan]", "verify <slug|slug#T2>", "canvas", or "canvas <name|id>"`
+const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "oracle <path>", "structure [<path>] [at <point>]", "structure history", "decisions [proposed|active|challenged|superseded]", "decision <decision>", "feature <slug> [shape|contract|plan]", "verify <slug|slug#T2>", "canvas", or "canvas <name|id>"`
 
 // ParseQuery parses the v1 query language.
 func ParseQuery(text string) (Query, error) {
@@ -122,7 +122,7 @@ func ParseQuery(text string) (Query, error) {
 		}
 	case QueryDecision:
 		if len(fields) < 2 {
-			return Query{}, fmt.Errorf(`unknown query %q: use "decision <verdict>"`, strings.TrimSpace(text))
+			return Query{}, fmt.Errorf(`unknown query %q: use "decision <decision>"`, strings.TrimSpace(text))
 		}
 		return Query{Kind: QueryDecision, Slug: strings.Join(fields[1:], " ")}, nil
 	case QueryVerify:

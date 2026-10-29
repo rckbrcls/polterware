@@ -30,11 +30,11 @@ describe("canvas ApplyPolter promotions", () => {
     expect(core.work.apply).toHaveBeenCalledOnce();
     expect(core.work.apply.mock.calls[0]![0]).toMatchObject({ dryRun: true });
   });
-  it("reads the assigned Verdict title from the operation and then resolves the exact entity ID", async () => {
+  it("reads the assigned Decision title from the operation and then resolves the exact entity ID", async () => {
     const core = bridge();
-    core.work.apply.mockResolvedValueOnce({ applied: true, ops: ['+ decision Verdict 0005: A card "Verdict 0005: A card"'], diagnostics: [] });
-    core.knowledge.list.mockResolvedValue({ items: [{ id: "old", kind: "verdict", title: "Verdict 0004: A card" }, { id: "new-id", kind: "verdict", title: "Verdict 0005: A card" }] });
-    expect(await canvasPersistence.promote!("p", { ...input, kind: "decision" })).toEqual({ kind: "decision", id: "new-id", title: "Verdict 0005: A card" });
+    core.work.apply.mockResolvedValueOnce({ applied: true, ops: ['+ decision Decision 0005: A card "Decision 0005: A card"'], diagnostics: [] });
+    core.knowledge.list.mockResolvedValue({ items: [{ id: "old", kind: "decision", title: "Decision 0004: A card" }, { id: "new-id", kind: "decision", title: "Decision 0005: A card" }] });
+    expect(await canvasPersistence.promote!("p", { ...input, kind: "decision" })).toEqual({ kind: "decision", id: "new-id", title: "Decision 0005: A card" });
   });
   it("promotes a declared Fact and links the exact canon ID, even with duplicate statements", async () => {
     const core = bridge();

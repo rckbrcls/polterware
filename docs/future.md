@@ -40,10 +40,10 @@ Category: **Project Context & Change Intelligence for AI Coding.** Polterware ke
 10. **Light enforcement.** Claude Code `PreToolUse` advisories ("this file is governed by decision X", "adding a dependency needs a decision"). Advisory first.
 11. **Engineering packs** that generate Inbox *questions*, never rules.
 12. **Similarity beyond word sets.** Add an FTS5 index when a ranked-search consumer needs it. Add local embeddings (`sqlite-vec`, small local model, opt-in download) only if measured misses are material.
-13. **Weak spots to close:** Structure timeline by commit is weak for rebased history (no per-batch commit stamp); automatic challenge from a decision review trigger; decision status chips on Canvas nodes; importing projected Verdict files.
+13. **Weak spots to close:** Structure timeline by commit is weak for rebased history (no per-batch commit stamp); automatic challenge from a decision review trigger; decision status chips on Canvas nodes; importing projected Decision files.
 14. **Scope exclusion in filters.** Scope pills are inclusion-only because reads take one `scope_nodes` union; `is not` on System / Domain / Component / Environment needs an `exclude_scope_nodes` on the scoped reads. Polterware Notes search filters are inclusion-only for the same reason (the core takes inclusion lists and caps results).
 
-## Cloud (needs an Verdict before any code)
+## Cloud (needs a Decision before any code)
 
 Local-first, offline-capable core stays free. Cloud is one Go service (Fly.io, same region as Supabase) over Postgres (`pgx` + `sqlc`), Supabase Auth with GitHub login (Go verifies JWTs), River for jobs, SSE for live claims, RLS as a second layer only. No Edge Functions, no `supabase-js` from the Web App, no Supabase Realtime. Cloud stores the project model, commit metadata, and judgments, never source code. The domain logic and Polter codec are one Go module shared with the local binary. The Web App lives in `polterware-web`; the public Desktop repository never authorizes hosted operations.
 
@@ -53,7 +53,7 @@ Build order:
 
 - **C0 — Read-only continuity.** `polterware login` (device flow), one-way log upload, GitHub App ingest, Web App delivery feed.
 - **C1 — Coordination.** Two-way sync, claims with leases, sessions, handoffs, remote MCP.
-- **C2 — Decisions.** Inbox with owners (`CODEOWNERS`), projection PRs (Verdicts, `AGENTS.md` blocks).
+- **C2 — Decisions.** Inbox with owners (`CODEOWNERS`), projection PRs (Decisions, `AGENTS.md` blocks).
 - **C3 — Judge.** Decision detector and handoff verification as GitHub Checks.
 - **C4 — Gates and billing.** Required checks, calibration, plans.
 
@@ -61,13 +61,13 @@ Cloud must not: ship an AI-memory product or a parallel vector store, provision 
 
 Open: sync operation granularity, long-offline replicas, log compaction, GitLab adapter boundary at ingest, webhook replay/backfill, whether "delivered" means merged or in production for a teammate, whether Cloud owns tasks or reads them from GitHub Issues/Linear.
 
-## Jev as Cloud Judge (never in Desktop or the local binary without a new Verdict)
+## Jev as Cloud Judge (never in Desktop or the local binary without a new Decision)
 
 TypeSafe Jev returns typed judgments with probabilities (Choice, Noul, Score), cheap enough to run on every push, PR, handoff, and apply. Code finds candidates, Jev selects, a threshold decides between acting, suggesting, and sending to the Inbox. Output stays `inferred` until a person or gate confirms. Keys live only in the Cloud service. Sending diffs to a third party needs per-repository opt-in and a retention policy.
 
 Candidate checks, strongest first: decision detector and invariant guard (one request per diff); handoff verification (does the diff support what the agent said?); commit ↔ task linking without an explicit reference; duplicate or contradictory decision/question; automatic challenge when a fact meets a decision's review trigger; Inbox routing (owner, blocking, priority); Oracle packing under a token budget.
 
-Optional later: bring-your-own LLM key enrichment (`inferred`, promoted by a human), only if an Verdict allows keys in the product.
+Optional later: bring-your-own LLM key enrichment (`inferred`, promoted by a human), only if a Decision allows keys in the product.
 
 ## Research and validation (hypotheses, no experiment run)
 
@@ -137,7 +137,7 @@ Open: branch naming scheme and whether it is configurable; where worktrees live 
 ## Larger ideas not yet decided
 
 - **Behavioral runtime.** Project and task contracts, typed actions, and an execution state machine that mediates effects where an integration can. Enforcement is only possible where the agent host lets Polterware mediate; elsewhere it stays advisory.
-- **Engineering knowledge library.** Versioned sources, principles, applicability conditions, and checks. No paper becomes policy automatically. Context capsules select facts, Verdict excerpts, gaps, and source paths under a token budget.
+- **Engineering knowledge library.** Versioned sources, principles, applicability conditions, and checks. No paper becomes policy automatically. Context capsules select facts, Decision excerpts, gaps, and source paths under a token budget.
 - **Decision ownership.** Authority classes (human-only, delegated, agent-local), a delegation budget, and Decision Inbox routing. Humans choose architecture, method, and test strategy; accepted decisions and invariants bound the agent.
 - **Automatic agent context.** Plugin, skill, and session hook that inject bounded context at session start. Fewer tokens through hybrid layout (short context file plus on-demand reads) and compact encodings such as TOON, measured against plain reading. Anti-ideas: dumping the architecture into the prompt, a vector store as truth.
 - **Multi-repo answers.** Cross-repository questions resolved from linked entities and evidence across projects, without cloning the other repository; federation only with Cloud.

@@ -156,7 +156,7 @@ describe("detailPanelStore", () => {
   });
 
   it("starts document properties closed and resets visibility between documents", () => {
-    for (const entityKind of ["verdict", "evidence", "card"]) {
+    for (const entityKind of ["decision", "evidence", "card"]) {
       const target = { scopeId, entityId: entityKind, entityKind };
       store().activateTarget(target);
       expect(store()).toMatchObject({ activeTarget: target, open: false });

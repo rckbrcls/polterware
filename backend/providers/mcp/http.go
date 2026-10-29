@@ -19,7 +19,7 @@ const SessionHeader = "Mcp-Session-Id"
 // (for example a killed bridge).
 const sessionIdle = 30 * time.Minute
 
-// Sessions serves MCP over HTTP inside the core (Verdict 0007): POST one JSON-RPC
+// Sessions serves MCP over HTTP inside the core (Decision 0007): POST one JSON-RPC
 // message, get its JSON response (202 for notifications); `initialize` opens a
 // session and returns its id in Mcp-Session-Id; DELETE closes it. Callers
 // authenticate before reaching this handler.

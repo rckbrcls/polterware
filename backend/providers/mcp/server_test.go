@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/polterware/polterware/backend/domains/drift"
 	"github.com/polterware/polterware/backend/domains/canon"
+	"github.com/polterware/polterware/backend/domains/drift"
 	"github.com/polterware/polterware/backend/providers/demoseed"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
@@ -207,8 +207,8 @@ func TestAgentRunAuditChain(t *testing.T) {
 		"agent_run_id": runID,
 		"kind":         "change",
 		"summary":      "Document DEPENDS_ON edge",
-		"rationale":    "Matches accepted Verdict scope",
-		"paths":        []any{"docs/verdict/0004-product-positioning-and-wedge.md"},
+		"rationale":    "Matches accepted Decision scope",
+		"paths":        []any{"docs/decision/0004-product-positioning-and-wedge.md"},
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -216,9 +216,9 @@ func TestAgentRunAuditChain(t *testing.T) {
 	evidence, err := canon.NewEvidence(
 		demoseed.ProjectID,
 		canon.EvidenceKindFile,
-		"Verdict text",
+		"Decision text",
 		"fs",
-		"docs/verdict/0004-product-positioning-and-wedge.md",
+		"docs/decision/0004-product-positioning-and-wedge.md",
 		"system",
 	)
 	if err != nil {
@@ -228,7 +228,7 @@ func TestAgentRunAuditChain(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := server.callTool(ToolAgentRunAppend, map[string]any{
-		"agent_run_id":  runID,
+		"agent_run_id": runID,
 		"kind":         "evidence",
 		"evidence_ids": []any{evidence.ID},
 	}); err != nil {
@@ -291,7 +291,7 @@ func TestAuditedWritesRequireEnvelopeAndMutate(t *testing.T) {
 
 	startText, err := server.callTool(ToolAgentRunStart, map[string]any{
 		"project_id": demoseed.ProjectID,
-		"task":       "Record Verdict fact",
+		"task":       "Record Decision fact",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -314,7 +314,7 @@ func TestAuditedWritesRequireEnvelopeAndMutate(t *testing.T) {
 		"project_id":   demoseed.ProjectID,
 		"agent_run_id": runID,
 		"summary":      "Add local store fact",
-		"rationale":    "Matches accepted Verdict",
+		"rationale":    "Matches accepted Decision",
 		"statement":    "SQLite is the local store",
 		"truth_class":  canon.TruthDeclared,
 	})
@@ -334,11 +334,11 @@ func TestAuditedWritesRequireEnvelopeAndMutate(t *testing.T) {
 	evText, err := server.callTool(ToolEvidenceUpsert, map[string]any{
 		"project_id":       demoseed.ProjectID,
 		"agent_run_id":     runID,
-		"summary":          "Attach Verdict evidence",
+		"summary":          "Attach Decision evidence",
 		"rationale":        "File backs the fact",
 		"kind":             canon.EvidenceKindFile,
-		"evidence_summary": "Verdict text",
-		"path":             "docs/verdict/0004-product-positioning-and-wedge.md",
+		"evidence_summary": "Decision text",
+		"path":             "docs/decision/0004-product-positioning-and-wedge.md",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -363,10 +363,10 @@ func TestAuditedWritesRequireEnvelopeAndMutate(t *testing.T) {
 	knowText, err := server.callTool(ToolKnowledgeUpsert, map[string]any{
 		"project_id":   demoseed.ProjectID,
 		"agent_run_id": runID,
-		"summary":      "Add Verdict library item",
+		"summary":      "Add Decision library item",
 		"rationale":    "Document the decision",
-		"title":        "Local SQLite Verdict",
-		"kind":         "verdict",
+		"title":        "Local SQLite Decision",
+		"kind":         "decision",
 		"body":         "Use SQLite for Desktop.",
 		"tags":         []any{"storage"},
 	})
@@ -389,7 +389,7 @@ func TestAuditedWritesRequireEnvelopeAndMutate(t *testing.T) {
 	if _, err := server.callTool(ToolKnowledgeLink, map[string]any{
 		"project_id":   demoseed.ProjectID,
 		"agent_run_id": runID,
-		"summary":      "Link Verdict to entity",
+		"summary":      "Link Decision to entity",
 		"rationale":    "Documents the component",
 		"knowledge_id": knowledgeID,
 		"entity_id":    entities[0].ID,

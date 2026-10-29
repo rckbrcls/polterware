@@ -9,7 +9,7 @@ import type { KnowledgePromptKind } from "./agent-prompts";
 import { knowledgePromptsForKind } from "./agent-prompts";
 
 function promptIcon(kind: KnowledgePromptKind) {
-  if (kind === "verdict") return <Shield size={16} />;
+  if (kind === "decision") return <Shield size={16} />;
   if (kind === "card") return <ListChecks size={16} />;
   return <BookOpen02Icon size={16} />;
 }

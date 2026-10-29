@@ -2,20 +2,19 @@ package polter
 
 import (
 	"fmt"
-	"regexp"
-	"strconv"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canon"
+	"github.com/polterware/polterware/backend/domains/decision"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
 // References is what reference-level lint checks against. A nil *References
 // means the project could not be resolved and only syntax is checked.
 type References struct {
-	// Verdicts holds each Verdict's knowledge id and title.
-	Verdicts []VerdictRef
+	// Decisions holds each Decision's knowledge id and title.
+	Decisions []DecisionRef
 	// Cards is the project's current Work graph, for similarity hints.
 	Cards []work.Card
 	// Nodes are the project's Structure nodes. Card under: is checked once any
@@ -33,14 +32,12 @@ type References struct {
 	Git *GitView
 }
 
-type VerdictRef struct {
+type DecisionRef struct {
 	ID    string
 	Title string
-	// Status is the Verdict knowledge status (proposed, accepted, …).
+	// Status is the Decision knowledge status (proposed, accepted, …).
 	Status string
 }
-
-var verdictNumber = regexp.MustCompile(`(?i)\b(?:adr|verdict)[\s\-_]*0*(\d+)\b`)
 
 // Lint decodes text and runs syntax checks, plus reference checks and
 // similarity hints when refs is set. It returns the decoded document so callers can continue to Plan.
@@ -65,20 +62,20 @@ func Lint(text string, refs *References) (Document, []Diagnostic) {
 func checkReferences(doc Document, refs References) []Diagnostic {
 	known := map[string]bool{}
 	numbers := map[int]bool{}
-	for _, verdict := range refs.Verdicts {
-		known[strings.ToLower(verdict.ID)] = true
-		if n, ok := parseVerdictNumber(verdict.Title); ok {
+	for _, decision := range refs.Decisions {
+		known[strings.ToLower(decision.ID)] = true
+		if n, ok := parseDecisionNumber(decision.Title); ok {
 			numbers[n] = true
 		}
 	}
 	// stale hints at a cited decision that no longer settles the question.
 	stale := func(line int, ref string) []Diagnostic {
-		for _, verdict := range refs.Verdicts {
-			if !CitesDecision(ref, verdict.ID, verdict.Title) || decisionBinding(verdict.Status) {
+		for _, decision := range refs.Decisions {
+			if !CitesDecision(ref, decision.ID, decision.Title) || decisionBinding(decision.Status) {
 				continue
 			}
-			state := decisionState(verdict.Status)
-			message := fmt.Sprintf("decision %s is %s", verdict.Title, state)
+			state := decisionState(decision.Status)
+			message := fmt.Sprintf("decision %s is %s", decision.Title, state)
 			if state == "superseded" {
 				message += ": cite its successor"
 			}
@@ -97,14 +94,14 @@ func checkReferences(doc Document, refs References) []Diagnostic {
 					diags = append(diags, stale(entry.Line, ref)...)
 					continue
 				}
-				if n, ok := parseVerdictNumber(ref); ok && numbers[n] {
+				if n, ok := parseDecisionNumber(ref); ok && numbers[n] {
 					diags = append(diags, stale(entry.Line, ref)...)
 					continue
 				}
 				diags = append(diags, Diagnostic{
 					Line:     entry.Line,
 					Severity: SeverityError,
-					Message:  fmt.Sprintf("unknown decision %q: no Verdict with that number or id in this project", ref),
+					Message:  fmt.Sprintf("unknown decision %q: no Decision with that number or id in this project", ref),
 				})
 			}
 		}
@@ -143,18 +140,13 @@ func CheckRepos(doc Document, repos []string) []Diagnostic {
 	return diags
 }
 
-// ParseVerdictNumber reads the number from "Verdict 0008", "Verdict-8", or a title.
-func ParseVerdictNumber(value string) (int, bool) {
-	return parseVerdictNumber(value)
+// ParseDecisionNumber reads the number from "Decision-0008" or a numbered title.
+func ParseDecisionNumber(value string) (int, bool) {
+	return decision.Number(value)
 }
 
-func parseVerdictNumber(value string) (int, bool) {
-	m := verdictNumber.FindStringSubmatch(value)
-	if m == nil {
-		return 0, false
-	}
-	n, err := strconv.Atoi(m[1])
-	return n, err == nil
+func parseDecisionNumber(value string) (int, bool) {
+	return decision.Number(value)
 }
 
 // architectureHints reminds that a delivered Architecture Change should clear

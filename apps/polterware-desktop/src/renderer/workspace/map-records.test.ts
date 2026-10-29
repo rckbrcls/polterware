@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   decisionState,
-  mapVerdicts,
+  mapDecisions,
   mapConnections,
   mapEvidence,
   mapEnvironments,
@@ -168,48 +168,54 @@ describe("decisionState", () => {
   });
 });
 
-describe("mapVerdicts", () => {
+describe("mapDecisions", () => {
   const items = [
-    { id: "verdict-a", kind: "verdict", title: "Verdict 0001: Local SQLite", status: "active", extraJson: JSON.stringify({ reviewTrigger: "multi-user" }) },
-    { id: "verdict-b", kind: "verdict", title: "Verdict 0002: Postgres", status: "proposed", extraJson: JSON.stringify({ supersededBy: "verdict-c" }) },
-    { id: "verdict-c", kind: "verdict", title: "Verdict 0003: Hosted", status: "accepted", extraJson: JSON.stringify({ statusReason: "scale" }) },
-    { id: "doc-1", kind: "evidence", tags: ["doc"], title: "Not an Verdict" },
+    { id: "decision-a", kind: "decision", title: "Decision 0001: Local SQLite", status: "active", extraJson: JSON.stringify({ reviewTrigger: "multi-user" }) },
+    { id: "decision-b", kind: "decision", title: "Decision 0002: Postgres", status: "proposed", extraJson: JSON.stringify({ supersededBy: "decision-c" }) },
+    { id: "decision-c", kind: "decision", title: "Decision 0003: Hosted", status: "accepted", extraJson: JSON.stringify({ statusReason: "scale" }) },
+    { id: "doc-1", kind: "doc", docType: "doc", title: "Not a Decision" },
   ];
 
-  it("keeps only Verdicts and resolves supersession both ways", () => {
-    const verdicts = mapVerdicts(items);
-    expect(verdicts.map((verdict) => verdict.id)).toEqual(["verdict-a", "verdict-b", "verdict-c"]);
-    expect(verdicts[1]?.supersededBy).toBe("Verdict 0003: Hosted");
-    expect(verdicts[2]?.supersedes).toEqual(["Verdict 0002: Postgres"]);
-    expect(verdicts[0]).toMatchObject({ reviewTrigger: "multi-user", state: "active" });
-    expect(verdicts[2]).toMatchObject({ state: "active", statusReason: "scale" });
+  it("keeps only Decisions and resolves supersession both ways", () => {
+    const decisions = mapDecisions(items);
+    expect(decisions.map((decision) => decision.id)).toEqual(["decision-a", "decision-b", "decision-c"]);
+    expect(decisions[1]?.supersededBy).toBe("Decision 0003: Hosted");
+    expect(decisions[2]?.supersedes).toEqual(["Decision 0002: Postgres"]);
+    expect(decisions[0]).toMatchObject({ reviewTrigger: "multi-user", state: "active" });
+    expect(decisions[2]).toMatchObject({ state: "active", statusReason: "scale" });
   });
 
-  it("lists the live Structure nodes that cite an Verdict by id or by number", () => {
-    const verdicts = mapVerdicts(items, new Map(), [
-      { path: "core/store", decisions: ["verdict-a"] },
-      { path: "core/api", decisions: ["Verdict-0001"] },
-      { path: "core/old", decisions: ["Verdict 1"], status: "removed" },
-      { path: "core/other", decisions: ["Verdict-0009"] },
+  it("reads a principle from its level", () => {
+    const [principle] = mapDecisions([{ id: "p", kind: "decision", title: "Local first", extraJson: JSON.stringify({ level: "principle" }) }]);
+    expect(principle?.scope).toBe("principle");
+  });
+
+  it("lists the live Structure nodes that cite a Decision by id or by number", () => {
+    const decisions = mapDecisions(items, new Map(), [
+      { path: "core/store", decisions: ["decision-a"] },
+      { path: "core/api", decisions: ["Decision-0001"] },
+      { path: "core/old", decisions: ["Decision 1"], status: "removed" },
+      { path: "core/other", decisions: ["Decision-0009"] },
     ]);
-    expect(verdicts[0]?.governs).toEqual(["core/store", "core/api"]);
-    expect(verdicts[1]?.governs).toEqual([]);
+    expect(decisions[0]?.governs).toEqual(["core/store", "core/api"]);
+    expect(decisions[1]?.governs).toEqual([]);
   });
 });
 
 describe("mapEvidence", () => {
   const records = [
-    { id: "d1", kind: "evidence", tags: ["doc"], title: "Guide", summary: "How to" },
-    { id: "rb", kind: "evidence", tags: ["runbook", "ops"], title: "Restore" },
-    { id: "s1", kind: "evidence", tags: ["source"], title: "README", extraJson: JSON.stringify({ path: "README.md" }) },
-    { id: "v1", kind: "verdict", title: "Decision" },
+    { id: "d1", kind: "doc", title: "Guide", summary: "How to" },
+    { id: "rb", kind: "doc", docType: "runbook", tags: ["ops"], title: "Restore" },
+    { id: "s1", kind: "doc", docType: "source", title: "README", extraJson: JSON.stringify({ path: "README.md" }) },
+    { id: "v1", kind: "decision", title: "Decision" },
   ];
 
   // The core sends protobuf JSON, which omits empty strings, so defaults apply to absent fields.
-  it("maps every evidence item regardless of its tags and skips other kinds", () => {
+  it("maps every doc with its type and skips other kinds", () => {
     const items = mapEvidence(records);
     expect(items.map((item) => item.id)).toEqual(["d1", "rb", "s1"]);
-    expect(items[1]).toMatchObject({ tags: ["runbook", "ops"], path: "", owner: "Platform" });
+    expect(items.map((item) => item.docType)).toEqual(["doc", "runbook", "source"]);
+    expect(items[1]).toMatchObject({ tags: ["ops"], path: "", owner: "Platform" });
   });
 
   it("keeps the project-relative path of a file-backed item", () => {
@@ -217,7 +223,7 @@ describe("mapEvidence", () => {
   });
 
   it("survives malformed extraJson", () => {
-    const [item] = mapEvidence([{ id: "bad", kind: "evidence", title: "T", extraJson: "{not json" }]);
+    const [item] = mapEvidence([{ id: "bad", kind: "doc", title: "T", extraJson: "{not json" }]);
     expect(item).toMatchObject({ id: "bad", path: "" });
   });
 });

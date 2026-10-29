@@ -88,36 +88,34 @@ func TestDefaultsDoesNotOverwriteAnExistingDatabase(t *testing.T) {
 	}
 }
 
-func TestSeededVerdictsCoverTheLifecycleStates(t *testing.T) {
+func TestSeededDecisionsCoverTheLifecycleStates(t *testing.T) {
 	store := newSeeded(t)
-	verdicts, err := store.ListKnowledge(demoseed.ProjectID, "verdict")
+	decisions, err := store.ListKnowledge(demoseed.ProjectID, "decision")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(verdicts) < 3 {
-		t.Fatalf("want at least 3 seeded Verdicts, got %d", len(verdicts))
+	if len(decisions) < 3 {
+		t.Fatalf("want at least 3 seeded Decisions, got %d", len(decisions))
 	}
 	states := map[string]bool{}
-	for _, verdict := range verdicts {
-		states[verdict.Status] = true
+	for _, decision := range decisions {
+		states[decision.Status] = true
 	}
 	if !states["active"] || !states["proposed"] {
-		t.Fatalf("seed must show active and proposed Verdicts, got %v", states)
+		t.Fatalf("seed must show active and proposed Decisions, got %v", states)
 	}
 }
 
 func TestSeededSourcesAreProjectRelative(t *testing.T) {
 	store := newSeeded(t)
-	items, err := store.ListKnowledge(demoseed.ProjectID, "evidence")
+	items, err := store.ListKnowledge(demoseed.ProjectID, knowledge.KindDoc)
 	if err != nil {
 		t.Fatal(err)
 	}
 	var sources []knowledge.Item
 	for _, item := range items {
-		for _, tag := range item.Tags {
-			if tag == "source" {
-				sources = append(sources, item)
-			}
+		if item.DocType == knowledge.DocTypeSource {
+			sources = append(sources, item)
 		}
 	}
 	if len(sources) == 0 {

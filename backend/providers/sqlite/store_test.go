@@ -318,19 +318,19 @@ func TestReplaceCommitLinksReplacesAndFilters(t *testing.T) {
 
 func TestSaveAndListKnowledge(t *testing.T) {
 	store := seededStore(t)
-	verdicts, err := store.ListKnowledge(demoseed.ProjectID, "verdict")
+	decisions, err := store.ListKnowledge(demoseed.ProjectID, "decision")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(verdicts) == 0 {
-		t.Fatal("seed must provide Verdicts")
+	if len(decisions) == 0 {
+		t.Fatal("seed must provide Decisions")
 	}
-	for _, item := range verdicts {
-		if item.Kind != "verdict" || item.ProjectID != demoseed.ProjectID {
+	for _, item := range decisions {
+		if item.Kind != "decision" || item.ProjectID != demoseed.ProjectID {
 			t.Fatalf("filter leaked %+v", item)
 		}
 	}
-	first := verdicts[0]
+	first := decisions[0]
 	if got, err := store.GetKnowledge(first.ID); err != nil || got.Title != first.Title {
 		t.Fatalf("GetKnowledge = %+v, %v", got, err)
 	}
@@ -344,7 +344,7 @@ func TestSaveAndListKnowledge(t *testing.T) {
 
 func TestKnowledgeArchiveRestoreAndDelete(t *testing.T) {
 	store := seededStore(t)
-	items, err := store.ListKnowledge(demoseed.ProjectID, knowledge.KindEvidence)
+	items, err := store.ListKnowledge(demoseed.ProjectID, knowledge.KindDoc)
 	if err != nil || len(items) == 0 {
 		t.Fatalf("seed evidence = %d err=%v", len(items), err)
 	}
@@ -356,7 +356,7 @@ func TestKnowledgeArchiveRestoreAndDelete(t *testing.T) {
 	if err != nil || !archived.Archived() {
 		t.Fatalf("archive = %+v err=%v", archived, err)
 	}
-	active, err := store.ListKnowledge(demoseed.ProjectID, knowledge.KindEvidence)
+	active, err := store.ListKnowledge(demoseed.ProjectID, knowledge.KindDoc)
 	if err != nil {
 		t.Fatal(err)
 	}

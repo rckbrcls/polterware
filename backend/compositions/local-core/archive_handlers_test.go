@@ -26,7 +26,7 @@ func TestKnowledgeArchiveRules(t *testing.T) {
 	if err := store.SaveProject(project); err != nil {
 		t.Fatal(err)
 	}
-	for _, item := range []struct{ id, kind string }{{"doc-1", knowledge.KindEvidence}, {"dec-1", knowledge.KindVerdict}} {
+	for _, item := range []struct{ id, kind string }{{"doc-1", knowledge.KindDoc}, {"dec-1", knowledge.KindDecision}} {
 		saved, err := knowledge.NewItem(item.id, project.ID, "Item "+item.id, "body", item.kind, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -57,7 +57,7 @@ func TestKnowledgeArchiveRules(t *testing.T) {
 		t.Fatalf("archive: err=%v item=%+v", err, archived)
 	}
 	_, err = core.SaveKnowledge(ctx, connect.NewRequest(&localv1.SaveKnowledgeRequest{
-		Item:   &localv1.KnowledgeItem{Id: "doc-1", ProjectId: project.ID, Title: "Edited", Kind: knowledge.KindEvidence},
+		Item:   &localv1.KnowledgeItem{Id: "doc-1", ProjectId: project.ID, Title: "Edited", Kind: knowledge.KindDoc},
 		Change: change,
 	}))
 	if !failed(err) {

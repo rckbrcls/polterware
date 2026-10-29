@@ -79,7 +79,7 @@ message ListChangesResponse {
   repeated ProjectChange changes = 1;
 }
 
-// McpSession is one live MCP client connected to the core (Verdict 0007).
+// McpSession is one live MCP client connected to the core (Decision 0007).
 message McpSession {
   string id = 1;
   string client_name = 2;

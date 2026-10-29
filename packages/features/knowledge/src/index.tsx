@@ -36,7 +36,7 @@ import {
   type EnvironmentItem,
   type ScopeFilterToken,
   type ScopeNodeItem,
-  type WorkspaceVerdict,
+  type WorkspaceDecision,
   type WorkspaceCanonEntity,
   type WorkspaceEvidence,
   type WorkspaceWorkCard,
@@ -107,7 +107,7 @@ const TABS: TabItem[] = [
     tooltip: {
       title: "Knowledge library",
       description:
-        "Verdicts and principles in one list. Filter by lifecycle state and links.",
+        "Decisions and principles in one list. Filter by lifecycle state and links.",
       icon: LibraryBig,
     },
   },
@@ -134,11 +134,11 @@ type CollectionTarget = {
 function normalizeTab(raw?: string): KnowledgeTab {
   if (raw === "board" || raw === "library" || raw === "evidence") return raw;
   if (raw === "sources" || raw === "docs" || raw === "runbooks") return "evidence";
-  if (raw === "verdicts") return "library";
+  if (raw === "decisions") return "library";
   return "specs";
 }
 
-/** Library (Verdicts) and Evidence share the same detail host. */
+/** Library (Decisions) and Evidence share the same detail host. */
 function isLibraryScope(scopeId?: string): boolean {
   return scopeId === "knowledge:library" || scopeId === "knowledge:evidence";
 }
@@ -156,7 +156,7 @@ function collectionFingerprint(
 }
 
 export function KnowledgeView(props: {
-  verdicts?: WorkspaceVerdict[];
+  decisions?: WorkspaceDecision[];
   evidence?: WorkspaceEvidence[];
   workCards?: WorkspaceWorkCard[];
   workBoards?: WorkspaceWorkBoard[];
@@ -175,9 +175,9 @@ export function KnowledgeView(props: {
   error?: string;
   onTabChange?: (tab: string) => void;
   onOpenEvidence?: (id: string) => void;
-  onOpenVerdict?: (id: string) => void;
-  /** Writes one Verdict lifecycle move. */
-  onDecisionAction?: (verdictId: string, action: DecisionAction) => void;
+  onOpenDecision?: (id: string) => void;
+  /** Writes one Decision lifecycle move. */
+  onDecisionAction?: (decisionId: string, action: DecisionAction) => void;
   onOpenCard?: (slug: string) => void;
   onOpenComponent?: (componentId: string) => void;
   onOpenEntity?: (entityId: string, refId: string, kind: string) => void;
@@ -189,7 +189,7 @@ export function KnowledgeView(props: {
   onSaveTitle?: (id: string, title: string) => void;
   /** Replaces the tags of an Evidence item. */
   onSaveTags?: (id: string, tags: string[]) => void;
-  onCreate?: (kind: "verdict", title: string, scope?: "principle" | "decision", scopePath?: string) => void;
+  onCreate?: (kind: "decision", title: string, scope?: "principle" | "decision", scopePath?: string) => void;
   /** Structure nodes offered by the scope pickers; the global scope preselects new items. */
   scopeNodes?: ScopeNodeItem[];
   /** Path of the active global scope, used as the default for new items. */
@@ -287,9 +287,9 @@ export function KnowledgeView(props: {
     pathAutosave.dispose();
   });
 
-  /** Tags already used by Evidence items and Verdicts, offered when adding a tag. */
+  /** Tags already used by Evidence items and Decisions, offered when adding a tag. */
   const tagSuggestions = createMemo(() =>
-    [...new Set([...distinctEvidenceTags(props.evidence ?? []), ...(props.verdicts ?? []).flatMap((item) => item.tags)])].sort(),
+    [...new Set([...distinctEvidenceTags(props.evidence ?? []), ...(props.decisions ?? []).flatMap((item) => item.tags)])].sort(),
   );
 
   /** Note-style editing (title + tags) for one Evidence item, when the host can persist it. */
@@ -344,7 +344,7 @@ export function KnowledgeView(props: {
     pathAutosave.schedule(id, path);
   }
 
-  const allLibraryRows = createMemo(() => libraryRowsFromWorkspace({ verdicts: props.verdicts }));
+  const allLibraryRows = createMemo(() => libraryRowsFromWorkspace({ decisions: props.decisions }));
 
   const HAS_OPERATORS = [
     { id: FILTER_IS, label: "has" },
@@ -410,7 +410,7 @@ export function KnowledgeView(props: {
           icon: () => <StatusDot tone={libraryStatusTone(id)} showLabel={false} />,
         })),
       },
-      linkedField("Verdict"),
+      linkedField("Decision"),
     ],
   });
   const evidencePageFilters = createPageFilters({
@@ -505,10 +505,10 @@ export function KnowledgeView(props: {
     });
   });
 
-  const verdict = createMemo((): WorkspaceVerdict | undefined => {
+  const decision = createMemo((): WorkspaceDecision | undefined => {
     const target = activeTarget();
-    return isLibraryScope(target?.scopeId) && target?.entityKind === "verdict"
-      ? (props.verdicts ?? []).find((item) => item.id === target.entityId)
+    return isLibraryScope(target?.scopeId) && target?.entityKind === "decision"
+      ? (props.decisions ?? []).find((item) => item.id === target.entityId)
       : undefined;
   });
 
@@ -526,10 +526,10 @@ export function KnowledgeView(props: {
       : undefined;
   });
 
-  function activate(entityId: string, entityKind: "evidence" | "verdict" | "card") {
+  function activate(entityId: string, entityKind: "evidence" | "decision" | "card") {
     openDetail({ scopeId: scopeId(), entityId, entityKind });
     if (entityKind === "evidence") props.onOpenEvidence?.(entityId);
-    else if (entityKind === "verdict") props.onOpenVerdict?.(entityId);
+    else if (entityKind === "decision") props.onOpenDecision?.(entityId);
     else props.onOpenCard?.(entityId);
   }
 
@@ -543,7 +543,7 @@ export function KnowledgeView(props: {
         setCreateOpen(true);
       }
     : undefined;
-  const createKind = createMemo((): CreateKnowledgeKind => (cardTab() ? "card" : "verdict"));
+  const createKind = createMemo((): CreateKnowledgeKind => (cardTab() ? "card" : "decision"));
 
   const listSearch = createMemo(() => {
     if (cardTab()) {
@@ -573,12 +573,12 @@ export function KnowledgeView(props: {
   const createLabel = createMemo(() => {
     if (evidenceTab()) return "Add evidence";
     if (cardTab()) return "New card";
-    return "New Verdict";
+    return "New Decision";
   });
 
   function linksFor(
     knowledgeId: string,
-    links: WorkspaceVerdict["entityLinks"] | WorkspaceEvidence["entityLinks"],
+    links: WorkspaceDecision["entityLinks"] | WorkspaceEvidence["entityLinks"],
   ) {
     return (
       <EntityLinks
@@ -875,11 +875,11 @@ export function KnowledgeView(props: {
       </Show>
       </Show>
 
-      <Show when={verdict()}>
+      <Show when={decision()}>
         {(item) => (
           <DecisionDetail
-            verdict={item()}
-            allVerdicts={props.verdicts ?? []}
+            decision={item()}
+            allDecisions={props.decisions ?? []}
             bodyMarkdown={bodyOverrides()[item().id] ?? item().bodyMarkdown}
             onBodyChange={(markdown) => {
               noteBodyChange(item().id, markdown, item().bodyMarkdown);
@@ -951,7 +951,7 @@ export function KnowledgeView(props: {
         onClose={() => { setCreateOpen(false); setCreateStage(undefined); }}
         onSubmit={(title, kind, scope, scopePath) => {
           if (kind === "card") props.onCreateCard?.(title, createStage());
-          else props.onCreate?.("verdict", title, scope, scopePath);
+          else props.onCreate?.("decision", title, scope, scopePath);
           setCreateOpen(false);
           setCreateStage(undefined);
         }}

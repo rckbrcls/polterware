@@ -16,14 +16,14 @@ import (
 )
 
 const decisionUsage = `usage: polterware decision list [proposed|active|challenged|superseded]
-       polterware decision show <verdict>
+       polterware decision show <decision>
        polterware decision propose "<title>" [--trigger "..."] [--body "..."]
-       polterware decision activate <verdict> [--reason "..."]
-       polterware decision challenge <verdict> --reason "..."
-       polterware decision supersede <verdict> (--by <verdict> | --title "<new title>") [--reason "..."]
-       polterware decision trigger <verdict> "<review condition>"`
+       polterware decision activate <decision> [--reason "..."]
+       polterware decision challenge <decision> --reason "..."
+       polterware decision supersede <decision> (--by <decision> | --title "<new title>") [--reason "..."]
+       polterware decision trigger <decision> "<review condition>"`
 
-// runDecision reads the Verdict lifecycle and writes its transitions as Polter
+// runDecision reads the Decision lifecycle and writes its transitions as Polter
 // decision blocks through ApplyPolter, so the CLI, MCP, and Desktop share one
 // path and one audit trail.
 func runDecision(dbPath string, args []string) error {
@@ -36,7 +36,7 @@ func runDecision(dbPath string, args []string) error {
 	projectID := flags.String("project", "", "project id (default: project containing the cwd)")
 	reason := flags.String("reason", "", "why the decision moves")
 	trigger := flags.String("trigger", "", "review trigger")
-	body := flags.String("body", "", "Verdict text, plain (no # headings)")
+	body := flags.String("body", "", "Decision text, plain (no # headings)")
 	by := flags.String("by", "", "the decision that supersedes")
 	title := flags.String("title", "", "title of a new superseding decision")
 	agent := flags.String("agent", "", "agent label (default: $"+envAgentLabel+")")
@@ -90,7 +90,7 @@ func runDecision(dbPath string, args []string) error {
 			return err
 		}
 		if (*by == "") == (*title == "") {
-			return errors.New("decision supersede needs exactly one of --by <verdict> or --title \"<new title>\"")
+			return errors.New("decision supersede needs exactly one of --by <decision> or --title \"<new title>\"")
 		}
 		if *by != "" {
 			input = polter.DecisionInput{Ref: *by, Supersedes: positional[0], Reason: *reason}

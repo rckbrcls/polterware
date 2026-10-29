@@ -38,15 +38,15 @@ const (
 )
 
 var (
-	ErrUnknownRun         = errors.New("unknown agent run")
-	ErrRunNotOpen         = errors.New("agent run is not open")
-	ErrInvalidKind        = errors.New("invalid agent run step kind")
-	ErrInvalidActorKind   = errors.New("invalid actor kind")
-	ErrChangeIncomplete   = errors.New("change step requires summary and rationale")
-	ErrMissingAgentRunID  = errors.New("agent_run_id is required")
-	ErrProjectMismatch    = errors.New("project_id does not match agent run")
-	ErrEmptyTask          = errors.New("task is required")
-	ErrEmptyProject       = errors.New("project_id is required")
+	ErrUnknownRun        = errors.New("unknown agent run")
+	ErrRunNotOpen        = errors.New("agent run is not open")
+	ErrInvalidKind       = errors.New("invalid agent run step kind")
+	ErrInvalidActorKind  = errors.New("invalid actor kind")
+	ErrChangeIncomplete  = errors.New("change step requires summary and rationale")
+	ErrMissingAgentRunID = errors.New("agent_run_id is required")
+	ErrProjectMismatch   = errors.New("project_id does not match agent run")
+	ErrEmptyTask         = errors.New("task is required")
+	ErrEmptyProject      = errors.New("project_id is required")
 )
 
 // Run is a minimal AgentRun audit header (task lives here, not as a step).
@@ -63,12 +63,12 @@ type Run struct {
 
 // Step is one link in context → change → evidence → drift.
 type Step struct {
-	ID         string
-	AgentRunID string
-	Kind       string
-	Summary    string
+	ID          string
+	AgentRunID  string
+	Kind        string
+	Summary     string
 	PayloadJSON string
-	CreatedAt  time.Time
+	CreatedAt   time.Time
 }
 
 // Record is a run plus ordered steps for reconstruction.

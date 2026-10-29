@@ -16,7 +16,7 @@ rationale: Slice 5 needs cards
 # Roadmap
 
 ## git-metadata-import: Git metadata import
-stage: plan · owner: erick · decisions: Verdict-0007
+stage: plan · owner: erick · decisions: Decision-0007
 
 Import HEAD, branch and recent commits as evidence.
 
@@ -159,9 +159,9 @@ func TestPlanUnknownReferences(t *testing.T) {
 }
 
 func TestLintReferences(t *testing.T) {
-	_, diags := Lint(sample, &References{Verdicts: []VerdictRef{{ID: "verdict-x", Title: "Verdict 0007: Deterministic import"}}})
+	_, diags := Lint(sample, &References{Decisions: []DecisionRef{{ID: "decision-x", Title: "Decision 0007: Deterministic import"}}})
 	if HasErrors(diags) {
-		t.Fatalf("Verdict-0007 should resolve: %+v", diags)
+		t.Fatalf("Decision-0007 should resolve: %+v", diags)
 	}
 	_, diags = Lint(sample, &References{})
 	if !hasDiag(diags, 10, "unknown decision") {

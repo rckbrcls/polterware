@@ -198,9 +198,9 @@ func rankScore(item Item) int {
 		score += 50
 	case "fact":
 		score += 45
-	case "verdict":
+	case "decision":
 		score += 35
-	case "evidence":
+	case "doc":
 		score += 30
 	}
 	return score

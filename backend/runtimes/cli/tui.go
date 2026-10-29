@@ -147,7 +147,7 @@ type tuiModel struct {
 func runTUI(dbPath string) error {
 	cwd, _ := os.Getwd()
 	coreBin, coreErr := coreclient.Executable()
-	// The TUI reads through the core (Verdict 0007); start it once on launch. Later
+	// The TUI reads through the core (Decision 0007); start it once on launch. Later
 	// refreshes never restart it, so stopping the core from the TUI sticks.
 	if coreErr == nil {
 		_, _ = coreclient.Ensure(dbPath)

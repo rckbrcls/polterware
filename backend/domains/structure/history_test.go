@@ -10,7 +10,7 @@ func historyOps() []HistoryOp {
 	return []HistoryOp{
 		{Seq: 1, BatchID: "b1", Kind: "create", EntityID: "n1", CreatedAt: t0, Fields: map[string]any{
 			"path": "core", "slug": "core", "title": "Core", "level": "domain", "status": "active", "position": float64(0),
-			"decisions": []any{"Verdict-0001"},
+			"decisions": []any{"Decision-0001"},
 		}},
 		{Seq: 2, BatchID: "b1", Kind: "create", EntityID: "i1", NodeID: "n1", CreatedAt: t0, Fields: map[string]any{
 			"text": "No network", "state": "active", "position": float64(0),
@@ -47,7 +47,7 @@ func TestReplayAtBatch(t *testing.T) {
 	if len(nodes[0].Invariants) != 1 || nodes[0].Invariants[0].State != "active" {
 		t.Fatalf("invariants = %+v", nodes[0].Invariants)
 	}
-	if got := nodes[0].Decisions; len(got) != 1 || got[0] != "Verdict-0001" {
+	if got := nodes[0].Decisions; len(got) != 1 || got[0] != "Decision-0001" {
 		t.Fatalf("decisions = %v", got)
 	}
 }

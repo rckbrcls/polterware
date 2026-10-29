@@ -6,15 +6,15 @@ import {
   libraryRowsFromWorkspace,
   toggleFilterValue,
 } from "./library-row";
-import type { WorkspaceVerdict } from "@polterware/feature-shell";
+import type { WorkspaceDecision } from "@polterware/feature-shell";
 
-const verdict = {
-  id: "verdict-1",
+const decision = {
+  id: "decision-1",
   title: "Local-first",
   summary: "",
   bodyMarkdown: "",
   updatedAt: "2026-01-02",
-  tags: ["verdict"],
+  tags: ["decision"],
   status: "accepted",
   state: "active",
   scope: "decision",
@@ -25,22 +25,22 @@ const verdict = {
   governs: [],
   owner: "Ada",
   entityLinks: [],
-} satisfies WorkspaceVerdict;
+} satisfies WorkspaceDecision;
 
-const principle = { ...verdict, id: "verdict-2", title: "Evidence over opinion", scope: "principle", state: "proposed" } satisfies WorkspaceVerdict;
+const principle = { ...decision, id: "decision-2", title: "Evidence over opinion", scope: "principle", state: "proposed" } satisfies WorkspaceDecision;
 
 describe("libraryRowsFromWorkspace", () => {
   it("pins principles above local decisions", () => {
-    const rows = libraryRowsFromWorkspace({ verdicts: [verdict, principle] });
-    expect(rows.map((row) => row.id)).toEqual(["verdict-2", "verdict-1"]);
+    const rows = libraryRowsFromWorkspace({ decisions: [decision, principle] });
+    expect(rows.map((row) => row.id)).toEqual(["decision-2", "decision-1"]);
     expect(rows[0]?.categoryLabel).toBe("Principle");
   });
 
   it("filters by status, linked, and query", () => {
-    const rows = libraryRowsFromWorkspace({ verdicts: [verdict, principle] });
-    expect(filterLibraryRows(rows, { ...EMPTY_LIBRARY_FILTERS, statuses: ["active"] }).map((row) => row.id)).toEqual(["verdict-1"]);
+    const rows = libraryRowsFromWorkspace({ decisions: [decision, principle] });
+    expect(filterLibraryRows(rows, { ...EMPTY_LIBRARY_FILTERS, statuses: ["active"] }).map((row) => row.id)).toEqual(["decision-1"]);
     expect(filterLibraryRows(rows, { ...EMPTY_LIBRARY_FILTERS, linked: "linked" })).toHaveLength(0);
-    expect(filterLibraryRows(rows, { ...EMPTY_LIBRARY_FILTERS, query: "evidence" }).map((row) => row.id)).toEqual(["verdict-2"]);
+    expect(filterLibraryRows(rows, { ...EMPTY_LIBRARY_FILTERS, query: "evidence" }).map((row) => row.id)).toEqual(["decision-2"]);
   });
 
   it("reports active filters and toggles values", () => {

@@ -1,6 +1,6 @@
 import type { IconTileTone } from "@polterware/frontend-design-system";
 
-export type KnowledgePromptKind = "card" | "verdict" | "evidence";
+export type KnowledgePromptKind = "card" | "decision" | "evidence";
 
 export type KnowledgeAgentPrompt = {
   id: string;
@@ -58,10 +58,10 @@ ${CLOSING}`,
   },
 ];
 
-const VERDICT_PROMPTS: KnowledgeAgentPrompt[] = [
+const DECISION_PROMPTS: KnowledgeAgentPrompt[] = [
   {
-    id: "prompt-verdict-extract",
-    kind: "verdict",
+    id: "prompt-decision-extract",
+    kind: "decision",
     title: "Extract decisions",
     description: "Record the decisions this code already reflects.",
     tone: "architecture",
@@ -72,8 +72,8 @@ Read the code, configuration, and documentation and find the architectural decis
 ${CLOSING}`,
   },
   {
-    id: "prompt-verdict-principles",
-    kind: "verdict",
+    id: "prompt-decision-principles",
+    kind: "decision",
     title: "Propose principles",
     description: "Draft project-wide rules inferred from the code.",
     tone: "security",
@@ -84,8 +84,8 @@ Infer three to five project-wide principles from how this code is actually writt
 ${CLOSING}`,
   },
   {
-    id: "prompt-verdict-review",
-    kind: "verdict",
+    id: "prompt-decision-review",
+    kind: "decision",
     title: "Review decisions",
     description: "Challenge decisions the code now contradicts.",
     tone: "observability",
@@ -136,7 +136,7 @@ Compare the registered evidence with the project tree and list the files that sh
 
 export const KNOWLEDGE_AGENT_PROMPTS: KnowledgeAgentPrompt[] = [
   ...CARD_PROMPTS,
-  ...VERDICT_PROMPTS,
+  ...DECISION_PROMPTS,
   ...EVIDENCE_PROMPTS,
 ];
 

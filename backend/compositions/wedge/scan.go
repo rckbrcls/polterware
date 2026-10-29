@@ -81,7 +81,7 @@ func ScanProject(store *storepkg.Store, projectID string) (ScanResult, error) {
 		}
 	}
 
-	existingSources, err := store.ListKnowledge(projectID, knowledge.KindEvidence)
+	existingSources, err := store.ListKnowledge(projectID, knowledge.KindDoc)
 	if err != nil {
 		return ScanResult{}, err
 	}
@@ -164,7 +164,7 @@ func upsertImportedKnowledgeSource(store *storepkg.Store, projectID string, file
 		}
 		return store.SaveKnowledge(existing)
 	}
-	item, err := knowledge.NewItem(importer.StableSourceID(projectID, path), projectID, title, "", "source", []string{"source"})
+	item, err := knowledge.NewItem(importer.StableSourceID(projectID, path), projectID, title, "", knowledge.DocTypeSource, nil)
 	if err != nil {
 		return err
 	}

@@ -17,7 +17,7 @@ rationale: Why it changes
 ---
 
 ## git-import: Git metadata import
-stage: plan · owner: erick · under: core/import · decisions: Verdict-0007
+stage: plan · owner: erick · under: core/import · decisions: Decision-0007
 
 Intent paragraph: what we want and why.
 
@@ -36,9 +36,9 @@ next: wire into ImportProjectSources
 touched: backend/import.go, docs/spec.md
 
 ### new: Local SQLite authority
-status: active · trigger: multi-user sync · supersedes: Verdict-0003 · reason: why
+status: active · trigger: multi-user sync · supersedes: Decision-0003 · reason: why
 
-Verdict body: context, decision, consequences.
+Decision body: context, decision, consequences.
 
 #### local-authority: One local core owns SQLite.
 kind: declared · scope: core · evidence: ev-existing-id
@@ -46,7 +46,7 @@ kind: declared · scope: core · evidence: ev-existing-id
 Rules:
 - `## slug: Title` is a card; the lowercase-kebab slug is its identity.
 - `# path: Title` is a Structure node. level: system, domain, or component. under: names the parent path. A component may also sit directly under its system (outside any domain). A different under: on an existing node moves it and rewrites descendant paths. uses: lists the node paths it depends on (comma separated; empty clears); the map draws them as edges. deploys: lists env=provider:resource links (comma separated; a present line replaces them, empty clears). A card under: names a component path once any component exists. repo: names a checkout from `polterware repo add` (empty is the project root); path: is a folder inside it, not the node path. migrating: old design -> new design marks a node in transition (empty clears it).
-- `### ref: Title` is an Verdict lifecycle block. `new` proposes one (a number is assigned); an Verdict number or id changes an existing one. States: proposed → active → challenged → active or superseded. `status: challenged` needs a reason:; `trigger:` is the review condition; `scope:` is the Structure node path the decision applies to (omit for the whole project); `supersedes: Verdict-0003` on the newer decision marks the older one superseded. Decisions are never removed. The body is plain text: no # lines.
+- `### ref: Title` is a Decision lifecycle block. `new` proposes one (a number is assigned); a ref such as `Decision-0003` or an id changes an existing one. States: proposed → active → challenged → active or superseded. `status: challenged` needs a reason:; `level: principle` pins it for the whole project; `trigger:` is the review condition; `scope:` is the Structure node path the decision applies to (omit for the whole project); `supersedes: Decision-0003` on the newer decision marks the older one superseded. Decisions are never removed. The body is plain text: no # lines.
 - `#### slug: Statement` creates a canon Fact or updates it by its lowercase-kebab slug; an existing Fact id can replace the slug. Omit the heading statement on updates to keep it. `kind:` is declared (default on create), observed, inferred, or verified. `scope:` names a Structure node path (empty clears; omit for the whole project on create). `evidence:` lists existing canon evidence ids, comma separated (a present line replaces links, empty clears). Omitted fields stay unchanged. Plan output uses the Fact id. Facts have no body text.
 - Stages: shape, plan, build, verify, delivered.
 - `kind: architecture` marks a card as an Architecture Change (default feature). Its under: names the node it changes; set `migrating:` on that node while the change is in flight, and clear it when the card is delivered.

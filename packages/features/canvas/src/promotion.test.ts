@@ -40,8 +40,8 @@ describe("canvas promotion Polter", () => {
     expect(() => assertApplied({ applied: false, diagnostics: [{ severity: "error", message: "Core refused" }] })).toThrow("Core refused");
     expect(() => assertApplied({})).toThrow("did not apply");
     expect(() => assertApplied({ applied: true })).not.toThrow();
-    expect(createdDecisionTitle(['+ decision Verdict 0005: A "Verdict 0005: A"'])).toBe("Verdict 0005: A");
-    expect(createdDecisionTitle(['+ decision Verdict 0005: Say "hi" "Verdict 0005: Say \\"hi\\""'])).toBe('Verdict 0005: Say "hi"');
+    expect(createdDecisionTitle(['+ decision Decision 0005: A "Decision 0005: A"'])).toBe("Decision 0005: A");
+    expect(createdDecisionTitle(['+ decision Decision 0005: Say "hi" "Decision 0005: Say \\"hi\\""'])).toBe('Decision 0005: Say "hi"');
     expect(() => createdDecisionTitle([])).toThrow("identity");
   });
 });

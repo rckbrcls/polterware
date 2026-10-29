@@ -2,7 +2,7 @@ import type { StatusTone } from "@polterware/frontend-design-system";
 
 export type { StatusTone };
 
-export function verdictStatusTone(status: string): StatusTone {
+export function decisionStatusTone(status: string): StatusTone {
   if (status === "accepted" || status === "active") return "ok";
   if (status === "proposed" || status === "superseded") return "muted";
   return "warn";

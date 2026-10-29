@@ -47,13 +47,13 @@ type Result struct {
 
 // Input is everything the narrow checker needs (pure; no I/O).
 type Input struct {
-	ProjectID     string
-	EntityID      string
-	ImportReady   bool // when false, skip import dependency diff (root missing / unreadable)
-	StoredFacts   []FactRef
-	ParsedDeps    []ParsedDep
-	Relationships []RelationshipRef
-	AcceptedVerdicts  []AcceptedVerdict
+	ProjectID         string
+	EntityID          string
+	ImportReady       bool // when false, skip import dependency diff (root missing / unreadable)
+	StoredFacts       []FactRef
+	ParsedDeps        []ParsedDep
+	Relationships     []RelationshipRef
+	AcceptedDecisions []AcceptedDecision
 	// GitDeliveryReady is true when at least one checkout has local main or master.
 	// The commit-task findings are skipped when it is false.
 	GitDeliveryReady bool
@@ -91,8 +91,8 @@ type RelationshipRef struct {
 	Source          string
 }
 
-// AcceptedVerdict is an accepted architecture decision linked to entities.
-type AcceptedVerdict struct {
+// AcceptedDecision is an accepted architecture decision linked to entities.
+type AcceptedDecision struct {
 	ID        string
 	Title     string
 	EntityIDs []string

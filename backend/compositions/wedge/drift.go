@@ -101,12 +101,12 @@ func assembleDriftInput(store *storepkg.Store, projectID, entityID string) (drif
 		})
 	}
 
-	verdicts, err := store.ListKnowledge(in.ProjectID, "verdict")
+	decisions, err := store.ListKnowledge(in.ProjectID, "decision")
 	if err != nil {
 		return drift.Input{}, err
 	}
-	accepted := make([]drift.AcceptedVerdict, 0)
-	for _, item := range verdicts {
+	accepted := make([]drift.AcceptedDecision, 0)
+	for _, item := range decisions {
 		if decision.Normalize(item.Status) != decision.StateActive {
 			continue
 		}
@@ -118,7 +118,7 @@ func assembleDriftInput(store *storepkg.Store, projectID, entityID string) (drif
 		for _, link := range links {
 			entityIDs = append(entityIDs, link.EntityID)
 		}
-		accepted = append(accepted, drift.AcceptedVerdict{
+		accepted = append(accepted, drift.AcceptedDecision{
 			ID:        item.ID,
 			Title:     item.Title,
 			EntityIDs: entityIDs,
@@ -126,11 +126,11 @@ func assembleDriftInput(store *storepkg.Store, projectID, entityID string) (drif
 	}
 
 	input := drift.Input{
-		ProjectID:     in.ProjectID,
-		EntityID:      in.EntityID,
-		StoredFacts:   factRefs,
-		Relationships: relRefs,
-		AcceptedVerdicts:  accepted,
+		ProjectID:         in.ProjectID,
+		EntityID:          in.EntityID,
+		StoredFacts:       factRefs,
+		Relationships:     relRefs,
+		AcceptedDecisions: accepted,
 	}
 
 	rootPath := ExpandRootPath(project.RootPath)

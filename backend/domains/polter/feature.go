@@ -51,7 +51,7 @@ type FeatureReview struct {
 }
 
 // ReviewDecision is one decision that applies to the card. From is "card"
-// or the node path that cites it. Status is empty when no Verdict matches.
+// or the node path that cites it. Status is empty when no Decision matches.
 type ReviewDecision struct {
 	Ref    string
 	ID     string
@@ -92,7 +92,7 @@ func ValidFeatureStep(step string) bool {
 // ReviewFeature computes the Shape impact and the checks of every step for
 // one active card. routes maps a question id to its Inbox route; a missing
 // id is RouteInbox.
-func ReviewFeature(snapshot work.Snapshot, slug string, verdicts []VerdictRef, routes map[string]string) (FeatureReview, error) {
+func ReviewFeature(snapshot work.Snapshot, slug string, decisions []DecisionRef, routes map[string]string) (FeatureReview, error) {
 	card, ok := snapshot.Card(slug)
 	if !ok || card.Status != work.CardActive {
 		return FeatureReview{}, fmt.Errorf("unknown card %q: list cards with polterware query cards", slug)
@@ -142,7 +142,7 @@ func ReviewFeature(snapshot work.Snapshot, slug string, verdicts []VerdictRef, r
 		}
 	}
 
-	review.Decisions = reviewDecisions(card, chain, verdicts)
+	review.Decisions = reviewDecisions(card, chain, decisions)
 	for _, node := range chain {
 		for _, inv := range node.Invariants {
 			if inv.State == work.InvariantActive {
@@ -219,29 +219,29 @@ func SuggestComponents(nodes []structure.Node, cards []work.Card, text, skipSlug
 	return out
 }
 
-// CitesDecision reports whether a decisions: entry names the Verdict with id and
-// title, by id or by Verdict number.
+// CitesDecision reports whether a decisions: entry names the Decision with id and
+// title, by id or by Decision number.
 func CitesDecision(ref, id, title string) bool {
 	ref = strings.TrimSpace(ref)
 	if strings.EqualFold(ref, id) {
 		return true
 	}
-	n, ok := parseVerdictNumber(ref)
+	n, ok := parseDecisionNumber(ref)
 	if !ok {
 		return false
 	}
-	m, ok := parseVerdictNumber(title)
+	m, ok := parseDecisionNumber(title)
 	return ok && n == m
 }
 
-func reviewDecisions(card work.Card, chain []structure.Node, verdicts []VerdictRef) []ReviewDecision {
+func reviewDecisions(card work.Card, chain []structure.Node, decisions []DecisionRef) []ReviewDecision {
 	var out []ReviewDecision
 	seen := map[string]bool{}
 	add := func(ref, from string) {
 		item := ReviewDecision{Ref: ref, From: from}
-		for _, verdict := range verdicts {
-			if CitesDecision(ref, verdict.ID, verdict.Title) {
-				item.ID, item.Title, item.Status = verdict.ID, verdict.Title, verdict.Status
+		for _, decision := range decisions {
+			if CitesDecision(ref, decision.ID, decision.Title) {
+				item.ID, item.Title, item.Status = decision.ID, decision.Title, decision.Status
 				break
 			}
 		}
@@ -316,7 +316,7 @@ func featureChecks(review FeatureReview) []FeatureCheck {
 	for _, decision := range review.Decisions {
 		switch {
 		case decision.ID == "":
-			add(FeatureStepContract, SeverityHint, "decision %s matches no Verdict in this project", decision.Ref)
+			add(FeatureStepContract, SeverityHint, "decision %s matches no Decision in this project", decision.Ref)
 		case decision.Status != "" && !decisionBinding(decision.Status):
 			add(FeatureStepContract, SeverityHint, "decision %s is %s, not active", decision.Title, decisionState(decision.Status))
 		}
@@ -546,7 +546,7 @@ func decisionLine(decision ReviewDecision) string {
 	if decision.Status != "" {
 		line += " (" + decision.Status + ")"
 	} else if decision.ID == "" {
-		line += " (no Verdict)"
+		line += " (no Decision)"
 	}
 	if decision.From != "card" {
 		line += " via " + decision.From

@@ -46,7 +46,7 @@ export type CheckResponse = Message<"polterware.local.v1.CheckResponse"> & {
 
   /**
    * build identifies the core binary; a client with a different build asks the
-   * core to shut down and starts its own (Verdict 0007).
+   * core to shut down and starts its own (Decision 0007).
    *
    * @generated from field: string build = 4;
    */
@@ -79,4 +79,3 @@ export const HealthService: GenService<{
   },
 }> = /*@__PURE__*/
   serviceDesc(file_polterware_local_v1_health, 0);
-

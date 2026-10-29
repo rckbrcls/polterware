@@ -40,9 +40,9 @@ func TestMetaRoundTrip(t *testing.T) {
 
 func TestSupersedeChecks(t *testing.T) {
 	ds := []Decision{
-		{ID: "a", Title: "Verdict 0001: A", Status: "superseded", Meta: Meta{SupersededBy: "b"}},
-		{ID: "b", Title: "Verdict 0002: B", Status: "active"},
-		{ID: "c", Title: "Verdict 0003: C", Status: "active"},
+		{ID: "a", Title: "Decision 0001: A", Status: "superseded", Meta: Meta{SupersededBy: "b"}},
+		{ID: "b", Title: "Decision 0002: B", Status: "active"},
+		{ID: "c", Title: "Decision 0003: C", Status: "active"},
 	}
 	if err := CheckSupersede(ds, "b", "b"); err == nil {
 		t.Error("self supersede must fail")
@@ -56,10 +56,45 @@ func TestSupersedeChecks(t *testing.T) {
 	if got := Chain(ds, "a"); len(got) != 2 || got[1] != "b" {
 		t.Errorf("chain = %v", got)
 	}
-	if d, ok := Find(ds, "Verdict-2"); !ok || d.ID != "b" {
+	if d, ok := Find(ds, "Decision-2"); !ok || d.ID != "b" {
 		t.Errorf("Find by number = %v %v", d, ok)
 	}
 	if NextNumber(ds) != 4 {
 		t.Errorf("NextNumber = %d", NextNumber(ds))
+	}
+}
+
+func TestNumberReadsRefsAndTitlesOnly(t *testing.T) {
+	for value, want := range map[string]int{
+		"Decision-0008":        8,
+		"decision-8":           8,
+		"Decision 0008":        8,
+		"Decision 0008: Title": 8,
+		"ADR-0008":             8,
+		"Verdict-0008":         8, // legacy prefix
+		"Verdict 0008: Title":  8, // legacy prefix
+	} {
+		if got, ok := Number(value); !ok || got != want {
+			t.Errorf("Number(%q) = %d %v, want %d", value, got, ok, want)
+		}
+	}
+	for _, value := range []string{"decision 3 of the team", "see Decision-0008", "Decisions 4", "0008"} {
+		if got, ok := Number(value); ok {
+			t.Errorf("Number(%q) = %d, want no number", value, got)
+		}
+	}
+	if Ref(8) != "Decision-0008" || StripNumber("Decision 0008: Local store") != "Local store" {
+		t.Errorf("Ref = %q, StripNumber = %q", Ref(8), StripNumber("Decision 0008: Local store"))
+	}
+}
+
+func TestLevelIsStoredOnlyForPrinciples(t *testing.T) {
+	extra := MergeMeta(`{"other":1}`, Meta{Level: "Principle"})
+	if ParseMeta(extra).Level != LevelPrinciple {
+		t.Fatalf("principle not stored: %s", extra)
+	}
+	extra = MergeMeta(extra, Meta{Level: LevelDecision})
+	if extra != `{"other":1}` {
+		t.Fatalf("a plain decision keeps no level: %s", extra)
 	}
 }

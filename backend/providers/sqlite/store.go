@@ -206,13 +206,17 @@ func (s *Store) DeleteEnvironment(id, projectID string) error {
 }
 
 func (s *Store) SaveKnowledge(item knowledge.Item) error {
+	if item.Tags == nil {
+		item.Tags = []string{}
+	}
 	tags, _ := json.Marshal(item.Tags)
 	if item.ExtraJSON == "" {
 		item.ExtraJSON = "{}"
 	}
-	_, err := s.DB.Exec(`INSERT INTO knowledge_items(id,project_id,title,body,kind,tags_json,summary,owner,status,extra_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
-		ON CONFLICT(id) DO UPDATE SET project_id=excluded.project_id,title=excluded.title,body=excluded.body,kind=excluded.kind,tags_json=excluded.tags_json,summary=excluded.summary,owner=excluded.owner,status=excluded.status,extra_json=excluded.extra_json,updated_at=excluded.updated_at`,
-		item.ID, item.ProjectID, item.Title, item.Body, item.Kind, string(tags), item.Summary, item.Owner, item.Status, item.ExtraJSON, item.CreatedAt.Format(time.RFC3339), item.UpdatedAt.Format(time.RFC3339))
+	item.DocType = knowledge.DocTypeFor(item.Kind, item.DocType)
+	_, err := s.DB.Exec(`INSERT INTO knowledge_items(id,project_id,title,body,kind,doc_type,tags_json,summary,owner,status,extra_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
+		ON CONFLICT(id) DO UPDATE SET project_id=excluded.project_id,title=excluded.title,body=excluded.body,kind=excluded.kind,doc_type=excluded.doc_type,tags_json=excluded.tags_json,summary=excluded.summary,owner=excluded.owner,status=excluded.status,extra_json=excluded.extra_json,updated_at=excluded.updated_at`,
+		item.ID, item.ProjectID, item.Title, item.Body, item.Kind, item.DocType, string(tags), item.Summary, item.Owner, item.Status, item.ExtraJSON, item.CreatedAt.Format(time.RFC3339), item.UpdatedAt.Format(time.RFC3339))
 	if err != nil {
 		return err
 	}
@@ -227,12 +231,12 @@ func (s *Store) SaveKnowledge(item knowledge.Item) error {
 	return s.indexKnowledgeFTS(item)
 }
 
-const knowledgeColumns = `id,project_id,title,body,kind,tags_json,summary,owner,status,extra_json,created_at,updated_at,archived_at`
+const knowledgeColumns = `id,project_id,title,body,kind,doc_type,tags_json,summary,owner,status,extra_json,created_at,updated_at,archived_at`
 
 func scanKnowledge(scan func(dest ...any) error) (knowledge.Item, error) {
 	var item knowledge.Item
 	var tags, created, updated, archived string
-	if err := scan(&item.ID, &item.ProjectID, &item.Title, &item.Body, &item.Kind, &tags,
+	if err := scan(&item.ID, &item.ProjectID, &item.Title, &item.Body, &item.Kind, &item.DocType, &tags,
 		&item.Summary, &item.Owner, &item.Status, &item.ExtraJSON, &created, &updated, &archived); err != nil {
 		return knowledge.Item{}, err
 	}
@@ -297,7 +301,7 @@ func (s *Store) SetKnowledgeArchived(id string, archived bool, at time.Time) (kn
 	if err != nil {
 		return knowledge.Item{}, err
 	}
-	if item.Kind == knowledge.KindVerdict {
+	if item.Kind == knowledge.KindDecision {
 		return knowledge.Item{}, knowledge.ErrDecisionArchive
 	}
 	stamp := ""
@@ -324,7 +328,7 @@ func (s *Store) DeleteKnowledge(id string) error {
 	if err != nil {
 		return err
 	}
-	if item.Kind == knowledge.KindVerdict {
+	if item.Kind == knowledge.KindDecision {
 		return knowledge.ErrDecisionArchive
 	}
 	if !item.Archived() {

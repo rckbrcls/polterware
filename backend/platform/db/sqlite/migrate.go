@@ -52,7 +52,7 @@ var legacyMigrationNames = map[string]string{
 // renameLegacyCanonTables carries a store from before the PPM to Canon rename
 // forward in place. Tables keep their rows, SQLite rewrites the foreign keys
 // that point at them, and their indexes are recreated under the current names.
-// Verdicts still stored as kind 'adr' are converted by the pending migrations.
+// Decisions still stored as kind 'adr' are converted by the pending migrations.
 func renameLegacyCanonTables(db *sql.DB) error {
 	tx, err := db.Begin()
 	if err != nil {

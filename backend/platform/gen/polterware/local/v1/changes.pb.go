@@ -21,7 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// ChangeService streams what changed in the local store (Verdict 0007). Events are
+// ChangeService streams what changed in the local store (Decision 0007). Events are
 // derived from committed SQLite transactions, coalesced, and numbered.
 type WatchChangesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`

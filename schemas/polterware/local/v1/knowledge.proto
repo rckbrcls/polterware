@@ -9,6 +9,7 @@ message KnowledgeItem {
   string project_id = 2;
   string title = 3;
   string body = 4;
+  // kind is doc or decision.
   string kind = 5;
   repeated string tags = 6;
   string summary = 7;
@@ -20,6 +21,8 @@ message KnowledgeItem {
   string scope_node_id = 13;
   // archived_at is empty while the item is active (RFC3339 otherwise).
   string archived_at = 14;
+  // doc_type is doc, runbook, or source for a doc and empty for a decision.
+  string doc_type = 15;
 }
 
 message KnowledgeEntityLink {

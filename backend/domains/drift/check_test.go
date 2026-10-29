@@ -48,8 +48,8 @@ func TestCheckEdgeDecisionConflict(t *testing.T) {
 				Predicate: "RELATED_TO", TruthClass: "inferred", Source: "canon",
 			},
 		},
-		AcceptedVerdicts: []AcceptedVerdict{
-			{ID: "verdict-1", Title: "Local SQLite", EntityIDs: []string{"ent-b"}},
+		AcceptedDecisions: []AcceptedDecision{
+			{ID: "decision-1", Title: "Local SQLite", EntityIDs: []string{"ent-b"}},
 		},
 	})
 	count := 0
@@ -150,8 +150,8 @@ func TestCheckEntityFilter(t *testing.T) {
 				Predicate: "CALLS", TruthClass: "inferred", Source: "canon",
 			},
 		},
-		AcceptedVerdicts: []AcceptedVerdict{
-			{ID: "verdict-1", Title: "Decision", EntityIDs: []string{"ent-keep"}},
+		AcceptedDecisions: []AcceptedDecision{
+			{ID: "decision-1", Title: "Decision", EntityIDs: []string{"ent-keep"}},
 		},
 	})
 	if len(result.Findings) != 1 || result.Findings[0].Type != TypeEdgeDecisionConflict {

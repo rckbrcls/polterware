@@ -170,7 +170,7 @@ export type DispatchWatchEvent = {
   at: string;
 };
 
-/** A coalesced store change from the core (Verdict 0007). */
+/** A coalesced store change from the core (Decision 0007). */
 export type CoreChangeEvent = {
   seq: number;
   projectIds: string[];

@@ -42,7 +42,7 @@ func TestValidCardStatusAndKind(t *testing.T) {
 }
 
 func TestValidSlug(t *testing.T) {
-	valid := []string{"a", "git-import", "verdict-0007", "v2", "a1-b2-c3"}
+	valid := []string{"a", "git-import", "decision-0007", "v2", "a1-b2-c3"}
 	for _, slug := range valid {
 		if !ValidSlug(slug) {
 			t.Errorf("%q must be valid", slug)

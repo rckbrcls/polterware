@@ -13,7 +13,7 @@ import (
 )
 
 // dial returns clients for the core that owns dbPath, starting it when needed
-// (Verdict 0007: only the core opens the store).
+// (Decision 0007: only the core opens the store).
 func dial(dbPath string) (coreclient.Clients, error) {
 	return coreclient.Connect(dbPath, "cli")
 }

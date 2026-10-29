@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/decision"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
@@ -51,9 +51,9 @@ type Document struct {
 	Facts     []FactNode
 }
 
-// DecisionNode is one `### ref: Title` block: an Verdict lifecycle change. Ref is
-// `new` for a proposal, otherwise an Verdict id, number, or title. The body after
-// the metadata is the Verdict text.
+// DecisionNode is one `### ref: Title` block: a Decision lifecycle change. Ref is
+// `new` for a proposal, otherwise a Decision id, number, or title. The body after
+// the metadata is the Decision text.
 type DecisionNode struct {
 	Line    int
 	Ref     string
@@ -76,8 +76,9 @@ func (n DecisionNode) MetaValue(key string) (string, bool) {
 
 // DecisionMetaKeys are the decision metadata keys. supersedes: names the
 // older decision the block's decision replaces; trigger: is the review
-// trigger; reason: explains a challenge or a supersede.
-var DecisionMetaKeys = []string{"status", "supersedes", "trigger", "reason", "scope"}
+// trigger; reason: explains a challenge or a supersede; level: principle pins
+// a decision for the whole project.
+var DecisionMetaKeys = []string{"status", "level", "supersedes", "trigger", "reason", "scope"}
 
 // DecisionNewRef is the ref that proposes a new decision.
 const DecisionNewRef = "new"
@@ -344,7 +345,7 @@ func (d *decoder) line(n int, raw string) {
 		return
 	case strings.HasPrefix(trimmed, "#"):
 		d.endHandoff()
-		d.errorf(n, `unsupported heading: cards use "## slug: title", decisions "### Verdict-0007: title", Facts "#### slug: Statement"`)
+		d.errorf(n, `unsupported heading: cards use "## slug: title", decisions "### Decision-0007: title", Facts "#### slug: Statement"`)
 		return
 	}
 
@@ -936,7 +937,7 @@ func (d *decoder) decisionHeading(n int, body string) {
 		title = strings.TrimSpace(body[idx+1:])
 	}
 	if ref == "" {
-		d.errorf(n, `decision needs a reference: write "### Verdict-0007: title" or "### new: title"`)
+		d.errorf(n, `decision needs a reference: write "### Decision-0007: title" or "### new: title"`)
 	}
 	key := strings.ToLower(ref)
 	if prev, dup := d.decRefs[key]; dup && key != DecisionNewRef {
@@ -981,6 +982,11 @@ func (d *decoder) decisionMeta(n int, line string) {
 			value = strings.ToLower(value)
 			if !decision.ValidState(value) {
 				d.errorf(n, "unknown decision status %q: use %s", value, strings.Join(decision.States, "|"))
+			}
+		case "level":
+			value = strings.ToLower(value)
+			if !decision.ValidLevel(value) {
+				d.errorf(n, "unknown decision level %q: use %s|%s", value, decision.LevelDecision, decision.LevelPrinciple)
 			}
 		case "supersedes", "trigger", "reason", "scope":
 		default:

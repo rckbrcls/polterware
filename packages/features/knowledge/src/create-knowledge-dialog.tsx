@@ -3,7 +3,7 @@ import { A11yDialog, Button, Field, Input, Select } from "@polterware/frontend-d
 import type { ScopeNodeItem } from "@polterware/feature-shell";
 import { ScopePicker } from "./scope-picker";
 
-export type CreateKnowledgeKind = "card" | "verdict";
+export type CreateKnowledgeKind = "card" | "decision";
 
 export function CreateKnowledgeDialog(props: {
   open: boolean;
@@ -11,7 +11,7 @@ export function CreateKnowledgeDialog(props: {
   onClose: () => void;
   onSubmit: (title: string, kind: CreateKnowledgeKind, scope?: "principle" | "decision", scopePath?: string) => void;
   scopeNodes?: ScopeNodeItem[];
-  /** Structure node path preselected for a new Verdict; empty is the whole project. */
+  /** Structure node path preselected for a new Decision; empty is the whole project. */
   defaultScopePath?: string;
 }) {
   const [title, setTitle] = createSignal("");
@@ -29,7 +29,7 @@ export function CreateKnowledgeDialog(props: {
   const copy = () =>
     activeKind() === "card"
       ? { title: "New card", placeholder: "Card title" }
-      : { title: "New Verdict", placeholder: "Verdict title" };
+      : { title: "New Decision", placeholder: "Decision title" };
   const canSubmit = () => title().trim().length > 0;
 
   function close() {
@@ -40,7 +40,7 @@ export function CreateKnowledgeDialog(props: {
   function submit() {
     const next = title().trim();
     if (!next) return;
-    props.onSubmit(next, activeKind(), activeKind() === "verdict" ? scope() : undefined, activeKind() === "verdict" && scope() === "decision" && scopePath() ? scopePath() : undefined);
+    props.onSubmit(next, activeKind(), activeKind() === "decision" ? scope() : undefined, activeKind() === "decision" && scope() === "decision" && scopePath() ? scopePath() : undefined);
     setTitle("");
   }
 
@@ -62,7 +62,7 @@ export function CreateKnowledgeDialog(props: {
       }
     >
       <div class="grid gap-4">
-        <Show when={activeKind() === "verdict"}>
+        <Show when={activeKind() === "decision"}>
           <Field label="Scope">
             <Select
               size="sm"

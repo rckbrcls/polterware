@@ -13,7 +13,7 @@ export const file_polterware_local_v1_changes: GenFile = /*@__PURE__*/
   fileDesc("CiFwb2x0ZXJ3YXJlL2xvY2FsL3YxL2NoYW5nZXMucHJvdG8SE3BvbHRlcndhcmUubG9jYWwudjEiKAoTV2F0Y2hDaGFuZ2VzUmVxdWVzdBIRCglhZnRlcl9zZXEYASABKAMidAoUV2F0Y2hDaGFuZ2VzUmVzcG9uc2USCwoDc2VxGAEgASgDEhMKC3Byb2plY3RfaWRzGAIgAygJEg0KBWtpbmRzGAMgAygJEg4KBnJlc3luYxgEIAEoCBIKCgJhdBgFIAEoCRIPCgdvcmlnaW5zGAYgAygJMnYKDUNoYW5nZVNlcnZpY2USZQoMV2F0Y2hDaGFuZ2VzEigucG9sdGVyd2FyZS5sb2NhbC52MS5XYXRjaENoYW5nZXNSZXF1ZXN0GikucG9sdGVyd2FyZS5sb2NhbC52MS5XYXRjaENoYW5nZXNSZXNwb25zZTABQugBChdjb20ucG9sdGVyd2FyZS5sb2NhbC52MUIMQ2hhbmdlc1Byb3RvUAFaUWdpdGh1Yi5jb20vcG9sdGVyd2FyZS9wb2x0ZXJ3YXJlL2JhY2tlbmQvcGxhdGZvcm0vZ2VuL3BvbHRlcndhcmUvbG9jYWwvdjE7bG9jYWx2MaICA1BMWKoCE1BvbHRlcndhcmUuTG9jYWwuVjHKAhNQb2x0ZXJ3YXJlXExvY2FsXFYx4gIfUG9sdGVyd2FyZVxMb2NhbFxWMVxHUEJNZXRhZGF0YeoCFVBvbHRlcndhcmU6OkxvY2FsOjpWMWIGcHJvdG8z");
 
 /**
- * ChangeService streams what changed in the local store (Verdict 0007). Events are
+ * ChangeService streams what changed in the local store (Decision 0007). Events are
  * derived from committed SQLite transactions, coalesced, and numbered.
  *
  * @generated from message polterware.local.v1.WatchChangesRequest
@@ -104,4 +104,3 @@ export const ChangeService: GenService<{
   },
 }> = /*@__PURE__*/
   serviceDesc(file_polterware_local_v1_changes, 0);
-

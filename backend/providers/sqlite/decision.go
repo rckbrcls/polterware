@@ -9,12 +9,12 @@ import (
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
-// loadDecisions returns the project's Verdicts with lifecycle state, oldest first.
+// loadDecisions returns the project's Decisions with lifecycle state, oldest first.
 func (s *Store) loadDecisions(projectID string) ([]decision.Decision, error) {
 	var out []decision.Decision
 	err := s.eachRow(`SELECT k.id,k.title,k.status,k.body,k.extra_json,COALESCE(n.path,'') FROM knowledge_items k
 		LEFT JOIN structure_nodes n ON n.id=k.scope_node_id
-		WHERE k.project_id=? AND k.kind='verdict' ORDER BY k.created_at, k.id`,
+		WHERE k.project_id=? AND k.kind='decision' ORDER BY k.created_at, k.id`,
 		projectID, func(rows *sql.Rows) error {
 			var d decision.Decision
 			var extra string
@@ -29,7 +29,7 @@ func (s *Store) loadDecisions(projectID string) ([]decision.Decision, error) {
 	return out, err
 }
 
-// applyDecisionOp creates or updates one Verdict knowledge item. Fields holds
+// applyDecisionOp creates or updates one Decision knowledge item. Fields holds
 // title, body, status, superseded_by, review_trigger, and status_reason;
 // only the keys present change.
 func applyDecisionOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
@@ -54,15 +54,16 @@ func applyDecisionOp(tx *sql.Tx, projectID string, op work.Op, now string) error
 		meta.SupersededBy, _ = str("superseded_by")
 		meta.ReviewTrigger, _ = str("review_trigger")
 		meta.StatusReason, _ = str("status_reason")
+		meta.Level, _ = str("level")
 		extra = decision.MergeMeta("{}", meta)
 		if _, err := tx.Exec(`INSERT INTO knowledge_items(id,project_id,title,body,kind,tags_json,summary,owner,status,extra_json,created_at,updated_at)
-			VALUES(?,?,?,?,'verdict','["verdict"]','','',?,?,?,?)`,
+			VALUES(?,?,?,?,'decision','[]','','',?,?,?,?)`,
 			op.EntityID, projectID, title, body, status, extra, now, now); err != nil {
 			return err
 		}
 	case work.OpUpdate:
 		var current string
-		if err := tx.QueryRow(`SELECT title,body,status,extra_json FROM knowledge_items WHERE id=? AND kind='verdict'`, op.EntityID).
+		if err := tx.QueryRow(`SELECT title,body,status,extra_json FROM knowledge_items WHERE id=? AND kind='decision'`, op.EntityID).
 			Scan(&title, &body, &status, &current); err != nil {
 			return fmt.Errorf("decision %s not found", op.EntityID)
 		}
@@ -85,6 +86,9 @@ func applyDecisionOp(tx *sql.Tx, projectID string, op work.Op, now string) error
 		if v, ok := str("status_reason"); ok {
 			meta.StatusReason = v
 		}
+		if v, ok := str("level"); ok {
+			meta.Level = v
+		}
 		extra = decision.MergeMeta(current, meta)
 		if _, err := tx.Exec(`UPDATE knowledge_items SET title=?,body=?,status=?,extra_json=?,updated_at=? WHERE id=?`,
 			title, body, status, extra, now, op.EntityID); err != nil {
@@ -102,11 +106,11 @@ func applyDecisionOp(tx *sql.Tx, projectID string, op work.Op, now string) error
 		return err
 	}
 	_, err := tx.Exec(`INSERT INTO knowledge_fts(knowledge_id, project_id, kind, title, body, summary, tags) VALUES(?,?,?,?,?,?,?)`,
-		op.EntityID, projectID, "verdict", title, body, "", strings.TrimSpace("verdict"))
+		op.EntityID, projectID, "decision", title, body, "", "")
 	return err
 }
 
-// setDecisionScope points a Verdict at the Structure node with the given path, or
+// setDecisionScope points a Decision at the Structure node with the given path, or
 // clears its scope when path is empty.
 func setDecisionScope(tx *sql.Tx, projectID, id, path string) error {
 	var node any

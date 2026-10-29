@@ -11,7 +11,7 @@ import (
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
 )
 
-// runExport writes Verdict files and the generated AGENTS.md block into every
+// runExport writes Decision files and the generated AGENTS.md block into every
 // checkout. The core writes the files; this command only reports them.
 func runExport(dbPath string, args []string) error {
 	fs := flag.NewFlagSet("export", flag.ContinueOnError)

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/knowledge"
 	"github.com/polterware/polterware/backend/domains/canon"
+	"github.com/polterware/polterware/backend/domains/knowledge"
 )
 
 func (s *Store) UpsertCanonEntity(entity canon.Entity) error {

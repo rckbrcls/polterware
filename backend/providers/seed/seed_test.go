@@ -59,14 +59,14 @@ func TestPolterwareContentIsReal(t *testing.T) {
 			t.Errorf("no card in stage %q", stage)
 		}
 	}
-	// Verdict-0001..0005 and the five principles are seeded as active.
-	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='verdict'`, seed.ProjectID); n != 15 {
-		t.Errorf("want 15 Verdicts, got %d", n)
+	// Decision-0001..0005 and the five principles are seeded as active.
+	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='decision'`, seed.ProjectID); n != 15 {
+		t.Errorf("want 15 Decisions, got %d", n)
 	}
-	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='verdict' AND status='active'`, seed.ProjectID); n != 10 {
-		t.Errorf("want 10 active Verdicts, got %d", n)
+	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='decision' AND status='active'`, seed.ProjectID); n != 10 {
+		t.Errorf("want 10 active Decisions, got %d", n)
 	}
-	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='verdict' AND extra_json LIKE '%"scope":"principle"%'`, seed.ProjectID); n != 5 {
+	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='decision' AND extra_json LIKE '%"level":"principle"%'`, seed.ProjectID); n != 5 {
 		t.Errorf("want 5 principles, got %d", n)
 	}
 	if n := count(t, store, `SELECT COUNT(*) FROM structure_nodes WHERE project_id=?`, seed.ProjectID); n < 10 {

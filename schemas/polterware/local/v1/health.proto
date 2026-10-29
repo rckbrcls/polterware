@@ -8,7 +8,7 @@ message CheckResponse {
   string version = 2;
   double uptime_sec = 3;
   // build identifies the core binary; a client with a different build asks the
-  // core to shut down and starts its own (Verdict 0007).
+  // core to shut down and starts its own (Decision 0007).
   string build = 4;
   int32 pid = 5;
 }

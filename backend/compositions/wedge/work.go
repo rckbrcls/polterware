@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"github.com/polterware/polterware/backend/domains/agentrun"
-	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/decision"
 	"github.com/polterware/polterware/backend/domains/inbox"
 	"github.com/polterware/polterware/backend/domains/polter"
 	"github.com/polterware/polterware/backend/domains/projects"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 	"github.com/polterware/polterware/backend/platform/ids"
 	gitpkg "github.com/polterware/polterware/backend/providers/git"
@@ -74,13 +74,13 @@ func PolterReferences(store *storepkg.Store, projectID string) (*polter.Referenc
 }
 
 func polterReferences(store *storepkg.Store, snapshot work.Snapshot) (*polter.References, error) {
-	verdicts, err := store.ListKnowledge(snapshot.ProjectID, "verdict")
+	decisions, err := store.ListKnowledge(snapshot.ProjectID, "decision")
 	if err != nil {
 		return nil, err
 	}
 	refs := &polter.References{Cards: snapshot.Cards, Nodes: snapshot.Nodes, Repos: snapshot.Repos, Environments: snapshot.Environments, Evidence: snapshot.Evidence}
-	for _, verdict := range verdicts {
-		refs.Verdicts = append(refs.Verdicts, polter.VerdictRef{ID: verdict.ID, Title: verdict.Title, Status: verdict.Status})
+	for _, decision := range decisions {
+		refs.Decisions = append(refs.Decisions, polter.DecisionRef{ID: decision.ID, Title: decision.Title, Status: decision.Status})
 	}
 	view := ProjectGit(store, snapshot.ProjectID)
 	refs.Git = &view
@@ -194,7 +194,7 @@ func ApplyPolter(store *storepkg.Store, in ApplyInput) (ApplyResult, error) {
 }
 
 // QueryPolter answers a v1 query ("cards", "card <slug>", "status", "inbox",
-// "handoff <slug>", "oracle", "structure", "decisions [state]", "decision <verdict>",
+// "handoff <slug>", "oracle", "structure", "decisions [state]", "decision <decision>",
 // "feature <slug>", "verify <target>", "canvas", "canvas <name|id>") in text.
 func QueryPolter(store *storepkg.Store, projectID, text string) (string, error) {
 	return QueryPolterScoped(store, projectID, text, structure.MultiScope{})

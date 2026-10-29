@@ -9,7 +9,7 @@ describe("mapWorkCards", () => {
         slug: "git-metadata-import",
         title: "Git metadata import",
         stage: "plan",
-        decisions: ["Verdict-0007"],
+        decisions: ["Decision-0007"],
         updatedAt: "2026-09-28T12:00:00Z",
         tasks: [
           { id: "t1", number: 1, title: "Commit evidence upsert", state: "done" },

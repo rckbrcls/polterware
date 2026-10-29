@@ -63,7 +63,7 @@ type CheckResponse struct {
 	Version   string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
 	UptimeSec float64                `protobuf:"fixed64,3,opt,name=uptime_sec,json=uptimeSec,proto3" json:"uptime_sec,omitempty"`
 	// build identifies the core binary; a client with a different build asks the
-	// core to shut down and starts its own (Verdict 0007).
+	// core to shut down and starts its own (Decision 0007).
 	Build         string `protobuf:"bytes,4,opt,name=build,proto3" json:"build,omitempty"`
 	Pid           int32  `protobuf:"varint,5,opt,name=pid,proto3" json:"pid,omitempty"`
 	unknownFields protoimpl.UnknownFields

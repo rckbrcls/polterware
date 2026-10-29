@@ -5,17 +5,17 @@ export function LibraryEmpty(props: { onCreate?: () => void }) {
   return (
     <div class="flex h-full min-h-[200px] w-full items-center justify-center p-8">
       <PageEmpty
-        title="No Verdicts yet"
+        title="No Decisions yet"
         mood="sleeping"
         action={
           props.onCreate ? (
             <Button size="sm" variant="primary" onClick={() => props.onCreate?.()}>
-              New Verdict
+              New Decision
             </Button>
           ) : undefined
         }
       >
-        <KnowledgePromptGrid kind="verdict" />
+        <KnowledgePromptGrid kind="decision" />
       </PageEmpty>
     </div>
   );

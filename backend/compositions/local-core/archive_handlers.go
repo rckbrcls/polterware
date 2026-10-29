@@ -35,7 +35,7 @@ func (core *Core) SetKnowledgeArchived(_ context.Context, request *connect.Reque
 	if err != nil {
 		return nil, internal(err)
 	}
-	if existing.Kind == knowledge.KindVerdict {
+	if existing.Kind == knowledge.KindDecision {
 		return nil, mapArchiveErr(knowledge.ErrDecisionArchive)
 	}
 	env.ProjectID = existing.ProjectID

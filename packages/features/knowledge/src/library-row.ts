@@ -1,7 +1,7 @@
-import type { WorkspaceVerdict } from "@polterware/feature-shell";
+import type { WorkspaceDecision } from "@polterware/feature-shell";
 import type { StatusTone } from "@polterware/frontend-design-system";
 
-export type LibraryEntityKind = "verdict";
+export type LibraryEntityKind = "decision";
 
 export type LibraryLinkedFilter = "any" | "linked" | "unlinked";
 
@@ -31,19 +31,19 @@ export type LibraryRow = {
   pinned: boolean;
 };
 
-/** The Library lists Verdicts; Evidence has its own list. */
-export function libraryRowsFromWorkspace(input: { verdicts?: WorkspaceVerdict[] }): LibraryRow[] {
-  const rows = (input.verdicts ?? []).map((verdict): LibraryRow => ({
-    id: verdict.id,
-    entityKind: "verdict",
-    title: verdict.title,
-    categoryLabel: verdict.scope === "principle" ? "Principle" : "Verdict",
-    statusLabel: verdict.state,
-    statusTone: decisionStateTone(verdict.state),
-    meta: verdict.owner,
-    updatedAt: verdict.updatedAt,
-    hasLinks: verdict.entityLinks.length > 0,
-    pinned: verdict.scope === "principle",
+/** The Library lists Decisions; Evidence has its own list. */
+export function libraryRowsFromWorkspace(input: { decisions?: WorkspaceDecision[] }): LibraryRow[] {
+  const rows = (input.decisions ?? []).map((decision): LibraryRow => ({
+    id: decision.id,
+    entityKind: "decision",
+    title: decision.title,
+    categoryLabel: decision.scope === "principle" ? "Principle" : "Decision",
+    statusLabel: decision.state,
+    statusTone: decisionStateTone(decision.state),
+    meta: decision.owner,
+    updatedAt: decision.updatedAt,
+    hasLinks: decision.entityLinks.length > 0,
+    pinned: decision.scope === "principle",
   }));
   return [...rows.filter((row) => row.pinned), ...rows.filter((row) => !row.pinned)];
 }
@@ -76,8 +76,8 @@ export function toggleFilterValue<T extends string>(
   return checked ? [...current, id] : current.filter((value) => value !== id);
 }
 
-/** Tone of an Verdict lifecycle state chip. */
-export function decisionStateTone(state: WorkspaceVerdict["state"]): StatusTone {
+/** Tone of a Decision lifecycle state chip. */
+export function decisionStateTone(state: WorkspaceDecision["state"]): StatusTone {
   switch (state) {
     case "active":
       return "ok";

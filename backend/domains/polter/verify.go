@@ -123,11 +123,11 @@ func VerifyFeature(in VerifyInput) (VerifyResult, error) {
 // EncodeVerify renders one line per check under a pass or fail heading.
 func EncodeVerify(result VerifyResult) string {
 	var b strings.Builder
-	verdict := "PASS"
+	decision := "PASS"
 	if !result.Passed {
-		verdict = "FAIL"
+		decision = "FAIL"
 	}
-	fmt.Fprintf(&b, "verify %s  %s\n", result.Target, verdict)
+	fmt.Fprintf(&b, "verify %s  %s\n", result.Target, decision)
 	for _, check := range result.Checks {
 		label := check.Status
 		if label == VerifyManual {

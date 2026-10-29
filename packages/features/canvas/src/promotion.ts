@@ -24,7 +24,7 @@ export function assertApplied(response: { applied?: unknown; diagnostics?: unkno
   const errors = diagnostics.filter((item) => item.severity === "error");
   if (errors.length || response.applied !== true) throw new Error(errors.map((item) => item.message).join("\n") || "ApplyPolter did not apply the promotion.");
 }
-/** FormatPlan decision create lines end with the JSON-quoted assigned Verdict title. */
+/** FormatPlan decision create lines end with the JSON-quoted assigned Decision title. */
 export function createdDecisionTitle(ops: unknown): string {
   const line = Array.isArray(ops) ? ops.find((line): line is string => typeof line === "string" && line.startsWith("+ decision ")) : undefined;
   const quoted = line?.match(/("(?:[^"\\]|\\.)*")$/)?.[1];

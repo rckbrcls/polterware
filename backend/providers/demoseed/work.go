@@ -32,7 +32,7 @@ Explain why the session cache reports degraded health in development.
 ? Is the degraded status a real regression or a stale probe?
 
 ## auth-token-rotation: Auth token rotation
-stage: plan · under: services/auth · decisions: Verdict-0001 · owner: Platform
+stage: plan · under: services/auth · decisions: Decision-0001 · owner: Platform
 
 Rotate signing keys without logging users out.
 
@@ -42,7 +42,7 @@ Rotate signing keys without logging users out.
 ! Old keys stay valid for one full session lifetime
 
 ## git-metadata-import: Git metadata import
-stage: build · under: core/import · decisions: Verdict-0001, Verdict-0002 · owner: Platform
+stage: build · under: core/import · decisions: Decision-0001, Decision-0002 · owner: Platform
 
 Import HEAD, branch, and recent commits as evidence for facts.
 
@@ -64,7 +64,7 @@ next: Wire commit evidence into the fact detail panel
 touched: backend/providers/git/git.go, backend/compositions/wedge/git_import.go
 
 ## drift-panel: Drift panel
-stage: build · under: reality/drift · decisions: Verdict-0002
+stage: build · under: reality/drift · decisions: Decision-0002
 
 List drift findings where declared intent and observed code disagree.
 
@@ -74,7 +74,7 @@ List drift findings where declared intent and observed code disagree.
 ! A finding always names its evidence
 
 ## context-compiler: Context compiler
-stage: verify · under: agents/context · decisions: Verdict-0003 · owner: Agents
+stage: verify · under: agents/context · decisions: Decision-0003 · owner: Agents
 
 Compile a bounded project context for an agent session.
 
@@ -84,7 +84,7 @@ Compile a bounded project context for an agent session.
 ! The compiled context never includes credentials
 
 ## local-sqlite-core: Local SQLite core
-stage: delivered · under: core · decisions: Verdict-0001 · owner: Platform
+stage: delivered · under: core · decisions: Decision-0001 · owner: Platform
 
 One local core process owns the SQLite database; every client attaches to it.
 

@@ -5,10 +5,10 @@ Use this skill when the operator asks about a Polterware project’s architectur
 
 ## When to use
 
-- Explain components, resources, environments, or linked library items (docs, Verdicts, runbooks) for the active local project.
+- Explain components, resources, environments, or linked library items (docs, Decisions, runbooks) for the active local project.
 - Gather a bounded context package before proposing a change.
 - Look up a Canon entity or evidence record by id after a context hit.
-- Check drift findings for the project (import dependency diffs, edges under accepted Verdicts without evidence, declared-versus-observed conflicts).
+- Check drift findings for the project (import dependency diffs, edges under accepted Decisions without evidence, declared-versus-observed conflicts).
 - Record a minimal AgentRun audit trail: context → task → change → evidence → drift. Justified changes (human and agent) appear in Agents → History.
 - Mutate facts, evidence, or knowledge through audited write tools (required change envelope: \`summary\`, \`rationale\`, open \`agent_run_id\`). Humans on Desktop use the same envelope.
 - Create or update Work cards (roadmap items, tasks, open questions, invariants) in Polter format with \`polter.apply\` or \`polterware apply\`.

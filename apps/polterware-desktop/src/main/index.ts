@@ -208,7 +208,7 @@ async function bootstrap() {
     },
   };
 
-  // The core is a shared daemon (Verdict 0007): attach or start it, never stop it
+  // The core is a shared daemon (Decision 0007): attach or start it, never stop it
   // on quit. Clients are swapped in place when the core restarts.
   let stopChangeWatcher = () => {};
   const dbPath = resolveUserDatabasePath();

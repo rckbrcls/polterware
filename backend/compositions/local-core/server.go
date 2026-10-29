@@ -42,7 +42,7 @@ type Core struct {
 	Build string
 	// DBDir is the database directory; agent setup keeps its local marketplace there.
 	DBDir string
-	// Bus turns committed SQLite writes into change events (Verdict 0007).
+	// Bus turns committed SQLite writes into change events (Decision 0007).
 	Bus *events.Bus
 	// MCP serves MCP sessions over HTTP at /mcp.
 	MCP *mcp.Sessions
@@ -243,7 +243,11 @@ func (core *Core) SaveKnowledge(_ context.Context, request *connect.Request[loca
 		return nil, mapAuditedErr(err)
 	}
 	env.ProjectID = item.ProjectId
-	created, err := knowledge.NewItem(item.Id, item.ProjectId, item.Title, item.Body, item.Kind, item.Tags)
+	kind := item.Kind
+	if kind == knowledge.KindDoc && item.DocType != "" {
+		kind = item.DocType
+	}
+	created, err := knowledge.NewItem(item.Id, item.ProjectId, item.Title, item.Body, kind, item.Tags)
 	if err != nil {
 		return nil, invalid(err.Error())
 	}
@@ -321,7 +325,7 @@ func (core *Core) DeleteKnowledge(_ context.Context, request *connect.Request[lo
 	if err != nil {
 		return nil, internal(err)
 	}
-	if existing.Kind == knowledge.KindVerdict {
+	if existing.Kind == knowledge.KindDecision {
 		return nil, mapArchiveErr(knowledge.ErrDecisionArchive)
 	}
 	if !existing.Archived() {
@@ -423,7 +427,7 @@ func environmentProto(item projects.Environment) *localv1.Environment {
 	return &localv1.Environment{Id: item.ID, ProjectId: item.ProjectID, Name: item.Name, Kind: item.Kind, Protection: item.Protection, IsDefault: item.IsDefault, Description: item.Description}
 }
 func knowledgeProto(item knowledge.Item) *localv1.KnowledgeItem {
-	return &localv1.KnowledgeItem{Id: item.ID, ProjectId: item.ProjectID, Title: item.Title, Body: item.Body, Kind: item.Kind, Tags: item.Tags, Summary: item.Summary, Owner: item.Owner, Status: item.Status, ExtraJson: item.ExtraJSON, CreatedAt: item.CreatedAt.Format(time.RFC3339), UpdatedAt: item.UpdatedAt.Format(time.RFC3339), ArchivedAt: archivedStamp(item.ArchivedAt)}
+	return &localv1.KnowledgeItem{Id: item.ID, ProjectId: item.ProjectID, Title: item.Title, Body: item.Body, Kind: item.Kind, DocType: item.DocType, Tags: item.Tags, Summary: item.Summary, Owner: item.Owner, Status: item.Status, ExtraJson: item.ExtraJSON, CreatedAt: item.CreatedAt.Format(time.RFC3339), UpdatedAt: item.UpdatedAt.Format(time.RFC3339), ArchivedAt: archivedStamp(item.ArchivedAt)}
 }
 func connectionProto(item integrations.Connection) *localv1.IntegrationConnection {
 	return &localv1.IntegrationConnection{Id: item.ID, ProjectId: item.ProjectID, ProviderId: item.ProviderID, Status: item.Status, Label: item.Label, EnvironmentId: item.EnvironmentID, LastSyncAt: item.LastSyncAt, Summary: item.Summary, CliCommand: item.CLICommand, SyncInterval: item.SyncInterval, Freshness: item.Freshness, ErrorMessage: item.ErrorMessage}

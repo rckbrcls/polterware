@@ -111,6 +111,7 @@ import {
   persistKnowledgeTags,
   persistKnowledgeTitle,
   persistKnowledgeCreate,
+  docTypeFromTags,
   persistKnowledgeScope,
   persistKnowledgeArchived,
   persistKnowledgeDeletePermanently,
@@ -351,7 +352,7 @@ export function App() {
     const unsubscribeExecute = window.polterware.commander.onExecuteCommand((id: string) => {
       handlePaletteCommand(id);
     });
-    // Live sync (Verdict 0007): writes from the CLI, MCP agents, or the TUI refresh
+    // Live sync (Decision 0007): writes from the CLI, MCP agents, or the TUI refresh
     // only the affected slices of the current project.
     const refresher = createChangeRefresher({
       currentProjectId: () => currentProjectId(),
@@ -481,7 +482,7 @@ export function App() {
     applyRoute(goHome(route()));
   }
 
-  /** Evidence opens in the Evidence list; Verdicts open in the Decisions list. */
+  /** Evidence opens in the Evidence list; Decisions open in the Decisions list. */
   const libraryScope = () =>
     route().section === "truth" && route().tab === "evidence" ? "knowledge:evidence" : "knowledge:library";
 
@@ -573,7 +574,7 @@ export function App() {
     const entityIds = new Set(workspace().canonEntities.filter((entity) => entity.refId === node.id || entity.refId === node.path).map((entity) => entity.id));
     return [node.id, {
       work: workspace().workCards.filter((card) => card.under === node.path).length,
-      decisions: workspace().verdicts.filter((decision) => decision.scopeNodeId === node.id || decision.governs.includes(node.path) || decision.entityLinks.some((link) => entityIds.has(link.entityId))).length,
+      decisions: workspace().decisions.filter((decision) => decision.scopeNodeId === node.id || decision.governs.includes(node.path) || decision.entityLinks.some((link) => entityIds.has(link.entityId))).length,
       facts: workspace().structureFacts.filter((fact) => fact.scopeNodeId === node.id || entityIds.has(fact.entityId)).length,
     }];
   })));
@@ -775,7 +776,7 @@ export function App() {
   }) {
     return (
       <KnowledgeView
-        verdicts={workspace().verdicts}
+        decisions={workspace().decisions}
         evidence={workspace().evidence}
         workCards={workspace().workCards}
         workBoards={workspace().workBoards}
@@ -789,25 +790,25 @@ export function App() {
         loading={loading() || !workspace().extensionsReady}
         onTabChange={(tab) => applyRoute(setTab(route(), tab))}
         onOpenEvidence={(id) => activateDetail("knowledge:evidence", id, "evidence")}
-        onOpenVerdict={(id) => activateDetail(libraryScope(), id, "verdict")}
-        onDecisionAction={(verdictId, action) => {
-          const verdict = workspace().verdicts.find((item) => item.id === verdictId);
-          if (!verdict) return;
+        onOpenDecision={(id) => activateDetail(libraryScope(), id, "decision")}
+        onDecisionAction={(decisionId, action) => {
+          const decision = workspace().decisions.find((item) => item.id === decisionId);
+          if (!decision) return;
           const successor = action.kind === "supersede"
-            ? workspace().verdicts.find((item) => item.id === action.byId)
+            ? workspace().decisions.find((item) => item.id === action.byId)
             : undefined;
           const summaries = {
-            activate: `Activate decision: ${verdict.title}`,
-            reactivate: `Keep decision active after review: ${verdict.title}`,
-            challenge: `Open review of decision: ${verdict.title}`,
-            supersede: `Supersede ${verdict.title} with ${successor?.title ?? "another decision"}`,
+            activate: `Activate decision: ${decision.title}`,
+            reactivate: `Keep decision active after review: ${decision.title}`,
+            challenge: `Open review of decision: ${decision.title}`,
+            supersede: `Supersede ${decision.title} with ${successor?.title ?? "another decision"}`,
           } as const;
           void justifyChange({
             title: "Justify decision change",
             defaultSummary: summaries[action.kind],
           }).then((change) => {
             if (!change) return;
-            return persistDecisionAction({ projectId: currentProjectId(), verdict, action, change }).then(async () => {
+            return persistDecisionAction({ projectId: currentProjectId(), decision, action, change }).then(async () => {
               await refreshWorkspace(currentProjectId());
               pushToast("Decision updated.", "success");
             });
@@ -824,7 +825,7 @@ export function App() {
         }}
         onLinkEntity={(knowledgeId, entityId, kind) => {
           const predicate = kind === "resource" || kind === "component"
-            ? (workspace().evidence.some((item) => item.id === knowledgeId && item.tags.includes("runbook")) ? "OPERATES" : "DOCUMENTS")
+            ? (workspace().evidence.some((item) => item.id === knowledgeId && item.docType === "runbook") ? "OPERATES" : "DOCUMENTS")
             : "RELATED_TO";
           void justifyChange({
             title: "Justify entity link",
@@ -942,13 +943,13 @@ export function App() {
               projectId: currentProjectId(),
               kind,
               title,
-              extraJson: scope === "principle" ? JSON.stringify({ scope: "principle" }) : undefined,
+              extraJson: scope === "principle" ? JSON.stringify({ level: "principle" }) : undefined,
               change,
             }).then(async (id) => {
               if (scopePath) await persistKnowledgeScope(currentProjectId(), id, scopePath);
               await refreshWorkspace(currentProjectId());
-              activateDetail("knowledge:library", id, "verdict");
-              pushToast("Verdict saved locally.", "success");
+              activateDetail("knowledge:library", id, "decision");
+              pushToast("Decision saved locally.", "success");
             });
           }).catch((error: unknown) => {
             pushToast(error instanceof Error ? error.message : "Could not create knowledge.", "danger");
@@ -962,9 +963,9 @@ export function App() {
             if (!change) return;
             return persistKnowledgeCreate({
               projectId: currentProjectId(),
-              kind: "evidence",
+              kind: "doc",
+              ...docTypeFromTags(tags),
               title,
-              tags,
               path,
               change,
             }).then(async (id) => {
@@ -1273,7 +1274,7 @@ export function App() {
               matchesEnvironment([deploy.environmentId, deploy.environment], scopeEnvironments())) }))}
             counts={structureCounts()}
             registryNodes={workspace().structure.nodes}
-            projectCounts={{ work: workspace().workCards.length, decisions: workspace().verdicts.length, facts: workspace().structureFacts.length }}
+            projectCounts={{ work: workspace().workCards.length, decisions: workspace().decisions.length, facts: workspace().structureFacts.length }}
             error={structureError() || (!workspace().available ? workspace().healthMessage : undefined)}
             loading={!structureError() && workspace().available && (loading() || !workspace().extensionsReady)}
             createDialogOpen={route().dialog?.type === "arch-node-create"}

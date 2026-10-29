@@ -5,8 +5,9 @@ import type {
   ProjectSwitcherItem,
   WorkspaceCatalogProvider,
   WorkspaceEvidence,
+  DocType,
   DecisionState,
-  WorkspaceVerdict,
+  WorkspaceDecision,
   WorkspaceEntityLink,
   WorkspaceCanonEntity,
   WorkspaceIntegration,
@@ -163,12 +164,17 @@ export function mapKnowledgeEntityLinks(
   return grouped;
 }
 
-/** Evidence is one kind of item; what a person calls it (runbook, doc, source) is a tag. */
+/** The doc type of a stored doc; anything unknown reads as a plain doc. */
+export function docType(value: string): DocType {
+  return value === "runbook" || value === "source" ? value : "doc";
+}
+
+/** Docs are the `doc` knowledge items; their type is `docType` and tags are free labels. */
 export function mapEvidence(
   items: Record<string, unknown>[],
   linksByKnowledge: Map<string, WorkspaceEntityLink[]> = new Map(),
 ): WorkspaceEvidence[] {
-  return items.filter((item) => asString(item.kind) === "evidence").map((item) => {
+  return items.filter((item) => asString(item.kind) === "doc").map((item) => {
     const extra = parseJsonObject(asString(item.extraJson));
     const id = asString(item.id);
     return {
@@ -176,6 +182,7 @@ export function mapEvidence(
       title: asString(item.title),
       summary: asString(item.summary),
       bodyMarkdown: asString(item.body),
+      docType: docType(asString(item.docType)),
       tags: asStringArray(item.tags),
       path: asString(extra.path),
       scopeNodeId: asString(item.scopeNodeId),
@@ -188,35 +195,39 @@ export function mapEvidence(
 
 const DECISION_STATES: DecisionState[] = ["proposed", "active", "challenged", "superseded"];
 
-/** Lifecycle state of a stored Verdict status; legacy "accepted" reads as active. */
+/** Lifecycle state of a stored Decision status; legacy "accepted" reads as active. */
 export function decisionState(status: string): DecisionState {
   const value = status.trim().toLowerCase();
   if (value === "accepted") return "active";
   return DECISION_STATES.includes(value as DecisionState) ? (value as DecisionState) : "proposed";
 }
 
-function verdictNumber(text: string): number | null {
-  const match = /\b(?:verdict|adr)[\s\-_]*0*(\d+)\b/i.exec(text);
+/**
+ * The number of a reference ("Decision-0008") or of a numbered title ("Decision 0008: Title"),
+ * as the core reads it: the adr and verdict prefixes are legacy names, and free text never matches.
+ */
+function decisionNumber(text: string): number | null {
+  const match = /^\s*(?:adr|verdict|decision)[\s\-_]*0*(\d+)\s*(?:[:.\-–—]|$)/i.exec(text);
   return match ? Number(match[1]) : null;
 }
 
-/** True when a `decisions:` entry names the Verdict by id or Verdict number. */
-function citesVerdict(ref: string, id: string, title: string): boolean {
+/** True when a `decisions:` entry names the Decision by id or Decision number. */
+function citesDecision(ref: string, id: string, title: string): boolean {
   if (ref.trim().toLowerCase() === id.toLowerCase()) return true;
-  const wanted = verdictNumber(ref);
-  return wanted !== null && wanted === verdictNumber(title);
+  const wanted = decisionNumber(ref);
+  return wanted !== null && wanted === decisionNumber(title);
 }
 
-export function mapVerdicts(
+export function mapDecisions(
   items: Record<string, unknown>[],
   linksByKnowledge: Map<string, WorkspaceEntityLink[]> = new Map(),
   nodes: { path: string; decisions: string[]; status?: string }[] = [],
-): WorkspaceVerdict[] {
-  const verdictItems = items.filter((item) => asString(item.kind) === "verdict");
-  const titleById = new Map(verdictItems.map((item) => [asString(item.id), asString(item.title)]));
+): WorkspaceDecision[] {
+  const decisionItems = items.filter((item) => asString(item.kind) === "decision");
+  const titleById = new Map(decisionItems.map((item) => [asString(item.id), asString(item.title)]));
   const supersededBy = (item: Record<string, unknown>) =>
     asString(parseJsonObject(asString(item.extraJson)).supersededBy);
-  return verdictItems.map((item) => {
+  return decisionItems.map((item) => {
     const id = asString(item.id);
     const title = asString(item.title);
     const extra = parseJsonObject(asString(item.extraJson));
@@ -229,13 +240,13 @@ export function mapVerdicts(
       tags: asStringArray(item.tags),
       status: asString(item.status, "proposed"),
       state: decisionState(asString(item.status)),
-      scope: extra.scope === "principle" ? "principle" : "decision",
+      scope: extra.level === "principle" ? "principle" : "decision",
       supersededBy: titleById.get(asString(extra.supersededBy)) ?? "",
-      supersedes: verdictItems.filter((other) => supersededBy(other) === id).map((other) => asString(other.title)),
+      supersedes: decisionItems.filter((other) => supersededBy(other) === id).map((other) => asString(other.title)),
       reviewTrigger: asString(extra.reviewTrigger),
       statusReason: asString(extra.statusReason),
       governs: nodes
-        .filter((node) => node.status !== "removed" && node.decisions.some((ref) => citesVerdict(ref, id, title)))
+        .filter((node) => node.status !== "removed" && node.decisions.some((ref) => citesDecision(ref, id, title)))
         .map((node) => node.path),
       scopeNodeId: asString(item.scopeNodeId),
       owner: asString(item.owner, "Platform"),

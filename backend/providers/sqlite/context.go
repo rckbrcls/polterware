@@ -3,9 +3,10 @@ package sqlite
 import (
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canon"
 	contextpkg "github.com/polterware/polterware/backend/domains/context"
+	"github.com/polterware/polterware/backend/domains/knowledge"
+	"github.com/polterware/polterware/backend/domains/structure"
 )
 
 const (
@@ -150,7 +151,7 @@ func (s *Store) scopeContextItems(req contextpkg.Request, items []contextpkg.Ite
 		return nil, err
 	}
 	maps := map[string]map[string]string{}
-	for _, kind := range []string{ScopeDecision, ScopeFact, ScopeEvidence} {
+	for _, kind := range []string{ScopeKnowledge, ScopeFact} {
 		m, err := s.ScopeMap(req.ProjectID, kind)
 		if err != nil {
 			return nil, err
@@ -163,10 +164,8 @@ func (s *Store) scopeContextItems(req contextpkg.Request, items []contextpkg.Ite
 		switch item.Kind {
 		case "fact":
 			node = maps[ScopeFact][item.ID]
-		case "verdict":
-			node = maps[ScopeDecision][item.ID]
-		case "evidence":
-			node = maps[ScopeDecision][item.ID]
+		case knowledge.KindDecision, knowledge.KindDoc:
+			node = maps[ScopeKnowledge][item.ID]
 		}
 		if resolved.Matches(node) {
 			out = append(out, item)

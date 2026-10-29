@@ -83,7 +83,7 @@ export type WorkspaceCanonEntity = {
   source: string;
 };
 
-export type WorkspaceVerdict = {
+export type WorkspaceDecision = {
   id: string;
   title: string;
   summary: string;
@@ -110,15 +110,19 @@ export type WorkspaceVerdict = {
   entityLinks: WorkspaceEntityLink[];
 };
 
+/** What a doc is: a document, a runbook (a procedure), or a registered project source file. */
+export type DocType = "doc" | "runbook" | "source";
+
 /**
- * One piece of Evidence: a markdown note, optionally pointing at a project file.
- * There is no type; a runbook or a document is an item carrying that tag.
+ * One doc: a markdown note, optionally pointing at a project file. Its type is
+ * `docType`; tags are free labels.
  */
 export type WorkspaceEvidence = {
   id: string;
   title: string;
   summary: string;
   bodyMarkdown: string;
+  docType: DocType;
   tags: string[];
   /** Project-relative path of the file this evidence points at; empty for a plain note. */
   path: string;
@@ -158,7 +162,7 @@ export type WorkspaceWorkInvariant = {
   text: string;
 };
 
-/** Work card from the Work tables (Verdict 0006), written through the Polter format. */
+/** Work card from the Work tables (Decision 0006), written through the Polter format. */
 /** A feature, or an Architecture Change that edits the Structure. */
 export type WorkCardKind = "feature" | "architecture";
 
@@ -193,7 +197,7 @@ export type WorkspaceFeatureReview = {
   /** Component paths suggested for a card without under:. */
   suggested: string[];
   touches: { path: string; level: string; title: string }[];
-  /** from is "card" or the node path citing the decision; status is empty when no Verdict matches. */
+  /** from is "card" or the node path citing the decision; status is empty when no Decision matches. */
   decisions: { ref: string; id: string; title: string; status: string; from: string }[];
   inherited: { text: string; from: string }[];
   questions: {

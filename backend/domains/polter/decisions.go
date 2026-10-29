@@ -2,16 +2,15 @@ package polter
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/decision"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 	"github.com/polterware/polterware/backend/platform/ids"
 )
 
-// planDecisions turns decision blocks into Verdict ops. Existing decisions move
+// planDecisions turns decision blocks into Decision ops. Existing decisions move
 // through the lifecycle; `new` proposes one; `supersedes:` on the newer
 // decision marks the older one superseded in the same batch.
 func (p *planner) planDecisions(doc Document) {
@@ -49,7 +48,7 @@ func (p *planner) planDecisions(doc Document) {
 		}
 		current, ok := decision.Find(list(), node.Ref)
 		if !ok {
-			p.errorf(node.Line, "unknown decision %q: use an Verdict number, id, or ### new: Title to propose one", node.Ref)
+			p.errorf(node.Line, "unknown decision %q: use a Decision number, id, or ### new: Title to propose one", node.Ref)
 			continue
 		}
 		p.updateDecision(node, current, state, list)
@@ -66,7 +65,7 @@ func (p *planner) createDecision(node DecisionNode, state map[string]decision.De
 	if n, ok := decision.Number(title); ok {
 		for _, d := range all {
 			if m, ok := decision.Number(d.Title); ok && m == n {
-				p.errorf(node.Line, "Verdict number %d is taken by %q: omit the number and it is assigned", n, d.Title)
+				p.errorf(node.Line, "Decision number %d is taken by %q: omit the number and it is assigned", n, d.Title)
 				return
 			}
 		}
@@ -92,14 +91,16 @@ func (p *planner) createDecision(node DecisionNode, state map[string]decision.De
 	trigger, _ := node.MetaValue("trigger")
 	reason, _ := node.MetaValue("reason")
 	scope, _ := node.MetaValue("scope")
+	level, _ := node.MetaValue("level")
+	level = decision.StoredLevel(level)
 	id := ids.NewULID()
-	created := decision.Decision{ID: id, Title: title, Status: status, Scope: scope, Meta: decision.Meta{ReviewTrigger: trigger}}
+	created := decision.Decision{ID: id, Title: title, Status: status, Scope: scope, Meta: decision.Meta{ReviewTrigger: trigger, Level: level}}
 	state[id] = created
 	p.ops = append(p.ops, work.Op{
 		Entity: work.EntityDecision, Kind: work.OpCreate, EntityID: id, CardSlug: title, Label: title,
 		Fields: map[string]any{
 			"title": title, "body": node.Body, "status": status,
-			"review_trigger": trigger, "scope": scope,
+			"review_trigger": trigger, "scope": scope, "level": level,
 		},
 	})
 	if hasSupersedes {
@@ -146,6 +147,10 @@ func (p *planner) updateDecision(node DecisionNode, current decision.Decision, s
 		set("scope", current.Scope, scope)
 		updated.Scope = scope
 	}
+	if level, ok := node.MetaValue("level"); ok && decision.StoredLevel(level) != current.Level {
+		set("level", current.Level, decision.StoredLevel(level))
+		updated.Level = decision.StoredLevel(level)
+	}
 	if hasReason && hasStatus && reason != current.StatusReason {
 		set("status_reason", current.StatusReason, reason)
 		updated.StatusReason = reason
@@ -174,7 +179,7 @@ func (p *planner) supersede(node DecisionNode, target string, newer decision.Dec
 	all := list()
 	old, ok := decision.Find(all, target)
 	if !ok {
-		p.errorf(node.Line, "unknown decision %q in supersedes: no Verdict with that number or id", target)
+		p.errorf(node.Line, "unknown decision %q in supersedes: no Decision with that number or id", target)
 		return
 	}
 	if decision.Normalize(old.Status) == decision.StateSuperseded {
@@ -206,7 +211,7 @@ func (p *planner) supersede(node DecisionNode, target string, newer decision.Dec
 
 func decisionHandle(d decision.Decision) string {
 	if n, ok := decision.Number(d.Title); ok {
-		return fmt.Sprintf("Verdict-%04d", n)
+		return decision.Ref(n)
 	}
 	return d.ID
 }
@@ -247,6 +252,9 @@ func EncodeDecisions(decisions []decision.Decision, state string) string {
 		}
 		shown++
 		line := fmt.Sprintf("- %s · %s", d.Title, s)
+		if d.Level == decision.LevelPrinciple {
+			line += " · principle"
+		}
 		if d.ReviewTrigger != "" && decision.Binding(s) {
 			line += " · review when: " + d.ReviewTrigger
 		}
@@ -268,7 +276,7 @@ func EncodeDecisions(decisions []decision.Decision, state string) string {
 func EncodeDecision(target decision.Decision, all []decision.Decision, nodePaths []string) string {
 	node := DecisionNode{Ref: decisionHandle(target), Body: target.Body}
 	if _, ok := decision.Number(target.Title); ok {
-		node.Title = strings.TrimSpace(titlePrefixRE.ReplaceAllString(target.Title, ""))
+		node.Title = decision.StripNumber(target.Title)
 	} else {
 		node.Title = target.Title
 	}
@@ -278,6 +286,7 @@ func EncodeDecision(target decision.Decision, all []decision.Decision, nodePaths
 		}
 	}
 	add("status", decision.Normalize(target.Status))
+	add("level", target.Level)
 	add("trigger", target.ReviewTrigger)
 	add("scope", target.Scope)
 	add("reason", target.StatusReason)
@@ -303,8 +312,6 @@ func EncodeDecision(target decision.Decision, all []decision.Decision, nodePaths
 	return b.String()
 }
 
-var titlePrefixRE = regexp.MustCompile(`(?i)^\s*verdict[\s\-_]*\d+\s*[:.\-–—]?\s*`)
-
 // NodesCiting returns the paths of active Structure nodes whose decisions: cite d.
 func NodesCiting(nodes []structure.Node, d decision.Decision) []string {
 	var paths []string
@@ -324,10 +331,12 @@ func NodesCiting(nodes []structure.Node, d decision.Decision) []string {
 
 // DecisionInput is one lifecycle change composed by the CLI and the Desktop.
 type DecisionInput struct {
-	// Ref is `new` or an Verdict number, id, or title.
-	Ref        string
-	Title      string
-	Status     string
+	// Ref is `new` or a Decision number, id, or title.
+	Ref    string
+	Title  string
+	Status string
+	// Level is principle, decision, or empty to leave it unchanged.
+	Level      string
 	Supersedes string
 	Trigger    string
 	Reason     string
@@ -345,6 +354,7 @@ func ComposeDecision(in DecisionInput, summary, rationale string) string {
 		}
 	}
 	add("status", in.Status)
+	add("level", in.Level)
 	add("supersedes", in.Supersedes)
 	add("trigger", in.Trigger)
 	add("reason", in.Reason)

@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canvas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/platform/ids"
 )
 

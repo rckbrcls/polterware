@@ -8,7 +8,7 @@ describe("detailDisplayFor", () => {
     expect(detailDisplayFor("inbox-item")).toBe("peek");
     expect(detailDisplayFor("change")).toBe("peek");
     expect(detailDisplayFor("evidence")).toBe("page");
-    expect(detailDisplayFor("verdict")).toBe("page");
+    expect(detailDisplayFor("decision")).toBe("page");
     expect(detailDisplayFor("card")).toBe("page");
     expect(detailDisplayFor("arch-node")).toBe("both");
   });
@@ -25,7 +25,7 @@ describe("detailDisplayFor", () => {
   });
 
   it("limits writing canvases to knowledge documents, preserving Structure and fact details", () => {
-    for (const kind of ["verdict", "evidence", "card"]) expect(isDocumentDetail(kind)).toBe(true);
+    for (const kind of ["decision", "evidence", "card"]) expect(isDocumentDetail(kind)).toBe(true);
     for (const kind of ["arch-view", "structure-card", "fact", undefined]) expect(isDocumentDetail(kind)).toBe(false);
   });
 });

@@ -138,7 +138,7 @@ describe("installBrowserDevBridge", () => {
     const api = window.polterware.core.knowledge;
     const projectId = "browser-preview";
     const active = async () => ((await api.list({ projectId })).items as { id: string }[]).map((item) => item.id);
-    await expect(api.setArchived({ id: "verdict-001", archived: true })).rejects.toThrow("decisions are never archived");
+    await expect(api.setArchived({ id: "decision-001", archived: true })).rejects.toThrow("decisions are never archived");
     await expect(api.delete({ id: "doc-api" })).rejects.toThrow("archive the item");
     await api.setArchived({ id: "doc-api", archived: true });
     expect(await active()).not.toContain("doc-api");
@@ -201,6 +201,6 @@ describe("installBrowserDevBridge", () => {
     expect((await core.work.listCards({ projectId: "browser-preview" })).cards).not.toEqual(expect.arrayContaining([expect.objectContaining({ slug })]));
     await expect(core.work.apply({ projectId: "browser-empty", text: promotionText(input) })).rejects.toThrow("already exists");
     await core.work.apply({ projectId: "browser-empty", text: promotionText({ ...input, kind: "decision" }) });
-    expect((await core.knowledge.list({ projectId: "browser-empty" })).items).toEqual(expect.arrayContaining([expect.objectContaining({ kind: "verdict", title: expect.stringContaining("Canvas idea"), status: "proposed" })]));
+    expect((await core.knowledge.list({ projectId: "browser-empty" })).items).toEqual(expect.arrayContaining([expect.objectContaining({ kind: "decision", title: expect.stringContaining("Canvas idea"), status: "proposed" })]));
   });
 });

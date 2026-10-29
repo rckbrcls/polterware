@@ -26,7 +26,7 @@ func reviewFeature(store *storepkg.Store, snapshot work.Snapshot, slug string) (
 	if err != nil {
 		return polter.FeatureReview{}, err
 	}
-	return polter.ReviewFeature(snapshot, slug, refs.Verdicts, questionRoutes(store, snapshot))
+	return polter.ReviewFeature(snapshot, slug, refs.Decisions, questionRoutes(store, snapshot))
 }
 
 // questionRoutes maps open question ids to where they wait: the Inbox,

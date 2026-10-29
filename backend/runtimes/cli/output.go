@@ -68,11 +68,11 @@ func usage() {
   polterware [-db path] apply <file|-> [--dry-run] [--project <id>] [--summary ...] [--rationale ...] [--agent-run-id ...]
   polterware [-db path] lint <file|dir|-> [--project <id>]   (silent on success)
   polterware [-db path] format                               (print the Polter format spec)
-  polterware [-db path] query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <verdict>" | "feature <slug> [step]" | "verify <slug>" | "canvas [<name|id>]" [--scope <node>[,<node>]] [--exact] [--project <id>]
+  polterware [-db path] query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <decision>" | "feature <slug> [step]" | "verify <slug>" | "canvas [<name|id>]" [--scope <node>[,<node>]] [--exact] [--project <id>]
   polterware [-db path] status [--scope <node>[,<node>]] [--exact] [--project <id>]
   polterware [-db path] handoff [--card <slug>] [--note "..."] [--project <id>]
   polterware [-db path] task claim|done|release <slug>#T2 [--agent name] [--project <id>]
-  polterware [-db path] decision list [state] | show <verdict> | propose "<title>" | activate <verdict> | challenge <verdict> --reason "..." | supersede <verdict> (--by <verdict> | --title "...") | trigger <verdict> "..." [--project <id>]
+  polterware [-db path] decision list [state] | show <decision> | propose "<title>" | activate <decision> | challenge <decision> --reason "..." | supersede <decision> (--by <decision> | --title "...") | trigger <decision> "..." [--project <id>]
   polterware [-db path] feature new "<intent>" [--title "..."] [--under <node>] [--project <id>]
   polterware [-db path] feature shape <slug> | contract <slug> [--accept] | plan <slug> [--approve] [--project <id>]
   polterware [-db path] verify <slug|slug#T2> [--project <id>]   (exit 1 when a check fails)

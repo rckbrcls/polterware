@@ -18,7 +18,7 @@ describe("mapFeatureReview", () => {
       underTitle: "Import",
       suggested: [],
       touches: [{ path: "core", level: "system", title: "Core" }],
-      decisions: [{ ref: "Verdict-0007", id: "verdict-7", title: "Verdict 0007 Deterministic import", status: "accepted", from: "core" }],
+      decisions: [{ ref: "Decision-0007", id: "decision-7", title: "Decision 0007 Deterministic import", status: "accepted", from: "core" }],
       inherited: [{ text: "No network calls during scan", from: "core" }],
       questions: [
         { id: "q1", text: "Merge commits?", blocking: true, route: "delegated" },

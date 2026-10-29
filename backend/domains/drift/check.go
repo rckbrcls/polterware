@@ -12,7 +12,7 @@ func Check(input Input) Result {
 	if input.ImportReady {
 		findings = append(findings, checkImportDeps(input.StoredFacts, input.ParsedDeps)...)
 	}
-	findings = append(findings, checkEdgeDecisions(input.Relationships, input.AcceptedVerdicts)...)
+	findings = append(findings, checkEdgeDecisions(input.Relationships, input.AcceptedDecisions)...)
 	findings = append(findings, checkDeclaredObserved(input.StoredFacts)...)
 	if input.GitDeliveryReady {
 		findings = append(findings, checkCommitTasks(input.DoneTasks, input.TaskCommits, input.WindowCommits)...)

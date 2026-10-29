@@ -9,9 +9,9 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/decision"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -208,7 +208,7 @@ type Snapshot struct {
 	// Environments are the project's environments. A deploys: line names one
 	// by id or by name.
 	Environments []NamedEnvironment
-	// Decisions are the project's Verdicts with their lifecycle state.
+	// Decisions are the project's Decisions with their lifecycle state.
 	Decisions []decision.Decision
 	Facts     []Fact
 	Evidence  []canon.Evidence

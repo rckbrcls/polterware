@@ -74,7 +74,7 @@ export function NodeInspector(props: {
       <FormStack>
         <Field label="Title"><Input aria-label="Promotion title" disabled={busy() || applied()} value={title()} onInput={(e) => setTitle(e.currentTarget.value)} /></Field>
         <Show when={promotion() === "card" || promotion() === "fact"}><Field label="Slug"><Input aria-label="Promotion slug" disabled={busy() || applied()} value={slug()} onInput={(e) => setSlug(e.currentTarget.value)} /></Field></Show>
-        <p class="text-xs text-[var(--color-text-muted)]">{promotion() === "card" ? "Stage: Shape" : promotion() === "decision" ? "Status: Proposed. The core assigns a Verdict number." : "Kind: Declared"}</p>
+        <p class="text-xs text-[var(--color-text-muted)]">{promotion() === "card" ? "Stage: Shape" : promotion() === "decision" ? "Status: Proposed. The core assigns a Decision number." : "Kind: Declared"}</p>
       </FormStack>
       <Show when={error()}><p role="alert" class="mt-3 text-sm text-[var(--color-danger)]">{error()}</p></Show>
     </A11yDialog>

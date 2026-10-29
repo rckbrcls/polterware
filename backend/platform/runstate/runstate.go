@@ -1,5 +1,5 @@
 // Package runstate owns the small files that let local Polterware processes
-// find the core (Verdict 0007): core.json (endpoint, token, build), core.lock (one
+// find the core (Decision 0007): core.json (endpoint, token, build), core.lock (one
 // core per database), and core.log. Files live in <db dir>/run and are private
 // to the user.
 package runstate
@@ -40,7 +40,7 @@ func LockPath(dbPath string) string { return filepath.Join(Dir(dbPath), "core.lo
 // ErrCoreLocked means another core already owns this database.
 var ErrCoreLocked = errors.New("another polterware core owns this database")
 
-// LockCore takes the exclusive per-database core lock (Verdict 0007: one core per
+// LockCore takes the exclusive per-database core lock (Decision 0007: one core per
 // database). The lock lasts until the returned file is closed or the process
 // exits.
 func LockCore(dbPath string) (*os.File, error) {

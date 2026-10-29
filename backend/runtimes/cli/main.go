@@ -54,7 +54,7 @@ func main() {
 	command := args[0]
 	rest := args[1:]
 
-	// Only `serve` opens the store (Verdict 0007); every other command is a client
+	// Only `serve` opens the store (Decision 0007); every other command is a client
 	// of the core and starts it when none is running.
 	var err error
 	switch command {

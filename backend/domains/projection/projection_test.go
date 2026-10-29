@@ -8,72 +8,72 @@ import (
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
-func testGraph() ([]structure.Node, []Verdict) {
+func testGraph() ([]structure.Node, []Decision) {
 	nodes := []structure.Node{
 		{ID: "s", Path: "shop", Level: structure.LevelSystem, Title: "Shop", Status: structure.NodeActive,
-			Decisions:  []string{"Verdict 0001"},
+			Decisions:  []string{"Decision 0001"},
 			Invariants: []structure.Invariant{{Text: "Money is integer cents", State: work.InvariantActive}}},
 		{ID: "d", ParentID: "s", Path: "shop/auth", Level: structure.LevelDomain, Title: "Auth", Status: structure.NodeActive,
-			Repo: "api", Folder: "src/auth", Decisions: []string{"verdict-tokens"},
+			Repo: "api", Folder: "src/auth", Decisions: []string{"decision-tokens"},
 			Invariants: []structure.Invariant{
 				{Text: "Tokens expire in 15 minutes", State: work.InvariantActive},
 				{Text: "Old rule", State: work.InvariantRemoved},
 			}},
 	}
-	verdicts := []Verdict{
-		{ID: "verdict-cents", Title: "Verdict 0001: Integer cents", Body: "## Decision\n\nStore cents.", Status: "accepted"},
-		{ID: "verdict-tokens", Title: "Verdict 0002: Short tokens", Body: "## Decision\n\nShort tokens."},
-		{ID: "verdict-free", Title: "Verdict 0003: Free standing", Body: "Body."},
+	decisions := []Decision{
+		{ID: "decision-cents", Title: "Decision 0001: Integer cents", Body: "## Decision\n\nStore cents.", Status: "accepted"},
+		{ID: "decision-tokens", Title: "Decision 0002: Short tokens", Body: "## Decision\n\nShort tokens."},
+		{ID: "decision-free", Title: "Decision 0003: Free standing", Body: "Body."},
 	}
-	return nodes, verdicts
+	return nodes, decisions
 }
 
 func TestGovernByCitingNodeRepo(t *testing.T) {
-	nodes, verdicts := testGraph()
-	governed := Govern(nodes, verdicts)
-	ids := func(list []Verdict) string {
+	nodes, decisions := testGraph()
+	governed := Govern(nodes, decisions)
+	ids := func(list []Decision) string {
 		var out []string
-		for _, verdict := range list {
-			out = append(out, verdict.ID)
+		for _, decision := range list {
+			out = append(out, decision.ID)
 		}
 		return strings.Join(out, ",")
 	}
-	if got := ids(governed[""]); got != "verdict-cents,verdict-free" {
+	if got := ids(governed[""]); got != "decision-cents,decision-free" {
 		t.Fatalf("root = %s", got)
 	}
-	if got := ids(governed["api"]); got != "verdict-tokens" {
+	if got := ids(governed["api"]); got != "decision-tokens" {
 		t.Fatalf("api = %s", got)
 	}
 }
 
-func TestVerdictFile(t *testing.T) {
-	_, verdicts := testGraph()
-	name, content, ok := VerdictFile(verdicts[0])
+func TestDecisionFile(t *testing.T) {
+	_, decisions := testGraph()
+	name, content, ok := DecisionFile(decisions[0])
 	if !ok || name != "0001-integer-cents.md" {
 		t.Fatalf("name = %q ok=%v", name, ok)
 	}
-	if id, ok := VerdictMarker(content); !ok || id != "verdict-cents" {
+	if id, ok := DecisionMarker(content); !ok || id != "decision-cents" {
 		t.Fatalf("marker = %q %v\n%s", id, ok, content)
 	}
-	if !strings.Contains(content, "# Verdict 0001: Integer cents\n\nLifecycle status: accepted\n\n## Decision") {
+	if !strings.Contains(content, "# Decision 0001: Integer cents\n\nLifecycle status: accepted\n\n## Decision") {
 		t.Fatalf("content = %s", content)
 	}
-	if _, _, ok := VerdictFile(Verdict{ID: "x", Title: "Untitled decision"}); ok {
+	if _, _, ok := DecisionFile(Decision{ID: "x", Title: "Untitled decision"}); ok {
 		t.Fatalf("an unnumbered title has no file")
 	}
-	if _, ok := VerdictMarker("# Verdict 0001: Hand-written\n"); ok {
+	if _, ok := DecisionMarker("# Decision 0001: Hand-written\n"); ok {
 		t.Fatalf("hand-written files carry no marker")
 	}
 }
 
 func TestBlockInheritsAncestors(t *testing.T) {
-	nodes, verdicts := testGraph()
-	governed := Govern(nodes, verdicts)
-	api := Block("api", nodes, governed["api"], verdicts)
+	nodes, decisions := testGraph()
+	governed := Govern(nodes, decisions)
+	api := Block("api", nodes, governed["api"], decisions)
 	for _, want := range []string{
 		"- shop/auth (domain) Auth · path: src/auth",
-		"- Verdict 0001: Integer cents (accepted)",
-		"- Verdict 0002: Short tokens",
+		"- Decision 0001: Integer cents (accepted)",
+		"- Decision 0002: Short tokens",
 		"- Money is integer cents (from shop)",
 		"- Tokens expire in 15 minutes (from shop/auth)",
 	} {
@@ -81,11 +81,11 @@ func TestBlockInheritsAncestors(t *testing.T) {
 			t.Fatalf("api block missing %q:\n%s", want, api)
 		}
 	}
-	if strings.Contains(api, "Old rule") || strings.Contains(api, "Verdict 0003") || strings.Contains(api, "- shop (system)") {
+	if strings.Contains(api, "Old rule") || strings.Contains(api, "Decision 0003") || strings.Contains(api, "- shop (system)") {
 		t.Fatalf("api block has foreign lines:\n%s", api)
 	}
-	root := Block("", nodes, governed[""], verdicts)
-	if strings.Contains(root, "Tokens expire") || !strings.Contains(root, "Verdict 0003: Free standing") {
+	root := Block("", nodes, governed[""], decisions)
+	if strings.Contains(root, "Tokens expire") || !strings.Contains(root, "Decision 0003: Free standing") {
 		t.Fatalf("root block:\n%s", root)
 	}
 	if !strings.HasPrefix(api, BlockBegin+"\n") || !strings.HasSuffix(api, BlockEnd+"\n") {

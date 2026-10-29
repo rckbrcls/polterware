@@ -78,6 +78,23 @@ if rg -n -i 'atlas' "$ROOT/apps" "$ROOT/packages" "$ROOT/backend" "$ROOT/schemas
     --glob '!docs/design-references/**' 2>/dev/null | rg -v 'synonyms: \["atlas"\]' | head -20 || true
 fi
 
+# Decisions are called Decisions. Allowed: migration history and its test, the dispatch
+# verifier and Vitals (a check's verdict is an ordinary word there), the input
+# readers that accept the legacy ref prefix (adr|verdict|decision), and lines
+# that name a legacy value on purpose.
+verdict_hits() {
+  rg -n -i 'verdict' "$ROOT/apps" "$ROOT/packages" "$ROOT/backend" "$ROOT/schemas" "$ROOT/docs" "$ROOT/AGENTS.md" "$ROOT/DESIGN.md" "$ROOT/README.md" \
+    --glob '!**/node_modules/**' --glob '!**/out/**' --glob '!**/release/**' --glob '!**/gen/**' \
+    --glob '!packages/contracts/src/gen/**' \
+    --glob '!backend/platform/db/sqlite/migrations/*.sql' --glob '!backend/platform/db/sqlite/migrate.go' --glob '!backend/platform/db/sqlite/sqlite_test.go' \
+    --glob '!backend/domains/dispatch/**' --glob '!backend/providers/dispatch/**' --glob '!apps/vitals-desktop/**' \
+    --glob '!docs/design-references/**' 2>/dev/null | rg -v 'adr\|verdict\|decision|(?i)legacy' || true
+}
+if [[ -n "$(verdict_hits)" ]]; then
+  die "Decisions are called Decisions; remove Verdict"
+  verdict_hits | head -20
+fi
+
 if [[ $fail -ne 0 ]]; then
   exit 1
 fi

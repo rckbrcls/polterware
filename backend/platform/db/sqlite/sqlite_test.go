@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"database/sql"
 	"os"
 	"path/filepath"
 	"slices"
@@ -150,22 +151,7 @@ func TestStructureRenameMigrationKeepsRowsAndForeignKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	entries, err := migrationFS.ReadDir("migrations")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, entry := range entries {
-		if entry.Name() >= "0037" {
-			continue
-		}
-		body, err := migrationFS.ReadFile("migrations/" + entry.Name())
-		if err != nil {
-			t.Fatal(err)
-		}
-		if _, err := db.Exec(string(body)); err != nil {
-			t.Fatalf("%s: %v", entry.Name(), err)
-		}
-	}
+	migrateBefore(t, db, "0037")
 	seed := []string{
 		`INSERT INTO projects(id,name,root_path,created_at,updated_at) VALUES('p','Project','/tmp','now','now')`,
 		`INSERT INTO atlas_nodes(id,project_id,parent_id,level,slug,path,title,created_at,updated_at) VALUES('sys','p',NULL,'system','app','app','App','now','now')`,
@@ -178,13 +164,7 @@ func TestStructureRenameMigrationKeepsRowsAndForeignKeys(t *testing.T) {
 			t.Fatalf("%s: %v", statement, err)
 		}
 	}
-	body, err := migrationFS.ReadFile("migrations/0037_structure_rename.sql")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := db.Exec(string(body)); err != nil {
-		t.Fatal(err)
-	}
+	applyMigration(t, db, "0037_structure_rename.sql")
 	for table, want := range map[string]int{"structure_nodes": 2, "structure_invariants": 1, "scope_assignments": 1} {
 		var got int
 		if err := db.QueryRow(`SELECT COUNT(*) FROM ` + table).Scan(&got); err != nil || got != want {
@@ -216,5 +196,106 @@ func TestStructureRenameMigrationKeepsRowsAndForeignKeys(t *testing.T) {
 	var left int
 	if err := db.QueryRow(`SELECT (SELECT COUNT(*) FROM structure_nodes) + (SELECT COUNT(*) FROM structure_invariants) + (SELECT COUNT(*) FROM scope_assignments)`).Scan(&left); err != nil || left != 0 {
 		t.Fatalf("cascade after rename left %d rows, err=%v", left, err)
+	}
+}
+
+func TestDecisionDocKindsMigration(t *testing.T) {
+	db, err := Open(filepath.Join(t.TempDir(), "kinds.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	migrateBefore(t, db, "0038")
+	seed := []string{
+		`INSERT INTO projects(id,name,root_path,created_at,updated_at) VALUES('p','Project','/tmp','now','now')`,
+		`INSERT INTO knowledge_items(id,project_id,title,body,kind,tags_json,extra_json,created_at,updated_at) VALUES('d1','p','Verdict 0003: Local store','b','verdict','["verdict","storage"]','{"scope":"principle","reviewTrigger":"x"}','now','now')`,
+		`INSERT INTO knowledge_items(id,project_id,title,body,kind,tags_json,extra_json,created_at,updated_at) VALUES('d2','p','ADR 0004: Old name','b','verdict','["adr"]','{}','now','now')`,
+		`INSERT INTO knowledge_items(id,project_id,title,body,kind,tags_json,created_at,updated_at) VALUES('k1','p','Guide','b','evidence','["doc","ops"]','now','now')`,
+		`INSERT INTO knowledge_items(id,project_id,title,body,kind,tags_json,created_at,updated_at) VALUES('k2','p','Failover','b','evidence','["runbook"]','now','now')`,
+		`INSERT INTO knowledge_items(id,project_id,title,body,kind,tags_json,created_at,updated_at,archived_at) VALUES('k3','p','go.mod','','evidence','["source"]','now','now','2026-01-01T00:00:00Z')`,
+		`INSERT INTO knowledge_items(id,project_id,title,body,kind,tags_json,created_at,updated_at) VALUES('k4','p','Untagged','b','evidence','[]','now','now')`,
+		`INSERT INTO knowledge_items(id,project_id,title,body,kind,tags_json,created_at,updated_at) VALUES('src-import-1','p','go.mod','','evidence','null','now','now')`,
+		`INSERT INTO canon_entities(id,project_id,kind,ref_kind,ref_id,title,observed_at,created_at,updated_at) VALUES('e','p','component','architecture_node','n','API','now','now','now')`,
+		`INSERT INTO knowledge_entity_links(id,project_id,knowledge_id,entity_id,predicate,observed_at,created_at) VALUES('l','p','k1','e','DOCUMENTS','now','now')`,
+		`INSERT INTO work_cards(id,project_id,slug,title,decisions_json,created_at,updated_at) VALUES('c','p','card','Card','["Verdict-3","d1","ADR 0004","Decision-0009"]','now','now')`,
+		`INSERT INTO structure_nodes(id,project_id,level,slug,path,title,decisions_json,created_at,updated_at) VALUES('n','p','system','app','app','App','["verdict_12"]','now','now')`,
+	}
+	for _, statement := range seed {
+		if _, err := db.Exec(statement); err != nil {
+			t.Fatalf("%s: %v", statement, err)
+		}
+	}
+	applyMigration(t, db, "0038_decision_doc_kinds.sql")
+
+	type row struct{ kind, docType, title, tags, extra string }
+	want := map[string]row{
+		"d1": {"decision", "", "Decision 0003: Local store", `["storage"]`, `{"reviewTrigger":"x","level":"principle"}`},
+		"d2": {"decision", "", "Decision 0004: Old name", `[]`, `{}`},
+		"k1": {"doc", "doc", "Guide", `["ops"]`, `{}`},
+		"k2": {"doc", "runbook", "Failover", `[]`, `{}`},
+		"k3": {"doc", "source", "go.mod", `[]`, `{}`},
+		"k4": {"doc", "doc", "Untagged", `[]`, `{}`},
+		// Older imports wrote JSON null tags; the importer id marks them as sources.
+		"src-import-1": {"doc", "source", "go.mod", `[]`, `{}`},
+	}
+	for id, w := range want {
+		var got row
+		if err := db.QueryRow(`SELECT kind,doc_type,title,tags_json,extra_json FROM knowledge_items WHERE id=?`, id).Scan(&got.kind, &got.docType, &got.title, &got.tags, &got.extra); err != nil {
+			t.Fatalf("%s: %v", id, err)
+		}
+		if got != w {
+			t.Errorf("%s = %+v, want %+v", id, got, w)
+		}
+	}
+	var links, fts int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM knowledge_entity_links`).Scan(&links); err != nil || links != 1 {
+		t.Fatalf("links = %d err=%v", links, err)
+	}
+	if err := db.QueryRow(`SELECT COUNT(*) FROM knowledge_fts`).Scan(&fts); err != nil || fts != 6 {
+		t.Fatalf("fts rows = %d (archived items stay out), err=%v", fts, err)
+	}
+	var card, node string
+	if err := db.QueryRow(`SELECT decisions_json FROM work_cards WHERE id='c'`).Scan(&card); err != nil || card != `["Decision-0003","d1","Decision-0004","Decision-0009"]` {
+		t.Fatalf("card decisions = %s err=%v", card, err)
+	}
+	if err := db.QueryRow(`SELECT decisions_json FROM structure_nodes WHERE id='n'`).Scan(&node); err != nil || node != `["Decision-0012"]` {
+		t.Fatalf("node decisions = %s err=%v", node, err)
+	}
+	if _, err := db.Exec(`INSERT INTO knowledge_items(id,project_id,title,body,kind,doc_type,created_at,updated_at) VALUES('x','p','Bad','b','decision','runbook','now','now')`); err == nil {
+		t.Fatal("a decision with a doc type was accepted")
+	}
+	rows, err := db.Query(`PRAGMA foreign_key_check`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rows.Next() {
+		t.Fatal("foreign_key_check reported violations")
+	}
+	_ = rows.Close()
+}
+
+// migrateBefore applies the embedded migrations whose names sort before prefix.
+func migrateBefore(t *testing.T, db *sql.DB, prefix string) {
+	t.Helper()
+	entries, err := migrationFS.ReadDir("migrations")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if entry.Name() >= prefix {
+			continue
+		}
+		applyMigration(t, db, entry.Name())
+	}
+}
+
+func applyMigration(t *testing.T, db *sql.DB, name string) {
+	t.Helper()
+	body, err := migrationFS.ReadFile("migrations/" + name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(string(body)); err != nil {
+		t.Fatalf("%s: %v", name, err)
 	}
 }

@@ -209,7 +209,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     name: "polterware export",
     synopsis: "polterware export [--dry-run] [--json] [--project <id>]",
     summary:
-      "Write Verdict files and the generated AGENTS.md block into every checkout of the project.",
+      "Write Decision files and the generated AGENTS.md block into every checkout of the project.",
     flags: [
       { name: "--dry-run", description: "Print what would change without writing." },
       PROJECT_FLAG,
@@ -279,7 +279,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "query",
     name: "polterware query",
     synopsis:
-      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <verdict>" | "feature <slug> [step]" | "verify <slug>" | "canvas [<name|id>]" [--scope <node>] [--exact] [--project <id>]',
+      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <decision>" | "feature <slug> [step]" | "verify <slug>" | "canvas [<name|id>]" [--scope <node>] [--exact] [--project <id>]',
     summary:
       "Read project state in Polter format: cards, one card, status, inbox, handoffs, Structure, decisions, feature steps, verification, or a shared canvas.",
     flags: [
@@ -334,13 +334,13 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "decision",
     name: "polterware decision",
     synopsis:
-      'polterware decision list [state] | show <verdict> | propose "<title>" | activate <verdict> | challenge <verdict> --reason "..." | supersede <verdict> (--by <verdict> | --title "...") | trigger <verdict> "..."',
-    summary: "Read and move Decisions (Verdicts) through their lifecycle.",
+      'polterware decision list [state] | show <decision> | propose "<title>" | activate <decision> | challenge <decision> --reason "..." | supersede <decision> (--by <decision> | --title "...") | trigger <decision> "..."',
+    summary: "Read and move Decisions through their lifecycle.",
     flags: [
       { name: "--reason", value: "text", description: "challenge: why the decision moves." },
       { name: "--trigger", value: "text", description: "Review trigger." },
-      { name: "--body", value: "text", description: "Verdict text, plain (no # headings)." },
-      { name: "--by", value: "verdict", description: "supersede: the decision that supersedes." },
+      { name: "--body", value: "text", description: "Decision text, plain (no # headings)." },
+      { name: "--by", value: "decision", description: "supersede: the decision that supersedes." },
       { name: "--title", value: "text", description: "supersede: title of a new superseding decision." },
       AGENT_FLAG,
       PROJECT_FLAG,
