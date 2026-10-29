@@ -1,56 +1,50 @@
-/* Detail content inside a Structure tree card. */
-.pw-structure-node {
+/* A Structure table row's name: indented by depth, its disclosure (or the room for one), the kind tile, and the title. */
+.pw-structure-row {
   display: flex;
   min-width: 0;
-  flex-direction: column;
-  gap: 6px;
-  color: var(--color-text-muted);
-  font-size: 12px;
+  align-items: center;
+  gap: 8px;
 }
 
-.pw-structure-node__description {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  margin: 0;
+.pw-structure-row__spacer {
+  width: 24px;
+  flex-shrink: 0;
+}
+
+/* A node's page: its description, then its sections, separated by space alone. */
+.pw-structure-page__intent {
+  margin: 8px 0 0;
   color: var(--color-text-secondary);
-  line-height: 1.4;
+  font-size: 15px;
+  line-height: 24px;
 }
 
-.pw-structure-node__meta {
+.pw-structure-page__sections {
   display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 32px;
+  margin-top: 32px;
 }
 
-.pw-structure-node__badge {
-  display: inline-flex;
-  min-width: 0;
-  align-items: center;
-  gap: 4px;
+.pw-structure-page__empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
 }
 
-.pw-structure-node__deploys {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
-  gap: 6px;
+.pw-structure-page__deploys {
+  display: flex;
+  flex-direction: column;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.pw-structure-node__deploy {
+.pw-structure-page__deploy {
   display: flex;
   min-width: 0;
+  height: 44px;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 12px;
+  font-size: 13px;
 }
-
-.pw-structure-node__empty {
-  margin: 0;
-}
-
