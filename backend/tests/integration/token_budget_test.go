@@ -20,8 +20,9 @@ import (
 // and a read more than 10% under it fails too, so the ceiling is lowered to
 // the new number in the change that made the read cheaper.
 var tokenCeilings = map[string]int{
-	"mcp.initialize": 344,
-	"mcp.tools_list": 2199,
+	// Four tools replace seventeen (initialize was 344, tools/list 2199).
+	"mcp.initialize": 237,
+	"mcp.tools_list": 692,
 	// The core alone; topics are read on demand (the whole spec was 1266).
 	"polter.format": 379,
 	// One brief replaces oracle + decision + handoff + context.get (461).

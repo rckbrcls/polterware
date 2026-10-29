@@ -6,27 +6,33 @@ import (
 	"github.com/polterware/polterware/backend/domains/polter"
 )
 
-// Stable wedge MCP tools (B4 reads + B6 AgentRun audit + B7 audited writes).
+// The MCP surface is four tools: reads and Polter writes, the format, and
+// docs, whose Markdown bodies do not fit Polter text.
 const (
-	ToolContextGet       = "context.get"
-	ToolEntityGet        = "entity.get"
-	ToolEvidenceGet      = "evidence.get"
-	ToolDriftCheck       = "drift.check"
-	ToolAgentRunStart    = "agent_run.start"
-	ToolAgentRunAppend   = "agent_run.append"
-	ToolAgentRunComplete = "agent_run.complete"
-	ToolAgentRunGet      = "agent_run.get"
-	ToolAgentRunList     = "agent_run.list"
-	ToolFactUpsert       = "fact.upsert"
-	ToolEvidenceUpsert   = "evidence.upsert"
-	ToolEvidenceLink     = "evidence.link"
-	ToolKnowledgeUpsert  = "knowledge.upsert"
-	ToolKnowledgeLink    = "knowledge.link"
-	// Polter channel (Decision 0006): Work cards in Polter format.
-	ToolPolterApply  = "polter.apply"
 	ToolPolterQuery  = "polter.query"
+	ToolPolterApply  = "polter.apply"
 	ToolPolterFormat = "polter.format"
+	ToolDocUpsert    = "doc.upsert"
 )
+
+// retiredTools maps each removed tool to what replaces it, so an agent with a
+// stale tool list gets a pointer instead of "unknown tool".
+var retiredTools = map[string]string{
+	"context.get":        `polter.query "brief <slug|path|file>" or "search <terms>"`,
+	"entity.get":         `polter.query "show <id>"`,
+	"evidence.get":       `polter.query "show <id>"`,
+	"drift.check":        `polter.query "drift"`,
+	"agent_run.start":    "nothing: polter.apply and doc.upsert join this session's run on their own",
+	"agent_run.append":   "nothing: polter.apply and doc.upsert join this session's run on their own",
+	"agent_run.complete": "nothing: the session run completes when the session closes",
+	"agent_run.get":      `polter.query "show <run id>"`,
+	"agent_run.list":     "the Activity page in the Desktop",
+	"fact.upsert":        "polter.apply with a #### slug: Statement block (polter.format topic facts)",
+	"evidence.upsert":    "polter.apply with evidence: file:<path>, commit:<sha>, or url:<link> on a fact",
+	"evidence.link":      "polter.apply with evidence: <id> on a fact",
+	"knowledge.upsert":   "doc.upsert for docs, or polter.apply with a ### block for Decisions",
+	"knowledge.link":     "doc.upsert with scope: <Structure path>",
+}
 
 func scopeArgumentSchema() map[string]any {
 	return map[string]any{
@@ -38,34 +44,8 @@ func scopeArgumentSchema() map[string]any {
 	}
 }
 
-func auditedWriteProperties(extra map[string]any) map[string]any {
-	props := map[string]any{
-		"project_id":   map[string]any{"type": "string"},
-		"agent_run_id": map[string]any{"type": "string"},
-		"summary":      map[string]any{"type": "string", "description": "Change envelope summary (required)"},
-		"rationale":    map[string]any{"type": "string", "description": "Change envelope rationale (required)"},
-		"paths":        map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-	}
-	for key, value := range extra {
-		props[key] = value
-	}
-	return props
-}
-
-func auditedWriteRequired(extra ...string) []string {
-	required := []string{"project_id", "agent_run_id", "summary", "rationale"}
-	return append(required, extra...)
-}
-
 func toolDefinitions() []map[string]any {
 	return []map[string]any{
-		{
-			"name":        ToolPolterFormat,
-			"description": fmt.Sprintf("Polter format core (about %d tokens); read once before polter.apply. topic adds one part.", polter.SpecCoreTokens),
-			"inputSchema": map[string]any{"type": "object", "properties": map[string]any{
-				"topic": map[string]any{"type": "string", "enum": polter.SpecTopicNames},
-			}},
-		},
 		{
 			"name":        ToolPolterQuery,
 			"description": "Read project state as compact text. Read \"brief <slug|path|file>\" before working on a card, node, or file; \"search <terms>\" finds anything. The query field lists the other reads.",
@@ -73,7 +53,7 @@ func toolDefinitions() []map[string]any {
 				"type": "object",
 				"properties": map[string]any{
 					"project_id":  map[string]any{"type": "string"},
-					"query":       map[string]any{"type": "string", "description": "\"brief <slug|path|file> [budget:N]\", \"search <terms>\", \"cards\" (default), \"card <slug>\", \"status\", \"inbox\", \"handoff <slug>\", \"decisions [state]\", \"decision <decision>\", \"feature <slug> [shape|contract|plan]\", \"verify <slug|slug#T2>\", \"milestones\", \"roadmap\", \"canvas\", or \"canvas <name|id>\""},
+					"query":       map[string]any{"type": "string", "description": "\"brief <slug|path|file> [budget:N]\", \"search <terms>\", \"show <id>\", \"drift\", \"cards\" (default), \"card <slug>\", \"status\", \"inbox\", \"handoff <slug>\", \"structure [<path>]\", \"decisions [state]\", \"decision <id>\", \"feature <slug> [shape|contract|plan]\", \"verify <slug|slug#T2>\", \"milestones\", \"roadmap\", or \"canvas [<name|id>]\""},
 					"scope":       scopeArgumentSchema(),
 					"scope_exact": map[string]any{"type": "boolean", "description": "With scope, leave out each node's ancestors."},
 				},
@@ -82,7 +62,7 @@ func toolDefinitions() []map[string]any {
 		},
 		{
 			"name":        ToolPolterApply,
-			"description": "Create or update Work cards, tasks, questions, invariants, and handoff blocks from Polter text in one audited write; claim: T2, done: T2, and release: T2 inside a card reserve or free a task for this session's client. Needs summary and rationale (frontmatter or arguments). Without agent_run_id the write joins this session's run; no agent_run.start/complete needed. dry_run returns the plan.",
+			"description": "Write Work cards, Structure nodes, Decisions, and Facts from Polter text in one audited write that joins this session's run. Needs summary and rationale (frontmatter or arguments). dry_run returns the plan.",
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": map[string]any{
@@ -97,191 +77,29 @@ func toolDefinitions() []map[string]any {
 			},
 		},
 		{
-			"name":        ToolContextGet,
-			"description": "Compile a bounded, provenance-aware project context package with machine reasons and evidence refs. Pass agent_run_id to append a context step on an open AgentRun.",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"project_id":   map[string]any{"type": "string"},
-					"query":        map[string]any{"type": "string"},
-					"entity_id":    map[string]any{"type": "string"},
-					"token_budget": map[string]any{"type": "integer"},
-					"agent_run_id": map[string]any{"type": "string"},
-					"scope":        scopeArgumentSchema(),
-					"scope_exact":  map[string]any{"type": "boolean", "description": "With scope, leave out each node's ancestors."},
-				},
-				"required": []string{"project_id"},
-			},
+			"name":        ToolPolterFormat,
+			"description": fmt.Sprintf("Polter format core (about %d tokens); read once before polter.apply. topic adds one part.", polter.SpecCoreTokens),
+			"inputSchema": map[string]any{"type": "object", "properties": map[string]any{
+				"topic": map[string]any{"type": "string", "enum": polter.SpecTopicNames},
+			}},
 		},
 		{
-			"name":        ToolEntityGet,
-			"description": "Fetch one Canon entity by id.",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"id": map[string]any{"type": "string"},
-				},
-				"required": []string{"id"},
-			},
-		},
-		{
-			"name":        ToolEvidenceGet,
-			"description": "Fetch one Canon evidence record by id.",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"id": map[string]any{"type": "string"},
-				},
-				"required": []string{"id"},
-			},
-		},
-		{
-			"name":        ToolDriftCheck,
-			"description": "Run the narrow Drift Checker: import dependency diffs, edges under accepted Decisions without evidence, and declared-versus-observed fact conflicts. Pass agent_run_id to append a drift step on an open AgentRun.",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"project_id":   map[string]any{"type": "string"},
-					"entity_id":    map[string]any{"type": "string"},
-					"agent_run_id": map[string]any{"type": "string"},
-				},
-				"required": []string{"project_id"},
-			},
-		},
-		{
-			"name":        ToolAgentRunStart,
-			"description": "Start a minimal AgentRun audit trail (context → task → change → evidence → drift).",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"project_id":  map[string]any{"type": "string"},
-					"task":        map[string]any{"type": "string"},
-					"agent_label": map[string]any{"type": "string"},
-				},
-				"required": []string{"project_id", "task"},
-			},
-		},
-		{
-			"name":        ToolAgentRunAppend,
-			"description": "Append a declared-only change or evidence step to an open AgentRun. Change requires summary and rationale but does not mutate the Canon. Prefer fact.upsert / evidence.* / knowledge.* for real mutations.",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"agent_run_id": map[string]any{"type": "string"},
-					"kind":         map[string]any{"type": "string", "enum": []string{"change", "evidence"}},
-					"summary":      map[string]any{"type": "string"},
-					"rationale":    map[string]any{"type": "string"},
-					"paths":        map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-					"evidence_ids": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-				},
-				"required": []string{"agent_run_id", "kind"},
-			},
-		},
-		{
-			"name":        ToolAgentRunComplete,
-			"description": "Mark an open AgentRun as completed.",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"agent_run_id": map[string]any{"type": "string"},
-				},
-				"required": []string{"agent_run_id"},
-			},
-		},
-		{
-			"name":        ToolAgentRunGet,
-			"description": "Fetch one AgentRun with ordered steps for audit reconstruction.",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"id":           map[string]any{"type": "string"},
-					"agent_run_id": map[string]any{"type": "string"},
-				},
-				"required": []string{"id"},
-			},
-		},
-		{
-			"name":        ToolAgentRunList,
-			"description": "List AgentRuns for a project (newest first).",
+			"name":        ToolDocUpsert,
+			"description": "Create or update a doc (Markdown body) in one audited write that joins this session's run. Pass id to update; omitted fields stay. scope is the Structure path the doc is about (empty clears).",
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"project_id": map[string]any{"type": "string"},
-					"limit":      map[string]any{"type": "integer"},
+					"id":         map[string]any{"type": "string"},
+					"title":      map[string]any{"type": "string"},
+					"body":       map[string]any{"type": "string"},
+					"doc_type":   map[string]any{"type": "string", "enum": []string{"doc", "runbook", "source"}},
+					"tags":       map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+					"scope":      map[string]any{"type": "string"},
+					"summary":    map[string]any{"type": "string"},
+					"rationale":  map[string]any{"type": "string"},
 				},
-				"required": []string{"project_id"},
-			},
-		},
-		{
-			"name":        ToolFactUpsert,
-			"description": "Audited write: upsert a Canon fact. Requires summary, rationale, and an open agent_run_id. Actor is always agent/mcp.",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": auditedWriteProperties(map[string]any{
-					"statement":   map[string]any{"type": "string"},
-					"id":          map[string]any{"type": "string"},
-					"truth_class": map[string]any{"type": "string"},
-					"entity_id":   map[string]any{"type": "string"},
-				}),
-				"required": auditedWriteRequired("statement"),
-			},
-		},
-		{
-			"name":        ToolEvidenceUpsert,
-			"description": "Audited write: upsert Canon evidence. Requires summary, rationale, and an open agent_run_id. Use evidence_summary for the evidence body (envelope summary is the change title).",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": auditedWriteProperties(map[string]any{
-					"kind":             map[string]any{"type": "string"},
-					"id":               map[string]any{"type": "string"},
-					"evidence_summary": map[string]any{"type": "string"},
-					"path":             map[string]any{"type": "string"},
-				}),
-				"required": auditedWriteRequired("kind"),
-			},
-		},
-		{
-			"name":        ToolEvidenceLink,
-			"description": "Audited write: link existing evidence to a fact. Requires summary, rationale, and an open agent_run_id.",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": auditedWriteProperties(map[string]any{
-					"fact_id":     map[string]any{"type": "string"},
-					"evidence_id": map[string]any{"type": "string"},
-				}),
-				"required": auditedWriteRequired("fact_id", "evidence_id"),
-			},
-		},
-		{
-			"name":        ToolKnowledgeUpsert,
-			"description": "Audited write: upsert a knowledge item. Requires summary, rationale, and an open agent_run_id.",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": auditedWriteProperties(map[string]any{
-					"title":        map[string]any{"type": "string"},
-					"kind":         map[string]any{"type": "string"},
-					"id":           map[string]any{"type": "string"},
-					"body":         map[string]any{"type": "string"},
-					"tags":         map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-					"item_summary": map[string]any{"type": "string"},
-					"status":       map[string]any{"type": "string"},
-					"extra_json":   map[string]any{"type": "string"},
-				}),
-				"required": auditedWriteRequired("title", "kind"),
-			},
-		},
-		{
-			"name":        ToolKnowledgeLink,
-			"description": "Audited write: link a knowledge item to a Canon entity. Requires summary, rationale, and an open agent_run_id.",
-			"inputSchema": map[string]any{
-				"type": "object",
-				"properties": auditedWriteProperties(map[string]any{
-					"knowledge_id": map[string]any{"type": "string"},
-					"entity_id":    map[string]any{"type": "string"},
-					"predicate":    map[string]any{"type": "string"},
-					"truth_class":  map[string]any{"type": "string"},
-				}),
-				"required": auditedWriteRequired("knowledge_id", "entity_id", "predicate"),
+				"required": []string{"project_id", "summary", "rationale"},
 			},
 		},
 	}
@@ -295,35 +113,11 @@ func (s *Server) invokeTool(name string, args map[string]any) (string, error) {
 		return s.polterQuery(args)
 	case ToolPolterApply:
 		return s.polterApply(args)
-	case ToolContextGet:
-		return s.contextGet(args)
-	case ToolEntityGet:
-		return s.entityGet(args)
-	case ToolEvidenceGet:
-		return s.evidenceGet(args)
-	case ToolDriftCheck:
-		return s.driftCheck(args)
-	case ToolAgentRunStart:
-		return s.agentRunStart(args)
-	case ToolAgentRunAppend:
-		return s.agentRunAppend(args)
-	case ToolAgentRunComplete:
-		return s.agentRunComplete(args)
-	case ToolAgentRunGet:
-		return s.agentRunGet(args)
-	case ToolAgentRunList:
-		return s.agentRunList(args)
-	case ToolFactUpsert:
-		return s.factUpsert(args)
-	case ToolEvidenceUpsert:
-		return s.evidenceUpsert(args)
-	case ToolEvidenceLink:
-		return s.evidenceLink(args)
-	case ToolKnowledgeUpsert:
-		return s.knowledgeUpsert(args)
-	case ToolKnowledgeLink:
-		return s.knowledgeLink(args)
-	default:
-		return "", fmt.Errorf("unknown tool %q", name)
+	case ToolDocUpsert:
+		return s.docUpsert(args)
 	}
+	if replacement, ok := retiredTools[name]; ok {
+		return "", fmt.Errorf("%s was removed: use %s", name, replacement)
+	}
+	return "", fmt.Errorf("unknown tool %q: use polter.query, polter.apply, polter.format, or doc.upsert", name)
 }

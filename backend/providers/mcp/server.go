@@ -119,8 +119,8 @@ func (s *Server) dispatch(req rpcRequest) (any, error) {
 		return map[string]any{
 			"protocolVersion": "2024-11-05",
 			"capabilities":    map[string]any{"tools": map[string]any{}},
-			"serverInfo":      map[string]any{"name": "polterware-mcp", "version": "0.5.0"},
-			"instructions":    "Polterware MCP. Before you work on a card, a Structure node, or a file, read polter.query \"brief <slug|path|file>\" (one compact read: tasks, invariants, governing decisions, facts, milestone); find anything with \"search <terms>\". Work cards: read polter.format once, then polter.query and polter.apply (Polter text with summary and rationale; the session run is implicit). polter.query also answers \"status\", \"inbox\", \"handoff <slug>\", \"structure [<path>]\", \"decisions [state]\", \"decision <decision>\", \"feature <slug> [shape|contract|plan]\", \"verify <slug|slug#T2>\", \"milestones\", \"roadmap\", and \"canvas [<name|id>]\" (agent-visible canvases only). In polter.apply, \"? question -> answer\" closes an Inbox decision, a ### ref: block moves a Decision through its lifecycle, a handoff: block writes the session record, and claim:/done:/release: lines reserve tasks. Also context.get, entity.get, evidence.get, drift.check; AgentRun audit (agent_run.start|append|complete|get|list); audited writes (fact.upsert, evidence.upsert, evidence.link, knowledge.upsert, knowledge.link) requiring summary, rationale, and an open agent_run_id.",
+			"serverInfo":      map[string]any{"name": "polterware-mcp", "version": "0.6.0"},
+			"instructions":    "Polterware MCP: four tools. polter.query reads compact text: \"brief <slug|path|file>\" before you work on a card, node, or file (tasks, invariants, governing decisions, facts, milestone); \"search <terms>\" finds anything; \"show <id>\" opens one record; \"drift\" lists drift findings; also \"status\", \"inbox\", \"cards\", \"handoff <slug>\", \"structure [<path>]\", \"decisions\", \"milestones\", \"roadmap\", and \"canvas [<name|id>]\" (agent-visible canvases only). polter.apply writes Work cards, Structure nodes, Decisions, and Facts as Polter text with summary and rationale (read polter.format once; pass topic for the rest). doc.upsert writes a doc with a Markdown body. Writes join this session's run; there is nothing to start or complete.",
 		}, nil
 	case "tools/list":
 		return map[string]any{"tools": toolDefinitions()}, nil
@@ -155,21 +155,12 @@ func (s *Server) callTool(name string, args map[string]any) (string, error) {
 	}
 	projectID := stringFrom(args["project_id"])
 	agentRunID := stringFrom(args["agent_run_id"])
-	if agentRunID == "" && name == ToolAgentRunGet {
-		agentRunID = stringFrom(args["id"])
-	}
 	argsJSON, _ := json.Marshal(args)
 	text, err := s.invokeTool(name, args)
 	summary := agentaccess.SummarizeResult(text, 240)
 	ok := err == nil
 	if err != nil {
 		summary = agentaccess.SummarizeResult(err.Error(), 240)
-	}
-	if name == ToolAgentRunStart && ok {
-		var started map[string]any
-		if json.Unmarshal([]byte(text), &started) == nil {
-			agentRunID = stringFrom(started["id"])
-		}
 	}
 	_ = s.Store.AppendAgentToolCall(agentaccess.ToolCall{
 		ProjectID:     projectID,

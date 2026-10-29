@@ -13,7 +13,7 @@ This project is tracked by Polterware, a local store of the project's Work cards
 4. Write Work cards, Decisions, and Facts in Polter format: \`polterware format\` prints the core rules (topics: \`structure\`, \`decisions\`, \`facts\`, \`feature\`); then \`polterware apply <file|-> --dry-run\` and apply. Every write needs a summary and a rationale.
 5. End with \`polterware handoff --card <slug> --note "..."\`.
 
-Over MCP the same reads are \`polter.query\` ("brief …", "search …") and \`polter.format\`, and writes are \`polter.apply\`. \`polterware --help\` lists every command.
+Over MCP the server has four tools: \`polter.query\` for the same reads ("brief …", "search …", "show <id>", "drift"), \`polter.format\`, \`polter.apply\` for Polter writes, and \`doc.upsert\` for docs with a Markdown body. \`polterware --help\` lists every command.
 
 \`polterware setup claude\` or \`polterware setup codex\` installs the full plugin: this skill with the format embedded, the hooks, and the MCP server.
 

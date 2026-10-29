@@ -69,7 +69,13 @@ func (s *Store) GetCanonFact(id string) (canon.Fact, error) {
 }
 
 func (s *Store) UpsertCanonEvidence(evidence canon.Evidence) error {
-	_, err := s.DB.Exec(`INSERT INTO canon_evidence(
+	return upsertCanonEvidence(s.DB, evidence)
+}
+
+func upsertCanonEvidence(db interface {
+	Exec(string, ...any) (sql.Result, error)
+}, evidence canon.Evidence) error {
+	_, err := db.Exec(`INSERT INTO canon_evidence(
 		id,project_id,kind,summary,source,path,actor,observed_at,created_at,updated_at
 	) VALUES(?,?,?,?,?,?,?,?,?,?)
 	ON CONFLICT(id) DO UPDATE SET

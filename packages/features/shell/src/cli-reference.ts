@@ -270,9 +270,9 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "query",
     name: "polterware query",
     synopsis:
-      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "brief <target>" | "search <terms>" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <decision>" | "feature <slug> [step]" | "verify <slug>" | "milestones" | "roadmap" | "canvas [<name|id>]" [--scope <node>] [--exact] [--project <id>]',
+      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "brief <target>" | "search <terms>" | "show <id>" | "drift" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <decision>" | "feature <slug> [step]" | "verify <slug>" | "milestones" | "roadmap" | "canvas [<name|id>]" [--scope <node>] [--exact] [--project <id>]',
     summary:
-      "Read project state in Polter format: briefs, search, cards, one card, status, inbox, handoffs, Structure, decisions, feature steps, verification, milestones, the roadmap, or a shared canvas.",
+      "Read project state in Polter format: briefs, search, one record by id, drift findings, cards, one card, status, inbox, handoffs, Structure, decisions, feature steps, verification, milestones, the roadmap, or a shared canvas.",
     flags: [
       ...SCOPE_FLAGS,
       {

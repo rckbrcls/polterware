@@ -78,11 +78,11 @@ var SpecTopics = map[string]string{
 	"facts": "Polter Facts.\n" +
 		"\n" +
 		"#### local-authority: One local core owns SQLite.\n" +
-		"kind: declared · scope: core · evidence: ev-existing-id\n" +
+		"kind: declared · scope: core · evidence: file:backend/serve.go, ev-existing-id\n" +
 		"\n" +
 		"- `#### slug: Statement` creates a canon Fact or updates it by its lowercase-kebab slug; an existing Fact id can replace the slug. Omit the heading statement on updates to keep it.\n" +
 		"- `kind:` is declared (default on create), observed, inferred, or verified. `scope:` names a Structure node path (empty clears; omit for the whole project on create).\n" +
-		"- `evidence:` lists existing canon evidence ids, comma separated (a present line replaces links, empty clears). Omitted fields stay unchanged. Plan output uses the Fact id. Facts have no body text.\n",
+		"- `evidence:` lists evidence, comma separated: an existing id, or file:<path>, commit:<sha>, or url:<link>, which creates the record with a stable id. A present line replaces links, empty clears. Omitted fields stay unchanged. Plan output uses the Fact id. Facts have no body text.\n",
 	"feature": "Polter feature flow, tasks, and claims.\n" +
 		"\n" +
 		"- New feature: `polterware feature new \"<intent>\"`, then `feature shape|contract|plan <slug>` (`--accept` / `--approve` pass the gate); check with `polterware verify <slug>`.\n" +
@@ -130,6 +130,8 @@ const (
 	QueryHandoff   = "handoff"
 	QueryBrief     = "brief"
 	QuerySearch    = "search"
+	QueryShow      = "show"
+	QueryDrift     = "drift"
 	QueryStructure = "structure"
 	QueryFeature   = "feature"
 	QueryVerify    = "verify"
@@ -141,7 +143,7 @@ const (
 	QueryRoadmap    = "roadmap"
 )
 
-const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "brief <slug|path|file>", "search <terms>", "structure [<path>] [at <point>]", "structure history", "decisions [proposed|active|challenged|superseded]", "decision <decision>", "feature <slug> [shape|contract|plan]", "verify <slug|slug#T2>", "canvas", "canvas <name|id>", "milestones", or "roadmap"`
+const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "brief <slug|path|file>", "search <terms>", "show <id>", "drift", "structure [<path>] [at <point>]", "structure history", "decisions [proposed|active|challenged|superseded]", "decision <decision>", "feature <slug> [shape|contract|plan]", "verify <slug|slug#T2>", "canvas", "canvas <name|id>", "milestones", or "roadmap"`
 
 // ParseQuery parses the v1 query language.
 func ParseQuery(text string) (Query, error) {
@@ -152,6 +154,11 @@ func ParseQuery(text string) (Query, error) {
 	switch fields[0] {
 	case QueryBrief, QuerySearch:
 		return parseBudgetQuery(fields[0], fields[1:])
+	case QueryShow:
+		if len(fields) < 2 {
+			return Query{}, fmt.Errorf(`show needs an id: use "show <card slug|Decision ref|fact|evidence|doc|entity|run id>"`)
+		}
+		return Query{Kind: QueryShow, Slug: strings.Join(fields[1:], " ")}, nil
 	case QueryFeature:
 		switch {
 		case len(fields) == 2:
@@ -216,6 +223,8 @@ func ParseQuery(text string) (Query, error) {
 		return Query{Kind: QueryMilestones}, nil
 	case len(fields) == 1 && fields[0] == QueryRoadmap:
 		return Query{Kind: QueryRoadmap}, nil
+	case len(fields) == 1 && fields[0] == QueryDrift:
+		return Query{Kind: QueryDrift}, nil
 	case len(fields) == 2 && fields[0] == QueryCard:
 		return Query{Kind: QueryCard, Slug: fields[1]}, nil
 	case len(fields) == 2 && fields[0] == QueryHandoff:

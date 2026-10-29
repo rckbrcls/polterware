@@ -1,6 +1,6 @@
 package drift
 
-// CheckerNarrow is the B5 finding producer name for drift.check.
+// CheckerNarrow is the B5 finding producer name for the drift read.
 const CheckerNarrow = "narrow"
 
 // Finding types for the narrow checker contract.
@@ -36,7 +36,7 @@ type Finding struct {
 	Details     map[string]string `json:"details,omitempty"`
 }
 
-// Result is the stable drift.check response shape.
+// Result is the stable drift check response shape.
 type Result struct {
 	ProjectID string    `json:"project_id"`
 	EntityID  string    `json:"entity_id,omitempty"`

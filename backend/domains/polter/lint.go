@@ -45,7 +45,7 @@ func Lint(text string, refs *References) (Document, []Diagnostic) {
 	doc, diags := Decode(text)
 	if refs != nil {
 		diags = append(diags, checkReferences(doc, *refs)...)
-		diags = append(diags, checkFactEvidence(doc, refs.Evidence)...)
+		diags = append(diags, checkFactEvidence("", doc, refs.Evidence)...)
 		diags = append(diags, CheckGraph(doc, refs.Nodes, refs.Cards)...)
 		diags = append(diags, CheckRepos(doc, refs.Repos)...)
 		diags = append(diags, CheckDeploys(doc, refs.Environments)...)

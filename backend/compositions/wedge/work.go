@@ -236,6 +236,10 @@ func QueryPolterScoped(store *storepkg.Store, projectID, text string, scope stru
 		return queryBrief(store, snapshot, scope, query.Slug, query.Budget)
 	case polter.QuerySearch:
 		return querySearch(store, snapshot, scope, query.Slug, query.Budget)
+	case polter.QueryShow:
+		return queryShow(store, snapshot, query.Slug)
+	case polter.QueryDrift:
+		return queryDrift(store, projectID)
 	case polter.QueryDecisions:
 		return polter.EncodeDecisions(snapshot.Decisions, query.Slug), nil
 	case polter.QueryDecision:

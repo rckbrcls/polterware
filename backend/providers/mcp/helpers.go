@@ -1,15 +1,5 @@
 package mcp
 
-import "encoding/json"
-
-func marshalPretty(value any) (string, error) {
-	body, err := json.MarshalIndent(value, "", "  ")
-	if err != nil {
-		return "", err
-	}
-	return string(body), nil
-}
-
 func stringFrom(value any) string {
 	text, _ := value.(string)
 	return text
@@ -28,23 +18,6 @@ func boolFrom(value any) bool {
 	return flag
 }
 
-func intFrom(value any, fallback int) int {
-	switch typed := value.(type) {
-	case float64:
-		return int(typed)
-	case int:
-		return typed
-	case int32:
-		return int(typed)
-	case json.Number:
-		n, err := typed.Int64()
-		if err == nil {
-			return int(n)
-		}
-	}
-	return fallback
-}
-
 func stringSliceFrom(value any) []string {
 	switch typed := value.(type) {
 	case []string:
@@ -60,15 +33,4 @@ func stringSliceFrom(value any) []string {
 	default:
 		return nil
 	}
-}
-
-func jsonRawOrObject(raw string) any {
-	if raw == "" {
-		return map[string]any{}
-	}
-	var value any
-	if err := json.Unmarshal([]byte(raw), &value); err != nil {
-		return raw
-	}
-	return value
 }

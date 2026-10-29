@@ -92,6 +92,21 @@ func applyFactOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 			return err
 		}
 	}
+	// Typed references (file:, commit:, url:) record their evidence before the links.
+	if records, ok := op.Fields["evidence_new"].([]map[string]string); ok {
+		for _, record := range records {
+			evidence := canon.Evidence{
+				ID: record["id"], ProjectID: projectID, Kind: record["kind"], Summary: record["summary"], Path: record["path"],
+				Source: "polter", Actor: fact.Actor, ObservedAt: timestamp, CreatedAt: timestamp, UpdatedAt: timestamp,
+			}
+			if err := canon.ValidateEvidence(evidence); err != nil {
+				return err
+			}
+			if err := upsertCanonEvidence(tx, evidence); err != nil {
+				return err
+			}
+		}
+	}
 	if evidence, ok := op.Fields["evidence"].([]string); ok {
 		if _, err := tx.Exec(`DELETE FROM canon_fact_evidence WHERE fact_id=?`, op.EntityID); err != nil {
 			return err

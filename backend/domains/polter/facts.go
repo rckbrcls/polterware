@@ -83,36 +83,42 @@ func (d *decoder) closeFact() {
 	d.inMeta = false
 }
 
-func resolveFactEvidence(value string, evidence []canon.Evidence) ([]string, string) {
-	ids := []string{}
+// resolveFactEvidence reads an evidence: list of existing ids and typed
+// references (file:, commit:, url:). A typed reference that is not stored yet
+// comes back in created; unknown is the first plain id that does not exist.
+func resolveFactEvidence(projectID, value string, evidence []canon.Evidence) (ids []string, created []canon.Evidence, unknown string) {
+	ids = []string{}
+	exists := func(id string) bool {
+		return slices.ContainsFunc(evidence, func(item canon.Evidence) bool { return item.ID == id })
+	}
 	for _, ref := range splitList(value) {
-		id := ""
-		for _, item := range evidence {
-			if item.ID == ref {
-				id = item.ID
-				break
+		id := ref
+		if typed, ok := canon.ParseEvidenceRef(ref); ok {
+			record := typed.Evidence(projectID)
+			id = record.ID
+			if !exists(id) && !slices.ContainsFunc(created, func(item canon.Evidence) bool { return item.ID == id }) {
+				created = append(created, record)
 			}
-		}
-		if id == "" {
-			return nil, ref
+		} else if !exists(id) {
+			return nil, nil, ref
 		}
 		if !slices.Contains(ids, id) {
 			ids = append(ids, id)
 		}
 	}
 	slices.Sort(ids)
-	return ids, ""
+	return ids, created, ""
 }
 
-func checkFactEvidence(doc Document, evidence []canon.Evidence) []Diagnostic {
+func checkFactEvidence(projectID string, doc Document, evidence []canon.Evidence) []Diagnostic {
 	var diags []Diagnostic
 	for _, node := range doc.Facts {
 		for _, entry := range node.Meta {
 			if entry.Key != "evidence" {
 				continue
 			}
-			if _, unknown := resolveFactEvidence(entry.Value, evidence); unknown != "" {
-				diags = append(diags, Diagnostic{Line: entry.Line, Severity: SeverityError, Message: "unknown evidence " + unknown + ": use an existing evidence id in this project"})
+			if _, _, unknown := resolveFactEvidence(projectID, entry.Value, evidence); unknown != "" {
+				diags = append(diags, Diagnostic{Line: entry.Line, Severity: SeverityError, Message: "unknown evidence " + unknown + ": use an existing evidence id, or file:<path>, commit:<sha>, or url:<link> to record new evidence"})
 			}
 		}
 	}
@@ -120,7 +126,7 @@ func checkFactEvidence(doc Document, evidence []canon.Evidence) []Diagnostic {
 }
 
 func (p *planner) planFacts(doc Document) {
-	p.diags = append(p.diags, checkFactEvidence(doc, p.snapshot.Evidence)...)
+	p.diags = append(p.diags, checkFactEvidence(p.snapshot.ProjectID, doc, p.snapshot.Evidence)...)
 	state := append([]work.Fact(nil), p.snapshot.Facts...)
 	for _, node := range doc.Facts {
 		failed := p.failed(node.Line)
@@ -175,7 +181,7 @@ func (p *planner) planFacts(doc Document) {
 			}
 		}
 		if value, ok := node.MetaValue("evidence"); ok {
-			evidence, unknown := resolveFactEvidence(value, p.snapshot.Evidence)
+			evidence, created, unknown := resolveFactEvidence(p.snapshot.ProjectID, value, p.snapshot.Evidence)
 			if unknown != "" {
 				continue
 			}
@@ -184,6 +190,13 @@ func (p *planner) planFacts(doc Document) {
 			if !slices.Equal(old, evidence) {
 				set("evidence", old, evidence)
 				current.Evidence = evidence
+			}
+			if len(created) > 0 {
+				records := make([]map[string]string, 0, len(created))
+				for _, item := range created {
+					records = append(records, map[string]string{"id": item.ID, "kind": item.Kind, "path": item.Path, "summary": item.Summary})
+				}
+				fields["evidence_new"] = records
 			}
 		}
 		if len(fields) == 0 {
