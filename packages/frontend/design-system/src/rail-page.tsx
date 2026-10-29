@@ -18,7 +18,8 @@ const RAIL_GAP = 48;
 /**
  * Keeps the rail mounted while it leaves and moves it like the detail panel: it slides 16px
  * to the right and fades on `spring.slow` (a quicker tween out), and beside the text its width
- * closes too, so the centered column glides to the middle with it instead of jumping. Snaps on
+ * closes too: its content, kept at full width, travels to the page's right edge as it fades,
+ * and the centered column glides to the middle at the same time instead of jumping. Snaps on
  * first paint; under reduced motion
  * only the fade remains.
  */
@@ -38,12 +39,11 @@ function createRailPresence(options: { rail: () => HTMLElement | undefined; visi
     const alpha = Math.min(1, Math.max(0, opacity.get()));
     rail.style.opacity = alpha === 1 ? "" : String(alpha);
     if (options.narrow() || width.get() >= RAIL_WIDTH) {
-      rail.style.width = rail.style.flexBasis = rail.style.marginLeft = rail.style.overflow = "";
+      rail.style.width = rail.style.flexBasis = rail.style.marginLeft = "";
       return;
     }
     rail.style.width = rail.style.flexBasis = `${width.get()}px`;
     rail.style.marginLeft = `${-RAIL_GAP * (1 - width.get() / RAIL_WIDTH)}px`;
-    rail.style.overflow = "hidden";
   }
   function stop() {
     run++;

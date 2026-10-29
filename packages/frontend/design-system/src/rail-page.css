@@ -60,6 +60,8 @@
   flex: 1 1 auto;
   align-items: flex-start;
   gap: 48px;
+  /* The rail's content leaves past the right edge while its width closes; never a sideways scroll. */
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 0 24px 64px 62px;
 }
@@ -87,8 +89,6 @@
   width: 376px;
   flex: 0 0 376px;
   flex-direction: column;
-  /* Its content stays on the right edge while the width closes, so it leaves to the right. */
-  align-items: flex-end;
   padding-top: 48px;
 }
 
