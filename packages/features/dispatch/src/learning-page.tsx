@@ -1,26 +1,21 @@
 import { For, Show, createMemo, createSignal, onMount, type JSX } from "solid-js";
 import {
-  AiBrain01Icon,
-  Card,
   CreditCard,
+  DataTable,
   Database,
-  Gauge,
-  IconTile,
   KeyRound,
   Layers,
   PageContent,
   PageEmpty,
-  ProgressBar,
   Shield,
   StatusChip,
   Zap,
   matchClauses,
   pushToast,
   type FilterClause,
-  type IconTileTone,
 } from "@polterware/frontend-design-system";
 import { dispatchBridge, mapDispatchClassifier } from "./dispatch-bridge";
-import type { DispatchClassifierTierView, DispatchClassifierView } from "./dispatch-types";
+import type { DispatchClassifierView } from "./dispatch-types";
 
 const EXCLUDED_FEATURES = new Set(["bias", "tier_easy", "tier_normal", "tier_hard"]);
 
@@ -29,7 +24,8 @@ type FailureFeatureRow = {
   weight: number;
 };
 
-const TIER_TONES: Record<string, IconTileTone> = { easy: "integration", normal: "execution", hard: "security" };
+/** A failure feature with its positive weight in each tier that weighs it. */
+type FeatureRow = { feature: string; weights: Record<string, number> };
 
 /** A feature's icon, read from its risk keyword. */
 function featureIcon(feature: string): JSX.Element {
@@ -95,113 +91,73 @@ export function DispatchLearningPage(props: {
   onMount(() => void load());
 
   const minSamples = () => classifier().minSamples || 5;
-  const allOnPrior = createMemo(() =>
-    classifier().tiers.every((tier) => tier.samples < minSamples()),
-  );
   const needle = () => (props.query ?? "").trim().toLowerCase();
   const visibleTiers = createMemo(() => classifier().tiers.filter((tier) => {
     const state = tier.samples < minSamples() ? "Prior" : "Learned";
     return matchClauses(tier, props.clauses ?? [], { tier: (item) => item.tier, state: () => state });
   }));
 
-  return (
-    <PageContent class="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4">
-      <Card class="flex flex-wrap items-center justify-between gap-3 p-4">
-        <div class="flex min-w-0 items-center gap-3">
-          <IconTile size={36} tone="execution" seed="dispatch-classifier" class="shrink-0">
-            <AiBrain01Icon size={16} aria-hidden />
-          </IconTile>
-          <div class="flex min-w-0 flex-col gap-0.5">
-            <span class="text-[13px] font-medium text-[var(--color-text-primary)]">
-              Tier failure classifier (schema v{classifier().featureSchema})
-            </span>
-            <p class="m-0 text-[12px] leading-5 text-[var(--color-text-secondary)]">
-              {allOnPrior()
-                ? `Cold start: weights stay on the prior until a tier has ${minSamples()} verified samples.`
-                : `Weights update after ${minSamples()} verified samples.`}
-            </p>
-          </div>
-        </div>
-        <StatusChip
-          tone={allOnPrior() ? "muted" : "ok"}
-          label={allOnPrior() ? "On prior" : "Active learning"}
-        />
-      </Card>
+  // One row per failure feature any visible tier weighs; a tier name match keeps every row.
+  const rows = createMemo((): FeatureRow[] => {
+    const names = classifier().featureNames;
+    const weights = new Map<string, Record<string, number>>();
+    for (const tier of visibleTiers()) {
+      for (const row of topFailureFeatures(names, tier.weights)) {
+        weights.set(row.feature, { ...weights.get(row.feature), [tier.tier]: row.weight });
+      }
+    }
+    const tierMatch = visibleTiers().some((tier) => needle() && tier.tier.toLowerCase().includes(needle()));
+    return [...weights.entries()]
+      .filter(([feature]) => !needle() || tierMatch || feature.toLowerCase().includes(needle()))
+      .map(([feature, byTier]) => ({ feature, weights: byTier }));
+  });
 
-      <div class="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3">
-        <For each={visibleTiers()} fallback={<div class="lg:col-span-3"><PageEmpty title="No matches" mood="lost" /></div>}>
-          {(tier: DispatchClassifierTierView) => {
-            const onPrior = () => tier.samples < minSamples();
-            const progress = () => {
-              const goal = minSamples();
-              if (goal <= 0) return 0;
-              return Math.min(100, Math.max(0, (tier.samples / goal) * 100));
-            };
-            const rows = createMemo(() => {
-              const all = topFailureFeatures(classifier().featureNames, tier.weights);
-              // A tier name match keeps every row; otherwise the query narrows the features.
-              if (!needle() || tier.tier.toLowerCase().includes(needle())) return all;
-              return all.filter((row) => row.feature.toLowerCase().includes(needle()));
-            });
-            const maxWeight = () => Math.max(1e-9, ...rows().map((row) => row.weight));
-            return (
-              <Card class="flex h-full min-w-0 flex-col gap-4 p-4">
-                <div class="flex min-w-0 items-center justify-between gap-2">
-                  <div class="flex min-w-0 items-center gap-2.5">
-                    <IconTile size={28} tone={TIER_TONES[tier.tier] ?? "neutral"} seed={`dispatch-tier-${tier.tier}`} class="shrink-0">
-                      <Gauge size={14} aria-hidden />
-                    </IconTile>
-                    <div class="flex min-w-0 flex-col">
-                      <span class="truncate text-[13px] font-semibold capitalize text-[var(--color-text-primary)]">{tier.tier}</span>
-                      <span class="truncate text-[11px] tabular-nums text-[var(--color-text-muted)]">
-                        {tier.samples} of {minSamples()} verified samples
+  return (
+    <PageContent class="flex min-h-0 flex-1 flex-col overflow-auto p-3">
+      <Show
+        when={visibleTiers().length > 0 && rows().length > 0}
+        fallback={<PageEmpty title={visibleTiers().length > 0 ? "Nothing risky" : "No matches"} mood={visibleTiers().length > 0 ? "sleeping" : "lost"} />}
+      >
+        <DataTable.Root rows={rows()} getRowId={(row) => row.feature} columnWidthsKey="dispatch-learning" density="list">
+          <DataTable.Table aria-label="Failure feature weights">
+            <DataTable.Header>
+              <DataTable.ColumnHeader<FeatureRow> id="feature" width="34%" minWidth={220} sortBy={(row) => row.feature}>Failure feature</DataTable.ColumnHeader>
+              <For each={visibleTiers()}>
+                {(tier) => {
+                  const onPrior = () => tier.samples < minSamples();
+                  return (
+                    <DataTable.ColumnHeader<FeatureRow> id={`tier-${tier.tier}`} align="right" sortBy={(row) => row.weights[tier.tier] ?? 0}>
+                      <span class="inline-flex items-center gap-2">
+                        <span class="capitalize">{tier.tier}</span>
+                        <span class="tabular-nums text-[var(--color-text-muted)]" title={`${tier.samples} of ${minSamples()} verified samples`}>
+                          {tier.samples}/{minSamples()}
+                        </span>
+                        <StatusChip tone={onPrior() ? "muted" : "ok"} label={onPrior() ? "Prior" : "Learned"} />
                       </span>
-                    </div>
-                  </div>
-                  <StatusChip tone={onPrior() ? "muted" : "ok"} label={onPrior() ? "Prior" : "Learned"} />
-                </div>
-                <ProgressBar
-                  label={`${tier.tier} verified samples`}
-                  value={progress()}
-                  aria-valuetext={`${tier.samples} of ${minSamples()} verified samples`}
-                  size="sm"
-                  tone="blue"
-                />
-                <div class="flex min-w-0 flex-col gap-2">
-                  <div class="flex items-center justify-between text-[11px] font-medium text-[var(--color-text-muted)]">
-                    <span>Failure features</span>
-                    <span>Weight</span>
-                  </div>
-                  <Show when={rows().length > 0} fallback={<PageEmpty title="Nothing risky" mood="sleeping" />}>
-                    <ul class="m-0 flex list-none flex-col gap-5 p-0 pt-1" aria-label={`${tier.tier} failure features`}>
-                      <For each={rows()}>
-                        {(row) => {
-                          return (
-                            <li class="flex min-w-0 flex-col gap-1.5">
-                              <div class="flex min-w-0 items-center gap-2">
-                                <span class="flex text-[var(--color-text-muted)]">{featureIcon(row.feature)}</span>
-                                <span class="min-w-0 flex-1 truncate font-mono text-[12px] text-[var(--color-text-secondary)]" title={row.feature}>{row.feature}</span>
-                                <span class="font-mono text-[12px] tabular-nums text-[var(--color-text-primary)]">+{row.weight.toFixed(2)}</span>
-                              </div>
-                              <ProgressBar
-                                label={`${row.feature} weight`}
-                                value={(row.weight / maxWeight()) * 100}
-                                aria-valuetext={row.weight.toFixed(2)}
-                                size="sm"
-                                tone="violet"
-                              />
-                            </li>
-                          );
-                        }}
-                      </For>
-                    </ul>
-                  </Show>
-                </div>
-              </Card>
-            );
-          }}
-        </For>
-      </div>
+                    </DataTable.ColumnHeader>
+                  );
+                }}
+              </For>
+            </DataTable.Header>
+            <DataTable.Body<FeatureRow>>
+              {(row) => (
+                <DataTable.Row row={row} rowId={row.feature} aria-label={row.feature}>
+                  <DataTable.PrimaryCell icon={featureIcon(row.feature)} iconTone="neutral" iconSeed={row.feature} title={<span class="font-mono">{row.feature}</span>} />
+                  <For each={visibleTiers()}>
+                    {(tier) => (
+                      <DataTable.Cell align="right">
+                        <Show when={row.weights[tier.tier] !== undefined} fallback={<span class="text-[var(--color-text-muted)]">—</span>}>
+                          <span class="font-mono tabular-nums text-[var(--color-text-primary)]">+{row.weights[tier.tier]!.toFixed(2)}</span>
+                        </Show>
+                      </DataTable.Cell>
+                    )}
+                  </For>
+                </DataTable.Row>
+              )}
+            </DataTable.Body>
+          </DataTable.Table>
+        </DataTable.Root>
+      </Show>
     </PageContent>
   );
 }
