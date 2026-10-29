@@ -30,6 +30,10 @@ export type DispatchBridge = {
     readOnly?: boolean;
   }) => Promise<unknown>;
   cancelRun: (payload: { id: string }) => Promise<unknown>;
+  /** Runs the project checks in the run's worktree; `ok` is false when they fail. */
+  verifyRun?: (payload: { id: string }) => Promise<unknown>;
+  /** Merges a verified run's branch; `ok` is false when the merge reports a failure. */
+  mergeRun?: (payload: { id: string }) => Promise<unknown>;
   result: (payload: { id: string; section?: string; offset?: number; limit?: number }) => Promise<unknown>;
   listWorktrees: (payload: { projectId: string }) => Promise<unknown>;
   listQuota: (payload?: { agent?: string; since?: string }) => Promise<unknown>;
@@ -88,6 +92,8 @@ export function dispatchBridge(): DispatchBridge | undefined {
     getRun: d.getRun,
     startRun: d.startRun,
     cancelRun: d.cancelRun,
+    verifyRun: d.verifyRun,
+    mergeRun: d.mergeRun,
     result: d.result,
     listWorktrees: d.listWorktrees,
     listQuota: d.listQuota,
@@ -516,4 +522,16 @@ export function worktreeDisplayStatus(runStatus: string, worktreeStatus: string)
 export function formatUsedPercent(usedPercent: number | undefined): string {
   if (usedPercent === undefined || !Number.isFinite(usedPercent)) return "unknown";
   return `${usedPercent.toFixed(1)}%`;
+}
+
+/** What the run header offers next: Verify a finished run that is not verified, Merge a verified one. */
+export function runReviewAction(
+  run: Pick<DispatchRunView, "status" | "verification" | "mergedAt">,
+  hasWorktree: boolean,
+): "verify" | "merge" | null {
+  const status = run.status.toLowerCase();
+  if (status === "pending" || status === "running" || run.mergedAt.trim() || !hasWorktree) return null;
+  const verdict = run.verification.trim().toLowerCase();
+  if (verdict === "verified" || verdict === "passed") return "merge";
+  return status === "completed" || status === "failed" ? "verify" : null;
 }

@@ -190,6 +190,8 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         getRun: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.getRun, payload),
         startRun: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.startRun, payload),
         cancelRun: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.cancelRun, payload),
+        verifyRun: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.verifyRun, payload),
+        mergeRun: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.mergeRun, payload),
         result: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.result, payload),
         listWorktrees: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listWorktrees, payload),
         listQuota: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listQuota, payload),

@@ -115,6 +115,8 @@ export const IPC_CHANNELS = {
     getRun: "core:get-run",
     startRun: "core:start-run",
     cancelRun: "core:cancel-run",
+    verifyRun: "core:verify-run",
+    mergeRun: "core:merge-run",
     result: "core:result",
     watchRun: "core:watch-run",
     unwatchRun: "core:unwatch-run",

@@ -362,6 +362,8 @@ export function createPolterwareIpcHandlers(controllers: PolterwareIpcController
     [IPC_CHANNELS.core.getRun]: coreHandler(controllers, "getRun"),
     [IPC_CHANNELS.core.startRun]: coreHandler(controllers, "startRun"),
     [IPC_CHANNELS.core.cancelRun]: coreHandler(controllers, "cancelRun"),
+    [IPC_CHANNELS.core.verifyRun]: coreHandler(controllers, "verifyRun"),
+    [IPC_CHANNELS.core.mergeRun]: coreHandler(controllers, "mergeRun"),
     [IPC_CHANNELS.core.result]: coreHandler(controllers, "result"),
     [IPC_CHANNELS.core.watchRun]: coreHandler(controllers, "watchRun"),
     [IPC_CHANNELS.core.unwatchRun]: coreHandler(controllers, "unwatchRun"),

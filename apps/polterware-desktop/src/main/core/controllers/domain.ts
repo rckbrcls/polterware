@@ -110,6 +110,8 @@ export function createCoreDomainControllers(
     getRun: async (input?: JsonObject) => toJsonObject(await clients.dispatch.getRun(requestMessage(input))),
     startRun: async (input?: JsonObject) => toJsonObject(await clients.dispatch.startRun(requestMessage(input))),
     cancelRun: async (input?: JsonObject) => toJsonObject(await clients.dispatch.cancelRun(requestMessage(input))),
+    verifyRun: async (input?: JsonObject) => toJsonObject(await clients.dispatch.verifyRun(requestMessage(input))),
+    mergeRun: async (input?: JsonObject) => toJsonObject(await clients.dispatch.mergeRun(requestMessage(input))),
     result: async (input?: JsonObject) => toJsonObject(await clients.dispatch.result(requestMessage(input))),
     watchRun: async (input?: JsonObject) => {
       const raw = payload(input);

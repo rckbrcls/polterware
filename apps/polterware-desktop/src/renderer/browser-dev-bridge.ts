@@ -922,6 +922,19 @@ function createBrowserDevBridge(): PolterwareBridge {
           if (run) run.status = "cancelled";
           return { run };
         },
+        verifyRun: async (args?: { id?: string }) => {
+          const run = previewDispatchRuns.find((item) => item.id === args?.id);
+          if (run) run.verification = "verified";
+          return { ok: Boolean(run), json: JSON.stringify({ status: run ? "verified" : "error" }) };
+        },
+        mergeRun: async (args?: { id?: string }) => {
+          const run = previewDispatchRuns.find((item) => item.id === args?.id);
+          if (run) {
+            run.mergedAt = new Date().toISOString();
+            run.mergeSha = "a1b2c3d";
+          }
+          return { ok: Boolean(run), json: JSON.stringify({ merged: Boolean(run) }) };
+        },
         result: async (args?: { id?: string; section?: string }) => {
           const run = previewDispatchRuns.find((item) => item.id === args?.id);
           return { content: run ? `${args?.section ?? "summary"}: ${run.note || run.error || run.status}` : "", total: 1 };
