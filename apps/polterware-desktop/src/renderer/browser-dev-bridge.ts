@@ -446,6 +446,27 @@ const previewDispatchOutputs: Record<string, string> = {
   ].join("\n"),
 };
 
+/** What the core replays from `watchRun` for a preview run: the CLI's JSONL stream and its own events. */
+const previewDispatchStreams: Record<string, { kind: string; text: string }[]> = {
+  "drun-1": [
+    {
+      kind: "output",
+      text: [
+        { type: "thread.started", thread_id: "019a-preview" },
+        { type: "turn.started" },
+        { type: "item.completed", item: { id: "item_0", type: "reasoning", text: "**Locating the dispatch RPC surface**" } },
+        { type: "item.completed", item: { id: "item_1", type: "command_execution", command: "rg -n \"VerifyRun|MergeRun\" backend", exit_code: 0 } },
+        { type: "item.completed", item: { id: "item_2", type: "file_change", changes: [{ path: "backend/domains/dispatch/rpc.go", kind: "update" }, { path: "schemas/polterware/local/v1/dispatch.proto", kind: "update" }] } },
+        { type: "item.completed", item: { id: "item_3", type: "command_execution", command: "go test ./backend/domains/dispatch/...", exit_code: 0 } },
+        { type: "item.completed", item: { id: "item_4", type: "agent_message", text: (previewDispatchOutputs["drun-1"] ?? "").split("\n[")[0] } },
+        { type: "turn.completed", usage: { input_tokens: 18240, output_tokens: 1210 } },
+      ].map((event) => JSON.stringify(event)).join("\n") + "\n",
+    },
+    { kind: "verified", text: "go test ./backend/... passed" },
+    { kind: "merged", text: "dispatch/drun-1 into main" },
+  ],
+};
+
 const previewDispatchRuns = [
   {
     id: "drun-1",
@@ -1056,7 +1077,13 @@ function createBrowserDevBridge(): PolterwareBridge {
             },
           ],
         }),
-        watchRun: () => unsubscribe,
+        watchRun: (args: { id: string }, onEvent: (event: { id: string; seq: number; kind: string; text: string; at: string }) => void) => {
+          const timer = window.setTimeout(() => {
+            (previewDispatchStreams[args.id] ?? []).forEach((event, index) =>
+              onEvent({ id: `${args.id}-${index}`, seq: index + 1, at: new Date().toISOString(), ...event }));
+          }, 0);
+          return () => window.clearTimeout(timer);
+        },
       }),
       work: browserDevApi({
         listMilestones: async ({ projectId }: { projectId: string }) => ({ milestones: milestones.filter((item) => item.projectId === projectId).sort((a, b) => a.position - b.position) }),

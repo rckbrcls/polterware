@@ -475,6 +475,37 @@
   text-decoration: none;
 }
 
+/* Agent transcript: a CLI reply at terminal size, 13/20 prose with headings barely above it. */
+.pw-md-editor--transcript {
+  flex: 0 0 auto;
+}
+
+.pw-md-editor--transcript .pw-md-editor__surface,
+.pw-md-editor--transcript .pw-md-editor__surface .ProseMirror {
+  min-height: 0;
+}
+
+.pw-md-editor--transcript .pw-md-editor__surface .ProseMirror {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-text-primary);
+}
+
+.pw-md-editor--transcript .pw-md-editor__prose :is(p, ul, ol, blockquote, pre) {
+  margin: 0 0 8px;
+}
+
+.pw-md-editor--transcript .pw-md-editor__prose :is(h1, h2, h3) {
+  margin: 12px 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.pw-md-editor--transcript .pw-md-editor__prose :is(p, ul, ol, blockquote, pre):last-child {
+  margin-bottom: 0;
+}
+
 /* Note page: document scrolls inside the editor to its edge, selection formatting floats above it */
 .pw-note-editor .pw-md-editor__surface {
   overflow-y: auto;

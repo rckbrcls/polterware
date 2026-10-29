@@ -78,7 +78,7 @@ import type {
   DispatchWorktreeView,
 } from "./dispatch-types";
 import { runReviewAction } from "./dispatch-bridge";
-import { splitRunLog, type RunLogSegment } from "./run-log";
+import { buildTranscript, type TranscriptEntry } from "./run-log";
 import { DispatchLearningPage } from "./learning-page";
 import { TierBoard, TierModelPalette } from "./tier-board";
 import { placeTierCard } from "./tier-board-model";
@@ -1022,6 +1022,7 @@ export function DispatchPage(props: {
               onBack={closeRun}
               worktree={worktreeByRunId().get(run().id)}
               log={runLogText()}
+              answer={selectedRunResult()}
               live={isRunActive(run().status)}
               now={now()}
               cancelling={cancellingId() === run().id}
@@ -1532,48 +1533,69 @@ function DispatchRunCard(props: {
 }
 
 /**
- * A run's output as its agent wrote it: the response renders as Markdown (headings, lists,
- * code, emphasis), and the lines the core recorded between them (`[verified] …`) show as quiet
- * event rows. No title or frame: it is the page's content.
+ * A run's output as its agent's CLI prints it: a header with the agent and model, what the agent
+ * did as `›` steps, its reasoning dimmed, its reply in compact Markdown, the CLI's raw output in
+ * mono, and the lines the core recorded (`✓ verified …`). No title or frame: it is the page's content.
  */
-function RunTranscript(props: { log: string; live: boolean }) {
-  const segments = createMemo(() => splitRunLog(props.log));
+function RunTranscript(props: { log: string; answer: string; header: string; live: boolean }) {
+  const entries = createMemo(() => buildTranscript(props.log, props.answer));
   return (
-    <div class="pw-run-transcript flex min-w-0 flex-col gap-3">
+    <div class="pw-run-transcript flex min-w-0 flex-col gap-2 font-mono text-[12px] leading-5">
+      <Show when={props.header}>
+        <div class="text-[var(--color-text-muted)]">{props.header}</div>
+      </Show>
       <Show
-        when={segments().length > 0}
-        fallback={<p class="m-0 text-[13px] text-[var(--color-text-muted)]">{props.live ? "Waiting for agent output…" : "No agent output recorded."}</p>}
+        when={entries().length > 0}
+        fallback={<div class="text-[var(--color-text-muted)]">{props.live ? "Waiting for agent output…" : "No agent output recorded."}</div>}
       >
-        <Index each={segments()}>
-          {(segment) => (
-            <Show
-              when={segment().kind === "event" ? (segment() as Extract<RunLogSegment, { kind: "event" }>) : undefined}
-              fallback={
-                <MarkdownEditor
-                  class="pw-md-editor--document"
-                  value={segment().text}
-                  editable={false}
-                  aria-label="Agent response"
-                />
-              }
-            >
-              {(event) => (
-                <div class="flex min-w-0 items-center gap-2 text-[12px] text-[var(--color-text-muted)]">
-                  <StatusChip tone={dispatchStatusTone(event().event)} label={event().event} />
-                  <span class="min-w-0 truncate">{event().text}</span>
-                </div>
-              )}
-            </Show>
-          )}
-        </Index>
+        <Index each={entries()}>{(entry) => <TranscriptLine entry={entry()} />}</Index>
       </Show>
       <Show when={props.live}>
-        <span class="inline-flex items-center gap-2 text-[12px] text-[var(--color-text-muted)]">
+        <div class="inline-flex items-center gap-2 text-[var(--color-text-muted)]">
           <StatusChip tone="syncing" label="Live" />
           The agent is still writing.
-        </span>
+        </div>
       </Show>
     </div>
+  );
+}
+
+function TranscriptLine(props: { entry: TranscriptEntry }) {
+  return (
+    <Switch>
+      <Match when={props.entry.kind === "step" && props.entry}>
+        {(step) => (
+          <div class={`flex min-w-0 gap-2 ${step().failed ? "text-[var(--color-danger)]" : "text-[var(--color-text-secondary)]"}`}>
+            <span aria-hidden="true" class="shrink-0 text-[var(--color-text-muted)]">›</span>
+            <span class="min-w-0 break-words">{step().text}</span>
+            <Show when={step().detail}>
+              <span class="shrink-0 text-[var(--color-text-muted)]">{step().detail}</span>
+            </Show>
+          </div>
+        )}
+      </Match>
+      <Match when={props.entry.kind === "thinking" && props.entry}>
+        {(thinking) => <div class="whitespace-pre-wrap break-words italic text-[var(--color-text-muted)]">{thinking().text.replace(/\*\*(.+?)\*\*/g, "$1")}</div>}
+      </Match>
+      <Match when={props.entry.kind === "message" && props.entry}>
+        {(message) => (
+          <div class="py-2 font-sans">
+            <MarkdownEditor class="pw-md-editor--transcript" value={message().text} editable={false} aria-label="Agent response" />
+          </div>
+        )}
+      </Match>
+      <Match when={props.entry.kind === "output" && props.entry}>
+        {(output) => <pre class="m-0 whitespace-pre-wrap break-words font-mono text-[var(--color-text-muted)]">{output().text}</pre>}
+      </Match>
+      <Match when={props.entry.kind === "event" && props.entry}>
+        {(event) => (
+          <div class="flex min-w-0 items-center gap-2 text-[var(--color-text-muted)]">
+            <StatusChip tone={dispatchStatusTone(event().event)} label={event().event} />
+            <span class="min-w-0 truncate">{event().text}</span>
+          </div>
+        )}
+      </Match>
+    </Switch>
   );
 }
 
@@ -1605,6 +1627,8 @@ function DispatchRunDetail(props: {
   onBack: () => void;
   worktree?: DispatchWorktreeView;
   log: string;
+  /** The stored final reply, shown when the stream holds none. */
+  answer: string;
   live: boolean;
   now: number;
   cancelling: boolean;
@@ -1751,7 +1775,7 @@ function DispatchRunDetail(props: {
               </RailGroup>
             )}
           </Show>
-          <RunTranscript log={props.log} live={props.live} />
+          <RunTranscript log={props.log} answer={props.answer} header={dotted(props.run.agent, props.run.model)} live={props.live} />
           <div ref={logEnd} />
         </div>
       </RailPage>
