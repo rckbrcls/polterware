@@ -1,5 +1,5 @@
-import { Show, createSignal, onMount, type JSX } from "solid-js";
-import { chromeStopsFromTint, chromeVariant, chromeVariantIndex, hashSeed, parseComputedColor, renderChromeFinish, type ChromePreset, type ChromeStop } from "./chrome-finish";
+import { Show, createEffect, createSignal, on, onCleanup, onMount, type JSX } from "solid-js";
+import { chromeMarkStopsFromTint, chromeStopsFromTint, chromeVariant, chromeVariantIndex, hashSeed, parseComputedColor, renderChromeFinish, type ChromePreset, type ChromeStop } from "./chrome-finish";
 import "./icon-tile.css";
 
 export type IconTileTone =
@@ -16,8 +16,11 @@ export type IconTileTone =
 
 export type IconTileSize = 16 | 20 | 24 | 28 | 36;
 
-/** `chrome` paints the seeded metal finish; `plain` is a neutral opaque tile with a neutral mark. */
-export type IconTileFinish = "chrome" | "plain";
+/**
+ * `chrome-mark` (default) is the neutral lit tile with the seeded metal finish cut out by the mark;
+ * `chrome` paints the seeded metal finish on the whole tile; `plain` is a neutral lit tile with a neutral mark.
+ */
+export type IconTileFinish = "chrome" | "plain" | "chrome-mark";
 
 export const AURORA_PALETTES = ["dusk", "ember", "ocean", "meadow", "orchid", "sand"] as const;
 export type AuroraPalette = (typeof AURORA_PALETTES)[number];
@@ -107,7 +110,7 @@ export type IconTileProps = {
   accent?: string;
   dimmed?: boolean;
   class?: string;
-  /** Tile material. `plain` ignores tone, brand, accent, and aurora. Defaults to `chrome`. */
+  /** Tile material. `chrome-mark` (default) tints the mark with tone, brand, accent, or aurora; `plain` ignores them. */
   finish?: IconTileFinish;
   /** Aurora palette; renders the chrome finish tinted with the per-id accent. */
   aurora?: AuroraPalette;
@@ -250,21 +253,68 @@ export function resolveIconTileAccent(
   return ICON_TILE_TONE_ACCENTS[tone];
 }
 
+const MARK_SHAPES = "path, circle, ellipse, rect, line, polyline, polygon";
+
+/** Serializes the mark's SVG with its used stroke widths, so it can mask a chrome sheet. */
+function markMaskImage(mark: HTMLElement): string | undefined {
+  const svg = mark.querySelector("svg");
+  if (!svg) return undefined;
+  const box = svg.getBoundingClientRect();
+  if (box.width === 0 || box.height === 0) return undefined;
+  const clone = svg.cloneNode(true) as SVGSVGElement;
+  const sources = svg.querySelectorAll(MARK_SHAPES);
+  const targets = clone.querySelectorAll(MARK_SHAPES);
+  // The tile stylesheet overrides stroke widths; a data URL image does not see it.
+  sources.forEach((source, index) => {
+    const used = Number.parseFloat(getComputedStyle(source).strokeWidth);
+    if (Number.isFinite(used)) targets[index]?.setAttribute("stroke-width", String(used));
+  });
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  clone.setAttribute("width", String(box.width));
+  clone.setAttribute("height", String(box.height));
+  const markup = new XMLSerializer().serializeToString(clone);
+  return `url("data:image/svg+xml,${encodeURIComponent(markup)}")`;
+}
+
 export function IconTile(props: IconTileProps) {
   const size = () => props.size ?? 24;
-  const finish = () => props.finish ?? "chrome";
+  const finish = () => props.finish ?? "chrome-mark";
   const accent = () =>
     props.dimmed
       ? "var(--color-icon-tile-accent-neutral)"
       : props.accent ?? (props.aurora ? resolveAuroraAccent(props.aurora) : resolveIconTileAccent(props.brand, props.tone));
   const [chrome, setChrome] = createSignal<HTMLCanvasElement>();
+  const [markMask, setMarkMask] = createSignal<string>();
   let tile!: HTMLSpanElement;
+  let mark!: HTMLSpanElement;
+
+  // A flat metal sheet the size of the tile, so the same seed matches the chrome tile's reflection,
+  // masked by the mark. Thin strokes need the saturated ramp; the tile ramp reads as silver at mark size.
+  // It repaints when the mark or its tint changes; without an SVG mark or WebGL2 the mark keeps the flat accent.
+  const paintMark = () => {
+    const tint = parseComputedColor(getComputedStyle(tile).color);
+    const variant = chromeVariant(chromeVariantIndex(props.seed), props.chromePreset);
+    const mask = markMaskImage(mark);
+    const stops = props.chromeStops ?? (tint ? chromeMarkStopsFromTint(tint) : undefined);
+    const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
+    const sheet = mask && stops ? renderChromeFinish(size() * dpr, dpr, { ...variant.options, stops, radius: 0, rounding: 0 }) : null;
+    setMarkMask(sheet ? mask : undefined);
+    setChrome(sheet ?? undefined);
+  };
 
   // Static chrome finish: rendered once on the client from the tile's computed accent and radius,
   // with horizon-metal lighting varied by the seed. Until then (SSR, first paint, no WebGL2)
   // the tile shows its flat accent tint.
   onMount(() => {
     if (finish() === "plain") return;
+    if (finish() === "chrome-mark") {
+      paintMark();
+      const observer = new MutationObserver(paintMark);
+      observer.observe(mark, { childList: true, subtree: true, attributes: true, characterData: true });
+      onCleanup(() => observer.disconnect());
+      createEffect(on([accent, size, () => props.seed, () => props.chromeStops, () => props.chromePreset], paintMark, { defer: true }));
+      return;
+    }
     const style = getComputedStyle(tile);
     const tint = parseComputedColor(style.color);
     const variant = chromeVariant(chromeVariantIndex(props.seed), props.chromePreset);
@@ -286,7 +336,8 @@ export function IconTile(props: IconTileProps) {
       data-size={size()}
       data-finish={finish()}
       data-aurora={finish() === "plain" ? undefined : props.aurora}
-      class={`pw-icon-tile ${finish() === "plain" ? "pw-icon-tile--plain" : ""} ${props.dimmed ? "pw-icon-tile--dimmed" : ""} ${props.class ?? ""}`}
+      data-mark-painted={markMask() ? "" : undefined}
+      class={`pw-icon-tile ${finish() === "chrome" ? "" : "pw-icon-tile--plain"} ${finish() === "chrome-mark" ? "pw-icon-tile--chrome-mark" : ""} ${props.dimmed ? "pw-icon-tile--dimmed" : ""} ${props.class ?? ""}`}
       style={{
         width: `${size()}px`,
         height: `${size()}px`,
@@ -294,17 +345,18 @@ export function IconTile(props: IconTileProps) {
       }}
       aria-hidden="true"
     >
-      <Show when={chrome()}>
+      <Show when={chrome()} keyed>
         {(chromeFinish) => (
           <canvas
             class="pw-icon-tile-finish"
-            width={chromeFinish().width}
-            height={chromeFinish().height}
-            ref={(canvas) => queueMicrotask(() => canvas.getContext("2d")?.drawImage(chromeFinish(), 0, 0))}
+            width={chromeFinish.width}
+            height={chromeFinish.height}
+            style={markMask() ? { "mask-image": markMask(), "-webkit-mask-image": markMask() } : undefined}
+            ref={(canvas) => queueMicrotask(() => canvas.getContext("2d")?.drawImage(chromeFinish, 0, 0))}
           />
         )}
       </Show>
-      <span class="pw-icon-tile-mark">{props.children}</span>
+      <span ref={mark} class="pw-icon-tile-mark">{props.children}</span>
     </span>
   );
 }

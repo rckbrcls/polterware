@@ -80,6 +80,38 @@ describe("IconTile", () => {
     expect(styles).toMatch(/\.pw-icon-tile--plain \.pw-icon-tile-mark \{\s*color: var\(--color-text-secondary\)/);
   });
 
+  it("defaults to the chrome mark and keeps the full chrome tile opt-in", () => {
+    const mark = renderHtml(() => (
+      <IconTile tone="data">
+        <svg data-mark viewBox="0 0 16 16" />
+      </IconTile>
+    ));
+    expect(mark).toContain('data-finish="chrome-mark"');
+    expect(mark).toContain("pw-icon-tile--chrome-mark");
+
+    const chrome = renderHtml(() => (
+      <IconTile finish="chrome" tone="data">
+        <svg data-mark viewBox="0 0 16 16" />
+      </IconTile>
+    ));
+    expect(chrome).toContain('data-finish="chrome"');
+    expect(chrome).not.toContain("pw-icon-tile--plain");
+  });
+
+  it("keeps the plain lit tile and the accent on a chrome mark", () => {
+    const html = renderHtml(() => (
+      <IconTile aurora="ocean">
+        <svg data-mark viewBox="0 0 16 16" />
+      </IconTile>
+    ));
+
+    expect(html).toContain("pw-icon-tile--plain");
+    expect(html).toContain("pw-icon-tile--chrome-mark");
+    expect(html).toContain('data-aurora="ocean"');
+    expect(html).toContain("color: rgb(138, 212, 202)");
+    expect(styles).toMatch(/\.pw-icon-tile--chrome-mark\[data-mark-painted\] \.pw-icon-tile-mark \{\s*visibility: hidden/);
+  });
+
   it("keeps a light accent-tinted base under the chrome finish", () => {
     expect(styles).toContain("var(--color-icon-tile-base)");
     expect(styles).toContain("var(--color-icon-tile-edge)");

@@ -39,6 +39,8 @@ export type ChromeFinishOptions = {
 
 type Rgb = readonly [number, number, number];
 
+const mix = (a: Rgb, b: Rgb, t: number): Rgb => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+
 /**
  * Hard silver ramp from the Figma chromatic metal gradient.
  * Highlights stay near white. The accent tints the mid band and, lightly, the dark valley.
@@ -47,7 +49,6 @@ type Rgb = readonly [number, number, number];
 export function chromeStopsFromTint(tint: Rgb, horizon = 0.5, smooth = false): ChromeStop[] {
   void horizon;
   void smooth;
-  const mix = (a: Rgb, b: Rgb, t: number): Rgb => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
   const white = mix(tint, [1, 1, 1], 0.82);
   const mid = mix([0.278, 0.302, 0.329], tint, 0.55);
   const dark = mix([0.247, 0.247, 0.251], tint, 0.22);
@@ -59,6 +60,33 @@ export function chromeStopsFromTint(tint: Rgb, horizon = 0.5, smooth = false): C
     { position: 0.55, color: dark },
     { position: 0.7, color: dark },
     { position: 0.7, color: white },
+  ];
+}
+
+/** Lowest mean channel for a chrome mark tint; darker accents would vanish on the dark tile face. */
+export const CHROME_MARK_TINT_FLOOR = 0.55;
+
+/**
+ * Saturated ramp for a chrome mark on the dark lit tile, same band layout as `chromeStopsFromTint`.
+ * Dark accents are first lifted toward white to the floor. The accent is then pushed away from grey;
+ * the body carries the hue, highlights lift toward white, and the valley deepens the hue instead of
+ * going grey, so thin strokes still read as color.
+ */
+export function chromeMarkStopsFromTint(input: Rgb): ChromeStop[] {
+  const inputMean = (input[0] + input[1] + input[2]) / 3;
+  const tint = inputMean < CHROME_MARK_TINT_FLOOR ? mix(input, [1, 1, 1], (CHROME_MARK_TINT_FLOOR - inputMean) / (1 - inputMean)) : input;
+  const mean = (tint[0] + tint[1] + tint[2]) / 3;
+  const vivid = tint.map((channel) => Math.min(1, Math.max(0, mean + (channel - mean) * 1.8))) as unknown as Rgb;
+  const light = mix(vivid, [1, 1, 1], 0.45);
+  const deep = mix(vivid, [0.12, 0.12, 0.13], 0.4);
+  return [
+    { position: 0.18, color: light },
+    { position: 0.43, color: vivid },
+    { position: 0.43, color: light },
+    { position: 0.55, color: light },
+    { position: 0.55, color: deep },
+    { position: 0.7, color: deep },
+    { position: 0.7, color: vivid },
   ];
 }
 

@@ -80,12 +80,13 @@
 
 /*
  * Plain finish: the lit control material (DESIGN.md Surface and color rules) instead of chrome.
- * A near-flat opaque face, no painted frame, the edge drawn by --material-control, a neutral mark.
+ * A near-flat opaque face, no frame, the edge drawn by --material-control, a neutral mark.
  * Tone, brand, and aurora do not apply.
  */
 .pw-icon-tile--plain {
-  border-color: var(--field-frame);
-  background: var(--color-surface-active);
+  /* Frameless like other lit controls: the inset edge sits on the outer edge, not 1px inside. */
+  border: 0 solid var(--field-frame);
+  background: var(--material-face-top);
   box-shadow: var(--material-control);
 }
 
@@ -102,4 +103,23 @@
 
 .pw-icon-tile--plain.pw-icon-tile--dimmed .pw-icon-tile-mark {
   color: var(--color-text-muted);
+}
+
+/*
+ * Chrome mark: the plain lit tile with the chrome sheet behind the mark, masked by the mark's SVG
+ * (set inline once painted). Until then the mark shows in the flat accent.
+ */
+.pw-icon-tile--chrome-mark .pw-icon-tile-mark {
+  color: inherit;
+}
+
+.pw-icon-tile--chrome-mark .pw-icon-tile-finish {
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+.pw-icon-tile--chrome-mark[data-mark-painted] .pw-icon-tile-mark {
+  visibility: hidden;
 }

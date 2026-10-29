@@ -6,7 +6,7 @@ import type { DocEntry } from "./docs/types";
 export default {
   name: "Icon Tile",
   group: "Layout",
-  summary: "IconTile places a dark mark over a light, seeded chrome finish, while AuroraCover supplies the matching decorative cover strip. Seeds vary the angle, phase, and split of the chromatic metal. Pin chromePreset to change the reflection shape. Choose a semantic tone, recognized brand, or aurora palette instead of custom dark accents. finish=\"plain\" drops the chrome for a neutral opaque tile with a neutral mark.",
+  summary: "IconTile is a neutral lit tile whose mark is cut out of a seeded chrome finish tinted by the accent; AuroraCover supplies the matching full-chrome cover strip. Seeds vary the angle, phase, and split of the chromatic metal. Pin chromePreset to change the reflection shape. Choose a semantic tone, recognized brand, or aurora palette; dark custom accents are lifted so the mark stays legible. finish=\"chrome\" paints the metal over the whole tile, and finish=\"plain\" keeps the tile and mark neutral.",
   exports: ["AuroraCover", "IconTile"],
   examples: [
     { id: "tones", title: "Semantic tones", render: () => (
@@ -24,6 +24,11 @@ export default {
       <><IconTile finish="plain"><Folder size={14} /></IconTile><IconTile finish="plain" size={28}><Database size={16} /></IconTile><IconTile finish="plain" size={36}><Shield size={18} /></IconTile><IconTile finish="plain" size={36} dimmed><Folder size={18} /></IconTile></>
       // #endregion
     ) },
+    { id: "chrome-mark", title: "Chrome mark", render: () => (
+      // #region chrome-mark
+      <><IconTile tone="architecture" seed="mark-folder"><Folder size={14} /></IconTile><IconTile brand="postgres" size={28} seed="mark-db"><Database size={16} /></IconTile><IconTile aurora="ember" size={36} seed="mark-shield"><Shield size={18} /></IconTile><IconTile aurora="orchid" size={36} seed="mark-orchid"><Folder size={18} /></IconTile><IconTile size={36} dimmed><Folder size={18} /></IconTile></>
+      // #endregion
+    ) },
     { id: "reflections", title: "Chrome reflection families", wide: true, render: () => (
       // #region reflections
       <div class="grid w-full grid-cols-2 gap-6 sm:grid-cols-3">
@@ -31,7 +36,7 @@ export default {
           <div class="flex flex-col items-start gap-3">
             <AuroraCover palette="ocean" seed="reflection-study" chromePreset={preset} class="w-full" />
             <div class="flex items-center gap-3">
-              <IconTile aurora="ocean" size={36} seed="reflection-study" chromePreset={preset}><Folder size={18} /></IconTile>
+              <IconTile finish="chrome" aurora="ocean" size={36} seed="reflection-study" chromePreset={preset}><Folder size={18} /></IconTile>
               <span>{preset}</span>
             </div>
           </div>
@@ -43,7 +48,7 @@ export default {
       // #region seeded-reflections
       <>
         {Array.from({ length: 10 }, (_, index) => (
-          <IconTile aurora="ocean" size={36} seed={`chrome-${index}`}><Folder size={18} /></IconTile>
+          <IconTile finish="chrome" aurora="ocean" size={36} seed={`chrome-${index}`}><Folder size={18} /></IconTile>
         ))}
       </>
       // #endregion
