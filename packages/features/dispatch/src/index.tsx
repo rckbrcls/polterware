@@ -445,6 +445,10 @@ export function DispatchPage(props: {
   tabs?: readonly { id: string; label: string }[];
   tabsLabel?: string;
   onTabChange?: (tab: string) => void;
+  /** Opens New run with this card and prompt filled in, such as Commander's Dispatch this card; a new `key` opens it again. */
+  startDraft?: { key: number; cardSlug: string; prompt: string };
+  /** Called once New run has taken the draft, so it does not open again on the next visit. */
+  onStartDraftUsed?: () => void;
 }) {
   const [localTab, setLocalTab] = createSignal<DispatchTab>(normalizeDispatchTab(props.tab));
   const activeTab = () => (props.tab ? normalizeDispatchTab(props.tab) : localTab());
@@ -617,6 +621,14 @@ export function DispatchPage(props: {
   );
 
   onMount(() => void refresh());
+
+  createEffect(on(() => props.startDraft, (draft) => {
+    if (!draft) return;
+    setDraftCard(draft.cardSlug);
+    setDraftPrompt(draft.prompt);
+    setStartOpen(true);
+    props.onStartDraftUsed?.();
+  }));
 
   const handleStartRun = async () => {
     const bridge = dispatchBridge();

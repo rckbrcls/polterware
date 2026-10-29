@@ -77,6 +77,8 @@ Removal is soft: docs and canvases are archived (`archived_at`; hidden from list
 
 Scope is a global filter, not a surface: each scoped page edits the one shared selection from its PageToolbar filter menu, with repeatable tokens (`system:`, `domain:`, `component:`, and `env:` on Structure, Truth Docs, and Activity). Node tokens are one union sent as `scope_nodes` (a parent includes its children; ancestors stay included because the read is non-exact). It narrows Work cards (through their component), Decisions, Facts, Evidence, Inbox/Drift, Activity, the Context Compiler, `polterware query|status|inbox|search --scope <node> [--exact]`, and the MCP `scope` argument. An entity has one optional scope (`scope_node_id`); no scope means the whole project and stays visible under any filter. Decisions take `scope:` in Polter; derived Inbox/Drift items are scoped with `polterware scope item <key> <node>`.
 
+While a Work card is open, Commander lists Copy agent brief (`polterware brief <slug>` to the clipboard) and Dispatch this card (Runs' Start run with the card and a prompt filled in, `DispatchPage` `startDraft`) first.
+
 Keep history controls, the Home button, Commander, App settings, and Project settings. Project switching happens on the Projects screen; do not introduce additional product surfaces without an approved decision.
 
 ## UI law

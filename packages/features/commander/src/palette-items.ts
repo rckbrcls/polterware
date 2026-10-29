@@ -40,3 +40,9 @@ export const DEFAULT_PALETTE_ITEMS: PaletteItem[] = [
   { id: "recent.payment", label: "Payment Service", group: "Recent" },
   { id: "recent.postgres", label: "prod-postgres", group: "Recent" },
 ];
+
+/** Shown first while a Work card is open: its brief for an agent, and a dispatch run on it. */
+export const CARD_PALETTE_ITEMS: PaletteItem[] = [
+  { id: "action.copy-brief", label: "Copy agent brief", group: "Actions" },
+  { id: "action.dispatch-card", label: "Dispatch this card", group: "Actions" },
+];

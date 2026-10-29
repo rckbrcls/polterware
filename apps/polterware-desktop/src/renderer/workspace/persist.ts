@@ -497,6 +497,12 @@ export async function persistFeatureCreate(input: {
   }));
 }
 
+/** What an agent reads before it works on a card (`polterware brief <slug>`). */
+export async function loadAgentBrief(projectId: string, slug: string): Promise<string> {
+  const raw = asRecord(await core().work.query({ projectId, query: `brief ${slug}` }));
+  return typeof raw.text === "string" ? raw.text : "";
+}
+
 /** Pass the contract (shape → plan) or plan (plan → build) gate. */
 export async function persistFeatureAdvance(input: {
   projectId: string;

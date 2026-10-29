@@ -53,10 +53,11 @@ import type { CardDraft, ComposeRequest, DecisionDraft, DocDraft, MilestoneActio
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
 import { hydrateAppearancePreferences, hydrateShortcutPreferences, settingsTabScope } from "@polterware/feature-settings/boot";
 import type { ProjectSettingsPageId } from "@polterware/feature-settings";
-import { CommandPalette } from "@polterware/feature-commander";
+import { CARD_PALETTE_ITEMS, CommandPalette, DEFAULT_ITEMS } from "@polterware/feature-commander";
 import { PageLoading, pushToast, requestConfirm, requestReason, type ArchivedListItem, type ReasonOptions, type TabItem } from "@polterware/frontend-design-system";
 import {
   SHORTCUT_SEQUENCES,
+  createDetailPanelSelector,
   createSequenceMatcher,
   detailDisplayFor,
   detailPanelStore,
@@ -148,6 +149,7 @@ import {
   persistMilestoneRename,
   persistMilestoneArchive,
   persistMilestonesReorder,
+  loadAgentBrief,
   persistFeatureAdvance,
   persistFeatureCreate,
   persistFeatureLine,
@@ -641,7 +643,31 @@ export function App() {
     else navigateSection(SEQUENCE_SECTIONS[id]);
   }
 
+  // The card a page shows, for Commander's card actions.
+  const openCardSlug = createDetailPanelSelector((state) => state.activeTarget?.entityKind === "card" ? state.activeTarget.entityId : "");
+  const paletteItems = createMemo(() => openCardSlug() ? [...CARD_PALETTE_ITEMS, ...DEFAULT_ITEMS] : DEFAULT_ITEMS);
+  const [dispatchDraft, setDispatchDraft] = createSignal<{ key: number; cardSlug: string; prompt: string }>();
+
   function handlePaletteCommand(id: string) {
+    if (id === "action.copy-brief" || id === "action.dispatch-card") {
+      const slug = openCardSlug();
+      if (!slug) return;
+      if (id === "action.copy-brief") {
+        void loadAgentBrief(currentProjectId(), slug)
+          .then(async (brief) => {
+            if (!brief.trim()) throw new Error("The core returned no brief for this card.");
+            await navigator.clipboard.writeText(brief);
+            pushToast("Agent brief copied.", "success");
+          })
+          .catch((error: unknown) => pushToast(error instanceof Error ? error.message : "Could not copy the agent brief.", "danger"));
+        return;
+      }
+      const title = workspace().workCards.find((card) => card.slug === slug)?.title ?? slug;
+      navigateSection("dispatch");
+      // Opened once Commander has closed and handed focus back, so its close does not dismiss New run.
+      window.setTimeout(() => setDispatchDraft({ key: Date.now(), cardSlug: slug, prompt: `${title}: work on card ${slug}. Read \`polterware brief ${slug}\` first.` }), 200);
+      return;
+    }
     if (id === "action.show-shortcuts") {
       setShortcutsOpen(true);
       return;
@@ -1697,6 +1723,8 @@ export function App() {
             tabs={dispatchTabsFor(route().section)}
             tabsLabel={dispatchTabsLabel(route().section)}
             onTabChange={(tab) => applyRoute(setTab(route(), tab))}
+            startDraft={dispatchDraft()}
+            onStartDraftUsed={() => setDispatchDraft(undefined)}
           />
         </Match>
 
@@ -1902,6 +1930,7 @@ export function App() {
       <ShortcutsPanel open={shortcutsOpen()} onClose={() => setShortcutsOpen(false)} />
       <CommandPalette
         open={paletteOpen()}
+        items={paletteItems()}
         platform={PLATFORM_CONTEXT}
         onClose={() => setPaletteOpen(false)}
         onCommand={(id) => {

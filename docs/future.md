@@ -22,7 +22,7 @@ Category: **Project Context & Change Intelligence for AI Coding.** Polterware ke
 
 - A rigid state machine for agents (UNDERSTAND → PLAN → …).
 - LLM calls or user LLM keys inside the Desktop or the local binary.
-- A sidebar for skills, plugins, or hooks as a product pillar (setup lives in Agents › Access).
+- A sidebar for skills, plugins, or hooks as a product pillar (setup lives in App settings › Agents).
 - AI-memory or "chat over the repo" positioning; codebase-wide RAG as ingest.
 - Reintroducing Operations, Terminal, or Nodes.
 
@@ -81,7 +81,7 @@ Independent hypotheses; a win on H2 does not validate H3–H5, and more restrict
 
 ## Dispatch still open
 
-The core engine, SQLite store, CLI, TUI, and Desktop surface (Runs, Routing, Usage) are shipped. Worktree info lives on the run card. A dispatch run is a core-executed delegation with a linked AgentRun and an optional Work card slug. There is no Dispatch MCP tool. The CLI exposes `merge`, `clean`, `recover`, `verify`, `route`, `classify`, `config`, `subagents`, `wait`, `doctor`, `on`/`off`/`hook`, `skill`, and `update`; the Desktop has no UI for them yet.
+The core engine, SQLite store, CLI, TUI, and Desktop surface (Runs, Routing, Usage) are shipped, with Verify, Merge, and Cancel on a run's page and a card's runs on its page. There is no Dispatch MCP tool. The CLI also exposes `clean`, `recover`, `route`, `classify`, `config`, `subagents`, `wait`, `doctor`, `on`/`off`/`hook`, `skill`, and `update`; the Desktop has no UI for those yet.
 
 Still open:
 
@@ -139,7 +139,7 @@ Open: branch naming scheme and whether it is configurable; where worktrees live 
 - **Behavioral runtime.** Project and task contracts, typed actions, and an execution state machine that mediates effects where an integration can. Enforcement is only possible where the agent host lets Polterware mediate; elsewhere it stays advisory.
 - **Engineering knowledge library.** Versioned sources, principles, applicability conditions, and checks. No paper becomes policy automatically. Context capsules select facts, Decision excerpts, gaps, and source paths under a token budget.
 - **Decision ownership.** Authority classes (human-only, delegated, agent-local), a delegation budget, and Decision Inbox routing. Humans choose architecture, method, and test strategy; accepted decisions and invariants bound the agent.
-- **Automatic agent context.** Plugin, skill, and session hook that inject bounded context at session start. Fewer tokens through hybrid layout (short context file plus on-demand reads) and compact encodings such as TOON, measured against plain reading. Anti-ideas: dumping the architecture into the prompt, a vector store as truth.
+- **Compact agent encodings.** The brief, the layered format, and the context hook ship; encodings such as TOON are untried and must beat plain text in `token_budget_test` before they replace it. Anti-ideas: dumping the architecture into the prompt, a vector store as truth.
 - **Multi-repo answers.** Cross-repository questions resolved from linked entities and evidence across projects, without cloning the other repository; federation only with Cloud.
 
 ## Product questions still open
