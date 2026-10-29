@@ -77,7 +77,6 @@ const PRESENCE_MOTION_PATHS = new Set([
   "packages/frontend/design-system/src/popover.css",
   "packages/frontend/design-system/src/template-card.css",
   "packages/frontend/design-system/src/toast.css",
-  "packages/features/architecture/src/atlas-tree.css",
 ]);
 // Shared JS motion primitives fade moving highlights and indicators through Motion values.
 const MOTION_VALUE_PATHS = new Set([
@@ -85,7 +84,6 @@ const MOTION_VALUE_PATHS = new Set([
   "packages/frontend/design-system/src/popup-motion.ts",
   "packages/frontend/design-system/src/icon-swap.tsx",
   "packages/frontend/design-system/src/placement-motion.ts",
-  "packages/features/architecture/src/canvas/atlas-card-frame.tsx",
   // Marketing page sections fade in once on scroll and the hero fades out as the page moves on.
   "apps/web/src/components/scroll-motion.ts",
 ]);

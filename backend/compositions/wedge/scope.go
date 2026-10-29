@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/polterware/polterware/backend/domains/agentrun"
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/decision"
 	"github.com/polterware/polterware/backend/domains/inbox"
@@ -17,7 +17,7 @@ import (
 // ListInboxScoped derives the Inbox and keeps the items inside scope. An item's
 // own scope wins; otherwise a Decision item takes its card's `under` and a
 // Verify item takes its fact's scope. Everything else is unscoped and stays.
-func ListInboxScoped(store *storepkg.Store, projectID string, scope atlas.MultiScope) (inbox.Result, error) {
+func ListInboxScoped(store *storepkg.Store, projectID string, scope structure.MultiScope) (inbox.Result, error) {
 	snapshot, err := store.LoadWorkSnapshot(projectID)
 	if err != nil {
 		return inbox.Result{}, err
@@ -25,7 +25,7 @@ func ListInboxScoped(store *storepkg.Store, projectID string, scope atlas.MultiS
 	return inboxScoped(store, snapshot, scope)
 }
 
-func inboxScoped(store *storepkg.Store, snapshot work.Snapshot, scope atlas.MultiScope) (inbox.Result, error) {
+func inboxScoped(store *storepkg.Store, snapshot work.Snapshot, scope structure.MultiScope) (inbox.Result, error) {
 	projectID := snapshot.ProjectID
 	result, err := listInbox(store, snapshot)
 	if err != nil || !scope.Active() {
@@ -73,9 +73,9 @@ func inboxScoped(store *storepkg.Store, snapshot work.Snapshot, scope atlas.Mult
 	return filtered, nil
 }
 
-// scopeSnapshot narrows the snapshot's cards and Decisions to scope. Atlas
+// scopeSnapshot narrows the snapshot's cards and Decisions to scope. Structure
 // nodes stay whole so the map keeps its structure.
-func scopeSnapshot(store *storepkg.Store, snapshot work.Snapshot, scope atlas.MultiScope) (work.Snapshot, error) {
+func scopeSnapshot(store *storepkg.Store, snapshot work.Snapshot, scope structure.MultiScope) (work.Snapshot, error) {
 	if !scope.Active() {
 		return snapshot, nil
 	}
@@ -167,39 +167,39 @@ func ScopeRefs(single string, many []string) []string {
 // ResolveScopeRef turns one node id, path, or slug into a Scope. An empty ref
 // is the whole project. Removed nodes are unknown. The ref is one node: commas
 // are not separators here (assignment stays a single node).
-func ResolveScopeRef(store *storepkg.Store, projectID, ref string, exact bool) (atlas.Scope, error) {
+func ResolveScopeRef(store *storepkg.Store, projectID, ref string, exact bool) (structure.Scope, error) {
 	ref = strings.TrimSpace(ref)
 	if ref == "" {
-		return atlas.Scope{}, nil
+		return structure.Scope{}, nil
 	}
 	scope, err := resolveScopeIDs(store, projectID, []string{ref}, exact)
 	if err != nil {
-		return atlas.Scope{}, err
+		return structure.Scope{}, err
 	}
-	return atlas.Scope{NodeID: scope.NodeIDs[0], Exact: exact}, nil
+	return structure.Scope{NodeID: scope.NodeIDs[0], Exact: exact}, nil
 }
 
 // ResolveScopeRefs turns node ids, paths, or slugs into one MultiScope. An
 // empty list is the whole project. Commas inside a ref split it. The first
 // unknown ref is an error. Removed nodes are unknown.
-func ResolveScopeRefs(store *storepkg.Store, projectID string, refs []string, exact bool) (atlas.MultiScope, error) {
+func ResolveScopeRefs(store *storepkg.Store, projectID string, refs []string, exact bool) (structure.MultiScope, error) {
 	return resolveScopeIDs(store, projectID, ScopeRefs("", refs), exact)
 }
 
-func resolveScopeIDs(store *storepkg.Store, projectID string, refs []string, exact bool) (atlas.MultiScope, error) {
+func resolveScopeIDs(store *storepkg.Store, projectID string, refs []string, exact bool) (structure.MultiScope, error) {
 	if len(refs) == 0 {
-		return atlas.MultiScope{}, nil
+		return structure.MultiScope{}, nil
 	}
-	nodes, err := store.AtlasNodes(projectID)
+	nodes, err := store.StructureNodes(projectID)
 	if err != nil {
-		return atlas.MultiScope{}, err
+		return structure.MultiScope{}, err
 	}
 	ids := make([]string, 0, len(refs))
 	seen := map[string]bool{}
 	for _, ref := range refs {
 		id := ""
 		for _, node := range nodes {
-			if node.Status == atlas.NodeRemoved {
+			if node.Status == structure.NodeRemoved {
 				continue
 			}
 			if node.ID == ref || node.Path == ref || node.Slug == ref {
@@ -208,17 +208,17 @@ func resolveScopeIDs(store *storepkg.Store, projectID string, refs []string, exa
 			}
 		}
 		if id == "" {
-			return atlas.MultiScope{}, fmt.Errorf("unknown atlas node %q: list them with polterware atlas", ref)
+			return structure.MultiScope{}, fmt.Errorf("unknown structure node %q: list them with polterware structure", ref)
 		}
 		if !seen[id] {
 			seen[id] = true
 			ids = append(ids, id)
 		}
 	}
-	return atlas.MultiScope{NodeIDs: ids, Exact: exact}, nil
+	return structure.MultiScope{NodeIDs: ids, Exact: exact}, nil
 }
 
-// LoadNodeScope resolves one scope reference against the project Atlas.
+// LoadNodeScope resolves one scope reference against the project Structure.
 func LoadNodeScope(store *storepkg.Store, projectID, ref string, exact bool) (storepkg.NodeScope, error) {
 	return LoadNodeScopes(store, projectID, []string{ref}, exact)
 }

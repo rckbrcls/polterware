@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/decision"
 	"github.com/polterware/polterware/backend/domains/work"
 	"github.com/polterware/polterware/backend/platform/ids"
@@ -264,7 +264,7 @@ func EncodeDecisions(decisions []decision.Decision, state string) string {
 }
 
 // EncodeDecision renders one decision as a Polter block plus its chain and
-// the Atlas nodes that cite it.
+// the Structure nodes that cite it.
 func EncodeDecision(target decision.Decision, all []decision.Decision, nodePaths []string) string {
 	node := DecisionNode{Ref: decisionHandle(target), Body: target.Body}
 	if _, ok := decision.Number(target.Title); ok {
@@ -305,11 +305,11 @@ func EncodeDecision(target decision.Decision, all []decision.Decision, nodePaths
 
 var titlePrefixRE = regexp.MustCompile(`(?i)^\s*verdict[\s\-_]*\d+\s*[:.\-–—]?\s*`)
 
-// NodesCiting returns the paths of active Atlas nodes whose decisions: cite d.
-func NodesCiting(nodes []atlas.Node, d decision.Decision) []string {
+// NodesCiting returns the paths of active Structure nodes whose decisions: cite d.
+func NodesCiting(nodes []structure.Node, d decision.Decision) []string {
 	var paths []string
 	for _, node := range nodes {
-		if node.Status == atlas.NodeRemoved {
+		if node.Status == structure.NodeRemoved {
 			continue
 		}
 		for _, ref := range node.Decisions {

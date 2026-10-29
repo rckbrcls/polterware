@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/polterware/polterware/backend/domains/agentrun"
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/decision"
 	"github.com/polterware/polterware/backend/domains/inbox"
 	"github.com/polterware/polterware/backend/domains/polter"
@@ -194,15 +194,15 @@ func ApplyPolter(store *storepkg.Store, in ApplyInput) (ApplyResult, error) {
 }
 
 // QueryPolter answers a v1 query ("cards", "card <slug>", "status", "inbox",
-// "handoff <slug>", "oracle", "atlas", "decisions [state]", "decision <verdict>",
+// "handoff <slug>", "oracle", "structure", "decisions [state]", "decision <verdict>",
 // "feature <slug>", "verify <target>", "canvas", "canvas <name|id>") in text.
 func QueryPolter(store *storepkg.Store, projectID, text string) (string, error) {
-	return QueryPolterScoped(store, projectID, text, atlas.MultiScope{})
+	return QueryPolterScoped(store, projectID, text, structure.MultiScope{})
 }
 
 // QueryPolterScoped answers a query over the cards, Decisions and Inbox items
 // inside scope. An inactive scope is the whole project. Several nodes are a union.
-func QueryPolterScoped(store *storepkg.Store, projectID, text string, scope atlas.MultiScope) (string, error) {
+func QueryPolterScoped(store *storepkg.Store, projectID, text string, scope structure.MultiScope) (string, error) {
 	query, err := polter.ParseQuery(text)
 	if err != nil {
 		return "", err
@@ -246,27 +246,27 @@ func QueryPolterScoped(store *storepkg.Store, projectID, text string, scope atla
 		return queryFeature(store, snapshot, query)
 	case polter.QueryCanvas:
 		return queryCanvas(store, projectID, query.Slug, scope)
-	case polter.QueryAtlas:
+	case polter.QueryStructure:
 		project, err := store.GetProject(projectID)
 		if err != nil {
 			return "", err
 		}
 		if query.History {
-			entries, err := AtlasHistory(store, projectID)
+			entries, err := StructureHistory(store, projectID)
 			if err != nil {
 				return "", err
 			}
-			return encodeAtlasHistory(entries), nil
+			return encodeStructureHistory(entries), nil
 		}
 		if query.At != "" {
-			rows, err := AtlasAt(context.Background(), store, projectID, query.At)
+			rows, err := StructureAt(context.Background(), store, projectID, query.At)
 			if err != nil {
 				return "", err
 			}
-			return "Atlas at " + query.At + " (structure only: status, features, and drift are live)\n" +
-				polter.EncodeAtlas(project.Name, rows, nil, query.Slug), nil
+			return "Structure at " + query.At + " (structure only: status, features, and drift are live)\n" +
+				polter.EncodeStructure(project.Name, rows, nil, query.Slug), nil
 		}
-		return polter.EncodeAtlas(project.Name, atlasRows(store, snapshot), snapshot.Cards, query.Slug), nil
+		return polter.EncodeStructure(project.Name, structureRows(store, snapshot), snapshot.Cards, query.Slug), nil
 	default:
 		return polter.EncodeList(snapshot), nil
 	}
@@ -288,7 +288,7 @@ func queryHandoff(store *storepkg.Store, snapshot work.Snapshot, slug string) (s
 	return polter.EncodeHandoff(card, handoff), nil
 }
 
-func queryStatus(store *storepkg.Store, snapshot work.Snapshot, scope atlas.MultiScope) string {
+func queryStatus(store *storepkg.Store, snapshot work.Snapshot, scope structure.MultiScope) string {
 	// The Inbox is a best-effort addition: a drift read that fails leaves
 	// status without its inbox lines rather than failing the session start.
 	inboxLines := ""

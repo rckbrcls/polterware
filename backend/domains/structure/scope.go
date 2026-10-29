@@ -1,6 +1,6 @@
-package atlas
+package structure
 
-// Scope is a global filter over the project: one Atlas node, or the whole
+// Scope is a global filter over the project: one Structure node, or the whole
 // project when NodeID is empty. Exact drops the ancestors from the match.
 type Scope struct {
 	NodeID string
@@ -10,7 +10,7 @@ type Scope struct {
 // Active reports whether the scope narrows anything.
 func (s Scope) Active() bool { return s.NodeID != "" }
 
-// MultiScope is a global filter over several Atlas nodes. The match is the
+// MultiScope is a global filter over several Structure nodes. The match is the
 // union of each node's Scope. Exact applies to every node. An empty NodeIDs
 // is the whole project.
 type MultiScope struct {

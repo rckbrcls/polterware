@@ -11,7 +11,7 @@ export function CreateKnowledgeDialog(props: {
   onClose: () => void;
   onSubmit: (title: string, kind: CreateKnowledgeKind, scope?: "principle" | "decision", scopePath?: string) => void;
   scopeNodes?: ScopeNodeItem[];
-  /** Atlas node path preselected for a new Verdict; empty is the whole project. */
+  /** Structure node path preselected for a new Verdict; empty is the whole project. */
   defaultScopePath?: string;
 }) {
   const [title, setTitle] = createSignal("");
@@ -77,7 +77,7 @@ export function CreateKnowledgeDialog(props: {
             />
           </Field>
           <Show when={scope() === "decision" && (props.scopeNodes?.length ?? 0) > 0}>
-            <Field label="Atlas scope" hint="Optional. Leave on Whole project to show it under every filter">
+            <Field label="Structure scope" hint="Optional. Leave on Whole project to show it under every filter">
               <ScopePicker nodes={props.scopeNodes ?? []} value={scopePath()} onChange={setScopePath} class="w-full" />
             </Field>
           </Show>

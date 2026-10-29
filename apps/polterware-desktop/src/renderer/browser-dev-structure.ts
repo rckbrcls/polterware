@@ -1,8 +1,8 @@
-import type { WorkspaceAtlasNode } from "@polterware/feature-shell";
+import type { WorkspaceStructureNode } from "@polterware/feature-shell";
 
 /** In-memory Structure mutations for the explicitly seeded browser bridge. */
-export function createBrowserStructure(seedProjectId: string, seed: readonly Partial<WorkspaceAtlasNode>[]) {
-  const projects = new Map<string, WorkspaceAtlasNode[]>();
+export function createBrowserStructure(seedProjectId: string, seed: readonly Partial<WorkspaceStructureNode>[]) {
+  const projects = new Map<string, WorkspaceStructureNode[]>();
   const list = (projectId: string) => {
     if (!projects.has(projectId)) projects.set(projectId, projectId === seedProjectId ? seed.map((node) => ({
       id: "", parentId: "", level: "system", slug: "", path: "", title: "", intent: "", decisions: [], invariants: [], status: "proposed",

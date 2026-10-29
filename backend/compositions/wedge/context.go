@@ -16,7 +16,7 @@ type ContextInput struct {
 	EntityID    string
 	TokenBudget int
 	AgentRunID  string
-	// ScopeNodeID and ScopeNodeIDs narrow the package to those Atlas nodes
+	// ScopeNodeID and ScopeNodeIDs narrow the package to those Structure nodes
 	// (union). ScopeExact leaves ancestors out of every node.
 	ScopeNodeID  string
 	ScopeNodeIDs []string

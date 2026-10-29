@@ -68,7 +68,7 @@ message ListChangesRequest {
   string actor_kind = 2;
   int32 limit = 3;
   // scope_node and scope_nodes narrow the history to changes whose subjects
-  // carry a scope_node_id inside that Atlas scope (union). scope_node is merged
+  // carry a scope_node_id inside that Structure scope (union). scope_node is merged
   // with scope_nodes. A change with no scoped subject stays visible.
   string scope_node = 4;
   bool scope_exact = 5;

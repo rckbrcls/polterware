@@ -9,7 +9,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/decision"
 	"golang.org/x/text/unicode/norm"
@@ -103,7 +103,7 @@ type Card struct {
 	Stage     string
 	Status    string
 	Owner     string
-	// Kind is feature or architecture (a structural Atlas change).
+	// Kind is feature or architecture (a structural Structure change).
 	Kind       string
 	Under      string
 	Decisions  []string
@@ -197,11 +197,11 @@ type Handoff struct {
 	CreatedAt  time.Time
 }
 
-// Snapshot is the current Work graph of one project, plus its Atlas nodes.
+// Snapshot is the current Work graph of one project, plus its Structure nodes.
 type Snapshot struct {
 	ProjectID string
 	Cards     []Card
-	Nodes     []atlas.Node
+	Nodes     []structure.Node
 	// Repos names the project's extra checkouts (project_repos). The
 	// project root is the unnamed default and is not listed.
 	Repos []string
@@ -242,13 +242,13 @@ func (s Snapshot) HasRepo(name string) bool {
 }
 
 // NodeByPath returns the node with path, including removed nodes.
-func (s Snapshot) NodeByPath(path string) (atlas.Node, bool) {
+func (s Snapshot) NodeByPath(path string) (structure.Node, bool) {
 	for _, node := range s.Nodes {
 		if node.Path == path {
 			return node, true
 		}
 	}
-	return atlas.Node{}, false
+	return structure.Node{}, false
 }
 
 // Card returns the card with slug, if present.
@@ -286,7 +286,7 @@ type Op struct {
 	EntityID string
 	CardID   string
 	CardSlug string
-	// NodeID is the atlas node an invariant belongs to. CardID stays empty.
+	// NodeID is the structure node an invariant belongs to. CardID stays empty.
 	NodeID string
 	// Label is the human handle used in plan output: the task number ("T2"),
 	// or the question/invariant text.

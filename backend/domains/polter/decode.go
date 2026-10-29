@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/decision"
 	"github.com/polterware/polterware/backend/domains/work"
 )
@@ -45,7 +45,7 @@ type Document struct {
 	Version   int
 	Summary   string
 	Rationale string
-	Nodes     []AtlasNode
+	Nodes     []StructureNode
 	Cards     []CardNode
 	Decisions []DecisionNode
 	Facts     []FactNode
@@ -82,9 +82,9 @@ var DecisionMetaKeys = []string{"status", "supersedes", "trigger", "reason", "sc
 // DecisionNewRef is the ref that proposes a new decision.
 const DecisionNewRef = "new"
 
-// AtlasNode is a system, domain, or component. Path is the heading path
+// StructureNode is a system, domain, or component. Path is the heading path
 // (`core` or `core/import`); the store materializes it with under:.
-type AtlasNode struct {
+type StructureNode struct {
 	Line       int
 	Slug       string
 	Path       string
@@ -96,7 +96,7 @@ type AtlasNode struct {
 }
 
 // MetaValue returns the last value given for key.
-func (n AtlasNode) MetaValue(key string) (string, bool) {
+func (n StructureNode) MetaValue(key string) (string, bool) {
 	value, found := "", false
 	for _, entry := range n.Meta {
 		if entry.Key == key {
@@ -194,7 +194,7 @@ type InvariantNode struct {
 // MetaKeys are the card metadata keys grammar v1 accepts.
 var MetaKeys = []string{"stage", "owner", "under", "decisions", "status", "kind"}
 
-// NodeMetaKeys are the Atlas node metadata keys. repo: names a registered
+// NodeMetaKeys are the Structure node metadata keys. repo: names a registered
 // checkout (empty is the project root); path: is a folder inside it.
 var NodeMetaKeys = []string{"level", "under", "repo", "path", "decisions", "uses", "deploys", "status", "migrating"}
 
@@ -228,7 +228,7 @@ type decoder struct {
 	diags []Diagnostic
 
 	card       *CardNode
-	node       *AtlasNode
+	node       *StructureNode
 	decision   *DecisionNode
 	fact       *FactNode
 	factRefs   map[string]int
@@ -761,7 +761,7 @@ func (d *decoder) nodeHeading(n int, slug, headingPath, title string) {
 	} else {
 		d.pathLines[headingPath] = n
 	}
-	d.node = &AtlasNode{Line: n, Slug: slug, Path: headingPath, Title: title}
+	d.node = &StructureNode{Line: n, Slug: slug, Path: headingPath, Title: title}
 	d.inMeta = true
 	d.intent = nil
 }
@@ -809,8 +809,8 @@ func (d *decoder) nodeMeta(n int, line string) {
 		switch key {
 		case "level":
 			value = strings.ToLower(value)
-			if !atlas.ValidLevel(value) {
-				d.errorf(n, "unknown level %q: use %s", value, strings.Join(atlas.Levels, "|"))
+			if !structure.ValidLevel(value) {
+				d.errorf(n, "unknown level %q: use %s", value, strings.Join(structure.Levels, "|"))
 			}
 		case "status":
 			value = strings.ToLower(value)

@@ -24,8 +24,8 @@ describe("detailDisplayFor", () => {
     expect(canExpandDetail("card")).toBe(true);
   });
 
-  it("limits writing canvases to knowledge documents, preserving Atlas and fact details", () => {
+  it("limits writing canvases to knowledge documents, preserving Structure and fact details", () => {
     for (const kind of ["verdict", "evidence", "card"]) expect(isDocumentDetail(kind)).toBe(true);
-    for (const kind of ["arch-view", "atlas-card", "fact", undefined]) expect(isDocumentDetail(kind)).toBe(false);
+    for (const kind of ["arch-view", "structure-card", "fact", undefined]) expect(isDocumentDetail(kind)).toBe(false);
   });
 });

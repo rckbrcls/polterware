@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
@@ -54,7 +54,7 @@ func TestPlanDeploysRoundTrip(t *testing.T) {
 		t.Fatalf("plan: %+v", diags)
 	}
 	var systemID, webID string
-	var deploys []atlas.Deployment
+	var deploys []structure.Deployment
 	for _, op := range ops {
 		if op.Entity != work.EntityNode || op.Kind != work.OpCreate {
 			continue
@@ -64,7 +64,7 @@ func TestPlanDeploysRoundTrip(t *testing.T) {
 			systemID = op.EntityID
 		case "app/web":
 			webID = op.EntityID
-			deploys, _ = op.Fields["deploys"].([]atlas.Deployment)
+			deploys, _ = op.Fields["deploys"].([]structure.Deployment)
 		}
 	}
 	if systemID == "" || webID == "" || len(deploys) != 2 {
@@ -80,9 +80,9 @@ func TestPlanDeploysRoundTrip(t *testing.T) {
 		t.Fatalf("ids = %q %q", deploys[0].ID, deploys[1].ID)
 	}
 
-	snapshot.Nodes = []atlas.Node{
-		{ID: systemID, Path: "app", Slug: "app", Title: "App", Level: atlas.LevelSystem, Status: atlas.NodeActive},
-		{ID: webID, Path: "app/web", Slug: "web", Title: "Web", Level: atlas.LevelComponent, Status: atlas.NodeActive, ParentID: systemID, Deploys: deploys},
+	snapshot.Nodes = []structure.Node{
+		{ID: systemID, Path: "app", Slug: "app", Title: "App", Level: structure.LevelSystem, Status: structure.NodeActive},
+		{ID: webID, Path: "app/web", Slug: "web", Title: "Web", Level: structure.LevelComponent, Status: structure.NodeActive, ParentID: systemID, Deploys: deploys},
 	}
 	if ops, diags = Plan(doc, snapshot); HasErrors(diags) || len(ops) != 0 {
 		t.Fatalf("re-plan should be a no-op: %s %+v", FormatPlan(ops), diags)
@@ -96,7 +96,7 @@ func TestPlanDeploysRoundTrip(t *testing.T) {
 	if HasErrors(diags) || len(ops) != 1 {
 		t.Fatalf("replace: %s %+v", FormatPlan(ops), diags)
 	}
-	replaced := ops[0].Fields["deploys"].([]atlas.Deployment)
+	replaced := ops[0].Fields["deploys"].([]structure.Deployment)
 	if len(replaced) != 1 || replaced[0].EnvironmentID != "env-prod" || replaced[0].ID != deploys[1].ID {
 		t.Fatalf("replaced = %+v", replaced)
 	}
@@ -104,7 +104,7 @@ func TestPlanDeploysRoundTrip(t *testing.T) {
 	if HasErrors(diags) || len(ops) != 1 {
 		t.Fatalf("clear: %s %+v", FormatPlan(ops), diags)
 	}
-	if cleared := ops[0].Fields["deploys"].([]atlas.Deployment); len(cleared) != 0 {
+	if cleared := ops[0].Fields["deploys"].([]structure.Deployment); len(cleared) != 0 {
 		t.Fatalf("cleared = %+v", cleared)
 	}
 	if !strings.Contains(FormatPlan(ops), "deploys:") {

@@ -469,7 +469,7 @@
   box-shadow: var(--field-rings);
 }
 
-/* Components and Structure nodes: the Atlas card layout inside the family silhouette, with the type as its icon tile. */
+/* Components and Structure nodes: the Structure card layout inside the family silhouette, with the type as its icon tile. */
 .pw-canvas-node-card {
   display: flex;
   width: 100%;

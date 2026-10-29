@@ -115,7 +115,7 @@ new ResizeObserver(() => { if (props.open && !opening) height.set(inner.offsetHe
 
 Keep the panel mounted while closing; set `hidden` only after the exit finishes. Fade opacity
 slightly ahead of height. Existing example: `animateGroupHeight` in
-`packages/features/architecture/src/atlas-tree.ts` (WAAPI, CSS for the rest); prefer the
+`packages/features/architecture/src/structure-tree.ts` (WAAPI, CSS for the rest); prefer the
 shared spring when touching it.
 
 ## Icon swap (two glyphs, one cell)

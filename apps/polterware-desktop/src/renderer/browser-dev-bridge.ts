@@ -131,9 +131,9 @@ const previewEntities = [
   entity("ent-store", "component", "comp-store", "Store"),
 ];
 
-type AtlasSeed = [id: string, parentId: string, level: "system" | "domain" | "component", slug: string, path: string, title: string, status: "proposed" | "in_progress" | "delivered" | "drift", decisions: string[], childCount: number, featureCount: number, openQuestions: number, folder: string];
+type StructureSeed = [id: string, parentId: string, level: "system" | "domain" | "component", slug: string, path: string, title: string, status: "proposed" | "in_progress" | "delivered" | "drift", decisions: string[], childCount: number, featureCount: number, openQuestions: number, folder: string];
 
-const atlasSeeds: AtlasSeed[] = [
+const structureSeeds: StructureSeed[] = [
   ["n-sys", "", "system", "polterware", "polterware", "Polterware", "in_progress", [], 4, 0, 0, ""],
   ["n-platform", "n-sys", "domain", "platform", "polterware/platform", "Platform", "in_progress", [], 3, 1, 0, "backend"],
   ["n-product", "n-sys", "domain", "product", "polterware/product", "Product", "in_progress", [], 3, 2, 1, "apps"],
@@ -143,7 +143,7 @@ const atlasSeeds: AtlasSeed[] = [
   ["comp-cli", "n-platform", "component", "cli", "polterware/platform/cli", "CLI", "delivered", [], 0, 1, 0, "backend/cli"],
   ["comp-api", "n-platform", "component", "api", "polterware/platform/api", "API", "drift", ["Verdict 003"], 0, 1, 1, "backend/api"],
   ["comp-desktop", "n-product", "component", "desktop", "polterware/product/desktop", "Desktop", "in_progress", [], 0, 3, 1, "apps/polterware-desktop"],
-  ["comp-atlas", "n-product", "component", "atlas", "polterware/product/atlas", "Atlas", "in_progress", ["Verdict 004"], 0, 2, 0, "packages/features/atlas"],
+  ["comp-structure", "n-product", "component", "structure", "polterware/product/structure", "Structure", "in_progress", ["Verdict 004"], 0, 2, 0, "packages/features/structure"],
   ["comp-inbox", "n-product", "component", "inbox", "polterware/product/inbox", "Inbox", "delivered", [], 0, 1, 0, "packages/features/inbox"],
   ["comp-store", "n-data", "component", "store", "polterware/data/store", "Store", "delivered", ["Verdict 001"], 0, 1, 0, "backend/store"],
   ["comp-contracts", "n-data", "component", "contracts", "polterware/data/contracts", "Contracts", "delivered", [], 0, 0, 0, "schemas"],
@@ -156,13 +156,13 @@ const previewUses: Record<string, string[]> = {
   "comp-cli": ["polterware/platform/core"],
   "comp-api": ["polterware/platform/core", "polterware/data/store"],
   "comp-desktop": ["polterware/platform/api", "polterware/product/inbox"],
-  "comp-atlas": ["polterware/platform/core"],
+  "comp-structure": ["polterware/platform/core"],
   "comp-mcp": ["polterware/platform/core", "polterware/data/contracts"],
   "comp-plugin": ["polterware/agents/mcp"],
 };
 
-const previewAtlas = {
-  nodes: atlasSeeds.map(([id, parentId, level, slug, path, title, status, decisions, childCount, featureCount, openQuestions, folder]) => ({
+const previewStructure = {
+  nodes: structureSeeds.map(([id, parentId, level, slug, path, title, status, decisions, childCount, featureCount, openQuestions, folder]) => ({
     id, parentId, level, slug, path, title, status, decisions, childCount, featureCount, openQuestions, folder,
     uses: previewUses[id] ?? [],
     intent: `${title} keeps its part of the system coherent.`,
@@ -178,7 +178,7 @@ const promotedFacts = new Map<string, Record<string, unknown>[]>();
 const promotedDecisions = new Map<string, Record<string, unknown>[]>();
 
 /**
- * Enough of `work.apply` for canvas promotions and the Atlas map: a node block that moves it (under:)
+ * Enough of `work.apply` for canvas promotions and the Structure map: a node block that moves it (under:)
  * or replaces its uses:. Everything else is ignored, like the rest of this bridge.
  */
 async function applyPreviewPolter(args?: { projectId?: string; text?: string; dryRun?: boolean }): Promise<Record<string, unknown>> {
@@ -219,7 +219,7 @@ async function applyPreviewPolter(args?: { projectId?: string; text?: string; dr
   throw new Error("Unsupported Polter input.");
 }
 
-const previewAtlasHistory = [
+const previewStructureHistory = [
   { batchId: "batch-4", at: "2026-09-25T10:00:00.000Z", nodeOps: 3, summary: "Added the agents domain." },
   { batchId: "batch-3", at: "2026-09-18T10:00:00.000Z", nodeOps: 2, summary: "Marked the API component as drifting." },
   { batchId: "batch-2", at: "2026-09-10T10:00:00.000Z", nodeOps: 5, summary: "Split platform into core and CLI." },
@@ -231,7 +231,7 @@ const cardSeeds: [slug: string, title: string, stage: string, kind: string, unde
   ["agent-handoff", "Agent handoff summary", "shape", "feature", "polterware/agents/mcp", []],
   ["split-api", "Split the API layer", "plan", "architecture", "polterware/platform/api", ["open", "open"]],
   ["event-stream", "Change event stream", "plan", "feature", "polterware/platform/core", ["done", "open"]],
-  ["atlas-canvas", "Atlas canvas", "build", "feature", "polterware/product/atlas", ["done", "open", "open"]],
+  ["structure-canvas", "Structure canvas", "build", "feature", "polterware/product/structure", ["done", "open", "open"]],
   ["board-view", "Work board", "build", "feature", "polterware/product/desktop", ["done", "done", "open"]],
   ["inbox-actions", "Inbox actions", "build", "feature", "polterware/product/inbox", ["open", "dropped"]],
   ["drift-checks", "Drift checks", "verify", "feature", "polterware/platform/api", ["done", "done"]],
@@ -268,7 +268,7 @@ const previewInboxItems = [
   inboxItem("inb-2", "decision", true, "Who reviews agent handoff?", "Owner is unset.", ["Ada", "Grace"], "polterware/agents/mcp", "card:agent-handoff", "open", ["decide", "delegate", "defer"]),
   inboxItem("inb-3", "decision", false, "Keep Markdown intent files?", "Verdict 004 is challenged.", ["Keep", "Replace"], "Verdict 004", "verdict:verdict-004", "open", ["decide", "defer", "ignore"]),
   inboxItem("inb-4", "drift", false, "API returns fields not in the contract", "Warning from the last scan.", [], "polterware/platform/api", "drift:api", "open", ["fix_code", "update_intent", "ignore"]),
-  inboxItem("inb-5", "drift", false, "Desktop imports a removed module", "Conflict with the atlas.", [], "polterware/product/desktop", "drift:desktop", "deferred", ["fix_code", "update_intent", "defer"]),
+  inboxItem("inb-5", "drift", false, "Desktop imports a removed module", "Conflict with the structure.", [], "polterware/product/desktop", "drift:desktop", "deferred", ["fix_code", "update_intent", "defer"]),
   inboxItem("inb-6", "verify", false, "Session cache fact has no evidence", "Attach evidence or reject.", [], "Session cache", "fact:cache", "open", ["verify", "reject"]),
   inboxItem("inb-7", "verify", false, "Web app region is unverified", "No import confirms the region.", [], "Web app", "fact:web", "open", ["verify", "reject"]),
   inboxItem("inb-8", "verify", false, "Staging database has no owner", "Owner fact is missing.", [], "Staging database", "fact:stg-db", "deferred", ["verify", "defer"]),
@@ -434,8 +434,8 @@ const previewDispatchRuns = [
     model: "grok-4.7",
     provider: "xai",
     effort: "high",
-    prompt: "Refactor the Atlas layout serializer",
-    cardSlug: "atlas-canvas",
+    prompt: "Refactor the Structure layout serializer",
+    cardSlug: "structure-canvas",
     agentRunId: "",
     dir: ".",
     repo: "polterware",
@@ -475,7 +475,7 @@ const previewDispatchWorktrees = [
     id: "wt-2",
     projectId: PREVIEW_PROJECT_ID,
     runId: "drun-2",
-    cardSlug: "atlas-canvas",
+    cardSlug: "structure-canvas",
     path: "/preview/worktrees/drun-2",
     branch: "dispatch/drun-2",
     baseSha: "a1b2c3d",
@@ -634,7 +634,7 @@ function browserDevApi(overrides?: Record<string, unknown>): (...args: unknown[]
 }
 
 function createBrowserDevBridge(): PolterwareBridge {
-  const structure = createBrowserStructure(PREVIEW_PROJECT_ID, previewAtlas.nodes);
+  const structure = createBrowserStructure(PREVIEW_PROJECT_ID, previewStructure.nodes);
   const structureCards = structuredClone(previewCards);
   // Archived and deleted knowledge ids; the seed itself stays untouched.
   const archivedKnowledge = new Map<string, string>();
@@ -956,7 +956,7 @@ function createBrowserDevBridge(): PolterwareBridge {
         },
         listCards: async (args?: ProjectArgs) => ({ cards: [...(args?.projectId === PREVIEW_PROJECT_ID ? structureCards : []), ...(promotedCards.get(args?.projectId ?? "") ?? [])] }),
         listInbox: scoped(previewInbox, { items: [], openCount: 0, blockingCount: 0 }),
-        listAtlas: async (args?: ProjectArgs) => structure.list(args?.projectId ?? ""),
+        listStructure: async (args?: ProjectArgs) => structure.list(args?.projectId ?? ""),
         apply: async (args?: { projectId?: string; text?: string; dryRun?: boolean }) => {
           if (/^# [^#]/m.test(args?.text ?? "")) {
             if (![PREVIEW_PROJECT_ID, "browser-empty"].includes(args?.projectId ?? "")) throw new Error("Project not found.");
@@ -974,7 +974,7 @@ function createBrowserDevBridge(): PolterwareBridge {
           return applyPreviewPolter(args);
         },
         setScope: async () => ({}),
-        listAtlasHistory: scoped({ entries: previewAtlasHistory }, { entries: [] }),
+        listStructureHistory: scoped({ entries: previewStructureHistory }, { entries: [] }),
       }),
       savedFilters: browserDevApi({
         list: async ({ projectId = "", surface }: { projectId?: string; surface: string }) => {

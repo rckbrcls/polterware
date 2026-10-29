@@ -52,13 +52,13 @@ describe("installBrowserDevBridge", () => {
     const before = await work.listCards({ projectId });
     type TestNode = { id: string; level: string; path: string; title: string };
     type TestCard = { slug: string; under: string };
-    const atlas = (await work.listAtlas({ projectId })) as unknown as { nodes: TestNode[] };
+    const structure = (await work.listStructure({ projectId })) as unknown as { nodes: TestNode[] };
     const cardsBefore = before.cards as unknown as TestCard[];
-    const component = atlas.nodes.find((node) => node.level === "component" && cardsBefore.some((card) => card.under === node.path))!;
-    const destination = atlas.nodes.find((node) => node.level === "system")!;
+    const component = structure.nodes.find((node) => node.level === "component" && cardsBefore.some((card) => card.under === node.path))!;
+    const destination = structure.nodes.find((node) => node.level === "system")!;
     const linked = cardsBefore.filter((card) => card.under === component.path);
     await work.apply({ projectId, text: `---\npolter: 1\nsummary: Move component\nrationale: Organize structure\n---\n\n# ${component.path}: ${component.title}\nlevel: component · under: ${destination.path}\n` });
-    const moved = ((await work.listAtlas({ projectId })) as unknown as { nodes: TestNode[] }).nodes.find((node) => node.id === component.id)!;
+    const moved = ((await work.listStructure({ projectId })) as unknown as { nodes: TestNode[] }).nodes.find((node) => node.id === component.id)!;
     const cards = (await work.listCards({ projectId })).cards as unknown as TestCard[];
     for (const card of linked) expect(cards.find((item) => item.slug === card.slug)?.under).toBe(moved.path);
   });

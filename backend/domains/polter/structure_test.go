@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
-func TestDecodeAtlasNode(t *testing.T) {
+func TestDecodeStructureNode(t *testing.T) {
 	text := `---
 polter: 1
 ---
@@ -47,8 +47,8 @@ under: core/import
 }
 
 func TestLintUnderRequiresComponent(t *testing.T) {
-	nodes := []atlas.Node{{
-		ID: "n1", Path: "core/import", Level: atlas.LevelComponent, Status: atlas.NodeActive,
+	nodes := []structure.Node{{
+		ID: "n1", Path: "core/import", Level: structure.LevelComponent, Status: structure.NodeActive,
 	}}
 	bad := "---\npolter: 1\n---\n## git-import: Git import\nunder: missing\n"
 	_, diags := Lint(bad, &References{Nodes: nodes})
@@ -70,11 +70,11 @@ func TestLintUnderRequiresComponent(t *testing.T) {
 func TestPlanMoveNode(t *testing.T) {
 	snapshot := work.Snapshot{
 		ProjectID: "p1",
-		Nodes: []atlas.Node{
-			{ID: "desktop", Path: "desktop", Level: atlas.LevelSystem, Title: "Desktop", Status: atlas.NodeActive},
-			{ID: "mobile", Path: "mobile", Level: atlas.LevelSystem, Title: "Mobile", Status: atlas.NodeActive},
-			{ID: "core", ParentID: "desktop", Path: "desktop/core", Level: atlas.LevelDomain, Title: "Core", Status: atlas.NodeActive},
-			{ID: "api", ParentID: "core", Path: "desktop/core/api", Level: atlas.LevelComponent, Title: "API", Status: atlas.NodeActive},
+		Nodes: []structure.Node{
+			{ID: "desktop", Path: "desktop", Level: structure.LevelSystem, Title: "Desktop", Status: structure.NodeActive},
+			{ID: "mobile", Path: "mobile", Level: structure.LevelSystem, Title: "Mobile", Status: structure.NodeActive},
+			{ID: "core", ParentID: "desktop", Path: "desktop/core", Level: structure.LevelDomain, Title: "Core", Status: structure.NodeActive},
+			{ID: "api", ParentID: "core", Path: "desktop/core/api", Level: structure.LevelComponent, Title: "API", Status: structure.NodeActive},
 		},
 		Cards: []work.Card{{
 			ID: "card-1", Slug: "import", Title: "Import", Under: "desktop/core/api", Status: work.CardActive,
@@ -124,12 +124,12 @@ under: core
 }
 
 func TestOracleBudgetDropsAncestors(t *testing.T) {
-	system := atlas.Node{ID: "s", Path: "polterware", Level: atlas.LevelSystem, Title: "Polterware", Status: atlas.NodeActive}
-	domain := atlas.Node{
-		ID: "d", ParentID: "s", Path: "core", Level: atlas.LevelDomain, Title: "Core", Status: atlas.NodeActive,
-		Invariants: []atlas.Invariant{{Text: "No network calls during scan", State: work.InvariantActive}},
+	system := structure.Node{ID: "s", Path: "polterware", Level: structure.LevelSystem, Title: "Polterware", Status: structure.NodeActive}
+	domain := structure.Node{
+		ID: "d", ParentID: "s", Path: "core", Level: structure.LevelDomain, Title: "Core", Status: structure.NodeActive,
+		Invariants: []structure.Invariant{{Text: "No network calls during scan", State: work.InvariantActive}},
 	}
-	component := atlas.Node{ID: "c", ParentID: "d", Path: "core/import", Level: atlas.LevelComponent, Title: "Import", Status: atlas.NodeActive}
+	component := structure.Node{ID: "c", ParentID: "d", Path: "core/import", Level: structure.LevelComponent, Title: "Import", Status: structure.NodeActive}
 	card := work.Card{
 		Slug: "git-import", Title: "Git import", Stage: work.StageBuild, Status: work.CardActive, Under: "core/import",
 		Intent: "Import HEAD as evidence.",
@@ -138,7 +138,7 @@ func TestOracleBudgetDropsAncestors(t *testing.T) {
 			Text: "Include merge commits?", Blocking: true, State: work.QuestionOpen, Options: []string{"yes", "no"},
 		}},
 	}
-	nodes := []atlas.Node{system, domain, component}
+	nodes := []structure.Node{system, domain, component}
 	full, err := Oracle(nodes, []work.Card{card}, "git-import", "task", 800)
 	if err != nil {
 		t.Fatal(err)

@@ -14,14 +14,14 @@ proposal format · guardrails
 - Tokens exist and are widely used: `--duration-fast|control|enter`, `--ease-standard|enter`
   (`packages/configuration/tailwind/base.css`). Off-token literals are rare (dialog enter
   220ms, drawer/detail-panel custom snap `cubic-bezier(0.16, 1.22, 0.3, 1)` 280ms,
-  `atlas-tree.css` 100/180ms + 24ms stagger, loops in skeleton/core status/boot splash).
+  `structure-tree.css` 100/180ms + 24ms stagger, loops in skeleton/core status/boot splash).
 - Presence: Ark popups/dialog/drawer/toast animate with CSS keyframes/`@starting-style` on
   `data-state`; side-aware origin already exists for dropdown/popover
   (`dropdown-menu.css`, `popover.css`). Reduced-motion blocks exist in ~14 design-system CSS
-  files and the toast/atlas tree.
+  files and the toast/structure tree.
 - The Switch is the reference JS-spring component: `switch.tsx`, `springs.ts`.
 - Only `switch.tsx` imports `motion`. Everything else is CSS transitions or WAAPI
-  (`atlas-tree.ts` `animateGroupHeight`).
+  (`structure-tree.ts` `animateGroupHeight`).
 
 ## Ranked opportunities (impact x frequency, then effort)
 
@@ -33,7 +33,7 @@ proposal format · guardrails
 | 4 | **Menus, popovers, tooltips** (Dropdown, filter popover, context menu, project/environment switchers) | Item highlight jumps; popups use CSS keyframes with 120-200ms | Fluid hover inside menus (from the checked row); sliding selected marker for checked items; enter on `fast`, exit quicker; keep side-aware origin | `dropdown-menu.tsx/css`, `menu.tsx`, `context-menu.tsx`, `filter-popover.tsx`, `shell/context-switchers.tsx`, `tooltip.tsx/css` | M |
 | 5 | **Dialogs and drawers** (create project, evidence form, detail panel) | Keyframe scale/fade; detail panel snap has an overshoot curve | Align to `slow` enter / quicker exit; decide deliberately whether the detail panel's overshoot (`--detail-panel-snap-ease`) stays (it is intentional-looking: name it once) | `dialog.css`, `drawer.css`, `detail-panel.css` | S |
 | 6 | **Buttons** (everywhere) | Colour transition only | 1px-inset press geometry (no scale), fast press / slow release; icon stroke 1.5 -> 2 on hover; loading keeps width | `button.tsx/css` | M (must stay on shared tokens; check `design:lint`) |
-| 7 | **Collapses** (Atlas tree groups, detail-panel sections, filter groups) | WAAPI/CSS height + per-row stagger | Measured-height spring on `fast`, snap when a child resized; keep "bulk = no motion" rule | `architecture/src/atlas-tree.ts/css`, `detail-panel.tsx` | M |
+| 7 | **Collapses** (Structure tree groups, detail-panel sections, filter groups) | WAAPI/CSS height + per-row stagger | Measured-height spring on `fast`, snap when a child resized; keep "bulk = no motion" rule | `architecture/src/structure-tree.ts/css`, `detail-panel.tsx` | M |
 | 8 | **Icon feedback** (copy, save, status) | Pop in/out | Two-glyph grid-cell crossfade, self-drawing check | Integrations connect actions, copy buttons in Settings/CLI reference | S each |
 | 9 | **Filter chips / active filter bar** | Simple colour transitions | Chip enter/leave on `fast`, shared removal reflow | `filter-chip.tsx/css`, `active-filter-bar.tsx/css` | S |
 | 10 | **Work board cards** | `.pw-work-card:hover` swap | Fluid hover (grid: axis `xy`, gap click capped ~16px), stage move glide | `knowledge/src/work-board.tsx/css` | M |

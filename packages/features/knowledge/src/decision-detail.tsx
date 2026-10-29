@@ -32,9 +32,9 @@ export function DecisionDetail(props: {
   bodyMarkdown: string;
   onBodyChange: (md: string) => void;
   onAction?: (action: DecisionAction) => void;
-  /** Atlas nodes offered by the scope picker. */
+  /** Structure nodes offered by the scope picker. */
   scopeNodes?: ScopeNodeItem[];
-  /** Writes the Atlas scope as a node path; empty clears it. */
+  /** Writes the Structure scope as a node path; empty clears it. */
   onScopeChange?: (path: string) => void;
   links?: JSX.Element;
   /** Note-style editing: editable title and tags, like Evidence and Notes. */
@@ -82,7 +82,7 @@ export function DecisionDetail(props: {
             {props.verdict.scope === "principle" ? "Principle (whole project)" : "Decision"}
           </KnowledgeDocumentProperty>
           <Show when={props.onScopeChange}>
-            <KnowledgeDocumentProperty label="Atlas scope">
+            <KnowledgeDocumentProperty label="Structure scope">
               <ScopePicker
                 nodes={props.scopeNodes ?? []}
                 value={scopePathOf(props.scopeNodes ?? [], props.verdict.scopeNodeId)}

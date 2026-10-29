@@ -22,7 +22,7 @@ func (s *Store) loadPolterFacts(projectID string) ([]work.Fact, error) {
 	}
 	// Load handles, scope and links together rather than querying once per Fact.
 	err = s.eachRow(`SELECT f.id,COALESCE(f.slug,''),COALESCE(n.path,''),COALESCE(fe.evidence_id,'')
-		FROM canon_facts f LEFT JOIN atlas_nodes n ON n.id=f.scope_node_id
+		FROM canon_facts f LEFT JOIN structure_nodes n ON n.id=f.scope_node_id
 		LEFT JOIN canon_fact_evidence fe ON fe.fact_id=f.id WHERE f.project_id=?`, projectID, func(rows *sql.Rows) error {
 		var id, slug, scope, evidence string
 		if err := rows.Scan(&id, &slug, &scope, &evidence); err != nil {
@@ -83,7 +83,7 @@ func applyFactOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 		var node any
 		if scope != "" {
 			var id string
-			if err := tx.QueryRow(`SELECT id FROM atlas_nodes WHERE project_id=? AND path=? AND status<>'removed'`, projectID, scope).Scan(&id); err != nil {
+			if err := tx.QueryRow(`SELECT id FROM structure_nodes WHERE project_id=? AND path=? AND status<>'removed'`, projectID, scope).Scan(&id); err != nil {
 				return fmt.Errorf("unknown scope %q", scope)
 			}
 			node = id

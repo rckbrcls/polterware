@@ -257,7 +257,7 @@ export function NewFeatureFlow(props: {
           <Field label="Title" hint="Defaults to the intent's first sentence.">
             <Input size="sm" value={title()} onInput={(event) => setTitle(event.currentTarget.value)} />
           </Field>
-          <Field label="Kind" hint="A structural change proposes an edit to the Atlas: mark the node it changes with migrating:.">
+          <Field label="Kind" hint="A structural change proposes an edit to the Structure: mark the node it changes with migrating:.">
             <Select
               size="sm"
               aria-label="Kind"
@@ -320,7 +320,7 @@ export function NewFeatureFlow(props: {
                     </p>
                   </Show>
                 </Section>
-                <Section title="Touches" empty={review().touches.length === 0} emptyText="No Atlas nodes yet.">
+                <Section title="Touches" empty={review().touches.length === 0} emptyText="No Structure nodes yet.">
                   <ul class="pw-feature-flow__list" aria-label="Touches">
                     <For each={review().touches}>
                       {(node) => (

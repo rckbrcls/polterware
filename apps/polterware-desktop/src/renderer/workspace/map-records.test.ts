@@ -130,7 +130,7 @@ describe("mapProjectRepos", () => {
 
 describe("mapCanonEntities and mapKnowledgeEntityLinks", () => {
   const entities = mapCanonEntities([
-    { id: "e1", kind: "component", refKind: "atlas", refId: "core/import", title: "Import" },
+    { id: "e1", kind: "component", refKind: "structure", refId: "core/import", title: "Import" },
     { id: "e2", kind: "resource", refId: "res-1", title: "DB", truthClass: "observed", source: "aws" },
   ]);
 
@@ -185,7 +185,7 @@ describe("mapVerdicts", () => {
     expect(verdicts[2]).toMatchObject({ state: "active", statusReason: "scale" });
   });
 
-  it("lists the live Atlas nodes that cite an Verdict by id or by number", () => {
+  it("lists the live Structure nodes that cite an Verdict by id or by number", () => {
     const verdicts = mapVerdicts(items, new Map(), [
       { path: "core/store", decisions: ["verdict-a"] },
       { path: "core/api", decisions: ["Verdict-0001"] },

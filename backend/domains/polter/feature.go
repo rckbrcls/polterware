@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
@@ -37,12 +37,12 @@ const (
 type FeatureReview struct {
 	Card work.Card
 	// Under is the node named by the card's under:, or nil.
-	Under *atlas.Node
+	Under *structure.Node
 	// Suggested lists component paths for a card without under:.
 	Suggested []string
 	// Touches is the under: chain (top-down) plus components whose words
 	// overlap the card title and intent.
-	Touches    []atlas.Node
+	Touches    []structure.Node
 	Decisions  []ReviewDecision
 	Inherited  []ReviewInvariant
 	Questions  []ReviewQuestion
@@ -100,16 +100,16 @@ func ReviewFeature(snapshot work.Snapshot, slug string, verdicts []VerdictRef, r
 	review := FeatureReview{Card: card}
 	nodes := snapshot.Nodes
 	for _, node := range nodes {
-		if node.Status != atlas.NodeRemoved && node.Level == atlas.LevelComponent {
+		if node.Status != structure.NodeRemoved && node.Level == structure.LevelComponent {
 			review.components = true
 			break
 		}
 	}
 
-	var chain []atlas.Node
+	var chain []structure.Node
 	if card.Under != "" {
 		for i := range nodes {
-			if nodes[i].Status != atlas.NodeRemoved && nodes[i].Path == card.Under {
+			if nodes[i].Status != structure.NodeRemoved && nodes[i].Path == card.Under {
 				under := nodes[i]
 				review.Under = &under
 				break
@@ -173,7 +173,7 @@ func ReviewFeature(snapshot work.Snapshot, slug string, verdicts []VerdictRef, r
 // text: their path, title, intent, and the cards placed under them. A
 // component needs one shared path or title word, or two shared words
 // overall. skipSlug leaves that card out of the card words.
-func SuggestComponents(nodes []atlas.Node, cards []work.Card, text, skipSlug string) []string {
+func SuggestComponents(nodes []structure.Node, cards []work.Card, text, skipSlug string) []string {
 	words := newWordSet(text)
 	if len(words) == 0 {
 		return nil
@@ -185,7 +185,7 @@ func SuggestComponents(nodes []atlas.Node, cards []work.Card, text, skipSlug str
 	}
 	var ranked []scored
 	for _, node := range nodes {
-		if node.Status == atlas.NodeRemoved || node.Level != atlas.LevelComponent {
+		if node.Status == structure.NodeRemoved || node.Level != structure.LevelComponent {
 			continue
 		}
 		name := newWordSet(strings.ReplaceAll(node.Path, "/", " ") + " " + node.Title)
@@ -234,7 +234,7 @@ func CitesDecision(ref, id, title string) bool {
 	return ok && n == m
 }
 
-func reviewDecisions(card work.Card, chain []atlas.Node, verdicts []VerdictRef) []ReviewDecision {
+func reviewDecisions(card work.Card, chain []structure.Node, verdicts []VerdictRef) []ReviewDecision {
 	var out []ReviewDecision
 	seen := map[string]bool{}
 	add := func(ref, from string) {
@@ -281,7 +281,7 @@ func featureChecks(review FeatureReview) []FeatureCheck {
 		if len(review.Suggested) > 0 {
 			add(FeatureStepShape, SeverityHint, "no under: suggested %s: add under: %s", strings.Join(review.Suggested, ", "), review.Suggested[0])
 		} else {
-			add(FeatureStepShape, SeverityHint, "no under: pick a component from polterware atlas")
+			add(FeatureStepShape, SeverityHint, "no under: pick a component from polterware structure")
 		}
 	}
 
@@ -631,7 +631,7 @@ func answeredIn(node CardNode, text string) bool {
 	return false
 }
 
-func containsNodePath(nodes []atlas.Node, path string) bool {
+func containsNodePath(nodes []structure.Node, path string) bool {
 	for _, node := range nodes {
 		if node.Path == path {
 			return true

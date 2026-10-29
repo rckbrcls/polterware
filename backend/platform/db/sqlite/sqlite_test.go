@@ -143,3 +143,78 @@ func TestPolterFactsMigrationPreservesAllAuditEntitiesAndNodeID(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestStructureRenameMigrationKeepsRowsAndForeignKeys(t *testing.T) {
+	db, err := Open(filepath.Join(t.TempDir(), "rename.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	entries, err := migrationFS.ReadDir("migrations")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if entry.Name() >= "0037" {
+			continue
+		}
+		body, err := migrationFS.ReadFile("migrations/" + entry.Name())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := db.Exec(string(body)); err != nil {
+			t.Fatalf("%s: %v", entry.Name(), err)
+		}
+	}
+	seed := []string{
+		`INSERT INTO projects(id,name,root_path,created_at,updated_at) VALUES('p','Project','/tmp','now','now')`,
+		`INSERT INTO atlas_nodes(id,project_id,parent_id,level,slug,path,title,created_at,updated_at) VALUES('sys','p',NULL,'system','app','app','App','now','now')`,
+		`INSERT INTO atlas_nodes(id,project_id,parent_id,level,slug,path,title,created_at,updated_at) VALUES('cmp','p','sys','component','api','app/api','API','now','now')`,
+		`INSERT INTO atlas_invariants(id,node_id,text,created_at,updated_at) VALUES('inv','cmp','Stays stateless','now','now')`,
+		`INSERT INTO scope_assignments(project_id,item_key,node_id,updated_at) VALUES('p','drift:x','cmp','now')`,
+	}
+	for _, statement := range seed {
+		if _, err := db.Exec(statement); err != nil {
+			t.Fatalf("%s: %v", statement, err)
+		}
+	}
+	body, err := migrationFS.ReadFile("migrations/0037_structure_rename.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(string(body)); err != nil {
+		t.Fatal(err)
+	}
+	for table, want := range map[string]int{"structure_nodes": 2, "structure_invariants": 1, "scope_assignments": 1} {
+		var got int
+		if err := db.QueryRow(`SELECT COUNT(*) FROM ` + table).Scan(&got); err != nil || got != want {
+			t.Fatalf("%s: rows=%d want %d err=%v", table, got, want, err)
+		}
+	}
+	rows, err := db.Query(`PRAGMA foreign_key_check`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rows.Next() {
+		t.Fatal("foreign_key_check reported violations")
+	}
+	_ = rows.Close()
+	var stale int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE name LIKE '%atlas%' OR sql LIKE '%atlas%'`).Scan(&stale); err != nil || stale != 0 {
+		t.Fatalf("schema still names atlas: %d err=%v", stale, err)
+	}
+	var referencing int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND (sql LIKE '%REFERENCES "structure_nodes"%' OR sql LIKE '%REFERENCES structure_nodes%')`).Scan(&referencing); err != nil || referencing < 6 {
+		t.Fatalf("tables referencing structure_nodes: %d err=%v", referencing, err)
+	}
+	if _, err := db.Exec(`INSERT INTO scope_assignments(project_id,item_key,node_id,updated_at) VALUES('p','drift:y','missing','now')`); err == nil {
+		t.Fatal("a scope assignment to an unknown node was accepted")
+	}
+	if _, err := db.Exec(`DELETE FROM structure_nodes WHERE id='sys'`); err != nil {
+		t.Fatal(err)
+	}
+	var left int
+	if err := db.QueryRow(`SELECT (SELECT COUNT(*) FROM structure_nodes) + (SELECT COUNT(*) FROM structure_invariants) + (SELECT COUNT(*) FROM scope_assignments)`).Scan(&left); err != nil || left != 0 {
+		t.Fatalf("cascade after rename left %d rows, err=%v", left, err)
+	}
+}

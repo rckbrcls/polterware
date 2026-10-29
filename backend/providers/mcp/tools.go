@@ -30,7 +30,7 @@ const (
 
 func scopeArgumentSchema() map[string]any {
 	return map[string]any{
-		"description": "Atlas node path, slug, or id, or a list of them. The read keeps the union of each node, its descendants, and its ancestors. Omit for the whole project.",
+		"description": "Structure node path, slug, or id, or a list of them. The read keeps the union of each node, its descendants, and its ancestors. Omit for the whole project.",
 		"oneOf": []any{
 			map[string]any{"type": "string"},
 			map[string]any{"type": "array", "items": map[string]any{"type": "string"}},

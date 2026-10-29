@@ -26,7 +26,7 @@ type Request struct {
 	Query       string
 	EntityID    string
 	TokenBudget int
-	// ScopeNodeID narrows candidates to one Atlas node, its descendants and,
+	// ScopeNodeID narrows candidates to one Structure node, its descendants and,
 	// unless ScopeExact, its ancestors. ScopeNodeIDs adds more nodes; the
 	// package keeps the union. Empty is the whole project.
 	ScopeNodeID  string

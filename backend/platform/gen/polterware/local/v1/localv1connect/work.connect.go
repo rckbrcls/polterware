@@ -36,11 +36,12 @@ const (
 	// WorkServiceListWorkCardsProcedure is the fully-qualified name of the WorkService's ListWorkCards
 	// RPC.
 	WorkServiceListWorkCardsProcedure = "/polterware.local.v1.WorkService/ListWorkCards"
-	// WorkServiceListAtlasProcedure is the fully-qualified name of the WorkService's ListAtlas RPC.
-	WorkServiceListAtlasProcedure = "/polterware.local.v1.WorkService/ListAtlas"
-	// WorkServiceListAtlasHistoryProcedure is the fully-qualified name of the WorkService's
-	// ListAtlasHistory RPC.
-	WorkServiceListAtlasHistoryProcedure = "/polterware.local.v1.WorkService/ListAtlasHistory"
+	// WorkServiceListStructureProcedure is the fully-qualified name of the WorkService's ListStructure
+	// RPC.
+	WorkServiceListStructureProcedure = "/polterware.local.v1.WorkService/ListStructure"
+	// WorkServiceListStructureHistoryProcedure is the fully-qualified name of the WorkService's
+	// ListStructureHistory RPC.
+	WorkServiceListStructureHistoryProcedure = "/polterware.local.v1.WorkService/ListStructureHistory"
 	// WorkServiceListAgentSessionsProcedure is the fully-qualified name of the WorkService's
 	// ListAgentSessions RPC.
 	WorkServiceListAgentSessionsProcedure = "/polterware.local.v1.WorkService/ListAgentSessions"
@@ -97,8 +98,8 @@ const (
 // WorkServiceClient is a client for the polterware.local.v1.WorkService service.
 type WorkServiceClient interface {
 	ListWorkCards(context.Context, *connect.Request[v1.ListWorkCardsRequest]) (*connect.Response[v1.ListWorkCardsResponse], error)
-	ListAtlas(context.Context, *connect.Request[v1.ListAtlasRequest]) (*connect.Response[v1.ListAtlasResponse], error)
-	ListAtlasHistory(context.Context, *connect.Request[v1.ListAtlasHistoryRequest]) (*connect.Response[v1.ListAtlasHistoryResponse], error)
+	ListStructure(context.Context, *connect.Request[v1.ListStructureRequest]) (*connect.Response[v1.ListStructureResponse], error)
+	ListStructureHistory(context.Context, *connect.Request[v1.ListStructureHistoryRequest]) (*connect.Response[v1.ListStructureHistoryResponse], error)
 	ListAgentSessions(context.Context, *connect.Request[v1.ListAgentSessionsRequest]) (*connect.Response[v1.ListAgentSessionsResponse], error)
 	ApplyPolter(context.Context, *connect.Request[v1.ApplyPolterRequest]) (*connect.Response[v1.ApplyPolterResponse], error)
 	LintPolter(context.Context, *connect.Request[v1.LintPolterRequest]) (*connect.Response[v1.LintPolterResponse], error)
@@ -137,16 +138,16 @@ func NewWorkServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(workServiceMethods.ByName("ListWorkCards")),
 			connect.WithClientOptions(opts...),
 		),
-		listAtlas: connect.NewClient[v1.ListAtlasRequest, v1.ListAtlasResponse](
+		listStructure: connect.NewClient[v1.ListStructureRequest, v1.ListStructureResponse](
 			httpClient,
-			baseURL+WorkServiceListAtlasProcedure,
-			connect.WithSchema(workServiceMethods.ByName("ListAtlas")),
+			baseURL+WorkServiceListStructureProcedure,
+			connect.WithSchema(workServiceMethods.ByName("ListStructure")),
 			connect.WithClientOptions(opts...),
 		),
-		listAtlasHistory: connect.NewClient[v1.ListAtlasHistoryRequest, v1.ListAtlasHistoryResponse](
+		listStructureHistory: connect.NewClient[v1.ListStructureHistoryRequest, v1.ListStructureHistoryResponse](
 			httpClient,
-			baseURL+WorkServiceListAtlasHistoryProcedure,
-			connect.WithSchema(workServiceMethods.ByName("ListAtlasHistory")),
+			baseURL+WorkServiceListStructureHistoryProcedure,
+			connect.WithSchema(workServiceMethods.ByName("ListStructureHistory")),
 			connect.WithClientOptions(opts...),
 		),
 		listAgentSessions: connect.NewClient[v1.ListAgentSessionsRequest, v1.ListAgentSessionsResponse](
@@ -268,28 +269,28 @@ func NewWorkServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // workServiceClient implements WorkServiceClient.
 type workServiceClient struct {
-	listWorkCards     *connect.Client[v1.ListWorkCardsRequest, v1.ListWorkCardsResponse]
-	listAtlas         *connect.Client[v1.ListAtlasRequest, v1.ListAtlasResponse]
-	listAtlasHistory  *connect.Client[v1.ListAtlasHistoryRequest, v1.ListAtlasHistoryResponse]
-	listAgentSessions *connect.Client[v1.ListAgentSessionsRequest, v1.ListAgentSessionsResponse]
-	applyPolter       *connect.Client[v1.ApplyPolterRequest, v1.ApplyPolterResponse]
-	lintPolter        *connect.Client[v1.LintPolterRequest, v1.LintPolterResponse]
-	queryPolter       *connect.Client[v1.QueryPolterRequest, v1.QueryPolterResponse]
-	writeHandoff      *connect.Client[v1.WriteHandoffRequest, v1.WriteHandoffResponse]
-	endSession        *connect.Client[v1.EndSessionRequest, v1.EndSessionResponse]
-	listInbox         *connect.Client[v1.ListInboxRequest, v1.ListInboxResponse]
-	resolveInboxItem  *connect.Client[v1.ResolveInboxItemRequest, v1.ResolveInboxItemResponse]
-	setScope          *connect.Client[v1.SetScopeRequest, v1.SetScopeResponse]
-	exportProjections *connect.Client[v1.ExportProjectionsRequest, v1.ExportProjectionsResponse]
-	reviewFeature     *connect.Client[v1.ReviewFeatureRequest, v1.ReviewFeatureResponse]
-	createFeature     *connect.Client[v1.CreateFeatureRequest, v1.CreateFeatureResponse]
-	advanceFeature    *connect.Client[v1.AdvanceFeatureRequest, v1.AdvanceFeatureResponse]
-	verifyFeature     *connect.Client[v1.VerifyFeatureRequest, v1.VerifyFeatureResponse]
-	listWorkBoards    *connect.Client[v1.ListWorkBoardsRequest, v1.ListWorkBoardsResponse]
-	createWorkBoard   *connect.Client[v1.CreateWorkBoardRequest, v1.CreateWorkBoardResponse]
-	updateWorkBoard   *connect.Client[v1.UpdateWorkBoardRequest, v1.UpdateWorkBoardResponse]
-	deleteWorkBoard   *connect.Client[v1.DeleteWorkBoardRequest, v1.DeleteWorkBoardResponse]
-	reorderWorkBoards *connect.Client[v1.ReorderWorkBoardsRequest, v1.ReorderWorkBoardsResponse]
+	listWorkCards        *connect.Client[v1.ListWorkCardsRequest, v1.ListWorkCardsResponse]
+	listStructure        *connect.Client[v1.ListStructureRequest, v1.ListStructureResponse]
+	listStructureHistory *connect.Client[v1.ListStructureHistoryRequest, v1.ListStructureHistoryResponse]
+	listAgentSessions    *connect.Client[v1.ListAgentSessionsRequest, v1.ListAgentSessionsResponse]
+	applyPolter          *connect.Client[v1.ApplyPolterRequest, v1.ApplyPolterResponse]
+	lintPolter           *connect.Client[v1.LintPolterRequest, v1.LintPolterResponse]
+	queryPolter          *connect.Client[v1.QueryPolterRequest, v1.QueryPolterResponse]
+	writeHandoff         *connect.Client[v1.WriteHandoffRequest, v1.WriteHandoffResponse]
+	endSession           *connect.Client[v1.EndSessionRequest, v1.EndSessionResponse]
+	listInbox            *connect.Client[v1.ListInboxRequest, v1.ListInboxResponse]
+	resolveInboxItem     *connect.Client[v1.ResolveInboxItemRequest, v1.ResolveInboxItemResponse]
+	setScope             *connect.Client[v1.SetScopeRequest, v1.SetScopeResponse]
+	exportProjections    *connect.Client[v1.ExportProjectionsRequest, v1.ExportProjectionsResponse]
+	reviewFeature        *connect.Client[v1.ReviewFeatureRequest, v1.ReviewFeatureResponse]
+	createFeature        *connect.Client[v1.CreateFeatureRequest, v1.CreateFeatureResponse]
+	advanceFeature       *connect.Client[v1.AdvanceFeatureRequest, v1.AdvanceFeatureResponse]
+	verifyFeature        *connect.Client[v1.VerifyFeatureRequest, v1.VerifyFeatureResponse]
+	listWorkBoards       *connect.Client[v1.ListWorkBoardsRequest, v1.ListWorkBoardsResponse]
+	createWorkBoard      *connect.Client[v1.CreateWorkBoardRequest, v1.CreateWorkBoardResponse]
+	updateWorkBoard      *connect.Client[v1.UpdateWorkBoardRequest, v1.UpdateWorkBoardResponse]
+	deleteWorkBoard      *connect.Client[v1.DeleteWorkBoardRequest, v1.DeleteWorkBoardResponse]
+	reorderWorkBoards    *connect.Client[v1.ReorderWorkBoardsRequest, v1.ReorderWorkBoardsResponse]
 }
 
 // ListWorkCards calls polterware.local.v1.WorkService.ListWorkCards.
@@ -297,14 +298,14 @@ func (c *workServiceClient) ListWorkCards(ctx context.Context, req *connect.Requ
 	return c.listWorkCards.CallUnary(ctx, req)
 }
 
-// ListAtlas calls polterware.local.v1.WorkService.ListAtlas.
-func (c *workServiceClient) ListAtlas(ctx context.Context, req *connect.Request[v1.ListAtlasRequest]) (*connect.Response[v1.ListAtlasResponse], error) {
-	return c.listAtlas.CallUnary(ctx, req)
+// ListStructure calls polterware.local.v1.WorkService.ListStructure.
+func (c *workServiceClient) ListStructure(ctx context.Context, req *connect.Request[v1.ListStructureRequest]) (*connect.Response[v1.ListStructureResponse], error) {
+	return c.listStructure.CallUnary(ctx, req)
 }
 
-// ListAtlasHistory calls polterware.local.v1.WorkService.ListAtlasHistory.
-func (c *workServiceClient) ListAtlasHistory(ctx context.Context, req *connect.Request[v1.ListAtlasHistoryRequest]) (*connect.Response[v1.ListAtlasHistoryResponse], error) {
-	return c.listAtlasHistory.CallUnary(ctx, req)
+// ListStructureHistory calls polterware.local.v1.WorkService.ListStructureHistory.
+func (c *workServiceClient) ListStructureHistory(ctx context.Context, req *connect.Request[v1.ListStructureHistoryRequest]) (*connect.Response[v1.ListStructureHistoryResponse], error) {
+	return c.listStructureHistory.CallUnary(ctx, req)
 }
 
 // ListAgentSessions calls polterware.local.v1.WorkService.ListAgentSessions.
@@ -405,8 +406,8 @@ func (c *workServiceClient) ReorderWorkBoards(ctx context.Context, req *connect.
 // WorkServiceHandler is an implementation of the polterware.local.v1.WorkService service.
 type WorkServiceHandler interface {
 	ListWorkCards(context.Context, *connect.Request[v1.ListWorkCardsRequest]) (*connect.Response[v1.ListWorkCardsResponse], error)
-	ListAtlas(context.Context, *connect.Request[v1.ListAtlasRequest]) (*connect.Response[v1.ListAtlasResponse], error)
-	ListAtlasHistory(context.Context, *connect.Request[v1.ListAtlasHistoryRequest]) (*connect.Response[v1.ListAtlasHistoryResponse], error)
+	ListStructure(context.Context, *connect.Request[v1.ListStructureRequest]) (*connect.Response[v1.ListStructureResponse], error)
+	ListStructureHistory(context.Context, *connect.Request[v1.ListStructureHistoryRequest]) (*connect.Response[v1.ListStructureHistoryResponse], error)
 	ListAgentSessions(context.Context, *connect.Request[v1.ListAgentSessionsRequest]) (*connect.Response[v1.ListAgentSessionsResponse], error)
 	ApplyPolter(context.Context, *connect.Request[v1.ApplyPolterRequest]) (*connect.Response[v1.ApplyPolterResponse], error)
 	LintPolter(context.Context, *connect.Request[v1.LintPolterRequest]) (*connect.Response[v1.LintPolterResponse], error)
@@ -441,16 +442,16 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(workServiceMethods.ByName("ListWorkCards")),
 		connect.WithHandlerOptions(opts...),
 	)
-	workServiceListAtlasHandler := connect.NewUnaryHandler(
-		WorkServiceListAtlasProcedure,
-		svc.ListAtlas,
-		connect.WithSchema(workServiceMethods.ByName("ListAtlas")),
+	workServiceListStructureHandler := connect.NewUnaryHandler(
+		WorkServiceListStructureProcedure,
+		svc.ListStructure,
+		connect.WithSchema(workServiceMethods.ByName("ListStructure")),
 		connect.WithHandlerOptions(opts...),
 	)
-	workServiceListAtlasHistoryHandler := connect.NewUnaryHandler(
-		WorkServiceListAtlasHistoryProcedure,
-		svc.ListAtlasHistory,
-		connect.WithSchema(workServiceMethods.ByName("ListAtlasHistory")),
+	workServiceListStructureHistoryHandler := connect.NewUnaryHandler(
+		WorkServiceListStructureHistoryProcedure,
+		svc.ListStructureHistory,
+		connect.WithSchema(workServiceMethods.ByName("ListStructureHistory")),
 		connect.WithHandlerOptions(opts...),
 	)
 	workServiceListAgentSessionsHandler := connect.NewUnaryHandler(
@@ -571,10 +572,10 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 		switch r.URL.Path {
 		case WorkServiceListWorkCardsProcedure:
 			workServiceListWorkCardsHandler.ServeHTTP(w, r)
-		case WorkServiceListAtlasProcedure:
-			workServiceListAtlasHandler.ServeHTTP(w, r)
-		case WorkServiceListAtlasHistoryProcedure:
-			workServiceListAtlasHistoryHandler.ServeHTTP(w, r)
+		case WorkServiceListStructureProcedure:
+			workServiceListStructureHandler.ServeHTTP(w, r)
+		case WorkServiceListStructureHistoryProcedure:
+			workServiceListStructureHistoryHandler.ServeHTTP(w, r)
 		case WorkServiceListAgentSessionsProcedure:
 			workServiceListAgentSessionsHandler.ServeHTTP(w, r)
 		case WorkServiceApplyPolterProcedure:
@@ -626,12 +627,12 @@ func (UnimplementedWorkServiceHandler) ListWorkCards(context.Context, *connect.R
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ListWorkCards is not implemented"))
 }
 
-func (UnimplementedWorkServiceHandler) ListAtlas(context.Context, *connect.Request[v1.ListAtlasRequest]) (*connect.Response[v1.ListAtlasResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ListAtlas is not implemented"))
+func (UnimplementedWorkServiceHandler) ListStructure(context.Context, *connect.Request[v1.ListStructureRequest]) (*connect.Response[v1.ListStructureResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ListStructure is not implemented"))
 }
 
-func (UnimplementedWorkServiceHandler) ListAtlasHistory(context.Context, *connect.Request[v1.ListAtlasHistoryRequest]) (*connect.Response[v1.ListAtlasHistoryResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ListAtlasHistory is not implemented"))
+func (UnimplementedWorkServiceHandler) ListStructureHistory(context.Context, *connect.Request[v1.ListStructureHistoryRequest]) (*connect.Response[v1.ListStructureHistoryResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ListStructureHistory is not implemented"))
 }
 
 func (UnimplementedWorkServiceHandler) ListAgentSessions(context.Context, *connect.Request[v1.ListAgentSessionsRequest]) (*connect.Response[v1.ListAgentSessionsResponse], error) {

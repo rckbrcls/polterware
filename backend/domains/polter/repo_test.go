@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
@@ -94,8 +94,8 @@ func TestPlanNodeRepoAndFolder(t *testing.T) {
 		t.Fatalf("fields = %+v", fields)
 	}
 
-	snapshot.Nodes = []atlas.Node{{
-		ID: "n1", Path: "api", Slug: "api", Title: "API", Level: atlas.LevelSystem, Status: atlas.NodeActive,
+	snapshot.Nodes = []structure.Node{{
+		ID: "n1", Path: "api", Slug: "api", Title: "API", Level: structure.LevelSystem, Status: structure.NodeActive,
 		Repo: "api", Folder: "services/api",
 	}}
 	// Absent keys leave the stored values; an empty repo: moves to the root.
@@ -112,8 +112,8 @@ func TestPlanNodeRepoAndFolder(t *testing.T) {
 }
 
 func TestOracleShowsCheckout(t *testing.T) {
-	nodes := []atlas.Node{{
-		ID: "c", Path: "auth", Level: atlas.LevelComponent, Title: "Auth", Status: atlas.NodeActive,
+	nodes := []structure.Node{{
+		ID: "c", Path: "auth", Level: structure.LevelComponent, Title: "Auth", Status: structure.NodeActive,
 		Repo: "api", Folder: "src/auth",
 	}}
 	text, err := Oracle(nodes, nil, "auth", "component", 800)

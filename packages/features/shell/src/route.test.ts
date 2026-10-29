@@ -68,16 +68,13 @@ describe("first version routes", () => {
     expect(resolveRoute("terminal")).toEqual({ section: "structure", tab: "all" });
   });
 
-  it("resolves Atlas aliases and retired tabs to Structure", () => {
-    expect(isNavSectionId("atlas")).toBe(false);
-    expect(resolveRoute("atlas")).toEqual({ section: "structure", tab: "all" });
-    expect(resolveRoute("atlas", "relations")).toEqual({ section: "structure", tab: "all" });
+  it("resolves retired Structure tabs to the tree", () => {
     expect(resolveRoute("structure", "canvas")).toEqual({ section: "structure", tab: "all" });
     expect(resolveRoute("structure", "hierarchy")).toEqual({ section: "structure", tab: "all" });
     expect(resolveRoute("structure", "views")).toEqual({ section: "structure", tab: "all" });
   });
 
-  it("maps pre-Atlas sections to their new homes", () => {
+  it("maps pre-Structure sections to their new homes", () => {
     expect(resolveRoute("architecture", "views")).toEqual({ section: "structure", tab: "all" });
     expect(resolveRoute("architecture", "components")).toEqual({ section: "structure", tab: "all" });
     expect(resolveRoute("resources", "nodes")).toEqual({ section: "structure", tab: "all" });

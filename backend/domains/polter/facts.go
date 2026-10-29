@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/work"
 )
@@ -164,8 +164,8 @@ func (p *planner) planFacts(doc Document) {
 		if scope, ok := node.MetaValue("scope"); ok {
 			if scope != "" {
 				target, exists := p.nodes[scope]
-				if !exists || target.Status == atlas.NodeRemoved {
-					p.errorf(factMetaLine(node, "scope"), "unknown scope %q: use an Atlas node path", scope)
+				if !exists || target.Status == structure.NodeRemoved {
+					p.errorf(factMetaLine(node, "scope"), "unknown scope %q: use a Structure node path", scope)
 					continue
 				}
 			}

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/integrations"
 	"github.com/polterware/polterware/backend/domains/work"
 	"github.com/polterware/polterware/backend/platform/ids"
@@ -118,7 +118,7 @@ func resolveEnvironment(envs []work.NamedEnvironment, ref string) (work.NamedEnv
 // resolveDeploys turns a deploys: line into stored links. mentioned is false
 // when the line is absent. err is set when the line is present but invalid;
 // the caller then skips the node.
-func resolveDeploys(node AtlasNode, existing []atlas.Deployment, envs []work.NamedEnvironment) (next []atlas.Deployment, mentioned bool, err error) {
+func resolveDeploys(node StructureNode, existing []structure.Deployment, envs []work.NamedEnvironment) (next []structure.Deployment, mentioned bool, err error) {
 	value, mentioned := node.MetaValue("deploys")
 	if !mentioned {
 		return existing, false, nil
@@ -127,13 +127,13 @@ func resolveDeploys(node AtlasNode, existing []atlas.Deployment, envs []work.Nam
 	if err != nil {
 		return existing, true, err
 	}
-	next = make([]atlas.Deployment, 0, len(specs))
+	next = make([]structure.Deployment, 0, len(specs))
 	for _, spec := range specs {
 		env, err := resolveEnvironment(envs, spec.Env)
 		if err != nil {
 			return existing, true, err
 		}
-		next = append(next, atlas.Deployment{
+		next = append(next, structure.Deployment{
 			EnvironmentID: env.ID,
 			Environment:   env.Name,
 			Provider:      spec.Provider,
@@ -143,7 +143,7 @@ func resolveDeploys(node AtlasNode, existing []atlas.Deployment, envs []work.Nam
 	return assignDeployIDs(existing, next), true, nil
 }
 
-func deploysLine(node AtlasNode) int {
+func deploysLine(node StructureNode) int {
 	for _, entry := range node.Meta {
 		if entry.Key == "deploys" {
 			return entry.Line
@@ -152,14 +152,14 @@ func deploysLine(node AtlasNode) int {
 	return node.Line
 }
 
-func assignDeployIDs(existing, next []atlas.Deployment) []atlas.Deployment {
+func assignDeployIDs(existing, next []structure.Deployment) []structure.Deployment {
 	byEnv := map[string]string{}
 	for _, deploy := range existing {
 		if deploy.ID != "" {
 			byEnv[deploy.EnvironmentID] = deploy.ID
 		}
 	}
-	out := append([]atlas.Deployment(nil), next...)
+	out := append([]structure.Deployment(nil), next...)
 	sort.Slice(out, func(i, j int) bool { return out[i].EnvironmentID < out[j].EnvironmentID })
 	for i := range out {
 		if out[i].ID != "" {
@@ -174,12 +174,12 @@ func assignDeployIDs(existing, next []atlas.Deployment) []atlas.Deployment {
 	return out
 }
 
-func sameDeploys(a, b []atlas.Deployment) bool {
+func sameDeploys(a, b []structure.Deployment) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	left := append([]atlas.Deployment(nil), a...)
-	right := append([]atlas.Deployment(nil), b...)
+	left := append([]structure.Deployment(nil), a...)
+	right := append([]structure.Deployment(nil), b...)
 	sort.Slice(left, func(i, j int) bool { return left[i].EnvironmentID < left[j].EnvironmentID })
 	sort.Slice(right, func(i, j int) bool { return right[i].EnvironmentID < right[j].EnvironmentID })
 	for i := range left {
@@ -190,9 +190,9 @@ func sameDeploys(a, b []atlas.Deployment) bool {
 	return true
 }
 
-func nonNilDeploys(values []atlas.Deployment) []atlas.Deployment {
+func nonNilDeploys(values []structure.Deployment) []structure.Deployment {
 	if values == nil {
-		return []atlas.Deployment{}
+		return []structure.Deployment{}
 	}
 	return values
 }

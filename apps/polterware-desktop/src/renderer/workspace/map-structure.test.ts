@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { mapAtlas, mapAtlasHistory } from "./map-records";
+import { mapStructure, mapStructureHistory } from "./map-records";
 
-describe("mapAtlas", () => {
+describe("mapStructure", () => {
   it("maps nodes and drift slugs, dropping unknown levels and statuses", () => {
-    const atlas = mapAtlas({
+    const structure = mapStructure({
       nodes: [
         {
           id: "n1",
@@ -31,8 +31,8 @@ describe("mapAtlas", () => {
       driftSlugs: ["git-import"],
     });
 
-    expect(atlas.nodes).toHaveLength(1);
-    expect(atlas.nodes[0]).toMatchObject({
+    expect(structure.nodes).toHaveLength(1);
+    expect(structure.nodes[0]).toMatchObject({
       id: "n1",
       path: "core",
       status: "in_progress",
@@ -44,21 +44,21 @@ describe("mapAtlas", () => {
       migrationFrom: "REST",
       migrationTo: "Connect",
     });
-    expect(atlas.nodes[0]?.invariants).toEqual([{ id: "i1", text: "One core process" }]);
-    expect(atlas.nodes[0]?.deploys).toEqual([{ id: "deploy-1", environmentId: "prod", environment: "Production", provider: "aws", resource: "api-prod" }]);
-    expect(atlas.driftSlugs).toEqual(["git-import"]);
+    expect(structure.nodes[0]?.invariants).toEqual([{ id: "i1", text: "One core process" }]);
+    expect(structure.nodes[0]?.deploys).toEqual([{ id: "deploy-1", environmentId: "prod", environment: "Production", provider: "aws", resource: "api-prod" }]);
+    expect(structure.driftSlugs).toEqual(["git-import"]);
   });
 
-  it("returns an empty atlas for an empty response", () => {
-    expect(mapAtlas({})).toEqual({ nodes: [], driftSlugs: [], historical: false });
+  it("returns an empty structure for an empty response", () => {
+    expect(mapStructure({})).toEqual({ nodes: [], driftSlugs: [], historical: false });
   });
 
   it("flags a replayed past graph", () => {
-    expect(mapAtlas({ historical: true }).historical).toBe(true);
+    expect(mapStructure({ historical: true }).historical).toBe(true);
   });
 
-  it("maps the change batches that touched the Atlas", () => {
-    const entries = mapAtlasHistory({
+  it("maps the change batches that touched the Structure", () => {
+    const entries = mapStructureHistory({
       entries: [{ batchId: "b2", at: "2026-09-02T10:00:00Z", nodeOps: 3, summary: "core/import" }],
     });
     expect(entries).toHaveLength(1);

@@ -26,7 +26,7 @@ const DEFAULT_TIERS = ["easy", "normal", "hard"] as const;
 /** Activity: the Unified Change History of justified project-model changes, across every surface. */
 export function ActivityPage(props: {
   projectId: string;
-  /** Expanded Atlas node ids. Empty leaves the change list unscoped. */
+  /** Expanded Structure node ids. Empty leaves the change list unscoped. */
   scopeNodes?: readonly string[];
   loadChanges?: (
     projectId: string,

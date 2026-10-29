@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canvas"
 	"github.com/polterware/polterware/backend/platform/ids"
 )
@@ -15,18 +15,18 @@ type rowQuery interface {
 	QueryRow(query string, args ...any) *sql.Row
 }
 
-// RequireAtlasNode reports whether nodeID belongs to the project. An empty
+// RequireStructureNode reports whether nodeID belongs to the project. An empty
 // nodeID is the whole project and is allowed.
-func (s *Store) RequireAtlasNode(projectID, nodeID string) error {
-	return requireAtlasNode(s.DB, projectID, nodeID)
+func (s *Store) RequireStructureNode(projectID, nodeID string) error {
+	return requireStructureNode(s.DB, projectID, nodeID)
 }
 
-func requireAtlasNode(q rowQuery, projectID, nodeID string) error {
+func requireStructureNode(q rowQuery, projectID, nodeID string) error {
 	if nodeID == "" {
 		return nil
 	}
 	var id string
-	err := q.QueryRow(`SELECT id FROM atlas_nodes WHERE id=? AND project_id=? AND status<>?`, nodeID, projectID, atlas.NodeRemoved).Scan(&id)
+	err := q.QueryRow(`SELECT id FROM structure_nodes WHERE id=? AND project_id=? AND status<>?`, nodeID, projectID, structure.NodeRemoved).Scan(&id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return canvas.ErrUnknownScope
 	}
@@ -167,7 +167,7 @@ func (s *Store) writeCanvas(item canvas.Canvas, agentRunID, batchID, op string, 
 		return canvas.Canvas{}, err
 	}
 	defer func() { _ = tx.Rollback() }()
-	if err := requireAtlasNode(tx, prepared.ProjectID, prepared.ScopeNodeID); err != nil {
+	if err := requireStructureNode(tx, prepared.ProjectID, prepared.ScopeNodeID); err != nil {
 		return canvas.Canvas{}, err
 	}
 	now := time.Now().UTC().Format(time.RFC3339)

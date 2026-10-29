@@ -64,6 +64,20 @@ if rg -n '@polterware/core|@polterware/ui|packages/core|packages/ui' \
     --glob '!**/node_modules/**' --glob '!**/out/**' 2>/dev/null | head -20 || true
 fi
 
+# The project graph is called Structure. Migrations and their test keep their history,
+# and the MongoDB Atlas synonym in the provider registry is a product name.
+if rg -n -i 'atlas' "$ROOT/apps" "$ROOT/packages" "$ROOT/backend" "$ROOT/schemas" "$ROOT/docs" "$ROOT/AGENTS.md" "$ROOT/DESIGN.md" \
+  --glob '!**/node_modules/**' --glob '!**/out/**' --glob '!**/release/**' \
+  --glob '!backend/platform/db/sqlite/migrations/*.sql' --glob '!backend/platform/db/sqlite/sqlite_test.go' \
+  --glob '!docs/design-references/**' \
+  2>/dev/null | rg -v 'synonyms: \["atlas"\]' | rg -q .; then
+  die "the project graph is Structure; remove Atlas"
+  rg -n -i 'atlas' "$ROOT/apps" "$ROOT/packages" "$ROOT/backend" "$ROOT/schemas" "$ROOT/docs" "$ROOT/AGENTS.md" "$ROOT/DESIGN.md" \
+    --glob '!**/node_modules/**' --glob '!**/out/**' --glob '!**/release/**' \
+    --glob '!backend/platform/db/sqlite/migrations/*.sql' --glob '!backend/platform/db/sqlite/sqlite_test.go' \
+    --glob '!docs/design-references/**' 2>/dev/null | rg -v 'synonyms: \["atlas"\]' | head -20 || true
+fi
+
 if [[ $fail -ne 0 ]]; then
   exit 1
 fi

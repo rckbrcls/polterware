@@ -255,7 +255,7 @@ export async function persistKnowledgeCreate(input: {
   return id;
 }
 
-/** Scopes a knowledge item (Decision or Evidence) to an Atlas node path; an empty path clears it. */
+/** Scopes a knowledge item (Decision or Evidence) to a Structure node path; an empty path clears it. */
 export async function persistKnowledgeScope(projectId: string, id: string, path: string): Promise<void> {
   await core().work.setScope({ projectId, kind: "knowledge", id, node: path });
 }
@@ -297,14 +297,14 @@ function polterCard(slug: string, title: string | null, meta: Record<string, str
   return `---\npolter: 1\n---\n\n${heading}\n${metaLine}\n`;
 }
 
-function atlasNodeText(input: { heading: string; title: string; level: string; under?: string }): string {
+function structureNodeText(input: { heading: string; title: string; level: string; under?: string }): string {
   const meta = [`level: ${input.level}`];
   if (input.under) meta.push(`under: ${input.under}`);
   return `---\npolter: 1\n---\n\n# ${input.heading}: ${polterValue(input.title)}\n${meta.join(" · ")}\n`;
 }
 
-/** Create an Atlas node. The heading is the slug; under names the parent path. */
-export async function persistAtlasCreateNode(input: {
+/** Create a Structure node. The heading is the slug; under names the parent path. */
+export async function persistStructureCreateNode(input: {
   projectId: string;
   heading: string;
   title: string;
@@ -312,11 +312,11 @@ export async function persistAtlasCreateNode(input: {
   under?: string;
   change: ChangeEnvelope;
 }): Promise<void> {
-  await applyPolter(input.projectId, atlasNodeText(input), input.change);
+  await applyPolter(input.projectId, structureNodeText(input), input.change);
 }
 
-/** Move an existing Atlas node under a new parent. The heading is its current path. */
-export async function persistAtlasMoveNode(input: {
+/** Move an existing Structure node under a new parent. The heading is its current path. */
+export async function persistStructureMoveNode(input: {
   projectId: string;
   path: string;
   title: string;
@@ -326,16 +326,16 @@ export async function persistAtlasMoveNode(input: {
 }): Promise<void> {
   await applyPolter(
     input.projectId,
-    atlasNodeText({ heading: input.path, title: input.title, level: input.level, under: input.under }),
+    structureNodeText({ heading: input.path, title: input.title, level: input.level, under: input.under }),
     input.change,
   );
 }
 
 /**
- * Replace an Atlas node's `uses:` list (the node paths it depends on). An empty
+ * Replace a Structure node's `uses:` list (the node paths it depends on). An empty
  * list clears it. The heading is the node's current path.
  */
-export async function persistAtlasUses(input: {
+export async function persistStructureUses(input: {
   projectId: string;
   path: string;
   title: string;
@@ -343,15 +343,15 @@ export async function persistAtlasUses(input: {
   uses: readonly string[];
   change: ChangeEnvelope;
 }): Promise<void> {
-  const text = atlasNodeText({ heading: input.path, title: input.title, level: input.level });
+  const text = structureNodeText({ heading: input.path, title: input.title, level: input.level });
   await applyPolter(input.projectId, `${text}uses: ${input.uses.join(", ")}\n`, input.change);
 }
 
 /**
- * Replace an Atlas node's `deploys:` list (environment=provider:resource links).
+ * Replace a Structure node's `deploys:` list (environment=provider:resource links).
  * An empty list clears it. The heading is the node's current path.
  */
-export async function persistAtlasUpdateDeploys(input: {
+export async function persistStructureUpdateDeploys(input: {
   projectId: string;
   path: string;
   title: string;
@@ -359,7 +359,7 @@ export async function persistAtlasUpdateDeploys(input: {
   deploys: readonly { environmentId: string; provider: string; resource: string }[];
   change: ChangeEnvelope;
 }): Promise<void> {
-  const text = atlasNodeText({ heading: input.path, title: input.title, level: input.level });
+  const text = structureNodeText({ heading: input.path, title: input.title, level: input.level });
   const deploysLine = input.deploys.length > 0
     ? `deploys: ${input.deploys.map((d) => `${d.environmentId}=${d.provider}:${d.resource}`).join(", ")}\n`
     : "deploys:\n";

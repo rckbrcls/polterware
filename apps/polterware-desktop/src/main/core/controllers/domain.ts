@@ -76,11 +76,11 @@ export function createCoreDomainControllers(
     saveSavedFilter: async (input?: JsonObject) => toJsonObject(await clients.savedFilters.saveSavedFilter(requestMessage(input))),
     deleteSavedFilter: async (input?: JsonObject) => toJsonObject(await clients.savedFilters.deleteSavedFilter(requestMessage(input))),
     listWorkCards: async (input?: JsonObject) => toJsonObject(await clients.work.listWorkCards(requestMessage(input))),
-    listAtlas: async (input?: JsonObject) => toJsonObject(await clients.work.listAtlas(requestMessage(input))),
+    listStructure: async (input?: JsonObject) => toJsonObject(await clients.work.listStructure(requestMessage(input))),
     listAgentSessions: async (input?: JsonObject) =>
       toJsonObject(await clients.work.listAgentSessions(requestMessage(input))),
-    listAtlasHistory: async (input?: JsonObject) =>
-      toJsonObject(await clients.work.listAtlasHistory(requestMessage(input))),
+    listStructureHistory: async (input?: JsonObject) =>
+      toJsonObject(await clients.work.listStructureHistory(requestMessage(input))),
     queryPolter: async (input?: JsonObject) => toJsonObject(await clients.work.queryPolter(requestMessage(input))),
     applyPolter: async (input?: JsonObject) => toJsonObject(await clients.work.applyPolter(requestMessage(input))),
     listInbox: async (input?: JsonObject) => toJsonObject(await clients.work.listInbox(requestMessage(input))),

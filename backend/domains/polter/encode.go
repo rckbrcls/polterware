@@ -24,7 +24,7 @@ func Format(doc Document) string {
 	b.WriteString("---\n")
 	for _, node := range doc.Nodes {
 		b.WriteString("\n")
-		writeAtlasNode(&b, node)
+		writeStructureNode(&b, node)
 	}
 	for _, card := range doc.Cards {
 		b.WriteString("\n")
@@ -109,7 +109,7 @@ func HandoffNodeFrom(handoff work.Handoff) *HandoffNode {
 	}
 }
 
-func writeAtlasNode(b *strings.Builder, node AtlasNode) {
+func writeStructureNode(b *strings.Builder, node StructureNode) {
 	path := node.Path
 	if path == "" {
 		path = node.Slug

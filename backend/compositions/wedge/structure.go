@@ -1,19 +1,19 @@
 package wedge
 
 import (
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/drift"
 	"github.com/polterware/polterware/backend/domains/work"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
-// AtlasRows derives status for the project's nodes. A drift read that fails
+// StructureRows derives status for the project's nodes. A drift read that fails
 // leaves every node without the drift mark rather than failing the read.
-func AtlasRows(store *storepkg.Store, snapshot work.Snapshot) []atlas.Row {
-	return atlasRows(store, snapshot)
+func StructureRows(store *storepkg.Store, snapshot work.Snapshot) []structure.Row {
+	return structureRows(store, snapshot)
 }
 
-func atlasRows(store *storepkg.Store, snapshot work.Snapshot) []atlas.Row {
+func structureRows(store *storepkg.Store, snapshot work.Snapshot) []structure.Row {
 	driftSlugs := map[string]bool{}
 	if findings, err := DriftFindings(store, snapshot.ProjectID); err == nil {
 		for _, finding := range findings {
@@ -25,7 +25,7 @@ func atlasRows(store *storepkg.Store, snapshot work.Snapshot) []atlas.Row {
 			}
 		}
 	}
-	features := make([]atlas.Feature, 0, len(snapshot.Cards))
+	features := make([]structure.Feature, 0, len(snapshot.Cards))
 	for _, card := range snapshot.Cards {
 		if card.Status != work.CardActive {
 			continue
@@ -36,12 +36,12 @@ func atlasRows(store *storepkg.Store, snapshot work.Snapshot) []atlas.Row {
 				open++
 			}
 		}
-		features = append(features, atlas.Feature{
+		features = append(features, structure.Feature{
 			Slug: card.Slug, Title: card.Title, Under: card.Under, Stage: card.Stage,
 			OpenQuestions: open, Drift: driftSlugs[card.Slug],
 		})
 	}
-	return atlas.Decorate(snapshot.Nodes, features)
+	return structure.Decorate(snapshot.Nodes, features)
 }
 
 // DriftSlugs returns card slugs named by a warning or conflict finding.

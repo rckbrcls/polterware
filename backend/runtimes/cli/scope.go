@@ -31,7 +31,7 @@ func (s *scopeList) Set(value string) error {
 	return nil
 }
 
-// scopeFlags are the flags that narrow a read to one or more Atlas nodes.
+// scopeFlags are the flags that narrow a read to one or more Structure nodes.
 type scopeFlags struct {
 	raw   *scopeList
 	exact *bool
@@ -48,14 +48,14 @@ func (s scopeFlags) nodes() []string {
 // addScopeFlags registers repeatable --scope and --exact on flags.
 func addScopeFlags(flags *flag.FlagSet) scopeFlags {
 	raw := &scopeList{}
-	flags.Var(raw, "scope", "Atlas node path, slug, or id; repeat or separate with commas (default: whole project)")
+	flags.Var(raw, "scope", "Structure node path, slug, or id; repeat or separate with commas (default: whole project)")
 	return scopeFlags{
 		raw:   raw,
 		exact: flags.Bool("exact", false, "with --scope, leave out each node's ancestors"),
 	}
 }
 
-// runScope assigns an entity to an Atlas node, or clears its scope.
+// runScope assigns an entity to a Structure node, or clears its scope.
 func runScope(dbPath string, args []string) error {
 	flags := flag.NewFlagSet("scope", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)

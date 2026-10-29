@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canvas"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
@@ -12,7 +12,7 @@ import (
 // queryCanvas lists agent-visible canvases, or returns the node-link export
 // of one of them. A canvas with agent_visible false is omitted from the list
 // and answers as unknown, including when the caller names its id.
-func queryCanvas(store *storepkg.Store, projectID, ref string, scope atlas.MultiScope) (string, error) {
+func queryCanvas(store *storepkg.Store, projectID, ref string, scope structure.MultiScope) (string, error) {
 	items, err := store.ListCanvases(projectID)
 	if err != nil {
 		return "", err

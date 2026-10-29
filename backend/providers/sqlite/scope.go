@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 )
 
 // Scope kinds name where an entity's scope is stored.
@@ -26,14 +26,14 @@ var scopeTables = map[string]string{
 	ScopeEvidence:  "canon_evidence",
 }
 
-// SetScope assigns an entity to an Atlas node, or clears the scope when nodeID
+// SetScope assigns an entity to a Structure node, or clears the scope when nodeID
 // is empty. A node path in nodeID is not accepted; resolve it first.
 func (s *Store) SetScope(projectID, kind, id, nodeID string) error {
 	if nodeID != "" {
 		var found string
-		err := s.DB.QueryRow(`SELECT id FROM atlas_nodes WHERE id=? AND project_id=? AND status<>'removed'`, nodeID, projectID).Scan(&found)
+		err := s.DB.QueryRow(`SELECT id FROM structure_nodes WHERE id=? AND project_id=? AND status<>'removed'`, nodeID, projectID).Scan(&found)
 		if err != nil {
-			return fmt.Errorf("unknown atlas node %q", nodeID)
+			return fmt.Errorf("unknown structure node %q", nodeID)
 		}
 	}
 	if kind == ScopeItem {
@@ -92,8 +92,8 @@ func (s *Store) ScopeMap(projectID, kind string) (map[string]string, error) {
 // NodeScope is the resolved filter for one project: the matching node set and
 // the nodes it was built from, so callers can also match by node path.
 type NodeScope struct {
-	Set   atlas.ScopeSet
-	Nodes []atlas.Node
+	Set   structure.ScopeSet
+	Nodes []structure.Node
 }
 
 // Matches reports whether an entity scoped to nodeID is visible.
@@ -113,30 +113,30 @@ func (n NodeScope) MatchesPath(path string) bool {
 	return false
 }
 
-// LoadScope resolves one node against the project's Atlas. An inactive scope
+// LoadScope resolves one node against the project's Structure. An inactive scope
 // returns a NodeScope whose Set is nil and matches everything.
-func (s *Store) LoadScope(projectID string, scope atlas.Scope) (NodeScope, error) {
+func (s *Store) LoadScope(projectID string, scope structure.Scope) (NodeScope, error) {
 	var ids []string
 	if scope.NodeID != "" {
 		ids = []string{scope.NodeID}
 	}
-	return s.LoadScopes(projectID, atlas.MultiScope{NodeIDs: ids, Exact: scope.Exact})
+	return s.LoadScopes(projectID, structure.MultiScope{NodeIDs: ids, Exact: scope.Exact})
 }
 
-// LoadScopes resolves several nodes against the project's Atlas. The set is
+// LoadScopes resolves several nodes against the project's Structure. The set is
 // the union of each node's scope. An inactive scope matches everything.
-func (s *Store) LoadScopes(projectID string, scope atlas.MultiScope) (NodeScope, error) {
+func (s *Store) LoadScopes(projectID string, scope structure.MultiScope) (NodeScope, error) {
 	if !scope.Active() {
 		return NodeScope{}, nil
 	}
-	nodes, err := s.loadAtlasNodes(projectID)
+	nodes, err := s.loadStructureNodes(projectID)
 	if err != nil {
 		return NodeScope{}, err
 	}
-	return NodeScope{Set: atlas.ResolveScopes(nodes, scope), Nodes: nodes}, nil
+	return NodeScope{Set: structure.ResolveScopes(nodes, scope), Nodes: nodes}, nil
 }
 
-// AtlasNodes returns every Atlas node of the project, removed ones included.
-func (s *Store) AtlasNodes(projectID string) ([]atlas.Node, error) {
-	return s.loadAtlasNodes(projectID)
+// StructureNodes returns every Structure node of the project, removed ones included.
+func (s *Store) StructureNodes(projectID string) ([]structure.Node, error) {
+	return s.loadStructureNodes(projectID)
 }

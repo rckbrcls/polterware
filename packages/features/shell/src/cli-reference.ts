@@ -160,7 +160,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     name: "polterware oracle",
     synopsis:
       'polterware oracle "<question>" [--zoom task|component|domain|system] [--budget N] [--project <id>]',
-    summary: "Answer a question from the project's Atlas and Work state within a token budget.",
+    summary: "Answer a question from the project's Structure and Work state within a token budget.",
     flags: [
       {
         name: "--zoom",
@@ -173,11 +173,11 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     example: 'polterware oracle "what touches billing?" --zoom domain',
   },
   {
-    id: "atlas",
-    name: "polterware atlas",
-    synopsis: "polterware atlas [--node <path>] [--at <point>] [--project <id>] | atlas history",
+    id: "structure",
+    name: "polterware structure",
+    synopsis: "polterware structure [--node <path>] [--at <point>] [--project <id>] | structure history",
     summary:
-      "Read the Atlas: the whole map, one node, or the map at a point in time. atlas history lists the change batches.",
+      "Read the Structure: the whole map, one node, or the map at a point in time. structure history lists the change batches.",
     flags: [
       { name: "--node", value: "path", description: "Node id or path." },
       {
@@ -187,7 +187,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
       },
       PROJECT_FLAG,
     ],
-    example: "polterware atlas --node backend/domains/work --at 2026-09-01",
+    example: "polterware structure --node backend/domains/work --at 2026-09-01",
   },
   {
     id: "canvas",
@@ -279,9 +279,9 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "query",
     name: "polterware query",
     synopsis:
-      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "atlas [<path>] [at <point>]" | "atlas history" | "decisions [state]" | "decision <verdict>" | "feature <slug> [step]" | "verify <slug>" | "canvas [<name|id>]" [--scope <node>] [--exact] [--project <id>]',
+      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <verdict>" | "feature <slug> [step]" | "verify <slug>" | "canvas [<name|id>]" [--scope <node>] [--exact] [--project <id>]',
     summary:
-      "Read project state in Polter format: cards, one card, status, inbox, handoffs, Atlas, decisions, feature steps, verification, or a shared canvas.",
+      "Read project state in Polter format: cards, one card, status, inbox, handoffs, Structure, decisions, feature steps, verification, or a shared canvas.",
     flags: [
       ...SCOPE_FLAGS,
       {
@@ -688,7 +688,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
 /** Sidebar and page sections: every command id appears in exactly one group. */
 export const CLI_COMMAND_GROUPS: readonly { id: string; label: string; commands: readonly string[] }[] = [
   { id: "setup", label: "Setup", commands: ["tui", "init", "scan", "repo", "setup", "hooks", "hook", "serve", "mcp", "help"] },
-  { id: "read", label: "Read", commands: ["context", "oracle", "atlas", "canvas", "query", "status", "inbox", "export", "drift"] },
+  { id: "read", label: "Read", commands: ["context", "oracle", "structure", "canvas", "query", "status", "inbox", "export", "drift"] },
   { id: "write", label: "Write", commands: ["apply", "lint", "format", "handoff", "task", "decision", "feature", "verify", "scope"] },
   {
     id: "delegation",

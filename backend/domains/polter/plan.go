@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 	"github.com/polterware/polterware/backend/platform/ids"
 )
@@ -28,7 +28,7 @@ func PlanAs(doc Document, snapshot work.Snapshot, holder string) ([]work.Op, []D
 		claims:       map[string]heldClaim{},
 		taskState:    map[string]string{},
 		removedCards: map[string]bool{},
-		nodes:        map[string]atlas.Node{},
+		nodes:        map[string]structure.Node{},
 	}
 	for _, node := range snapshot.Nodes {
 		p.nodes[node.Path] = node
@@ -63,8 +63,8 @@ type planner struct {
 	nextPosition int
 	nextNode     int
 	holder       string
-	// nodes is the project's atlas nodes by path, including ones this text creates.
-	nodes map[string]atlas.Node
+	// nodes is the project's structure nodes by path, including ones this text creates.
+	nodes map[string]structure.Node
 	// claims is the project's active claims by task id, updated as ops are planned.
 	claims map[string]heldClaim
 	// taskState holds task states this text changes, by task id.
@@ -99,7 +99,7 @@ func (p *planner) failed(line int) bool {
 // failedDeploys reports a decode error on the node's deploys: line. Those
 // errors sit on the metadata line, not the heading, so failed(node.Line) misses
 // them. A bad line must not write the node.
-func (p *planner) failedDeploys(node AtlasNode) bool {
+func (p *planner) failedDeploys(node StructureNode) bool {
 	for _, entry := range node.Meta {
 		if entry.Key == "deploys" && p.failed(entry.Line) {
 			return true
@@ -135,7 +135,7 @@ func (p *planner) planNodes(doc Document) {
 		parentID := ""
 		if parent != "" {
 			parentNode, ok := p.nodes[parent]
-			if !ok || parentNode.Status == atlas.NodeRemoved {
+			if !ok || parentNode.Status == structure.NodeRemoved {
 				continue
 			}
 			parentID = parentNode.ID
@@ -152,12 +152,12 @@ func (p *planner) planNodes(doc Document) {
 	}
 }
 
-func (p *planner) createNode(node AtlasNode, path, level, parentID string) {
+func (p *planner) createNode(node StructureNode, path, level, parentID string) {
 	if node.Title == "" {
 		p.errorf(node.Line, "unknown node %q: add a title (# %s: Title)", path, node.Path)
 		return
 	}
-	if status, _ := node.MetaValue("status"); status == atlas.NodeRemoved {
+	if status, _ := node.MetaValue("status"); status == structure.NodeRemoved {
 		p.errorf(node.Line, "cannot remove unknown node %q: check the path", path)
 		return
 	}
@@ -173,9 +173,9 @@ func (p *planner) createNode(node AtlasNode, path, level, parentID string) {
 		return
 	}
 	id := ids.NewULID()
-	created := atlas.Node{
+	created := structure.Node{
 		ID: id, Slug: node.Slug, Path: path, Title: node.Title, Intent: node.Intent,
-		Level: level, Status: atlas.NodeActive, ParentID: parentID, Position: p.nextNode,
+		Level: level, Status: structure.NodeActive, ParentID: parentID, Position: p.nextNode,
 		Uses: splitList(uses), Repo: repo, Folder: folder, MigrationFrom: migrationFrom, MigrationTo: migrationTo,
 		Deploys: deploys,
 	}
@@ -183,7 +183,7 @@ func (p *planner) createNode(node AtlasNode, path, level, parentID string) {
 		Entity: work.EntityNode, Kind: work.OpCreate, EntityID: id, CardSlug: path, Label: node.Title,
 		Fields: map[string]any{
 			"slug": node.Slug, "title": node.Title, "intent": node.Intent, "level": level,
-			"status": atlas.NodeActive, "path": path, "parent_id": parentID,
+			"status": structure.NodeActive, "path": path, "parent_id": parentID,
 			"decisions": splitList(decisions), "uses": splitList(uses), "position": p.nextNode,
 			"repo": repo, "folder": folder,
 			"migration_from": migrationFrom, "migration_to": migrationTo,
@@ -196,7 +196,7 @@ func (p *planner) createNode(node AtlasNode, path, level, parentID string) {
 	p.nodes[path] = created
 }
 
-func (p *planner) updateNode(node AtlasNode, existing atlas.Node, path, level, parentID string) {
+func (p *planner) updateNode(node StructureNode, existing structure.Node, path, level, parentID string) {
 	fields, before := map[string]any{}, map[string]any{}
 	set := func(key string, old, value any) {
 		fields[key], before[key] = value, old
@@ -265,7 +265,7 @@ func (p *planner) updateNode(node AtlasNode, existing atlas.Node, path, level, p
 	}
 	if len(fields) > 0 {
 		kind := work.OpUpdate
-		if fields["status"] == atlas.NodeRemoved {
+		if fields["status"] == structure.NodeRemoved {
 			kind = work.OpRemove
 		}
 		p.ops = append(p.ops, work.Op{
@@ -273,8 +273,8 @@ func (p *planner) updateNode(node AtlasNode, existing atlas.Node, path, level, p
 			Label: existing.Title, Fields: fields, Before: before,
 		})
 	}
-	if status == atlas.NodeRemoved {
-		existing.Status = atlas.NodeRemoved
+	if status == structure.NodeRemoved {
+		existing.Status = structure.NodeRemoved
 		p.nodes[path] = existing
 		return
 	}
@@ -335,14 +335,14 @@ func (p *planner) rewriteMovedPaths(oldPath, newPath string) {
 	}
 }
 
-func (p *planner) nodeInvariants(node AtlasNode, stored *atlas.Node) {
+func (p *planner) nodeInvariants(node StructureNode, stored *structure.Node) {
 	maxPosition := -1
 	for _, inv := range stored.Invariants {
 		maxPosition = max(maxPosition, inv.Position)
 	}
 	for _, inv := range node.Invariants {
 		key := work.NormalizeText(inv.Text)
-		var existing *atlas.Invariant
+		var existing *structure.Invariant
 		for i := range stored.Invariants {
 			if work.NormalizeText(stored.Invariants[i].Text) == key {
 				existing = &stored.Invariants[i]
@@ -355,7 +355,7 @@ func (p *planner) nodeInvariants(node AtlasNode, stored *atlas.Node) {
 			}
 			maxPosition++
 			id := ids.NewULID()
-			stored.Invariants = append(stored.Invariants, atlas.Invariant{
+			stored.Invariants = append(stored.Invariants, structure.Invariant{
 				ID: id, NodeID: stored.ID, Text: inv.Text, State: work.InvariantActive, Position: maxPosition,
 			})
 			p.ops = append(p.ops, work.Op{
@@ -987,7 +987,7 @@ func short(value any) string {
 	if list, ok := value.([]string); ok {
 		text = "[" + strings.Join(list, ", ") + "]"
 	}
-	if deploys, ok := value.([]atlas.Deployment); ok {
+	if deploys, ok := value.([]structure.Deployment); ok {
 		parts := make([]string, len(deploys))
 		for i, deploy := range deploys {
 			name := deploy.Environment

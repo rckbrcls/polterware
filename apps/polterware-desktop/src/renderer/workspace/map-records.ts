@@ -15,11 +15,11 @@ import type {
   WorkspaceInbox,
   WorkspaceInboxAction,
   WorkspaceInboxKind,
-  WorkspaceAtlas,
-  WorkspaceAtlasHistoryEntry,
-  WorkspaceAtlasNode,
-  AtlasLevel,
-  AtlasStatus,
+  WorkspaceStructure,
+  WorkspaceStructureHistoryEntry,
+  WorkspaceStructureNode,
+  StructureLevel,
+  StructureStatus,
   WorkspaceWorkCard,
   WorkspaceWorkBoard,
   WorkStage,
@@ -292,22 +292,22 @@ export function mapWorkCards(items: Record<string, unknown>[]): WorkspaceWorkCar
   }));
 }
 
-const ATLAS_LEVELS: AtlasLevel[] = ["system", "domain", "component"];
-const ATLAS_STATUSES: AtlasStatus[] = ["proposed", "in_progress", "delivered", "drift"];
+const STRUCTURE_LEVELS: StructureLevel[] = ["system", "domain", "component"];
+const STRUCTURE_STATUSES: StructureStatus[] = ["proposed", "in_progress", "delivered", "drift"];
 
-/** Atlas hierarchy from WorkService.ListAtlas. Unknown levels and statuses are dropped. */
-export function mapAtlas(raw: Record<string, unknown>): WorkspaceAtlas {
-  const nodes: WorkspaceAtlasNode[] = [];
+/** Structure hierarchy from WorkService.ListStructure. Unknown levels and statuses are dropped. */
+export function mapStructure(raw: Record<string, unknown>): WorkspaceStructure {
+  const nodes: WorkspaceStructureNode[] = [];
   for (const item of asObjectArray(raw.nodes)) {
     const level = asString(item.level);
     const status = asString(item.status);
-    if (!ATLAS_LEVELS.includes(level as AtlasLevel) || !ATLAS_STATUSES.includes(status as AtlasStatus)) {
+    if (!STRUCTURE_LEVELS.includes(level as StructureLevel) || !STRUCTURE_STATUSES.includes(status as StructureStatus)) {
       continue;
     }
     nodes.push({
       id: asString(item.id),
       parentId: asString(item.parentId),
-      level: level as AtlasLevel,
+      level: level as StructureLevel,
       slug: asString(item.slug),
       path: asString(item.path),
       title: asString(item.title, asString(item.slug)),
@@ -317,7 +317,7 @@ export function mapAtlas(raw: Record<string, unknown>): WorkspaceAtlas {
         id: asString(invariant.id),
         text: asString(invariant.text),
       })),
-      status: status as AtlasStatus,
+      status: status as StructureStatus,
       childCount: asNumber(item.childCount),
       featureCount: asNumber(item.featureCount),
       openQuestions: asNumber(item.openQuestions),
@@ -335,8 +335,8 @@ export function mapAtlas(raw: Record<string, unknown>): WorkspaceAtlas {
   return { nodes, driftSlugs: asStringArray(raw.driftSlugs), historical: asBoolean(raw.historical) };
 }
 
-/** Change batches that touched the Atlas, newest first. */
-export function mapAtlasHistory(raw: Record<string, unknown>): WorkspaceAtlasHistoryEntry[] {
+/** Change batches that touched the Structure, newest first. */
+export function mapStructureHistory(raw: Record<string, unknown>): WorkspaceStructureHistoryEntry[] {
   return asObjectArray(raw.entries).map((item) => ({
     batchId: asString(item.batchId),
     at: formatInstant(asString(item.at)),

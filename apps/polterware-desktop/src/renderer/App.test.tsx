@@ -34,7 +34,7 @@ describe("Desktop core composition", () => {
     const persist = readFileSync(join(import.meta.dirname, "workspace/persist.ts"), "utf8");
     expect(source).toContain("loadWorkspaceShell");
     expect(source).toContain("loadWorkspaceExtensions");
-    expect(source).toContain("persistAtlasCreateNode");
+    expect(source).toContain("persistStructureCreateNode");
     expect(source).toContain("persistKnowledgeCreate");
         expect(source).toContain("persistEnvironment");
     expect(source).toContain("persistEnvironmentDefault");
@@ -43,7 +43,7 @@ describe("Desktop core composition", () => {
     expect(persist).toContain("syncConnection");
     expect(persist).not.toContain("Metadata refreshed from the local store.");
     expect(source).toContain("projectId={currentProjectId()}");
-    expect(source).toContain("nodes={filterStructureNodes(workspace().atlas.nodes, scopeNodeIdList()).map");
+    expect(source).toContain("nodes={filterStructureNodes(workspace().structure.nodes, scopeNodeIdList()).map");
     expect(source).not.toContain("PROJECT_SWITCHER_FIXTURES");
     expect(source).not.toContain("RESOURCE_FIXTURES");
     expect(source).not.toContain('fixtureMode="force"');

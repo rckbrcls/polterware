@@ -23,7 +23,7 @@ export const STRUCTURE_AGENT_PROMPTS: StructureAgentPrompt[] = [
     level: "system",
     prompt: `${PREAMBLE}
 
-Read this repository and propose its Structure: the top-level systems, the domains inside them, and the components that make them up (\`# path: Title\` with \`level:\` and \`under:\`). Point each node's \`path:\` at the folder that holds it and add a one-line intent. Check \`polterware query atlas\` first and do not repeat a node that exists.
+Read this repository and propose its Structure: the top-level systems, the domains inside them, and the components that make them up (\`# path: Title\` with \`level:\` and \`under:\`). Point each node's \`path:\` at the folder that holds it and add a one-line intent. Check \`polterware query structure\` first and do not repeat a node that exists.
 
 ${CLOSING}`,
   },
@@ -35,7 +35,7 @@ ${CLOSING}`,
     level: "component",
     prompt: `${PREAMBLE}
 
-Read the existing Structure (\`polterware query atlas\`) and the imports, API calls, and shared packages between its components. Fill in \`uses:\` on each component with the node paths it depends on, so the map draws the edges. Do not add nodes in this pass.
+Read the existing Structure (\`polterware query structure\`) and the imports, API calls, and shared packages between its components. Fill in \`uses:\` on each component with the node paths it depends on, so the map draws the edges. Do not add nodes in this pass.
 
 ${CLOSING}`,
   },

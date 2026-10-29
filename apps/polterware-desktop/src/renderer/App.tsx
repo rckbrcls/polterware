@@ -83,7 +83,7 @@ import {
   loadProjects,
   loadWorkCards,
   loadWorkBoards,
-  loadAtlas,
+  loadStructure,
   loadCanonEvidence,
   loadChanges,
   loadFacts,
@@ -131,10 +131,10 @@ import {
   persistFeatureLine,
   loadFeatureReview,
   persistWorkRemoveCard,
-  persistAtlasCreateNode,
-  persistAtlasMoveNode,
-  persistAtlasUses,
-  persistAtlasUpdateDeploys,
+  persistStructureCreateNode,
+  persistStructureMoveNode,
+  persistStructureUses,
+  persistStructureUpdateDeploys,
   persistWorkSetStage,
   resetLocalStore,
 } from "./workspace/persist";
@@ -162,7 +162,7 @@ function formatArchiveDate(stamp: string): string {
 }
 
 /** Local label so the lazily loaded Knowledge package stays out of the main bundle. */
-function uniqueAtlasSlug(nodes: readonly { path: string; slug: string }[], title: string): string {
+function uniqueStructureSlug(nodes: readonly { path: string; slug: string }[], title: string): string {
   const base = title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "node";
   const taken = new Set(nodes.flatMap((node) => [node.slug, node.path, node.path.split("/").pop() ?? ""]));
   if (!taken.has(base)) return base;
@@ -370,14 +370,14 @@ export function App() {
         setWorkspace((current) => ({ ...current, ...extensions, extensionsReady: true }));
       },
       refreshWork: async (projectId) => {
-        const [workCards, atlas, inbox, workBoards] = await Promise.all([
+        const [workCards, structure, inbox, workBoards] = await Promise.all([
           loadWorkCards(projectId),
-          loadAtlas(projectId),
+          loadStructure(projectId),
           loadInbox(projectId),
           loadWorkBoards(projectId),
         ]);
         if (currentProjectId() !== projectId) return;
-        setWorkspace((current) => ({ ...current, workCards, atlas, inbox, workBoards }));
+        setWorkspace((current) => ({ ...current, workCards, structure, inbox, workBoards }));
       },
       onError: (error) => {
         console.warn("Live refresh failed.", error);
@@ -561,7 +561,7 @@ export function App() {
   /** Scope tokens. Node tokens become scope_nodes; env tokens narrow on the client. */
   const [scopeTokens, setScopeTokens] = createSignal<ScopeFilterToken[]>([]);
   const scopeNodes = createMemo<ScopeNodeItem[]>(() =>
-    workspace().atlas.nodes.map((node) => ({
+    workspace().structure.nodes.map((node) => ({
       id: node.id,
       parentId: node.parentId,
       level: node.level,
@@ -569,7 +569,7 @@ export function App() {
       title: node.title,
     })),
   );
-  const structureCounts = createMemo(() => Object.fromEntries(workspace().atlas.nodes.map((node) => {
+  const structureCounts = createMemo(() => Object.fromEntries(workspace().structure.nodes.map((node) => {
     const entityIds = new Set(workspace().canonEntities.filter((entity) => entity.refId === node.id || entity.refId === node.path).map((entity) => entity.id));
     return [node.id, {
       work: workspace().workCards.filter((card) => card.under === node.path).length,
@@ -645,12 +645,12 @@ export function App() {
     const projectId = currentProjectId();
     try {
       await window.polterware.core.work.resolveInboxItem({ projectId, itemId: item.id, action, answer: answer ?? "" });
-      const [workCards, atlas, inbox] = await Promise.all([
+      const [workCards, structure, inbox] = await Promise.all([
         loadWorkCards(projectId),
-        loadAtlas(projectId),
+        loadStructure(projectId),
         loadInbox(projectId),
       ]);
-      if (currentProjectId() === projectId) setWorkspace((current) => ({ ...current, workCards, atlas, inbox }));
+      if (currentProjectId() === projectId) setWorkspace((current) => ({ ...current, workCards, structure, inbox }));
     } catch (error) {
       pushToast(error instanceof Error ? error.message : "Could not update the Inbox item.", "danger");
       throw error;
@@ -689,7 +689,7 @@ export function App() {
   const [flowBusy, setFlowBusy] = createSignal(false);
   const [flowErrors, setFlowErrors] = createSignal<string[]>([]);
   const flowComponents = () =>
-    workspace().atlas.nodes
+    workspace().structure.nodes
       .filter((node) => node.level === "component")
       .map((node) => ({ path: node.path, title: node.title }));
 
@@ -1269,10 +1269,10 @@ export function App() {
             projectName={workspace().settings.name || "Project"}
             projectDescription={workspace().settings.description}
             projectRepository={workspace().settings.repository}
-            nodes={filterStructureNodes(workspace().atlas.nodes, scopeNodeIdList()).map((node) => ({ ...node, deploys: node.deploys?.filter((deploy) =>
+            nodes={filterStructureNodes(workspace().structure.nodes, scopeNodeIdList()).map((node) => ({ ...node, deploys: node.deploys?.filter((deploy) =>
               matchesEnvironment([deploy.environmentId, deploy.environment], scopeEnvironments())) }))}
             counts={structureCounts()}
-            registryNodes={workspace().atlas.nodes}
+            registryNodes={workspace().structure.nodes}
             projectCounts={{ work: workspace().workCards.length, decisions: workspace().verdicts.length, facts: workspace().structureFacts.length }}
             error={structureError() || (!workspace().available ? workspace().healthMessage : undefined)}
             loading={!structureError() && workspace().available && (loading() || !workspace().extensionsReady)}
@@ -1290,15 +1290,15 @@ export function App() {
             onDeploysChange={async (nodeId, deploys) => {
               const projectId = currentProjectId();
               if (!projectId) throw new Error("No project selected.");
-              const node = workspace().atlas.nodes.find((n) => n.id === nodeId);
+              const node = workspace().structure.nodes.find((n) => n.id === nodeId);
               if (!node) throw new Error("Structure node not found.");
               const change = await justifyChange({ title: "Update deploys", defaultSummary: `Update deploys for ${node.title}` });
               if (!change) throw new Error("Cancelled.");
-              await persistAtlasUpdateDeploys({ projectId, path: node.path, title: node.title, level: node.level, deploys, change });
+              await persistStructureUpdateDeploys({ projectId, path: node.path, title: node.title, level: node.level, deploys, change });
               await refreshWorkspace(projectId);
             }}
             onMove={async (nodeId, parentId) => {
-              const nodes = workspace().atlas.nodes;
+              const nodes = workspace().structure.nodes;
               const node = nodes.find((item) => item.id === nodeId);
               const parent = nodes.find((item) => item.id === parentId);
               if (!node || !parent) throw new Error("Missing structure node.");
@@ -1311,7 +1311,7 @@ export function App() {
                     : `Move ${node.title} under ${parent.title}`,
               });
               if (!change) throw new Error("Cancelled.");
-              await persistAtlasMoveNode({
+              await persistStructureMoveNode({
                 projectId: currentProjectId(),
                 path: node.path,
                 title: node.title,
@@ -1322,21 +1322,21 @@ export function App() {
               await refreshWorkspace(currentProjectId());
             }}
             onUses={async (nodeId, targetIds) => {
-              const nodes = workspace().atlas.nodes;
+              const nodes = workspace().structure.nodes;
               const source = nodes.find((node) => node.id === nodeId);
               if (!source) throw new Error("Missing structure node.");
               const change = await justifyChange({ title: "Update dependencies", defaultSummary: `Update dependencies of ${source.title}` });
               if (!change) throw new Error("Cancelled.");
-              await persistAtlasUses({ projectId: currentProjectId(), path: source.path, title: source.title, level: source.level,
+              await persistStructureUses({ projectId: currentProjectId(), path: source.path, title: source.title, level: source.level,
                 uses: nodes.filter((node) => targetIds.includes(node.id)).map((node) => node.path), change });
               await refreshWorkspace(currentProjectId());
             }}
             onCreate={async (draft) => {
-              const nodes = workspace().atlas.nodes;
+              const nodes = workspace().structure.nodes;
               const parent = nodes.find((node) => node.id === draft.parentId);
               const change = await justifyChange({ title: "Add structure node", defaultSummary: `Add ${draft.title}${parent ? ` under ${parent.title}` : ""}` });
               if (!change) throw new Error("Cancelled.");
-              await persistAtlasCreateNode({ projectId: currentProjectId(), heading: uniqueAtlasSlug(nodes, draft.title), title: draft.title,
+              await persistStructureCreateNode({ projectId: currentProjectId(), heading: uniqueStructureSlug(nodes, draft.title), title: draft.title,
                 level: draft.level, under: parent?.path, change });
               await refreshWorkspace(currentProjectId());
               pushToast("Structure node added.", "success");

@@ -200,7 +200,6 @@ export function resolveRoute(
     section = "structure";
     tab = "all";
   }
-  if (section === "atlas") section = "structure";
   // Pre-Structure sections map onto their new homes.
   if (section === "architecture") {
     section = "structure";

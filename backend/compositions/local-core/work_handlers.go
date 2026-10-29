@@ -13,7 +13,7 @@ import (
 
 	"github.com/polterware/polterware/backend/compositions/wedge"
 	"github.com/polterware/polterware/backend/domains/agentrun"
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/polter"
 	"github.com/polterware/polterware/backend/domains/work"
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
@@ -41,53 +41,53 @@ func (core *Core) ListWorkCards(_ context.Context, request *connect.Request[loca
 	return connect.NewResponse(&localv1.ListWorkCardsResponse{Cards: cards}), nil
 }
 
-func (core *Core) ListAtlas(ctx context.Context, request *connect.Request[localv1.ListAtlasRequest]) (*connect.Response[localv1.ListAtlasResponse], error) {
+func (core *Core) ListStructure(ctx context.Context, request *connect.Request[localv1.ListStructureRequest]) (*connect.Response[localv1.ListStructureResponse], error) {
 	if request.Msg.ProjectId == "" {
 		return nil, invalid("project id is required")
 	}
 	if point := strings.TrimSpace(request.Msg.AsOf); point != "" {
-		rows, err := wedge.AtlasAt(ctx, core.Store, request.Msg.ProjectId, point)
+		rows, err := wedge.StructureAt(ctx, core.Store, request.Msg.ProjectId, point)
 		if err != nil {
 			return nil, invalid(err.Error())
 		}
-		nodes := make([]*localv1.AtlasNode, 0, len(rows))
+		nodes := make([]*localv1.StructureNode, 0, len(rows))
 		for _, row := range rows {
-			node := atlasNodeProto(row)
-			node.Status = atlas.StatusProposed
+			node := structureNodeProto(row)
+			node.Status = structure.StatusProposed
 			nodes = append(nodes, node)
 		}
-		return connect.NewResponse(&localv1.ListAtlasResponse{Nodes: nodes, Historical: true}), nil
+		return connect.NewResponse(&localv1.ListStructureResponse{Nodes: nodes, Historical: true}), nil
 	}
 	snapshot, err := core.Store.LoadWorkSnapshot(request.Msg.ProjectId)
 	if err != nil {
 		return nil, internal(err)
 	}
-	rows := wedge.AtlasRows(core.Store, snapshot)
-	nodes := make([]*localv1.AtlasNode, 0, len(rows))
+	rows := wedge.StructureRows(core.Store, snapshot)
+	nodes := make([]*localv1.StructureNode, 0, len(rows))
 	for _, row := range rows {
-		nodes = append(nodes, atlasNodeProto(row))
+		nodes = append(nodes, structureNodeProto(row))
 	}
-	return connect.NewResponse(&localv1.ListAtlasResponse{
+	return connect.NewResponse(&localv1.ListStructureResponse{
 		Nodes: nodes, DriftSlugs: wedge.DriftSlugs(core.Store, request.Msg.ProjectId),
 	}), nil
 }
 
-func (core *Core) ListAtlasHistory(_ context.Context, request *connect.Request[localv1.ListAtlasHistoryRequest]) (*connect.Response[localv1.ListAtlasHistoryResponse], error) {
+func (core *Core) ListStructureHistory(_ context.Context, request *connect.Request[localv1.ListStructureHistoryRequest]) (*connect.Response[localv1.ListStructureHistoryResponse], error) {
 	if request.Msg.ProjectId == "" {
 		return nil, invalid("project id is required")
 	}
-	entries, err := wedge.AtlasHistory(core.Store, request.Msg.ProjectId)
+	entries, err := wedge.StructureHistory(core.Store, request.Msg.ProjectId)
 	if err != nil {
 		return nil, internal(err)
 	}
-	out := make([]*localv1.AtlasHistoryEntry, 0, len(entries))
+	out := make([]*localv1.StructureHistoryEntry, 0, len(entries))
 	for _, entry := range entries {
-		out = append(out, &localv1.AtlasHistoryEntry{
+		out = append(out, &localv1.StructureHistoryEntry{
 			BatchId: entry.BatchID, At: entry.At.UTC().Format(time.RFC3339), AgentRunId: entry.AgentRunID,
 			NodeOps: int32(entry.NodeOps), Summary: entry.Summary,
 		})
 	}
-	return connect.NewResponse(&localv1.ListAtlasHistoryResponse{Entries: out}), nil
+	return connect.NewResponse(&localv1.ListStructureHistoryResponse{Entries: out}), nil
 }
 
 func (core *Core) ListAgentSessions(_ context.Context, request *connect.Request[localv1.ListAgentSessionsRequest]) (*connect.Response[localv1.ListAgentSessionsResponse], error) {
@@ -322,8 +322,8 @@ func diagnosticsMessage(diags []polter.Diagnostic) string {
 	return strings.Join(lines, "; ")
 }
 
-func atlasNodeProto(row atlas.Row) *localv1.AtlasNode {
-	out := &localv1.AtlasNode{
+func structureNodeProto(row structure.Row) *localv1.StructureNode {
+	out := &localv1.StructureNode{
 		Id:            row.ID,
 		ParentId:      row.ParentID,
 		Level:         row.Level,
@@ -355,7 +355,7 @@ func atlasNodeProto(row atlas.Row) *localv1.AtlasNode {
 		if inv.State == work.InvariantRemoved {
 			continue
 		}
-		out.Invariants = append(out.Invariants, &localv1.AtlasInvariant{Id: inv.ID, Text: inv.Text})
+		out.Invariants = append(out.Invariants, &localv1.StructureInvariant{Id: inv.ID, Text: inv.Text})
 	}
 	return out
 }

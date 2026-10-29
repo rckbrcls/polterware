@@ -69,8 +69,8 @@ func TestPolterwareContentIsReal(t *testing.T) {
 	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='verdict' AND extra_json LIKE '%"scope":"principle"%'`, seed.ProjectID); n != 5 {
 		t.Errorf("want 5 principles, got %d", n)
 	}
-	if n := count(t, store, `SELECT COUNT(*) FROM atlas_nodes WHERE project_id=?`, seed.ProjectID); n < 10 {
-		t.Errorf("want an Atlas of Polterware, got %d nodes", n)
+	if n := count(t, store, `SELECT COUNT(*) FROM structure_nodes WHERE project_id=?`, seed.ProjectID); n < 10 {
+		t.Errorf("want a Structure of Polterware, got %d nodes", n)
 	}
 	if n := count(t, store, `SELECT COUNT(*) FROM canon_facts WHERE project_id=?`, seed.ProjectID); n == 0 {
 		t.Error("want facts")
@@ -100,7 +100,7 @@ func TestNoMockContentRemains(t *testing.T) {
 
 func TestDefaultsIsIdempotent(t *testing.T) {
 	store := newSeeded(t)
-	tables := []string{"projects", "environments", "knowledge_items", "work_cards", "work_tasks", "atlas_nodes", "canon_facts"}
+	tables := []string{"projects", "environments", "knowledge_items", "work_cards", "work_tasks", "structure_nodes", "canon_facts"}
 	before := map[string]int{}
 	for _, table := range tables {
 		before[table] = count(t, store, `SELECT COUNT(*) FROM `+table)
@@ -117,7 +117,7 @@ func TestDefaultsIsIdempotent(t *testing.T) {
 
 func TestPolterwareMapIsSeeded(t *testing.T) {
 	store := newSeeded(t)
-	rows, err := store.DB.Query(`SELECT path, uses_json FROM atlas_nodes WHERE project_id=?`, seed.ProjectID)
+	rows, err := store.DB.Query(`SELECT path, uses_json FROM structure_nodes WHERE project_id=?`, seed.ProjectID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,7 +139,7 @@ func TestPolterwareMapIsSeeded(t *testing.T) {
 		for _, to := range list {
 			edges++
 			if _, ok := uses[to]; !ok {
-				t.Errorf("%s uses %s, which is not an Atlas node", from, to)
+				t.Errorf("%s uses %s, which is not a Structure node", from, to)
 			}
 			if to == from {
 				t.Errorf("%s uses itself", from)

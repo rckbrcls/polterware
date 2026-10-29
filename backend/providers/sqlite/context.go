@@ -3,7 +3,7 @@ package sqlite
 import (
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canon"
 	contextpkg "github.com/polterware/polterware/backend/domains/context"
 )
@@ -145,7 +145,7 @@ func (s *Store) scopeContextItems(req contextpkg.Request, items []contextpkg.Ite
 	if len(ids) == 0 {
 		return items, nil
 	}
-	resolved, err := s.LoadScopes(req.ProjectID, atlas.MultiScope{NodeIDs: ids, Exact: req.ScopeExact})
+	resolved, err := s.LoadScopes(req.ProjectID, structure.MultiScope{NodeIDs: ids, Exact: req.ScopeExact})
 	if err != nil {
 		return nil, err
 	}

@@ -9,7 +9,7 @@ import (
 func TestExportNodeLinkShape(t *testing.T) {
 	body, err := Export(Graph{
 		Nodes: []Node{
-			{ID: "s", Kind: KindSystem, Label: "API", Props: map[string]any{"tier": "edge"}, Ref: &Ref{Kind: RefNode, ID: "atlas-1"}},
+			{ID: "s", Kind: KindSystem, Label: "API", Props: map[string]any{"tier": "edge"}, Ref: &Ref{Kind: RefNode, ID: "structure-1"}},
 			{ID: "n", Kind: KindNote, Label: "later"},
 		},
 		Edges: []Edge{{ID: "e", From: "s", To: "n", Kind: EdgeUses, Props: map[string]any{"sync": true}}},
@@ -44,7 +44,7 @@ func TestExportNodeLinkShape(t *testing.T) {
 		t.Fatalf("props = %v", props)
 	}
 	ref, _ := first["ref"].(map[string]any)
-	if ref["kind"] != RefNode || ref["id"] != "atlas-1" {
+	if ref["kind"] != RefNode || ref["id"] != "structure-1" {
 		t.Fatalf("ref = %v", ref)
 	}
 	if first["trust"] != TrustReferenced {
@@ -126,7 +126,7 @@ func TestExportTrustClearsEmptyRef(t *testing.T) {
 func TestExportMermaidAndDot(t *testing.T) {
 	graph := Graph{
 		Nodes: []Node{
-			{ID: "s", Kind: KindSystem, Label: "API", Ref: &Ref{Kind: RefNode, ID: "atlas-1"}},
+			{ID: "s", Kind: KindSystem, Label: "API", Ref: &Ref{Kind: RefNode, ID: "structure-1"}},
 			{ID: "n", Kind: KindNote, Label: "later"},
 		},
 		Edges: []Edge{{ID: "e", From: "s", To: "n", Kind: EdgeUses}},

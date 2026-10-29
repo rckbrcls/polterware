@@ -583,7 +583,7 @@ type ListChangesRequest struct {
 	ActorKind string `protobuf:"bytes,2,opt,name=actor_kind,json=actorKind,proto3" json:"actor_kind,omitempty"`
 	Limit     int32  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 	// scope_node and scope_nodes narrow the history to changes whose subjects
-	// carry a scope_node_id inside that Atlas scope (union). scope_node is merged
+	// carry a scope_node_id inside that Structure scope (union). scope_node is merged
 	// with scope_nodes. A change with no scoped subject stays visible.
 	ScopeNode     string   `protobuf:"bytes,4,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
 	ScopeExact    bool     `protobuf:"varint,5,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`

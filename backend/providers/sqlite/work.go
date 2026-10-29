@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 	"github.com/polterware/polterware/backend/platform/ids"
 )
@@ -59,7 +59,7 @@ func (s *Store) LoadWorkSnapshot(projectID string) (work.Snapshot, error) {
 		return snapshot, err
 	}
 	if len(snapshot.Cards) == 0 {
-		snapshot.Nodes, err = s.loadAtlasNodes(projectID)
+		snapshot.Nodes, err = s.loadStructureNodes(projectID)
 		return snapshot, err
 	}
 
@@ -129,7 +129,7 @@ func (s *Store) LoadWorkSnapshot(projectID string) (work.Snapshot, error) {
 	if err != nil {
 		return snapshot, err
 	}
-	snapshot.Nodes, err = s.loadAtlasNodes(projectID)
+	snapshot.Nodes, err = s.loadStructureNodes(projectID)
 	return snapshot, err
 }
 
@@ -232,7 +232,7 @@ func (s *Store) ApplyWorkOps(projectID, agentRunID, batchID string, ops []work.O
 		}
 		switch {
 		case op.Entity == work.EntityNode && op.NodeID != "":
-			if _, err := tx.Exec(`UPDATE atlas_nodes SET updated_at=? WHERE id=?`, now, op.NodeID); err != nil {
+			if _, err := tx.Exec(`UPDATE structure_nodes SET updated_at=? WHERE id=?`, now, op.NodeID); err != nil {
 				return nil, err
 			}
 		case op.Entity != work.EntityCard && op.Entity != work.EntityNode && op.Entity != work.EntityDecision && op.CardID != "":
@@ -270,7 +270,7 @@ func applyWorkOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 		return applyClaimOp(tx, projectID, op, now)
 	}
 	if op.Entity == work.EntityNode {
-		return applyAtlasOp(tx, projectID, op, now)
+		return applyStructureOp(tx, projectID, op, now)
 	}
 	if op.Entity == work.EntityFact {
 		return applyFactOp(tx, projectID, op, now)
@@ -400,13 +400,13 @@ func applyClaimOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 	}
 }
 
-// ListAtlasChangeOps returns the change_ops rows that touched Atlas nodes and
+// ListStructureChangeOps returns the change_ops rows that touched Structure nodes and
 // invariants, oldest first.
-func (s *Store) ListAtlasChangeOps(projectID string) ([]atlas.HistoryOp, error) {
-	var ops []atlas.HistoryOp
+func (s *Store) ListStructureChangeOps(projectID string) ([]structure.HistoryOp, error) {
+	var ops []structure.HistoryOp
 	err := s.eachRow(`SELECT rowid,batch_id,agent_run_id,op,entity_id,node_id,data_json,created_at
 		FROM change_ops WHERE project_id=? AND entity='node' ORDER BY rowid`, projectID, func(rows *sql.Rows) error {
-		var op atlas.HistoryOp
+		var op structure.HistoryOp
 		var data, created string
 		if err := rows.Scan(&op.Seq, &op.BatchID, &op.AgentRunID, &op.Kind, &op.EntityID, &op.NodeID, &data, &created); err != nil {
 			return err

@@ -4,21 +4,21 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
 func featureSnapshot(card work.Card) work.Snapshot {
 	return work.Snapshot{
 		ProjectID: "p1",
-		Nodes: []atlas.Node{
-			{ID: "n-core", Level: atlas.LevelDomain, Path: "core", Title: "Core", Status: atlas.NodeActive,
+		Nodes: []structure.Node{
+			{ID: "n-core", Level: structure.LevelDomain, Path: "core", Title: "Core", Status: structure.NodeActive,
 				Decisions:  []string{"Verdict 0007"},
-				Invariants: []atlas.Invariant{{Text: "No network calls during scan", State: work.InvariantActive}}},
-			{ID: "n-import", ParentID: "n-core", Level: atlas.LevelComponent, Path: "core/import", Title: "Import",
-				Intent: "Deterministic import of project files and git metadata", Status: atlas.NodeActive},
-			{ID: "n-auth", ParentID: "n-core", Level: atlas.LevelComponent, Path: "core/auth", Title: "Auth",
-				Intent: "Bearer sessions", Status: atlas.NodeActive},
+				Invariants: []structure.Invariant{{Text: "No network calls during scan", State: work.InvariantActive}}},
+			{ID: "n-import", ParentID: "n-core", Level: structure.LevelComponent, Path: "core/import", Title: "Import",
+				Intent: "Deterministic import of project files and git metadata", Status: structure.NodeActive},
+			{ID: "n-auth", ParentID: "n-core", Level: structure.LevelComponent, Path: "core/auth", Title: "Auth",
+				Intent: "Bearer sessions", Status: structure.NodeActive},
 		},
 		Cards: []work.Card{card},
 	}
@@ -270,12 +270,12 @@ func TestParseMigration(t *testing.T) {
 	}
 }
 
-func TestParseQueryAtlasAt(t *testing.T) {
-	q, err := ParseQuery("atlas core/import at 2026-09-01")
-	if err != nil || q.Kind != QueryAtlas || q.Slug != "core/import" || q.At != "2026-09-01" {
+func TestParseQueryStructureAt(t *testing.T) {
+	q, err := ParseQuery("structure core/import at 2026-09-01")
+	if err != nil || q.Kind != QueryStructure || q.Slug != "core/import" || q.At != "2026-09-01" {
 		t.Fatalf("query = %+v, err = %v", q, err)
 	}
-	q, err = ParseQuery("atlas history")
+	q, err = ParseQuery("structure history")
 	if err != nil || !q.History {
 		t.Fatalf("query = %+v, err = %v", q, err)
 	}

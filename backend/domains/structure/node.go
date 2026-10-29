@@ -1,6 +1,6 @@
-// Package atlas is the project graph above Work cards: system, domain, and
+// Package structure is the project graph above Work cards: system, domain, and
 // component nodes. Features stay cards. Status is derived when the graph is read.
-package atlas
+package structure
 
 const (
 	LevelSystem    = "system"
@@ -50,7 +50,7 @@ func AllowedParent(level, parentLevel string) bool {
 	return level == LevelComponent && parentLevel == LevelSystem
 }
 
-// Node is one Atlas node. Invariants are its contract.
+// Node is one Structure node. Invariants are its contract.
 type Node struct {
 	ID        string
 	ProjectID string

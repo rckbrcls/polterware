@@ -26,7 +26,7 @@ func TestCanvasRoundTrip(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if _, err := store.DB.Exec(`INSERT INTO atlas_nodes(id,project_id,level,slug,path,title,created_at,updated_at)
+	if _, err := store.DB.Exec(`INSERT INTO structure_nodes(id,project_id,level,slug,path,title,created_at,updated_at)
 		VALUES('node-1','proj-canvas','system','app','app','App',?,?)`, now.Format(time.RFC3339), now.Format(time.RFC3339)); err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func TestCanvasRoundTrip(t *testing.T) {
 	if got.Name != "Platform map" || got.Graph.Nodes[2].Kind != canvas.KindNote || got.ScopeNodeID != "node-1" {
 		t.Fatalf("reopen = %+v", got)
 	}
-	if _, err := reopened.DB.Exec(`DELETE FROM atlas_nodes WHERE id='node-1'`); err != nil {
+	if _, err := reopened.DB.Exec(`DELETE FROM structure_nodes WHERE id='node-1'`); err != nil {
 		t.Fatal(err)
 	}
 	got, err = reopened.GetCanvas("proj-canvas", created.ID)

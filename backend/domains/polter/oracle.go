@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	contextpkg "github.com/polterware/polterware/backend/domains/context"
 	"github.com/polterware/polterware/backend/domains/work"
 )
@@ -13,7 +13,7 @@ import (
 // deterministic: same graph, same text. Lower-priority blocks are dropped
 // first: ancestor lines, then open tasks, intent, blocking questions, and
 // inherited invariants last. The heading stays.
-func Oracle(nodes []atlas.Node, cards []work.Card, target, zoom string, budget int) (string, error) {
+func Oracle(nodes []structure.Node, cards []work.Card, target, zoom string, budget int) (string, error) {
 	if budget < 1 {
 		budget = contextpkg.DefaultTokenBudget
 	}
@@ -22,16 +22,16 @@ func Oracle(nodes []atlas.Node, cards []work.Card, target, zoom string, budget i
 	}
 	node, card, ok := resolveOracleTarget(nodes, cards, target)
 	if !ok {
-		return "", fmt.Errorf("unknown node %q: list the graph with polterware atlas", target)
+		return "", fmt.Errorf("unknown node %q: list the graph with polterware structure", target)
 	}
 	blocks := oracleBlocks(nodes, cards, node, card, zoom)
 	return packBlocks(blocks, budget), nil
 }
 
-func resolveOracleTarget(nodes []atlas.Node, cards []work.Card, target string) (*atlas.Node, *work.Card, bool) {
+func resolveOracleTarget(nodes []structure.Node, cards []work.Card, target string) (*structure.Node, *work.Card, bool) {
 	target = strings.TrimSpace(target)
 	for i := range nodes {
-		if nodes[i].Status == atlas.NodeRemoved {
+		if nodes[i].Status == structure.NodeRemoved {
 			continue
 		}
 		if nodes[i].Path == target || nodes[i].ID == target {
@@ -47,7 +47,7 @@ func resolveOracleTarget(nodes []atlas.Node, cards []work.Card, target string) (
 		}
 	}
 	for i := range nodes {
-		if nodes[i].Status != atlas.NodeRemoved && nodes[i].Title == target {
+		if nodes[i].Status != structure.NodeRemoved && nodes[i].Title == target {
 			return &nodes[i], nil, true
 		}
 	}
@@ -59,7 +59,7 @@ func resolveOracleTarget(nodes []atlas.Node, cards []work.Card, target string) (
 	return nil, nil, false
 }
 
-func oracleBlocks(nodes []atlas.Node, cards []work.Card, node *atlas.Node, card *work.Card, zoom string) []string {
+func oracleBlocks(nodes []structure.Node, cards []work.Card, node *structure.Node, card *work.Card, zoom string) []string {
 	focus := node
 	if focus == nil && card != nil {
 		focus = componentFor(nodes, card.Under)
@@ -79,13 +79,13 @@ func oracleBlocks(nodes []atlas.Node, cards []work.Card, node *atlas.Node, card 
 		}
 		blocks = append(blocks, openTaskLines(card)...)
 		blocks = append(blocks, contextLines(focus, chain)...)
-	case zoom == "task" && focus != nil && focus.Level == atlas.LevelComponent:
+	case zoom == "task" && focus != nil && focus.Level == structure.LevelComponent:
 		children := cardsUnderPath(cards, focus.Path)
 		if len(children) == 1 {
 			return oracleBlocks(nodes, cards, focus, &children[0], zoom)
 		}
 		blocks = append(blocks, nodeHeading(focus))
-		withSelf := append(append([]atlas.Node{}, chain...), *focus)
+		withSelf := append(append([]structure.Node{}, chain...), *focus)
 		blocks = append(blocks, contractLines(nil, withSelf)...)
 		if focus.Intent != "" {
 			blocks = append(blocks, focus.Intent)
@@ -172,7 +172,7 @@ func cardHeading(card *work.Card) string {
 	return line
 }
 
-func nodeHeading(node *atlas.Node) string {
+func nodeHeading(node *structure.Node) string {
 	if node == nil {
 		return ""
 	}
@@ -185,7 +185,7 @@ func nodeHeading(node *atlas.Node) string {
 
 // checkoutLine is `repo: api · path: src/auth`, or empty when the node sits
 // at the root of the project checkout.
-func checkoutLine(node *atlas.Node) string {
+func checkoutLine(node *structure.Node) string {
 	var parts []string
 	if node.Repo != "" {
 		parts = append(parts, "repo: "+node.Repo)
@@ -233,7 +233,7 @@ func blockingQuestionLines(card *work.Card) []string {
 	return lines
 }
 
-func ownInvariants(node *atlas.Node) []string {
+func ownInvariants(node *structure.Node) []string {
 	if node == nil {
 		return nil
 	}
@@ -247,7 +247,7 @@ func ownInvariants(node *atlas.Node) []string {
 	return lines
 }
 
-func contractLines(focus *atlas.Node, chain []atlas.Node) []string {
+func contractLines(focus *structure.Node, chain []structure.Node) []string {
 	var lines []string
 	if focus != nil {
 		for _, inv := range focus.Invariants {
@@ -260,7 +260,7 @@ func contractLines(focus *atlas.Node, chain []atlas.Node) []string {
 	return append(lines, inheritedInvariants(chain)...)
 }
 
-func contextLines(focus *atlas.Node, chain []atlas.Node) []string {
+func contextLines(focus *structure.Node, chain []structure.Node) []string {
 	var lines []string
 	if focus != nil {
 		line := fmt.Sprintf("%s: %s %s", focus.Level, focus.Path, focus.Title)
@@ -272,7 +272,7 @@ func contextLines(focus *atlas.Node, chain []atlas.Node) []string {
 	return append(lines, ancestorLines(chain)...)
 }
 
-func inheritedInvariants(chain []atlas.Node) []string {
+func inheritedInvariants(chain []structure.Node) []string {
 	var lines []string
 	for _, node := range chain {
 		for _, inv := range node.Invariants {
@@ -285,7 +285,7 @@ func inheritedInvariants(chain []atlas.Node) []string {
 	return lines
 }
 
-func ancestorLines(chain []atlas.Node) []string {
+func ancestorLines(chain []structure.Node) []string {
 	var lines []string
 	for i := len(chain) - 1; i >= 0; i-- {
 		node := chain[i]
@@ -294,19 +294,19 @@ func ancestorLines(chain []atlas.Node) []string {
 	return lines
 }
 
-func ancestorChain(nodes []atlas.Node, node *atlas.Node) []atlas.Node {
+func ancestorChain(nodes []structure.Node, node *structure.Node) []structure.Node {
 	if node == nil {
 		return nil
 	}
-	byID := map[string]atlas.Node{}
+	byID := map[string]structure.Node{}
 	for _, item := range nodes {
 		byID[item.ID] = item
 	}
-	var chain []atlas.Node
+	var chain []structure.Node
 	current := *node
 	for current.ParentID != "" {
 		parent, ok := byID[current.ParentID]
-		if !ok || parent.Status == atlas.NodeRemoved {
+		if !ok || parent.Status == structure.NodeRemoved {
 			break
 		}
 		chain = append(chain, parent)
@@ -315,7 +315,7 @@ func ancestorChain(nodes []atlas.Node, node *atlas.Node) []atlas.Node {
 	return chain
 }
 
-func ancestorAt(chain []atlas.Node, level string) *atlas.Node {
+func ancestorAt(chain []structure.Node, level string) *structure.Node {
 	for i := range chain {
 		if chain[i].Level == level {
 			return &chain[i]
@@ -324,9 +324,9 @@ func ancestorAt(chain []atlas.Node, level string) *atlas.Node {
 	return nil
 }
 
-func componentFor(nodes []atlas.Node, path string) *atlas.Node {
+func componentFor(nodes []structure.Node, path string) *structure.Node {
 	for i := range nodes {
-		if nodes[i].Status != atlas.NodeRemoved && nodes[i].Path == path && nodes[i].Level == atlas.LevelComponent {
+		if nodes[i].Status != structure.NodeRemoved && nodes[i].Path == path && nodes[i].Level == structure.LevelComponent {
 			return &nodes[i]
 		}
 	}
@@ -343,12 +343,12 @@ func cardsUnderPath(cards []work.Card, path string) []work.Card {
 	return out
 }
 
-func featuresUnder(nodes []atlas.Node, cards []work.Card, node *atlas.Node) []work.Card {
+func featuresUnder(nodes []structure.Node, cards []work.Card, node *structure.Node) []work.Card {
 	if node == nil {
 		return nil
 	}
 	paths := map[string]bool{}
-	if node.Level == atlas.LevelComponent {
+	if node.Level == structure.LevelComponent {
 		paths[node.Path] = true
 	}
 	collectComponentPaths(nodes, node.ID, paths)
@@ -361,12 +361,12 @@ func featuresUnder(nodes []atlas.Node, cards []work.Card, node *atlas.Node) []wo
 	return out
 }
 
-func collectComponentPaths(nodes []atlas.Node, parentID string, paths map[string]bool) {
+func collectComponentPaths(nodes []structure.Node, parentID string, paths map[string]bool) {
 	for _, node := range nodes {
-		if node.Status == atlas.NodeRemoved || node.ParentID != parentID {
+		if node.Status == structure.NodeRemoved || node.ParentID != parentID {
 			continue
 		}
-		if node.Level == atlas.LevelComponent {
+		if node.Level == structure.LevelComponent {
 			paths[node.Path] = true
 		}
 		collectComponentPaths(nodes, node.ID, paths)
@@ -391,13 +391,13 @@ func featureLines(cards []work.Card) []string {
 	return lines
 }
 
-func childLines(nodes []atlas.Node, parent *atlas.Node) []string {
+func childLines(nodes []structure.Node, parent *structure.Node) []string {
 	if parent == nil {
 		return nil
 	}
 	var lines []string
 	for _, node := range nodes {
-		if node.Status == atlas.NodeRemoved || node.ParentID != parent.ID {
+		if node.Status == structure.NodeRemoved || node.ParentID != parent.ID {
 			continue
 		}
 		lines = append(lines, fmt.Sprintf("%s  %s  %q", node.Path, node.Level, node.Title))
@@ -405,13 +405,13 @@ func childLines(nodes []atlas.Node, parent *atlas.Node) []string {
 	return lines
 }
 
-// EncodeAtlas renders the graph, or one node and its children, as plain text.
-func EncodeAtlas(projectName string, rows []atlas.Row, cards []work.Card, focus string) string {
+// EncodeStructure renders the graph, or one node and its children, as plain text.
+func EncodeStructure(projectName string, rows []structure.Row, cards []work.Card, focus string) string {
 	if projectName == "" {
 		projectName = "project"
 	}
-	byPath := map[string]atlas.Row{}
-	byID := map[string]atlas.Row{}
+	byPath := map[string]structure.Row{}
+	byID := map[string]structure.Row{}
 	for _, row := range rows {
 		byPath[row.Path] = row
 		byID[row.ID] = row
@@ -423,9 +423,9 @@ func EncodeAtlas(projectName string, rows []atlas.Row, cards []work.Card, focus 
 			row, ok = byID[focus]
 		}
 		if !ok {
-			return fmt.Sprintf("unknown node %q: list the graph with polterware atlas\n", focus)
+			return fmt.Sprintf("unknown node %q: list the graph with polterware structure\n", focus)
 		}
-		writeAtlasRow(&b, projectName, row, rows, cards)
+		writeStructureRow(&b, projectName, row, rows, cards)
 		return b.String()
 	}
 	fmt.Fprintf(&b, "%s\n", projectName)
@@ -438,13 +438,13 @@ func EncodeAtlas(projectName string, rows []atlas.Row, cards []work.Card, focus 
 		fmt.Fprintf(&b, "%s  %s  %s%s  %q\n", row.Path, row.Level, statusLabel(row.Derived), migrationSuffix(row.Node), row.Title)
 	}
 	if roots == 0 {
-		b.WriteString("No Atlas nodes.\n")
+		b.WriteString("No Structure nodes.\n")
 	}
 	return b.String()
 }
 
-func writeAtlasRow(b *strings.Builder, projectName string, row atlas.Row, rows []atlas.Row, cards []work.Card) {
-	fmt.Fprintf(b, "%s\n", atlasBreadcrumb(projectName, row, rows))
+func writeStructureRow(b *strings.Builder, projectName string, row structure.Row, rows []structure.Row, cards []work.Card) {
+	fmt.Fprintf(b, "%s\n", structureBreadcrumb(projectName, row, rows))
 	fmt.Fprintf(b, "%s  %s  %s\n", row.Path, row.Level, statusLabel(row.Derived))
 	if row.Intent != "" {
 		fmt.Fprintf(b, "Intent: %s\n", row.Intent)
@@ -491,8 +491,8 @@ func writeAtlasRow(b *strings.Builder, projectName string, row atlas.Row, rows [
 	}
 }
 
-func atlasBreadcrumb(projectName string, row atlas.Row, rows []atlas.Row) string {
-	byID := map[string]atlas.Row{}
+func structureBreadcrumb(projectName string, row structure.Row, rows []structure.Row) string {
+	byID := map[string]structure.Row{}
 	for _, item := range rows {
 		byID[item.ID] = item
 	}
@@ -513,18 +513,18 @@ func statusLabel(status string) string {
 	switch status {
 	case "":
 		return "n/a"
-	case atlas.StatusInProgress:
+	case structure.StatusInProgress:
 		return "in progress"
-	case atlas.StatusDelivered:
+	case structure.StatusDelivered:
 		return "delivered"
-	case atlas.StatusDrift:
+	case structure.StatusDrift:
 		return "drift"
 	default:
 		return "proposed"
 	}
 }
 
-func migrationSuffix(node atlas.Node) string {
+func migrationSuffix(node structure.Node) string {
 	if !node.Migrating() {
 		return ""
 	}

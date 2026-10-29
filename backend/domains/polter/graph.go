@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
@@ -40,15 +40,15 @@ func ResolveNode(headingPath, under string, hasUnder bool) (path, parent, fromPa
 
 func checkPlacement(path, parent, level string) string {
 	if level == "" {
-		return fmt.Sprintf("node %q needs level: use %s", path, strings.Join(atlas.Levels, "|"))
+		return fmt.Sprintf("node %q needs level: use %s", path, strings.Join(structure.Levels, "|"))
 	}
-	if !atlas.ValidLevel(level) {
-		return fmt.Sprintf("unknown level %q: use %s", level, strings.Join(atlas.Levels, "|"))
+	if !structure.ValidLevel(level) {
+		return fmt.Sprintf("unknown level %q: use %s", level, strings.Join(structure.Levels, "|"))
 	}
-	if level == atlas.LevelSystem && parent != "" {
+	if level == structure.LevelSystem && parent != "" {
 		return fmt.Sprintf("system %q has no parent: remove under:", path)
 	}
-	if level != atlas.LevelSystem && parent == "" {
+	if level != structure.LevelSystem && parent == "" {
 		return fmt.Sprintf("%s %q needs under: name its parent", level, path)
 	}
 	return ""
@@ -56,7 +56,7 @@ func checkPlacement(path, parent, level string) string {
 
 // CheckGraph reports under: and level errors. A card under: is free text until
 // the project or this text has a component; after that it must name one.
-func CheckGraph(doc Document, stored []atlas.Node, cards []work.Card) []Diagnostic {
+func CheckGraph(doc Document, stored []structure.Node, cards []work.Card) []Diagnostic {
 	known := map[string]placed{}
 	for _, node := range stored {
 		known[node.Path] = placed{level: node.Level, status: node.Status}
@@ -85,7 +85,7 @@ func CheckGraph(doc Document, stored []atlas.Node, cards []work.Card) []Diagnost
 		if fromPath != "" {
 			source = fromPath
 			prev, ok := known[fromPath]
-			if !ok || prev.status == atlas.NodeRemoved {
+			if !ok || prev.status == structure.NodeRemoved {
 				diags = append(diags, Diagnostic{
 					Line: node.Line, Severity: SeverityError,
 					Message: fmt.Sprintf("unknown node %q: check the path", fromPath),
@@ -119,23 +119,23 @@ func CheckGraph(doc Document, stored []atlas.Node, cards []work.Card) []Diagnost
 			if prev, ok := known[source]; ok {
 				status = prev.status
 			} else {
-				status = atlas.NodeActive
+				status = structure.NodeActive
 			}
 		}
-		if parent != "" && status != atlas.NodeRemoved {
+		if parent != "" && status != structure.NodeRemoved {
 			prev, ok := known[parent]
-			want, _ := atlas.ParentLevel(level)
-			if level == atlas.LevelComponent {
+			want, _ := structure.ParentLevel(level)
+			if level == structure.LevelComponent {
 				want = "domain or a system"
 			}
 			switch {
-			case !ok || prev.status == atlas.NodeRemoved:
+			case !ok || prev.status == structure.NodeRemoved:
 				diags = append(diags, Diagnostic{
 					Line: node.Line, Severity: SeverityError,
 					Message: fmt.Sprintf("unknown under %q: define the parent first", parent),
 				})
 				continue
-			case !atlas.AllowedParent(level, prev.level):
+			case !structure.AllowedParent(level, prev.level):
 				diags = append(diags, Diagnostic{
 					Line: node.Line, Severity: SeverityError,
 					Message: fmt.Sprintf("under %q is a %s: a %s sits under a %s", parent, prev.level, level, want),
@@ -143,7 +143,7 @@ func CheckGraph(doc Document, stored []atlas.Node, cards []work.Card) []Diagnost
 				continue
 			}
 		}
-		if status == atlas.NodeRemoved {
+		if status == structure.NodeRemoved {
 			if n := countActiveChildren(known, path); n > 0 {
 				diags = append(diags, Diagnostic{
 					Line: node.Line, Severity: SeverityError,
@@ -167,7 +167,7 @@ func CheckGraph(doc Document, stored []atlas.Node, cards []work.Card) []Diagnost
 			delete(known, fromPath)
 		}
 		known[path] = entry
-		if value, ok := node.MetaValue("uses"); ok && status != atlas.NodeRemoved {
+		if value, ok := node.MetaValue("uses"); ok && status != structure.NodeRemoved {
 			uses = append(uses, usesRef{line: node.Line, from: path, to: splitList(value)})
 		}
 	}
@@ -181,10 +181,10 @@ func CheckGraph(doc Document, stored []atlas.Node, cards []work.Card) []Diagnost
 					Line: ref.line, Severity: SeverityError,
 					Message: fmt.Sprintf("node %q cannot use itself: remove it from uses:", target),
 				})
-			case !ok || prev.status == atlas.NodeRemoved:
+			case !ok || prev.status == structure.NodeRemoved:
 				diags = append(diags, Diagnostic{
 					Line: ref.line, Severity: SeverityError,
-					Message: fmt.Sprintf("unknown uses %q: name an Atlas node path", target),
+					Message: fmt.Sprintf("unknown uses %q: name a Structure node path", target),
 				})
 			}
 		}
@@ -198,14 +198,14 @@ func CheckGraph(doc Document, stored []atlas.Node, cards []work.Card) []Diagnost
 			continue
 		}
 		prev, ok := known[under]
-		if !ok || prev.status == atlas.NodeRemoved {
+		if !ok || prev.status == structure.NodeRemoved {
 			diags = append(diags, Diagnostic{
 				Line: card.Line, Severity: SeverityError,
 				Message: fmt.Sprintf("unknown under %q: name a component path", under),
 			})
 			continue
 		}
-		if prev.level != atlas.LevelComponent {
+		if prev.level != structure.LevelComponent {
 			diags = append(diags, Diagnostic{
 				Line: card.Line, Severity: SeverityError,
 				Message: fmt.Sprintf("under %q is a %s: cards sit under a component", under, prev.level),
@@ -218,7 +218,7 @@ func CheckGraph(doc Document, stored []atlas.Node, cards []work.Card) []Diagnost
 func countComponents(known map[string]placed) int {
 	n := 0
 	for _, node := range known {
-		if node.status != atlas.NodeRemoved && node.level == atlas.LevelComponent {
+		if node.status != structure.NodeRemoved && node.level == structure.LevelComponent {
 			n++
 		}
 	}
@@ -229,7 +229,7 @@ func countActiveChildren(known map[string]placed, parent string) int {
 	n := 0
 	prefix := parent + "/"
 	for path, node := range known {
-		if node.status == atlas.NodeRemoved || !strings.HasPrefix(path, prefix) {
+		if node.status == structure.NodeRemoved || !strings.HasPrefix(path, prefix) {
 			continue
 		}
 		if !strings.Contains(strings.TrimPrefix(path, prefix), "/") {

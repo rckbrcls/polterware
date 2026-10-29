@@ -33,7 +33,7 @@ const (
 	EdgeDependsOn  = "depends_on"
 	EdgeContains   = "contains"
 
-	// Entity refs. RefNode is an Atlas structure node.
+	// Entity refs. RefNode is an Structure node.
 	RefCard     = "card"
 	RefDecision = "decision"
 	RefFact     = "fact"

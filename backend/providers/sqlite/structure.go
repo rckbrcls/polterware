@@ -6,22 +6,22 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/integrations"
 	"github.com/polterware/polterware/backend/domains/work"
 	"github.com/polterware/polterware/backend/platform/ids"
 )
 
-func (s *Store) loadAtlasNodes(projectID string) ([]atlas.Node, error) {
+func (s *Store) loadStructureNodes(projectID string) ([]structure.Node, error) {
 	rows, err := s.DB.Query(`SELECT id,project_id,COALESCE(parent_id,''),level,slug,path,title,intent,status,decisions_json,uses_json,position,repo,folder,migration_from,migration_to
-		FROM atlas_nodes WHERE project_id=? ORDER BY position, created_at`, projectID)
+		FROM structure_nodes WHERE project_id=? ORDER BY position, created_at`, projectID)
 	if err != nil {
 		return nil, err
 	}
-	var nodes []atlas.Node
+	var nodes []structure.Node
 	index := map[string]int{}
 	for rows.Next() {
-		var node atlas.Node
+		var node structure.Node
 		var decisions, uses string
 		if err := rows.Scan(&node.ID, &node.ProjectID, &node.ParentID, &node.Level, &node.Slug, &node.Path,
 			&node.Title, &node.Intent, &node.Status, &decisions, &uses, &node.Position, &node.Repo, &node.Folder, &node.MigrationFrom, &node.MigrationTo); err != nil {
@@ -39,10 +39,10 @@ func (s *Store) loadAtlasNodes(projectID string) ([]atlas.Node, error) {
 	if len(nodes) == 0 {
 		return nil, nil
 	}
-	err = s.eachRow(`SELECT id,node_id,text,state,position FROM atlas_invariants
-		WHERE node_id IN (SELECT id FROM atlas_nodes WHERE project_id=?) ORDER BY position`,
+	err = s.eachRow(`SELECT id,node_id,text,state,position FROM structure_invariants
+		WHERE node_id IN (SELECT id FROM structure_nodes WHERE project_id=?) ORDER BY position`,
 		projectID, func(rows *sql.Rows) error {
-			var inv atlas.Invariant
+			var inv structure.Invariant
 			if err := rows.Scan(&inv.ID, &inv.NodeID, &inv.Text, &inv.State, &inv.Position); err != nil {
 				return err
 			}
@@ -58,7 +58,7 @@ func (s *Store) loadAtlasNodes(projectID string) ([]atlas.Node, error) {
 		FROM node_deployments d LEFT JOIN environments e ON e.id=d.environment_id
 		WHERE d.project_id=? ORDER BY e.name, d.environment_id`,
 		projectID, func(rows *sql.Rows) error {
-			var deploy atlas.Deployment
+			var deploy structure.Deployment
 			var nodeID string
 			if err := rows.Scan(&deploy.ID, &nodeID, &deploy.EnvironmentID, &deploy.Environment, &deploy.Provider, &deploy.Resource); err != nil {
 				return err
@@ -71,9 +71,9 @@ func (s *Store) loadAtlasNodes(projectID string) ([]atlas.Node, error) {
 	return nodes, err
 }
 
-func applyAtlasOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
+func applyStructureOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 	if op.NodeID != "" {
-		return applyAtlasInvariant(tx, op, now)
+		return applyStructureInvariant(tx, op, now)
 	}
 	deploys, hasDeploys := op.Fields["deploys"]
 	parent, _ := op.Fields["parent_id"].(string)
@@ -91,7 +91,7 @@ func applyAtlasOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 		folder, _ := op.Fields["folder"].(string)
 		migrationFrom, _ := op.Fields["migration_from"].(string)
 		migrationTo, _ := op.Fields["migration_to"].(string)
-		_, err = tx.Exec(`INSERT INTO atlas_nodes(id,project_id,parent_id,level,slug,path,title,intent,status,decisions_json,uses_json,position,repo,folder,migration_from,migration_to,created_at,updated_at)
+		_, err = tx.Exec(`INSERT INTO structure_nodes(id,project_id,parent_id,level,slug,path,title,intent,status,decisions_json,uses_json,position,repo,folder,migration_from,migration_to,created_at,updated_at)
 			VALUES(?,?,NULLIF(?,''),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			op.EntityID, projectID, parent, op.Fields["level"], op.Fields["slug"], op.Fields["path"],
 			op.Fields["title"], op.Fields["intent"], op.Fields["status"], decisions, uses, op.Fields["position"], repo, folder, migrationFrom, migrationTo, now, now)
@@ -101,7 +101,7 @@ func applyAtlasOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 	case work.OpUpdate, work.OpRemove:
 		columnOp := op
 		columnOp.Fields = withoutField(op.Fields, "deploys")
-		if err := updateAtlasNode(tx, columnOp, now); err != nil {
+		if err := updateStructureNode(tx, columnOp, now); err != nil {
 			return err
 		}
 	default:
@@ -128,17 +128,17 @@ func withoutField(fields map[string]any, key string) map[string]any {
 // them. Provider is checked again so a hand-built op cannot store an unknown
 // catalog id or a credential.
 func applyNodeDeploys(tx *sql.Tx, projectID, nodeID string, value any, now string) error {
-	deploys, ok := atlas.DeploymentsFrom(value)
+	deploys, ok := structure.DeploymentsFrom(value)
 	if !ok {
 		return fmt.Errorf("invalid deploys")
 	}
-	existing := map[string]atlas.Deployment{}
+	existing := map[string]structure.Deployment{}
 	rows, err := tx.Query(`SELECT id,environment_id,provider,resource FROM node_deployments WHERE node_id=?`, nodeID)
 	if err != nil {
 		return err
 	}
 	for rows.Next() {
-		var deploy atlas.Deployment
+		var deploy structure.Deployment
 		if err := rows.Scan(&deploy.ID, &deploy.EnvironmentID, &deploy.Provider, &deploy.Resource); err != nil {
 			_ = rows.Close()
 			return err
@@ -192,7 +192,7 @@ func applyNodeDeploys(tx *sql.Tx, projectID, nodeID string, value any, now strin
 	return rows.Err()
 }
 
-func updateAtlasNode(tx *sql.Tx, op work.Op, now string) error {
+func updateStructureNode(tx *sql.Tx, op work.Op, now string) error {
 	var sets []string
 	var values []any
 	for field, value := range op.Fields {
@@ -226,14 +226,14 @@ func updateAtlasNode(tx *sql.Tx, op work.Op, now string) error {
 	}
 	sets = append(sets, "updated_at=?")
 	values = append(values, now, op.EntityID)
-	_, err := tx.Exec(`UPDATE atlas_nodes SET `+strings.Join(sets, ",")+` WHERE id=?`, values...)
+	_, err := tx.Exec(`UPDATE structure_nodes SET `+strings.Join(sets, ",")+` WHERE id=?`, values...)
 	return err
 }
 
-func applyAtlasInvariant(tx *sql.Tx, op work.Op, now string) error {
+func applyStructureInvariant(tx *sql.Tx, op work.Op, now string) error {
 	switch op.Kind {
 	case work.OpCreate:
-		_, err := tx.Exec(`INSERT INTO atlas_invariants(id,node_id,text,state,position,created_at,updated_at)
+		_, err := tx.Exec(`INSERT INTO structure_invariants(id,node_id,text,state,position,created_at,updated_at)
 			VALUES(?,?,?,?,?,?,?)`,
 			op.EntityID, op.NodeID, op.Fields["text"], op.Fields["state"], op.Fields["position"], now, now)
 		return err
@@ -253,7 +253,7 @@ func applyAtlasInvariant(tx *sql.Tx, op work.Op, now string) error {
 		}
 		sets = append(sets, "updated_at=?")
 		values = append(values, now, op.EntityID)
-		_, err := tx.Exec(`UPDATE atlas_invariants SET `+strings.Join(sets, ",")+` WHERE id=?`, values...)
+		_, err := tx.Exec(`UPDATE structure_invariants SET `+strings.Join(sets, ",")+` WHERE id=?`, values...)
 		return err
 	default:
 		return fmt.Errorf("unknown op %q", op.Kind)

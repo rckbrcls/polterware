@@ -1,4 +1,4 @@
-package atlas
+package structure
 
 import (
 	"testing"

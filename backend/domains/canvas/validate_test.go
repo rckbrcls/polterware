@@ -55,12 +55,12 @@ func TestRegistryHasOneGeneralistType(t *testing.T) {
 }
 
 func TestValidateCanvas(t *testing.T) {
-	structure := &Ref{Kind: RefNode, ID: "atlas-1"}
+	structure := &Ref{Kind: RefNode, ID: "structure-1"}
 	mustValid(t, TypeCanvas, Graph{
 		Nodes: []Node{
 			{ID: "s", Kind: KindSystem, Label: "App", Ref: structure},
 			{ID: "web", Kind: "frontend", Label: "Web", Props: map[string]any{"technology": "React"}},
-			{ID: "db", Kind: "database", Label: "Main", Props: map[string]any{"technology": "Postgres"}, Ref: &Ref{Kind: RefNode, ID: "atlas-2"}},
+			{ID: "db", Kind: "database", Label: "Main", Props: map[string]any{"technology": "Postgres"}, Ref: &Ref{Kind: RefNode, ID: "structure-2"}},
 			{ID: "r", Kind: "rectangle", Label: "box"},
 			{ID: "n", Kind: KindNote, Label: "later"},
 			{ID: "t", Kind: KindText, Label: "body"},

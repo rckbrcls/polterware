@@ -47,7 +47,7 @@ message WorkCard {
   repeated WorkTask tasks = 12;
   repeated WorkQuestion questions = 13;
   repeated WorkInvariant invariants = 14;
-  // kind is "feature" or "architecture" (a structural Atlas change).
+  // kind is "feature" or "architecture" (a structural Structure change).
   string kind = 15;
 }
 
@@ -59,7 +59,7 @@ message PolterDiagnostic {
 
 // ListWorkCards returns active cards with their tasks, open or answered
 // questions, and active invariants, ordered by position.
-// Scope fields on a request narrow the read to one or more Atlas nodes (id or
+// Scope fields on a request narrow the read to one or more Structure nodes (id or
 // path). Each node contributes itself, its descendants and, unless scope_exact,
 // its ancestors; the read keeps the union. scope_node is the legacy single
 // node and is merged with scope_nodes. Empty is the whole project. Unscoped
@@ -106,7 +106,7 @@ message LintPolterRequest {
 message LintPolterResponse { repeated PolterDiagnostic diagnostics = 1; }
 
 // QueryPolter answers "cards", "card <slug>", "status", "inbox",
-// "handoff <slug>", "oracle <path>", or "atlas" in text.
+// "handoff <slug>", "oracle <path>", or "structure" in text.
 // "status" is the short session-start summary.
 message QueryPolterRequest {
   string project_id = 1;
@@ -182,9 +182,9 @@ message ListInboxRequest {
   repeated string scope_nodes = 4;
 }
 
-// SetScope assigns an entity to an Atlas node, or clears it when node is empty.
+// SetScope assigns an entity to a Structure node, or clears it when node is empty.
 // kind is "decision", "fact", "evidence", or "item" (a derived Drift/Inbox item,
-// identified by its item key). node is an Atlas node id or path.
+// identified by its item key). node is a Structure node id or path.
 message SetScopeRequest {
   string project_id = 1;
   string kind = 2;
@@ -218,12 +218,12 @@ message ResolveInboxItemResponse {
   repeated PolterDiagnostic diagnostics = 4;
 }
 
-message AtlasInvariant {
+message StructureInvariant {
   string id = 1;
   string text = 2;
 }
 
-// NodeDeployment is where one Atlas node is deployed in one environment.
+// NodeDeployment is where one Structure node is deployed in one environment.
 // provider is a catalog id. resource names the remote target. Credentials
 // are never stored.
 message NodeDeployment {
@@ -235,9 +235,9 @@ message NodeDeployment {
   string resource = 5;
 }
 
-// AtlasNode is a system, domain, or component. status is derived:
+// StructureNode is a system, domain, or component. status is derived:
 // proposed, in_progress, delivered, or drift.
-message AtlasNode {
+message StructureNode {
   string id = 1;
   string parent_id = 2;
   string level = 3;
@@ -246,7 +246,7 @@ message AtlasNode {
   string title = 6;
   string intent = 7;
   repeated string decisions = 8;
-  repeated AtlasInvariant invariants = 9;
+  repeated StructureInvariant invariants = 9;
   string status = 10;
   int32 child_count = 11;
   int32 feature_count = 12;
@@ -265,21 +265,21 @@ message AtlasNode {
   repeated NodeDeployment deploys = 19;
 }
 
-// ListAtlas reads the live graph, or the graph replayed at as_of (an RFC3339
+// ListStructure reads the live graph, or the graph replayed at as_of (an RFC3339
 // date, a YYYY-MM-DD day, a change batch id, or a commit sha). A past graph
 // has no derived status: every node reports "proposed" and historical is true.
-message ListAtlasRequest {
+message ListStructureRequest {
   string project_id = 1;
   string as_of = 2;
 }
-message ListAtlasResponse {
-  repeated AtlasNode nodes = 1;
+message ListStructureResponse {
+  repeated StructureNode nodes = 1;
   repeated string drift_slugs = 2;
   bool historical = 3;
 }
 
-// AtlasHistoryEntry is one applied change batch that touched Atlas nodes.
-message AtlasHistoryEntry {
+// StructureHistoryEntry is one applied change batch that touched Structure nodes.
+message StructureHistoryEntry {
   string batch_id = 1;
   string at = 2;
   string agent_run_id = 3;
@@ -325,8 +325,8 @@ message ListAgentSessionsResponse {
   string branch = 3;
 }
 
-message ListAtlasHistoryRequest { string project_id = 1; }
-message ListAtlasHistoryResponse { repeated AtlasHistoryEntry entries = 1; }
+message ListStructureHistoryRequest { string project_id = 1; }
+message ListStructureHistoryResponse { repeated StructureHistoryEntry entries = 1; }
 
 // ExportProjections writes Verdict files into docs/verdict/ of each governing checkout
 // and the generated AGENTS.md block of every checkout. The store stays the
@@ -516,8 +516,8 @@ message ReorderWorkBoardsResponse { repeated WorkBoard boards = 1; }
 
 service WorkService {
   rpc ListWorkCards(ListWorkCardsRequest) returns (ListWorkCardsResponse);
-  rpc ListAtlas(ListAtlasRequest) returns (ListAtlasResponse);
-  rpc ListAtlasHistory(ListAtlasHistoryRequest) returns (ListAtlasHistoryResponse);
+  rpc ListStructure(ListStructureRequest) returns (ListStructureResponse);
+  rpc ListStructureHistory(ListStructureHistoryRequest) returns (ListStructureHistoryResponse);
   rpc ListAgentSessions(ListAgentSessionsRequest) returns (ListAgentSessionsResponse);
   rpc ApplyPolter(ApplyPolterRequest) returns (ApplyPolterResponse);
   rpc LintPolter(LintPolterRequest) returns (LintPolterResponse);

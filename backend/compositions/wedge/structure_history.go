@@ -7,18 +7,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/providers/git"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
 var commitSHA = regexp.MustCompile(`^[0-9a-fA-F]{7,40}$`)
 
-// AtlasAt replays the Atlas as it was at point: a change batch id, an RFC3339
+// StructureAt replays the Structure as it was at point: a change batch id, an RFC3339
 // time, a YYYY-MM-DD day, or a commit sha (resolved to its committer time).
 // Rows carry no derived status, feature counts, or drift: those are live-only.
-func AtlasAt(ctx context.Context, store *storepkg.Store, projectID, point string) ([]atlas.Row, error) {
-	ops, err := store.ListAtlasChangeOps(projectID)
+func StructureAt(ctx context.Context, store *storepkg.Store, projectID, point string) ([]structure.Row, error) {
+	ops, err := store.ListStructureChangeOps(projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -26,16 +26,16 @@ func AtlasAt(ctx context.Context, store *storepkg.Store, projectID, point string
 	if err != nil {
 		return nil, err
 	}
-	cut, err := atlas.Cut(ops, point)
+	cut, err := structure.Cut(ops, point)
 	if err != nil {
 		return nil, err
 	}
-	return atlas.Historical(atlas.Replay(projectID, ops[:cut])), nil
+	return structure.Historical(structure.Replay(projectID, ops[:cut])), nil
 }
 
 // resolveCommitPoint turns a commit sha into its committer time. Anything
 // else, including a batch id, passes through unchanged.
-func resolveCommitPoint(ctx context.Context, store *storepkg.Store, projectID string, ops []atlas.HistoryOp, point string) (string, error) {
+func resolveCommitPoint(ctx context.Context, store *storepkg.Store, projectID string, ops []structure.HistoryOp, point string) (string, error) {
 	point = strings.TrimSpace(point)
 	if !commitSHA.MatchString(point) {
 		return point, nil
@@ -56,23 +56,23 @@ func resolveCommitPoint(ctx context.Context, store *storepkg.Store, projectID st
 	return committed.UTC().Format(time.RFC3339), nil
 }
 
-// AtlasHistory lists the change batches that touched the Atlas, newest first.
-func AtlasHistory(store *storepkg.Store, projectID string) ([]atlas.HistoryEntry, error) {
-	ops, err := store.ListAtlasChangeOps(projectID)
+// StructureHistory lists the change batches that touched the Structure, newest first.
+func StructureHistory(store *storepkg.Store, projectID string) ([]structure.HistoryEntry, error) {
+	ops, err := store.ListStructureChangeOps(projectID)
 	if err != nil {
 		return nil, err
 	}
-	entries := atlas.History(ops)
+	entries := structure.History(ops)
 	for i, j := 0, len(entries)-1; i < j; i, j = i+1, j-1 {
 		entries[i], entries[j] = entries[j], entries[i]
 	}
 	return entries, nil
 }
 
-// encodeAtlasHistory renders the batches for `atlas history`.
-func encodeAtlasHistory(entries []atlas.HistoryEntry) string {
+// encodeStructureHistory renders the batches for `structure history`.
+func encodeStructureHistory(entries []structure.HistoryEntry) string {
 	if len(entries) == 0 {
-		return "No Atlas changes recorded.\n"
+		return "No Structure changes recorded.\n"
 	}
 	var b strings.Builder
 	for _, entry := range entries {

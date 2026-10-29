@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/work"
 )
@@ -18,9 +18,9 @@ type References struct {
 	Verdicts []VerdictRef
 	// Cards is the project's current Work graph, for similarity hints.
 	Cards []work.Card
-	// Nodes are the project's Atlas nodes. Card under: is checked once any
+	// Nodes are the project's Structure nodes. Card under: is checked once any
 	// component exists.
-	Nodes []atlas.Node
+	Nodes []structure.Node
 	// Repos names the project's registered checkouts. Node repo: and task
 	// [repo: …] must name one; empty is the project root.
 	Repos []string
@@ -159,7 +159,7 @@ func parseVerdictNumber(value string) (int, bool) {
 
 // architectureHints reminds that a delivered Architecture Change should clear
 // the migrating: state of the node it changes.
-func architectureHints(doc Document, cards []work.Card, nodes []atlas.Node) []Diagnostic {
+func architectureHints(doc Document, cards []work.Card, nodes []structure.Node) []Diagnostic {
 	stored := map[string]work.Card{}
 	for _, card := range cards {
 		stored[card.Slug] = card
@@ -184,7 +184,7 @@ func architectureHints(doc Document, cards []work.Card, nodes []atlas.Node) []Di
 			continue
 		}
 		for _, node := range nodes {
-			if node.Path == under && node.Status != atlas.NodeRemoved && node.Migrating() && !clearsMigration(doc, under) {
+			if node.Path == under && node.Status != structure.NodeRemoved && node.Migrating() && !clearsMigration(doc, under) {
 				diags = append(diags, Diagnostic{
 					Line: card.Line, Severity: SeverityHint,
 					Message: fmt.Sprintf("architecture change %s is delivered but node %s is still migrating %s -> %s: clear migrating: on it", card.Slug, under, node.MigrationFrom, node.MigrationTo),

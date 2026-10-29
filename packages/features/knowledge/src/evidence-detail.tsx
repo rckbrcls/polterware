@@ -16,7 +16,7 @@ export function EvidenceDetail(props: {
   onPathChange?: (path: string) => void;
   onArchive?: () => void;
   scopeNodes?: ScopeNodeItem[];
-  /** Writes the Atlas scope as a node path; empty clears it. */
+  /** Writes the Structure scope as a node path; empty clears it. */
   onScopeChange?: (path: string) => void;
   links?: JSX.Element;
 }) {
@@ -40,7 +40,7 @@ export function EvidenceDetail(props: {
                 <EditablePath value={props.pathValue} onChange={props.onPathChange} />
               </KnowledgeDocumentProperty>
               <Show when={props.onScopeChange}>
-                <KnowledgeDocumentProperty label="Atlas scope">
+                <KnowledgeDocumentProperty label="Structure scope">
                   <ScopePicker
                     nodes={props.scopeNodes ?? []}
                     value={scopePathOf(props.scopeNodes ?? [], evidence().scopeNodeId)}

@@ -2,7 +2,7 @@ import { createMemo } from "solid-js";
 import { Select } from "@polterware/frontend-design-system";
 import type { ScopeNodeItem } from "@polterware/feature-shell";
 
-/** Picks the Atlas node an entity belongs to; the empty value is the whole project. */
+/** Picks the Structure node an entity belongs to; the empty value is the whole project. */
 export function ScopePicker(props: {
   nodes: readonly ScopeNodeItem[];
   /** Path of the selected node; empty for the whole project. */
@@ -21,7 +21,7 @@ export function ScopePicker(props: {
     <Select
       size="sm"
       class={props.class ?? "w-full min-w-0"}
-      aria-label={props["aria-label"] ?? "Atlas scope"}
+      aria-label={props["aria-label"] ?? "Structure scope"}
       options={options()}
       value={props.value}
       onChange={props.onChange}

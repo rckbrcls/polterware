@@ -72,8 +72,8 @@ func main() {
 		err = runContext(*dbPath, rest)
 	case "oracle":
 		err = runOracle(*dbPath, rest)
-	case "atlas":
-		err = runAtlas(*dbPath, rest)
+	case "structure":
+		err = runStructure(*dbPath, rest)
 	case "canvas":
 		err = runCanvas(*dbPath, rest)
 	case "export":

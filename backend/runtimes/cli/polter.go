@@ -140,7 +140,7 @@ func runQuery(dbPath string, args []string) error {
 		return err
 	}
 	if len(positional) == 0 {
-		return errors.New(`usage: polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "atlas" | "decisions [state]" | "decision <verdict>" | "feature <slug> [step]" | "verify <slug>" | "canvas [<name|id>]"`)
+		return errors.New(`usage: polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "structure" | "decisions [state]" | "decision <verdict>" | "feature <slug> [step]" | "verify <slug>" | "canvas [<name|id>]"`)
 	}
 	c, err := dial(dbPath)
 	if err != nil {

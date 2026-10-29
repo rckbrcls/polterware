@@ -170,7 +170,7 @@ const FACTS_SCOPE = "truth:facts";
 /** Agents → Facts: list/inspect Canon facts and evidence; mutate with change envelope. */
 export function CanonFactsPanel(props: {
   projectId: string;
-  /** Expanded Atlas node ids. Empty leaves the lists unscoped. */
+  /** Expanded Structure node ids. Empty leaves the lists unscoped. */
   scopeNodes?: readonly string[];
   loadFacts?: (projectId: string) => Promise<unknown>;
   loadEvidence?: (projectId: string) => Promise<unknown>;

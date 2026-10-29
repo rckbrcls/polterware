@@ -34,12 +34,12 @@ export type ProjectSwitcherItem = {
   refId?: string;
 };
 
-/** One Atlas node path. Knowledge editors still store a single path. */
+/** One Structure node path. Knowledge editors still store a single path. */
 export type WorkspaceScope = {
   node: string;
 };
 
-/** One Atlas node offered by the scope filter. */
+/** One Structure node offered by the scope filter. */
 export type ScopeNodeItem = {
   id: string;
   parentId: string;

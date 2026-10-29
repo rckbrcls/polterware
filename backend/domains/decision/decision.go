@@ -112,7 +112,7 @@ type Decision struct {
 	Title  string
 	Status string
 	Body   string
-	// Scope is the path of the Atlas node the decision applies to; empty is the
+	// Scope is the path of the Structure node the decision applies to; empty is the
 	// whole project.
 	Scope string
 	Meta

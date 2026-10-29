@@ -262,7 +262,7 @@ type WorkCard struct {
 	Tasks      []*WorkTask      `protobuf:"bytes,12,rep,name=tasks,proto3" json:"tasks,omitempty"`
 	Questions  []*WorkQuestion  `protobuf:"bytes,13,rep,name=questions,proto3" json:"questions,omitempty"`
 	Invariants []*WorkInvariant `protobuf:"bytes,14,rep,name=invariants,proto3" json:"invariants,omitempty"`
-	// kind is "feature" or "architecture" (a structural Atlas change).
+	// kind is "feature" or "architecture" (a structural Structure change).
 	Kind          string `protobuf:"bytes,15,opt,name=kind,proto3" json:"kind,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -465,7 +465,7 @@ func (x *PolterDiagnostic) GetMessage() string {
 
 // ListWorkCards returns active cards with their tasks, open or answered
 // questions, and active invariants, ordered by position.
-// Scope fields on a request narrow the read to one or more Atlas nodes (id or
+// Scope fields on a request narrow the read to one or more Structure nodes (id or
 // path). Each node contributes itself, its descendants and, unless scope_exact,
 // its ancestors; the read keeps the union. scope_node is the legacy single
 // node and is merged with scope_nodes. Empty is the whole project. Unscoped
@@ -857,7 +857,7 @@ func (x *LintPolterResponse) GetDiagnostics() []*PolterDiagnostic {
 }
 
 // QueryPolter answers "cards", "card <slug>", "status", "inbox",
-// "handoff <slug>", "oracle <path>", or "atlas" in text.
+// "handoff <slug>", "oracle <path>", or "structure" in text.
 // "status" is the short session-start summary.
 type QueryPolterRequest struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
@@ -1505,9 +1505,9 @@ func (x *ListInboxRequest) GetScopeNodes() []string {
 	return nil
 }
 
-// SetScope assigns an entity to an Atlas node, or clears it when node is empty.
+// SetScope assigns an entity to a Structure node, or clears it when node is empty.
 // kind is "decision", "fact", "evidence", or "item" (a derived Drift/Inbox item,
-// identified by its item key). node is an Atlas node id or path.
+// identified by its item key). node is a Structure node id or path.
 type SetScopeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
@@ -1829,7 +1829,7 @@ func (x *ResolveInboxItemResponse) GetDiagnostics() []*PolterDiagnostic {
 	return nil
 }
 
-type AtlasInvariant struct {
+type StructureInvariant struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
@@ -1837,20 +1837,20 @@ type AtlasInvariant struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AtlasInvariant) Reset() {
-	*x = AtlasInvariant{}
+func (x *StructureInvariant) Reset() {
+	*x = StructureInvariant{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AtlasInvariant) String() string {
+func (x *StructureInvariant) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AtlasInvariant) ProtoMessage() {}
+func (*StructureInvariant) ProtoMessage() {}
 
-func (x *AtlasInvariant) ProtoReflect() protoreflect.Message {
+func (x *StructureInvariant) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1862,26 +1862,26 @@ func (x *AtlasInvariant) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AtlasInvariant.ProtoReflect.Descriptor instead.
-func (*AtlasInvariant) Descriptor() ([]byte, []int) {
+// Deprecated: Use StructureInvariant.ProtoReflect.Descriptor instead.
+func (*StructureInvariant) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{25}
 }
 
-func (x *AtlasInvariant) GetId() string {
+func (x *StructureInvariant) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *AtlasInvariant) GetText() string {
+func (x *StructureInvariant) GetText() string {
 	if x != nil {
 		return x.Text
 	}
 	return ""
 }
 
-// NodeDeployment is where one Atlas node is deployed in one environment.
+// NodeDeployment is where one Structure node is deployed in one environment.
 // provider is a catalog id. resource names the remote target. Credentials
 // are never stored.
 type NodeDeployment struct {
@@ -1961,9 +1961,9 @@ func (x *NodeDeployment) GetResource() string {
 	return ""
 }
 
-// AtlasNode is a system, domain, or component. status is derived:
+// StructureNode is a system, domain, or component. status is derived:
 // proposed, in_progress, delivered, or drift.
-type AtlasNode struct {
+type StructureNode struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	ParentId      string                 `protobuf:"bytes,2,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
@@ -1973,7 +1973,7 @@ type AtlasNode struct {
 	Title         string                 `protobuf:"bytes,6,opt,name=title,proto3" json:"title,omitempty"`
 	Intent        string                 `protobuf:"bytes,7,opt,name=intent,proto3" json:"intent,omitempty"`
 	Decisions     []string               `protobuf:"bytes,8,rep,name=decisions,proto3" json:"decisions,omitempty"`
-	Invariants    []*AtlasInvariant      `protobuf:"bytes,9,rep,name=invariants,proto3" json:"invariants,omitempty"`
+	Invariants    []*StructureInvariant  `protobuf:"bytes,9,rep,name=invariants,proto3" json:"invariants,omitempty"`
 	Status        string                 `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
 	ChildCount    int32                  `protobuf:"varint,11,opt,name=child_count,json=childCount,proto3" json:"child_count,omitempty"`
 	FeatureCount  int32                  `protobuf:"varint,12,opt,name=feature_count,json=featureCount,proto3" json:"feature_count,omitempty"`
@@ -1994,20 +1994,20 @@ type AtlasNode struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AtlasNode) Reset() {
-	*x = AtlasNode{}
+func (x *StructureNode) Reset() {
+	*x = StructureNode{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AtlasNode) String() string {
+func (x *StructureNode) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AtlasNode) ProtoMessage() {}
+func (*StructureNode) ProtoMessage() {}
 
-func (x *AtlasNode) ProtoReflect() protoreflect.Message {
+func (x *StructureNode) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2019,148 +2019,148 @@ func (x *AtlasNode) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AtlasNode.ProtoReflect.Descriptor instead.
-func (*AtlasNode) Descriptor() ([]byte, []int) {
+// Deprecated: Use StructureNode.ProtoReflect.Descriptor instead.
+func (*StructureNode) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{27}
 }
 
-func (x *AtlasNode) GetId() string {
+func (x *StructureNode) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *AtlasNode) GetParentId() string {
+func (x *StructureNode) GetParentId() string {
 	if x != nil {
 		return x.ParentId
 	}
 	return ""
 }
 
-func (x *AtlasNode) GetLevel() string {
+func (x *StructureNode) GetLevel() string {
 	if x != nil {
 		return x.Level
 	}
 	return ""
 }
 
-func (x *AtlasNode) GetSlug() string {
+func (x *StructureNode) GetSlug() string {
 	if x != nil {
 		return x.Slug
 	}
 	return ""
 }
 
-func (x *AtlasNode) GetPath() string {
+func (x *StructureNode) GetPath() string {
 	if x != nil {
 		return x.Path
 	}
 	return ""
 }
 
-func (x *AtlasNode) GetTitle() string {
+func (x *StructureNode) GetTitle() string {
 	if x != nil {
 		return x.Title
 	}
 	return ""
 }
 
-func (x *AtlasNode) GetIntent() string {
+func (x *StructureNode) GetIntent() string {
 	if x != nil {
 		return x.Intent
 	}
 	return ""
 }
 
-func (x *AtlasNode) GetDecisions() []string {
+func (x *StructureNode) GetDecisions() []string {
 	if x != nil {
 		return x.Decisions
 	}
 	return nil
 }
 
-func (x *AtlasNode) GetInvariants() []*AtlasInvariant {
+func (x *StructureNode) GetInvariants() []*StructureInvariant {
 	if x != nil {
 		return x.Invariants
 	}
 	return nil
 }
 
-func (x *AtlasNode) GetStatus() string {
+func (x *StructureNode) GetStatus() string {
 	if x != nil {
 		return x.Status
 	}
 	return ""
 }
 
-func (x *AtlasNode) GetChildCount() int32 {
+func (x *StructureNode) GetChildCount() int32 {
 	if x != nil {
 		return x.ChildCount
 	}
 	return 0
 }
 
-func (x *AtlasNode) GetFeatureCount() int32 {
+func (x *StructureNode) GetFeatureCount() int32 {
 	if x != nil {
 		return x.FeatureCount
 	}
 	return 0
 }
 
-func (x *AtlasNode) GetOpenQuestions() int32 {
+func (x *StructureNode) GetOpenQuestions() int32 {
 	if x != nil {
 		return x.OpenQuestions
 	}
 	return 0
 }
 
-func (x *AtlasNode) GetRepo() string {
+func (x *StructureNode) GetRepo() string {
 	if x != nil {
 		return x.Repo
 	}
 	return ""
 }
 
-func (x *AtlasNode) GetFolder() string {
+func (x *StructureNode) GetFolder() string {
 	if x != nil {
 		return x.Folder
 	}
 	return ""
 }
 
-func (x *AtlasNode) GetMigrationFrom() string {
+func (x *StructureNode) GetMigrationFrom() string {
 	if x != nil {
 		return x.MigrationFrom
 	}
 	return ""
 }
 
-func (x *AtlasNode) GetMigrationTo() string {
+func (x *StructureNode) GetMigrationTo() string {
 	if x != nil {
 		return x.MigrationTo
 	}
 	return ""
 }
 
-func (x *AtlasNode) GetUses() []string {
+func (x *StructureNode) GetUses() []string {
 	if x != nil {
 		return x.Uses
 	}
 	return nil
 }
 
-func (x *AtlasNode) GetDeploys() []*NodeDeployment {
+func (x *StructureNode) GetDeploys() []*NodeDeployment {
 	if x != nil {
 		return x.Deploys
 	}
 	return nil
 }
 
-// ListAtlas reads the live graph, or the graph replayed at as_of (an RFC3339
+// ListStructure reads the live graph, or the graph replayed at as_of (an RFC3339
 // date, a YYYY-MM-DD day, a change batch id, or a commit sha). A past graph
 // has no derived status: every node reports "proposed" and historical is true.
-type ListAtlasRequest struct {
+type ListStructureRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	AsOf          string                 `protobuf:"bytes,2,opt,name=as_of,json=asOf,proto3" json:"as_of,omitempty"`
@@ -2168,20 +2168,20 @@ type ListAtlasRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListAtlasRequest) Reset() {
-	*x = ListAtlasRequest{}
+func (x *ListStructureRequest) Reset() {
+	*x = ListStructureRequest{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListAtlasRequest) String() string {
+func (x *ListStructureRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListAtlasRequest) ProtoMessage() {}
+func (*ListStructureRequest) ProtoMessage() {}
 
-func (x *ListAtlasRequest) ProtoReflect() protoreflect.Message {
+func (x *ListStructureRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2193,48 +2193,48 @@ func (x *ListAtlasRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListAtlasRequest.ProtoReflect.Descriptor instead.
-func (*ListAtlasRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListStructureRequest.ProtoReflect.Descriptor instead.
+func (*ListStructureRequest) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{28}
 }
 
-func (x *ListAtlasRequest) GetProjectId() string {
+func (x *ListStructureRequest) GetProjectId() string {
 	if x != nil {
 		return x.ProjectId
 	}
 	return ""
 }
 
-func (x *ListAtlasRequest) GetAsOf() string {
+func (x *ListStructureRequest) GetAsOf() string {
 	if x != nil {
 		return x.AsOf
 	}
 	return ""
 }
 
-type ListAtlasResponse struct {
+type ListStructureResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Nodes         []*AtlasNode           `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	Nodes         []*StructureNode       `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
 	DriftSlugs    []string               `protobuf:"bytes,2,rep,name=drift_slugs,json=driftSlugs,proto3" json:"drift_slugs,omitempty"`
 	Historical    bool                   `protobuf:"varint,3,opt,name=historical,proto3" json:"historical,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListAtlasResponse) Reset() {
-	*x = ListAtlasResponse{}
+func (x *ListStructureResponse) Reset() {
+	*x = ListStructureResponse{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListAtlasResponse) String() string {
+func (x *ListStructureResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListAtlasResponse) ProtoMessage() {}
+func (*ListStructureResponse) ProtoMessage() {}
 
-func (x *ListAtlasResponse) ProtoReflect() protoreflect.Message {
+func (x *ListStructureResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2246,34 +2246,34 @@ func (x *ListAtlasResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListAtlasResponse.ProtoReflect.Descriptor instead.
-func (*ListAtlasResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListStructureResponse.ProtoReflect.Descriptor instead.
+func (*ListStructureResponse) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{29}
 }
 
-func (x *ListAtlasResponse) GetNodes() []*AtlasNode {
+func (x *ListStructureResponse) GetNodes() []*StructureNode {
 	if x != nil {
 		return x.Nodes
 	}
 	return nil
 }
 
-func (x *ListAtlasResponse) GetDriftSlugs() []string {
+func (x *ListStructureResponse) GetDriftSlugs() []string {
 	if x != nil {
 		return x.DriftSlugs
 	}
 	return nil
 }
 
-func (x *ListAtlasResponse) GetHistorical() bool {
+func (x *ListStructureResponse) GetHistorical() bool {
 	if x != nil {
 		return x.Historical
 	}
 	return false
 }
 
-// AtlasHistoryEntry is one applied change batch that touched Atlas nodes.
-type AtlasHistoryEntry struct {
+// StructureHistoryEntry is one applied change batch that touched Structure nodes.
+type StructureHistoryEntry struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	BatchId    string                 `protobuf:"bytes,1,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
 	At         string                 `protobuf:"bytes,2,opt,name=at,proto3" json:"at,omitempty"`
@@ -2285,20 +2285,20 @@ type AtlasHistoryEntry struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AtlasHistoryEntry) Reset() {
-	*x = AtlasHistoryEntry{}
+func (x *StructureHistoryEntry) Reset() {
+	*x = StructureHistoryEntry{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AtlasHistoryEntry) String() string {
+func (x *StructureHistoryEntry) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AtlasHistoryEntry) ProtoMessage() {}
+func (*StructureHistoryEntry) ProtoMessage() {}
 
-func (x *AtlasHistoryEntry) ProtoReflect() protoreflect.Message {
+func (x *StructureHistoryEntry) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2310,40 +2310,40 @@ func (x *AtlasHistoryEntry) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AtlasHistoryEntry.ProtoReflect.Descriptor instead.
-func (*AtlasHistoryEntry) Descriptor() ([]byte, []int) {
+// Deprecated: Use StructureHistoryEntry.ProtoReflect.Descriptor instead.
+func (*StructureHistoryEntry) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{30}
 }
 
-func (x *AtlasHistoryEntry) GetBatchId() string {
+func (x *StructureHistoryEntry) GetBatchId() string {
 	if x != nil {
 		return x.BatchId
 	}
 	return ""
 }
 
-func (x *AtlasHistoryEntry) GetAt() string {
+func (x *StructureHistoryEntry) GetAt() string {
 	if x != nil {
 		return x.At
 	}
 	return ""
 }
 
-func (x *AtlasHistoryEntry) GetAgentRunId() string {
+func (x *StructureHistoryEntry) GetAgentRunId() string {
 	if x != nil {
 		return x.AgentRunId
 	}
 	return ""
 }
 
-func (x *AtlasHistoryEntry) GetNodeOps() int32 {
+func (x *StructureHistoryEntry) GetNodeOps() int32 {
 	if x != nil {
 		return x.NodeOps
 	}
 	return 0
 }
 
-func (x *AtlasHistoryEntry) GetSummary() string {
+func (x *StructureHistoryEntry) GetSummary() string {
 	if x != nil {
 		return x.Summary
 	}
@@ -2703,27 +2703,27 @@ func (x *ListAgentSessionsResponse) GetBranch() string {
 	return ""
 }
 
-type ListAtlasHistoryRequest struct {
+type ListStructureHistoryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListAtlasHistoryRequest) Reset() {
-	*x = ListAtlasHistoryRequest{}
+func (x *ListStructureHistoryRequest) Reset() {
+	*x = ListStructureHistoryRequest{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListAtlasHistoryRequest) String() string {
+func (x *ListStructureHistoryRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListAtlasHistoryRequest) ProtoMessage() {}
+func (*ListStructureHistoryRequest) ProtoMessage() {}
 
-func (x *ListAtlasHistoryRequest) ProtoReflect() protoreflect.Message {
+func (x *ListStructureHistoryRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2735,39 +2735,39 @@ func (x *ListAtlasHistoryRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListAtlasHistoryRequest.ProtoReflect.Descriptor instead.
-func (*ListAtlasHistoryRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListStructureHistoryRequest.ProtoReflect.Descriptor instead.
+func (*ListStructureHistoryRequest) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{36}
 }
 
-func (x *ListAtlasHistoryRequest) GetProjectId() string {
+func (x *ListStructureHistoryRequest) GetProjectId() string {
 	if x != nil {
 		return x.ProjectId
 	}
 	return ""
 }
 
-type ListAtlasHistoryResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entries       []*AtlasHistoryEntry   `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+type ListStructureHistoryResponse struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Entries       []*StructureHistoryEntry `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListAtlasHistoryResponse) Reset() {
-	*x = ListAtlasHistoryResponse{}
+func (x *ListStructureHistoryResponse) Reset() {
+	*x = ListStructureHistoryResponse{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListAtlasHistoryResponse) String() string {
+func (x *ListStructureHistoryResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListAtlasHistoryResponse) ProtoMessage() {}
+func (*ListStructureHistoryResponse) ProtoMessage() {}
 
-func (x *ListAtlasHistoryResponse) ProtoReflect() protoreflect.Message {
+func (x *ListStructureHistoryResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2779,12 +2779,12 @@ func (x *ListAtlasHistoryResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListAtlasHistoryResponse.ProtoReflect.Descriptor instead.
-func (*ListAtlasHistoryResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListStructureHistoryResponse.ProtoReflect.Descriptor instead.
+func (*ListStructureHistoryResponse) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{37}
 }
 
-func (x *ListAtlasHistoryResponse) GetEntries() []*AtlasHistoryEntry {
+func (x *ListStructureHistoryResponse) GetEntries() []*StructureHistoryEntry {
 	if x != nil {
 		return x.Entries
 	}
@@ -4769,8 +4769,8 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x04item\x18\x01 \x01(\v2\x1e.polterware.local.v1.InboxItemR\x04item\x12\x16\n" +
 	"\x06action\x18\x02 \x01(\tR\x06action\x12\x10\n" +
 	"\x03ops\x18\x03 \x03(\tR\x03ops\x12G\n" +
-	"\vdiagnostics\x18\x04 \x03(\v2%.polterware.local.v1.PolterDiagnosticR\vdiagnostics\"4\n" +
-	"\x0eAtlasInvariant\x12\x0e\n" +
+	"\vdiagnostics\x18\x04 \x03(\v2%.polterware.local.v1.PolterDiagnosticR\vdiagnostics\"8\n" +
+	"\x12StructureInvariant\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\"\xa1\x01\n" +
 	"\x0eNodeDeployment\x12\x0e\n" +
@@ -4778,8 +4778,8 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x0eenvironment_id\x18\x02 \x01(\tR\renvironmentId\x12 \n" +
 	"\venvironment\x18\x03 \x01(\tR\venvironment\x12\x1a\n" +
 	"\bprovider\x18\x04 \x01(\tR\bprovider\x12\x1a\n" +
-	"\bresource\x18\x05 \x01(\tR\bresource\"\xd5\x04\n" +
-	"\tAtlasNode\x12\x0e\n" +
+	"\bresource\x18\x05 \x01(\tR\bresource\"\xdd\x04\n" +
+	"\rStructureNode\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tparent_id\x18\x02 \x01(\tR\bparentId\x12\x14\n" +
 	"\x05level\x18\x03 \x01(\tR\x05level\x12\x12\n" +
@@ -4787,9 +4787,9 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x04path\x18\x05 \x01(\tR\x04path\x12\x14\n" +
 	"\x05title\x18\x06 \x01(\tR\x05title\x12\x16\n" +
 	"\x06intent\x18\a \x01(\tR\x06intent\x12\x1c\n" +
-	"\tdecisions\x18\b \x03(\tR\tdecisions\x12C\n" +
+	"\tdecisions\x18\b \x03(\tR\tdecisions\x12G\n" +
 	"\n" +
-	"invariants\x18\t \x03(\v2#.polterware.local.v1.AtlasInvariantR\n" +
+	"invariants\x18\t \x03(\v2'.polterware.local.v1.StructureInvariantR\n" +
 	"invariants\x12\x16\n" +
 	"\x06status\x18\n" +
 	" \x01(\tR\x06status\x12\x1f\n" +
@@ -4802,19 +4802,19 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x0emigration_from\x18\x10 \x01(\tR\rmigrationFrom\x12!\n" +
 	"\fmigration_to\x18\x11 \x01(\tR\vmigrationTo\x12\x12\n" +
 	"\x04uses\x18\x12 \x03(\tR\x04uses\x12=\n" +
-	"\adeploys\x18\x13 \x03(\v2#.polterware.local.v1.NodeDeploymentR\adeploys\"F\n" +
-	"\x10ListAtlasRequest\x12\x1d\n" +
+	"\adeploys\x18\x13 \x03(\v2#.polterware.local.v1.NodeDeploymentR\adeploys\"J\n" +
+	"\x14ListStructureRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x13\n" +
-	"\x05as_of\x18\x02 \x01(\tR\x04asOf\"\x8a\x01\n" +
-	"\x11ListAtlasResponse\x124\n" +
-	"\x05nodes\x18\x01 \x03(\v2\x1e.polterware.local.v1.AtlasNodeR\x05nodes\x12\x1f\n" +
+	"\x05as_of\x18\x02 \x01(\tR\x04asOf\"\x92\x01\n" +
+	"\x15ListStructureResponse\x128\n" +
+	"\x05nodes\x18\x01 \x03(\v2\".polterware.local.v1.StructureNodeR\x05nodes\x12\x1f\n" +
 	"\vdrift_slugs\x18\x02 \x03(\tR\n" +
 	"driftSlugs\x12\x1e\n" +
 	"\n" +
 	"historical\x18\x03 \x01(\bR\n" +
-	"historical\"\x95\x01\n" +
-	"\x11AtlasHistoryEntry\x12\x19\n" +
+	"historical\"\x99\x01\n" +
+	"\x15StructureHistoryEntry\x12\x19\n" +
 	"\bbatch_id\x18\x01 \x01(\tR\abatchId\x12\x0e\n" +
 	"\x02at\x18\x02 \x01(\tR\x02at\x12 \n" +
 	"\fagent_run_id\x18\x03 \x01(\tR\n" +
@@ -4849,12 +4849,12 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x19ListAgentSessionsResponse\x12=\n" +
 	"\bsessions\x18\x01 \x03(\v2!.polterware.local.v1.AgentSessionR\bsessions\x12?\n" +
 	"\bhandoffs\x18\x02 \x03(\v2#.polterware.local.v1.SessionHandoffR\bhandoffs\x12\x16\n" +
-	"\x06branch\x18\x03 \x01(\tR\x06branch\"8\n" +
-	"\x17ListAtlasHistoryRequest\x12\x1d\n" +
+	"\x06branch\x18\x03 \x01(\tR\x06branch\"<\n" +
+	"\x1bListStructureHistoryRequest\x12\x1d\n" +
 	"\n" +
-	"project_id\x18\x01 \x01(\tR\tprojectId\"\\\n" +
-	"\x18ListAtlasHistoryResponse\x12@\n" +
-	"\aentries\x18\x01 \x03(\v2&.polterware.local.v1.AtlasHistoryEntryR\aentries\"R\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\"d\n" +
+	"\x1cListStructureHistoryResponse\x12D\n" +
+	"\aentries\x18\x01 \x03(\v2*.polterware.local.v1.StructureHistoryEntryR\aentries\"R\n" +
 	"\x18ExportProjectionsRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x17\n" +
@@ -4995,11 +4995,11 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\tboard_ids\x18\x02 \x03(\tR\bboardIds\x12;\n" +
 	"\x06change\x18\x03 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"S\n" +
 	"\x19ReorderWorkBoardsResponse\x126\n" +
-	"\x06boards\x18\x01 \x03(\v2\x1e.polterware.local.v1.WorkBoardR\x06boards2\x83\x12\n" +
+	"\x06boards\x18\x01 \x03(\v2\x1e.polterware.local.v1.WorkBoardR\x06boards2\x9b\x12\n" +
 	"\vWorkService\x12f\n" +
-	"\rListWorkCards\x12).polterware.local.v1.ListWorkCardsRequest\x1a*.polterware.local.v1.ListWorkCardsResponse\x12Z\n" +
-	"\tListAtlas\x12%.polterware.local.v1.ListAtlasRequest\x1a&.polterware.local.v1.ListAtlasResponse\x12o\n" +
-	"\x10ListAtlasHistory\x12,.polterware.local.v1.ListAtlasHistoryRequest\x1a-.polterware.local.v1.ListAtlasHistoryResponse\x12r\n" +
+	"\rListWorkCards\x12).polterware.local.v1.ListWorkCardsRequest\x1a*.polterware.local.v1.ListWorkCardsResponse\x12f\n" +
+	"\rListStructure\x12).polterware.local.v1.ListStructureRequest\x1a*.polterware.local.v1.ListStructureResponse\x12{\n" +
+	"\x14ListStructureHistory\x120.polterware.local.v1.ListStructureHistoryRequest\x1a1.polterware.local.v1.ListStructureHistoryResponse\x12r\n" +
 	"\x11ListAgentSessions\x12-.polterware.local.v1.ListAgentSessionsRequest\x1a..polterware.local.v1.ListAgentSessionsResponse\x12`\n" +
 	"\vApplyPolter\x12'.polterware.local.v1.ApplyPolterRequest\x1a(.polterware.local.v1.ApplyPolterResponse\x12]\n" +
 	"\n" +
@@ -5037,74 +5037,74 @@ func file_polterware_local_v1_work_proto_rawDescGZIP() []byte {
 
 var file_polterware_local_v1_work_proto_msgTypes = make([]protoimpl.MessageInfo, 67)
 var file_polterware_local_v1_work_proto_goTypes = []any{
-	(*WorkTask)(nil),                  // 0: polterware.local.v1.WorkTask
-	(*WorkQuestion)(nil),              // 1: polterware.local.v1.WorkQuestion
-	(*WorkInvariant)(nil),             // 2: polterware.local.v1.WorkInvariant
-	(*WorkCard)(nil),                  // 3: polterware.local.v1.WorkCard
-	(*PolterDiagnostic)(nil),          // 4: polterware.local.v1.PolterDiagnostic
-	(*ListWorkCardsRequest)(nil),      // 5: polterware.local.v1.ListWorkCardsRequest
-	(*ListWorkCardsResponse)(nil),     // 6: polterware.local.v1.ListWorkCardsResponse
-	(*ApplyPolterRequest)(nil),        // 7: polterware.local.v1.ApplyPolterRequest
-	(*ApplyPolterResponse)(nil),       // 8: polterware.local.v1.ApplyPolterResponse
-	(*LintPolterRequest)(nil),         // 9: polterware.local.v1.LintPolterRequest
-	(*LintPolterResponse)(nil),        // 10: polterware.local.v1.LintPolterResponse
-	(*QueryPolterRequest)(nil),        // 11: polterware.local.v1.QueryPolterRequest
-	(*QueryPolterResponse)(nil),       // 12: polterware.local.v1.QueryPolterResponse
-	(*WriteHandoffRequest)(nil),       // 13: polterware.local.v1.WriteHandoffRequest
-	(*WriteHandoffResponse)(nil),      // 14: polterware.local.v1.WriteHandoffResponse
-	(*EndSessionRequest)(nil),         // 15: polterware.local.v1.EndSessionRequest
-	(*EndSessionResponse)(nil),        // 16: polterware.local.v1.EndSessionResponse
-	(*InboxItem)(nil),                 // 17: polterware.local.v1.InboxItem
-	(*RoutedInboxItem)(nil),           // 18: polterware.local.v1.RoutedInboxItem
-	(*ListInboxRequest)(nil),          // 19: polterware.local.v1.ListInboxRequest
-	(*SetScopeRequest)(nil),           // 20: polterware.local.v1.SetScopeRequest
-	(*SetScopeResponse)(nil),          // 21: polterware.local.v1.SetScopeResponse
-	(*ListInboxResponse)(nil),         // 22: polterware.local.v1.ListInboxResponse
-	(*ResolveInboxItemRequest)(nil),   // 23: polterware.local.v1.ResolveInboxItemRequest
-	(*ResolveInboxItemResponse)(nil),  // 24: polterware.local.v1.ResolveInboxItemResponse
-	(*AtlasInvariant)(nil),            // 25: polterware.local.v1.AtlasInvariant
-	(*NodeDeployment)(nil),            // 26: polterware.local.v1.NodeDeployment
-	(*AtlasNode)(nil),                 // 27: polterware.local.v1.AtlasNode
-	(*ListAtlasRequest)(nil),          // 28: polterware.local.v1.ListAtlasRequest
-	(*ListAtlasResponse)(nil),         // 29: polterware.local.v1.ListAtlasResponse
-	(*AtlasHistoryEntry)(nil),         // 30: polterware.local.v1.AtlasHistoryEntry
-	(*SessionClaim)(nil),              // 31: polterware.local.v1.SessionClaim
-	(*AgentSession)(nil),              // 32: polterware.local.v1.AgentSession
-	(*SessionHandoff)(nil),            // 33: polterware.local.v1.SessionHandoff
-	(*ListAgentSessionsRequest)(nil),  // 34: polterware.local.v1.ListAgentSessionsRequest
-	(*ListAgentSessionsResponse)(nil), // 35: polterware.local.v1.ListAgentSessionsResponse
-	(*ListAtlasHistoryRequest)(nil),   // 36: polterware.local.v1.ListAtlasHistoryRequest
-	(*ListAtlasHistoryResponse)(nil),  // 37: polterware.local.v1.ListAtlasHistoryResponse
-	(*ExportProjectionsRequest)(nil),  // 38: polterware.local.v1.ExportProjectionsRequest
-	(*ProjectionFile)(nil),            // 39: polterware.local.v1.ProjectionFile
-	(*ExportProjectionsResponse)(nil), // 40: polterware.local.v1.ExportProjectionsResponse
-	(*FeatureTouch)(nil),              // 41: polterware.local.v1.FeatureTouch
-	(*FeatureDecision)(nil),           // 42: polterware.local.v1.FeatureDecision
-	(*FeatureInvariant)(nil),          // 43: polterware.local.v1.FeatureInvariant
-	(*FeatureQuestion)(nil),           // 44: polterware.local.v1.FeatureQuestion
-	(*FeatureCheck)(nil),              // 45: polterware.local.v1.FeatureCheck
-	(*FeatureReview)(nil),             // 46: polterware.local.v1.FeatureReview
-	(*ReviewFeatureRequest)(nil),      // 47: polterware.local.v1.ReviewFeatureRequest
-	(*ReviewFeatureResponse)(nil),     // 48: polterware.local.v1.ReviewFeatureResponse
-	(*CreateFeatureRequest)(nil),      // 49: polterware.local.v1.CreateFeatureRequest
-	(*CreateFeatureResponse)(nil),     // 50: polterware.local.v1.CreateFeatureResponse
-	(*AdvanceFeatureRequest)(nil),     // 51: polterware.local.v1.AdvanceFeatureRequest
-	(*AdvanceFeatureResponse)(nil),    // 52: polterware.local.v1.AdvanceFeatureResponse
-	(*VerifyFeatureRequest)(nil),      // 53: polterware.local.v1.VerifyFeatureRequest
-	(*VerifyCheck)(nil),               // 54: polterware.local.v1.VerifyCheck
-	(*VerifyFeatureResponse)(nil),     // 55: polterware.local.v1.VerifyFeatureResponse
-	(*WorkBoard)(nil),                 // 56: polterware.local.v1.WorkBoard
-	(*ListWorkBoardsRequest)(nil),     // 57: polterware.local.v1.ListWorkBoardsRequest
-	(*ListWorkBoardsResponse)(nil),    // 58: polterware.local.v1.ListWorkBoardsResponse
-	(*CreateWorkBoardRequest)(nil),    // 59: polterware.local.v1.CreateWorkBoardRequest
-	(*CreateWorkBoardResponse)(nil),   // 60: polterware.local.v1.CreateWorkBoardResponse
-	(*UpdateWorkBoardRequest)(nil),    // 61: polterware.local.v1.UpdateWorkBoardRequest
-	(*UpdateWorkBoardResponse)(nil),   // 62: polterware.local.v1.UpdateWorkBoardResponse
-	(*DeleteWorkBoardRequest)(nil),    // 63: polterware.local.v1.DeleteWorkBoardRequest
-	(*DeleteWorkBoardResponse)(nil),   // 64: polterware.local.v1.DeleteWorkBoardResponse
-	(*ReorderWorkBoardsRequest)(nil),  // 65: polterware.local.v1.ReorderWorkBoardsRequest
-	(*ReorderWorkBoardsResponse)(nil), // 66: polterware.local.v1.ReorderWorkBoardsResponse
-	(*ChangeEnvelope)(nil),            // 67: polterware.local.v1.ChangeEnvelope
+	(*WorkTask)(nil),                     // 0: polterware.local.v1.WorkTask
+	(*WorkQuestion)(nil),                 // 1: polterware.local.v1.WorkQuestion
+	(*WorkInvariant)(nil),                // 2: polterware.local.v1.WorkInvariant
+	(*WorkCard)(nil),                     // 3: polterware.local.v1.WorkCard
+	(*PolterDiagnostic)(nil),             // 4: polterware.local.v1.PolterDiagnostic
+	(*ListWorkCardsRequest)(nil),         // 5: polterware.local.v1.ListWorkCardsRequest
+	(*ListWorkCardsResponse)(nil),        // 6: polterware.local.v1.ListWorkCardsResponse
+	(*ApplyPolterRequest)(nil),           // 7: polterware.local.v1.ApplyPolterRequest
+	(*ApplyPolterResponse)(nil),          // 8: polterware.local.v1.ApplyPolterResponse
+	(*LintPolterRequest)(nil),            // 9: polterware.local.v1.LintPolterRequest
+	(*LintPolterResponse)(nil),           // 10: polterware.local.v1.LintPolterResponse
+	(*QueryPolterRequest)(nil),           // 11: polterware.local.v1.QueryPolterRequest
+	(*QueryPolterResponse)(nil),          // 12: polterware.local.v1.QueryPolterResponse
+	(*WriteHandoffRequest)(nil),          // 13: polterware.local.v1.WriteHandoffRequest
+	(*WriteHandoffResponse)(nil),         // 14: polterware.local.v1.WriteHandoffResponse
+	(*EndSessionRequest)(nil),            // 15: polterware.local.v1.EndSessionRequest
+	(*EndSessionResponse)(nil),           // 16: polterware.local.v1.EndSessionResponse
+	(*InboxItem)(nil),                    // 17: polterware.local.v1.InboxItem
+	(*RoutedInboxItem)(nil),              // 18: polterware.local.v1.RoutedInboxItem
+	(*ListInboxRequest)(nil),             // 19: polterware.local.v1.ListInboxRequest
+	(*SetScopeRequest)(nil),              // 20: polterware.local.v1.SetScopeRequest
+	(*SetScopeResponse)(nil),             // 21: polterware.local.v1.SetScopeResponse
+	(*ListInboxResponse)(nil),            // 22: polterware.local.v1.ListInboxResponse
+	(*ResolveInboxItemRequest)(nil),      // 23: polterware.local.v1.ResolveInboxItemRequest
+	(*ResolveInboxItemResponse)(nil),     // 24: polterware.local.v1.ResolveInboxItemResponse
+	(*StructureInvariant)(nil),           // 25: polterware.local.v1.StructureInvariant
+	(*NodeDeployment)(nil),               // 26: polterware.local.v1.NodeDeployment
+	(*StructureNode)(nil),                // 27: polterware.local.v1.StructureNode
+	(*ListStructureRequest)(nil),         // 28: polterware.local.v1.ListStructureRequest
+	(*ListStructureResponse)(nil),        // 29: polterware.local.v1.ListStructureResponse
+	(*StructureHistoryEntry)(nil),        // 30: polterware.local.v1.StructureHistoryEntry
+	(*SessionClaim)(nil),                 // 31: polterware.local.v1.SessionClaim
+	(*AgentSession)(nil),                 // 32: polterware.local.v1.AgentSession
+	(*SessionHandoff)(nil),               // 33: polterware.local.v1.SessionHandoff
+	(*ListAgentSessionsRequest)(nil),     // 34: polterware.local.v1.ListAgentSessionsRequest
+	(*ListAgentSessionsResponse)(nil),    // 35: polterware.local.v1.ListAgentSessionsResponse
+	(*ListStructureHistoryRequest)(nil),  // 36: polterware.local.v1.ListStructureHistoryRequest
+	(*ListStructureHistoryResponse)(nil), // 37: polterware.local.v1.ListStructureHistoryResponse
+	(*ExportProjectionsRequest)(nil),     // 38: polterware.local.v1.ExportProjectionsRequest
+	(*ProjectionFile)(nil),               // 39: polterware.local.v1.ProjectionFile
+	(*ExportProjectionsResponse)(nil),    // 40: polterware.local.v1.ExportProjectionsResponse
+	(*FeatureTouch)(nil),                 // 41: polterware.local.v1.FeatureTouch
+	(*FeatureDecision)(nil),              // 42: polterware.local.v1.FeatureDecision
+	(*FeatureInvariant)(nil),             // 43: polterware.local.v1.FeatureInvariant
+	(*FeatureQuestion)(nil),              // 44: polterware.local.v1.FeatureQuestion
+	(*FeatureCheck)(nil),                 // 45: polterware.local.v1.FeatureCheck
+	(*FeatureReview)(nil),                // 46: polterware.local.v1.FeatureReview
+	(*ReviewFeatureRequest)(nil),         // 47: polterware.local.v1.ReviewFeatureRequest
+	(*ReviewFeatureResponse)(nil),        // 48: polterware.local.v1.ReviewFeatureResponse
+	(*CreateFeatureRequest)(nil),         // 49: polterware.local.v1.CreateFeatureRequest
+	(*CreateFeatureResponse)(nil),        // 50: polterware.local.v1.CreateFeatureResponse
+	(*AdvanceFeatureRequest)(nil),        // 51: polterware.local.v1.AdvanceFeatureRequest
+	(*AdvanceFeatureResponse)(nil),       // 52: polterware.local.v1.AdvanceFeatureResponse
+	(*VerifyFeatureRequest)(nil),         // 53: polterware.local.v1.VerifyFeatureRequest
+	(*VerifyCheck)(nil),                  // 54: polterware.local.v1.VerifyCheck
+	(*VerifyFeatureResponse)(nil),        // 55: polterware.local.v1.VerifyFeatureResponse
+	(*WorkBoard)(nil),                    // 56: polterware.local.v1.WorkBoard
+	(*ListWorkBoardsRequest)(nil),        // 57: polterware.local.v1.ListWorkBoardsRequest
+	(*ListWorkBoardsResponse)(nil),       // 58: polterware.local.v1.ListWorkBoardsResponse
+	(*CreateWorkBoardRequest)(nil),       // 59: polterware.local.v1.CreateWorkBoardRequest
+	(*CreateWorkBoardResponse)(nil),      // 60: polterware.local.v1.CreateWorkBoardResponse
+	(*UpdateWorkBoardRequest)(nil),       // 61: polterware.local.v1.UpdateWorkBoardRequest
+	(*UpdateWorkBoardResponse)(nil),      // 62: polterware.local.v1.UpdateWorkBoardResponse
+	(*DeleteWorkBoardRequest)(nil),       // 63: polterware.local.v1.DeleteWorkBoardRequest
+	(*DeleteWorkBoardResponse)(nil),      // 64: polterware.local.v1.DeleteWorkBoardResponse
+	(*ReorderWorkBoardsRequest)(nil),     // 65: polterware.local.v1.ReorderWorkBoardsRequest
+	(*ReorderWorkBoardsResponse)(nil),    // 66: polterware.local.v1.ReorderWorkBoardsResponse
+	(*ChangeEnvelope)(nil),               // 67: polterware.local.v1.ChangeEnvelope
 }
 var file_polterware_local_v1_work_proto_depIdxs = []int32{
 	0,  // 0: polterware.local.v1.WorkCard.tasks:type_name -> polterware.local.v1.WorkTask
@@ -5121,13 +5121,13 @@ var file_polterware_local_v1_work_proto_depIdxs = []int32{
 	18, // 11: polterware.local.v1.ListInboxResponse.routed:type_name -> polterware.local.v1.RoutedInboxItem
 	17, // 12: polterware.local.v1.ResolveInboxItemResponse.item:type_name -> polterware.local.v1.InboxItem
 	4,  // 13: polterware.local.v1.ResolveInboxItemResponse.diagnostics:type_name -> polterware.local.v1.PolterDiagnostic
-	25, // 14: polterware.local.v1.AtlasNode.invariants:type_name -> polterware.local.v1.AtlasInvariant
-	26, // 15: polterware.local.v1.AtlasNode.deploys:type_name -> polterware.local.v1.NodeDeployment
-	27, // 16: polterware.local.v1.ListAtlasResponse.nodes:type_name -> polterware.local.v1.AtlasNode
+	25, // 14: polterware.local.v1.StructureNode.invariants:type_name -> polterware.local.v1.StructureInvariant
+	26, // 15: polterware.local.v1.StructureNode.deploys:type_name -> polterware.local.v1.NodeDeployment
+	27, // 16: polterware.local.v1.ListStructureResponse.nodes:type_name -> polterware.local.v1.StructureNode
 	31, // 17: polterware.local.v1.AgentSession.claims:type_name -> polterware.local.v1.SessionClaim
 	32, // 18: polterware.local.v1.ListAgentSessionsResponse.sessions:type_name -> polterware.local.v1.AgentSession
 	33, // 19: polterware.local.v1.ListAgentSessionsResponse.handoffs:type_name -> polterware.local.v1.SessionHandoff
-	30, // 20: polterware.local.v1.ListAtlasHistoryResponse.entries:type_name -> polterware.local.v1.AtlasHistoryEntry
+	30, // 20: polterware.local.v1.ListStructureHistoryResponse.entries:type_name -> polterware.local.v1.StructureHistoryEntry
 	39, // 21: polterware.local.v1.ExportProjectionsResponse.files:type_name -> polterware.local.v1.ProjectionFile
 	3,  // 22: polterware.local.v1.FeatureReview.card:type_name -> polterware.local.v1.WorkCard
 	41, // 23: polterware.local.v1.FeatureReview.touches:type_name -> polterware.local.v1.FeatureTouch
@@ -5152,8 +5152,8 @@ var file_polterware_local_v1_work_proto_depIdxs = []int32{
 	67, // 42: polterware.local.v1.ReorderWorkBoardsRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	56, // 43: polterware.local.v1.ReorderWorkBoardsResponse.boards:type_name -> polterware.local.v1.WorkBoard
 	5,  // 44: polterware.local.v1.WorkService.ListWorkCards:input_type -> polterware.local.v1.ListWorkCardsRequest
-	28, // 45: polterware.local.v1.WorkService.ListAtlas:input_type -> polterware.local.v1.ListAtlasRequest
-	36, // 46: polterware.local.v1.WorkService.ListAtlasHistory:input_type -> polterware.local.v1.ListAtlasHistoryRequest
+	28, // 45: polterware.local.v1.WorkService.ListStructure:input_type -> polterware.local.v1.ListStructureRequest
+	36, // 46: polterware.local.v1.WorkService.ListStructureHistory:input_type -> polterware.local.v1.ListStructureHistoryRequest
 	34, // 47: polterware.local.v1.WorkService.ListAgentSessions:input_type -> polterware.local.v1.ListAgentSessionsRequest
 	7,  // 48: polterware.local.v1.WorkService.ApplyPolter:input_type -> polterware.local.v1.ApplyPolterRequest
 	9,  // 49: polterware.local.v1.WorkService.LintPolter:input_type -> polterware.local.v1.LintPolterRequest
@@ -5174,8 +5174,8 @@ var file_polterware_local_v1_work_proto_depIdxs = []int32{
 	63, // 64: polterware.local.v1.WorkService.DeleteWorkBoard:input_type -> polterware.local.v1.DeleteWorkBoardRequest
 	65, // 65: polterware.local.v1.WorkService.ReorderWorkBoards:input_type -> polterware.local.v1.ReorderWorkBoardsRequest
 	6,  // 66: polterware.local.v1.WorkService.ListWorkCards:output_type -> polterware.local.v1.ListWorkCardsResponse
-	29, // 67: polterware.local.v1.WorkService.ListAtlas:output_type -> polterware.local.v1.ListAtlasResponse
-	37, // 68: polterware.local.v1.WorkService.ListAtlasHistory:output_type -> polterware.local.v1.ListAtlasHistoryResponse
+	29, // 67: polterware.local.v1.WorkService.ListStructure:output_type -> polterware.local.v1.ListStructureResponse
+	37, // 68: polterware.local.v1.WorkService.ListStructureHistory:output_type -> polterware.local.v1.ListStructureHistoryResponse
 	35, // 69: polterware.local.v1.WorkService.ListAgentSessions:output_type -> polterware.local.v1.ListAgentSessionsResponse
 	8,  // 70: polterware.local.v1.WorkService.ApplyPolter:output_type -> polterware.local.v1.ApplyPolterResponse
 	10, // 71: polterware.local.v1.WorkService.LintPolter:output_type -> polterware.local.v1.LintPolterResponse

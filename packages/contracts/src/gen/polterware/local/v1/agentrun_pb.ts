@@ -301,7 +301,7 @@ export type ListChangesRequest = Message<"polterware.local.v1.ListChangesRequest
 
   /**
    * scope_node and scope_nodes narrow the history to changes whose subjects
-   * carry a scope_node_id inside that Atlas scope (union). scope_node is merged
+   * carry a scope_node_id inside that Structure scope (union). scope_node is merged
    * with scope_nodes. A change with no scoped subject stays visible.
    *
    * @generated from field: string scope_node = 4;
@@ -689,4 +689,3 @@ export const AgentRunService: GenService<{
   },
 }> = /*@__PURE__*/
   serviceDesc(file_polterware_local_v1_agentrun, 0);
-

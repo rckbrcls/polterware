@@ -1,6 +1,6 @@
-package atlas
+package structure
 
-// Deployment is one environment link for an Atlas node. Provider is a catalog
+// Deployment is one environment link for a Structure node. Provider is a catalog
 // id and Resource names the remote target. Credentials are never stored.
 type Deployment struct {
 	ID            string `json:"id"`

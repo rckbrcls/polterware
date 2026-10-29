@@ -117,7 +117,7 @@ const TABS: TabItem[] = [
     tooltip: {
       title: "Project evidence",
       description:
-        "Markdown notes and project files that back the facts, described only by tags and linked to the Atlas.",
+        "Markdown notes and project files that back the facts, described only by tags and linked to the Structure.",
       icon: FileText,
     },
   },
@@ -190,11 +190,11 @@ export function KnowledgeView(props: {
   /** Replaces the tags of an Evidence item. */
   onSaveTags?: (id: string, tags: string[]) => void;
   onCreate?: (kind: "verdict", title: string, scope?: "principle" | "decision", scopePath?: string) => void;
-  /** Atlas nodes offered by the scope pickers; the global scope preselects new items. */
+  /** Structure nodes offered by the scope pickers; the global scope preselects new items. */
   scopeNodes?: ScopeNodeItem[];
   /** Path of the active global scope, used as the default for new items. */
   activeScopePath?: string;
-  /** Writes the Atlas scope of a Decision or Evidence item as a node path; empty clears it. */
+  /** Writes the Structure scope of a Decision or Evidence item as a node path; empty clears it. */
   onSetScope?: (id: string, path: string) => void;
   onCreateEvidence?: (input: NewEvidenceInput) => void;
   onImportProjectSources?: () => void;

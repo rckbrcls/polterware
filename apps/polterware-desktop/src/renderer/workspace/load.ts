@@ -10,15 +10,15 @@ import type {
   WorkspaceIntegrationResource,
   WorkspaceIntegrationSyncRun,
   WorkspaceInbox,
-  WorkspaceAtlas,
-  WorkspaceAtlasHistoryEntry,
+  WorkspaceStructure,
+  WorkspaceStructureHistoryEntry,
   WorkspaceWorkCard,
   WorkspaceWorkBoard,
 } from "@polterware/feature-shell";
 import { asNumber, asObjectArray, asRecord, asString } from "./format";
 import {
   mapVerdicts,
-  mapAtlasHistory,
+  mapStructureHistory,
   mapConnections,
   mapEvidence,
   mapEnvironments,
@@ -32,7 +32,7 @@ import {
   mapSettingsEnvironments,
   mapSyncRuns,
   mapInbox,
-  mapAtlas,
+  mapStructure,
   mapWorkCards,
   mapWorkBoards,
 } from "./map-records";
@@ -51,7 +51,7 @@ export type WorkspaceSnapshot = {
   verdicts: WorkspaceVerdict[];
   workCards: WorkspaceWorkCard[];
   workBoards: WorkspaceWorkBoard[];
-  atlas: WorkspaceAtlas;
+  structure: WorkspaceStructure;
   inbox: WorkspaceInbox;
   canonEntities: WorkspaceCanonEntity[];
   providers: WorkspaceCatalogProvider[];
@@ -69,7 +69,7 @@ export type WorkspaceExtensions = Pick<
   | "verdicts"
   | "workCards"
   | "workBoards"
-  | "atlas"
+  | "structure"
   | "inbox"
   | "canonEntities"
   | "providers"
@@ -105,7 +105,7 @@ export function emptyWorkspaceExtensions(): WorkspaceExtensions {
     verdicts: [],
     workCards: [],
     workBoards: [],
-    atlas: emptyAtlas(),
+    structure: emptyStructure(),
     inbox: emptyInbox(),
     canonEntities: [],
     providers: [],
@@ -140,12 +140,12 @@ export function emptyInbox(): WorkspaceInbox {
   return { items: [], openCount: 0, blockingCount: 0 };
 }
 
-export function emptyAtlas(): WorkspaceAtlas {
+export function emptyStructure(): WorkspaceStructure {
   return { nodes: [], driftSlugs: [], historical: false };
 }
 
 /**
- * Atlas node ids the Desktop reads under. Empty means the whole project.
+ * Structure node ids the Desktop reads under. Empty means the whole project.
  * Loaders spread this so every refresh path stays scoped. A parent id is
  * already expanded to itself and its children by the caller.
  */
@@ -190,17 +190,17 @@ export async function loadWorkBoards(projectId: string): Promise<WorkspaceWorkBo
   return mapWorkBoards(asObjectArray(asRecord(await core().work.listBoards({ projectId })).boards));
 }
 
-/** Atlas nodes for the canvas. A failed read keeps the page usable with no nodes. */
-export async function loadAtlas(projectId: string, asOf = "", api = core()): Promise<WorkspaceAtlas> {
-  return mapAtlas(asRecord(await api.work.listAtlas({ projectId, asOf })));
+/** Structure nodes for the canvas. A failed read keeps the page usable with no nodes. */
+export async function loadStructure(projectId: string, asOf = "", api = core()): Promise<WorkspaceStructure> {
+  return mapStructure(asRecord(await api.work.listStructure({ projectId, asOf })));
 }
 
-/** Change batches that touched the Atlas. A failed read leaves the timeline with only Now. */
-export async function loadAtlasHistory(projectId: string, api = core()): Promise<WorkspaceAtlasHistoryEntry[]> {
+/** Change batches that touched the Structure. A failed read leaves the timeline with only Now. */
+export async function loadStructureHistory(projectId: string, api = core()): Promise<WorkspaceStructureHistoryEntry[]> {
   try {
-    return mapAtlasHistory(asRecord(await api.work.listAtlasHistory({ projectId })));
+    return mapStructureHistory(asRecord(await api.work.listStructureHistory({ projectId })));
   } catch (error) {
-    console.warn("Atlas history read failed.", error);
+    console.warn("Structure history read failed.", error);
     return [];
   }
 }
@@ -312,7 +312,7 @@ export async function loadWorkspaceExtensions(
     api.knowledge.list({ projectId, ...scopeArgs() }),
     api.work.listCards({ projectId, ...scopeArgs() }),
     loadInbox(projectId, api),
-    loadAtlas(projectId, "", api),
+    loadStructure(projectId, "", api),
     api.canon.listEntities({ projectId }).catch(() => ({ entities: [] })),
     api.knowledge.listLinks({ projectId }).catch(() => ({ links: [] })),
     api.integrations.listProviders(),
@@ -327,7 +327,7 @@ export async function loadWorkspaceExtensions(
     knowledgeRes,
     workRes,
     inbox,
-    atlas,
+    structure,
     entitiesRes,
     linksRes,
     providersRes,
@@ -346,7 +346,7 @@ export async function loadWorkspaceExtensions(
   const canonEntities = mapCanonEntities(asObjectArray(asRecord(entitiesRes).entities));
   const linksByKnowledge = mapKnowledgeEntityLinks(asObjectArray(asRecord(linksRes).links), canonEntities);
   const evidence = mapEvidence(knowledgeItems, linksByKnowledge);
-  const verdicts = mapVerdicts(knowledgeItems, linksByKnowledge, atlas.nodes);
+  const verdicts = mapVerdicts(knowledgeItems, linksByKnowledge, structure.nodes);
   const workCards = mapWorkCards(asObjectArray(asRecord(workRes).cards));
 
   await Promise.resolve();
@@ -370,7 +370,7 @@ export async function loadWorkspaceExtensions(
     verdicts,
     workCards,
     workBoards,
-    atlas,
+    structure,
     inbox,
     canonEntities,
     providers,

@@ -107,7 +107,7 @@ export function IntegrationInlineDetail(props: {
           when={resources().length > 0}
           fallback={
             <p class="m-0 text-[var(--color-text-muted)]">
-              No imported resources yet. Refresh metadata imports a bounded list from the local CLI; link them to components in the Atlas.
+              No imported resources yet. Refresh metadata imports a bounded list from the local CLI; link them to components in the Structure.
             </p>
           }
         >

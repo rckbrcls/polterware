@@ -4,18 +4,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
-func testGraph() ([]atlas.Node, []Verdict) {
-	nodes := []atlas.Node{
-		{ID: "s", Path: "shop", Level: atlas.LevelSystem, Title: "Shop", Status: atlas.NodeActive,
+func testGraph() ([]structure.Node, []Verdict) {
+	nodes := []structure.Node{
+		{ID: "s", Path: "shop", Level: structure.LevelSystem, Title: "Shop", Status: structure.NodeActive,
 			Decisions:  []string{"Verdict 0001"},
-			Invariants: []atlas.Invariant{{Text: "Money is integer cents", State: work.InvariantActive}}},
-		{ID: "d", ParentID: "s", Path: "shop/auth", Level: atlas.LevelDomain, Title: "Auth", Status: atlas.NodeActive,
+			Invariants: []structure.Invariant{{Text: "Money is integer cents", State: work.InvariantActive}}},
+		{ID: "d", ParentID: "s", Path: "shop/auth", Level: structure.LevelDomain, Title: "Auth", Status: structure.NodeActive,
 			Repo: "api", Folder: "src/auth", Decisions: []string{"verdict-tokens"},
-			Invariants: []atlas.Invariant{
+			Invariants: []structure.Invariant{
 				{Text: "Tokens expire in 15 minutes", State: work.InvariantActive},
 				{Text: "Old rule", State: work.InvariantRemoved},
 			}},

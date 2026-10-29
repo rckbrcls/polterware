@@ -37,11 +37,11 @@ Polter format is the agent to Polterware language: a small markdown dialect deco
 
 The core, polterware serve, is the only process that opens the SQLite store. One core runs per database, enforced by a lock. It is a daemon with idle exit that any client can start or attach to, with a build handshake. Change events come from SQLite commit hooks, not call sites. MCP runs inside the core and polterware mcp is a stdio to HTTP bridge. CLI commands are thin clients.
 
-### new: Atlas nodes above Work cards
+### new: Structure nodes above Work cards
 
-System, domain, and component are Atlas nodes with contract lines. A feature stays a Work card and a task stays a Work task. A node parent is named by under. Status is derived on read: proposed, in progress, delivered, or drift, and Git does not move the stored card stage. Oracle is a deterministic packing of the graph to a token budget, with no model on the path. The Atlas canvas shows this graph.
+System, domain, and component are Structure nodes with contract lines. A feature stays a Work card and a task stays a Work task. A node parent is named by under. Status is derived on read: proposed, in progress, delivered, or drift, and Git does not move the stored card stage. Oracle is a deterministic packing of the graph to a token budget, with no model on the path. The Structure canvas shows this graph.
 
-### new: Checkouts on Atlas nodes and projections into checkouts
+### new: Checkouts on Structure nodes and projections into checkouts
 
 A node names its checkout and folder. A task may name its checkout, and a claim scope carries it, so scopes in different checkouts never overlap. Projections are written from the store and never read back: each Verdict becomes a file in its governing checkout and one generated block in each checkout AGENTS.md. Edits made in a checkout are not imported; the next export replaces them. The renderer never touches the filesystem.
 

@@ -102,9 +102,9 @@ export type WorkspaceVerdict = {
   supersedes: string[];
   reviewTrigger: string;
   statusReason: string;
-  /** Paths of the Atlas nodes that cite this decision. */
+  /** Paths of the Structure nodes that cite this decision. */
   governs: string[];
-  /** Atlas node the decision is scoped to; unset means the whole project. */
+  /** Structure node the decision is scoped to; unset means the whole project. */
   scopeNodeId?: string;
   owner: string;
   entityLinks: WorkspaceEntityLink[];
@@ -122,7 +122,7 @@ export type WorkspaceEvidence = {
   tags: string[];
   /** Project-relative path of the file this evidence points at; empty for a plain note. */
   path: string;
-  /** Atlas node the evidence is scoped to; unset means the whole project. */
+  /** Structure node the evidence is scoped to; unset means the whole project. */
   scopeNodeId?: string;
   owner: string;
   updatedAt: string;
@@ -159,7 +159,7 @@ export type WorkspaceWorkInvariant = {
 };
 
 /** Work card from the Work tables (Verdict 0006), written through the Polter format. */
-/** A feature, or an Architecture Change that edits the Atlas structure. */
+/** A feature, or an Architecture Change that edits the Structure. */
 export type WorkCardKind = "feature" | "architecture";
 
 export type WorkspaceWorkCard = {
@@ -187,7 +187,7 @@ export type FeatureQuestionRoute = "inbox" | "deferred" | "delegated" | "answere
 /** Shape impact and gate checks of one card, from WorkService.ReviewFeature. */
 export type WorkspaceFeatureReview = {
   card: WorkspaceWorkCard;
-  /** Set when the card's under: names an Atlas node. */
+  /** Set when the card's under: names a Structure node. */
   underPath: string;
   underTitle: string;
   /** Component paths suggested for a card without under:. */
@@ -207,21 +207,21 @@ export type WorkspaceFeatureReview = {
   checks: { step: "shape" | "contract" | "plan"; severity: "error" | "hint"; message: string }[];
 };
 
-export type AtlasLevel = "system" | "domain" | "component";
-export type AtlasStatus = "proposed" | "in_progress" | "delivered" | "drift";
+export type StructureLevel = "system" | "domain" | "component";
+export type StructureStatus = "proposed" | "in_progress" | "delivered" | "drift";
 
-/** Atlas node from WorkService.ListAtlas. Status is derived on read. */
-export type WorkspaceAtlasNode = {
+/** Structure node from WorkService.ListStructure. Status is derived on read. */
+export type WorkspaceStructureNode = {
   id: string;
   parentId: string;
-  level: AtlasLevel;
+  level: StructureLevel;
   slug: string;
   path: string;
   title: string;
   intent: string;
   decisions: string[];
   invariants: WorkspaceWorkInvariant[];
-  status: AtlasStatus;
+  status: StructureStatus;
   childCount: number;
   featureCount: number;
   openQuestions: number;
@@ -237,15 +237,15 @@ export type WorkspaceAtlasNode = {
   uses?: string[];
 };
 
-export type WorkspaceAtlas = {
-  nodes: WorkspaceAtlasNode[];
+export type WorkspaceStructure = {
+  nodes: WorkspaceStructureNode[];
   driftSlugs: string[];
   /** True for a replayed past graph: status, feature counts, and drift are live-only. */
   historical: boolean;
 };
 
-/** One change batch that touched the Atlas, from WorkService.ListAtlasHistory. */
-export type WorkspaceAtlasHistoryEntry = {
+/** One change batch that touched the Structure, from WorkService.ListStructureHistory. */
+export type WorkspaceStructureHistoryEntry = {
   batchId: string;
   at: string;
   nodeOps: number;

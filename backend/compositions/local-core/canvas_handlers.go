@@ -84,7 +84,7 @@ func (core *Core) CreateCanvas(_ context.Context, request *connect.Request[local
 	if err != nil {
 		return nil, mapCanvasWriteErr(err)
 	}
-	if err := core.Store.RequireAtlasNode(prepared.ProjectID, prepared.ScopeNodeID); err != nil {
+	if err := core.Store.RequireStructureNode(prepared.ProjectID, prepared.ScopeNodeID); err != nil {
 		return nil, mapCanvasWriteErr(err)
 	}
 	env.ProjectID = prepared.ProjectID
@@ -154,7 +154,7 @@ func (core *Core) UpdateCanvas(_ context.Context, request *connect.Request[local
 	if err != nil {
 		return nil, mapCanvasWriteErr(err)
 	}
-	if err := core.Store.RequireAtlasNode(prepared.ProjectID, prepared.ScopeNodeID); err != nil {
+	if err := core.Store.RequireStructureNode(prepared.ProjectID, prepared.ScopeNodeID); err != nil {
 		return nil, mapCanvasWriteErr(err)
 	}
 	env.ProjectID = prepared.ProjectID

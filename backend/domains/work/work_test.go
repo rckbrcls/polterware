@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 )
 
 func TestStagesAreInBoardOrder(t *testing.T) {
@@ -110,12 +110,12 @@ func TestCardLatestHandoff(t *testing.T) {
 func TestSnapshotLookups(t *testing.T) {
 	snapshot := Snapshot{
 		ProjectID: "p",
-		Cards:     []Card{{Slug: "git-import"}, {Slug: "atlas"}},
-		Nodes:     []atlas.Node{{Path: "core/import", Status: "removed"}},
+		Cards:     []Card{{Slug: "git-import"}, {Slug: "structure"}},
+		Nodes:     []structure.Node{{Path: "core/import", Status: "removed"}},
 		Repos:     []string{"api"},
 	}
-	if card, ok := snapshot.Card("atlas"); !ok || card.Slug != "atlas" {
-		t.Fatalf("Card(atlas) = %+v, %v", card, ok)
+	if card, ok := snapshot.Card("structure"); !ok || card.Slug != "structure" {
+		t.Fatalf("Card(structure) = %+v, %v", card, ok)
 	}
 	if _, ok := snapshot.Card("missing"); ok {
 		t.Fatal("unknown slug must not be found")

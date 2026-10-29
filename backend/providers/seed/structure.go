@@ -2,13 +2,13 @@ package seed
 
 import "strings"
 
-// structurePolter is Polterware described in its own Atlas: one system, its
+// structurePolter is Polterware described in its own Structure: one system, its
 // domains and components, and the Work cards from its roadmap. "§" stands for a backtick
 // (task scopes) and {web}/{cloud} expand to a "repo:" segment only when that
 // checkout is registered.
 const structurePolter = `---
 polter: 1
-summary: Describe Polterware as an Atlas and Work board
+summary: Describe Polterware as a Structure and Work board
 rationale: Polterware is managed with its own build, so its structure and roadmap are the seed
 ---
 
@@ -52,7 +52,7 @@ Feature packages and the shared frontend infrastructure the Desktop renderer is 
 # polterware/frontend/features: Feature packages
 level: component · under: polterware/frontend · path: packages/features · uses: polterware/frontend/design-system, polterware/frontend/state, polterware/frontend/canvas
 
-Shell, Atlas, Work and Decisions, Reality, Integrations, Settings, and Commander, one package each.
+Shell, Structure, Work and Decisions, Reality, Integrations, Settings, and Commander, one package each.
 
 # polterware/frontend/design-system: Design system
 level: component · under: polterware/frontend · path: packages/frontend/design-system · uses: polterware/frontend/state
@@ -62,7 +62,7 @@ Shared controls, overlays, tables, and the design tokens in DESIGN.md.
 # polterware/frontend/canvas: Canvas
 level: component · under: polterware/frontend · path: packages/frontend/canvas
 
-The graph canvas the Atlas map is drawn on.
+The graph canvas the Structure map is drawn on.
 
 # polterware/frontend/state: State and platform
 level: component · under: polterware/frontend · path: packages/frontend/state
@@ -87,14 +87,14 @@ The polterware serve process. It owns SQLite and serves Connect RPC and MCP.
 ! Only the core opens SQLite
 
 # polterware/core/server: Core server
-level: component · under: polterware/core · decisions: Verdict-0007 · path: backend/compositions/local-core · uses: polterware/core/services, polterware/core/store, polterware/core/mcp, polterware/core/events, polterware/core/integrations, polterware/core/inbox, polterware/core/atlas, polterware/agents/runs, polterware/agents/access, polterware/agents/setup, polterware/contracts/generated
+level: component · under: polterware/core · decisions: Verdict-0007 · path: backend/compositions/local-core · uses: polterware/core/services, polterware/core/store, polterware/core/mcp, polterware/core/events, polterware/core/integrations, polterware/core/inbox, polterware/core/structure, polterware/agents/runs, polterware/agents/access, polterware/agents/setup, polterware/contracts/generated
 
 The Connect RPC and MCP HTTP server, the process lock, and the build handshake.
 
 ! One core per database
 
 # polterware/core/services: Project services
-level: component · under: polterware/core · decisions: Verdict-0004 · path: backend/compositions/wedge · uses: polterware/core/work, polterware/core/import, polterware/core/drift, polterware/core/context, polterware/core/decisions, polterware/core/atlas, polterware/core/inbox, polterware/core/git, polterware/core/facts, polterware/core/store, polterware/agents/runs
+level: component · under: polterware/core · decisions: Verdict-0004 · path: backend/compositions/wedge · uses: polterware/core/work, polterware/core/import, polterware/core/drift, polterware/core/context, polterware/core/decisions, polterware/core/structure, polterware/core/inbox, polterware/core/git, polterware/core/facts, polterware/core/store, polterware/agents/runs
 
 Composes the domains into project init, scan, Polter apply, and project model sync.
 
@@ -104,7 +104,7 @@ level: component · under: polterware/core · decisions: Verdict-0007 · path: b
 One clean baseline schema and the commit hooks that emit change events.
 
 # polterware/core/work: Work model and Polter codec
-level: component · under: polterware/core · decisions: Verdict-0006, Verdict-0010 · path: backend/domains/polter · uses: polterware/core/atlas, polterware/core/decisions, polterware/core/context
+level: component · under: polterware/core · decisions: Verdict-0006, Verdict-0010 · path: backend/domains/polter · uses: polterware/core/structure, polterware/core/decisions, polterware/core/context
 
 Work cards, tasks, questions, invariants, decisions, claims, and the Polter grammar.
 
@@ -141,8 +141,8 @@ Packs the project graph into a budgeted context for an agent session.
 
 ! The compiled context never includes credentials
 
-# polterware/core/atlas: Atlas model
-level: component · under: polterware/core · decisions: Verdict-0008, Verdict-0009 · path: backend/domains/atlas
+# polterware/core/structure: Structure model
+level: component · under: polterware/core · decisions: Verdict-0008, Verdict-0009 · path: backend/domains/structure
 
 System, domain, and component nodes, their uses edges, derived status, and history.
 
@@ -185,7 +185,7 @@ The single polterware binary: commands, status TUI, serve, and mcp.
 # polterware/cli/commands: CLI commands
 level: component · under: polterware/cli · path: backend/runtimes/cli · uses: polterware/cli/coreclient, polterware/core/server, polterware/core/mcp, polterware/core/work, polterware/agents/setup
 
-Thin core clients: apply, query, status, handoff, atlas, oracle, decision, feature, export.
+Thin core clients: apply, query, status, handoff, structure, oracle, decision, feature, export.
 
 # polterware/cli/coreclient: Core client
 level: component · under: polterware/cli · path: backend/platform/coreclient · uses: polterware/contracts/generated
@@ -241,7 +241,7 @@ Architecture drafts for sync, hosted MCP, and the Judge.
 ## navigation-swap: Navigation swap
 stage: delivered · under: polterware/desktop/renderer
 
-Sidebar surfaces Inbox, Atlas, Work, Decisions, Reality, Agents, Integrations, with Settings in the footer.
+Sidebar surfaces Inbox, Structure, Work, Decisions, Reality, Agents, Integrations, with Settings in the footer.
 
 - [x] Sidebar and routes §packages/features/shell/*§
 - [x] Legacy routes redirect
@@ -335,15 +335,15 @@ Decision, Drift, and Verify items derived on every read.
 - [x] Sidebar count, status, and polterware inbox
 ! The Inbox has only Decision, Drift, and Verify items
 
-## atlas-hierarchy-oracle: Atlas hierarchy and Oracle
+## structure-hierarchy-oracle: Structure hierarchy and Oracle
 stage: verify · under: polterware/core/context · decisions: Verdict-0008, Verdict-0009
 
 System, domain, and component nodes above Work cards, plus a budgeted Oracle.
 
-- [x] Node model and derived status §backend/domains/atlas/*§
+- [x] Node model and derived status §backend/domains/structure/*§
 - [x] Multi-repository nodes and projections §backend/domains/projection/*§
-- [x] polterware atlas and oracle
-- [x] Atlas canvas and Oracle preview
+- [x] polterware structure and oracle
+- [x] Structure canvas and Oracle preview
 ! Oracle uses no model
 
 ## new-feature-flow: New-feature flow
@@ -368,10 +368,10 @@ Proposed, active, challenged, superseded, with history kept.
 ## architecture-evolution: Architecture evolution
 stage: verify · under: polterware/core/work · decisions: Verdict-0008
 
-Architecture Change cards, node migration state, and the Atlas timeline.
+Architecture Change cards, node migration state, and the Structure timeline.
 
 - [x] kind: architecture cards and migrating: on nodes
-- [x] atlas --at and atlas history §backend/domains/atlas/*§
+- [x] structure --at and structure history §backend/domains/structure/*§
 
 ## agent-sessions: Agents sessions
 stage: verify · under: polterware/agents/runs
@@ -406,7 +406,7 @@ Run Polterware on its own repository from a local build, and judge every seeded 
 ? Which seeded cards and Verdict statuses are wrong?
 
 handoff:
-branch: feat/atlas-grounded-sdd
+branch: feat/structure-grounded-sdd
 agent: claude-code
 goal: Manage Polterware with its own build
 done: tests green, CLI and macOS app built, real Polterware project seeded
@@ -442,14 +442,14 @@ Cover request payload shapes and partial failure in the workspace loader and per
 - [ ] load.ts partial-failure behavior
 - [ ] Smoke test that the contracts exports the Desktop uses exist §packages/contracts/*§
 
-## atlas-views-naming: Atlas Views naming
+## structure-views-naming: Structure Views naming
 stage: plan · under: polterware/desktop/renderer
 
-Atlas Views and some toasts still say Architecture.
+Structure Views and some toasts still say Architecture.
 
-- [ ] Rename Architecture strings in Atlas Views and toasts §packages/features/architecture/*§
+- [ ] Rename Architecture strings in Structure Views and toasts §packages/features/architecture/*§
 
-## atlas-upper-levels: Creating the upper Atlas levels
+## structure-upper-levels: Creating the upper Structure levels
 stage: shape · under: polterware/core/work · decisions: Verdict-0008
 
 Decide who creates System and Domain nodes.

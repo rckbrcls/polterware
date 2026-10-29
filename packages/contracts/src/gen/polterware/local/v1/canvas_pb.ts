@@ -272,7 +272,7 @@ export type ListCanvasesRequest = Message<"polterware.local.v1.ListCanvasesReque
   projectId: string;
 
   /**
-   * scope_node narrows the list to canvases scoped to that Atlas node
+   * scope_node narrows the list to canvases scoped to that Structure node
    * (id or path), its descendants, and, unless scope_exact, its ancestors.
    * Empty is the whole project. A canvas with no scope stays visible.
    *

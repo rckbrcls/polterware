@@ -13,7 +13,7 @@ import (
 func (s *Store) loadDecisions(projectID string) ([]decision.Decision, error) {
 	var out []decision.Decision
 	err := s.eachRow(`SELECT k.id,k.title,k.status,k.body,k.extra_json,COALESCE(n.path,'') FROM knowledge_items k
-		LEFT JOIN atlas_nodes n ON n.id=k.scope_node_id
+		LEFT JOIN structure_nodes n ON n.id=k.scope_node_id
 		WHERE k.project_id=? AND k.kind='verdict' ORDER BY k.created_at, k.id`,
 		projectID, func(rows *sql.Rows) error {
 			var d decision.Decision
@@ -106,14 +106,14 @@ func applyDecisionOp(tx *sql.Tx, projectID string, op work.Op, now string) error
 	return err
 }
 
-// setDecisionScope points a Verdict at the Atlas node with the given path, or
+// setDecisionScope points a Verdict at the Structure node with the given path, or
 // clears its scope when path is empty.
 func setDecisionScope(tx *sql.Tx, projectID, id, path string) error {
 	var node any
 	if path = strings.TrimSpace(path); path != "" {
 		var nodeID string
-		if err := tx.QueryRow(`SELECT id FROM atlas_nodes WHERE project_id=? AND path=? AND status<>'removed'`, projectID, path).Scan(&nodeID); err != nil {
-			return fmt.Errorf("scope %q is not an Atlas node path: list them with polterware atlas", path)
+		if err := tx.QueryRow(`SELECT id FROM structure_nodes WHERE project_id=? AND path=? AND status<>'removed'`, projectID, path).Scan(&nodeID); err != nil {
+			return fmt.Errorf("scope %q is not a Structure node path: list them with polterware structure", path)
 		}
 		node = nodeID
 	}

@@ -1,4 +1,4 @@
-package atlas
+package structure
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// HistoryOp is one change_ops row that touched an Atlas node or invariant.
+// HistoryOp is one change_ops row that touched a Structure node or invariant.
 type HistoryOp struct {
 	Seq        int64
 	BatchID    string
@@ -20,7 +20,7 @@ type HistoryOp struct {
 	CreatedAt time.Time
 }
 
-// HistoryEntry is one batch that touched the Atlas.
+// HistoryEntry is one batch that touched the Structure.
 type HistoryEntry struct {
 	BatchID    string
 	At         time.Time

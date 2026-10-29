@@ -16,8 +16,8 @@ export const DETAIL_DISPLAY: Readonly<Record<string, DetailDisplay>> = {
   verdict: "page",
   card: "page",
   "arch-node": "both",
-  "atlas-node": "both",
-  "atlas-card": "both",
+  "structure-node": "both",
+  "structure-card": "both",
 };
 
 /** Unknown kinds keep the previous behavior: panel plus expansion. */

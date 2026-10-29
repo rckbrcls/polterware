@@ -64,11 +64,11 @@ func (s *Store) ListUnbackedCanonFacts(projectID string) ([]inbox.Fact, error) {
 	return out, rows.Err()
 }
 
-// ListNodeDeployLinks returns every deploy link on an active Atlas node.
+// ListNodeDeployLinks returns every deploy link on an active Structure node.
 func (s *Store) ListNodeDeployLinks(projectID string) ([]inbox.DeployLink, error) {
 	rows, err := s.DB.Query(`SELECT d.node_id,n.path,d.environment_id,COALESCE(e.name,''),d.provider,d.resource
 		FROM node_deployments d
-		JOIN atlas_nodes n ON n.id=d.node_id
+		JOIN structure_nodes n ON n.id=d.node_id
 		LEFT JOIN environments e ON e.id=d.environment_id
 		WHERE d.project_id=? AND n.status<>'removed'
 		ORDER BY n.path, e.name, d.environment_id`, projectID)

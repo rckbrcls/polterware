@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
@@ -19,7 +19,7 @@ func TestScopeRefsMergesSingleRepeatedAndCommas(t *testing.T) {
 }
 
 func TestFilterChangesByScope(t *testing.T) {
-	resolved := storepkg.NodeScope{Set: atlas.ScopeSet{"auth": true}}
+	resolved := storepkg.NodeScope{Set: structure.ScopeSet{"auth": true}}
 	scopes := map[string]string{"fact-auth": "auth", "fact-bill": "billing"}
 	rows := []storepkg.ChangeRow{
 		{StepID: "open", PayloadJSON: `{"summary":"note"}`},

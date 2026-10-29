@@ -501,7 +501,7 @@ func (x *CanvasTypeDefinition) GetUnrestricted() bool {
 type ListCanvasesRequest struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	// scope_node narrows the list to canvases scoped to that Atlas node
+	// scope_node narrows the list to canvases scoped to that Structure node
 	// (id or path), its descendants, and, unless scope_exact, its ancestors.
 	// Empty is the whole project. A canvas with no scope stays visible.
 	ScopeNode  string `protobuf:"bytes,2,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`

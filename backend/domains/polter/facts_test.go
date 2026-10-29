@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/work"
 )
@@ -50,7 +50,7 @@ func TestFactLintLineNumbers(t *testing.T) {
 }
 
 func TestFactPlanCreateUpdateAndOmission(t *testing.T) {
-	snapshot := work.Snapshot{ProjectID: "p", Nodes: []atlas.Node{{ID: "n", Path: "core", Level: "system", Status: atlas.NodeActive}}, Evidence: []canon.Evidence{{ID: "ev-1"}}}
+	snapshot := work.Snapshot{ProjectID: "p", Nodes: []structure.Node{{ID: "n", Path: "core", Level: "system", Status: structure.NodeActive}}, Evidence: []canon.Evidence{{ID: "ev-1"}}}
 	for _, kind := range []string{"", "declared", "observed", "inferred", "verified"} {
 		text := Header + "#### local-core: Local core\nscope: core\nevidence: ev-1, ev-1\n"
 		if kind != "" {

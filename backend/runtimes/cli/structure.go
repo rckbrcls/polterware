@@ -11,8 +11,8 @@ import (
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
 )
 
-func runAtlas(dbPath string, args []string) error {
-	fs := flag.NewFlagSet("atlas", flag.ContinueOnError)
+func runStructure(dbPath string, args []string) error {
+	fs := flag.NewFlagSet("structure", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
 	projectID := fs.String("project", "", "project id (default: project containing the cwd)")
 	node := fs.String("node", "", "node id or path")
@@ -22,10 +22,10 @@ func runAtlas(dbPath string, args []string) error {
 	}
 	history := fs.NArg() == 1 && fs.Arg(0) == "history"
 	if fs.NArg() > 0 && !history {
-		return fmt.Errorf("unknown argument %q: use atlas [--node <path>] [--at <point>] or atlas history", fs.Arg(0))
+		return fmt.Errorf("unknown argument %q: use structure [--node <path>] [--at <point>] or structure history", fs.Arg(0))
 	}
 	if history && (*node != "" || *at != "") {
-		return fmt.Errorf("atlas history takes no --node or --at")
+		return fmt.Errorf("structure history takes no --node or --at")
 	}
 	c, err := dial(dbPath)
 	if err != nil {
@@ -35,10 +35,10 @@ func runAtlas(dbPath string, args []string) error {
 	if err != nil {
 		return err
 	}
-	query := "atlas"
+	query := "structure"
 	switch {
 	case history:
-		query = "atlas history"
+		query = "structure history"
 	default:
 		if *node != "" {
 			query += " " + *node

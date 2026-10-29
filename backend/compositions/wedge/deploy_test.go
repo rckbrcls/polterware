@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/polterware/polterware/backend/compositions/wedge"
-	"github.com/polterware/polterware/backend/domains/atlas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/inbox"
 	"github.com/polterware/polterware/backend/domains/integrations"
 	"github.com/polterware/polterware/backend/domains/projects"
@@ -182,7 +182,7 @@ deploys:
 	}
 }
 
-func nodeByPath(t *testing.T, store *storepkg.Store, projectID, path string) atlas.Node {
+func nodeByPath(t *testing.T, store *storepkg.Store, projectID, path string) structure.Node {
 	t.Helper()
 	snapshot, err := store.LoadWorkSnapshot(projectID)
 	if err != nil {
@@ -194,7 +194,7 @@ func nodeByPath(t *testing.T, store *storepkg.Store, projectID, path string) atl
 		}
 	}
 	t.Fatalf("missing node %s", path)
-	return atlas.Node{}
+	return structure.Node{}
 }
 
 func deployItem(result inbox.Result, key string) (inbox.Item, bool) {
