@@ -419,6 +419,62 @@
   text-decoration: line-through;
 }
 
+/* Document page (Linear issue body): 15/24 prose that the page scrolls; the editing gutter sits
+   outside the text column so the text lines up with the title. */
+.pw-md-editor--document {
+  flex: 0 0 auto;
+}
+
+.pw-md-editor--document[data-editable="true"] {
+  margin-left: -32px;
+}
+
+/* Room to start writing when editable; read-only text is only as tall as its content. */
+.pw-md-editor--document .pw-md-editor__surface,
+.pw-md-editor--document .pw-md-editor__surface .ProseMirror {
+  min-height: 0;
+}
+
+.pw-md-editor--document[data-editable="true"] .pw-md-editor__surface,
+.pw-md-editor--document[data-editable="true"] .pw-md-editor__surface .ProseMirror {
+  min-height: 96px;
+}
+
+.pw-md-editor--document .pw-md-editor__surface .ProseMirror {
+  font-size: 15px;
+  font-weight: 450;
+  letter-spacing: -0.1px;
+  line-height: 24px;
+}
+
+.pw-md-editor--document .pw-md-editor__prose :is(p, ul, ol, blockquote, pre) {
+  margin: 0 0 16px;
+}
+
+.pw-md-editor--document .pw-md-editor__prose :is(h1, h2, h3) {
+  margin: 24px 0 8px;
+}
+
+.pw-md-editor--document .pw-md-editor__prose h1 {
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.pw-md-editor--document .pw-md-editor__prose h2 {
+  font-size: 17px;
+  line-height: 24px;
+}
+
+.pw-md-editor--document .pw-md-editor__prose h3 {
+  font-size: 15px;
+  line-height: 24px;
+}
+
+.pw-md-editor--document .pw-md-editor__prose a {
+  color: var(--color-info);
+  text-decoration: none;
+}
+
 /* Note page: document scrolls inside the editor to its edge, selection formatting floats above it */
 .pw-note-editor .pw-md-editor__surface {
   overflow-y: auto;

@@ -1,8 +1,7 @@
 import type { JSX } from "solid-js";
-import { Show, createMemo } from "solid-js";
-import { AuroraCover, auroraForId, Button, ChevronLeft, DetailPanel, InformationCircle, Input, MarkdownEditor, TagPicker } from "@polterware/frontend-design-system";
+import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
+import { Button, ChevronLeft, ChevronRight, Input, MarkdownEditor, SidebarRightIcon, TagPicker, useDesignSystem } from "@polterware/frontend-design-system";
 import { EntityDocumentCanvas, requestDetailExpanded } from "@polterware/feature-shell";
-import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
 import { KnowledgeDocumentProperties } from "./knowledge-document-properties";
 import "./knowledge-document.css";
 
@@ -15,17 +14,44 @@ export type EvidenceNoteProps = {
   onTagsChange?: (tags: string[]) => void;
 };
 
+/** Below this page width the properties rail leaves the row and opens as a drawer. */
+const NARROW_WIDTH = 900;
+
+function readRailPreference(key: string | undefined): boolean {
+  if (!key) return true;
+  try {
+    return localStorage.getItem(key) !== "hidden";
+  } catch {
+    return true;
+  }
+}
+
+function writeRailPreference(key: string | undefined, open: boolean) {
+  if (!key) return;
+  try {
+    localStorage.setItem(key, open ? "open" : "hidden");
+  } catch {
+    // Storage may be unavailable; the rail still toggles for this page.
+  }
+}
+
+/**
+ * Full-page Markdown document, organized like a Linear issue: a 44px header with the trail,
+ * a 654px text column (24px title, 15/24 prose) and a 376px properties rail on the right.
+ */
 export function KnowledgeDocumentShell(props: {
-  /** Stable entity identity for the cover and title field. */
+  /** Stable entity identity for the title field. */
   entityId: string;
   title: string;
-  /** Entity icon rendered at 32px in the cover and in the properties header. */
+  /** Entity icon, shown at 16px before the title in the header trail. */
   icon: JSX.Element;
+  /** Surface path before the title in the header, e.g. ["Truth", "Evidence"]. */
+  trail?: readonly string[];
   bodyMarkdown: string;
   /** Omit for documents whose content is edited through another workflow. */
   onBodyChange?: (md: string) => void;
   tabs?: JSX.Element;
-  /** Shared Property rows, rendered only in the global details card. */
+  /** Shared Property rows, rendered in the properties rail. */
   properties?: JSX.Element;
   links?: JSX.Element;
   metadataActions?: JSX.Element;
@@ -38,65 +64,94 @@ export function KnowledgeDocumentShell(props: {
   tagSuggestions?: readonly string[];
   onTagsChange?: (tags: string[]) => void;
 }) {
-  const propertiesOpen = createDetailPanelSelector(state => state.open);
+  const railKey = useDesignSystem().storageKey("document.rail");
+  const [railOpen, setRailOpen] = createSignal(readRailPreference(railKey));
+  const [narrow, setNarrow] = createSignal(false);
+  const [drawerOpen, setDrawerOpen] = createSignal(false);
+  const railVisible = () => narrow() ? drawerOpen() : railOpen();
   const tagOptions = createMemo(() =>
     [...new Set([...(props.tagSuggestions ?? []), ...(props.tags ?? [])])].map(name => ({ id: name, name })),
   );
+  let root: HTMLDivElement | undefined;
   let editor: HTMLDivElement | undefined;
 
-  return <Show when={props.entityId} keyed>{entityId => <>
-    <EntityDocumentCanvas>
-      <DetailPanel.Body class="pw-detail-panel__body--fixed h-full min-h-0 pw-knowledge-document-body">
-        <DetailPanel.Main class="relative flex min-w-0 min-h-0 flex-1 flex-col overflow-y-auto !p-3 !pt-[48px]">
-          <div class="pointer-events-none absolute inset-x-[8px] top-[8px] z-10 flex items-center justify-between gap-3 [&>*]:pointer-events-auto">
-            <Button size="icon" variant="texture" aria-label="Back" onClick={() => requestDetailExpanded(false)}><ChevronLeft size={14} /></Button>
-            <div class="flex items-center gap-2">
-              <Show when={props.status}><span role="status" aria-live="polite" class="text-xs text-[var(--color-text-muted)]">{props.status}</span></Show>
-              <Button size="icon" variant="texture" data-detail-opener aria-label={propertiesOpen() ? "Hide properties" : "Show properties"}
-                aria-expanded={propertiesOpen()} selected={propertiesOpen()}
-                onClick={() => detailPanelStore.getState().toggle()}><InformationCircle size={14} /></Button>
-            </div>
+  onMount(() => {
+    if (!root || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(([entry]) => { if (entry) setNarrow(entry.contentRect.width < NARROW_WIDTH); });
+    observer.observe(root);
+    onCleanup(() => observer.disconnect());
+  });
+
+  function toggleRail() {
+    if (narrow()) {
+      setDrawerOpen(open => !open);
+      return;
+    }
+    const next = !railOpen();
+    setRailOpen(next);
+    writeRailPreference(railKey, next);
+  }
+
+  return <Show when={props.entityId} keyed>{entityId => <EntityDocumentCanvas>
+    <div ref={root} class="pw-document" data-narrow={narrow() ? "true" : undefined}>
+      <header class="pw-document__header">
+        <div class="pw-document__trail">
+          <Button size="icon" variant="texture" aria-label="Back" onClick={() => requestDetailExpanded(false)}><ChevronLeft size={14} /></Button>
+          <nav class="pw-document__crumbs" aria-label="Breadcrumb">
+            <For each={props.trail ?? []}>{part => <>
+              <span class="pw-document__crumb">{part}</span>
+              <ChevronRight size={12} aria-hidden="true" class="pw-document__crumb-separator" />
+            </>}</For>
+            <span class="pw-document__crumb-icon" aria-hidden="true">{props.icon}</span>
+            <span class="pw-document__crumb pw-document__crumb--current">{props.title || "Untitled"}</span>
+          </nav>
+        </div>
+        <div class="pw-document__actions">
+          <Show when={props.status}><span role="status" aria-live="polite" class="pw-document__status">{props.status}</span></Show>
+          <Button size="icon" variant="icon" aria-label={railVisible() ? "Hide properties" : "Show properties"}
+            aria-expanded={railVisible()} selected={railVisible()} onClick={toggleRail}><SidebarRightIcon size={14} /></Button>
+        </div>
+      </header>
+      <div class="pw-document__scroll">
+        <div class="pw-document__column">
+          <Show when={props.tabs}>{props.tabs}</Show>
+          <Show when={props.onTitleChange} fallback={<h1 class="pw-document__title">{props.title}</h1>}>
+            <Input aria-label="Title" placeholder="Untitled" class="pw-document__title"
+              id={`document-title-${entityId}`} value={props.title} onInput={event => props.onTitleChange?.(event.currentTarget.value)}
+              onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); editor?.querySelector<HTMLElement>(".ProseMirror")?.focus(); } }} />
+          </Show>
+          <div ref={editor} class="pw-document__body">
+            <MarkdownEditor class="pw-md-editor--document" value={props.bodyMarkdown} onChange={props.onBodyChange} editable={Boolean(props.onBodyChange)}
+              placeholder="Add a description…" aria-label={`${props.title} body`} />
           </div>
-          <div class="relative mx-auto w-full max-w-[720px] shrink-0">
-            <AuroraCover palette={auroraForId(entityId)} seed={entityId} class="!h-28 !rounded-[var(--radius-surface)]" />
-            <span class="absolute bottom-3 left-4 inline-flex text-[var(--color-bg)]" aria-hidden="true">{props.icon}</span>
-          </div>
-          <div class="mx-auto flex min-h-0 w-full max-w-[720px] flex-1 flex-col gap-4 pb-4 pt-4">
-            <Show when={props.tabs}>{props.tabs}</Show>
-            <Show when={props.onTitleChange} fallback={<h1 class="m-0 pl-8 text-[36px] font-semibold leading-tight text-[var(--color-text-primary)]">{props.title}</h1>}>
-              <Input aria-label="Title" placeholder="Untitled" class="!h-auto !border-0 !bg-transparent !bg-none !pl-8 !pr-0 !py-1 !text-[36px] !font-semibold !leading-tight !shadow-none !outline-none !ring-0 focus:!outline-none focus-visible:!outline-none focus-visible:!shadow-none focus-visible:!ring-0 focus:!border-0"
-                id={`document-title-${entityId}`} value={props.title} onInput={event => props.onTitleChange?.(event.currentTarget.value)}
-                onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); editor?.querySelector<HTMLElement>(".ProseMirror")?.focus(); } }} />
-            </Show>
-            <Show when={props.onTagsChange}>
-              <div class="pl-8"><TagPicker tags={tagOptions()} selectedIds={props.tags ?? []}
-                onChange={ids => props.onTagsChange?.(ids)} onCreate={async name => name.trim() || undefined} /></div>
-            </Show>
-            <div ref={editor} class="pw-note-editor flex min-h-0 flex-1 flex-col [&_.pw-md-editor]:min-h-0 [&_.pw-md-editor__surface]:flex [&_.pw-md-editor__surface]:flex-col [&_.ProseMirror]:flex-1 [&_.ProseMirror]:!outline-none [&_.ProseMirror]:!shadow-none [&_.ProseMirror:focus-visible]:!outline-none" classList={{ "pl-8": !props.onBodyChange }}>
-              <MarkdownEditor value={props.bodyMarkdown} onChange={props.onBodyChange} editable={Boolean(props.onBodyChange)}
-                placeholder="Write in Markdown…" aria-label={`${props.title} body`} />
-            </div>
-            {props.children}
-          </div>
-        </DetailPanel.Main>
-      </DetailPanel.Body>
-    </EntityDocumentCanvas>
-    <DetailPanel.Content>
-      <DetailPanel.Header />
-      <DetailPanel.Body layout="document"><DetailPanel.Main class="!px-4 !pb-4 !pt-4">
-        <DetailPanel.Title title={props.title || "Untitled"} />
-        <KnowledgeDocumentProperties properties={props.properties} links={props.links} metadataActions={props.metadataActions} footerActions={props.footerActions} />
-      </DetailPanel.Main></DetailPanel.Body>
-    </DetailPanel.Content>
-  </>}</Show>;
+          {props.children}
+        </div>
+        <Show when={railVisible()}>
+          <aside class="pw-document__rail" aria-label="Properties">
+            <KnowledgeDocumentProperties properties={props.properties} links={props.links} metadataActions={props.metadataActions} footerActions={props.footerActions}
+              labels={props.onTagsChange ? <TagPicker tags={tagOptions()} selectedIds={props.tags ?? []}
+                onChange={ids => props.onTagsChange?.(ids)} onCreate={async name => name.trim() || undefined} /> : undefined} />
+          </aside>
+        </Show>
+      </div>
+    </div>
+  </EntityDocumentCanvas>}</Show>;
 }
 
 export function KnowledgeDocumentNotFound(props: { kindLabel: string; title?: string }) {
   return <EntityDocumentCanvas>
-    <div class="mx-auto flex w-full max-w-[720px] flex-col gap-4 p-4">
-      <Button size="icon" variant="texture" class="self-start" aria-label="Back" onClick={() => requestDetailExpanded(false)}><ChevronLeft size={14} /></Button>
-      <h1 class="m-0 text-[36px] font-semibold leading-tight">{props.title ?? `${props.kindLabel} not found`}</h1>
-      <p class="m-0 text-[12.5px] text-[var(--color-text-muted)]">This {props.kindLabel.toLowerCase()} is not available in the current project knowledge set. It may have been archived or the link is stale.</p>
+    <div class="pw-document">
+      <header class="pw-document__header">
+        <div class="pw-document__trail">
+          <Button size="icon" variant="texture" aria-label="Back" onClick={() => requestDetailExpanded(false)}><ChevronLeft size={14} /></Button>
+        </div>
+      </header>
+      <div class="pw-document__scroll">
+        <div class="pw-document__column">
+          <h1 class="pw-document__title">{props.title ?? `${props.kindLabel} not found`}</h1>
+          <p class="m-0 text-[13px] text-[var(--color-text-muted)]">This {props.kindLabel.toLowerCase()} is not available in the current project knowledge set. It may have been archived or the link is stale.</p>
+        </div>
+      </div>
     </div>
   </EntityDocumentCanvas>;
 }

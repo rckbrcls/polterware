@@ -24,6 +24,7 @@ export function EvidenceDetail(props: {
     <Show when={props.evidence} fallback={<KnowledgeDocumentNotFound kindLabel="Evidence" />}>
       {(evidence) => (
         <KnowledgeDocumentShell
+          trail={["Truth", "Evidence"]}
           entityId={evidence().id}
           title={props.note?.title ?? evidence().title}
           icon={<FileText size={32} />}

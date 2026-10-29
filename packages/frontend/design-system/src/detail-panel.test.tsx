@@ -722,7 +722,6 @@ describe("lateral DetailPanel", () => {
   });
   it("keeps retained entity surfaces on the shared DetailPanel", () => {
     const featureFiles = [
-      "packages/features/knowledge/src/knowledge-document-shell.tsx",
       "packages/features/settings/src/agent-run-history-card.tsx",
       "packages/features/settings/src/canon-facts-panel.tsx",
       "packages/features/shell/src/inbox-item-detail.tsx",
@@ -735,5 +734,12 @@ describe("lateral DetailPanel", () => {
       expect(featureSource, file).toContain("<DetailPanel.Header");
       expect(featureSource, file).not.toMatch(/DetailPanel\.(Actions|Action|Overflow)\b/);
     }
+  });
+  it("lays out Markdown documents as a page with a properties rail, not the floating panel", () => {
+    const shell = readFileSync(repoPath("packages/features/knowledge/src/knowledge-document-shell.tsx"), "utf8");
+    expect(shell).not.toContain("<DetailPanel.Content>");
+    expect(shell).toContain('class="pw-document__rail"');
+    expect(readFileSync(repoPath("packages/features/knowledge/src/knowledge-document-properties.tsx"), "utf8")).toContain('variant="rail"');
+    expect(readFileSync(repoPath("packages/features/shell/src/entity-detail-host.tsx"), "utf8")).toContain("!documentPage()");
   });
 });

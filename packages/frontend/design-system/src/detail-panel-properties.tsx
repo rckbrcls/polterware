@@ -4,8 +4,11 @@ import { Plus } from "./hugeicons";
 export type DetailPanelPropertiesProps = {
   children: JSX.Element;
   class?: string;
-  /** `list` = label column + value (rails); `inline` = wrapping label/value pairs (documents). */
-  variant?: "list" | "inline";
+  /**
+   * `list` = label column + right-aligned value (panels); `inline` = wrapping label/value pairs;
+   * `rail` = a document's properties rail: muted label, then the value as a left-aligned ghost pill.
+   */
+  variant?: "list" | "inline" | "rail";
 };
 
 export type DetailPanelPropertyProps = {

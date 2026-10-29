@@ -1,33 +1,42 @@
 import { children, Show, type JSX } from "solid-js";
-import { Delete, DetailPanel, Layers, Link } from "@polterware/frontend-design-system";
+import { DetailPanel } from "@polterware/frontend-design-system";
 
-/** Shared properties card content for every full Markdown document. */
+/** Properties rail for every full Markdown document: plain titled groups, as in a Linear issue. */
 export function KnowledgeDocumentProperties(props: {
   properties?: JSX.Element;
+  /** Tag picker, shown under "Labels". */
+  labels?: JSX.Element;
   links?: JSX.Element;
   metadataActions?: JSX.Element;
   footerActions?: JSX.Element;
 }) {
   const properties = children(() => props.properties);
+  const labels = children(() => props.labels);
   const links = children(() => props.links);
   const metadataActions = children(() => props.metadataActions);
   const footerActions = children(() => props.footerActions);
   return <>
     <Show when={properties() || metadataActions()}>
-      <DetailPanel.Section title="Organize" icon={<Layers size={14} />} collapsible>
-        <DetailPanel.Properties>{properties()}</DetailPanel.Properties>
-        <Show when={metadataActions()}><div class="pw-detail-panel__actions">{metadataActions()}</div></Show>
-      </DetailPanel.Section>
+      <section class="pw-document__group">
+        <h3 class="pw-document__group-title">Properties</h3>
+        <DetailPanel.Properties variant="rail">{properties()}</DetailPanel.Properties>
+        <Show when={metadataActions()}><div class="pw-document__group-actions">{metadataActions()}</div></Show>
+      </section>
+    </Show>
+    <Show when={labels()}>
+      <section class="pw-document__group">
+        <h3 class="pw-document__group-title">Labels</h3>
+        <div class="pw-document__group-body">{labels()}</div>
+      </section>
     </Show>
     <Show when={links()}>
-      <DetailPanel.Section title="Links" icon={<Link size={14} />} collapsible>
-        <DetailPanel.Properties><KnowledgeDocumentProperty label="Linked entities">{links()}</KnowledgeDocumentProperty></DetailPanel.Properties>
-      </DetailPanel.Section>
+      <section class="pw-document__group">
+        <h3 class="pw-document__group-title">Links</h3>
+        <div class="pw-document__group-body">{links()}</div>
+      </section>
     </Show>
     <Show when={footerActions()}>
-      <DetailPanel.Section title="Danger zone" icon={<Delete size={14} />} collapsible defaultOpen={false}>
-        <div class="pw-detail-panel__actions">{footerActions()}</div>
-      </DetailPanel.Section>
+      <div class="pw-document__rail-footer">{footerActions()}</div>
     </Show>
   </>;
 }

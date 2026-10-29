@@ -399,6 +399,50 @@
   font-size: 12px;
 }
 
+/* Document properties rail (Linear issue): a muted label, then the value as a ghost pill that
+   fills only on hover. Controls drop their field chrome and size to their content. */
+.pw-detail-panel__properties[data-variant="rail"] {
+  gap: 2px;
+}
+
+.pw-detail-panel__properties[data-variant="rail"] .pw-detail-panel__property {
+  min-height: 30px;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 4px;
+}
+
+.pw-detail-panel__properties[data-variant="rail"] .pw-detail-panel__property dt {
+  padding-left: 8px;
+  font-size: 12px;
+}
+
+.pw-detail-panel__properties[data-variant="rail"] .pw-detail-panel__property dd {
+  justify-content: flex-start;
+  padding-inline: 6px 10px;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pw-detail-panel__properties[data-variant="rail"] .pw-detail-panel__property dd :is(.control-field, .pw-knowledge-path) {
+  width: auto !important;
+  max-width: 100%;
+  height: 28px;
+  min-height: 28px;
+  flex: 0 1 auto;
+  margin: 0 0 0 -6px !important;
+  border-radius: 9999px;
+  padding: 0 10px 0 6px;
+  background: transparent;
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pw-detail-panel__properties[data-variant="rail"] .pw-detail-panel__property dd :is(.control-field, .pw-knowledge-path):hover {
+  background: var(--color-surface-hover);
+}
+
 .pw-detail-panel__property-add {
   display: inline-flex;
   align-items: center;

@@ -33,7 +33,184 @@
   cursor: default;
 }
 
-/* The document page owns its insets so the cover and top actions sit at the toolbar edge. */
-.pw-knowledge-document-body > .pw-detail-panel__record {
+/*
+ * Document page, organized like a Linear issue: a 44px header with the trail, a 654px text column
+ * 62px from the panel edge, and a 376px properties rail 48px to its right. The page scrolls as one.
+ */
+.pw-document {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.pw-document__header {
+  display: flex;
+  height: 44px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 8px;
+}
+
+.pw-document__trail,
+.pw-document__actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.pw-document__crumbs {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pw-document__crumb {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.pw-document__crumb--current {
+  overflow: hidden;
+  flex-shrink: 1;
+  color: var(--color-text-primary);
+  text-overflow: ellipsis;
+}
+
+.pw-document__crumb-separator {
+  flex-shrink: 0;
+  color: var(--color-text-disabled);
+}
+
+.pw-document__crumb-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.pw-document__crumb-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pw-document__status {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.pw-document__scroll {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  align-items: flex-start;
+  gap: 48px;
+  overflow-y: auto;
+  padding: 0 24px 64px 62px;
+}
+
+.pw-document__column {
+  display: flex;
+  min-width: 0;
+  max-width: 654px;
+  flex: 1 1 654px;
+  flex-direction: column;
+}
+
+/* Title: 24/32/600, no field chrome; the shared Input keeps focus and keyboard behaviour. */
+.pw-document__title,
+.pw-document__title.control-field {
+  width: 100%;
+  height: auto;
+  margin: 32px 0 8px;
   padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-text-primary);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.16px;
+  line-height: 32px;
+  outline: none;
+}
+
+.pw-document__title.control-field:hover,
+.pw-document__title.control-field:focus,
+.pw-document__title.control-field:focus-visible {
+  background: transparent;
+  box-shadow: none;
+}
+
+.pw-document__body {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24px;
+}
+
+/* Rail: no frame or fill, sticky beside the text. */
+.pw-document__rail {
+  position: sticky;
+  top: 0;
+  display: flex;
+  width: 376px;
+  flex: 0 0 376px;
+  flex-direction: column;
+  padding-top: 48px;
+}
+
+.pw-document__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding: 0 0 10px 4px;
+}
+
+.pw-document__group-title {
+  margin: 0;
+  padding: 0 8px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pw-document__group-body,
+.pw-document__group-actions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.pw-document__rail-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 8px 0;
+  box-shadow: inset 0 0.5px 0 0 var(--color-border-default);
+}
+
+/* Narrow pages: the rail opens as a drawer over the text, on the floating material. */
+.pw-document[data-narrow="true"] .pw-document__rail {
+  position: absolute;
+  z-index: 20;
+  top: 52px;
+  right: 8px;
+  bottom: 8px;
+  width: min(376px, calc(100% - 16px));
+  overflow-y: auto;
+  padding: 16px 8px;
+  border-radius: var(--radius-card);
+  background: var(--card-fill);
+  box-shadow: var(--material-float);
 }
