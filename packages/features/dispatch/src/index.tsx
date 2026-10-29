@@ -4,10 +4,8 @@ import { BotAvatar, agentMarkFor, botAvatarTypes, type BotAvatarType } from "@po
 import { EntityDetailHost, createPageFilters, type PageFilters } from "@polterware/feature-shell";
 import {
   Bot,
-  Badge,
   Button,
   Card,
-  Clock,
   Cpu,
   DetailPanel,
   Dialog,
@@ -1066,7 +1064,7 @@ export function DispatchPage(props: {
                 <div
                   role="listbox"
                   aria-label="Dispatch runs"
-                  class="flex flex-col gap-2"
+                  class="flex flex-col gap-0.5"
                   onKeyDown={(event) => {
                     if (event.target !== event.currentTarget) return;
                     if (event.key === "ArrowDown") {
@@ -1397,45 +1395,6 @@ export function DispatchPage(props: {
 }
 
 /** A run card's facts: its route, worktree branch and status, and a trailing slot. */
-function RunFacts(props: {
-  run: DispatchRunView;
-  worktree?: DispatchWorktreeView;
-  trailing?: JSX.Element;
-}) {
-  const branch = () => (props.worktree?.branch || props.run.branch).trim();
-  const path = () => (props.worktree?.path || props.run.worktree).trim();
-  const status = () => worktreeDisplayStatus(props.run.status, props.worktree?.status ?? "");
-  const route = () => routeLabel(props.run);
-  const files = () => formatFiles(props.run);
-  const showWorktree = () => Boolean(branch() || path() || status());
-  return (
-    <Show when={route() || showWorktree() || files() || props.trailing}>
-      <div class="flex min-w-0 flex-col gap-2">
-        <div class="flex min-w-0 flex-wrap items-center gap-2">
-          <Show when={route()}>
-            {(value) => (
-              <Badge tone="muted" title={`Route: ${value()}`}>
-                <Route size={12} aria-hidden="true" />
-                <span class="ml-1">{value()}</span>
-              </Badge>
-            )}
-          </Show>
-          <Show when={showWorktree() && branch()}>
-            <Badge tone="muted" title={path() || `Worktree: ${branch()}`}>
-              <GitBranch size={12} aria-hidden="true" />
-              <span class="ml-1 truncate font-mono">{branch()}</span>
-            </Badge>
-          </Show>
-          <Show when={status()}>
-            <StatusChip tone={dispatchStatusTone(status())} label={status()} />
-          </Show>
-          <span class="ml-auto inline-flex min-w-0">{props.trailing}</span>
-        </div>
-      </div>
-    </Show>
-  );
-}
-
 function DispatchRunCard(props: {
   run: DispatchRunView;
   worktree?: DispatchWorktreeView;
@@ -1447,10 +1406,15 @@ function DispatchRunCard(props: {
   onMove: (key: "up" | "down" | "home" | "end") => void;
   onCancel: () => void;
 }) {
-  const identity = () => dotted(props.run.agent, props.run.model);
-  const duration = () => {
-    if (props.run.runMs !== undefined) return measuredDuration(props.run.runMs);
-    return measuredDuration(props.run.queuedMs);
+  const failed = () => dispatchStatusTone(props.run.status) === "danger";
+  /** The run's last word: its error or note, else who ran it. */
+  const subtitle = () => (failed() && props.run.error.trim()) || props.run.note.trim() || dotted(props.run.agent, props.run.model);
+  const statusDot = () => {
+    const tone = dispatchStatusTone(props.run.status);
+    if (tone === "danger") return "bg-[var(--color-danger)]";
+    if (tone === "syncing") return "bg-[var(--color-info)]";
+    if (tone === "ok") return "bg-[var(--color-success)]";
+    return "bg-[var(--color-text-disabled)]";
   };
   const fromControl = (target: EventTarget | null) =>
     target instanceof Element && Boolean(target.closest("button, a, input, textarea, select"));
@@ -1464,7 +1428,7 @@ function DispatchRunCard(props: {
       data-detail-opener=""
       data-selected={props.selected ? "true" : undefined}
       tabIndex={props.tabStop ? 0 : -1}
-      class={`min-w-0 rounded-[var(--radius-card)] outline-offset-2 transition-[outline-color] duration-[var(--duration-fast)] ease-[var(--ease-standard)] motion-reduce:transition-none ${props.selected ? "outline outline-1 outline-[var(--color-accent)]" : ""}`}
+      class={`flex min-w-0 cursor-pointer items-center gap-3 rounded-[var(--radius-control)] px-3 py-2 outline-none transition-colors duration-[var(--duration-fast)] ease-[var(--ease-standard)] hover:bg-[var(--color-surface-hover)] focus-visible:bg-[var(--color-surface-hover)] motion-reduce:transition-none ${props.selected ? "bg-[var(--color-surface-selected)]" : ""}`}
       onClick={(event) => {
         if (fromControl(event.target)) return;
         props.onOpen();
@@ -1489,45 +1453,23 @@ function DispatchRunCard(props: {
         }
       }}
     >
-      <Card class="flex min-w-0 flex-col gap-3">
-        <div class="flex min-h-7 min-w-0 items-center gap-2">
-          <span class="inline-flex shrink-0">
-            <DispatchAgentAvatar agent={props.run.agent} seed={props.run.id} status={props.run.status} />
-          </span>
-          <span class="min-w-0 shrink truncate text-[13px] leading-5 text-[var(--color-text-primary)]" title={props.run.prompt || "—"}>
-            {props.run.prompt || "—"}
-          </span>
-          <span class="min-w-0 max-w-[min(18rem,28%)] shrink-[2] truncate font-mono text-[11px] text-[var(--color-text-muted)]" title={identity()}>
-            {identity()}
-          </span>
-          <span class="flex-1" aria-hidden="true" />
-          <StatusChip tone={dispatchStatusTone(props.run.status)} label={props.run.status || "unknown"} />
-          <span class="shrink-0 font-mono text-[11px] text-[var(--color-text-muted)]" title={props.run.id}>
-            {shortRunId(props.run.id)}
-          </span>
-          <FileChangeLine run={props.run} />
-          <Show when={isRunActive(props.run.status)}>
-            <Button size="sm" variant="ghost" disabled={props.cancelling} onClick={() => props.onCancel()}>
-              <Stop size={12} />
-              Cancel
-            </Button>
-          </Show>
-        </div>
-        <Show when={props.run.note.trim()}>
-          <p class="m-0 flex min-w-0 items-center gap-1 truncate text-[12px] leading-4 text-[var(--color-text-muted)]" title={props.run.note.trim()}>
-            <span class="truncate">{props.run.note.trim()}</span>
-          </p>
-        </Show>
-        <RunFacts run={props.run} worktree={props.worktree} trailing={
-          <span class="inline-flex min-h-7 shrink-0 items-center gap-2 text-[11px] tabular-nums text-[var(--color-text-muted)]">
-            <span>{formatAgo(props.run.createdAt || props.run.startedAt, props.now)}</span>
-            <span class="inline-flex items-center gap-1">
-              <Clock size={12} />
-              {duration()}
-            </span>
-          </span>
-        } />
-      </Card>
+      <DispatchAgentAvatar agent={props.run.agent} seed={props.run.id} status={props.run.status} size={40} />
+      <span class="flex min-w-0 flex-1 flex-col">
+        <span class="truncate text-[13px] font-medium leading-5 text-[var(--color-text-primary)]" title={props.run.prompt || "—"}>
+          {props.run.prompt || "—"}
+        </span>
+        <span class={`truncate text-[12px] leading-5 ${failed() ? "text-[var(--color-danger)]" : "text-[var(--color-text-muted)]"}`} title={subtitle()}>
+          {subtitle()}
+        </span>
+      </span>
+      <Show when={isRunActive(props.run.status)}>
+        <Button size="sm" variant="ghost" disabled={props.cancelling} onClick={() => props.onCancel()}>
+          <Stop size={12} />
+          Cancel
+        </Button>
+      </Show>
+      <span class="shrink-0 text-[11px] tabular-nums text-[var(--color-text-muted)]">{formatAgo(props.run.createdAt || props.run.startedAt, props.now)}</span>
+      <span aria-label={props.run.status || "unknown"} title={props.run.status || "unknown"} class={`size-2 shrink-0 rounded-full ${statusDot()}`} />
     </article>
   );
 }
