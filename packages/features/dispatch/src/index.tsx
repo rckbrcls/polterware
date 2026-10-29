@@ -66,6 +66,7 @@ import {
   mapDispatchTiers,
   mapDispatchModels,
   mapDispatchWorktrees,
+  worktreeDisplayStatus,
 } from "./dispatch-bridge";
 import type {
   DispatchAgentView,
@@ -458,10 +459,7 @@ function valueFilterField(id: string, label: string, values: readonly string[], 
   };
 }
 
-const DEFAULT_DISPATCH_TABS = [
-  { id: "runs", label: "Runs" },
-  { id: "agents", label: "Agents" },
-];
+const DEFAULT_DISPATCH_TABS = [{ id: "runs", label: "Runs" }];
 
 /** One Dispatch route, with a tab rail only when the route has multiple destinations. */
 export function DispatchPage(props: {
@@ -911,7 +909,7 @@ export function DispatchPage(props: {
       <Show when={!runDetailOpen()}>
         <PageToolbar.Root>
           <Show
-            when={activeTab() !== "stats" && routeTabs().length > 1}
+            when={routeTabs().length > 1}
             fallback={<PageToolbar.Leading>{null}</PageToolbar.Leading>}
           >
             <PageToolbar.Tabs>
@@ -1459,7 +1457,7 @@ function RunFacts(props: {
   const layout = () => props.layout ?? "list";
   const branch = () => (props.worktree?.branch || props.run.branch).trim();
   const path = () => (props.worktree?.path || props.run.worktree).trim();
-  const status = () => props.worktree?.status.trim() || "";
+  const status = () => worktreeDisplayStatus(props.run.status, props.worktree?.status ?? "");
   const model = () => modelLabel(props.run);
   const route = () => routeLabel(props.run);
   const timing = () => timingLabel(props.run);

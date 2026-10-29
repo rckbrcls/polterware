@@ -24,6 +24,7 @@ import type {
   ChangeEnvelopeView,
   ProjectChangeRow,
 } from "./agents-types";
+import { mergeActivityRows } from "./activity-rows";
 import {
   driftFindingSeverityTone,
   parseDriftStepPayload,
@@ -175,21 +176,7 @@ export function AgentRunHistoryCard(props: {
   const activeTarget = createDetailPanelSelector((state) => state.activeTarget);
   const dispatchEvents = () => props.dispatchEvents ?? [];
 
-  const mergedRows = createMemo<ProjectChangeRow[]>(() => [
-    ...props.changes,
-    ...dispatchEvents().map((event): ProjectChangeRow => ({
-      stepId: `dispatch:${event.id}`,
-      agentRunId: event.runId,
-      projectId: event.projectId,
-      actorKind: "agent",
-      agentLabel: event.agent ? `${event.agent}${event.tier ? ` · ${event.tier}` : ""}` : "dispatch",
-      runStatus: event.kind,
-      runTask: event.tier ? `Dispatch (${event.tier})` : "Dispatch",
-      summary: event.text || `Dispatch ${event.kind}`,
-      payloadJson: "{}",
-      createdAt: event.at,
-    })),
-  ]);
+  const mergedRows = createMemo<ProjectChangeRow[]>(() => mergeActivityRows(props.changes, dispatchEvents()));
 
   createEffect(() => {
     const targets = mergedRows().map((change) => ({

@@ -15,13 +15,14 @@ NOW
 
 PROJECT
   Work
+  Canvas
   Structure
   Truth
 
 DISPATCH
-  Runs          Runs, Agents
+  Runs
   Routing       Tiers, Learning
-  Usage         Stats
+  Usage         Agents, Stats
 
 FOOTER
   Project settings

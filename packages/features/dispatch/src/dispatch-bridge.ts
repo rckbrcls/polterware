@@ -501,6 +501,18 @@ export function dispatchStatusTone(status: string): StatusTone {
   return "muted";
 }
 
+/**
+ * The status the worktree chip shows. A run that ended without finishing keeps its worktree
+ * active for `polterware recover` or `clean`; the run's end wins so the card never reads as live work.
+ */
+export function worktreeDisplayStatus(runStatus: string, worktreeStatus: string): string {
+  const worktree = worktreeStatus.trim();
+  if (worktree.toLowerCase() !== "active") return worktree;
+  const run = runStatus.trim().toLowerCase();
+  if (run === "failed" || run === "cancelled" || run === "timed_out" || run === "orphaned") return runStatus.trim();
+  return worktree;
+}
+
 export function formatUsedPercent(usedPercent: number | undefined): string {
   if (usedPercent === undefined || !Number.isFinite(usedPercent)) return "unknown";
   return `${usedPercent.toFixed(1)}%`;

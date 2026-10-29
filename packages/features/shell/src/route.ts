@@ -98,7 +98,7 @@ export const DEFAULT_TABS = {
   truth: "decisions",
   dispatch: "runs",
   "dispatch-routing": "tiers",
-  "dispatch-usage": "stats",
+  "dispatch-usage": "agents",
   activity: "all",
 } satisfies Record<SectionId, string>;
 
@@ -117,18 +117,16 @@ export const SECTION_TABS = {
     { id: "facts", label: "Facts" },
     { id: "docs", label: "Docs" },
   ],
-  // A run, and the agents that can take it. Worktree info lives on the run card.
-  dispatch: [
-    { id: "runs", label: "Runs" },
-    { id: "agents", label: "Agents" },
-  ],
+  // Route id only — Runs is a flat page (no tab rail). Worktree info lives on the run card.
+  dispatch: [{ id: "runs", label: "Runs" }],
   // Tier order, and what the classifier learned.
   "dispatch-routing": [
     { id: "tiers", label: "Tiers" },
     { id: "learning", label: "Learning" },
   ],
-  // Route id only — Usage shows Stats directly (no tab rail).
+  // Quota and pace per agent, and what the runs cost.
   "dispatch-usage": [
+    { id: "agents", label: "Agents" },
     { id: "stats", label: "Stats" },
   ],
   // Route id only — Activity is a flat page (no tab rail).
@@ -257,13 +255,13 @@ export function resolveRoute(
     if (tab === "tiers" || tab === "learning") {
       section = "dispatch-routing";
     } else {
-      section = "dispatch";
+      section = "dispatch-usage";
       tab = "agents";
     }
   } else if (section === "dispatch") {
     if (tab === "worktrees") tab = "runs";
     else if (tab === "tiers" || tab === "learning") section = "dispatch-routing";
-    else if (tab === "stats") section = "dispatch-usage";
+    else if (tab === "agents" || tab === "stats") section = "dispatch-usage";
   }
 
   if (isSectionId(section) && sectionAvailable(section, platform)) {

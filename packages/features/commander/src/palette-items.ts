@@ -15,7 +15,7 @@ export const DEFAULT_PALETTE_ITEMS: PaletteItem[] = [
   { id: "nav.canvas", label: "Canvas", group: "Navigation", shortcutId: "shell.open_canvas" },
   { id: "nav.structure", label: "Structure", group: "Navigation" },
   { id: "nav.truth", label: "Truth", group: "Navigation" },
-  { id: "nav.dispatch", label: "Dispatch Agents", group: "Navigation" },
+  { id: "nav.dispatch", label: "Dispatch Runs", group: "Navigation" },
   { id: "nav.dispatch-routing", label: "Dispatch Routing", group: "Navigation" },
   { id: "nav.dispatch-usage", label: "Dispatch Usage", group: "Navigation" },
   { id: "nav.activity", label: "Activity", group: "Navigation" },

@@ -29,13 +29,13 @@ describe("first version routes", () => {
     expect(SECTION_TABS.structure?.map((tab) => tab.id)).toEqual(["all"]);
     expect(SECTION_TABS.work?.map((tab) => tab.id)).toEqual(["board", "specs"]);
     expect(SECTION_TABS.truth?.map((tab) => tab.id)).toEqual(["decisions", "facts", "docs"]);
-    expect(SECTION_TABS.dispatch?.map((tab) => tab.id)).toEqual(["runs", "agents"]);
+    expect(SECTION_TABS.dispatch?.map((tab) => tab.id)).toEqual(["runs"]);
+    expect(SECTION_TABS["dispatch-usage"]?.map((tab) => tab.id)).toEqual(["agents", "stats"]);
     expect(SECTION_TABS["dispatch-routing"]?.map((tab) => tab.id)).toEqual(["tiers", "learning"]);
-    expect(SECTION_TABS["dispatch-usage"]?.map((tab) => tab.id)).toEqual(["stats"]);
     expect(DEFAULT_TABS.work).toBe("board");
     expect(DEFAULT_TABS.dispatch).toBe("runs");
     expect(DEFAULT_TABS["dispatch-routing"]).toBe("tiers");
-    expect(DEFAULT_TABS["dispatch-usage"]).toBe("stats");
+    expect(DEFAULT_TABS["dispatch-usage"]).toBe("agents");
   });
 
   it("opens a Settings page over any route without changing history", () => {
@@ -97,15 +97,16 @@ describe("first version routes", () => {
   it("keeps dispatch runs together and moves the other tabs onto their routes", () => {
     expect(resolveRoute("dispatch")).toEqual({ section: "dispatch", tab: "runs" });
     expect(resolveRoute("dispatch", "runs")).toEqual({ section: "dispatch", tab: "runs" });
-    expect(resolveRoute("dispatch", "agents")).toEqual({ section: "dispatch", tab: "agents" });
+    expect(resolveRoute("dispatch", "agents")).toEqual({ section: "dispatch-usage", tab: "agents" });
     expect(resolveRoute("dispatch", "worktrees")).toEqual({ section: "dispatch", tab: "runs" });
     expect(resolveRoute("dispatch", "tiers")).toEqual({ section: "dispatch-routing", tab: "tiers" });
     expect(resolveRoute("dispatch", "learning")).toEqual({ section: "dispatch-routing", tab: "learning" });
     expect(resolveRoute("dispatch", "stats")).toEqual({ section: "dispatch-usage", tab: "stats" });
-    expect(resolveRoute("dispatch-agents", "runs")).toEqual({ section: "dispatch", tab: "agents" });
+    expect(resolveRoute("dispatch-agents", "runs")).toEqual({ section: "dispatch-usage", tab: "agents" });
     expect(resolveRoute("dispatch-agents", "tiers")).toEqual({ section: "dispatch-routing", tab: "tiers" });
     expect(resolveRoute("dispatch-routing")).toEqual({ section: "dispatch-routing", tab: "tiers" });
-    expect(resolveRoute("dispatch-usage")).toEqual({ section: "dispatch-usage", tab: "stats" });
+    expect(resolveRoute("dispatch-usage")).toEqual({ section: "dispatch-usage", tab: "agents" });
+    expect(resolveRoute("dispatch-usage", "stats")).toEqual({ section: "dispatch-usage", tab: "stats" });
   });
 
   it("opens the Projects screen before a project is entered", () => {
