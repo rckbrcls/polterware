@@ -11,7 +11,7 @@
 .pw-progress-bar__range {
   box-sizing: border-box;
   height: 100%;
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   background: linear-gradient(to bottom, color-mix(in oklab, var(--progress-bar-color, var(--progress-bar-tone)) 65%, var(--material-face-top)), color-mix(in oklab, var(--progress-bar-color, var(--progress-bar-tone)) 65%, var(--material-face-bottom)));
   box-shadow: var(--material-well);
   transition: width var(--spring-moderate-duration) var(--spring-moderate-ease);

@@ -163,7 +163,7 @@
  * = fill + radius + tokenized edge-light surface border.
  */
 .surface-panel {
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: var(--radius-surface);
   background: var(--color-surface);
   box-shadow: var(--material-raised);
@@ -182,7 +182,7 @@
  * Same edge-light as MainSurface + quiet outer lift over the shell.
  */
 .surface-panel-float {
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: var(--radius-surface);
   background: var(--card-fill);
   box-shadow:
@@ -194,7 +194,7 @@
  * Form controls + compact menus — mirrored from base.css (DESIGN.md Control field / Menu).
  */
 .control-field {
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: var(--radius-control);
   /* Recessed well, a step darker than the card it sits in, lit by the control rim. */
   background: var(--color-field-background);
@@ -241,9 +241,9 @@
 }
 
 /* Inputs and selects (marked .pw-field-control) are taller than the buttons that share the chrome. */
-/* Recessed well with the control rim; focus paints the frame in the primary colour. */
+/* Recessed well with the control edge; focus draws an inner ring in the primary colour. */
 .pw-field-control {
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: 12px;
   background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
   box-shadow: var(--field-rings);
@@ -254,7 +254,8 @@
 .pw-field-control:focus,
 .pw-field-control:focus-visible,
 .pw-field-control[data-state="open"] {
-  border-color: var(--color-primary);
+  /* The frame has no width (the lit edge sits at the outer edge), so focus is an inner ring. */
+  box-shadow: inset 0 0 0 1px var(--color-primary), 0 1px 2px var(--material-drop-strong);
 }
 .pw-field-control.control-field-sm { height: var(--field-height-sm); border-radius: 6px; }
 .pw-field-control.control-field-md { height: var(--field-height-md); }
@@ -268,7 +269,7 @@
 }
 
 .menu-panel {
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: var(--radius-menu);
   background: var(--card-fill);
   overflow: hidden;
@@ -360,7 +361,7 @@
 /** Nested product card — same as base.css .card-panel (design-system Card). */
 .card-panel,
 .card-texture {
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: var(--radius-card);
   background: var(--card-fill);
   /* The lit rim and top edge, then the raised drop (`--card-lift` overrides it). */

@@ -9,7 +9,7 @@
   /* Below a floating PageToolbar (tabs.css), the bar starts under the toolbar's controls. */
   margin-top: calc(8px + var(--pw-toolbar-overlay, 0px));
   padding: 2px;
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: 14px;
   background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
   box-shadow: var(--field-rings);

@@ -7,7 +7,7 @@
   align-items: center;
   gap: 2px;
   padding: 2px;
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: 14px;
   background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
   box-shadow: var(--field-rings);

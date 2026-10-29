@@ -106,7 +106,7 @@
   gap: 2px;
   flex-shrink: 0;
   padding: 2px;
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: 14px;
   /* A recessed track: the inset chip rim, no drop, so only the active pill reads as raised. */
   background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
@@ -147,7 +147,7 @@
 /* The one active pill: glides between tabs on spring.moderate. */
 .pw-fluid-hover-highlight.pw-tab-indicator {
   /* Lit material: the near-flat face of a small control and its 0.5px rim, no thick frame. */
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: 11px;
   background: linear-gradient(to bottom, var(--material-face-top), var(--material-face-bottom));
   box-shadow: var(--material-control);

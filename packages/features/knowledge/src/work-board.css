@@ -99,7 +99,7 @@
   position: absolute;
   z-index: -1;
   inset: -1px;
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: inherit;
   background: var(--color-surface-subtle);
   box-shadow: var(--field-rings);
@@ -169,7 +169,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 7px 10px;
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: var(--radius-item);
   background: var(--color-surface-raised);
   box-shadow: var(--field-rings);

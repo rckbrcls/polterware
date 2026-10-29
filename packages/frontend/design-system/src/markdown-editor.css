@@ -370,7 +370,7 @@
   height: 18px;
   margin: 0;
   box-sizing: border-box;
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: 5px;
   background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
   box-shadow: var(--field-rings);

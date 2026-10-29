@@ -7,7 +7,7 @@
   /* Lit material, like OpenCode's key chip: a near-flat face a step above the surface, lit at
      the top, with the inset 0.5px chip rim and no thick frame. */
   box-sizing: border-box;
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: 4px;
   background: linear-gradient(to bottom, var(--material-face-top), var(--material-face-bottom));
   box-shadow: var(--material-well);

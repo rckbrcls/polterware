@@ -1,5 +1,5 @@
 /* Texture: the calendar is a recessed track (same as .pw-tabs); events are raised faces. */
-.pw-calendar { overflow: clip; border: 1px solid var(--field-frame); border-radius: 10px; background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom)); box-shadow: var(--field-rings); color: var(--color-text-secondary); font-size: 12px; }
+.pw-calendar { overflow: clip; border: 0 solid var(--field-frame); border-radius: 10px; background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom)); box-shadow: var(--field-rings); color: var(--color-text-secondary); font-size: 12px; }
 .pw-calendar__days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .pw-calendar[data-view="day"] .pw-calendar__days { grid-template-columns: minmax(0, 1fr); }
 .pw-calendar__day { min-width: 0; box-shadow: inset -1px 0 var(--color-border-subtle); }

@@ -210,9 +210,11 @@
   --material-highlight-strong: rgb(255 255 255 / 0.1);
   --material-drop: rgb(0 0 0 / 0.3);
   --material-drop-strong: rgb(0 0 0 / 0.4);
-  /* The lit edge alone: rim plus a top band one rim deeper. Controls take the strong edge. */
-  --material-edge: inset 0 0 0 0.5px var(--material-rim-strong), inset 0 0.5px 0 0 var(--material-rim);
-  --material-edge-quiet: inset 0 0 0 0.5px var(--material-rim), inset 0 0.5px 0 0 var(--material-highlight-strong);
+  /* The lit edge alone, at the outer edge of a frameless box: a bright top band that follows the
+   * radius and fades out along the corners, over a faint rim for the sides and bottom. Controls
+   * take the strong edge. */
+  --material-edge: inset 0 0.5px 0 0 var(--material-rim-strong), inset 0 0 0 0.5px var(--material-highlight-strong);
+  --material-edge-quiet: inset 0 0.5px 0 0 var(--material-rim), inset 0 0 0 0.5px var(--material-highlight);
   /* Small raised controls: buttons, chips, active pills. */
   --material-control: 0 1px 2px var(--material-drop-strong), var(--material-edge);
   /* Host panels and cards. */
@@ -374,7 +376,7 @@ input[type="number"]::-webkit-outer-spin-button {
  * Prefer this over ad-hoc border + bg. The border is the edge-light rim.
  */
 .surface-panel {
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: var(--radius-surface);
   background: var(--color-surface);
   box-shadow: var(--material-raised);
@@ -390,7 +392,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 /** Floating overlay on shell — same edge-light + soft outer lift. */
 .surface-panel-float {
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: var(--radius-surface);
   background: var(--card-fill);
   box-shadow:
@@ -404,7 +406,7 @@ input[type="number"]::-webkit-outer-spin-button {
  * Prefer design-system Input/Select/Textarea over ad-hoc field classes.
  */
 .control-field {
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: var(--radius-control);
   /* Recessed well, a step darker than the card it sits in, lit by the control rim. */
   background: var(--color-field-background);
@@ -451,9 +453,9 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 /* Inputs and selects (marked .pw-field-control) are taller than the buttons that share the chrome. */
-/* Recessed well with the control rim; focus paints the frame in the primary colour. */
+/* Recessed well with the control edge; focus draws an inner ring in the primary colour. */
 .pw-field-control {
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: 12px;
   background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
   box-shadow: var(--field-rings);
@@ -464,7 +466,8 @@ input[type="number"]::-webkit-outer-spin-button {
 .pw-field-control:focus,
 .pw-field-control:focus-visible,
 .pw-field-control[data-state="open"] {
-  border-color: var(--color-primary);
+  /* The frame has no width (the lit edge sits at the outer edge), so focus is an inner ring. */
+  box-shadow: inset 0 0 0 1px var(--color-primary), 0 1px 2px var(--material-drop-strong);
 }
 .pw-field-control.control-field-sm { height: var(--field-height-sm); border-radius: 6px; }
 .pw-field-control.control-field-md { height: var(--field-height-md); }
@@ -575,7 +578,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .card-panel,
 .card-texture {
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: var(--radius-card);
   background: var(--card-fill);
   /* The lit rim and top edge, then the raised drop (`--card-lift` overrides it). */
@@ -601,7 +604,7 @@ input[type="number"]::-webkit-outer-spin-button {
  * Large menus (org/project) use surface-panel-float via Popover.
  */
 .menu-panel {
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   border-radius: var(--radius-menu);
   background: var(--card-fill);
   overflow: hidden;

@@ -116,7 +116,7 @@ html[data-shell-chrome="solid"] .vitals-topbar {
   flex-shrink: 0;
   padding: 0 6px 0 0;
   border-radius: 999px;
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   /* Lit material: near-flat face and drop; the fading rim comes from `material-rim-fade`. */
   background: linear-gradient(to bottom, var(--material-face-top), var(--material-face-bottom));
   box-shadow: 0 1px 2px var(--material-drop-strong);
@@ -180,7 +180,7 @@ html[data-shell-chrome="solid"] .vitals-topbar {
   height: 24px;
   padding: 0;
   border-radius: 999px;
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   /* Lit material: near-flat face and drop; the fading rim comes from `material-rim-fade`. */
   background: linear-gradient(to bottom, var(--material-face-top), var(--material-face-bottom));
   box-shadow: 0 1px 2px var(--material-drop-strong);
@@ -650,7 +650,7 @@ main.vitals-main {
   width: 30px;
   height: 30px;
   border-radius: 999px;
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   /* Lit material: near-flat face and drop; the fading rim comes from `material-rim-fade`. */
   background: linear-gradient(to bottom, var(--material-face-top), var(--material-face-bottom));
   box-shadow: 0 1px 2px var(--material-drop-strong);
@@ -732,7 +732,7 @@ main.vitals-main {
   height: 30px;
   padding: 0;
   border-radius: 999px;
-  border: 1px solid var(--field-frame);
+  border: 0 solid var(--field-frame);
   /* Lit material: near-flat face and drop; the fading rim comes from `material-rim-fade`. */
   background: linear-gradient(to bottom, var(--material-face-top), var(--material-face-bottom));
   box-shadow: 0 1px 2px var(--material-drop-strong);

@@ -68,9 +68,9 @@ describe("edge-light policy", () => {
     const panel = ruleBody(materials, ".surface-panel");
     const field = ruleBody(materials, ".control-field");
 
-    expect(panel).toContain("border: 1px solid var(--field-frame)");
+    expect(panel).toContain("border: 0 solid var(--field-frame)");
     expect(panel).toContain("box-shadow: var(--material-raised)");
-    expect(field).toContain("border: 1px solid var(--field-frame)");
+    expect(field).toContain("border: 0 solid var(--field-frame)");
     expect(field).toContain("box-shadow: var(--material-control)");
     expect(ruleBody(materials, ".surface-panel-float")).toContain("var(--material-float)");
   });
