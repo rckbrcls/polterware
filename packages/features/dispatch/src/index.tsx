@@ -1075,9 +1075,18 @@ export function DispatchPage(props: {
               when={visibleAgentCards().length > 0}
               fallback={<PageEmpty title={agentCards().length > 0 ? "No matches" : "No agents found"} mood={agentCards().length > 0 ? "lost" : "sad"} />}
             >
-              <div class="grid auto-rows-fr items-stretch gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,17.5rem),1fr))]">
-                <For each={visibleAgentCards()}>
-                  {(entry) => {
+              <DataTable.Root rows={visibleAgentCards()} getRowId={(entry) => entry.agent} columnWidthsKey="dispatch-agents" density="list">
+                <DataTable.Table aria-label="Agents">
+                  <DataTable.Header>
+                    <DataTable.ColumnHeader<AgentQuotaSeries> id="agent" width="22%">Agent</DataTable.ColumnHeader>
+                    <DataTable.ColumnHeader<AgentQuotaSeries> id="usage" width="24%" sortable={false}>Usage</DataTable.ColumnHeader>
+                    <DataTable.ColumnHeader<AgentQuotaSeries> id="pace" sortable={false}>Pace</DataTable.ColumnHeader>
+                    <DataTable.ColumnHeader<AgentQuotaSeries> id="window" sortable={false}>Window</DataTable.ColumnHeader>
+                    <DataTable.ColumnHeader<AgentQuotaSeries> id="source" sortable={false}>Source</DataTable.ColumnHeader>
+                    <DataTable.ColumnHeader<AgentQuotaSeries> id="risk" sortable={false}>Probe risk</DataTable.ColumnHeader>
+                  </DataTable.Header>
+                  <DataTable.Body<AgentQuotaSeries>>
+                    {(entry) => {
                     const latest = createMemo(() => quotaSnapshots()
                       .filter((snap) => snap.agent === entry.agent)
                       .sort((a, b) => b.sampledAt.localeCompare(a.sampledAt))[0]);
@@ -1122,107 +1131,55 @@ export function DispatchPage(props: {
                       const time = parseTime(cooldownUntil());
                       return time !== undefined && time > now();
                     };
-                    return (
-                      <Card class="flex h-full min-w-0 flex-col gap-4 p-3.5">
-                        <div class="flex min-w-0 items-center justify-between gap-2">
-                          <div class="flex min-w-0 items-center gap-2">
-                            <DispatchAgentAvatar agent={entry.agent} seed={entry.agent} />
-                            <div class="flex min-w-0 flex-col gap-0.5">
-                              <span class="truncate text-[13px] font-medium text-[var(--color-text-primary)]">
-                                {entry.agent}
-                              </span>
-                              <Show when={provider()}>
-                                {(label) => (
-                                  <span class="truncate text-[11px] text-[var(--color-text-muted)]" title={label()}>
-                                    {label()}
-                                  </span>
-                                )}
-                              </Show>
-                            </div>
-                          </div>
-                          <StatusChip
-                            tone={pace() === "ahead" ? "warn" : pace() ? "ok" : "unknown"}
-                            label={pace() ?? "unknown"}
+                      const sourceText = () => {
+                        const [source, confidence] = facts().map((fact) => fact.value);
+                        return dotted(source ?? "", confidence ? `${confidence} confidence` : "");
+                      };
+                      const windowFacts = () => facts().slice(2).map((fact) => `${fact.label}: ${fact.value}`).join(" / ");
+                      return (
+                        <DataTable.Row row={entry} rowId={entry.agent} aria-label={entry.agent}>
+                          <DataTable.PrimaryCell
+                            leading={<DispatchAgentAvatar agent={entry.agent} seed={entry.agent} size={32} />}
+                            title={entry.agent}
+                            trailing={<Show when={provider()}>{(label) => <span class="text-[12px] text-[var(--color-text-muted)]">{label()}</span>}</Show>}
                           />
-                        </div>
-                        <div class="flex flex-col gap-2.5">
-                          <div class="flex items-end justify-between gap-3">
-                            <div class="flex items-baseline gap-2 text-[var(--color-text-primary)]">
+                          <DataTable.Cell>
+                            <div class="flex min-w-0 items-center gap-3">
                               <SegmentDisplay
                                 value={used() === undefined ? "--" : formatUsedPercent(used())}
-                                size={28}
+                                size={18}
                                 aria-label={`${entry.agent} quota usage: ${formatUsedPercent(used())}`}
                               />
-                              <Show when={used() === undefined}><span class="text-[11px] text-[var(--color-text-muted)]">unknown</span></Show>
-                            </div>
-                            <div class="flex min-w-0 flex-col items-end gap-0.5 text-right text-[11px] tabular-nums">
-                              <Show when={quotaWindow(latest())}>
-                                {(window) => <span class="text-[var(--color-text-secondary)]">of {window()} window</span>}
-                              </Show>
-                              <Show when={reset() !== undefined}>
-                                <span class="text-[var(--color-text-muted)]" title={formatWhen(latest()!.resetsAt)}>
-                                  Resets {relativeWhen(latest()!.resetsAt, now())}
-                                </span>
-                              </Show>
-                            </div>
-                          </div>
-                          <ProgressBar
-                            label={`${entry.agent} quota usage`}
-                            value={used() ?? null}
-                            aria-valuetext={formatUsedPercent(used())}
-                            tone="blue"
-                          />
-                        </div>
-                        <Show when={entry.series.length >= 3}>
-                          {/* Clip the shared chart's value-axis gutter only in cards. */}
-                          <div class="overflow-hidden">
-                            <div class="-ml-10 w-[calc(100%+2.5rem)]">
-                              <SparkChart
-                                series={entry.series}
-                                label={`${entry.agent} quota usage history`}
-                                strokeToken="--color-chart-blue"
-                                height={48}
-                                padding={[4, 4, 4, 0]}
-                              />
-                            </div>
-                          </div>
-                        </Show>
-                        <dl class="m-0 mt-auto grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-[var(--color-border-subtle)] pt-3 text-[11px] leading-5 tabular-nums">
-                          <div class="flex min-w-0 items-center justify-between gap-2">
-                            <dt class="text-[var(--color-text-muted)]">Binary</dt>
-                            <dd class="m-0 truncate font-mono text-[var(--color-text-secondary)]">{agentView()?.bin || "—"}</dd>
-                          </div>
-                          <div class="flex min-w-0 items-center justify-between gap-2">
-                            <dt class="text-[var(--color-text-muted)]">Probe risk</dt>
-                            <dd class="m-0">
-                              <StatusChip tone={dispatchStatusTone(agentView()?.risk ?? "")} label={agentView()?.risk || "unknown"} />
-                            </dd>
-                          </div>
-                          <For each={facts()}>
-                            {(fact) => (
-                              <div class="flex min-w-0 items-center justify-between gap-2">
-                                <dt class="truncate text-[var(--color-text-muted)]">{fact.label}</dt>
-                                <dd class="m-0 truncate text-[var(--color-text-secondary)]">{fact.value}</dd>
+                              <div class="w-28 shrink-0">
+                                <ProgressBar label={`${entry.agent} quota usage`} value={used() ?? null} aria-valuetext={formatUsedPercent(used())} tone="blue" />
                               </div>
-                            )}
-                          </For>
-                          <Show when={cooldownUntil()}>
-                            {(until) => (
-                              <div class="col-span-2 flex min-w-0 items-center justify-between gap-2">
-                                <dt class="text-[var(--color-text-muted)]">Cooldown until</dt>
-                                <dd class="m-0 flex items-center gap-1.5 text-[var(--color-text-secondary)]">
-                                  <Show when={cooldownActive()}><StatusChip tone="warn" label="Cooldown" /></Show>
-                                  {formatWhen(until())}
-                                </dd>
-                              </div>
-                            )}
-                          </Show>
-                        </dl>
-                      </Card>
-                    );
-                  }}
-                </For>
-              </div>
+                            </div>
+                          </DataTable.Cell>
+                          <DataTable.Cell>
+                            <div class="flex items-center gap-1.5">
+                              <StatusChip tone={pace() === "ahead" ? "warn" : pace() ? "ok" : "unknown"} label={pace() ?? "unknown"} />
+                              <Show when={cooldownActive()}>
+                                <span title={`Cooldown until ${formatWhen(cooldownUntil())}`}><StatusChip tone="warn" label="Cooldown" /></span>
+                              </Show>
+                            </div>
+                          </DataTable.Cell>
+                          <DataTable.Cell>
+                            <span class="truncate text-[12px] tabular-nums text-[var(--color-text-secondary)]" title={windowFacts() || undefined}>
+                              {dotted(quotaWindow(latest()) ?? "", reset() !== undefined ? `resets ${relativeWhen(latest()!.resetsAt, now())}` : "")}
+                            </span>
+                          </DataTable.Cell>
+                          <DataTable.Cell>
+                            <span class="truncate text-[12px] text-[var(--color-text-secondary)]" title={agentView()?.bin ? `Binary: ${agentView()!.bin}` : undefined}>{sourceText()}</span>
+                          </DataTable.Cell>
+                          <DataTable.Cell>
+                            <StatusChip tone={dispatchStatusTone(agentView()?.risk ?? "")} label={agentView()?.risk || "unknown"} />
+                          </DataTable.Cell>
+                        </DataTable.Row>
+                      );
+                    }}
+                  </DataTable.Body>
+                </DataTable.Table>
+              </DataTable.Root>
             </Show>
           </PageContent>
         </Match>
