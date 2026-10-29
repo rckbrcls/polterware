@@ -180,7 +180,10 @@ export function RailPage(props: RailPageProps) {
   const railPresent = createRailPresence({ rail: railElement, spacer: leadSpacer, visible: railVisible, narrow });
 
   onMount(() => {
-    if (!root || typeof ResizeObserver === "undefined") return;
+    if (!root) return;
+    // Measured before the first paint, so a narrow page never shows the rail beside the text for a frame.
+    setNarrow(root.clientWidth > 0 && root.clientWidth < NARROW_WIDTH);
+    if (typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(([entry]) => { if (entry) setNarrow(entry.contentRect.width < NARROW_WIDTH); });
     observer.observe(root);
     onCleanup(() => observer.disconnect());

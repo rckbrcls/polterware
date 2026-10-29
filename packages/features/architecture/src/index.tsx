@@ -1,10 +1,10 @@
 import { For, Index, Show, createEffect, createMemo, createSignal, onCleanup, untrack, type JSX } from "solid-js";
 import { createPageFilters, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
 import {
-  A11yDialog, Badge, Boxes, Button, Card, PromptCardGrid, Checkbox, Field, Folder, FormStack, Input,
-  ActiveFilterBar, FilterPopover, IconTile, Layers, ListChecks, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
-  Cloud, Cpu, Delete, EntityContextMenu, EntityMenuButton, GitBranch, Link2, Package, Route,
-  ScrollText, SearchBar, Select, ShieldCheck, StatusChip, TreeView, createEntityContextMenu, pushToast,
+  A11yDialog, Boxes, Button, PromptCardGrid, Checkbox, Field, Folder, FormStack, Input,
+  ActiveFilterBar, FilterPopover, IconTile, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
+  Cloud, Delete, EntityContextMenu, EntityMenuButton, Link2, Package, Route,
+  SearchBar, Select, TreeView, createEntityContextMenu, pushToast,
   type EntityAction, type TreeViewNode,
   ToolbarIconButton,
 } from "@polterware/frontend-design-system";
@@ -12,6 +12,7 @@ import { createDetailPanelSelector, detailPanelStore, readRemembered, writeRemem
 import { COMPONENTS, component } from "@polterware/feature-canvas/components";
 import { STRUCTURE_AGENT_PROMPTS } from "./agent-prompts";
 import { buildStructureTree, flattenStructureTree, structureParents, type StructureKind, type StructureNode, type StructureTreeItem } from "./structure-tree";
+import { StructureNodePage, recordsLabel } from "./structure-node-page";
 import type { ProjectEnvironment } from "./domain/project-environments";
 import type { WorkspaceIntegration } from "@polterware/feature-shell";
 import "./structure.css";
@@ -43,23 +44,6 @@ function KindIcon(props: { kind: StructureKind | "project"; size?: number }) {
 }
 const kindLabel = (kind: string) => kind.charAt(0).toUpperCase() + kind.slice(1);
 
-function countTitle(count: number, singular: string) {
-  return `${count} ${singular}${count === 1 ? "" : "s"}`;
-}
-
-/** A metadata badge with an icon; the label and title sit on the inner span, which Badge does not forward. */
-function MetaBadge(props: { icon: JSX.Element; label: string; children: JSX.Element }) {
-  return <Badge tone="muted"><span class="pw-structure-node__badge" aria-label={props.label} title={props.label}>{props.icon}{props.children}</span></Badge>;
-}
-
-function RecordCounts(props: { counts: Counts }) {
-  return <>
-    <Show when={props.counts.work > 0}><MetaBadge icon={<ListChecks size={12} aria-hidden="true" />} label={countTitle(props.counts.work, "Work card")}>{countTitle(props.counts.work, "card")}</MetaBadge></Show>
-    <Show when={props.counts.decisions > 0}><MetaBadge icon={<ShieldCheck size={12} aria-hidden="true" />} label={countTitle(props.counts.decisions, "Decision")}>{countTitle(props.counts.decisions, "decision")}</MetaBadge></Show>
-    <Show when={props.counts.facts > 0}><MetaBadge icon={<ScrollText size={12} aria-hidden="true" />} label={countTitle(props.counts.facts, "Fact")}>{countTitle(props.counts.facts, "fact")}</MetaBadge></Show>
-  </>;
-}
-
 /** The component kind's palette label (`database` reads Database); unknown kinds read as written. */
 export function componentKindLabel(kind: string): string {
   return component(kind)?.label ?? kind;
@@ -70,62 +54,30 @@ export function checkoutLabel(repo = "", folder = ""): string {
   return repo && folder ? `${repo}/${folder}` : repo || folder;
 }
 
-type NodeDetailsProps = {
-  level: StructureKind | "project";
-  description?: string;
-  kind?: string;
-  tech?: string;
-  repo?: string;
-  folder?: string;
-  uses?: readonly string[];
-  deploys?: StructureNode["deploys"];
-  counts: Counts;
-  isProviderConnected: (provider: string) => boolean;
-};
-
-/**
- * Everything Structure knows about a node, shown inside its tree card: badges for metadata,
- * compact cards for deploys. A component's kind replaces its level badge; empty fields are left out.
- */
-function NodeDetails(props: NodeDetailsProps) {
-  const checkout = () => checkoutLabel(props.repo, props.folder);
-  return <div class="pw-structure-node">
-    <Show when={props.description}>{(description) => <p class="pw-structure-node__description">{description()}</p>}</Show>
-    <div class="pw-structure-node__meta">
-      <Show when={props.kind} fallback={<Badge tone="info">{kindLabel(props.level)}</Badge>}>
-        {(kind) => <Badge tone="info"><span class="pw-structure-node__badge" aria-label={`Kind ${componentKindLabel(kind())}`} title={`Kind ${componentKindLabel(kind())}`}><Package size={12} aria-hidden="true" />{componentKindLabel(kind())}</span></Badge>}
-      </Show>
-      <Show when={props.tech}>{(tech) => <MetaBadge icon={<Cpu size={12} aria-hidden="true" />} label={`Technology ${tech()}`}>{tech()}</MetaBadge>}</Show>
-      <Show when={checkout()}>{(path) => <MetaBadge icon={<GitBranch size={12} aria-hidden="true" />} label={`Checkout ${path()}`}>{path()}</MetaBadge>}</Show>
-      <For each={props.uses ?? []}>{(use) => <MetaBadge icon={<Link2 size={12} aria-hidden="true" />} label={`Uses ${use}`}>{use}</MetaBadge>}</For>
-      <RecordCounts counts={props.counts} />
-    </div>
-    <Show when={props.level === "component" && props.deploys?.length}>
-        <ul class="pw-structure-node__deploys" aria-label="Deploys">
-          <For each={props.deploys!}>{(deploy) => <li>
-            <Card variant="texture" texture="compact" class="pw-structure-node__deploy">
-              <Cloud size={14} aria-hidden="true" />
-              <span class="flex min-w-0 flex-col">
-                <span class="truncate text-[var(--color-text-primary)]">{deploy.resource}</span>
-                <span class="truncate">{deploy.provider} / {deploy.environment || deploy.environmentId}</span>
-              </span>
-              <Show when={!props.isProviderConnected(deploy.provider)}><StatusChip tone="warn" label="CLI not connected" /></Show>
-            </Card>
-          </li>}</For>
-        </ul>
-    </Show>
-  </div>;
+/** A component's kind and technology ("Database / Postgres"), or the node's level. */
+function levelLabel(node: Pick<StructureNode, "level" | "kind" | "tech">): string {
+  if (node.level !== "component") return kindLabel(node.level);
+  const kind = node.kind ? componentKindLabel(node.kind) : "Component";
+  return node.tech ? `${kind} / ${node.tech}` : kind;
 }
 
-const NO_KIND = "none";
-const KIND_OPTIONS = [{ value: NO_KIND, label: "None" }, ...COMPONENTS.map((item) => ({ value: item.kind, label: item.label }))];
-
-/** Row actions. Keys stay inside the menu so the tree does not treat them as row navigation. */
-function NodeActions(props: { title: string; actions: readonly EntityAction[] }) {
-  return <span class="inline-flex" onKeyDown={(event) => event.stopPropagation()}>
+/** A tree card's one line after its title: kind / technology and the record counts, then Add child and the actions. */
+function NodeLine(props: { meta: string; addLabel?: string; onAdd?: () => void; title: string; actions: readonly EntityAction[] }) {
+  return <span class="pw-structure-line" onKeyDown={(event) => event.stopPropagation()}>
+    <span class="pw-structure-line__meta">{props.meta}</span>
+    <Show when={props.onAdd}>
+      <span class="pw-structure-line__add">
+        <Button size="icon" variant="ghost" aria-label={props.addLabel ?? "Add child"} onClick={(event) => { event.stopPropagation(); props.onAdd?.(); }}><Plus size={14} /></Button>
+      </span>
+    </Show>
     <EntityMenuButton label={`Actions for ${props.title}`} actions={props.actions} />
   </span>;
 }
+
+// A click opens the node's page, so the tree keeps no selection of its own and every click reports.
+const NO_SELECTION: string[] = [];
+const NO_KIND = "none";
+const KIND_OPTIONS = [{ value: NO_KIND, label: "None" }, ...COMPONENTS.map((item) => ({ value: item.kind, label: item.label }))];
 
 export function StructureView(props: {
   projectName: string;
@@ -184,7 +136,6 @@ export function StructureView(props: {
   const tree = createMemo(() => buildStructureTree(props.nodes, query()));
   const visible = createMemo(() => flattenStructureTree(tree()));
   const selectedId = () => target()?.scopeId === STRUCTURE_SCOPE ? target()?.entityId : undefined;
-  const selectedValue = createMemo<string[]>(() => { const id = selectedId(); return id ? [id] : []; }, [], { equals: sameIds });
   const selected = createMemo(() => props.nodes.find((node) => node.id === selectedId()));
   const registry = () => props.registryNodes ?? props.nodes;
   const parents = () => structureParents(registry(), moveOpen() ? selected()?.level ?? kind() : kind(), moveOpen() ? selected()?.id : undefined);
@@ -254,22 +205,38 @@ export function StructureView(props: {
   ];
   const projectActions = (): EntityAction[] => [{ id: "add-system", label: "Add system", icon: Plus, disabled: !!props.loading || !!props.error, onSelect: () => { open(PROJECT_ID); props.onOpenCreate(); } }];
   const rowMenu = createEntityContextMenu();
+  const addChild = (id: string) => { open(id); props.onOpenCreate(); };
+  const meta = (parts: readonly string[]) => parts.filter(Boolean).join(" / ");
   const toTreeNode = (item: StructureTreeItem): TreeViewNode => ({
     id: item.node.id, label: item.node.title, icon: <IconTile size={20} tone="neutral" seed={item.node.id}><KindIcon kind={item.node.level} size={12} /></IconTile>,
-    trailing: <NodeActions title={item.node.title} actions={nodeActions(item.node)} />,
+    trailing: <NodeLine title={item.node.title} actions={nodeActions(item.node)} meta={meta([levelLabel(item.node), recordsLabel(props.counts[item.node.id])])}
+      onAdd={item.node.level === "component" ? undefined : () => addChild(item.node.id)} addLabel={`Add child to ${item.node.title}`} />,
     onContextMenu: (event) => rowMenu.open(event, nodeActions(item.node)),
-    details: <NodeDetails level={item.node.level} description={item.node.intent} kind={item.node.level === "component" ? item.node.kind : undefined} tech={item.node.tech} repo={item.node.repo} folder={item.node.folder} uses={usesTitles(item.node)} deploys={item.node.deploys} counts={props.counts[item.node.id] ?? { work: 0, decisions: 0, facts: 0 }} isProviderConnected={isProviderConnected} />,
     children: item.children.map(toTreeNode),
   });
   const treeNodes = createMemo<TreeViewNode[]>(() => props.loading || props.error ? [] : [{
     id: PROJECT_ID, label: props.projectName, icon: <IconTile size={20} tone="neutral" seed={PROJECT_ID}><KindIcon kind="project" size={12} /></IconTile>,
-    trailing: <NodeActions title={props.projectName} actions={projectActions()} />,
+    trailing: <NodeLine title={props.projectName} actions={projectActions()} meta={meta(["Project", recordsLabel(props.projectCounts)])}
+      onAdd={props.loading || props.error ? undefined : () => addChild(PROJECT_ID)} addLabel="Add system" />,
     onContextMenu: (event) => rowMenu.open(event, projectActions()),
-    details: <NodeDetails level="project" description={props.projectDescription} repo={props.projectRepository} counts={props.projectCounts} isProviderConnected={isProviderConnected} />,
     children: tree().map(toTreeNode),
   }]);
 
-  // The tree cards carry every detail, so the collection only tracks the selection (for links and dialogs) and offers no panel.
+  // A node opens as a page of its own; Back returns to the tree with the same branches open.
+  const [pageId, setPageId] = createSignal("");
+  const pageNode = createMemo(() => props.nodes.find((node) => node.id === pageId()));
+  const openPage = (id: string) => { open(id); if (id !== PROJECT_ID) setPageId(id); };
+  const ancestorsOf = (node: StructureNode) => {
+    const chain: StructureNode[] = [];
+    const seen = new Set<string>([node.id]);
+    for (let parent = props.nodes.find((item) => item.id === node.parentId); parent && !seen.has(parent.id); parent = props.nodes.find((item) => item.id === parent!.parentId)) {
+      seen.add(parent.id);
+      chain.unshift(parent);
+    }
+    return chain;
+  };
+
+  // A node's details are its page, so the collection only tracks the selection (for links and dialogs) and offers no panel.
   createEffect(() => {
     const targets = [PROJECT_ID, ...visible().map((node) => node.id)].map((entityId) => ({ scopeId: STRUCTURE_SCOPE, entityId, entityKind: "arch-node" }));
     detailPanelStore.getState().registerCollection({ scopeId: STRUCTURE_SCOPE, status: props.loading ? "loading" : props.error ? "error" : "ready", targets, details: false, selectFirst: false });
@@ -315,6 +282,7 @@ export function StructureView(props: {
   });
 
   return <div class="flex min-h-0 flex-1 flex-col">
+    <Show when={pageNode()} fallback={<>
     <PageToolbar.Root>
       <PageToolbar.Leading>{null}</PageToolbar.Leading>
       <PageToolbar.Actions>
@@ -341,10 +309,18 @@ export function StructureView(props: {
       <PageContent class="pw-scroll-fade overflow-auto p-4">
                 <Show when={visible().length} fallback={<PageEmpty title={query().trim() ? "No matches" : "No structure yet"} mood={query().trim() ? "lost" : "sleeping"} >{!query().trim() ? <PromptCardGrid items={STRUCTURE_AGENT_PROMPTS.map((item) => ({ id: item.id, title: item.title, description: item.description, tone: item.tone, icon: <KindIcon kind={item.level} size={16} />, prompt: item.prompt }))} /> : undefined}</PageEmpty>}>
           <EntityContextMenu menu={rowMenu} />
-          <TreeView label="Project structure" branches expandOnClick={false} class="[&_h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)} selectedValue={selectedValue()} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} />
+          <TreeView label="Project structure" branches expandOnClick={false} class="[&_h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)} selectedValue={NO_SELECTION} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) openPage(id); }} />
         </Show>
       </PageContent>
     }><PageError message={props.error!} /></Show>}><PageLoading label="Loading structure…" /></Show>
+    </>}>
+      {(node) => <StructureNodePage node={node()} ancestors={ancestorsOf(node())}
+        children={props.nodes.filter((item) => item.parentId === node().id)} counts={props.counts}
+        icon={(level, size) => <KindIcon kind={level} size={size} />} levelLabel={levelLabel}
+        checkout={checkoutLabel(node().repo, node().folder)} uses={usesTitles(node())} actions={nodeActions(node())}
+        isProviderConnected={isProviderConnected} onBack={() => setPageId("")} onOpen={openPage}
+        onAddChild={node().level === "component" ? undefined : () => addChild(node().id)} />}
+    </Show>
     <A11yDialog open={!!props.createDialogOpen || moveOpen()} title={moveOpen() ? "Move node" : "Add structure node"} dismissible={!busy()} onClose={() => { if (!busy()) { setMoveOpen(false); props.onCloseCreate(); } }} footer={<>
       <Button variant="ghost" disabled={busy()} onClick={() => { setMoveOpen(false); props.onCloseCreate(); }}>Cancel</Button>
       <Button disabled={busy() || (!moveOpen() && !title().trim()) || ((moveOpen() || kind() !== "system") && !parents().some((node) => node.id === parent()))} onClick={() => void save(() => moveOpen() ? props.onMove(selected()!.id, parent()) : props.onCreate({ title: title().trim(), level: kind(), parentId: parent() }), () => { setMoveOpen(false); props.onCloseCreate(); })}>{busy() ? "Saving…" : "Save"}</Button>

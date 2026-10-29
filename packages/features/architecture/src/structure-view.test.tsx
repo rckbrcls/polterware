@@ -22,30 +22,23 @@ beforeEach(() => detailPanelStore.setState(detailPanelDefaultState));
 afterEach(() => { dispose?.(); document.body.replaceChildren(); });
 
 describe("Structure collection", () => {
-  it("shows every node detail inside its tree card with no side panel or Cards view", async () => {
+  it("keeps the branch tree with one compact line per card and opens a node as its own page", async () => {
     const { host, open } = mount();
     await tick();
     expect(detailPanelStore.getState().open).toBe(false);
     expect(detailPanelStore.getState().available).toBe(false);
-    expect(host.querySelector('[aria-label="Structure view"]')).toBeNull();
     const search = host.querySelector<HTMLInputElement>('[role="searchbox"]')!;
     search.value = "api";
     search.dispatchEvent(new Event("input", { bubbles: true }));
     await tick();
     const api = host.querySelector<HTMLElement>('[data-part="item"][data-value="api"]')!;
-    expect(api).not.toBeNull();
-    expect(api.textContent).toContain("Serves the project");
-    expect(api.querySelector('[aria-label="Kind API"]')).not.toBeNull();
-    expect(api.querySelector('[aria-label="Technology Go"]')).not.toBeNull();
-    expect(api.querySelector('[aria-label="Checkout backend/src/api"]')).not.toBeNull();
-    // A component's kind replaces its level badge, and empty fields are left out.
-    expect(api.textContent).not.toContain("Component");
-    expect(api.textContent).not.toContain("No deploy targets yet.");
-    expect(api.textContent).toContain("2 cards");
-    expect(api.querySelector('[aria-label="2 Work cards"]')).not.toBeNull();
-    expect(api.querySelector('[aria-label="1 Decision"]')).not.toBeNull();
-    expect(api.querySelector('[aria-label="3 Facts"]')).not.toBeNull();
+    // One line: kind / technology and the record counts; the description waits for the page.
+    expect(api.textContent).toContain("API / Go / 2 cards / 1 decision / 3 facts");
+    expect(api.textContent).not.toContain("Serves the project");
     expect(api.querySelector('[aria-label="Actions for API"]')).not.toBeNull();
+    // A component has no children, so its card offers no Add child; its system does.
+    expect(api.querySelector('[aria-label^="Add child"]')).toBeNull();
+    expect(host.querySelector('[aria-label="Add child to Application"]')).not.toBeNull();
     // Branch cards are led by a texture +/- key; the open project key shows the minus.
     const key = host.querySelector<HTMLElement>('.pw-tree__key[aria-label="Toggle Project"]')!;
     expect(key.classList.contains("pw-texture-button")).toBe(true);
@@ -54,13 +47,17 @@ describe("Structure collection", () => {
     api.click();
     await tick();
     expect(open).toHaveBeenCalledWith("api");
-    expect(detailPanelStore.getState().activeTarget?.entityId).toBe("api");
-    search.value = "web";
-    search.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(host.querySelector("h1")?.textContent).toBe("API");
+    expect(host.textContent).toContain("Serves the project");
+    expect(host.querySelector('[aria-label="Properties"]')?.textContent).toContain("API / Go");
+    host.querySelector<HTMLButtonElement>('button[aria-label="Back"]')!.click();
     await tick();
-    const web = host.querySelector<HTMLElement>('[data-part="item"][data-value="web"]')!;
-    expect(web.textContent).toContain("Component");
-    expect(web.querySelector('[aria-label^="Technology"], [aria-label^="Checkout"]')).toBeNull();
+    // Back returns to the same tree, and the same card opens again.
+    const again = host.querySelector<HTMLElement>('[data-part="item"][data-value="api"]')!;
+    expect(again).not.toBeNull();
+    again.click();
+    await tick();
+    expect(host.querySelector("h1")?.textContent).toBe("API");
   });
   it("retains the toolbar and exposes a collection error", async () => {
     const { host } = mount({ error: "Core unavailable" });

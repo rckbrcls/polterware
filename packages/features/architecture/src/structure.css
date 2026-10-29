@@ -1,56 +1,65 @@
-/* Detail content inside a Structure tree card. */
-.pw-structure-node {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 6px;
-  color: var(--color-text-muted);
-  font-size: 12px;
-}
-
-.pw-structure-node__description {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  margin: 0;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-}
-
-.pw-structure-node__meta {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-
-.pw-structure-node__badge {
+/* A Structure tree card's one line after its title: kind / technology and record counts, then Add child and the actions. */
+.pw-structure-line {
   display: inline-flex;
   min-width: 0;
   align-items: center;
   gap: 4px;
 }
 
-.pw-structure-node__deploys {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
-  gap: 6px;
+.pw-structure-line__meta {
+  overflow: hidden;
+  margin-right: 8px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Add child shows while the row is hovered or holds focus, like Linear's row actions. */
+.pw-structure-line__add {
+  display: inline-flex;
+  visibility: hidden;
+}
+
+.pw-tree__line:hover .pw-structure-line__add,
+.pw-tree__line:focus-within .pw-structure-line__add {
+  visibility: visible;
+}
+
+/* A node's page: its description, then its sections, separated by space alone. */
+.pw-structure-page__intent {
+  margin: 8px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  line-height: 24px;
+}
+
+.pw-structure-page__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-top: 32px;
+}
+
+.pw-structure-page__empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.pw-structure-page__deploys {
+  display: flex;
+  flex-direction: column;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.pw-structure-node__deploy {
+.pw-structure-page__deploy {
   display: flex;
   min-width: 0;
+  height: 44px;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 12px;
+  font-size: 13px;
 }
-
-.pw-structure-node__empty {
-  margin: 0;
-}
-
