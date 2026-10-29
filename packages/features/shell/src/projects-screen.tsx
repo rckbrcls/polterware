@@ -1,16 +1,15 @@
-import { For, Show, createMemo, createSignal } from "solid-js";
+import { Show, createMemo, createSignal } from "solid-js";
 import {
   ActiveFilterBar,
-  Badge,
-  Button,
-  Card,
   ContextMenu,
   Copy,
+  DataTable,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   ExternalLink,
+  FilterChip,
   Folder,
   FolderKanban,
   FilterPopover,
@@ -26,6 +25,7 @@ import {
   Settings,
   StatusDot,
   ToolbarIconButton,
+  Tooltip,
   buttonClassName,
   matchClauses,
   type FilterField,
@@ -47,15 +47,7 @@ export type ProjectsScreenProps = {
   onCreateProject: () => void;
 };
 
-function secondaryLine(project: ProjectSwitcherItem): { text: string; title?: string } | undefined {
-  const description = project.description?.trim();
-  if (description) return { text: description };
-  const path = project.directory?.trim();
-  if (path) return { text: path, title: path };
-  return undefined;
-}
-
-/** Last path segment, shown as the folder badge. */
+/** Last path segment, shown in the Folder column. */
 function folderName(project: ProjectSwitcherItem): string | undefined {
   const path = project.directory?.trim().replace(/[\\/]+$/, "");
   if (!path) return undefined;
@@ -81,112 +73,113 @@ function statusOf(project: ProjectSwitcherItem): ProjectStatus {
   return project.status ?? "active";
 }
 
+function statusOption(project: ProjectSwitcherItem) {
+  const status = statusOf(project);
+  return STATUS_FILTERS.find((option) => option.id === status)!;
+}
+
 function folderOf(project: ProjectSwitcherItem): FolderFilter {
   return project.directory?.trim() ? "linked" : "none";
 }
 
-type CardMenu = { project: ProjectSwitcherItem; x: number; y: number };
+/** `lastActivity` is already formatted; sort by the instant it names when it parses. */
+function updatedAt(project: ProjectSwitcherItem): number | undefined {
+  const time = Date.parse(project.lastActivity ?? "");
+  return Number.isNaN(time) ? undefined : time;
+}
 
-function ProjectCard(props: {
+type RowMenu = { project: ProjectSwitcherItem; x: number; y: number };
+
+function ProjectRow(props: {
   project: ProjectSwitcherItem;
   onOpen: (projectId: string) => void;
   onOpenSettings?: (projectId: string) => void;
-  onMenu: (menu: CardMenu) => void;
+  onMenu: (menu: RowMenu) => void;
 }) {
-  const secondary = () => secondaryLine(props.project);
-
-  function activate() {
-    props.onOpen(props.project.projectId);
-  }
+  const project = () => props.project;
+  const activate = () => props.onOpen(project().projectId);
 
   return (
-    <Card
-      class="pw-projects-card"
-      ref={(element) => {
-        element.tabIndex = 0;
-        element.setAttribute("role", "button");
-        element.setAttribute("aria-label", `Open ${props.project.name}`);
-        // The menu trigger lives inside the card; stopping propagation would also starve Ark's delegated handlers.
-        const inMenu = (event: Event) => event.target instanceof Element && event.target.closest(".pw-projects-card-menu") !== null;
-        element.onclick = (event) => {
-          if (!inMenu(event)) activate();
-        };
-        element.oncontextmenu = (event) => {
-          event.preventDefault();
-          props.onMenu({ project: props.project, x: event.clientX, y: event.clientY });
-        };
-        element.onkeydown = (event) => {
-          if (inMenu(event)) return;
-          if (event.key !== "Enter" && event.key !== " ") return;
-          event.preventDefault();
-          activate();
-        };
+    <DataTable.Row
+      row={project()}
+      rowId={project().projectId}
+      aria-label={`Open ${project().name}`}
+      onActivate={activate}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        props.onMenu({ project: project(), x: event.clientX, y: event.clientY });
       }}
     >
-      <div class="pw-projects-card-head">
-        <IconTile size={24} seed={props.project.projectId} class="shrink-0">
-          <FolderKanban size={14} />
-        </IconTile>
-        <h2 class="truncate text-[14px] font-medium text-[var(--color-text-primary)]">
-          {props.project.name}
-        </h2>
-        <span class="pw-projects-card-menu">
-          <DropdownMenu positioning={{ placement: "bottom-end" }}>
-            <DropdownMenuTrigger aria-label={`Actions for ${props.project.name}`} class={buttonClassName("texture", "icon")}>
-              <MoreHorizontal size={14} aria-hidden="true" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent class="min-w-40">
-              <DropdownMenuItem value="open" onSelect={activate}>
-                <ExternalLink size={14} aria-hidden="true" />
-                Open
-              </DropdownMenuItem>
-              <Show when={props.onOpenSettings}>
-                <DropdownMenuItem value="settings" onSelect={() => props.onOpenSettings?.(props.project.projectId)}>
-                  <Settings size={14} aria-hidden="true" />
-                  Project settings
-                </DropdownMenuItem>
-              </Show>
-              <Show when={props.project.directory?.trim()}>
-                <DropdownMenuItem
-                  value="copy-path"
-                  onSelect={() => {
-                    const path = props.project.directory?.trim();
-                    if (path) void navigator.clipboard?.writeText(path);
-                  }}
-                >
-                  <Copy size={14} aria-hidden="true" />
-                  Copy path
-                </DropdownMenuItem>
-              </Show>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </span>
-      </div>
-      <Show when={secondary()}>
-        {(line) => (
-          <p class="pw-projects-card-description" title={line().title}>
-            {line().text}
-          </p>
-        )}
-      </Show>
-      <div class="pw-projects-card-meta">
-        <Badge tone="muted">{props.project.environmentSummary}</Badge>
-        <Show when={folderName(props.project)}>
+      <DataTable.PrimaryCell
+        class="pw-projects-name-cell"
+        leading={
+          <IconTile size={16} seed={project().projectId}>
+            <FolderKanban size={11} />
+          </IconTile>
+        }
+        title={
+          <>
+            {project().name}
+            <Show when={project().description?.trim()}>
+              {(description) => <span class="pw-projects-description">{description()}</span>}
+            </Show>
+          </>
+        }
+      />
+      <DataTable.Cell>
+        <StatusDot tone={statusOption(project()).tone} label={statusOption(project()).label} />
+      </DataTable.Cell>
+      <DataTable.Cell>{project().environmentSummary}</DataTable.Cell>
+      <DataTable.Cell>
+        <Show when={folderName(project())} fallback="—">
           {(name) => (
-            <Badge tone="muted" class="pw-projects-card-folder" title={props.project.directory}>
-              <Folder size={12} aria-hidden="true" />
-              {name()}
-            </Badge>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild={(triggerProps) => <span {...triggerProps()}>{name()}</span>} />
+              <Tooltip.Content>{project().directory}</Tooltip.Content>
+            </Tooltip.Root>
           )}
         </Show>
-      </div>
-    </Card>
+      </DataTable.Cell>
+      <DataTable.Cell>{project().lastActivity ?? "—"}</DataTable.Cell>
+      {/* Menu items render in a portal whose events still reach the row; keep them from opening the project. */}
+      <DataTable.Cell align="right" class="pw-projects-row-menu" onClick={(event: MouseEvent) => event.stopPropagation()}>
+        <DropdownMenu positioning={{ placement: "bottom-end" }}>
+          <DropdownMenuTrigger aria-label={`Actions for ${project().name}`} class={buttonClassName("ghost", "icon")}>
+            <MoreHorizontal size={14} aria-hidden="true" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="min-w-40">
+            <DropdownMenuItem value="open" onSelect={activate}>
+              <ExternalLink size={14} aria-hidden="true" />
+              Open
+            </DropdownMenuItem>
+            <Show when={props.onOpenSettings}>
+              <DropdownMenuItem value="settings" onSelect={() => props.onOpenSettings?.(project().projectId)}>
+                <Settings size={14} aria-hidden="true" />
+                Project settings
+              </DropdownMenuItem>
+            </Show>
+            <Show when={project().directory?.trim()}>
+              <DropdownMenuItem
+                value="copy-path"
+                onSelect={() => {
+                  const path = project().directory?.trim();
+                  if (path) void navigator.clipboard?.writeText(path);
+                }}
+              >
+                <Copy size={14} aria-hidden="true" />
+                Copy path
+              </DropdownMenuItem>
+            </Show>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </DataTable.Cell>
+    </DataTable.Row>
   );
 }
 
 export function ProjectsScreen(props: ProjectsScreenProps) {
   const [query, setQuery] = createSignal("");
-  const [menu, setMenu] = createSignal<CardMenu | null>(null);
+  const [menu, setMenu] = createSignal<RowMenu | null>(null);
   const countOf = (match: (project: ProjectSwitcherItem) => boolean) => props.projects.filter(match).length;
   const fields = (): FilterField[] => [
     {
@@ -224,33 +217,44 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
         matchClauses(project, filters.pageClauses(), { status: statusOf, folder: folderOf }),
     );
   });
+  const showingAll = () => !query().trim() && filters.clauses().length === 0;
 
   return (
     <div class="pw-projects">
-      <div class="pw-projects-column">
-        <div class="pw-projects-bar">
-          <h1 class="pw-page-toolbar-title m-0">Projects</h1>
-          <div class="pw-projects-bar-actions">
-            <SearchBar
-              placeholder="Search projects"
-              aria-label="Search projects by name"
-              value={query()}
-              onInput={setQuery}
-            />
-            <FilterPopover
-              ariaLabel="Project filters"
-              title="Filter projects"
-              shortcut
-              fields={filters.fields()}
-              clauses={filters.clauses()}
-              onClausesChange={filters.onClausesChange}
-              saved={filters.saved()}
-            />
-            <ToolbarIconButton label="New project" onClick={() => props.onCreateProject()}>
-              <Plus size={14} />
-            </ToolbarIconButton>
-          </div>
+      <header class="pw-projects-header">
+        <h1 class="pw-projects-title">Projects</h1>
+        <div class="pw-projects-header-actions">
+          <SearchBar
+            placeholder="Search projects"
+            aria-label="Search projects by name"
+            value={query()}
+            onInput={setQuery}
+          />
+          <FilterPopover
+            ariaLabel="Project filters"
+            title="Filter projects"
+            shortcut
+            fields={filters.fields()}
+            clauses={filters.clauses()}
+            onClausesChange={filters.onClausesChange}
+            saved={filters.saved()}
+          />
+          <ToolbarIconButton label="New project" onClick={() => props.onCreateProject()}>
+            <Plus size={14} />
+          </ToolbarIconButton>
         </div>
+      </header>
+      <div class="pw-projects-view-bar">
+        <FilterChip
+          class="pw-projects-view-chip"
+          selected={showingAll()}
+          onClick={() => {
+            setQuery("");
+            filters.clear();
+          }}
+        >
+          All projects
+        </FilterChip>
         <ActiveFilterBar
           fields={filters.fields()}
           clauses={filters.clauses()}
@@ -258,7 +262,7 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
           saved={filters.saved()}
         />
       </div>
-      <PageContent class="pw-scroll-fade">
+      <PageContent class="pw-projects-content pw-scroll-fade">
         <Show
           when={!props.loading}
           fallback={<PageLoading layout="page" label="Loading projects…" />}
@@ -298,15 +302,47 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
                 </Show>
               }
             >
-              <ul class="pw-projects-grid" aria-label="Projects">
-                <For each={filtered()}>
-                  {(project) => (
-                    <li>
-                      <ProjectCard project={project} onOpen={props.onOpenProject} onOpenSettings={props.onOpenProjectSettings} onMenu={setMenu} />
-                    </li>
-                  )}
-                </For>
-              </ul>
+              <DataTable.Root
+                rows={filtered()}
+                getRowId={(project) => project.projectId}
+                estimateRowHeight={48}
+                resizableColumns
+                columnWidthsKey="projects"
+                class="pw-projects-table"
+              >
+                <DataTable.Table aria-label="Projects">
+                  <DataTable.Header>
+                    <DataTable.ColumnHeader<ProjectSwitcherItem> id="name" maxWidth={960} sortBy={(project) => project.name}>
+                      Name
+                    </DataTable.ColumnHeader>
+                    <DataTable.ColumnHeader<ProjectSwitcherItem> id="status" sortBy={(project) => statusOption(project).label}>
+                      Status
+                    </DataTable.ColumnHeader>
+                    <DataTable.ColumnHeader<ProjectSwitcherItem> id="environments" sortBy={(project) => project.environmentSummary}>
+                      Environments
+                    </DataTable.ColumnHeader>
+                    <DataTable.ColumnHeader<ProjectSwitcherItem> id="folder" sortBy={folderName}>
+                      Folder
+                    </DataTable.ColumnHeader>
+                    <DataTable.ColumnHeader<ProjectSwitcherItem> id="updated" sortBy={updatedAt}>
+                      Updated
+                    </DataTable.ColumnHeader>
+                    <DataTable.ColumnHeader<ProjectSwitcherItem> id="actions" width="44px" align="right" sortable={false} resizable={false}>
+                      <span class="sr-only">Actions</span>
+                    </DataTable.ColumnHeader>
+                  </DataTable.Header>
+                  <DataTable.Body<ProjectSwitcherItem>>
+                    {(project) => (
+                      <ProjectRow
+                        project={project}
+                        onOpen={props.onOpenProject}
+                        onOpenSettings={props.onOpenProjectSettings}
+                        onMenu={setMenu}
+                      />
+                    )}
+                  </DataTable.Body>
+                </DataTable.Table>
+              </DataTable.Root>
             </Show>
           </Show>
         </Show>

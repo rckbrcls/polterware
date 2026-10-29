@@ -5,104 +5,98 @@
   flex-direction: column;
 }
 
-.pw-projects-column {
-  width: 100%;
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 16px 16px 0;
-  box-sizing: border-box;
-}
-
-/* Title on the left edge of the grid; search, filters, and actions on the right edge. */
-.pw-projects-bar {
+/* Linear's 44px header: title on the left; search, filters and the create action on the right. */
+.pw-projects-header {
   display: flex;
   min-width: 0;
+  min-height: 44px;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  padding: 0 12px 0 24px;
 }
 
-.pw-projects-bar-actions {
+.pw-projects-title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pw-projects-header-actions {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   gap: 8px;
 }
 
-.pw-projects-column .pw-active-filter-bar {
-  margin: 8px 0 0;
-}
-
-.pw-projects-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  align-content: start;
-  width: 100%;
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 16px;
-  box-sizing: border-box;
-  list-style: none;
-}
-
-.pw-projects-card {
+/* The view bar: the current view as a pill, then any active filter clauses. */
+.pw-projects-view-bar {
   display: flex;
   min-width: 0;
-  min-height: 132px;
-  flex-direction: column;
-  gap: 4px;
-  height: 100%;
-  padding: 16px;
-  cursor: pointer;
-}
-
-.pw-projects-card-head {
-  display: flex;
-  min-width: 0;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  padding: 0 12px 8px 18px;
 }
 
-.pw-projects-card-head > h2 {
-  flex: 1 1 auto;
-  min-width: 0;
+.pw-projects-view-chip {
+  min-height: 28px;
+  border-radius: 9999px;
+}
+
+.pw-projects-view-bar .pw-active-filter-bar {
   margin: 0;
 }
 
-.pw-projects-card-menu {
-  flex: 0 0 auto;
-  display: inline-flex;
-  margin: -6px 0;
-}
-
-.pw-projects-card-meta {
+.pw-projects-content {
   display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: auto;
-  padding-top: 12px;
+  flex-direction: column;
 }
 
-.pw-projects-card:hover,
-.pw-projects-card:focus-visible {
-  background: linear-gradient(to bottom, var(--color-surface-hover), var(--color-surface-subtle));
-}
-
-.pw-projects-card-folder {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.pw-projects-card-description {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
-  margin: 6px 0 0;
+.pw-projects-table .pw-data-table-column-header {
+  height: 32px;
+  padding-block: 0;
   color: var(--color-text-muted);
+  font-size: 12px;
+  font-variation-settings: var(--font-variation-medium);
+}
+
+/* Centered on the line box, the 28px sort button keeps the header row at 32px. */
+.pw-projects-table .pw-data-table-column-header > * {
+  vertical-align: middle;
+}
+
+.pw-projects-table .pw-data-table-cell {
+  height: 48px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.pw-projects-table .pw-data-table-primary {
+  gap: 8px;
+}
+
+.pw-projects-table .pw-data-table-primary-title {
   font-size: 13px;
-  line-height: 1.3;
+}
+
+.pw-projects-description {
+  margin-left: 8px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+/* Row actions appear on hover, keyboard focus, or while their menu is open. */
+.pw-projects-row-menu > * {
+  visibility: hidden;
+}
+
+.pw-data-table-row:is(:hover, :focus-within, [data-fluid-hover-active]) > .pw-projects-row-menu > *,
+.pw-projects-row-menu:has([data-state="open"]) > * {
+  visibility: visible;
 }
