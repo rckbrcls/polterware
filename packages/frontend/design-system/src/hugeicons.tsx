@@ -12,6 +12,7 @@ import {
   BookOpen as BookOpenDefinition,
   BookOpen02Icon as BookOpen02IconDefinition,
   Bookshelf01Icon as Bookshelf01IconDefinition,
+  Bookmark02Icon as Bookmark02IconDefinition,
   Bot as BotDefinition,
   BoxIcon as BoxDefinition,
   BoxesIcon as BoxesDefinition,
@@ -129,6 +130,16 @@ import {
   Menu01Icon as Menu01IconDefinition,
   ArrowRight02Icon as ArrowRight02IconDefinition,
   ArrowUpRight01Icon as ArrowUpRight01IconDefinition,
+  AiBrain01Icon as AiBrain01IconDefinition,
+  AiSearchIcon as AiSearchIconDefinition,
+  FirewallIcon as FirewallIconDefinition,
+  GridTableIcon as GridTableIconDefinition,
+  InfinityIcon as InfinityIconDefinition,
+  Key01Icon as Key01IconDefinition,
+  McpServerIcon as McpServerIconDefinition,
+  RoboticIcon as RoboticIconDefinition,
+  SlidersHorizontalIcon as SlidersHorizontalIconDefinition,
+  SquareLock02Icon as SquareLock02IconDefinition,
 } from "@hugeicons/core-free-icons";
 
 type HugeIconNodeAttributes = Readonly<Record<string, string | number>>;
@@ -251,6 +262,7 @@ const iconDefinitions = {
   BookOpen: BookOpenDefinition,
   BookOpen02Icon: BookOpen02IconDefinition,
   Bookshelf01Icon: Bookshelf01IconDefinition,
+  Bookmark: Bookmark02IconDefinition,
   Bot: BotDefinition,
   Box: BoxDefinition,
   Boxes: BoxesDefinition,
@@ -372,6 +384,17 @@ const iconDefinitions = {
   Menu01Icon: Menu01IconDefinition,
   ArrowRight02Icon: ArrowRight02IconDefinition,
   ArrowUpRight01Icon: ArrowUpRight01IconDefinition,
+  // Canvas component types.
+  AiBrain01Icon: AiBrain01IconDefinition,
+  AiSearchIcon: AiSearchIconDefinition,
+  FirewallIcon: FirewallIconDefinition,
+  GridTableIcon: GridTableIconDefinition,
+  InfinityIcon: InfinityIconDefinition,
+  Key01Icon: Key01IconDefinition,
+  McpServerIcon: McpServerIconDefinition,
+  RoboticIcon: RoboticIconDefinition,
+  SlidersHorizontalIcon: SlidersHorizontalIconDefinition,
+  SquareLock02Icon: SquareLock02IconDefinition,
 } satisfies Record<string, HugeIconDefinition>;
 
 type PolterIconName = keyof typeof iconDefinitions;
@@ -398,6 +421,7 @@ export const {
   BookOpen,
   BookOpen02Icon,
   Bookshelf01Icon,
+  Bookmark,
   Bot,
   Box,
   Boxes,
@@ -519,6 +543,16 @@ export const {
   Menu01Icon,
   ArrowRight02Icon,
   ArrowUpRight01Icon,
+  AiBrain01Icon,
+  AiSearchIcon,
+  FirewallIcon,
+  GridTableIcon,
+  InfinityIcon,
+  Key01Icon,
+  McpServerIcon,
+  RoboticIcon,
+  SlidersHorizontalIcon,
+  SquareLock02Icon,
 } = iconComponents;
 
 export const PlusIcon = Plus;

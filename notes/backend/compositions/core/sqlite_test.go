@@ -126,7 +126,7 @@ func TestSqliteEveryRPCAgainstTempDB(t *testing.T) {
 		}
 		return true
 	})
-	if count != 65 {
+	if count != 68 {
 		t.Fatalf("RPC coverage changed: %d unary RPCs", count)
 	}
 }

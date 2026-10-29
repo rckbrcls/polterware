@@ -14,3 +14,17 @@ export function FloatingSurfaceProvider(props: { children: JSX.Element }) {
 export function useInFloatingSurface(): boolean {
   return useContext(FloatingSurfaceContext);
 }
+
+const TextureFaceContext = createContext(false);
+
+/**
+ * Makes every solid (keycap) button in its subtree, icon-only ones included, render the texture face.
+ * An app wraps its root in it to keep keycaps in the library while its own surfaces use texture buttons.
+ */
+export function TextureFaceProvider(props: { children: JSX.Element }) {
+  return <TextureFaceContext.Provider value={true}>{props.children}</TextureFaceContext.Provider>;
+}
+
+export function useTextureFace(): boolean {
+  return useContext(TextureFaceContext);
+}

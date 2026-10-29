@@ -1,4 +1,4 @@
-// Package canvas is a typed property graph. Layout (positions, sizes, groups)
+// Package canvas is a semantic property graph. Layout (positions, sizes, groups)
 // is stored beside the graph and is never part of its semantics.
 package canvas
 
@@ -10,42 +10,28 @@ import (
 )
 
 const (
-	TypeFree         = "free"
-	TypeArchitecture = "architecture"
-	TypeRoadmap      = "roadmap"
-	TypeFlow         = "flow"
-	TypeBrainstorm   = "brainstorm"
-	TypeIdeas        = "ideas"
+	// TypeCanvas is the one canvas type: drawing shapes plus semantic components.
+	TypeCanvas = "canvas"
 
-	// Annotations are allowed on every canvas type and skip structural rules.
+	// Annotations skip structural rules.
 	KindNote = "note"
 	KindText = "text"
 
-	KindLane      = "lane"
-	KindMilestone = "milestone"
-	KindItem      = "item"
-
+	// Structure kinds cite a Structure node.
 	KindSystem    = "system"
 	KindDomain    = "domain"
 	KindComponent = "component"
-	KindService   = "service"
-	KindDatabase  = "database"
-	KindQueue     = "queue"
 
-	KindStep     = "step"
-	KindDecision = "decision"
-	KindStart    = "start"
-	KindEnd      = "end"
-
-	KindIdea  = "idea"
-	KindGroup = "group"
-
-	EdgeDependsOn = "depends_on"
-	EdgePrecedes  = "precedes"
-	EdgeUses      = "uses"
-	EdgeContains  = "contains"
-	EdgeNext      = "next"
-	EdgeRelates   = "relates"
+	EdgeRelates    = "relates"
+	EdgeFlows      = "flows"
+	EdgeUses       = "uses"
+	EdgeCalls      = "calls"
+	EdgeReads      = "reads"
+	EdgeWrites     = "writes"
+	EdgePublishes  = "publishes"
+	EdgeSubscribes = "subscribes"
+	EdgeDependsOn  = "depends_on"
+	EdgeContains   = "contains"
 
 	// Entity refs. RefNode is an Atlas structure node.
 	RefCard     = "card"
@@ -63,6 +49,41 @@ const (
 )
 
 var (
+	// ShapeKinds are the drawing shapes, in palette order. They carry no
+	// meaning and skip structural rules. Names never collide with a component
+	// kind (cylinder, not database).
+	ShapeKinds = []string{
+		"rectangle", "rounded", "square", "ellipse", "circle", "diamond", "triangle",
+		"hexagon", "parallelogram", "trapezoid", "cylinder", "cloud", "document",
+		"actor", "callout", "process", "terminator", "predefined", "manual-input",
+		"delay", "display", "frame",
+	}
+
+	// ComponentKinds are the semantic components, in palette order. Each may
+	// carry a technology prop and an optional ref to a Structure node.
+	ComponentKinds = []string{
+		"frontend", "mobile", "desktop", "cli",
+		"service", "api", "gateway", "worker", "function", "scheduler",
+		"database", "cache", "queue", "stream", "storage", "search", "warehouse",
+		"auth", "cdn", "cluster", "monitoring",
+		"external", "llm", "payment", "email",
+		"user", "team",
+		"agent", "mcp", "vector",
+		"secrets", "firewall", "kms",
+		"logs", "tracing", "alerting",
+		"pipeline", "ci", "webhook",
+		"config", "spec", "dataset",
+	}
+
+	// StructureKinds mirror Structure levels and always ref a Structure node.
+	StructureKinds = []string{KindSystem, KindDomain, KindComponent}
+
+	// EdgeKinds are the connection kinds, in palette order.
+	EdgeKinds = []string{
+		EdgeRelates, EdgeFlows, EdgeUses, EdgeCalls, EdgeReads, EdgeWrites,
+		EdgePublishes, EdgeSubscribes, EdgeDependsOn, EdgeContains,
+	}
+
 	ErrInvalidGraph = errors.New("invalid canvas graph")
 	ErrUnknownType  = errors.New("unknown canvas type")
 	ErrNameRequired = errors.New("canvas name is required")

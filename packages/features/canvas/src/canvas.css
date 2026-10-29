@@ -1,10 +1,585 @@
-.pw-canvas-editor { touch-action: none; }
-.pw-canvas-surface { background-image: radial-gradient(circle, var(--color-border-default) 1px, var(--color-surface) 1px); background-size: var(--canvas-grid-size, 24px) var(--canvas-grid-size, 24px); background-position: var(--canvas-grid-position, 0 0); }
-.pw-canvas-selected { outline: 1px solid var(--color-text-primary); outline-offset: -1px; border-radius: var(--radius-card); }
-.pw-canvas-text { background: var(--color-surface-subtle); }
-.pw-canvas-diamond-content { padding: 12% 24% !important; gap: 0; }
-.pw-canvas-frame { align-items: flex-start !important; justify-content: flex-start !important; }
-.pw-canvas-dock.card-texture-framed[data-texture], .pw-canvas-zoom.card-texture-framed[data-texture], .pw-canvas-rail.card-texture-framed[data-texture] { --tx-face-radius: 999px; position: absolute; bottom: 12px; display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 999px; box-shadow: 0 8px 24px var(--color-shadow-float); }
-.pw-canvas-dock { left: 50%; transform: translateX(-50%); }
-.pw-canvas-zoom { right: 12px; }
-.pw-canvas-rail { left: 12px; }
+/* Canvas list: the same card grid, hierarchy and hover as the Projects screen. */
+.pw-canvas-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-content: start;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0;
+  padding: 16px;
+  box-sizing: border-box;
+  list-style: none;
+}
+
+.pw-canvas-card {
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  min-height: 200px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* The miniature covers the face, so hover lifts the miniature instead. */
+.pw-canvas-card:hover .pw-canvas-card-preview,
+.pw-canvas-card:focus-visible .pw-canvas-card-preview {
+  filter: brightness(1.12);
+}
+
+/* The miniature fills the whole card inside its frame and rim; the title and badges float over its grid. */
+.pw-canvas-card-preview {
+  position: absolute;
+  z-index: 0;
+  inset: 1px;
+  overflow: hidden;
+  border-radius: calc(var(--radius-card) - 2px);
+  transition: filter var(--duration-fast) var(--ease-standard);
+}
+
+/* The miniature fades into the card face under the floating title row. */
+.pw-canvas-card-preview::after {
+  position: absolute;
+  inset: auto 0 0;
+  height: 96px;
+  background: var(--material-fade-edge-top);
+  content: "";
+  pointer-events: none;
+}
+
+.pw-canvas-card-head {
+  position: relative;
+  z-index: 1;
+}
+
+.pw-canvas-card-head {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.pw-canvas-card-head > h2 {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+.pw-canvas-card-menu {
+  flex: 0 0 auto;
+  display: inline-flex;
+  margin: -6px 0;
+}
+
+.pw-canvas-card-flag {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+}
+
+/* Editor: toolbar, two panels and the canvas well between them. */
+.pw-canvas-editor-page {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+}
+
+.pw-canvas-editor-leading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.pw-canvas-name {
+  width: 224px;
+}
+
+.pw-canvas-save {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.pw-canvas-save[data-state="error"] {
+  color: var(--color-danger);
+}
+
+.pw-canvas-toolbar-separator {
+  height: 16px;
+  margin: 0 2px;
+  align-self: center;
+}
+
+.pw-canvas-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 8px;
+  color: var(--color-danger);
+  font-size: 13px;
+}
+
+.pw-canvas-workspace {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.pw-canvas-stage {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+}
+
+.pw-canvas-topbar {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+/* Only the controls catch pointers; the empty stretch between them stays the canvas. */
+.pw-canvas-topbar > * > * {
+  pointer-events: auto;
+}
+
+.pw-canvas-editor {
+  touch-action: none;
+}
+
+/* The well sits one step below the panels; the dotted grid follows the viewport. */
+.pw-canvas-surface {
+  background-color: var(--color-app-background);
+  /* A small, quiet dot with a soft edge, so the grid reads as texture rather than pattern. */
+  background-image: radial-gradient(circle, var(--color-border-default) 0.75px, var(--color-app-background) 1.25px);
+  background-size: var(--canvas-grid-size, 24px) var(--canvas-grid-size, 24px);
+  background-position: var(--canvas-grid-position, 0 0);
+}
+
+.pw-canvas-surface:focus-visible {
+  outline: none;
+}
+
+.pw-canvas-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* Floating docks over the canvas (DESIGN.md: editors group tools in a floating dock, not a crowded header). */
+.pw-canvas-dock.card-texture-framed[data-texture] {
+  --tx-face-radius: 999px;
+  position: absolute;
+  bottom: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px var(--color-shadow-float);
+}
+
+.pw-canvas-dock--tools {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.pw-canvas-dock-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.pw-canvas-dock--hint.card-texture-framed[data-texture] {
+  top: 52px;
+  bottom: auto;
+  left: 12px;
+  padding: 5px 12px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.pw-canvas-zoom-level {
+  width: 38px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* Pressed tools, checked swatches and the chosen connection kind share one flat selected fill. */
+.pw-canvas-editor-page .pw-button-flat:is([aria-pressed="true"], [aria-checked="true"], [data-selected]) {
+  color: var(--color-text-primary);
+}
+
+.pw-canvas-editor-page .pw-button-flat:is([aria-pressed="true"], [aria-checked="true"], [data-selected])::before {
+  background-color: var(--color-surface-selected);
+}
+
+/* Side panels. */
+.pw-canvas-panel {
+  background: var(--color-surface);
+}
+
+.pw-canvas-panel[data-side="left"] {
+  border-right: 1px solid var(--color-border-default);
+}
+
+.pw-canvas-panel[data-side="right"] {
+  border-left: 1px solid var(--color-border-default);
+}
+
+.pw-canvas-panel-root {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+}
+
+.pw-canvas-panel-head {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 12px 8px;
+}
+
+.pw-canvas-panel-title {
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pw-canvas-panel-detail {
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pw-canvas-panel-tabs {
+  padding: 0 8px 4px;
+}
+
+.pw-canvas-panel-body {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 4px 12px 12px;
+}
+
+.pw-canvas-panel-note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Shape library tiles and rows. */
+/* The shape library shows each kind as the gallery draws it: the real shape fitted to a small art box, its name below. */
+.pw-canvas-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.pw-canvas-library-tile.pw-canvas-library-tile {
+  display: flex;
+  width: 100%;
+  height: auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 6px 6px 4px;
+  border-radius: var(--radius-control);
+}
+
+.pw-canvas-library-art {
+  display: block;
+  height: 52px;
+  pointer-events: none;
+}
+
+.pw-canvas-library-tile .pw-canvas-library-art > svg.pw-canvas-gallery-art {
+  width: 100%;
+  height: 100%;
+}
+
+.pw-canvas-library-name {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pw-canvas-library-group {
+  margin: 8px 2px 4px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.pw-canvas-library-group:first-child {
+  margin-top: 0;
+}
+
+.pw-canvas-library-tile:hover .pw-canvas-library-name {
+  color: var(--color-text-primary);
+}
+
+/* Library and inspector sections sit tighter than a detail panel: shorter toggles, no inner top gap. */
+.pw-canvas-panel-body .pw-detail-panel__section-toggle {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+.pw-canvas-panel-body .pw-detail-panel__section-body {
+  gap: 8px;
+  padding: 0 0 10px;
+}
+
+.pw-canvas-swatch {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+}
+
+/* Shapes, selection and connections. */
+/* A sticky note: a bold title over its body, read from the top left and clear of the folded corner, in the note's ink. */
+.pw-canvas-note {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px 22px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.pw-canvas-note :is(span, textarea, input) {
+  color: inherit;
+  text-align: start;
+}
+
+.pw-canvas-note-title span {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.pw-canvas-note-body {
+  min-height: 0;
+  flex: 1;
+  margin: 0;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pw-canvas-selection {
+  fill: none;
+  stroke: var(--color-info);
+  stroke-width: 1.5;
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.pw-canvas-handle {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-info);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  transition: fill var(--duration-fast) var(--ease-standard);
+}
+
+.pw-canvas-handle:hover {
+  fill: var(--color-info);
+}
+
+.pw-canvas-edge path {
+  stroke: var(--color-text-muted);
+  transition: stroke var(--duration-fast) var(--ease-standard);
+}
+
+.pw-canvas-edge--interactive {
+  cursor: pointer;
+}
+
+.pw-canvas-edge--interactive:hover path {
+  stroke: var(--color-text-secondary);
+}
+
+.pw-canvas-edge[data-selected] path {
+  stroke: var(--color-info);
+}
+
+.pw-canvas-edge text {
+  fill: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.pw-canvas-edge[data-selected] text {
+  fill: var(--color-text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pw-canvas-save,
+  .pw-canvas-handle,
+  .pw-canvas-edge path {
+    transition: none;
+  }
+}
+
+/* The Work board card on the canvas: field frame, subtle surface and one inner ring, without the Card rings or lift. */
+.card-panel.pw-canvas-field-card {
+  border-color: var(--field-frame);
+  background: var(--color-surface-subtle);
+  box-shadow: var(--field-rings);
+}
+
+/* Components and Structure nodes: the Atlas card layout inside the family silhouette, with the type as its icon tile. */
+.pw-canvas-node-card {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+  user-select: none;
+}
+
+.pw-canvas-node-card-text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.pw-canvas-node-card .pw-canvas-node-card-text > * {
+  max-width: 100%;
+  text-align: start;
+}
+
+.pw-canvas-node-card-text > span:not(.pw-canvas-node-card-sub) {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.pw-canvas-node-card-sub {
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--color-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Shape gallery: every kind drawn by the real node renderer, grouped like the shape library and centered on the page. */
+.pw-canvas-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 16px 32px;
+  box-sizing: border-box;
+}
+
+.pw-canvas-gallery-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pw-canvas-gallery-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 0 2px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.pw-canvas-gallery-heading span {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.pw-canvas-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* No card around a kind: the drawing sits on the page grid like a shape on the canvas. */
+.pw-canvas-gallery-tile {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pw-canvas-gallery-art-box {
+  height: 132px;
+}
+
+.pw-canvas-gallery-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.pw-canvas-gallery-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+}

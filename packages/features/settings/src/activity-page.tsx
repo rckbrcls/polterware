@@ -6,7 +6,7 @@ import {
   type DispatchRunEventView,
   type DispatchRunView,
 } from "@polterware/feature-dispatch";
-import { EntityDetailHost, scopeFilterMenuGroups, scopeFilterPills, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
+import { EntityDetailHost, createPageFilters, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
 import {
   FilterPopover,
   ActiveFilterBar,
@@ -14,7 +14,8 @@ import {
   PageToolbar,
   Tabs,
   pushToast,
-  type FilterPopoverGroup,
+  matchClauses,
+  type FilterField,
 } from "@polterware/frontend-design-system";
 import type { AgentRunDetail, ProjectChangeRow } from "./agents-types";
 import { agentsBridge, mapAgentRunDetail, mapProjectChanges } from "./agents-bridge";
@@ -42,8 +43,6 @@ export function ActivityPage(props: {
   const [knownAgents, setKnownAgents] = createSignal<string[]>([]);
   const [knownTiers, setKnownTiers] = createSignal<string[]>([...DEFAULT_TIERS]);
   const [actorFilter, setActorFilter] = createSignal<ChangeActorFilter>("all");
-  const [dispatchAgentFilter, setDispatchAgentFilter] = createSignal("");
-  const [dispatchTierFilter, setDispatchTierFilter] = createSignal("");
   const [selectedStepId, setSelectedStepId] = createSignal("");
   const [selectedDispatchEventId, setSelectedDispatchEventId] = createSignal("");
   const [runDetail, setRunDetail] = createSignal<AgentRunDetail | undefined>();
@@ -76,22 +75,19 @@ export function ActivityPage(props: {
     }
   };
 
-  const refreshDispatchHistory = async (agentOverride?: string, tierOverride?: string) => {
+  /** Dispatch history is fetched unfiltered and narrowed by the page's clauses, so `is not` works. */
+  const refreshDispatchHistory = async () => {
     const dBridge = dispatchBridge();
     const projectId = props.projectId.trim();
     if (!dBridge || !projectId) {
       setDispatchEvents([]);
       return;
     }
-    const agent = agentOverride ?? dispatchAgentFilter();
-    const tier = tierOverride ?? dispatchTierFilter();
     try {
       const events = mapDispatchHistory(
         await dBridge.listHistory({
           projectId,
-          limit: 50,
-          ...(agent ? { agent } : {}),
-          ...(tier ? { tier } : {}),
+          limit: 200,
         }),
       );
       setDispatchEvents(events);
@@ -166,52 +162,37 @@ export function ActivityPage(props: {
     }
   };
 
-  const dispatchFilterGroups = (): FilterPopoverGroup[] => {
-    const groups: FilterPopoverGroup[] = [
-      {
-        id: "tier",
-        label: "Tier",
-        selectionMode: "single",
-        options: knownTiers().map((tier) => ({
-          id: tier,
-          label: tier,
-          checked: dispatchTierFilter() === tier,
-          onCheckedChange: (checked: boolean) => {
-            const next = checked ? tier : "";
-            setDispatchTierFilter(next);
-            void refreshDispatchHistory(dispatchAgentFilter(), next);
-          },
-        })),
-      },
-    ];
-    const agents = knownAgents();
-    if (agents.length > 0) {
-      groups.push({
-        id: "agent",
-        label: "Agent",
-        selectionMode: "single",
-        options: agents.map((agent) => ({
-          id: agent,
-          label: agent,
-          checked: dispatchAgentFilter() === agent,
-          onCheckedChange: (checked: boolean) => {
-            const next = checked ? agent : "";
-            setDispatchAgentFilter(next);
-            void refreshDispatchHistory(next, dispatchTierFilter());
-          },
-        })),
-      });
-    }
-    return groups;
-  };
-
-  const filteredDispatchEvents = createMemo(() => {
-    const agent = dispatchAgentFilter();
-    const tier = dispatchTierFilter();
-    return dispatchEvents().filter(
-      (event) => (!agent || event.agent === agent) && (!tier || event.tier === tier),
-    );
+  const fields = (): FilterField[] => [
+    {
+      id: "tier",
+      label: "Tier",
+      kind: "multi",
+      options: knownTiers().map((tier) => ({ id: tier, label: tier })),
+    },
+    {
+      id: "agent",
+      label: "Agent",
+      kind: "multi",
+      options: knownAgents().map((agent) => ({ id: agent, label: agent })),
+    },
+  ];
+  const filters = createPageFilters({
+    surface: "activity",
+    fields,
+    scope: {
+      tokens: () => props.scopeTokens ?? [],
+      nodes: () => props.scopeCatalogNodes ?? [],
+      environments: () => props.scopeEnvironments ?? [],
+      allowEnv: true,
+      onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
+    },
   });
+
+  const filteredDispatchEvents = createMemo(() =>
+    dispatchEvents().filter((event) =>
+      matchClauses(event, filters.pageClauses(), { tier: (item) => item.tier, agent: (item) => item.agent }),
+    ),
+  );
 
   // The page stays mounted across project switches: drop the previous project's rows and reload.
   createEffect(
@@ -257,29 +238,19 @@ export function ActivityPage(props: {
           <FilterPopover
             ariaLabel="Activity filters"
             title="Filter activity"
-            active={dispatchTierFilter() !== "" || dispatchAgentFilter() !== "" || (props.scopeTokens?.length ?? 0) > 0}
-            onClear={() => {
-              setDispatchTierFilter("");
-              setDispatchAgentFilter("");
-              props.onScopeTokensChange?.([]);
-              void refreshDispatchHistory("", "");
-            }}
-            groups={[
-              ...scopeFilterMenuGroups({
-                tokens: props.scopeTokens ?? [],
-                nodes: props.scopeCatalogNodes ?? [],
-                environments: props.scopeEnvironments ?? [],
-                allowEnv: true,
-                onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
-              }),
-              ...dispatchFilterGroups(),
-            ]}
+            shortcut
+            fields={filters.fields()}
+            clauses={filters.clauses()}
+            onClausesChange={filters.onClausesChange}
+            saved={filters.saved()}
           />
         </PageToolbar.Actions>
       </PageToolbar.Root>
       <ActiveFilterBar
-        items={scopeFilterPills(props.scopeTokens ?? [], (tokens) => props.onScopeTokensChange?.(tokens))}
-        onClear={() => props.onScopeTokensChange?.([])}
+        fields={filters.fields()}
+        clauses={filters.clauses()}
+        onClausesChange={filters.onClausesChange}
+        saved={filters.saved()}
       />
       <PageContent class="flex min-h-0 flex-1 flex-col p-0">
         <AgentRunHistoryCard

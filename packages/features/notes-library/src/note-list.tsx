@@ -1,6 +1,6 @@
 import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount, type JSX } from "solid-js";
-import { A11yDialog, ActiveFilterBar, AuroraCover, auroraForId, Button, CalendarClock, Card, Check, Checkbox, ContextMenu, Delete, ExternalLink, Inbox, Pin, PinOff, CollapsibleSection, FileText, Folder, FilterPopover, ListChecks, MoreHorizontal, Plus, PageEmpty, PageError, PageLoading, PageOffline, PageToolbar, SearchBar, Select, TemplateCardGrid, type ActiveFilterPill, type FilterPopoverGroup, type TemplateCardGridItem } from "@polterware/frontend-design-system";
-import { NoteDetailHost } from "@polterware/feature-notes-shell/feature";
+import { A11yDialog, ActiveFilterBar, AuroraCover, auroraForId, Button, CalendarClock, Card, Check, Checkbox, ContextMenu, Delete, ExternalLink, Inbox, Pin, PinOff, CollapsibleSection, FileText, Folder, FilterPopover, ListChecks, MoreHorizontal, Plus, PageEmpty, PageError, PageLoading, PageOffline, PageToolbar, SearchBar, Select, TemplateCardGrid, createSavedFilters, matchClauses, pushToast, type FilterClause, type FilterField, type TemplateCardGridItem } from "@polterware/frontend-design-system";
+import { NoteDetailHost, notesSavedFiltersApi } from "@polterware/feature-notes-shell/feature";
 import { browserBridge } from "./bridge";
 import { createCardReorder, type FolderItem } from "./card-reorder";
 import { errorText, filterRows, todayGroup, DEFAULT_FILTER, type NoteRow } from "./model";
@@ -14,14 +14,11 @@ import { UndoNotice } from "./undo-notice";
 export type NoteCollectionProps = { spaceId?: string; mode?: "today" | "inbox" | "space" | "spaces"; store?: NotesStore; onOpen?: (id: string) => void; virtualized?: boolean; leading?: JSX.Element; trailing?: JSX.Element; onCreateSpace?: () => void; folderItems?: FolderItem[]; onReorderFolders?: (updates: { id: string; sortOrder: number }[]) => Promise<void> | void; canDropInto?: (held: HeldItem, spaceId: string) => boolean; onDropInto?: (held: HeldItem, spaceId: string) => Promise<void> | void };
 export type HeldItem = { kind: "space" | "note"; id: string };
 /** Nothing is filtered out until the user narrows by status. */
-const DEFAULT_STATUS = "";
 export function NoteCollection(props: NoteCollectionProps) {
   const store = props.store ?? notesStore;
   const shell = tryNotesShell();
   const [query, setQuery] = createSignal("");
-  const [status, setStatus] = createSignal(DEFAULT_STATUS);
-  const [pinned, setPinned] = createSignal(false);
-  const [tagId, setTagId] = createSignal("");
+  const [clauses, setClauses] = createSignal<FilterClause[]>([]);
   const [selection, setSelection] = createSignal<ReadonlySet<string>>(new Set<string>());
   const [activeId, setActiveId] = createSignal<string | null>(null);
   const [busy, setBusy] = createSignal(false);
@@ -56,8 +53,9 @@ export function NoteCollection(props: NoteCollectionProps) {
     }
     return dates;
   });
-  const filtered = createMemo(() => filterRows(store.rows(), { ...DEFAULT_FILTER, query: query(), status: status(), pinned: pinned(), tagId: tagId(), order: DEFAULT_FILTER.order,
-    inbox: mode() === "inbox", spaceId: mode() === "space" ? props.spaceId : undefined }));
+  const filtered = createMemo(() => filterRows(store.rows(), { ...DEFAULT_FILTER, query: query(), status: "", pinned: false, tagId: "", order: DEFAULT_FILTER.order,
+    inbox: mode() === "inbox", spaceId: mode() === "space" ? props.spaceId : undefined })
+    .filter(row => matchClauses(row, clauses(), { pinned: item => item.pinned, status: item => item.status, tags: item => item.tagIds })));
   const displayRows = createMemo(() => {
     if (mode() === "spaces") return [];
     if (mode() !== "today") return filtered();
@@ -134,7 +132,7 @@ export function NoteCollection(props: NoteCollectionProps) {
     if (shell?.newNote) void shell.newNote({ spaceId: props.spaceId });
     else void createFrom({ title: "Untitled" });
   }
-  const narrowed = () => Boolean(query() || pinned() || tagId() || status() !== DEFAULT_STATUS);
+  const narrowed = () => Boolean(query() || clauses().length > 0);
   const templateItems = (): TemplateCardGridItem[] => [
     { id: "note", title: "Note", description: "A short note you can fill in.", tone: "knowledge", icon: <FileText size={16} />, onSelect: () => void createFrom({ title: "Note" }) },
     { id: "checklist", title: "Checklist", description: "A few steps to check off.", tone: "execution", icon: <ListChecks size={16} />, onSelect: () => void createFrom({ title: "Checklist", checklist: [
@@ -177,23 +175,20 @@ export function NoteCollection(props: NoteCollectionProps) {
     else if (id && event.key === " " && element.matches("[data-row-id]")) { event.preventDefault(); event.stopPropagation(); void store.toggle(id, "status"); }
     else if (id && event.key.toLowerCase() === "e" && !event.metaKey && !event.ctrlKey) { event.preventDefault(); event.stopPropagation(); open(id); queueMicrotask(() => document.querySelector<HTMLInputElement>("[data-note-title]")?.focus()); }
   };
-  const resetFilters = () => { setStatus(DEFAULT_STATUS); setPinned(DEFAULT_FILTER.pinned); setTagId(DEFAULT_FILTER.tagId); };
-  const filtersActive = () => status() !== DEFAULT_STATUS || pinned() || Boolean(tagId());
-  const filterGroups = createMemo((): FilterPopoverGroup[] => [
-    { id: "pinned", label: "Pinned", inline: true, options: [{ id: "pinned", label: "Pinned", checked: pinned(), onCheckedChange: setPinned }] },
-    { id: "status", label: "Status", selectionMode: "single", options: [
-      { id: "active", label: "Active", checked: status() === "active", onCheckedChange: checked => setStatus(checked ? "active" : DEFAULT_STATUS) },
-      { id: "completed", label: "Completed", checked: status() === "completed", onCheckedChange: checked => setStatus(checked ? "completed" : DEFAULT_STATUS) },
+  const filterFields = createMemo((): FilterField[] => [
+    { id: "status", label: "Status", pluralLabel: "statuses", kind: "single", icon: () => <Check size={14} aria-hidden="true" />, options: [
+      { id: "active", label: "Active", icon: () => <Inbox size={14} aria-hidden="true" /> },
+      { id: "completed", label: "Completed", icon: () => <Check size={14} aria-hidden="true" /> },
     ] },
-    { id: "tags", label: "Tags", selectionMode: "single", options: store.tags().map(tag => ({ id: tag.id ?? "", label: tag.name ?? "Unnamed tag", checked: tagId() === tag.id, onCheckedChange: checked => setTagId(checked ? tag.id ?? "" : "") })) },
+    { id: "tags", label: "Tag", kind: "multi", icon: () => <ListChecks size={14} aria-hidden="true" />, options: store.tags().map(tag => ({ id: tag.id ?? "", label: tag.name ?? "Unnamed tag" })) },
+    { id: "pinned", label: "Note", menuLabel: "Pinned", kind: "boolean", section: "flags", icon: () => <Pin size={14} aria-hidden="true" />, options: [{ id: "pinned", label: "Pinned", icon: () => <Pin size={14} aria-hidden="true" /> }] },
   ]);
-  const activeFilters = createMemo((): ActiveFilterPill[] => {
-    const pills: ActiveFilterPill[] = [];
-    if (status() === "active") pills.push({ id: "status", label: "Active", onRemove: () => setStatus(DEFAULT_STATUS) });
-    if (status() === "completed") pills.push({ id: "status", label: "Completed", onRemove: () => setStatus(DEFAULT_STATUS) });
-    if (pinned()) pills.push({ id: "pinned", label: "Pinned", onRemove: () => setPinned(false) });
-    if (tagId()) pills.push({ id: "tag", label: store.tags().find(tag => tag.id === tagId())?.name ?? "Tag", onRemove: () => setTagId("") });
-    return pills;
+  const savedApi = notesSavedFiltersApi("notes.library");
+  const saved = createSavedFilters({
+    api: () => savedApi,
+    clauses,
+    onApply: next => setClauses(next),
+    onError: message => pushToast(`Saved filters failed: ${message}`, "danger"),
   });
   const cards = (keys: () => string[]) => (
             <For each={keys()}>{key => { const item = () => itemByKey().get(key); return <Show when={item()}><li
@@ -254,12 +249,12 @@ export function NoteCollection(props: NoteCollectionProps) {
       <PageToolbar.Actions>
         <Show when={mode() !== "spaces"}>
           <SearchBar aria-label="Filter notes" placeholder="Filter notes" value={query()} onInput={setQuery} />
-          <FilterPopover ariaLabel="Filters" active={filtersActive()} onClear={resetFilters} groups={filterGroups()} />
+          <FilterPopover ariaLabel="Filters" shortcut fields={filterFields()} clauses={clauses()} onClausesChange={setClauses} saved={saved()} />
         </Show>
         {props.trailing}
       </PageToolbar.Actions>
     </PageToolbar.Root>
-    <ActiveFilterBar items={activeFilters()} onClear={resetFilters} />
+    <ActiveFilterBar fields={filterFields()} clauses={clauses()} onClausesChange={setClauses} saved={saved()} />
     <Show when={actionError()}><PageError title="Action failed" message={actionError()} /></Show>
     <For each={Object.entries(store.errors()).filter(([, value]) => Boolean(value))}>{([id, message]) => <div role="alert" class="flex items-center gap-2"><p>Note action failed: {message}</p><Button variant="secondary" onClick={() => open(id)}>Open note</Button></div>}</For>
     <Show when={mode() === "today" && store.scheduleError()}><p role="status">Scheduled notes unavailable: {store.scheduleError()}. Due notes are shown.</p></Show>

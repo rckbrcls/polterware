@@ -28,7 +28,8 @@
 .pw-detail-panel__frame {
   position: absolute;
   z-index: 5;
-  top: 8px; right: 8px; bottom: 8px;
+  /* Below a floating PageToolbar (tabs.css), the panel starts under its controls. */
+  top: calc(8px + var(--pw-toolbar-overlay, 0px)); right: 8px; bottom: 8px;
   display: flex;
   width: var(--detail-panel-width);
   min-width: 0; min-height: 0;

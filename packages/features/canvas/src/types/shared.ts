@@ -1,8 +1,8 @@
-import type { ArchNode, ArchitectureDocument, Relationship } from "@polterware/frontend-canvas";
+import type { ArchNode, Relationship } from "@polterware/frontend-canvas";
 import { edgePalette, nodePalette, type CanvasType } from "../model";
 
-export type NodeVariant = "card" | "ellipse" | "text" | "decision" | "terminal" | "sticky" | "frame" | "lane" | "milestone";
-export type InspectorField = { key: string; label: string; kind: "text" | "date" | "lane" | "color" };
+export type NodeVariant = "card" | "text" | "sticky" | "component";
+export type InspectorField = { key: string; label: string; kind: "text" | "color" };
 export type CanvasBehavior = {
   palette: typeof nodePalette;
   edges: typeof edgePalette;
@@ -10,19 +10,16 @@ export type CanvasBehavior = {
   edgeStyle: (kind: string) => { arrow: boolean; dashed?: boolean };
   edgeFields: (sourceKind: string) => readonly InspectorField[];
   fields: (kind: string) => readonly InspectorField[];
-  defaults: (kind: string, now?: Date) => Record<string, unknown>;
+  defaults: (kind: string) => Record<string, unknown>;
   initialGeometry?: (kind: string) => Partial<Pick<ArchNode, "width" | "height" | "zIndex">>;
-  layout?: (doc: ArchitectureDocument) => ArchitectureDocument;
-  drop?: (doc: ArchitectureDocument, movedIds: readonly string[]) => ArchitectureDocument;
-  hints: (doc: ArchitectureDocument) => string[];
   structureReferences?: boolean;
 };
 export const genericBehavior: CanvasBehavior = {
   palette: nodePalette, edges: edgePalette,
-  variant: (kind) => kind === "ellipse" ? "ellipse" : kind === "text" ? "text" : "card",
-  edgeStyle: () => ({ arrow: false }), edgeFields: () => [], fields: () => [], defaults: () => ({}), hints: () => [],
+  variant: (kind) => kind === "text" ? "text" : "card",
+  edgeStyle: () => ({ arrow: false }), edgeFields: () => [], fields: () => [], defaults: () => ({}),
 };
-export const annotation = (kind: string) => kind === "note" || kind === "text";
+export { annotation, freeform } from "../shapes";
 export function properties(item: Pick<ArchNode | Relationship, "metadata">): Record<string, unknown> {
   const value: unknown = JSON.parse(String(item.metadata?.propsJson || "{}"));
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Expected canvas properties to be an object.");

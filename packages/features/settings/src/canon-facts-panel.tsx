@@ -11,6 +11,8 @@ import {
   History,
   Link,
   ScrollText,
+  matchClauses,
+  type FilterClause,
 } from "@polterware/frontend-design-system";
 import { openDetail } from "@polterware/feature-shell";
 import { detailPanelStore } from "@polterware/frontend-state";
@@ -173,7 +175,8 @@ export function CanonFactsPanel(props: {
   loadFacts?: (projectId: string) => Promise<unknown>;
   loadEvidence?: (projectId: string) => Promise<unknown>;
   query: string;
-  truthClasses: readonly string[];
+  /** Page filter clauses; field `truth` matches the fact truth class. */
+  clauses: readonly FilterClause[];
   /** Bumped by the page toolbar's add button. */
   createToken: number;
   busy: boolean;
@@ -193,7 +196,7 @@ export function CanonFactsPanel(props: {
     const needle = props.query.trim().toLowerCase();
     return facts().filter(
       (fact) =>
-        (props.truthClasses.length === 0 || props.truthClasses.includes(fact.truthClass)) &&
+        matchClauses(fact, props.clauses, { truth: (item) => item.truthClass }) &&
         (!needle || [fact.statement, fact.id, fact.entityId, fact.source].some((value) => value.toLowerCase().includes(needle))),
     );
   });

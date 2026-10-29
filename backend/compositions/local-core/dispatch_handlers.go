@@ -707,6 +707,84 @@ func (core *Core) ListTiers(ctx context.Context, _ *connect.Request[localv1.List
 	return connect.NewResponse(&localv1.ListTiersResponse{Tiers: out}), nil
 }
 
+// ReplaceTiers stores a new tier table. Rows keep their request order within each tier.
+func (core *Core) ReplaceTiers(ctx context.Context, request *connect.Request[localv1.ReplaceTiersRequest]) (*connect.Response[localv1.ReplaceTiersResponse], error) {
+	table := dispatch.Table{Tiers: map[adapters.Tier][]dispatch.Entry{}}
+	for _, row := range request.Msg.GetTiers() {
+		tier := adapters.Tier(strings.TrimSpace(row.GetName()))
+		if !tier.Valid() {
+			return nil, invalid(fmt.Sprintf("unknown tier %q", row.GetName()))
+		}
+		table.Tiers[tier] = append(table.Tiers[tier], dispatch.Entry{
+			Provider: strings.TrimSpace(row.GetProvider()),
+			Agent:    strings.TrimSpace(row.GetAgent()),
+			Model:    strings.TrimSpace(row.GetModel()),
+			Speed:    int(row.GetSpeed()),
+			Strength: int(row.GetStrength()),
+		})
+	}
+	validated, err := table.Validated()
+	if err != nil {
+		return nil, invalid(err.Error())
+	}
+	if err := core.Store.ReplaceTiers(ctx, validated.Rows()); err != nil {
+		return nil, internal(err)
+	}
+	rows, err := core.Store.ListTiers(ctx)
+	if err != nil {
+		return nil, internal(err)
+	}
+	out := make([]*localv1.DispatchTier, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, dispatchTierProto(row))
+	}
+	return connect.NewResponse(&localv1.ReplaceTiersResponse{Tiers: out}), nil
+}
+
+// ListModels asks every installed agent CLI for its models, in parallel and bounded by a timeout.
+func (core *Core) ListModels(ctx context.Context, _ *connect.Request[localv1.ListModelsRequest]) (*connect.Response[localv1.ListModelsResponse], error) {
+	type listed struct {
+		models  []*localv1.DispatchModel
+		problem string
+	}
+	known := adapters.Known()
+	results := make([]listed, len(known))
+	var wg sync.WaitGroup
+	for i, a := range known {
+		if _, err := exec.LookPath(a.Binary()); err != nil {
+			continue
+		}
+		wg.Add(1)
+		go func(i int, a adapters.Adapter) {
+			defer wg.Done()
+			listCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+			defer cancel()
+			models, err := a.Models(listCtx)
+			if err != nil {
+				results[i].problem = fmt.Sprintf("%s: %v", a.Name(), err)
+				return
+			}
+			for _, m := range models {
+				results[i].models = append(results[i].models, &localv1.DispatchModel{
+					Agent:    a.Name(),
+					Model:    m.ID,
+					Provider: adapters.ProviderOf(a.Name(), m.ID),
+					Tier:     string(m.Tier),
+				})
+			}
+		}(i, a)
+	}
+	wg.Wait()
+	response := &localv1.ListModelsResponse{}
+	for _, r := range results {
+		response.Models = append(response.Models, r.models...)
+		if r.problem != "" {
+			response.Problems = append(response.Problems, r.problem)
+		}
+	}
+	return connect.NewResponse(response), nil
+}
+
 func (core *Core) ListAgents(ctx context.Context, _ *connect.Request[localv1.ListAgentsRequest]) (*connect.Response[localv1.ListAgentsResponse], error) {
 	core.probeAgentsAndQuota(ctx, "", time.Now().UTC())
 	agents, err := core.Store.ListAgents(ctx)

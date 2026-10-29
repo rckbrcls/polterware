@@ -1,0 +1,45 @@
+syntax = "proto3";
+package polterware.local.v1;
+option go_package = "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1;localv1";
+
+// SavedFilter is a named filter combination for one surface (page). An empty
+// project_id is an app-level surface such as "projects". payload_json is
+// opaque JSON the UI owns and must be an object with an integer version.
+// Saved filters are UI preferences: writes are not audited change_ops.
+message SavedFilter {
+  string id = 1;
+  string project_id = 2;
+  string surface = 3;
+  string name = 4;
+  string payload_json = 5;
+  int32 position = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+// ListSavedFilters returns the surface's filters in position order.
+message ListSavedFiltersRequest {
+  string project_id = 1;
+  string surface = 2;
+}
+message ListSavedFiltersResponse { repeated SavedFilter filters = 1; }
+
+// SaveSavedFilter upserts by (project_id, surface, name). A new name is
+// appended after the surface's filters; an existing one keeps its position
+// and gets the new payload.
+message SaveSavedFilterRequest {
+  string project_id = 1;
+  string surface = 2;
+  string name = 3;
+  string payload_json = 4;
+}
+message SaveSavedFilterResponse { SavedFilter filter = 1; }
+
+message DeleteSavedFilterRequest { string id = 1; }
+message DeleteSavedFilterResponse {}
+
+service SavedFilterService {
+  rpc ListSavedFilters(ListSavedFiltersRequest) returns (ListSavedFiltersResponse);
+  rpc SaveSavedFilter(SaveSavedFilterRequest) returns (SaveSavedFilterResponse);
+  rpc DeleteSavedFilter(DeleteSavedFilterRequest) returns (DeleteSavedFilterResponse);
+}

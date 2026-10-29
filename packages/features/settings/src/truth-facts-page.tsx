@@ -1,5 +1,5 @@
 import { createSignal } from "solid-js";
-import { EntityDetailHost, scopeFilterMenuGroups, scopeFilterPills, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
+import { EntityDetailHost, createPageFilters, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
 import {
   FilterPopover,
   ActiveFilterBar,
@@ -10,7 +10,7 @@ import {
   StatusDot,
   Tabs,
   ToolbarIconButton,
-  type FilterPopoverGroup,
+  type FilterField,
   type TabItem,
 } from "@polterware/frontend-design-system";
 import { CanonFactsPanel, type CanonJustifyChange } from "./canon-facts-panel";
@@ -39,27 +39,33 @@ export function TruthFactsPage(props: {
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
 }) {
   const [query, setQuery] = createSignal("");
-  const [truthClasses, setTruthClasses] = createSignal<string[]>([]);
   const [busy, setBusy] = createSignal(false);
   const [createToken, setCreateToken] = createSignal(0);
 
-  const groups = (): FilterPopoverGroup[] => [
+  const fields = (): FilterField[] => [
     {
       id: "truth",
       label: "Truth",
-      leading: <StatusDot tone="ok" showLabel={false} />,
+      kind: "multi",
+      icon: () => <StatusDot tone="ok" showLabel={false} />,
       options: TRUTH_CLASSES.map((option) => ({
         id: option.id,
         label: option.label,
-        leading: <StatusDot tone={option.tone} showLabel={false} />,
-        checked: truthClasses().includes(option.id),
-        onCheckedChange: (checked: boolean) =>
-          setTruthClasses((current) =>
-            checked ? [...current.filter((id) => id !== option.id), option.id] : current.filter((id) => id !== option.id),
-          ),
+        icon: () => <StatusDot tone={option.tone} showLabel={false} />,
       })),
     },
   ];
+  const filters = createPageFilters({
+    surface: "truth.facts",
+    fields,
+    scope: {
+      tokens: () => props.scopeTokens ?? [],
+      nodes: () => props.scopeCatalogNodes ?? [],
+      environments: () => props.scopeEnvironments ?? [],
+      allowEnv: false,
+      onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
+    },
+  });
 
   return (
     <EntityDetailHost>
@@ -82,21 +88,11 @@ export function TruthFactsPage(props: {
           <FilterPopover
             ariaLabel="Fact filters"
             title="Filter facts"
-            active={truthClasses().length > 0 || (props.scopeTokens?.length ?? 0) > 0}
-            onClear={() => {
-              setTruthClasses([]);
-              props.onScopeTokensChange?.([]);
-            }}
-            groups={[
-              ...scopeFilterMenuGroups({
-                tokens: props.scopeTokens ?? [],
-                nodes: props.scopeCatalogNodes ?? [],
-                environments: props.scopeEnvironments ?? [],
-                allowEnv: false,
-                onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
-              }),
-              ...groups(),
-            ]}
+            shortcut
+            fields={filters.fields()}
+            clauses={filters.clauses()}
+            onClausesChange={filters.onClausesChange}
+            saved={filters.saved()}
           />
           <ToolbarIconButton
             label="New fact"
@@ -108,8 +104,10 @@ export function TruthFactsPage(props: {
         </PageToolbar.Actions>
       </PageToolbar.Root>
       <ActiveFilterBar
-        items={scopeFilterPills(props.scopeTokens ?? [], (tokens) => props.onScopeTokensChange?.(tokens))}
-        onClear={() => props.onScopeTokensChange?.([])}
+        fields={filters.fields()}
+        clauses={filters.clauses()}
+        onClausesChange={filters.onClausesChange}
+        saved={filters.saved()}
       />
       <PageContent class="flex min-h-0 flex-1 flex-col p-0">
         <CanonFactsPanel
@@ -118,7 +116,7 @@ export function TruthFactsPage(props: {
           loadFacts={props.loadFacts}
           loadEvidence={props.loadEvidence}
           query={query()}
-          truthClasses={truthClasses()}
+          clauses={filters.pageClauses()}
           createToken={createToken()}
           busy={busy()}
           justifyChange={props.justifyChange}

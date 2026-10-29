@@ -4,7 +4,10 @@ import {
   type PlatformContext,
 } from "@polterware/frontend-platform";
 
-/** Project surfaces. Dispatch is three routes (Runs, Routing, Usage), with tabs on Runs and Routing. Settings is a dialog, not a section. */
+/**
+ * Project surfaces. Dispatch is three routes (Runs, Routing, Usage), with tabs on Runs and Routing.
+ * Settings is a dialog, not a section: Platforms live in Project settings, the CLI reference in App settings.
+ */
 export type NavSectionId =
   | "inbox"
   | "structure"
@@ -14,8 +17,6 @@ export type NavSectionId =
   | "dispatch"
   | "dispatch-routing"
   | "dispatch-usage"
-  | "integrations"
-  | "agents"
   | "activity";
 
 export type SectionId = NavSectionId;
@@ -31,6 +32,9 @@ export type ProjectSettingsTabId =
   | "agents-oracle"
   | "agents-compile"
   | "agents-drift"
+  | "platforms-connected"
+  | "platforms-catalog"
+  | "cli-reference"
   | "shortcuts"
   | "appearance"
   | "local-core"
@@ -50,7 +54,6 @@ export type DialogState =
   | { type: "create-view" }
   | { type: "settings"; tab: ProjectSettingsTabId }
   | { type: "project-settings" }
-  | { type: "connect-integration"; providerId?: string }
   | { type: "confirm"; message: string }
   | null;
 
@@ -96,8 +99,6 @@ export const DEFAULT_TABS = {
   dispatch: "runs",
   "dispatch-routing": "tiers",
   "dispatch-usage": "stats",
-  integrations: "connected",
-  agents: "agents",
   activity: "all",
 } satisfies Record<SectionId, string>;
 
@@ -130,16 +131,6 @@ export const SECTION_TABS = {
   "dispatch-usage": [
     { id: "stats", label: "Stats" },
   ],
-  integrations: [
-    { id: "connected", label: "Connected" },
-    { id: "catalog", label: "Catalog" },
-  ],
-  // The backend hub: agent CLIs with setup, hooks, and skill, the MCP helper and local core, and the CLI reference.
-  agents: [
-    { id: "agents", label: "Agents" },
-    { id: "server", label: "Server" },
-    { id: "cli", label: "CLI reference" },
-  ],
   // Route id only — Activity is a flat page (no tab rail).
   activity: [{ id: "all", label: "All" }],
 } satisfies Partial<Record<SectionId, { id: string; label: string }[]>>;
@@ -153,8 +144,6 @@ const NAV_SECTIONS = {
   dispatch: true,
   "dispatch-routing": true,
   "dispatch-usage": true,
-  integrations: true,
-  agents: true,
   activity: true,
 } satisfies Record<string, boolean>;
 
@@ -257,16 +246,10 @@ export function resolveRoute(
     section = "truth";
   } else if (section === "agents" && tab === "history") {
     section = "activity";
-  }
-  // The CLI reference moved into the Core route.
-  if (section === "cli") {
-    section = "agents";
-    tab = "cli";
-  }
-  // Preserve deep links to the former separate Integrations routes.
-  if (section === "integrations-connected" || section === "integrations-catalog") {
-    tab = section === "integrations-catalog" ? "catalog" : "connected";
-    section = "integrations";
+  } else if (legacySettingsTab(section, tab)) {
+    // Core, the CLI reference, and Platforms moved into the Settings dialog.
+    section = DEFAULT_SECTION;
+    tab = undefined;
   }
   // Legacy Dispatch routes. Worktrees folded into the run card.
   if (section === "dispatch-agents") {
@@ -286,6 +269,19 @@ export function resolveRoute(
     return { section, tab: normalizeTab(section, tab) };
   }
   return { section: DEFAULT_SECTION, tab: DEFAULT_TABS[DEFAULT_SECTION] };
+}
+
+/**
+ * The Settings page that replaced a former route: Core and the CLI reference (App settings)
+ * and Platforms (Project settings). Undefined for any other route.
+ */
+export function legacySettingsTab(rawSection: string, rawTab?: string): ProjectSettingsTabId | undefined {
+  const section = rawSection.toLowerCase();
+  if (section === "cli" || (section === "agents" && rawTab === "cli")) return "cli-reference";
+  if (section === "agents") return rawTab === "server" ? "agents-mcp" : "agents-setup";
+  if (section === "integrations-catalog" || (section === "integrations" && rawTab === "catalog")) return "platforms-catalog";
+  if (section === "integrations" || section === "integrations-connected") return "platforms-connected";
+  return undefined;
 }
 
 export function resolveSection(raw: string, platform?: PlatformContext): NavSectionId {

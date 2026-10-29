@@ -1,14 +1,14 @@
 import { createClient, type Interceptor } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-node";
 import { NoteService, SpaceService, TagService, ScheduleService, PlaceService, AttachmentService, FocusService,
-  ReviewService, SearchService, ReminderService, ActivityService, SettingsService, AgentAccessService,
+  ReviewService, SearchService, ReminderService, ActivityService, SettingsService, SavedFilterService, AgentAccessService,
   MaintenanceService, HealthService, ChangeService } from "@polterware/notes-contracts";
 
 export const services = {
   notes: NoteService, spaces: SpaceService, tags: TagService, schedule: ScheduleService,
   places: PlaceService, attachments: AttachmentService, focus: FocusService, review: ReviewService,
   search: SearchService, reminders: ReminderService, activity: ActivityService, settings: SettingsService,
-  agents: AgentAccessService, maintenance: MaintenanceService,
+  savedFilters: SavedFilterService, agents: AgentAccessService, maintenance: MaintenanceService,
 } as const;
 export function validateEndpoint(endpoint: string): string {
   const url = new URL(endpoint);
@@ -30,6 +30,7 @@ export function createCoreClients(endpoint: string, token: string) {
     focus: createClient(FocusService, transport), review: createClient(ReviewService, transport),
     search: createClient(SearchService, transport), reminders: createClient(ReminderService, transport),
     activity: createClient(ActivityService, transport), settings: createClient(SettingsService, transport),
+    savedFilters: createClient(SavedFilterService, transport),
     agents: createClient(AgentAccessService, transport), maintenance: createClient(MaintenanceService, transport),
     health: createClient(HealthService, transport), changes: createClient(ChangeService, transport),
   };

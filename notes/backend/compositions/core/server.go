@@ -71,6 +71,7 @@ func Start(ln net.Listener, cfg Config) (*Server, error) {
 	mux.Handle(rpc.NewReviewServiceHandler(reviewHandler{s: cfg.Services.Review}, opts...))
 	mux.Handle(rpc.NewActivityServiceHandler(activityHandler{s: cfg.Services.Activity}, opts...))
 	mux.Handle(rpc.NewSettingsServiceHandler(settingsHandler{s: cfg.Services.Settings}, opts...))
+	mux.Handle(rpc.NewSavedFilterServiceHandler(savedFilterHandler{s: cfg.Services.SavedFilters}, opts...))
 	mux.Handle(rpc.NewSearchServiceHandler(searchHandler{s: cfg.Services.Search}, opts...))
 	mux.Handle(rpc.NewAttachmentServiceHandler(attachmentHandler{s: cfg.Services.Attachments}, opts...))
 	mux.Handle(rpc.NewPlaceServiceHandler(placeHandler{s: cfg.Services.Places}, opts...))

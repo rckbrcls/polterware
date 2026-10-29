@@ -118,7 +118,7 @@ func TestEveryRPCIsMountedAndAuthenticated(t *testing.T) {
 		}
 		return true
 	})
-	if count != 65 {
+	if count != 68 {
 		t.Fatalf("RPC coverage changed: %d unary RPCs; update this gate", count)
 	}
 }

@@ -13,7 +13,7 @@ import {
 } from "solid-js";
 import {
   Activity,
-  Bot,
+  Terminal,
   Box,
   Briefcase06Icon,
   centerItemInView,
@@ -54,9 +54,10 @@ const PALETTE_TILES: Record<string, { tone: IconTileTone; icon: () => JSX.Elemen
   "nav.dispatch-routing": { tone: "execution", icon: () => <ListOrdered size={12} /> },
   "nav.dispatch-usage": { tone: "execution", icon: () => <Gauge size={12} /> },
   "nav.activity": { tone: "neutral", icon: () => <History size={12} /> },
-  "nav.agents": { tone: "identity", icon: () => <Bot size={12} /> },
-  "nav.integrations": { tone: "integration", icon: () => <ShieldCheck size={12} /> },
+  "nav.platforms": { tone: "integration", icon: () => <ShieldCheck size={12} /> },
+  "nav.cli-reference": { tone: "identity", icon: () => <Terminal size={12} /> },
   "nav.settings": { tone: "neutral", icon: () => <Settings size={12} /> },
+  "nav.app-settings": { tone: "neutral", icon: () => <Settings size={12} /> },
   "action.open-sync": { tone: "execution", icon: () => <Activity size={12} /> },
   "action.create-node": { tone: "architecture", icon: () => <Plus size={12} /> },
   "action.connect-integration": { tone: "integration", icon: () => <Plug size={12} /> },

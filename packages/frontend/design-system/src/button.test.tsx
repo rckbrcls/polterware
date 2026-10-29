@@ -2,7 +2,7 @@ import { createSignal } from "solid-js";
 import { render } from "solid-js/web";
 import { afterEach, describe, expect, it } from "vitest";
 import { Button, LinkButton, type ButtonVariant } from "./button";
-import { FloatingSurfaceProvider } from "./floating-surface";
+import { FloatingSurfaceProvider, TextureFaceProvider } from "./floating-surface";
 
 const cleanups: Array<() => void> = [];
 afterEach(() => { cleanups.splice(0).forEach(dispose => dispose()); document.body.replaceChildren(); });
@@ -79,5 +79,28 @@ describe("Button inside a floating surface", () => {
     const [icon, kept] = Array.from(host.querySelectorAll("button"));
     expect(icon!.classList.contains("pw-texture-button")).toBe(false);
     expect(kept!.classList.contains("pw-button-flat")).toBe(true);
+  });
+});
+
+describe("TextureFaceProvider", () => {
+  it("renders solid buttons, icon-only ones included, with the texture face and keeps keycaps outside it", () => {
+    const host = mount(() => <>
+      <Button variant="primary">Outside</Button>
+      <TextureFaceProvider>
+        <Button variant="primary">Save</Button>
+        <Button variant="primary" size="icon" aria-label="Add">+</Button>
+        <Button variant="danger">Delete</Button>
+        <Button>Cancel</Button>
+        <Button variant="ghost">Ghost</Button>
+      </TextureFaceProvider>
+    </>);
+    const [outside, save, add, remove, cancel, ghost] = [...host.querySelectorAll("button")];
+    expect(outside!.className).toContain("pw-control-button");
+    expect(save!.dataset.textureTone).toBe("primary");
+    expect(add!.dataset.textureTone).toBe("primary");
+    expect(add!.className).not.toContain("control-field");
+    expect(remove!.dataset.textureTone).toBe("danger");
+    expect(cancel!.dataset.textureTone).toBe("neutral");
+    expect(ghost!.className).toContain("pw-button-flat");
   });
 });

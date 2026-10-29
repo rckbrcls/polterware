@@ -46,6 +46,8 @@ export type PopoverProps = {
   autoFocus?: boolean;
   /** Extra portalled elements that belong to this popover interaction tree. */
   persistentElements?: Array<() => HTMLElement | null>;
+  /** Escape pressed inside this popover (it closes either way); nested menus use it to close their parent too. */
+  onEscapeKeyDown?: () => void;
   /** Receives the mounted Ark content element. */
   contentRef?: (element: HTMLElement) => void;
   /**
@@ -90,6 +92,7 @@ export function Popover(props: PopoverProps) {
       lazyMount
       unmountOnExit
       closeOnEscape
+      onEscapeKeyDown={() => props.onEscapeKeyDown?.()}
       closeOnInteractOutside
       onInteractOutside={(event) => {
         // Menus, selects and popovers opened from inside this popover are portalled

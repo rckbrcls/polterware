@@ -1,4 +1,4 @@
-import { For, Show, createSignal, onCleanup, onMount, type JSX } from "solid-js";
+import { For, Show, createSignal, onCleanup, type JSX } from "solid-js";
 import {
   Button,
   Check,
@@ -6,13 +6,11 @@ import {
   DataTable,
   IconSwap,
   Kbd,
-  PageContent,
-  PageToolbar,
   pushToast,
-  ToolbarIconButton,
 } from "@polterware/frontend-design-system";
 import {
   CLI_COMMANDS,
+  CLI_COMMAND_GROUPS,
   CLI_USAGE_FLAGS,
   CLI_TUI_KEYS,
   CLI_USAGE,
@@ -228,204 +226,98 @@ function CommandIndex(props: {
   );
 }
 
-// Mirrors ghostBody in backend/runtimes/cli/ghost.go; spaces are the eyes.
-const GHOST_BODY = ["  ▄█████▄", " ████ █ ██", " ████▄█▄██", " █▀█▀█▀█▀█"].join("\n");
-
-function CliMark() {
-  return (
-    <pre aria-hidden="true" class="m-0 mb-8 justify-self-center font-mono text-[12px] leading-none text-[var(--color-text-primary)]">
-      <span class="text-[var(--color-success)]">{"     ●"}</span>
-      {"\n"}
-      <span class="text-[var(--color-text-muted)]">{"     │"}</span>
-      {"\n"}
-      {GHOST_BODY}
-    </pre>
-  );
-}
-
 function sectionId(command: CliCommand) {
-  return `cli-${command.id}`;
+  return `cli-command-${command.id}`;
 }
-
-type TocEntry = { id: string; label: string; nested?: boolean };
 
 const FIRST_SECTION = "cli-usage";
 
-const TOC: readonly TocEntry[] = [
-  { id: FIRST_SECTION, label: "Usage" },
-  { id: "cli-commands", label: "Commands" },
-  ...CLI_COMMANDS.map((command) => ({ id: sectionId(command), label: command.name, nested: true })),
-  { id: "cli-keys", label: "Interactive keys" },
-];
+/** Commands of each group, in group order. */
+const GROUPED_COMMANDS = CLI_COMMAND_GROUPS.map((group) => ({
+  ...group,
+  anchor: `cli-group-${group.id}`,
+  items: group.commands.flatMap((id) => CLI_COMMANDS.filter((command) => command.id === id)),
+}));
 
-// Offset from the scroller's top edge at which a section counts as current.
-/** Height of the toolbar that floats over the scroll area. */
-const TOOLBAR_OVERLAP = 48;
-const ACTIVE_OFFSET = 32 + TOOLBAR_OVERLAP;
-// Space kept above a section after navigating to it.
-const SCROLL_MARGIN = 16 + TOOLBAR_OVERLAP;
-
-function OnThisPage(props: { activeId: string; onNavigate: (id: string) => void }) {
+/** The reference itself: usage, the grouped command index, interactive keys, and one section per command. */
+function CliReferenceSections(props: { onNavigate: (id: string) => void }) {
   return (
-    <nav aria-label="On this page" class="sticky top-14 hidden self-start lg:block">
-      <ul class="m-0 grid list-none gap-0.5 p-0">
-        <For each={TOC}>
-          {(entry) => {
-            const active = () => props.activeId === entry.id;
-            return (
-              <li>
-                <a
-                  href={`#${entry.id}`}
-                  aria-current={active() ? "location" : undefined}
-                  class="block truncate rounded-[var(--radius-item)] py-1 pr-2 text-[12.5px] no-underline outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-border-focus)]"
-                  classList={{
-                    "pl-2": !entry.nested,
-                    "pl-5 font-mono text-[12px]": entry.nested,
-                    "bg-[var(--color-surface-selected)] text-[var(--color-text-primary)]": active(),
-                    "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-secondary)]":
-                      !active(),
-                  }}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    props.onNavigate(entry.id);
-                  }}
-                >
-                  {entry.label}
-                </a>
-              </li>
-            );
-          }}
+    <>
+      <section id={FIRST_SECTION} class="grid gap-4">
+        <SectionHeading>Usage</SectionHeading>
+        <Prose>
+          The polterware CLI reads and writes the same local database as the Desktop, through the local core.
+          Commands that list --json in their options print JSON for scripts and agents.
+        </Prose>
+        <CodeBlock command={CLI_USAGE} prompt={false} />
+        <FlagTable label="Usage options" flags={CLI_USAGE_FLAGS} />
+      </section>
+
+      <section id="cli-commands" class="grid gap-6">
+        <SectionHeading>All commands</SectionHeading>
+        <For each={GROUPED_COMMANDS}>
+          {(group) => (
+            <div class="grid gap-2">
+              <GroupHeading>{group.label}</GroupHeading>
+              <CommandIndex label={`${group.label} commands`} commands={group.items} onNavigate={props.onNavigate} />
+            </div>
+          )}
         </For>
-      </ul>
-    </nav>
+      </section>
+
+      <section id="cli-keys" class="grid gap-4">
+        <SectionHeading>Interactive keys</SectionHeading>
+        <Prose>Keys available in the interactive status view started by running polterware with no command.</Prose>
+        <ReferenceTable<CliKey>
+          label="Interactive keys"
+          rows={CLI_TUI_KEYS}
+          rowId={(key) => key.keys}
+          columns={[
+            {
+              id: "keys",
+              label: "Key",
+              width: "32%",
+              cell: (key) => <Kbd>{key.keys}</Kbd>,
+            },
+            { id: "action", label: "Action", cell: (key) => <span class={textCell}>{key.description}</span> },
+          ]}
+        />
+      </section>
+
+      <For each={GROUPED_COMMANDS}>
+        {(group) => (
+          <div class="grid gap-12">
+            <h2
+              id={group.anchor}
+              class="m-0 border-b border-[var(--color-border)] pb-2 text-[12px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]"
+            >
+              {group.label}
+            </h2>
+            <For each={group.items}>{(command) => <CommandSection command={command} />}</For>
+          </div>
+        )}
+      </For>
+    </>
   );
 }
 
-export function CliReferencePage(props: { tabs?: JSX.Element }) {
-  const [activeId, setActiveId] = createSignal(FIRST_SECTION);
-  let layout: HTMLDivElement | undefined;
+const copyReference = () => void copyText(cliReferenceMarkdown(), "Reference");
 
-  // Scroll only PageContent; scrollIntoView would also scroll the shell and hide the toolbar.
-  const scrollToSection = (id: string) => {
-    setActiveId(id);
-    const scroller = layout?.parentElement;
-    const element = document.getElementById(id);
-    if (!scroller || !element) return;
-    const offset = element.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
-    scroller.scrollTo({ top: scroller.scrollTop + offset - SCROLL_MARGIN, behavior: "smooth" });
-  };
-
-  onMount(() => {
-    // PageContent is the scroll container.
-    const scroller = layout?.parentElement;
-    if (!scroller) return;
-
-    const update = () => {
-      if (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2) {
-        setActiveId(TOC.at(-1)?.id ?? FIRST_SECTION);
-        return;
-      }
-      const top = scroller.getBoundingClientRect().top + ACTIVE_OFFSET;
-      let current = FIRST_SECTION;
-      for (const entry of TOC) {
-        const element = document.getElementById(entry.id);
-        if (element && element.getBoundingClientRect().top <= top) current = entry.id;
-      }
-      setActiveId(current);
-    };
-
-    let frame = 0;
-    const onScroll = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        update();
-      });
-    };
-
-    update();
-    scroller.addEventListener("scroll", onScroll, { passive: true });
-    onCleanup(() => {
-      scroller.removeEventListener("scroll", onScroll);
-      if (frame) cancelAnimationFrame(frame);
-    });
-  });
-
+/** The CLI reference as an App settings page: the settings rail is the navigation, so it has no sidebar of its own. */
+export function CliReferenceSettings() {
   return (
-    <div class="relative flex h-full min-h-0 flex-col">
-      {/* The toolbar floats over the scroll area so the page has no header band. */}
-      <div class="pointer-events-none absolute inset-x-0 top-0 z-10 [&_button]:pointer-events-auto [&_[role=tablist]]:pointer-events-auto">
-      <PageToolbar.Root>
-        <Show
-          when={props.tabs}
-          fallback={
-            <PageToolbar.Leading>
-              <span class="pw-page-toolbar-title">CLI reference</span>
-            </PageToolbar.Leading>
-          }
-        >
-          <PageToolbar.Tabs>{props.tabs}</PageToolbar.Tabs>
-        </Show>
-        <PageToolbar.Actions>
-          <ToolbarIconButton label="Copy reference" onClick={() => void copyText(cliReferenceMarkdown(), "Reference")}>
-            <Copy size={14} />
-          </ToolbarIconButton>
-        </PageToolbar.Actions>
-      </PageToolbar.Root>
+    <div class="grid min-w-0 gap-12">
+      <div class="flex items-center justify-between gap-3">
+        <p class="m-0 text-[12.5px] text-[var(--color-text-muted)]">Every polterware command, its options, and the interactive keys.</p>
+        {/* Labelled rather than icon-only: it copies the whole reference as Markdown, which an icon alone does not say. */}
+        <Button variant="primary" size="sm" class="!rounded-full shrink-0" onClick={copyReference}>
+          <Copy size={14} aria-hidden />
+          Copy full reference
+        </Button>
       </div>
-      <PageContent class="pw-scroll-fade overflow-auto px-4 pb-8 pt-[72px]">
-        <div
-          ref={layout}
-          class="grid w-full gap-10 lg:grid-cols-[180px_minmax(0,1fr)]"
-        >
-          <OnThisPage activeId={activeId()} onNavigate={scrollToSection} />
-
-          <div class="mx-auto grid w-full min-w-0 max-w-3xl gap-12">
-            <CliMark />
-
-            <section id={FIRST_SECTION} class="grid gap-4">
-              <SectionHeading>Usage</SectionHeading>
-              <Prose>
-                The polterware CLI reads and writes the same local database as the Desktop. init, scan,
-                context, and drift accept --json for scripts and agents.
-              </Prose>
-              <CodeBlock command={CLI_USAGE} prompt={false} />
-              <FlagTable label="Usage options" flags={CLI_USAGE_FLAGS} />
-            </section>
-
-            <section id="cli-commands" class="grid gap-4">
-              <SectionHeading>Commands</SectionHeading>
-              <CommandIndex
-                label="polterware commands"
-                commands={CLI_COMMANDS}
-                onNavigate={scrollToSection}
-              />
-            </section>
-
-            <For each={CLI_COMMANDS}>{(command) => <CommandSection command={command} />}</For>
-
-            <section id="cli-keys" class="grid gap-4">
-              <SectionHeading>Interactive keys</SectionHeading>
-              <Prose>Keys available in the interactive status view started by running polterware with no command.</Prose>
-              <ReferenceTable<CliKey>
-                label="Interactive keys"
-                rows={CLI_TUI_KEYS}
-                rowId={(key) => key.keys}
-                columns={[
-                  {
-                    id: "keys",
-                    label: "Key",
-                    width: "32%",
-                    cell: (key) => <Kbd>{key.keys}</Kbd>,
-                  },
-                  { id: "action", label: "Action", cell: (key) => <span class={textCell}>{key.description}</span> },
-                ]}
-              />
-            </section>
-
-          </div>
-        </div>
-      </PageContent>
+      <CliReferenceSections
+        onNavigate={(id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+      />
     </div>
   );
 }

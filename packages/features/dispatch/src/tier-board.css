@@ -1,0 +1,234 @@
+/* Routing tiers grid: an order column, then one column per tier. Rows are `display: contents`, so every cell sits on the board grid.
+ * Rows take the height of their tallest card, and the board grows downward as rows are added. */
+.pw-tier-board {
+  display: grid;
+  grid-template-columns: 72px repeat(3, minmax(0, 1fr));
+  grid-auto-rows: auto;
+  gap: 10px;
+  align-items: stretch;
+  align-content: start;
+}
+
+.pw-tier-board__row {
+  display: contents;
+}
+
+.pw-tier-board__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px 2px;
+}
+
+.pw-tier-board__order {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.pw-tier-board__cell {
+  display: flex;
+  min-width: 0;
+  border-radius: var(--radius-card);
+}
+
+.pw-tier-board__cell[data-drop-over] {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.pw-tier-card {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.pw-tier-card__body {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* The model id leads the card, with the agent and provider under it; the meters sit at the foot. */
+.pw-tier-card__head {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.pw-tier-card__model {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--color-text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.pw-tier-card__meters {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+/* One meter per line: label, bar, value. */
+.pw-tier-meter {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 8px;
+}
+
+.pw-tier-card__body[data-draggable] {
+  cursor: grab;
+  touch-action: none;
+}
+
+/* The card being dragged stays in its slot as a quiet placeholder; the ghost follows the pointer. */
+.pw-tier-card--lifted {
+  filter: brightness(0.6);
+}
+
+:root[data-tier-dragging],
+:root[data-tier-dragging] * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
+.pw-tier-ghost {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.pw-tier-ghost__card {
+  display: flex;
+  width: 220px;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px var(--color-shadow);
+}
+
+.pw-tier-board__empty {
+  display: flex;
+  min-height: 96px;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-card);
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.pw-tier-board__empty[data-next] {
+  border: 1px dashed var(--color-border-strong);
+}
+
+/* The palette window covers the whole app; only its frame takes the pointer. */
+.pw-tier-palette-window.pw-floating-window-root {
+  position: fixed;
+  z-index: calc(var(--z-dropdown, 105) - 1);
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Fills the floating window: search on top, the model list takes the rest, the custom pair at the bottom. */
+.pw-tier-palette {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px 12px;
+}
+
+.pw-tier-palette__list {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+}
+
+.pw-tier-palette__item {
+  touch-action: none;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-item);
+  cursor: grab;
+}
+
+.pw-tier-palette__item:hover,
+.pw-tier-palette__item:focus-visible {
+  background: var(--color-surface-hover);
+}
+
+.pw-tier-palette__custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+/* Agent and model share one pill field, split by a divider. */
+.pw-tier-palette__pair {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  padding: 0;
+  border-radius: 9999px;
+}
+
+.pw-tier-palette__pair.pw-field-control.control-field-sm {
+  padding: 0;
+  border-radius: 9999px;
+}
+
+.pw-tier-palette__pair:focus-within {
+  border-color: var(--color-primary);
+}
+
+.pw-tier-palette__pair .pw-field-control.control-field-sm,
+.pw-tier-palette__pair .pw-field-control.control-field-sm:hover:not(:disabled) {
+  height: 100%;
+  flex: 1 1 0;
+  padding-inline: 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.pw-tier-palette__divider {
+  flex: none;
+  align-self: stretch;
+  width: 1px;
+  margin: 7px 0;
+  background: var(--color-border-subtle);
+}
+
+/* Not matching the search or filters: the card keeps its slot but steps back (no alpha on surfaces). */
+.pw-tier-card--dimmed {
+  filter: grayscale(1) brightness(0.55);
+}

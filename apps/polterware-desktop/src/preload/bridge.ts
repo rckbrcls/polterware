@@ -19,6 +19,11 @@ type BridgeIpc = {
   removeListener?(channel: string, listener: BridgeListener): void;
 };
 
+// Saved filters belong to one surface (page). An omitted or empty projectId is
+// an app-level surface such as "projects". payloadJson is the UI's opaque JSON.
+export type SavedFilterListInput = { projectId?: string; surface: string };
+export type SavedFilterSaveInput = SavedFilterListInput & { name: string; payloadJson: string };
+
 function coreCall(ipc: BridgeIpc, channel: (typeof IPC_CHANNELS.core)[keyof typeof IPC_CHANNELS.core], payload?: JsonObject) {
   return ipc.invoke(channel, payload);
 }
@@ -145,6 +150,13 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         createFeature: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.createFeature, payload),
         advanceFeature: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.advanceFeature, payload),
       },
+      savedFilters: {
+        list: ({ projectId, surface }: SavedFilterListInput) =>
+          coreCall(ipc, IPC_CHANNELS.core.listSavedFilters, { projectId: projectId ?? "", surface }),
+        save: ({ projectId, surface, name, payloadJson }: SavedFilterSaveInput) =>
+          coreCall(ipc, IPC_CHANNELS.core.saveSavedFilter, { projectId: projectId ?? "", surface, name, payloadJson }),
+        delete: ({ id }: { id: string }) => coreCall(ipc, IPC_CHANNELS.core.deleteSavedFilter, { id }),
+      },
       canon: {
         listEntities: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listCanonEntities, payload),
         sync: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.syncProjectModel, payload),
@@ -185,6 +197,8 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         listAgents: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listAgents, payload),
         listHistory: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listHistory, payload),
         checkTiers: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.checkTiers, payload),
+        listModels: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listModels, payload),
+        replaceTiers: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.replaceTiers, payload),
         stats: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.stats, payload),
         getClassifier: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.getClassifier, payload),
         capacity: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.capacity, payload),

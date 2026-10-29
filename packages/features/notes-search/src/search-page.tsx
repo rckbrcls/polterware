@@ -1,11 +1,12 @@
 import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount } from "solid-js";
-import { NoteDetailHost, useNotesShell } from "@polterware/feature-notes-shell/feature";
+import { NoteDetailHost, notesSavedFiltersApi, useNotesShell } from "@polterware/feature-notes-shell/feature";
 import {
-  ActiveFilterBar, Button, DataTable, DatePicker, Field, FilterChip, FilterChipGroup, FilterPopover, Input,
+  ActiveFilterBar, DataTable, DatePicker, FilterChip, FilterChipGroup, FilterPopover,
   PageContent, PageEmpty, PageError, PageHeader, PageLoading, PageOffline, PageToolbar, Search as SearchIcon,
-  SearchBar, StatusChip, parseDate,
+  SearchBar, StatusChip, createSavedFilters, parseDate, pushToast, type FilterClause,
 } from "@polterware/frontend-design-system";
-import { matchedInLabel, type DuePreset, type SearchFilters, type SearchHitJSON, type UpdatedPreset } from "./model";
+import { clausesToFilters, filtersToClauses, searchFilterFields } from "./filter-clauses";
+import { matchedInLabel, type SearchFilters, type SearchHitJSON } from "./model";
 import { HighlightedSnippet, hitLabel } from "./snippet";
 import { searchStore, type SearchStore } from "./store";
 
@@ -14,52 +15,29 @@ const STATUS_CHIPS = [
   { id: "completed", label: "Completed" },
   { id: "", label: "All" },
 ];
-const DUE_OPTIONS: { id: DuePreset; label: string }[] = [
-  { id: "any", label: "Any due date" }, { id: "overdue", label: "Overdue" }, { id: "today", label: "Due today" },
-  { id: "next7", label: "Next 7 days" }, { id: "month", label: "This month" }, { id: "custom", label: "Custom due range" },
-];
-const UPDATED_OPTIONS: { id: UpdatedPreset; label: string }[] = [
-  { id: "any", label: "Any update" }, { id: "today", label: "Updated today" }, { id: "last7", label: "Last 7 days" },
-  { id: "last30", label: "Last 30 days" }, { id: "custom", label: "Custom updated range" },
-];
-
-function dueLabel(filters: SearchFilters): string {
-  return DUE_OPTIONS.find(option => option.id === filters.due)?.label ?? "Due";
-}
-function updatedLabel(filters: SearchFilters): string {
-  return UPDATED_OPTIONS.find(option => option.id === filters.updated)?.label ?? "Updated";
-}
-function pickDue(store: SearchStore, next: DuePreset) {
-  store.setFilters({ due: next, dueFrom: next === "custom" ? store.filters().dueFrom : "", dueTo: next === "custom" ? store.filters().dueTo : "" });
-}
-function pickUpdated(store: SearchStore, next: UpdatedPreset) {
-  store.setFilters({ updated: next, updatedFrom: next === "custom" ? store.filters().updatedFrom : "", updatedTo: next === "custom" ? store.filters().updatedTo : "" });
-}
-
 export function SearchPage(props: { store?: SearchStore }) {
   const store = props.store ?? searchStore;
   const shell = useNotesShell();
-  const [name, setName] = createSignal("");
   let root: HTMLDivElement | undefined;
   onMount(() => onCleanup(store.connect()));
   createEffect(() => {
     store.applyRouteQuery(shell.searchParams().get("q"));
   });
   const honesty = createMemo(() => store.honesty());
-  const activeFilters = createMemo(() => {
-    const filters = store.filters();
-    const items: { id: string; label: string; onRemove: () => void }[] = [];
-    if (filters.spaceId) {
-      const space = store.spaces().find(item => item.id === filters.spaceId);
-      items.push({ id: "space", label: space?.name ? `Space: ${space.name}` : "Space", onRemove: () => store.setFilters({ spaceId: "" }) });
-    }
-    for (const id of filters.tagIds) {
-      const tag = store.tags().find(item => item.id === id);
-      items.push({ id: `tag-${id}`, label: tag?.name ? `Tag: ${tag.name}` : "Tag", onRemove: () => store.setFilters({ tagIds: filters.tagIds.filter(value => value !== id) }) });
-    }
-    if (filters.due !== "any") items.push({ id: "due", label: dueLabel(filters), onRemove: () => store.setFilters({ due: "any", dueFrom: "", dueTo: "" }) });
-    if (filters.updated !== "any") items.push({ id: "updated", label: updatedLabel(filters), onRemove: () => store.setFilters({ updated: "any", updatedFrom: "", updatedTo: "" }) });
-    return items;
+  const fields = createMemo(() => searchFilterFields(store.spaces(), store.tags()));
+  const clauses = createMemo(() => filtersToClauses(store.filters()));
+  const setClauses = (next: FilterClause[]) => store.setFilters(clausesToFilters(next, store.filters()));
+  const savedApi = notesSavedFiltersApi("notes.search");
+  const saved = createSavedFilters({
+    api: () => savedApi,
+    clauses,
+    extra: () => ({ query: store.query(), filters: store.filters() }),
+    onApply: (next, extra) => {
+      const stored = extra?.filters as Partial<SearchFilters> | undefined;
+      store.setFilters(stored ? { ...stored, tagIds: [...(stored.tagIds ?? [])] } : clausesToFilters(next, store.filters()));
+      if (typeof extra?.query === "string") store.setQuery(extra.query);
+    },
+    onError: message => pushToast(`Saved filters failed: ${message}`, "danger"),
   });
   function open(id: string | null) { if (id) shell.openNote(id); }
   function onKeyDown(event: KeyboardEvent) {
@@ -98,41 +76,11 @@ export function SearchPage(props: { store?: SearchStore }) {
           <div class="flex min-w-0 flex-wrap items-center gap-2">
             <SearchBar aria-label="Search notes" placeholder="Search notes" value={store.query()} onInput={value => store.setQuery(value)} />
             <FilterChipGroup aria-label="Status" value={store.filters().status} items={STATUS_CHIPS} onChange={status => store.setFilters({ status })} />
-            <FilterPopover
-              ariaLabel="Filter by Space" triggerLabel="Space" active={Boolean(store.filters().spaceId)} onClear={() => store.setFilters({ spaceId: "", includeDescendants: true })}
-              groups={[
-                { id: "descendants", label: "Include child Spaces", inline: true, options: [{ id: "descendants", label: "Include child Spaces", checked: store.filters().includeDescendants, onCheckedChange: checked => store.setFilters({ includeDescendants: checked }) }] },
-                { id: "spaces", label: "Spaces", selectionMode: "single", options: store.spaces().map(space => ({ id: space.id ?? "", label: space.name ?? "Unnamed Space", checked: store.filters().spaceId === space.id, onCheckedChange: checked => store.setFilters({ spaceId: checked ? space.id ?? "" : "" }) })) },
-              ]}
-            />
-            <FilterPopover
-              ariaLabel="Filter by tag" triggerLabel="Tags" active={store.filters().tagIds.length > 0} onClear={() => store.setFilters({ tagIds: [] })}
-              groups={[{ id: "tags", label: "Tags", selectionMode: "multiple", options: store.tags().map(tag => ({ id: tag.id ?? "", label: tag.name ?? "Unnamed tag", checked: store.filters().tagIds.includes(tag.id ?? ""), onCheckedChange: checked => store.setFilters({ tagIds: checked ? [...store.filters().tagIds, tag.id ?? ""] : store.filters().tagIds.filter(id => id !== tag.id) }) })) }]}
-            />
-            <FilterPopover
-              ariaLabel="Filter by due date" triggerLabel="Due" active={store.filters().due !== "any"} onClear={() => store.setFilters({ due: "any", dueFrom: "", dueTo: "" })}
-              groups={[{ id: "due", label: "Due", selectionMode: "single", options: DUE_OPTIONS.map(option => ({
-                id: option.id, label: option.label, checked: store.filters().due === option.id,
-                onCheckedChange: checked => { if (checked) pickDue(store, option.id); },
-              })) }]}
-            />
-            <FilterPopover
-              ariaLabel="Filter by updated date" triggerLabel="Updated" active={store.filters().updated !== "any"} onClear={() => store.setFilters({ updated: "any", updatedFrom: "", updatedTo: "" })}
-              groups={[{ id: "updated", label: "Updated", selectionMode: "single", options: UPDATED_OPTIONS.map(option => ({
-                id: option.id, label: option.label, checked: store.filters().updated === option.id,
-                onCheckedChange: checked => { if (checked) pickUpdated(store, option.id); },
-              })) }]}
-            />
+            <FilterPopover ariaLabel="Search filters" shortcut fields={fields()} clauses={clauses()} onClausesChange={setClauses} saved={saved()} />
           </div>
         </PageToolbar.Leading>
-        <PageToolbar.Actions>
-          <Field label="Save filters" for="notes-search-save">
-            <Input id="notes-search-save" size="sm" placeholder="Name" value={name()} onInput={event => setName(event.currentTarget.value)} />
-          </Field>
-          <Button variant="secondary" size="sm" onClick={() => { store.saveFilters(name()); setName(""); }}>Save filters</Button>
-        </PageToolbar.Actions>
       </PageToolbar.Root>
-      <ActiveFilterBar items={activeFilters()} onClear={store.filtersOn() ? () => store.clearFilters() : undefined} />
+      <ActiveFilterBar fields={fields()} clauses={clauses()} onClausesChange={setClauses} saved={saved()} />
       <Show when={store.filters().due === "custom" || store.filters().updated === "custom"}>
         <div class="flex flex-wrap items-end gap-3 px-4 py-2">
           <Show when={store.filters().due === "custom"}>
@@ -147,15 +95,6 @@ export function SearchPage(props: { store?: SearchStore }) {
       </Show>
       <PageContent>
         <p class="px-4 pt-3 text-[13px] text-[var(--color-text-muted)]" role="status">{honesty().detail}</p>
-        <Show when={store.saved().length}>
-          <div class="flex flex-wrap items-center gap-2 px-4 pt-3" role="group" aria-label="Saved filters">
-            <For each={store.saved()}>{item => (
-              <FilterChip selected={false} aria-label={`Apply saved filter ${item.name}`} onClick={() => store.applySaved(item.id)}>
-                {item.name}
-              </FilterChip>
-            )}</For>
-          </div>
-        </Show>
         <Show when={store.loadState() === "unavailable"}>
           <PageOffline title="Search unavailable" message={store.loadError() || "The local core is unreachable."} onRetry={() => void store.reload()} />
         </Show>

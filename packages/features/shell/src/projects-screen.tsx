@@ -1,5 +1,6 @@
 import { For, Show, createMemo, createSignal } from "solid-js";
 import {
+  ActiveFilterBar,
   Badge,
   Button,
   Card,
@@ -12,6 +13,7 @@ import {
   ExternalLink,
   Folder,
   FolderKanban,
+  FilterPopover,
   IconTile,
   MoreHorizontal,
   PageContent,
@@ -19,13 +21,17 @@ import {
   TemplateCardGrid,
   PageLoading,
   PageOffline,
-  PageToolbar,
   Plus,
   SearchBar,
   Settings,
+  StatusDot,
   ToolbarIconButton,
   buttonClassName,
+  matchClauses,
+  type FilterField,
+  type StatusTone,
 } from "@polterware/frontend-design-system";
+import { createPageFilters } from "./page-filters";
 import type { ProjectSwitcherItem } from "./types";
 import "./projects-screen.css";
 
@@ -54,6 +60,29 @@ function folderName(project: ProjectSwitcherItem): string | undefined {
   const path = project.directory?.trim().replace(/[\\/]+$/, "");
   if (!path) return undefined;
   return path.split(/[\\/]/).pop() || undefined;
+}
+
+type ProjectStatus = NonNullable<ProjectSwitcherItem["status"]>;
+type FolderFilter = "linked" | "none";
+
+const STATUS_FILTERS: { id: ProjectStatus; label: string; tone: StatusTone }[] = [
+  { id: "active", label: "Active", tone: "ok" },
+  { id: "paused", label: "Paused", tone: "warn" },
+  { id: "archived", label: "Archived", tone: "muted" },
+];
+
+const FOLDER_FILTERS: { id: FolderFilter; label: string }[] = [
+  { id: "linked", label: "Linked folder" },
+  { id: "none", label: "No folder" },
+];
+
+/** A project without a stored status is treated as active. */
+function statusOf(project: ProjectSwitcherItem): ProjectStatus {
+  return project.status ?? "active";
+}
+
+function folderOf(project: ProjectSwitcherItem): FolderFilter {
+  return project.directory?.trim() ? "linked" : "none";
 }
 
 type CardMenu = { project: ProjectSwitcherItem; x: number; y: number };
@@ -158,28 +187,77 @@ function ProjectCard(props: {
 export function ProjectsScreen(props: ProjectsScreenProps) {
   const [query, setQuery] = createSignal("");
   const [menu, setMenu] = createSignal<CardMenu | null>(null);
+  const countOf = (match: (project: ProjectSwitcherItem) => boolean) => props.projects.filter(match).length;
+  const fields = (): FilterField[] => [
+    {
+      id: "status",
+      label: "Status",
+      pluralLabel: "statuses",
+      kind: "multi",
+      icon: () => <StatusDot tone="ok" showLabel={false} />,
+      options: STATUS_FILTERS.map((option) => ({
+        id: option.id,
+        label: option.label,
+        trailing: String(countOf((project) => statusOf(project) === option.id)),
+        icon: () => <StatusDot tone={option.tone} showLabel={false} />,
+      })),
+    },
+    {
+      id: "folder",
+      label: "Folder",
+      kind: "multi",
+      icon: () => <Folder size={14} aria-hidden />,
+      options: FOLDER_FILTERS.map((option) => ({
+        id: option.id,
+        label: option.label,
+        trailing: String(countOf((project) => folderOf(project) === option.id)),
+        icon: () => <Folder size={14} aria-hidden />,
+      })),
+    },
+  ];
+  const filters = createPageFilters({ surface: "projects", appLevel: true, fields });
   const filtered = createMemo(() => {
     const normalized = query().trim().toLowerCase();
-    if (!normalized) return props.projects;
-    return props.projects.filter((project) => project.name.toLowerCase().includes(normalized));
+    return props.projects.filter(
+      (project) =>
+        (!normalized || project.name.toLowerCase().includes(normalized)) &&
+        matchClauses(project, filters.pageClauses(), { status: statusOf, folder: folderOf }),
+    );
   });
 
   return (
     <div class="pw-projects">
-      <PageToolbar.Root>
-        <PageToolbar.Leading>{null}</PageToolbar.Leading>
-        <PageToolbar.Actions>
-          <SearchBar
-            placeholder="Search projects"
-            aria-label="Search projects by name"
-            value={query()}
-            onInput={setQuery}
-          />
-          <ToolbarIconButton label="New project" onClick={() => props.onCreateProject()}>
-            <Plus size={14} />
-          </ToolbarIconButton>
-        </PageToolbar.Actions>
-      </PageToolbar.Root>
+      <div class="pw-projects-column">
+        <div class="pw-projects-bar">
+          <h1 class="pw-page-toolbar-title m-0">Projects</h1>
+          <div class="pw-projects-bar-actions">
+            <SearchBar
+              placeholder="Search projects"
+              aria-label="Search projects by name"
+              value={query()}
+              onInput={setQuery}
+            />
+            <FilterPopover
+              ariaLabel="Project filters"
+              title="Filter projects"
+              shortcut
+              fields={filters.fields()}
+              clauses={filters.clauses()}
+              onClausesChange={filters.onClausesChange}
+              saved={filters.saved()}
+            />
+            <ToolbarIconButton label="New project" onClick={() => props.onCreateProject()}>
+              <Plus size={14} />
+            </ToolbarIconButton>
+          </div>
+        </div>
+        <ActiveFilterBar
+          fields={filters.fields()}
+          clauses={filters.clauses()}
+          onClausesChange={filters.onClausesChange}
+          saved={filters.saved()}
+        />
+      </div>
       <PageContent class="pw-scroll-fade">
         <Show
           when={!props.loading}

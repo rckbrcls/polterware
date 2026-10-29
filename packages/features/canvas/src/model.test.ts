@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { commit, createHistory, historyUndo, historyRedo, hitTest, layoutSync, moveNodes, screenToDocument, setNodePositions, updateNode, zoomAt } from "@polterware/frontend-canvas";
 import { connectNodes, edgePalette, insertNode, nodePalette, readCanvas, readTypes, removeSelection, resizeNode, serializeCanvas, toDocument, type CanvasRecord, type CanvasType } from "./model";
+import { SHAPES } from "./shapes";
 
 const free: CanvasType = { type: "free", label: "Free", nodeKinds: ["note", "text"], edgeKinds: [], rules: [], unrestricted: true };
 const brainstorm: CanvasType = { type: "brainstorm", label: "Brainstorm", nodeKinds: ["idea", "group", "note", "text"], edgeKinds: ["relates", "contains"], rules: [], unrestricted: false };
@@ -12,7 +13,7 @@ function twoNodes() {
 }
 describe("canvas graph and layout", () => {
   it("builds palettes from the server definition and allows free edges", () => {
-    expect(nodePalette(free)).toEqual(["rectangle", "ellipse", "note", "text"]);
+    expect(nodePalette(free)).toEqual([...SHAPES.map((item) => item.kind), "note", "text"]);
     expect(nodePalette(brainstorm)).toEqual(brainstorm.nodeKinds);
     expect(edgePalette(brainstorm)).toEqual(["relates", "contains"]);
     expect(() => insertNode(twoNodes(), brainstorm, "ellipse", { x: 0, y: 0 }, "bad")).toThrow("not allowed");

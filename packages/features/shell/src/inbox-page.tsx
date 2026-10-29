@@ -30,11 +30,12 @@ import {
   StatusChip,
   Scale,
   ThumbsDownIcon,
-  type FilterPopoverGroup,
+  matchClauses,
+  type FilterField,
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
 import { EntityDetailHost } from "./entity-detail-host";
-import { scopeFilterMenuGroups, scopeFilterPills } from "./scope-filter-menu";
+import { createPageFilters } from "./page-filters";
 import type { EnvironmentItem, ScopeNodeItem } from "./types";
 import type { ScopeFilterToken } from "./scope-filter";
 import { openDetail } from "./detail-expansion";
@@ -101,49 +102,38 @@ export function InboxPage(props: {
   scopeEnvironments?: readonly EnvironmentItem[];
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
 }) {
-  const [kinds, setKinds] = createSignal<string[]>([]);
   const [pending, setPending] = createSignal("");
   const [deciding, setDeciding] = createSignal<WorkspaceInboxItem | null>(null);
   const [answer, setAnswer] = createSignal("");
   const [query, setQuery] = createSignal("");
-  const [statuses, setStatuses] = createSignal<string[]>([]);
 
   const items = () => props.inbox?.items ?? [];
   const countOf = (kind: WorkspaceInboxKind) =>
     items().filter((item) => item.state === "open" && item.kind === kind).length;
   const itemStatus = (item: WorkspaceInboxItem) =>
     item.state === "deferred" ? "deferred" : item.blocking ? "blocking" : "open";
-  const visible = createMemo(() => {
-    const needle = query().trim().toLowerCase();
-    return items().filter(
-      (item) =>
-        (kinds().length === 0 || kinds().includes(item.kind)) &&
-        (statuses().length === 0 || statuses().includes(itemStatus(item))) &&
-        (!needle || [item.title, item.where, item.source].some((value) => (value ?? "").toLowerCase().includes(needle))),
-    );
-  });
-  const toggle = (setter: (update: (current: string[]) => string[]) => void, id: string, checked: boolean) =>
-    setter((current) => (checked ? [...current.filter((value) => value !== id), id] : current.filter((value) => value !== id)));
-  const filterGroups = (): FilterPopoverGroup[] => [
+  const fields = (): FilterField[] => [
     {
       id: "type",
       label: "Type",
-      leading: <Scale size={14} aria-hidden />,
+      kind: "multi",
+      icon: () => <Scale size={14} aria-hidden />,
       options: TYPE_FILTERS.map((option) => {
         const Icon = KIND_ICON[option.id];
         return {
           id: option.id,
-          label: `${option.label} (${countOf(option.id)})`,
-          leading: <Icon size={14} aria-hidden />,
-          checked: kinds().includes(option.id),
-          onCheckedChange: (checked: boolean) => toggle(setKinds, option.id, checked),
+          label: option.label,
+          trailing: String(countOf(option.id)),
+          icon: () => <Icon size={14} aria-hidden />,
         };
       }),
     },
     {
       id: "status",
       label: "Status",
-      leading: <StatusDot tone="ok" showLabel={false} />,
+      pluralLabel: "statuses",
+      kind: "multi",
+      icon: () => <StatusDot tone="ok" showLabel={false} />,
       options: [
         { id: "blocking", label: "Blocking", tone: "danger" as const },
         { id: "open", label: "Open", tone: "ok" as const },
@@ -151,12 +141,29 @@ export function InboxPage(props: {
       ].map((option) => ({
         id: option.id,
         label: option.label,
-        leading: <StatusDot tone={option.tone} showLabel={false} />,
-        checked: statuses().includes(option.id),
-        onCheckedChange: (checked: boolean) => toggle(setStatuses, option.id, checked),
+        icon: () => <StatusDot tone={option.tone} showLabel={false} />,
       })),
     },
   ];
+  const filters = createPageFilters({
+    surface: "inbox",
+    fields,
+    scope: {
+      tokens: () => props.scopeTokens ?? [],
+      nodes: () => props.scopeNodes ?? [],
+      environments: () => props.scopeEnvironments ?? [],
+      allowEnv: false,
+      onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
+    },
+  });
+  const visible = createMemo(() => {
+    const needle = query().trim().toLowerCase();
+    return items().filter(
+      (item) =>
+        matchClauses(item, filters.pageClauses(), { type: (entry) => entry.kind, status: itemStatus }) &&
+        (!needle || [item.title, item.where, item.source].some((value) => (value ?? "").toLowerCase().includes(needle))),
+    );
+  });
   const open = () => visible().filter((item) => item.state === "open");
   const deferred = () => visible().filter((item) => item.state === "deferred");
   const rows = createMemo(() => [...open(), ...deferred()]);
@@ -258,28 +265,19 @@ export function InboxPage(props: {
           <FilterPopover
             ariaLabel="Inbox filters"
             title="Filter inbox"
-            active={statuses().length > 0 || kinds().length > 0 || (props.scopeTokens?.length ?? 0) > 0}
-            onClear={() => {
-              setStatuses([]);
-              setKinds([]);
-              props.onScopeTokensChange?.([]);
-            }}
-            groups={[
-              ...scopeFilterMenuGroups({
-                tokens: props.scopeTokens ?? [],
-                nodes: props.scopeNodes ?? [],
-                environments: props.scopeEnvironments ?? [],
-                allowEnv: false,
-                onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
-              }),
-              ...filterGroups(),
-            ]}
+            shortcut
+            fields={filters.fields()}
+            clauses={filters.clauses()}
+            onClausesChange={filters.onClausesChange}
+            saved={filters.saved()}
           />
         </PageToolbar.Actions>
       </PageToolbar.Root>
       <ActiveFilterBar
-        items={scopeFilterPills(props.scopeTokens ?? [], (tokens) => props.onScopeTokensChange?.(tokens))}
-        onClear={() => props.onScopeTokensChange?.([])}
+        fields={filters.fields()}
+        clauses={filters.clauses()}
+        onClausesChange={filters.onClausesChange}
+        saved={filters.saved()}
       />
       <PageContent class="p-0">
         <Show

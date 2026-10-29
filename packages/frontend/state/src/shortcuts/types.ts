@@ -15,6 +15,7 @@ export type ShortcutCommandId =
   | "shell.toggle_sidebar"
   | "shell.toggle_detail"
   | "shell.open_canvas"
+  | "shell.open_filter"
   | "structure.add_node";
 
 export type ShortcutCommand = {

@@ -4,7 +4,8 @@ import {
   Button,
   SettingsDialog,
 } from "@polterware/frontend-design-system";
-import { normalizeSettingsTab, SETTINGS_TABS } from "./settings-helpers";
+import { CliReferenceSettings } from "@polterware/feature-shell";
+import { normalizeSettingsTab, settingsTabScope, settingsTabsFor, SETTINGS_TABS } from "./settings-helpers";
 import { SettingsRow, SettingsSection } from "./settings-section";
 import { ShortcutsPage } from "./shortcuts-page";
 import { AppearanceCard } from "./appearance-card";
@@ -23,13 +24,12 @@ export {
   protectionLabel,
   protectionTone,
 } from "./environment-status";
-export { normalizeSettingsTab, SETTINGS_TABS } from "./settings-helpers";
+export { normalizeSettingsTab, settingsTabScope, settingsTabsFor, SETTINGS_TABS, type SettingsScope } from "./settings-helpers";
 export { EnvironmentRows } from "./environment-rows";
 export { SettingsRow, SettingsSection } from "./settings-section";
 export { CreateEnvironmentDialog } from "./create-environment-dialog";
 export { ShortcutsPage } from "./shortcuts-page";
 export { AgentsSettingsPanel, type AgentsSettingsTab } from "./agents-settings-panel";
-export { AiIntegrationsPanel } from "./ai-integrations-panel";
 export { TruthFactsPage } from "./truth-facts-page";
 export { ActivityPage } from "./activity-page";
 export { hydrateShortcutPreferences, persistShortcutOverrides } from "./shortcut-persist";
@@ -38,7 +38,10 @@ export { AppearanceCard } from "./appearance-card";
 export { PrivacyCard } from "./privacy-card";
 export { ProjectSettingsDialog } from "./project-settings-dialog";
 
-/** Project settings, agents, shortcuts, and this computer. */
+/**
+ * Project settings (project, repositories, environments, agent context, platforms) or app settings
+ * (agent tooling, the CLI reference, shortcuts, appearance, the local core); the tab picks which one opens.
+ */
 export function SettingsView(props: {
   open: boolean;
   onClose: () => void;
@@ -48,25 +51,31 @@ export function SettingsView(props: {
   onTabChange?: (t: string) => void;
   /** Project controls share the host callbacks with the project switcher dialog. */
   renderProjectSettings?: (tab: ProjectSettingsPageId) => JSX.Element;
+  /** Platforms share the host's integration data and connect flow. */
+  renderPlatforms?: (tab: "connected" | "catalog") => JSX.Element;
   onResetLocalStore?: () => void;
 }) {
   const tab = () => normalizeSettingsTab(props.tab);
   const [resetOpen, setResetOpen] = createSignal(false);
 
+  const scope = () => settingsTabScope(tab());
+  const tabs = () => settingsTabsFor(scope());
   const activeTab = () => SETTINGS_TABS.find((item) => item.id === tab());
   const headingFor = (item?: (typeof SETTINGS_TABS)[number]) =>
-    item && (item.group === "Agents" || item.group === "Project") ? `${item.group} · ${item.label}` : item?.label;
+    item && item.group !== "App" ? `${item.group} · ${item.label}` : item?.label;
 
   const searchEntries = createMemo(() =>
-    [...SETTINGS_SEARCH_ENTRIES, ...dynamicSettingsEntries()].map((entry) => ({ ...entry, item: entry.tab })),
+    [...SETTINGS_SEARCH_ENTRIES, ...dynamicSettingsEntries()]
+      .filter((entry) => settingsTabScope(entry.tab) === scope())
+      .map((entry) => ({ ...entry, item: entry.tab })),
   );
 
   return (
     <>
       <SettingsDialog
         open={props.open}
-        title="Settings"
-        items={SETTINGS_TABS.map((item) => ({ id: item.id, label: item.label, group: item.group, icon: item.tooltip.icon }))}
+        title={scope() === "project" ? "Project settings" : "App settings"}
+        items={tabs().map((item) => ({ id: item.id, label: item.label, group: item.group, icon: item.tooltip.icon }))}
         active={tab()}
         onSelect={(id) => props.onTabChange?.(id)}
         searchEntries={searchEntries()}
@@ -76,6 +85,14 @@ export function SettingsView(props: {
       >
         <Show when={activeTab()?.group === "Project"}>
           {props.renderProjectSettings?.(tab() as ProjectSettingsPageId)}
+        </Show>
+
+        <Show when={tab() === "platforms-connected" || tab() === "platforms-catalog"}>
+          {props.renderPlatforms?.(tab() === "platforms-catalog" ? "catalog" : "connected")}
+        </Show>
+
+        <Show when={tab() === "cli-reference"}>
+          <CliReferenceSettings />
         </Show>
 
         <Show when={tab().startsWith("agents-")}>

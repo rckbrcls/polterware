@@ -42,7 +42,7 @@ message Canvas {
   string id = 1;
   string project_id = 2;
   string name = 3;
-  // type is "free", "architecture", "roadmap", "flow", "brainstorm", or "ideas".
+  // type is always "canvas": one generalist type of drawing shapes and semantic components.
   string type = 4;
   bool agent_visible = 5;
   CanvasGraph graph = 6;
@@ -52,8 +52,8 @@ message Canvas {
   string updated_at = 10;
 }
 
-// CanvasTypeDefinition is the palette and the rules for one canvas type.
-// node_kinds includes note and text, which every type allows.
+// CanvasTypeDefinition is the palette and the rules of the canvas type.
+// node_kinds lists components, structure kinds, drawing shapes, note, and text.
 // unrestricted means kinds outside node_kinds and edge_kinds are still valid.
 message CanvasTypeDefinition {
   string type = 1;
@@ -118,7 +118,7 @@ message DeleteCanvasResponse {}
 message ListCanvasTypesRequest {}
 message ListCanvasTypesResponse { repeated CanvasTypeDefinition types = 1; }
 
-// CanvasService stores typed canvases. Writes validate the graph and reject
+// CanvasService stores canvases. Writes validate the graph and reject
 // violations. Layout is persisted and is not validated as a graph.
 service CanvasService {
   rpc ListCanvases(ListCanvasesRequest) returns (ListCanvasesResponse);

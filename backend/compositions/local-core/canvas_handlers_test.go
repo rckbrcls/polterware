@@ -31,12 +31,12 @@ func TestCanvasServiceRejectsAndUpdatesParts(t *testing.T) {
 	change := &localv1.ChangeEnvelope{Summary: "Save canvas", Rationale: "The roadmap needs a surface"}
 
 	types, err := core.ListCanvasTypes(ctx, connect.NewRequest(&localv1.ListCanvasTypesRequest{}))
-	if err != nil || len(types.Msg.GetTypes()) != 6 {
+	if err != nil || len(types.Msg.GetTypes()) != 1 {
 		t.Fatalf("types: err=%v n=%d", err, len(types.Msg.GetTypes()))
 	}
 	sawNote := false
 	for _, item := range types.Msg.GetTypes() {
-		if item.GetType() != "architecture" {
+		if item.GetType() != "canvas" {
 			continue
 		}
 		for _, kind := range item.GetNodeKinds() {
@@ -46,15 +46,15 @@ func TestCanvasServiceRejectsAndUpdatesParts(t *testing.T) {
 		}
 	}
 	if !sawNote {
-		t.Fatal("architecture palette must include note")
+		t.Fatal("canvas palette must include note")
 	}
 
 	_, err = core.CreateCanvas(ctx, connect.NewRequest(&localv1.CreateCanvasRequest{
 		ProjectId: project.ID,
 		Name:      "Broken",
-		Type:      "roadmap",
+		Type:      "canvas",
 		Change:    change,
-		Graph:     &localv1.CanvasGraph{Nodes: []*localv1.CanvasNode{{Id: "a", Kind: "database"}}},
+		Graph:     &localv1.CanvasGraph{Nodes: []*localv1.CanvasNode{{Id: "a", Kind: "spaceship"}}},
 	}))
 	var connectErr *connect.Error
 	if !errors.As(err, &connectErr) || connectErr.Code() != connect.CodeInvalidArgument || !strings.Contains(connectErr.Message(), "not allowed") {
@@ -64,7 +64,7 @@ func TestCanvasServiceRejectsAndUpdatesParts(t *testing.T) {
 	_, err = core.CreateCanvas(ctx, connect.NewRequest(&localv1.CreateCanvasRequest{
 		ProjectId: project.ID,
 		Name:      "Sketch",
-		Type:      "architecture",
+		Type:      "canvas",
 		Change:    change,
 		Graph:     &localv1.CanvasGraph{Nodes: []*localv1.CanvasNode{{Id: "s", Kind: "system", Label: "API"}}},
 	}))
@@ -75,23 +75,23 @@ func TestCanvasServiceRejectsAndUpdatesParts(t *testing.T) {
 	noteOnly, err := core.CreateCanvas(ctx, connect.NewRequest(&localv1.CreateCanvasRequest{
 		ProjectId: project.ID,
 		Name:      "Sketch",
-		Type:      "architecture",
+		Type:      "canvas",
 		Change:    change,
 		Graph:     &localv1.CanvasGraph{Nodes: []*localv1.CanvasNode{{Id: "n", Kind: "note", Label: "later"}}},
 	}))
 	if err != nil || noteOnly.Msg.GetCanvas().GetGraph().GetNodes()[0].GetKind() != "note" {
-		t.Fatalf("note on architecture: err=%v msg=%+v", err, noteOnly)
+		t.Fatalf("note on canvas: err=%v msg=%+v", err, noteOnly)
 	}
 
 	created, err := core.CreateCanvas(ctx, connect.NewRequest(&localv1.CreateCanvasRequest{
 		ProjectId:    project.ID,
 		Name:         "Platform",
-		Type:         "roadmap",
+		Type:         "canvas",
 		AgentVisible: true,
 		Change:       change,
 		Graph: &localv1.CanvasGraph{
 			Nodes: []*localv1.CanvasNode{
-				{Id: "a", Kind: "item", Label: "Import", PropsJson: `{"quarter":"2026Q1"}`},
+				{Id: "a", Kind: "service", Label: "Import", PropsJson: `{"technology":"Go"}`},
 				{Id: "n", Kind: "note", Label: "ask"},
 			},
 			Edges: []*localv1.CanvasEdge{{Id: "e", From: "a", To: "n", Kind: "depends_on"}},
@@ -134,7 +134,7 @@ func TestCanvasServiceRejectsAndUpdatesParts(t *testing.T) {
 	if moved.Msg.GetCanvas().GetLayoutJson() != layout || moved.Msg.GetCanvas().GetName() != name {
 		t.Fatalf("layout update = %+v", moved.Msg.GetCanvas())
 	}
-	if !strings.Contains(moved.Msg.GetCanvas().GetGraph().GetNodes()[0].GetPropsJson(), "2026Q1") {
+	if !strings.Contains(moved.Msg.GetCanvas().GetGraph().GetNodes()[0].GetPropsJson(), "technology") {
 		t.Fatalf("layout update changed the graph: %+v", moved.Msg.GetCanvas().GetGraph())
 	}
 
@@ -142,7 +142,7 @@ func TestCanvasServiceRejectsAndUpdatesParts(t *testing.T) {
 		ProjectId: project.ID,
 		Id:        canvasID,
 		Change:    change,
-		Graph:     &localv1.CanvasGraph{Nodes: []*localv1.CanvasNode{{Id: "a", Kind: "database"}}},
+		Graph:     &localv1.CanvasGraph{Nodes: []*localv1.CanvasNode{{Id: "a", Kind: "spaceship"}}},
 	}))
 	if !errors.As(err, &connectErr) || connectErr.Code() != connect.CodeInvalidArgument {
 		t.Fatalf("bad graph update: %v", err)

@@ -5,23 +5,28 @@ import {
   environmentSelectOptions,
   environmentsDetailScope,
   normalizeSettingsTab,
+  settingsTabScope,
+  settingsTabsFor,
   SETTINGS_TABS,
 } from "./settings-helpers";
 
 describe("settings helpers", () => {
-  it("groups the tabs as Project · Agents · App", () => {
+  it("groups the tabs as Project · Context · Platforms · Agents · App", () => {
     expect(SETTINGS_TABS.map((tab) => tab.id)).toEqual([
       "general",
       "repositories",
       "environments",
       "project-danger",
+      "agents-oracle",
+      "agents-compile",
+      "agents-drift",
+      "platforms-connected",
+      "platforms-catalog",
       "agents-mcp",
       "agents-setup",
       "agents-hooks",
       "agents-skill",
-      "agents-oracle",
-      "agents-compile",
-      "agents-drift",
+      "cli-reference",
       "shortcuts",
       "appearance",
       "local-core",
@@ -30,12 +35,44 @@ describe("settings helpers", () => {
     ]);
     expect([...new Set(SETTINGS_TABS.map((tab) => tab.group))]).toEqual([
       "Project",
+      "Context",
+      "Platforms",
       "Agents",
       "App",
     ]);
     const labels = SETTINGS_TABS.map((tab) => tab.label).join(" ");
     expect(labels).not.toMatch(/Knowledge/i);
     expect(new Set(SETTINGS_TABS.map((tab) => tab.tooltip.icon)).size).toBe(SETTINGS_TABS.length);
+  });
+
+  it("splits project settings from app settings", () => {
+    expect(settingsTabsFor("project").map((tab) => tab.id)).toEqual([
+      "general",
+      "repositories",
+      "environments",
+      "project-danger",
+      "agents-oracle",
+      "agents-compile",
+      "agents-drift",
+      "platforms-connected",
+      "platforms-catalog",
+    ]);
+    expect(settingsTabsFor("app").map((tab) => tab.group)).toEqual([
+      "Agents",
+      "Agents",
+      "Agents",
+      "Agents",
+      "Agents",
+      "App",
+      "App",
+      "App",
+      "App",
+      "App",
+    ]);
+    expect(settingsTabScope("agents-drift")).toBe("project");
+    expect(settingsTabScope("platforms-catalog")).toBe("project");
+    expect(settingsTabScope("agents-mcp")).toBe("app");
+    expect(settingsTabScope("cli-reference")).toBe("app");
   });
 
   it("preserves focused pages and redirects former page ids", () => {

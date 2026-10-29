@@ -2132,6 +2132,254 @@ func (x *ListHistoryResponse) GetEvents() []*DispatchRunEvent {
 	return nil
 }
 
+// A model an installed agent CLI lists, for building the tier table.
+type DispatchModel struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Agent    string                 `protobuf:"bytes,1,opt,name=agent,proto3" json:"agent,omitempty"`
+	Model    string                 `protobuf:"bytes,2,opt,name=model,proto3" json:"model,omitempty"`
+	Provider string                 `protobuf:"bytes,3,opt,name=provider,proto3" json:"provider,omitempty"`
+	// The tier the agent suggests for the model, when it reports one.
+	Tier          string `protobuf:"bytes,4,opt,name=tier,proto3" json:"tier,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DispatchModel) Reset() {
+	*x = DispatchModel{}
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DispatchModel) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DispatchModel) ProtoMessage() {}
+
+func (x *DispatchModel) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DispatchModel.ProtoReflect.Descriptor instead.
+func (*DispatchModel) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *DispatchModel) GetAgent() string {
+	if x != nil {
+		return x.Agent
+	}
+	return ""
+}
+
+func (x *DispatchModel) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *DispatchModel) GetProvider() string {
+	if x != nil {
+		return x.Provider
+	}
+	return ""
+}
+
+func (x *DispatchModel) GetTier() string {
+	if x != nil {
+		return x.Tier
+	}
+	return ""
+}
+
+type ListModelsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListModelsRequest) Reset() {
+	*x = ListModelsRequest{}
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListModelsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListModelsRequest) ProtoMessage() {}
+
+func (x *ListModelsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListModelsRequest.ProtoReflect.Descriptor instead.
+func (*ListModelsRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{30}
+}
+
+type ListModelsResponse struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Models []*DispatchModel       `protobuf:"bytes,1,rep,name=models,proto3" json:"models,omitempty"`
+	// Agents that are installed but could not list their models.
+	Problems      []string `protobuf:"bytes,2,rep,name=problems,proto3" json:"problems,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListModelsResponse) Reset() {
+	*x = ListModelsResponse{}
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListModelsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListModelsResponse) ProtoMessage() {}
+
+func (x *ListModelsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListModelsResponse.ProtoReflect.Descriptor instead.
+func (*ListModelsResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *ListModelsResponse) GetModels() []*DispatchModel {
+	if x != nil {
+		return x.Models
+	}
+	return nil
+}
+
+func (x *ListModelsResponse) GetProblems() []string {
+	if x != nil {
+		return x.Problems
+	}
+	return nil
+}
+
+// Replaces the whole tier table. Rows keep their order within each tier; position is recomputed.
+type ReplaceTiersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tiers         []*DispatchTier        `protobuf:"bytes,1,rep,name=tiers,proto3" json:"tiers,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReplaceTiersRequest) Reset() {
+	*x = ReplaceTiersRequest{}
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReplaceTiersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReplaceTiersRequest) ProtoMessage() {}
+
+func (x *ReplaceTiersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReplaceTiersRequest.ProtoReflect.Descriptor instead.
+func (*ReplaceTiersRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *ReplaceTiersRequest) GetTiers() []*DispatchTier {
+	if x != nil {
+		return x.Tiers
+	}
+	return nil
+}
+
+type ReplaceTiersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tiers         []*DispatchTier        `protobuf:"bytes,1,rep,name=tiers,proto3" json:"tiers,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReplaceTiersResponse) Reset() {
+	*x = ReplaceTiersResponse{}
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReplaceTiersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReplaceTiersResponse) ProtoMessage() {}
+
+func (x *ReplaceTiersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReplaceTiersResponse.ProtoReflect.Descriptor instead.
+func (*ReplaceTiersResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *ReplaceTiersResponse) GetTiers() []*DispatchTier {
+	if x != nil {
+		return x.Tiers
+	}
+	return nil
+}
+
 type CheckTiersRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -2140,7 +2388,7 @@ type CheckTiersRequest struct {
 
 func (x *CheckTiersRequest) Reset() {
 	*x = CheckTiersRequest{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[29]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2152,7 +2400,7 @@ func (x *CheckTiersRequest) String() string {
 func (*CheckTiersRequest) ProtoMessage() {}
 
 func (x *CheckTiersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[29]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2165,7 +2413,7 @@ func (x *CheckTiersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckTiersRequest.ProtoReflect.Descriptor instead.
 func (*CheckTiersRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{29}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{34}
 }
 
 type CheckTiersResponse struct {
@@ -2177,7 +2425,7 @@ type CheckTiersResponse struct {
 
 func (x *CheckTiersResponse) Reset() {
 	*x = CheckTiersResponse{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[30]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2189,7 +2437,7 @@ func (x *CheckTiersResponse) String() string {
 func (*CheckTiersResponse) ProtoMessage() {}
 
 func (x *CheckTiersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[30]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2202,7 +2450,7 @@ func (x *CheckTiersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckTiersResponse.ProtoReflect.Descriptor instead.
 func (*CheckTiersResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{30}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *CheckTiersResponse) GetProblems() []string {
@@ -2223,7 +2471,7 @@ type StatsRequest struct {
 
 func (x *StatsRequest) Reset() {
 	*x = StatsRequest{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[31]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2235,7 +2483,7 @@ func (x *StatsRequest) String() string {
 func (*StatsRequest) ProtoMessage() {}
 
 func (x *StatsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[31]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2248,7 +2496,7 @@ func (x *StatsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatsRequest.ProtoReflect.Descriptor instead.
 func (*StatsRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{31}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *StatsRequest) GetProjectId() string {
@@ -2289,7 +2537,7 @@ type DispatchStatsRow struct {
 
 func (x *DispatchStatsRow) Reset() {
 	*x = DispatchStatsRow{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[32]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2301,7 +2549,7 @@ func (x *DispatchStatsRow) String() string {
 func (*DispatchStatsRow) ProtoMessage() {}
 
 func (x *DispatchStatsRow) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[32]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2314,7 +2562,7 @@ func (x *DispatchStatsRow) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchStatsRow.ProtoReflect.Descriptor instead.
 func (*DispatchStatsRow) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{32}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *DispatchStatsRow) GetKey() string {
@@ -2394,7 +2642,7 @@ type DispatchStatRank struct {
 
 func (x *DispatchStatRank) Reset() {
 	*x = DispatchStatRank{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[33]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2406,7 +2654,7 @@ func (x *DispatchStatRank) String() string {
 func (*DispatchStatRank) ProtoMessage() {}
 
 func (x *DispatchStatRank) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[33]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2419,7 +2667,7 @@ func (x *DispatchStatRank) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchStatRank.ProtoReflect.Descriptor instead.
 func (*DispatchStatRank) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{33}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *DispatchStatRank) GetKey() string {
@@ -2476,7 +2724,7 @@ type DispatchStatsRankings struct {
 
 func (x *DispatchStatsRankings) Reset() {
 	*x = DispatchStatsRankings{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[34]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2488,7 +2736,7 @@ func (x *DispatchStatsRankings) String() string {
 func (*DispatchStatsRankings) ProtoMessage() {}
 
 func (x *DispatchStatsRankings) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[34]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2501,7 +2749,7 @@ func (x *DispatchStatsRankings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchStatsRankings.ProtoReflect.Descriptor instead.
 func (*DispatchStatsRankings) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{34}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *DispatchStatsRankings) GetMostUsedModel() *DispatchStatRank {
@@ -2545,7 +2793,7 @@ type StatsResponse struct {
 
 func (x *StatsResponse) Reset() {
 	*x = StatsResponse{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[35]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2557,7 +2805,7 @@ func (x *StatsResponse) String() string {
 func (*StatsResponse) ProtoMessage() {}
 
 func (x *StatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[35]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2570,7 +2818,7 @@ func (x *StatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatsResponse.ProtoReflect.Descriptor instead.
 func (*StatsResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{35}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *StatsResponse) GetBy() string {
@@ -2616,7 +2864,7 @@ type GetClassifierRequest struct {
 
 func (x *GetClassifierRequest) Reset() {
 	*x = GetClassifierRequest{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[36]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2628,7 +2876,7 @@ func (x *GetClassifierRequest) String() string {
 func (*GetClassifierRequest) ProtoMessage() {}
 
 func (x *GetClassifierRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[36]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2641,7 +2889,7 @@ func (x *GetClassifierRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetClassifierRequest.ProtoReflect.Descriptor instead.
 func (*GetClassifierRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{36}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{41}
 }
 
 type DispatchClassifierTier struct {
@@ -2655,7 +2903,7 @@ type DispatchClassifierTier struct {
 
 func (x *DispatchClassifierTier) Reset() {
 	*x = DispatchClassifierTier{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[37]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2667,7 +2915,7 @@ func (x *DispatchClassifierTier) String() string {
 func (*DispatchClassifierTier) ProtoMessage() {}
 
 func (x *DispatchClassifierTier) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[37]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2680,7 +2928,7 @@ func (x *DispatchClassifierTier) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchClassifierTier.ProtoReflect.Descriptor instead.
 func (*DispatchClassifierTier) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{37}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *DispatchClassifierTier) GetTier() string {
@@ -2716,7 +2964,7 @@ type GetClassifierResponse struct {
 
 func (x *GetClassifierResponse) Reset() {
 	*x = GetClassifierResponse{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[38]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2728,7 +2976,7 @@ func (x *GetClassifierResponse) String() string {
 func (*GetClassifierResponse) ProtoMessage() {}
 
 func (x *GetClassifierResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[38]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2741,7 +2989,7 @@ func (x *GetClassifierResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetClassifierResponse.ProtoReflect.Descriptor instead.
 func (*GetClassifierResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{38}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *GetClassifierResponse) GetFeatureSchema() int32 {
@@ -2781,7 +3029,7 @@ type CapacityRequest struct {
 
 func (x *CapacityRequest) Reset() {
 	*x = CapacityRequest{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[39]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2793,7 +3041,7 @@ func (x *CapacityRequest) String() string {
 func (*CapacityRequest) ProtoMessage() {}
 
 func (x *CapacityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[39]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2806,7 +3054,7 @@ func (x *CapacityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CapacityRequest.ProtoReflect.Descriptor instead.
 func (*CapacityRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{39}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *CapacityRequest) GetSince() string {
@@ -2831,7 +3079,7 @@ type DispatchCapacityKey struct {
 
 func (x *DispatchCapacityKey) Reset() {
 	*x = DispatchCapacityKey{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[40]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2843,7 +3091,7 @@ func (x *DispatchCapacityKey) String() string {
 func (*DispatchCapacityKey) ProtoMessage() {}
 
 func (x *DispatchCapacityKey) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[40]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2856,7 +3104,7 @@ func (x *DispatchCapacityKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchCapacityKey.ProtoReflect.Descriptor instead.
 func (*DispatchCapacityKey) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{40}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *DispatchCapacityKey) GetKey() string {
@@ -2919,7 +3167,7 @@ type CapacityResponse struct {
 
 func (x *CapacityResponse) Reset() {
 	*x = CapacityResponse{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[41]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2931,7 +3179,7 @@ func (x *CapacityResponse) String() string {
 func (*CapacityResponse) ProtoMessage() {}
 
 func (x *CapacityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[41]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2944,7 +3192,7 @@ func (x *CapacityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CapacityResponse.ProtoReflect.Descriptor instead.
 func (*CapacityResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{41}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *CapacityResponse) GetSince() string {
@@ -2986,7 +3234,7 @@ type RouteRequest struct {
 
 func (x *RouteRequest) Reset() {
 	*x = RouteRequest{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[42]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2998,7 +3246,7 @@ func (x *RouteRequest) String() string {
 func (*RouteRequest) ProtoMessage() {}
 
 func (x *RouteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[42]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3011,7 +3259,7 @@ func (x *RouteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteRequest.ProtoReflect.Descriptor instead.
 func (*RouteRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{42}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *RouteRequest) GetTier() string {
@@ -3098,7 +3346,7 @@ type ClassifyRequest struct {
 
 func (x *ClassifyRequest) Reset() {
 	*x = ClassifyRequest{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[43]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3110,7 +3358,7 @@ func (x *ClassifyRequest) String() string {
 func (*ClassifyRequest) ProtoMessage() {}
 
 func (x *ClassifyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[43]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3123,7 +3371,7 @@ func (x *ClassifyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClassifyRequest.ProtoReflect.Descriptor instead.
 func (*ClassifyRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{43}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *ClassifyRequest) GetTier() string {
@@ -3177,7 +3425,7 @@ type VerifyRunRequest struct {
 
 func (x *VerifyRunRequest) Reset() {
 	*x = VerifyRunRequest{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[44]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3189,7 +3437,7 @@ func (x *VerifyRunRequest) String() string {
 func (*VerifyRunRequest) ProtoMessage() {}
 
 func (x *VerifyRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[44]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3202,7 +3450,7 @@ func (x *VerifyRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyRunRequest.ProtoReflect.Descriptor instead.
 func (*VerifyRunRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{44}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *VerifyRunRequest) GetId() string {
@@ -3223,7 +3471,7 @@ type MergeRunRequest struct {
 
 func (x *MergeRunRequest) Reset() {
 	*x = MergeRunRequest{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[45]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3235,7 +3483,7 @@ func (x *MergeRunRequest) String() string {
 func (*MergeRunRequest) ProtoMessage() {}
 
 func (x *MergeRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[45]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3248,7 +3496,7 @@ func (x *MergeRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergeRunRequest.ProtoReflect.Descriptor instead.
 func (*MergeRunRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{45}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *MergeRunRequest) GetId() string {
@@ -3282,7 +3530,7 @@ type CleanRunRequest struct {
 
 func (x *CleanRunRequest) Reset() {
 	*x = CleanRunRequest{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[46]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3294,7 +3542,7 @@ func (x *CleanRunRequest) String() string {
 func (*CleanRunRequest) ProtoMessage() {}
 
 func (x *CleanRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[46]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3307,7 +3555,7 @@ func (x *CleanRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CleanRunRequest.ProtoReflect.Descriptor instead.
 func (*CleanRunRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{46}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *CleanRunRequest) GetId() string {
@@ -3333,7 +3581,7 @@ type RecoverRunRequest struct {
 
 func (x *RecoverRunRequest) Reset() {
 	*x = RecoverRunRequest{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[47]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3345,7 +3593,7 @@ func (x *RecoverRunRequest) String() string {
 func (*RecoverRunRequest) ProtoMessage() {}
 
 func (x *RecoverRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[47]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3358,7 +3606,7 @@ func (x *RecoverRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecoverRunRequest.ProtoReflect.Descriptor instead.
 func (*RecoverRunRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{47}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *RecoverRunRequest) GetId() string {
@@ -3382,7 +3630,7 @@ type ConfigRequest struct {
 
 func (x *ConfigRequest) Reset() {
 	*x = ConfigRequest{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[48]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3394,7 +3642,7 @@ func (x *ConfigRequest) String() string {
 func (*ConfigRequest) ProtoMessage() {}
 
 func (x *ConfigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[48]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3407,7 +3655,7 @@ func (x *ConfigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigRequest.ProtoReflect.Descriptor instead.
 func (*ConfigRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{48}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *ConfigRequest) GetAction() string {
@@ -3456,7 +3704,7 @@ type SubagentsRequest struct {
 
 func (x *SubagentsRequest) Reset() {
 	*x = SubagentsRequest{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[49]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3468,7 +3716,7 @@ func (x *SubagentsRequest) String() string {
 func (*SubagentsRequest) ProtoMessage() {}
 
 func (x *SubagentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[49]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3481,7 +3729,7 @@ func (x *SubagentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubagentsRequest.ProtoReflect.Descriptor instead.
 func (*SubagentsRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{49}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *SubagentsRequest) GetAction() string {
@@ -3509,7 +3757,7 @@ type RouteResponse struct {
 
 func (x *RouteResponse) Reset() {
 	*x = RouteResponse{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[50]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3521,7 +3769,7 @@ func (x *RouteResponse) String() string {
 func (*RouteResponse) ProtoMessage() {}
 
 func (x *RouteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[50]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3534,7 +3782,7 @@ func (x *RouteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteResponse.ProtoReflect.Descriptor instead.
 func (*RouteResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{50}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *RouteResponse) GetOk() bool {
@@ -3562,7 +3810,7 @@ type ClassifyResponse struct {
 
 func (x *ClassifyResponse) Reset() {
 	*x = ClassifyResponse{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[51]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3574,7 +3822,7 @@ func (x *ClassifyResponse) String() string {
 func (*ClassifyResponse) ProtoMessage() {}
 
 func (x *ClassifyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[51]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3587,7 +3835,7 @@ func (x *ClassifyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClassifyResponse.ProtoReflect.Descriptor instead.
 func (*ClassifyResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{51}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *ClassifyResponse) GetOk() bool {
@@ -3615,7 +3863,7 @@ type VerifyRunResponse struct {
 
 func (x *VerifyRunResponse) Reset() {
 	*x = VerifyRunResponse{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[52]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3627,7 +3875,7 @@ func (x *VerifyRunResponse) String() string {
 func (*VerifyRunResponse) ProtoMessage() {}
 
 func (x *VerifyRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[52]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3640,7 +3888,7 @@ func (x *VerifyRunResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyRunResponse.ProtoReflect.Descriptor instead.
 func (*VerifyRunResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{52}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *VerifyRunResponse) GetOk() bool {
@@ -3668,7 +3916,7 @@ type MergeRunResponse struct {
 
 func (x *MergeRunResponse) Reset() {
 	*x = MergeRunResponse{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[53]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3680,7 +3928,7 @@ func (x *MergeRunResponse) String() string {
 func (*MergeRunResponse) ProtoMessage() {}
 
 func (x *MergeRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[53]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3693,7 +3941,7 @@ func (x *MergeRunResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergeRunResponse.ProtoReflect.Descriptor instead.
 func (*MergeRunResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{53}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *MergeRunResponse) GetOk() bool {
@@ -3721,7 +3969,7 @@ type CleanRunResponse struct {
 
 func (x *CleanRunResponse) Reset() {
 	*x = CleanRunResponse{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[54]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3733,7 +3981,7 @@ func (x *CleanRunResponse) String() string {
 func (*CleanRunResponse) ProtoMessage() {}
 
 func (x *CleanRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[54]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3746,7 +3994,7 @@ func (x *CleanRunResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CleanRunResponse.ProtoReflect.Descriptor instead.
 func (*CleanRunResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{54}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *CleanRunResponse) GetOk() bool {
@@ -3774,7 +4022,7 @@ type RecoverRunResponse struct {
 
 func (x *RecoverRunResponse) Reset() {
 	*x = RecoverRunResponse{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[55]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3786,7 +4034,7 @@ func (x *RecoverRunResponse) String() string {
 func (*RecoverRunResponse) ProtoMessage() {}
 
 func (x *RecoverRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[55]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3799,7 +4047,7 @@ func (x *RecoverRunResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecoverRunResponse.ProtoReflect.Descriptor instead.
 func (*RecoverRunResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{55}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *RecoverRunResponse) GetOk() bool {
@@ -3827,7 +4075,7 @@ type ConfigResponse struct {
 
 func (x *ConfigResponse) Reset() {
 	*x = ConfigResponse{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[56]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3839,7 +4087,7 @@ func (x *ConfigResponse) String() string {
 func (*ConfigResponse) ProtoMessage() {}
 
 func (x *ConfigResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[56]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3852,7 +4100,7 @@ func (x *ConfigResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigResponse.ProtoReflect.Descriptor instead.
 func (*ConfigResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{56}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *ConfigResponse) GetOk() bool {
@@ -3880,7 +4128,7 @@ type SubagentsResponse struct {
 
 func (x *SubagentsResponse) Reset() {
 	*x = SubagentsResponse{}
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[57]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3892,7 +4140,7 @@ func (x *SubagentsResponse) String() string {
 func (*SubagentsResponse) ProtoMessage() {}
 
 func (x *SubagentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[57]
+	mi := &file_polterware_local_v1_dispatch_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3905,7 +4153,7 @@ func (x *SubagentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubagentsResponse.ProtoReflect.Descriptor instead.
 func (*SubagentsResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{57}
+	return file_polterware_local_v1_dispatch_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *SubagentsResponse) GetOk() bool {
@@ -4123,7 +4371,20 @@ const file_polterware_local_v1_dispatch_proto_rawDesc = "" +
 	"\x05limit\x18\x04 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x05 \x01(\x05R\x06offset\"T\n" +
 	"\x13ListHistoryResponse\x12=\n" +
-	"\x06events\x18\x01 \x03(\v2%.polterware.local.v1.DispatchRunEventR\x06events\"\x13\n" +
+	"\x06events\x18\x01 \x03(\v2%.polterware.local.v1.DispatchRunEventR\x06events\"k\n" +
+	"\rDispatchModel\x12\x14\n" +
+	"\x05agent\x18\x01 \x01(\tR\x05agent\x12\x14\n" +
+	"\x05model\x18\x02 \x01(\tR\x05model\x12\x1a\n" +
+	"\bprovider\x18\x03 \x01(\tR\bprovider\x12\x12\n" +
+	"\x04tier\x18\x04 \x01(\tR\x04tier\"\x13\n" +
+	"\x11ListModelsRequest\"l\n" +
+	"\x12ListModelsResponse\x12:\n" +
+	"\x06models\x18\x01 \x03(\v2\".polterware.local.v1.DispatchModelR\x06models\x12\x1a\n" +
+	"\bproblems\x18\x02 \x03(\tR\bproblems\"N\n" +
+	"\x13ReplaceTiersRequest\x127\n" +
+	"\x05tiers\x18\x01 \x03(\v2!.polterware.local.v1.DispatchTierR\x05tiers\"O\n" +
+	"\x14ReplaceTiersResponse\x127\n" +
+	"\x05tiers\x18\x01 \x03(\v2!.polterware.local.v1.DispatchTierR\x05tiers\"\x13\n" +
 	"\x11CheckTiersRequest\"0\n" +
 	"\x12CheckTiersResponse\x12\x1a\n" +
 	"\bproblems\x18\x01 \x03(\tR\bproblems\"S\n" +
@@ -4257,7 +4518,7 @@ const file_polterware_local_v1_dispatch_proto_rawDesc = "" +
 	"\x04json\x18\x02 \x01(\tR\x04json\"7\n" +
 	"\x11SubagentsResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x12\n" +
-	"\x04json\x18\x02 \x01(\tR\x04json2\xb6\x10\n" +
+	"\x04json\x18\x02 \x01(\tR\x04json2\xfa\x11\n" +
 	"\x0fDispatchService\x12W\n" +
 	"\bListRuns\x12$.polterware.local.v1.ListRunsRequest\x1a%.polterware.local.v1.ListRunsResponse\x12Q\n" +
 	"\x06GetRun\x12\".polterware.local.v1.GetRunRequest\x1a#.polterware.local.v1.GetRunResponse\x12W\n" +
@@ -4272,7 +4533,10 @@ const file_polterware_local_v1_dispatch_proto_rawDesc = "" +
 	"ListAgents\x12&.polterware.local.v1.ListAgentsRequest\x1a'.polterware.local.v1.ListAgentsResponse\x12`\n" +
 	"\vListHistory\x12'.polterware.local.v1.ListHistoryRequest\x1a(.polterware.local.v1.ListHistoryResponse\x12]\n" +
 	"\n" +
-	"CheckTiers\x12&.polterware.local.v1.CheckTiersRequest\x1a'.polterware.local.v1.CheckTiersResponse\x12N\n" +
+	"CheckTiers\x12&.polterware.local.v1.CheckTiersRequest\x1a'.polterware.local.v1.CheckTiersResponse\x12]\n" +
+	"\n" +
+	"ListModels\x12&.polterware.local.v1.ListModelsRequest\x1a'.polterware.local.v1.ListModelsResponse\x12c\n" +
+	"\fReplaceTiers\x12(.polterware.local.v1.ReplaceTiersRequest\x1a).polterware.local.v1.ReplaceTiersResponse\x12N\n" +
 	"\x05Stats\x12!.polterware.local.v1.StatsRequest\x1a\".polterware.local.v1.StatsResponse\x12f\n" +
 	"\rGetClassifier\x12).polterware.local.v1.GetClassifierRequest\x1a*.polterware.local.v1.GetClassifierResponse\x12W\n" +
 	"\bCapacity\x12$.polterware.local.v1.CapacityRequest\x1a%.polterware.local.v1.CapacityResponse\x12N\n" +
@@ -4299,7 +4563,7 @@ func file_polterware_local_v1_dispatch_proto_rawDescGZIP() []byte {
 	return file_polterware_local_v1_dispatch_proto_rawDescData
 }
 
-var file_polterware_local_v1_dispatch_proto_msgTypes = make([]protoimpl.MessageInfo, 58)
+var file_polterware_local_v1_dispatch_proto_msgTypes = make([]protoimpl.MessageInfo, 63)
 var file_polterware_local_v1_dispatch_proto_goTypes = []any{
 	(*DispatchRun)(nil),            // 0: polterware.local.v1.DispatchRun
 	(*DispatchAttempt)(nil),        // 1: polterware.local.v1.DispatchAttempt
@@ -4330,35 +4594,40 @@ var file_polterware_local_v1_dispatch_proto_goTypes = []any{
 	(*ListAgentsResponse)(nil),     // 26: polterware.local.v1.ListAgentsResponse
 	(*ListHistoryRequest)(nil),     // 27: polterware.local.v1.ListHistoryRequest
 	(*ListHistoryResponse)(nil),    // 28: polterware.local.v1.ListHistoryResponse
-	(*CheckTiersRequest)(nil),      // 29: polterware.local.v1.CheckTiersRequest
-	(*CheckTiersResponse)(nil),     // 30: polterware.local.v1.CheckTiersResponse
-	(*StatsRequest)(nil),           // 31: polterware.local.v1.StatsRequest
-	(*DispatchStatsRow)(nil),       // 32: polterware.local.v1.DispatchStatsRow
-	(*DispatchStatRank)(nil),       // 33: polterware.local.v1.DispatchStatRank
-	(*DispatchStatsRankings)(nil),  // 34: polterware.local.v1.DispatchStatsRankings
-	(*StatsResponse)(nil),          // 35: polterware.local.v1.StatsResponse
-	(*GetClassifierRequest)(nil),   // 36: polterware.local.v1.GetClassifierRequest
-	(*DispatchClassifierTier)(nil), // 37: polterware.local.v1.DispatchClassifierTier
-	(*GetClassifierResponse)(nil),  // 38: polterware.local.v1.GetClassifierResponse
-	(*CapacityRequest)(nil),        // 39: polterware.local.v1.CapacityRequest
-	(*DispatchCapacityKey)(nil),    // 40: polterware.local.v1.DispatchCapacityKey
-	(*CapacityResponse)(nil),       // 41: polterware.local.v1.CapacityResponse
-	(*RouteRequest)(nil),           // 42: polterware.local.v1.RouteRequest
-	(*ClassifyRequest)(nil),        // 43: polterware.local.v1.ClassifyRequest
-	(*VerifyRunRequest)(nil),       // 44: polterware.local.v1.VerifyRunRequest
-	(*MergeRunRequest)(nil),        // 45: polterware.local.v1.MergeRunRequest
-	(*CleanRunRequest)(nil),        // 46: polterware.local.v1.CleanRunRequest
-	(*RecoverRunRequest)(nil),      // 47: polterware.local.v1.RecoverRunRequest
-	(*ConfigRequest)(nil),          // 48: polterware.local.v1.ConfigRequest
-	(*SubagentsRequest)(nil),       // 49: polterware.local.v1.SubagentsRequest
-	(*RouteResponse)(nil),          // 50: polterware.local.v1.RouteResponse
-	(*ClassifyResponse)(nil),       // 51: polterware.local.v1.ClassifyResponse
-	(*VerifyRunResponse)(nil),      // 52: polterware.local.v1.VerifyRunResponse
-	(*MergeRunResponse)(nil),       // 53: polterware.local.v1.MergeRunResponse
-	(*CleanRunResponse)(nil),       // 54: polterware.local.v1.CleanRunResponse
-	(*RecoverRunResponse)(nil),     // 55: polterware.local.v1.RecoverRunResponse
-	(*ConfigResponse)(nil),         // 56: polterware.local.v1.ConfigResponse
-	(*SubagentsResponse)(nil),      // 57: polterware.local.v1.SubagentsResponse
+	(*DispatchModel)(nil),          // 29: polterware.local.v1.DispatchModel
+	(*ListModelsRequest)(nil),      // 30: polterware.local.v1.ListModelsRequest
+	(*ListModelsResponse)(nil),     // 31: polterware.local.v1.ListModelsResponse
+	(*ReplaceTiersRequest)(nil),    // 32: polterware.local.v1.ReplaceTiersRequest
+	(*ReplaceTiersResponse)(nil),   // 33: polterware.local.v1.ReplaceTiersResponse
+	(*CheckTiersRequest)(nil),      // 34: polterware.local.v1.CheckTiersRequest
+	(*CheckTiersResponse)(nil),     // 35: polterware.local.v1.CheckTiersResponse
+	(*StatsRequest)(nil),           // 36: polterware.local.v1.StatsRequest
+	(*DispatchStatsRow)(nil),       // 37: polterware.local.v1.DispatchStatsRow
+	(*DispatchStatRank)(nil),       // 38: polterware.local.v1.DispatchStatRank
+	(*DispatchStatsRankings)(nil),  // 39: polterware.local.v1.DispatchStatsRankings
+	(*StatsResponse)(nil),          // 40: polterware.local.v1.StatsResponse
+	(*GetClassifierRequest)(nil),   // 41: polterware.local.v1.GetClassifierRequest
+	(*DispatchClassifierTier)(nil), // 42: polterware.local.v1.DispatchClassifierTier
+	(*GetClassifierResponse)(nil),  // 43: polterware.local.v1.GetClassifierResponse
+	(*CapacityRequest)(nil),        // 44: polterware.local.v1.CapacityRequest
+	(*DispatchCapacityKey)(nil),    // 45: polterware.local.v1.DispatchCapacityKey
+	(*CapacityResponse)(nil),       // 46: polterware.local.v1.CapacityResponse
+	(*RouteRequest)(nil),           // 47: polterware.local.v1.RouteRequest
+	(*ClassifyRequest)(nil),        // 48: polterware.local.v1.ClassifyRequest
+	(*VerifyRunRequest)(nil),       // 49: polterware.local.v1.VerifyRunRequest
+	(*MergeRunRequest)(nil),        // 50: polterware.local.v1.MergeRunRequest
+	(*CleanRunRequest)(nil),        // 51: polterware.local.v1.CleanRunRequest
+	(*RecoverRunRequest)(nil),      // 52: polterware.local.v1.RecoverRunRequest
+	(*ConfigRequest)(nil),          // 53: polterware.local.v1.ConfigRequest
+	(*SubagentsRequest)(nil),       // 54: polterware.local.v1.SubagentsRequest
+	(*RouteResponse)(nil),          // 55: polterware.local.v1.RouteResponse
+	(*ClassifyResponse)(nil),       // 56: polterware.local.v1.ClassifyResponse
+	(*VerifyRunResponse)(nil),      // 57: polterware.local.v1.VerifyRunResponse
+	(*MergeRunResponse)(nil),       // 58: polterware.local.v1.MergeRunResponse
+	(*CleanRunResponse)(nil),       // 59: polterware.local.v1.CleanRunResponse
+	(*RecoverRunResponse)(nil),     // 60: polterware.local.v1.RecoverRunResponse
+	(*ConfigResponse)(nil),         // 61: polterware.local.v1.ConfigResponse
+	(*SubagentsResponse)(nil),      // 62: polterware.local.v1.SubagentsResponse
 }
 var file_polterware_local_v1_dispatch_proto_depIdxs = []int32{
 	1,  // 0: polterware.local.v1.DispatchRun.attempts:type_name -> polterware.local.v1.DispatchAttempt
@@ -4371,65 +4640,72 @@ var file_polterware_local_v1_dispatch_proto_depIdxs = []int32{
 	5,  // 7: polterware.local.v1.ListTiersResponse.tiers:type_name -> polterware.local.v1.DispatchTier
 	6,  // 8: polterware.local.v1.ListAgentsResponse.agents:type_name -> polterware.local.v1.DispatchAgent
 	2,  // 9: polterware.local.v1.ListHistoryResponse.events:type_name -> polterware.local.v1.DispatchRunEvent
-	33, // 10: polterware.local.v1.DispatchStatsRankings.most_used_model:type_name -> polterware.local.v1.DispatchStatRank
-	33, // 11: polterware.local.v1.DispatchStatsRankings.most_used_provider:type_name -> polterware.local.v1.DispatchStatRank
-	33, // 12: polterware.local.v1.DispatchStatsRankings.slowest_model:type_name -> polterware.local.v1.DispatchStatRank
-	33, // 13: polterware.local.v1.DispatchStatsRankings.most_failed_model:type_name -> polterware.local.v1.DispatchStatRank
-	32, // 14: polterware.local.v1.StatsResponse.rows:type_name -> polterware.local.v1.DispatchStatsRow
-	34, // 15: polterware.local.v1.StatsResponse.rankings:type_name -> polterware.local.v1.DispatchStatsRankings
-	37, // 16: polterware.local.v1.GetClassifierResponse.tiers:type_name -> polterware.local.v1.DispatchClassifierTier
-	40, // 17: polterware.local.v1.CapacityResponse.keys:type_name -> polterware.local.v1.DispatchCapacityKey
-	7,  // 18: polterware.local.v1.DispatchService.ListRuns:input_type -> polterware.local.v1.ListRunsRequest
-	9,  // 19: polterware.local.v1.DispatchService.GetRun:input_type -> polterware.local.v1.GetRunRequest
-	11, // 20: polterware.local.v1.DispatchService.StartRun:input_type -> polterware.local.v1.StartRunRequest
-	13, // 21: polterware.local.v1.DispatchService.CancelRun:input_type -> polterware.local.v1.CancelRunRequest
-	15, // 22: polterware.local.v1.DispatchService.Result:input_type -> polterware.local.v1.ResultRequest
-	17, // 23: polterware.local.v1.DispatchService.WatchRun:input_type -> polterware.local.v1.WatchRunRequest
-	19, // 24: polterware.local.v1.DispatchService.ListWorktrees:input_type -> polterware.local.v1.ListWorktreesRequest
-	21, // 25: polterware.local.v1.DispatchService.ListQuota:input_type -> polterware.local.v1.ListQuotaRequest
-	23, // 26: polterware.local.v1.DispatchService.ListTiers:input_type -> polterware.local.v1.ListTiersRequest
-	25, // 27: polterware.local.v1.DispatchService.ListAgents:input_type -> polterware.local.v1.ListAgentsRequest
-	27, // 28: polterware.local.v1.DispatchService.ListHistory:input_type -> polterware.local.v1.ListHistoryRequest
-	29, // 29: polterware.local.v1.DispatchService.CheckTiers:input_type -> polterware.local.v1.CheckTiersRequest
-	31, // 30: polterware.local.v1.DispatchService.Stats:input_type -> polterware.local.v1.StatsRequest
-	36, // 31: polterware.local.v1.DispatchService.GetClassifier:input_type -> polterware.local.v1.GetClassifierRequest
-	39, // 32: polterware.local.v1.DispatchService.Capacity:input_type -> polterware.local.v1.CapacityRequest
-	42, // 33: polterware.local.v1.DispatchService.Route:input_type -> polterware.local.v1.RouteRequest
-	43, // 34: polterware.local.v1.DispatchService.Classify:input_type -> polterware.local.v1.ClassifyRequest
-	44, // 35: polterware.local.v1.DispatchService.VerifyRun:input_type -> polterware.local.v1.VerifyRunRequest
-	45, // 36: polterware.local.v1.DispatchService.MergeRun:input_type -> polterware.local.v1.MergeRunRequest
-	46, // 37: polterware.local.v1.DispatchService.CleanRun:input_type -> polterware.local.v1.CleanRunRequest
-	47, // 38: polterware.local.v1.DispatchService.RecoverRun:input_type -> polterware.local.v1.RecoverRunRequest
-	48, // 39: polterware.local.v1.DispatchService.Config:input_type -> polterware.local.v1.ConfigRequest
-	49, // 40: polterware.local.v1.DispatchService.Subagents:input_type -> polterware.local.v1.SubagentsRequest
-	8,  // 41: polterware.local.v1.DispatchService.ListRuns:output_type -> polterware.local.v1.ListRunsResponse
-	10, // 42: polterware.local.v1.DispatchService.GetRun:output_type -> polterware.local.v1.GetRunResponse
-	12, // 43: polterware.local.v1.DispatchService.StartRun:output_type -> polterware.local.v1.StartRunResponse
-	14, // 44: polterware.local.v1.DispatchService.CancelRun:output_type -> polterware.local.v1.CancelRunResponse
-	16, // 45: polterware.local.v1.DispatchService.Result:output_type -> polterware.local.v1.ResultResponse
-	18, // 46: polterware.local.v1.DispatchService.WatchRun:output_type -> polterware.local.v1.WatchRunResponse
-	20, // 47: polterware.local.v1.DispatchService.ListWorktrees:output_type -> polterware.local.v1.ListWorktreesResponse
-	22, // 48: polterware.local.v1.DispatchService.ListQuota:output_type -> polterware.local.v1.ListQuotaResponse
-	24, // 49: polterware.local.v1.DispatchService.ListTiers:output_type -> polterware.local.v1.ListTiersResponse
-	26, // 50: polterware.local.v1.DispatchService.ListAgents:output_type -> polterware.local.v1.ListAgentsResponse
-	28, // 51: polterware.local.v1.DispatchService.ListHistory:output_type -> polterware.local.v1.ListHistoryResponse
-	30, // 52: polterware.local.v1.DispatchService.CheckTiers:output_type -> polterware.local.v1.CheckTiersResponse
-	35, // 53: polterware.local.v1.DispatchService.Stats:output_type -> polterware.local.v1.StatsResponse
-	38, // 54: polterware.local.v1.DispatchService.GetClassifier:output_type -> polterware.local.v1.GetClassifierResponse
-	41, // 55: polterware.local.v1.DispatchService.Capacity:output_type -> polterware.local.v1.CapacityResponse
-	50, // 56: polterware.local.v1.DispatchService.Route:output_type -> polterware.local.v1.RouteResponse
-	51, // 57: polterware.local.v1.DispatchService.Classify:output_type -> polterware.local.v1.ClassifyResponse
-	52, // 58: polterware.local.v1.DispatchService.VerifyRun:output_type -> polterware.local.v1.VerifyRunResponse
-	53, // 59: polterware.local.v1.DispatchService.MergeRun:output_type -> polterware.local.v1.MergeRunResponse
-	54, // 60: polterware.local.v1.DispatchService.CleanRun:output_type -> polterware.local.v1.CleanRunResponse
-	55, // 61: polterware.local.v1.DispatchService.RecoverRun:output_type -> polterware.local.v1.RecoverRunResponse
-	56, // 62: polterware.local.v1.DispatchService.Config:output_type -> polterware.local.v1.ConfigResponse
-	57, // 63: polterware.local.v1.DispatchService.Subagents:output_type -> polterware.local.v1.SubagentsResponse
-	41, // [41:64] is the sub-list for method output_type
-	18, // [18:41] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	29, // 10: polterware.local.v1.ListModelsResponse.models:type_name -> polterware.local.v1.DispatchModel
+	5,  // 11: polterware.local.v1.ReplaceTiersRequest.tiers:type_name -> polterware.local.v1.DispatchTier
+	5,  // 12: polterware.local.v1.ReplaceTiersResponse.tiers:type_name -> polterware.local.v1.DispatchTier
+	38, // 13: polterware.local.v1.DispatchStatsRankings.most_used_model:type_name -> polterware.local.v1.DispatchStatRank
+	38, // 14: polterware.local.v1.DispatchStatsRankings.most_used_provider:type_name -> polterware.local.v1.DispatchStatRank
+	38, // 15: polterware.local.v1.DispatchStatsRankings.slowest_model:type_name -> polterware.local.v1.DispatchStatRank
+	38, // 16: polterware.local.v1.DispatchStatsRankings.most_failed_model:type_name -> polterware.local.v1.DispatchStatRank
+	37, // 17: polterware.local.v1.StatsResponse.rows:type_name -> polterware.local.v1.DispatchStatsRow
+	39, // 18: polterware.local.v1.StatsResponse.rankings:type_name -> polterware.local.v1.DispatchStatsRankings
+	42, // 19: polterware.local.v1.GetClassifierResponse.tiers:type_name -> polterware.local.v1.DispatchClassifierTier
+	45, // 20: polterware.local.v1.CapacityResponse.keys:type_name -> polterware.local.v1.DispatchCapacityKey
+	7,  // 21: polterware.local.v1.DispatchService.ListRuns:input_type -> polterware.local.v1.ListRunsRequest
+	9,  // 22: polterware.local.v1.DispatchService.GetRun:input_type -> polterware.local.v1.GetRunRequest
+	11, // 23: polterware.local.v1.DispatchService.StartRun:input_type -> polterware.local.v1.StartRunRequest
+	13, // 24: polterware.local.v1.DispatchService.CancelRun:input_type -> polterware.local.v1.CancelRunRequest
+	15, // 25: polterware.local.v1.DispatchService.Result:input_type -> polterware.local.v1.ResultRequest
+	17, // 26: polterware.local.v1.DispatchService.WatchRun:input_type -> polterware.local.v1.WatchRunRequest
+	19, // 27: polterware.local.v1.DispatchService.ListWorktrees:input_type -> polterware.local.v1.ListWorktreesRequest
+	21, // 28: polterware.local.v1.DispatchService.ListQuota:input_type -> polterware.local.v1.ListQuotaRequest
+	23, // 29: polterware.local.v1.DispatchService.ListTiers:input_type -> polterware.local.v1.ListTiersRequest
+	25, // 30: polterware.local.v1.DispatchService.ListAgents:input_type -> polterware.local.v1.ListAgentsRequest
+	27, // 31: polterware.local.v1.DispatchService.ListHistory:input_type -> polterware.local.v1.ListHistoryRequest
+	34, // 32: polterware.local.v1.DispatchService.CheckTiers:input_type -> polterware.local.v1.CheckTiersRequest
+	30, // 33: polterware.local.v1.DispatchService.ListModels:input_type -> polterware.local.v1.ListModelsRequest
+	32, // 34: polterware.local.v1.DispatchService.ReplaceTiers:input_type -> polterware.local.v1.ReplaceTiersRequest
+	36, // 35: polterware.local.v1.DispatchService.Stats:input_type -> polterware.local.v1.StatsRequest
+	41, // 36: polterware.local.v1.DispatchService.GetClassifier:input_type -> polterware.local.v1.GetClassifierRequest
+	44, // 37: polterware.local.v1.DispatchService.Capacity:input_type -> polterware.local.v1.CapacityRequest
+	47, // 38: polterware.local.v1.DispatchService.Route:input_type -> polterware.local.v1.RouteRequest
+	48, // 39: polterware.local.v1.DispatchService.Classify:input_type -> polterware.local.v1.ClassifyRequest
+	49, // 40: polterware.local.v1.DispatchService.VerifyRun:input_type -> polterware.local.v1.VerifyRunRequest
+	50, // 41: polterware.local.v1.DispatchService.MergeRun:input_type -> polterware.local.v1.MergeRunRequest
+	51, // 42: polterware.local.v1.DispatchService.CleanRun:input_type -> polterware.local.v1.CleanRunRequest
+	52, // 43: polterware.local.v1.DispatchService.RecoverRun:input_type -> polterware.local.v1.RecoverRunRequest
+	53, // 44: polterware.local.v1.DispatchService.Config:input_type -> polterware.local.v1.ConfigRequest
+	54, // 45: polterware.local.v1.DispatchService.Subagents:input_type -> polterware.local.v1.SubagentsRequest
+	8,  // 46: polterware.local.v1.DispatchService.ListRuns:output_type -> polterware.local.v1.ListRunsResponse
+	10, // 47: polterware.local.v1.DispatchService.GetRun:output_type -> polterware.local.v1.GetRunResponse
+	12, // 48: polterware.local.v1.DispatchService.StartRun:output_type -> polterware.local.v1.StartRunResponse
+	14, // 49: polterware.local.v1.DispatchService.CancelRun:output_type -> polterware.local.v1.CancelRunResponse
+	16, // 50: polterware.local.v1.DispatchService.Result:output_type -> polterware.local.v1.ResultResponse
+	18, // 51: polterware.local.v1.DispatchService.WatchRun:output_type -> polterware.local.v1.WatchRunResponse
+	20, // 52: polterware.local.v1.DispatchService.ListWorktrees:output_type -> polterware.local.v1.ListWorktreesResponse
+	22, // 53: polterware.local.v1.DispatchService.ListQuota:output_type -> polterware.local.v1.ListQuotaResponse
+	24, // 54: polterware.local.v1.DispatchService.ListTiers:output_type -> polterware.local.v1.ListTiersResponse
+	26, // 55: polterware.local.v1.DispatchService.ListAgents:output_type -> polterware.local.v1.ListAgentsResponse
+	28, // 56: polterware.local.v1.DispatchService.ListHistory:output_type -> polterware.local.v1.ListHistoryResponse
+	35, // 57: polterware.local.v1.DispatchService.CheckTiers:output_type -> polterware.local.v1.CheckTiersResponse
+	31, // 58: polterware.local.v1.DispatchService.ListModels:output_type -> polterware.local.v1.ListModelsResponse
+	33, // 59: polterware.local.v1.DispatchService.ReplaceTiers:output_type -> polterware.local.v1.ReplaceTiersResponse
+	40, // 60: polterware.local.v1.DispatchService.Stats:output_type -> polterware.local.v1.StatsResponse
+	43, // 61: polterware.local.v1.DispatchService.GetClassifier:output_type -> polterware.local.v1.GetClassifierResponse
+	46, // 62: polterware.local.v1.DispatchService.Capacity:output_type -> polterware.local.v1.CapacityResponse
+	55, // 63: polterware.local.v1.DispatchService.Route:output_type -> polterware.local.v1.RouteResponse
+	56, // 64: polterware.local.v1.DispatchService.Classify:output_type -> polterware.local.v1.ClassifyResponse
+	57, // 65: polterware.local.v1.DispatchService.VerifyRun:output_type -> polterware.local.v1.VerifyRunResponse
+	58, // 66: polterware.local.v1.DispatchService.MergeRun:output_type -> polterware.local.v1.MergeRunResponse
+	59, // 67: polterware.local.v1.DispatchService.CleanRun:output_type -> polterware.local.v1.CleanRunResponse
+	60, // 68: polterware.local.v1.DispatchService.RecoverRun:output_type -> polterware.local.v1.RecoverRunResponse
+	61, // 69: polterware.local.v1.DispatchService.Config:output_type -> polterware.local.v1.ConfigResponse
+	62, // 70: polterware.local.v1.DispatchService.Subagents:output_type -> polterware.local.v1.SubagentsResponse
+	46, // [46:71] is the sub-list for method output_type
+	21, // [21:46] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_polterware_local_v1_dispatch_proto_init() }
@@ -4441,16 +4717,16 @@ func file_polterware_local_v1_dispatch_proto_init() {
 	file_polterware_local_v1_dispatch_proto_msgTypes[1].OneofWrappers = []any{}
 	file_polterware_local_v1_dispatch_proto_msgTypes[4].OneofWrappers = []any{}
 	file_polterware_local_v1_dispatch_proto_msgTypes[6].OneofWrappers = []any{}
-	file_polterware_local_v1_dispatch_proto_msgTypes[32].OneofWrappers = []any{}
-	file_polterware_local_v1_dispatch_proto_msgTypes[33].OneofWrappers = []any{}
-	file_polterware_local_v1_dispatch_proto_msgTypes[40].OneofWrappers = []any{}
+	file_polterware_local_v1_dispatch_proto_msgTypes[37].OneofWrappers = []any{}
+	file_polterware_local_v1_dispatch_proto_msgTypes[38].OneofWrappers = []any{}
+	file_polterware_local_v1_dispatch_proto_msgTypes[45].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_polterware_local_v1_dispatch_proto_rawDesc), len(file_polterware_local_v1_dispatch_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   58,
+			NumMessages:   63,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

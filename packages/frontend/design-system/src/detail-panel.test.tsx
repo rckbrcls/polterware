@@ -78,7 +78,7 @@ function mount(options: {
       >
         <DetailPanel.Collection>
           <PageToolbar.Root><PageToolbar.Actions><button>Filter</button></PageToolbar.Actions></PageToolbar.Root>
-          <ActiveFilterBar items={filters() ? [{ id: "status", label: "Open", onRemove: () => setFilters(false) }] : []} />
+          <ActiveFilterBar fields={[]} clauses={[]} onClausesChange={() => undefined} items={filters() ? [{ id: "status", label: "Open", onRemove: () => setFilters(false) }] : []} />
           <button data-detail-opener data-detail-target-id="alpha" onClick={() => { setOpen(true); }}>Alpha row</button>
         </DetailPanel.Collection>
         <DetailPanel.Content>
@@ -215,7 +215,7 @@ describe("lateral DetailPanel", () => {
     const host = document.createElement("div"); document.body.append(host);
     const dispose = render(() => <div>
       <PageToolbar.Root><PageToolbar.Actions><button>Filter</button></PageToolbar.Actions></PageToolbar.Root>
-      <ActiveFilterBar items={[{ id: "status", label: "Open", onRemove: () => undefined }]} />
+      <ActiveFilterBar fields={[]} clauses={[]} onClausesChange={() => undefined} items={[{ id: "status", label: "Open", onRemove: () => undefined }]} />
     </div>, host);
     expect(host.querySelector(".pw-page-toolbar")!.parentElement).toBe(host.firstElementChild);
     expect(host.querySelector(".pw-active-filter-bar")!.parentElement).toBe(host.firstElementChild);

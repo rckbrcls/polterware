@@ -58,6 +58,7 @@ export {
   historySnapshot,
   resolveSection,
   resolveRoute,
+  legacySettingsTab,
   defaultTabFor,
   DEFAULT_TABS,
   SECTION_TABS,
@@ -76,7 +77,8 @@ export { expandedDetail, openDetail, requestDetailExpanded, setDetailExpandHandl
 export { SidebarNav, SidebarSettingsItem } from "./sidebar";
 export type { SidebarCount } from "./sidebar";
 export { TitleBar } from "./title-bar";
-export { CliReferencePage } from "./cli-reference-page";
+export { CliReferenceSettings } from "./cli-reference-page";
+export { CLI_COMMANDS } from "./cli-reference";
 export { InboxPage } from "./inbox-page";
 export { ProjectsScreen } from "./projects-screen";
 export { TerminalEmulator } from "./terminal-emulator";
@@ -84,7 +86,9 @@ export { TerminalTranscript } from "./terminal-transcript";
 export { CreateProjectDialog } from "./create-project-dialog";
 export { ProjectSwitcher } from "./project-switcher";
 export { WorkspaceContextBar } from "./context-switchers";
-export { scopeFilterMenuGroups, scopeFilterPills } from "./scope-filter-menu";
+export { clausesToScopeTokens, isScopeFieldId, scopeFilterFields, scopeTokensToClauses } from "./scope-filter-menu";
+export { createPageFilters, polterwareSavedFiltersApi } from "./page-filters";
+export type { PageFilterScope, PageFilters, PageFiltersOptions } from "./page-filters";
 export {
   SCOPE_FILTER_KEYS,
   dedupeParsedScopeTokens,
@@ -148,9 +152,14 @@ export function Shell(props: {
   onOpenProjectSettings?: () => void;
   onSelectEnvironment?: (environmentId: string) => void;
   onOpenCommander?: () => void;
+  /** Opens Project settings from the sidebar footer. */
   onOpenSettings?: () => void;
-  /** True while the Settings dialog is open. */
+  /** True while Project settings is open. */
   settingsOpen?: boolean;
+  /** Opens App settings from the title bar. */
+  onOpenAppSettings?: () => void;
+  /** True while App settings is open. */
+  appSettingsOpen?: boolean;
   workspace?: WorkspaceContext;
   projects?: ProjectSwitcherItem[];
   environments?: EnvironmentItem[];
@@ -216,6 +225,8 @@ export function Shell(props: {
         onForward={() => props.onForward?.()}
         onGoHome={() => props.onGoHome?.()}
         onOpenCommander={() => props.onOpenCommander?.()}
+        onOpenAppSettings={() => props.onOpenAppSettings?.()}
+        appSettingsOpen={props.appSettingsOpen}
       />
 
       <div class="flex min-h-0 flex-1">

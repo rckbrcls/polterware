@@ -12,6 +12,9 @@ import { createPanelShortcuts } from "./create-panel-shortcuts";
 import { DETAIL_PANEL_MAX_WIDTH, DETAIL_PANEL_MIN_WIDTH, DETAIL_PANEL_SIDEBAR_ID, clampDetailPanelWidth, persistStoredWidth, readStoredWidth } from "./panel-width";
 import "../detail-panel.css";
 
+/** A pinned panel never squeezes the page beside it below this width. */
+const PINNED_COLLECTION_MIN_WIDTH = 360;
+
 export type DetailPanelRootProps = {
   open: boolean;
   expanded?: boolean;
@@ -24,6 +27,8 @@ export type DetailPanelRootProps = {
   shortcuts?: boolean;
   /** Shows the expand/restore button in the header (default true). */
   expandable?: boolean;
+  /** Keeps the panel permanently open: the header drops its close button (the page owns visibility). */
+  pinned?: boolean;
   activeEntityId?: string | null;
   onOpenChange: (open: boolean) => void;
   onExpandedChange?: (expanded: boolean) => void;
@@ -94,7 +99,7 @@ export function DetailPanelRoot(props: DetailPanelRootProps) {
     setPreferredWidth(width);
     persistStoredWidth(storageKey(), width);
   }
-  const layout = createPanelLayout({ workspace: () => workspace, preferredWidth, cancelResize: () => resize.cancel() });
+  const layout = createPanelLayout({ workspace: () => workspace, preferredWidth, cancelResize: () => resize.cancel(), reserveCollection: () => props.pinned ? PINNED_COLLECTION_MIN_WIDTH : 0 });
   const resize = createPanelResize({ root: () => root, enabled: resizable, preferredWidth, ...layout, setPreferredWidth, persistWidth });
   const focus = createPanelFocus({ root: () => root, frame: () => frame, divider: () => divider, visible, available, activeEntityId });
   function close(outside = false) {
@@ -137,7 +142,7 @@ export function DetailPanelRoot(props: DetailPanelRootProps) {
           hidden={!presence.present() || !available()} inert={!visible() ? true : undefined} aria-hidden={!visible() ? true : undefined}
           role="region" aria-label={props["aria-label"] ?? "Details"}
           onPointerDown={(event) => event.stopPropagation()} onWheel={(event) => event.stopPropagation()}>
-          <header class={`pw-detail-panel__header ${headerClass()}`} data-expandable={props.expandable !== false}>
+          <header class={`pw-detail-panel__header ${headerClass()}`} data-expandable={props.expandable !== false || expanded()}>
             <div ref={setHeaderHost} class="pw-detail-panel__header-title" />
             <Show
               when={expanded()}
@@ -148,9 +153,11 @@ export function DetailPanelRoot(props: DetailPanelRootProps) {
                       <ExpandIcon size={14} />
                     </Button>
                   </Show>
-                  <Button variant="icon" aria-label="Close details" title={`Close details (${closeShortcut()})`} onClick={() => close()}>
-                    <X size={14} />
-                  </Button>
+                  <Show when={!props.pinned}>
+                    <Button variant="icon" aria-label="Close details" title={`Close details (${closeShortcut()})`} onClick={() => close()}>
+                      <X size={14} />
+                    </Button>
+                  </Show>
                 </>
               }
             >

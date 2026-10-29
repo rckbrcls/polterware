@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createSignal, type JSX } from "solid-js";
 import { render } from "solid-js/web";
-import { Checkbox } from "./checkbox";
+import { Checkbox, CheckboxRow } from "./checkbox";
 import { SegmentedControl } from "./segmented-control";
 import { NumberStepper } from "./number-stepper";
 import { Slider } from "./slider";
@@ -31,6 +31,14 @@ describe("Checkbox", () => {
     const host = mount(() => <Checkbox label="Reduced" />); const input = host.querySelector<HTMLInputElement>("input")!;
     input.focus(); key(input, " "); // jsdom does not synthesize the browser's native Space click.
     input.click(); await vi.waitFor(() => expect(input.checked).toBe(true));
+  });  it("renders a selection row with the checkbox first and reports boolean changes", async () => {
+    const change = vi.fn();
+    const host = mount(() => <CheckboxRow label="Staging" leading={<span data-icon />} trailing="2" checked={false} onCheckedChange={change} />);
+    const row = host.querySelector<HTMLElement>(".pw-checkbox-row")!;
+    expect(row.firstElementChild?.tagName).toBe("INPUT");
+    expect(row.querySelector(".pw-checkbox-row__trailing")!.textContent).toBe("2");
+    host.querySelector<HTMLInputElement>("input")!.click();
+    await vi.waitFor(() => expect(change).toHaveBeenCalledWith(true));
   });
 });
 describe("SegmentedControl", () => {

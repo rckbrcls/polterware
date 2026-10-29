@@ -36,6 +36,7 @@ var watched = map[string]tableMeta{
 	"focus_sessions":   {entity: "focus", idCol: 0},
 	"reminder_oneoffs": {entity: "reminder", idCol: 0},
 	"settings":         {entity: "setting", idCol: 0},
+	"saved_filters":    {entity: "saved_filter", idCol: 0},
 }
 
 var harvests sync.Map // key string -> *harvestBuf

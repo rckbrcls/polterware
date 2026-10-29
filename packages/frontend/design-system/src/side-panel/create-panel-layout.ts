@@ -1,20 +1,27 @@
 import { createEffect, createSignal, onCleanup, onMount, type Accessor } from "solid-js";
 import type { PanelExitGeometry } from "./create-panel-presence";
-import { clampDetailPanelWidth } from "./panel-width";
+import { DETAIL_PANEL_MIN_WIDTH, clampDetailPanelWidth } from "./panel-width";
 
 export function createPanelLayout(options: {
   workspace: Accessor<HTMLElement | undefined>;
   preferredWidth: Accessor<number>;
   cancelResize: () => void;
+  /** Width the collection beside the panel keeps; the panel narrows (never below its minimum) instead of crushing it. */
+  reserveCollection?: Accessor<number>;
 }) {
-  const [hostWidth, setHostWidth] = createSignal(0);
+  const [measuredWidth, setHostWidth] = createSignal(0);
+  const hostWidth = () => {
+    const measured = measuredWidth();
+    const reserve = options.reserveCollection?.() ?? 0;
+    return measured > 0 && reserve > 0 ? Math.max(measured - reserve, DETAIL_PANEL_MIN_WIDTH + 16) : measured;
+  };
   const panelWidth = () => clampDetailPanelWidth(options.preferredWidth(), hostWidth());
   onMount(() => {
     const workspace = options.workspace();
     const measure = () => {
       if (!workspace) return;
       const width = workspace.getBoundingClientRect().width;
-      if (width !== hostWidth()) options.cancelResize();
+      if (width !== measuredWidth()) options.cancelResize();
       setHostWidth(width);
     };
     measure();

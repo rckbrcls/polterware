@@ -28,6 +28,9 @@ function mount(api: CanvasPort, onBack = vi.fn(), entities: readonly StoreEntity
   return host;
 }
 function button(label: string) { return container.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!; }
+function tab(label: string) { return [...container.querySelectorAll<HTMLElement>('[role="tab"]')].find((item) => item.textContent?.includes(label))!; }
+async function openTab(label: string) { tab(label).click(); await vi.waitFor(() => expect(tab(label).getAttribute("aria-selected")).toBe("true")); }
+function lastPatch(api: CanvasPort) { return vi.mocked(api.update).mock.calls.at(-1)![2]; }
 function pointer(host: HTMLElement, type: string, x: number, y: number) {
   const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: y, button: 0 });
   Object.defineProperty(event, "pointerId", { value: 1 }); host.dispatchEvent(event);
@@ -50,8 +53,9 @@ describe("Desktop canvas interactions", () => {
     expect(JSON.parse(vi.mocked(api.update).mock.calls[1]![2].layoutJson!).nodes.a).toMatchObject({ x: 100, y: 100 });
   });
   it("keeps the inline input mounted across keystrokes and saves the completed label", async () => {
-    vi.useFakeTimers(); const api = port(); mount(api);
-    container.querySelector("foreignObject")!.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    vi.useFakeTimers(); const api = port(); const host = mount(api);
+    // The shape library draws samples too; the label lives on the canvas.
+    host.querySelector("foreignObject")!.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
     await Promise.resolve();
     const input = container.querySelector<HTMLInputElement>('[aria-label="Shape label"]')!;
     expect(input).toBeTruthy(); input.value = "First"; input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -64,7 +68,7 @@ describe("Desktop canvas interactions", () => {
   it("resizes the selection and supports delete and redo from shared controls", async () => {
     vi.useFakeTimers(); const api = port(); const host = mount(api);
     pointer(host, "pointerdown", 160, 160); pointer(host, "pointerup", 160, 160);
-    pointer(button("Resize shape"), "pointerdown", 310, 230);
+    pointer(container.querySelector<HTMLElement>('[aria-label="Resize se"]')!, "pointerdown", 310, 230);
     pointer(host, "pointermove", 370, 270); pointer(host, "pointerup", 370, 270);
     await vi.advanceTimersByTimeAsync(500);
     expect(JSON.parse(vi.mocked(api.update).mock.calls.at(-1)![2].layoutJson!).nodes.a).toMatchObject({ width: 240, height: 140 });
@@ -87,9 +91,63 @@ describe("Desktop canvas interactions", () => {
     expect(api.update).toHaveBeenCalledTimes(2); expect(onBack).toHaveBeenCalledOnce();
     expect(JSON.parse(vi.mocked(api.update).mock.calls[1]![2].layoutJson!).nodes.a.x).toBe(120);
   });
+  it("opens the inspector only for a selection, with the shape inspector tabs", async () => {
+    const host = mount(port(), vi.fn(), [{ kind: "card", id: "real-card-id", title: "Store card" }]);
+    const panel = () => container.querySelector<HTMLElement>('aside.pw-resizable-sidebar[aria-label="Inspector"]')!;
+    const inspector = () => container.querySelector<HTMLElement>('aside.pw-canvas-panel-root[aria-label="Inspector"]')!;
+    expect(panel().hasAttribute("data-hidden")).toBe(true);
+    expect(inspector().textContent).toBe("");
+    pointer(host, "pointerdown", 160, 160); pointer(host, "pointerup", 160, 160);
+    expect(panel().hasAttribute("data-hidden")).toBe(false);
+    // A note is edited as a color, a title and a body.
+    expect(inspector().querySelector('[aria-label="Title"]')).toBeTruthy();
+    expect(inspector().querySelector('textarea[aria-label="Body"]')).toBeTruthy();
+    expect(inspector().querySelector('[role="radiogroup"][aria-label="Note color"]')).toBeTruthy();
+    expect(tab("Arrange")).toBeTruthy(); expect(tab("Data")).toBeTruthy();
+    await openTab("Data");
+    expect(container.querySelector('[aria-label="Link Work card: Store card"]')).toBeTruthy();
+    pointer(host, "pointerdown", 20, 20); pointer(host, "pointerup", 20, 20);
+    expect(inspector().querySelector('[aria-label="Title"]')).toBeNull();
+    expect(panel().hasAttribute("data-hidden")).toBe(true);
+  });
+  it("adds library shapes by click at the viewport center and by drop at the pointer", async () => {
+    vi.useFakeTimers(); const api = port(); const host = mount(api);
+    button("Rectangle").click();
+    await vi.advanceTimersByTimeAsync(500);
+    const added = lastPatch(api).graph!.nodes.at(-1)!;
+    expect(added).toMatchObject({ kind: "rectangle", label: "Rectangle" });
+    expect(JSON.parse(lastPatch(api).layoutJson!).nodes[added.id]).toMatchObject({ x: -130, y: -90, width: 180, height: 100 });
+    const drop = new Event("drop", { bubbles: true, cancelable: true });
+    Object.defineProperties(drop, { clientX: { value: 340 }, clientY: { value: 240 },
+      dataTransfer: { value: { getData: (type: string) => type === "application/x-polter-shape" ? "circle" : "" } } });
+    host.dispatchEvent(drop);
+    await vi.advanceTimersByTimeAsync(500);
+    const dropped = lastPatch(api).graph!.nodes.at(-1)!;
+    expect(dropped.kind).toBe("circle");
+    expect(JSON.parse(lastPatch(api).layoutJson!).nodes[dropped.id]).toMatchObject({ x: 240, y: 140, width: 120, height: 120 });
+  });
+  it("persists shape style as semantic tags and undoes it", async () => {
+    vi.useFakeTimers(); const api = port(); const host = mount(api);
+    button("Rectangle").click();
+    button("Fill: blue").click();
+    await vi.advanceTimersByTimeAsync(500);
+    const style = () => JSON.parse(lastPatch(api).graph!.nodes.at(-1)!.propsJson).style;
+    expect(style()).toMatchObject({ fill: "blue" });
+    expect(host.querySelector('[data-shape="rectangle"] path[data-face]')!.getAttribute("fill")).toBe("var(--color-status-info-background)");
+    button("Undo").click(); await vi.advanceTimersByTimeAsync(500);
+    expect(style()).toBeUndefined();
+  });
+  it("moves a shape to the back of the stacking order from Arrange", async () => {
+    vi.useFakeTimers(); const api = port(); mount(api);
+    button("Rectangle").click(); await openTab("Arrange");
+    [...container.querySelectorAll("button")].find((item) => item.textContent === "Send to back")!.click();
+    await vi.advanceTimersByTimeAsync(500);
+    expect(lastPatch(api).graph!.nodes.map((node) => node.kind)).toEqual(["rectangle", "note"]);
+  });
   it("links existing entities, persists the real ref and unlinks without losing the local label", async () => {
     vi.useFakeTimers(); const api = port(); const host = mount(api, vi.fn(), [{ kind: "card", id: "real-card-id", title: "Store card" }]);
     pointer(host, "pointerdown", 160, 160); pointer(host, "pointerup", 160, 160);
+    await openTab("Data");
     container.querySelector<HTMLElement>('[aria-label="Link Work card: Store card"]')!.click();
     await vi.advanceTimersByTimeAsync(500);
     expect(vi.mocked(api.update).mock.calls.at(-1)![2].graph?.nodes[0]).toMatchObject({ label: "Original", ref: { kind: "card", id: "real-card-id" } });
@@ -113,6 +171,7 @@ describe("Desktop canvas interactions", () => {
   it("keeps ApplyPolter errors in the promotion dialog and links only after explicit success", async () => {
     const api = port(); api.promote = vi.fn().mockRejectedValueOnce(new Error("Server validation refused")).mockResolvedValueOnce({ kind: "card", id: "created", title: "Original", slug: "original" });
     const host = mount(api); pointer(host, "pointerdown", 160, 160); pointer(host, "pointerup", 160, 160);
+    await openTab("Data");
     [...container.querySelectorAll("button")].find((button) => button.textContent?.includes("Promote to Work card"))!.click();
     expect(api.promote).not.toHaveBeenCalled();
     const dialog = () => document.body.querySelector('[role="dialog"]')!;
@@ -128,6 +187,7 @@ describe("Desktop canvas interactions", () => {
   it("promotes a note to a Fact and persists the returned canon reference", async () => {
     const api = port(); api.promote = vi.fn().mockResolvedValue({ kind: "fact", id: "fact-created", title: "Original", slug: "original" });
     const host = mount(api); pointer(host, "pointerdown", 160, 160); pointer(host, "pointerup", 160, 160);
+    await openTab("Data");
     [...container.querySelectorAll("button")].find((button) => button.textContent?.includes("Promote to Fact"))!.click();
     const dialog = () => document.body.querySelector('[role="dialog"]')!;
     await vi.waitFor(() => expect(dialog()).toBeTruthy());

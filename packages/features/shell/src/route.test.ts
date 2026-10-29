@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_NAV } from "./navigation";
-import { DEFAULT_TABS, SECTION_TABS, closeDialog, createDefaultRoute, createHomeRoute, enterProject, goHome, goSection, historySnapshot, isHomeRoute, openDialog, routesEqual, setTab, ensureRouteAvailable, isNavSectionId, resolveRoute, sectionMemory, withSectionMemory } from "./route";
+import { DEFAULT_TABS, SECTION_TABS, closeDialog, createDefaultRoute, createHomeRoute, enterProject, goHome, goSection, historySnapshot, isHomeRoute, openDialog, routesEqual, setTab, ensureRouteAvailable, isNavSectionId, legacySettingsTab, resolveRoute, sectionMemory, withSectionMemory } from "./route";
 
 describe("first version routes", () => {
   it("opens Inbox", () => {
@@ -9,10 +9,10 @@ describe("first version routes", () => {
 
   it("exposes the exact project navigation and keeps Canvas after Work", () => {
     expect(
-      ["inbox", "structure", "work", "canvas", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "integrations", "agents", "activity"].every(isNavSectionId),
+      ["inbox", "structure", "work", "canvas", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "activity"].every(isNavSectionId),
     ).toBe(true);
     expect(DEFAULT_NAV.map((item) => item.section)).toEqual([
-      "inbox", "activity", "work", "canvas", "structure", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "integrations", "agents",
+      "inbox", "activity", "work", "canvas", "structure", "truth", "dispatch", "dispatch-routing", "dispatch-usage",
     ]);
     expect(resolveRoute("canvas")).toEqual({ section: "canvas", tab: "all" });
     expect(DEFAULT_TABS.canvas).toBe("all");
@@ -32,19 +32,17 @@ describe("first version routes", () => {
     expect(SECTION_TABS.dispatch?.map((tab) => tab.id)).toEqual(["runs", "agents"]);
     expect(SECTION_TABS["dispatch-routing"]?.map((tab) => tab.id)).toEqual(["tiers", "learning"]);
     expect(SECTION_TABS["dispatch-usage"]?.map((tab) => tab.id)).toEqual(["stats"]);
-    expect(SECTION_TABS.integrations.map((tab) => tab.id)).toEqual(["connected", "catalog"]);
-    expect(DEFAULT_TABS.integrations).toBe("connected");
     expect(DEFAULT_TABS.work).toBe("board");
     expect(DEFAULT_TABS.dispatch).toBe("runs");
     expect(DEFAULT_TABS["dispatch-routing"]).toBe("tiers");
     expect(DEFAULT_TABS["dispatch-usage"]).toBe("stats");
   });
 
-  it("opens provider authentication over either Integrations tab without changing history", () => {
-    for (const tab of ["connected", "catalog"]) {
-      const page = setTab(createDefaultRoute("integrations"), tab);
-      const modal = openDialog(page, { type: "connect-integration", providerId: "github" });
-      expect(modal).toMatchObject({ section: "integrations", tab, dialog: { type: "connect-integration", providerId: "github" } });
+  it("opens a Settings page over any route without changing history", () => {
+    for (const tab of ["platforms-connected", "platforms-catalog", "cli-reference"] as const) {
+      const page = createDefaultRoute("structure");
+      const modal = openDialog(page, { type: "settings", tab });
+      expect(modal).toMatchObject({ section: "structure", dialog: { type: "settings", tab } });
       expect(historySnapshot(modal)).toEqual(page);
       expect(routesEqual(page, modal)).toBe(true);
       expect(closeDialog(modal)).toEqual(page);
@@ -144,7 +142,6 @@ describe("first version routes", () => {
       section: "dispatch",
       tab: "runs",
     });
-    expect(resolveRoute("integrations-catalog")).toEqual({ section: "integrations", tab: "catalog" });
     const back = goHome(entered);
     expect(isHomeRoute(back)).toBe(true);
     expect(back.projectId).toBeUndefined();
@@ -153,12 +150,23 @@ describe("first version routes", () => {
     expect(back.expandedDetail).toBeUndefined();
   });
 
-  it("gives Agents its own route and resolves Integrations links to its tabs", () => {
-    expect(resolveRoute("agents", "access")).toEqual({ section: "agents", tab: "agents" });
-    expect(resolveRoute("integrations")).toEqual({ section: "integrations", tab: "connected" });
-    expect(resolveRoute("integrations", "catalog")).toEqual({ section: "integrations", tab: "catalog" });
-    expect(resolveRoute("integrations-connected")).toEqual({ section: "integrations", tab: "connected" });
-    expect(resolveRoute("integrations-catalog")).toEqual({ section: "integrations", tab: "catalog" });
+  it("sends the former Core, CLI reference, and Platforms routes to their Settings pages", () => {
+    for (const [section, tab, settings] of [
+      ["agents", "agents", "agents-setup"],
+      ["agents", "server", "agents-mcp"],
+      ["agents", "cli", "cli-reference"],
+      ["cli", undefined, "cli-reference"],
+      ["integrations", undefined, "platforms-connected"],
+      ["integrations", "catalog", "platforms-catalog"],
+      ["integrations-connected", undefined, "platforms-connected"],
+      ["integrations-catalog", undefined, "platforms-catalog"],
+    ] as const) {
+      expect(legacySettingsTab(section, tab)).toBe(settings);
+      expect(resolveRoute(section, tab)).toEqual({ section: "inbox", tab: "all" });
+    }
+    expect(legacySettingsTab("work", "board")).toBeUndefined();
+    expect(isNavSectionId("integrations")).toBe(false);
+    expect(isNavSectionId("agents")).toBe(false);
   });
 });
 

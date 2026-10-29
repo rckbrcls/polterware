@@ -31,5 +31,5 @@ export const OVERVIEW_CARD_ORDER: readonly OverviewId[] = [
 
 export const OVERVIEW_OPEN_COMMAND: Record<OverviewId, string> = {
   knowledge: "nav.work",
-  integrations: "nav.integrations",
+  integrations: "nav.platforms",
 };

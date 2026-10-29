@@ -25,9 +25,10 @@ func FormatViolations(list []Violation) string {
 	return strings.Join(parts, "; ")
 }
 
-// Validate checks graph against def. Note and text nodes skip structural
-// rules. Free (Unrestricted) has no kind or structural rules. The result is
-// empty when the graph is valid. Layout is not an input.
+// Validate checks graph against def. Only structure kinds (system, domain,
+// component) must ref a structure node; components and freeform nodes may
+// omit a ref. Unrestricted skips kind checks. The result is empty when the
+// graph is valid. Layout is not an input.
 func Validate(def Definition, graph Graph) []Violation {
 	var found []Violation
 	add := func(where, message string) {
@@ -62,18 +63,8 @@ func Validate(def Definition, graph Graph) []Violation {
 				add(refWhere, "id is required")
 			}
 		}
-		if def.Unrestricted || isAnnotation(node.Kind) {
-			continue
-		}
-		switch def.Type {
-		case TypeRoadmap:
-			if node.Kind == KindItem && !itemTimed(node.Props) {
-				add(where, "item requires start and end, or a quarter")
-			}
-		case TypeArchitecture:
-			if !structureRef(node.Ref) {
-				add(where, "requires a ref to a structure node")
-			}
+		if contains(StructureKinds, node.Kind) && !structureRef(node.Ref) {
+			add(where, "requires a ref to a structure node")
 		}
 	}
 
@@ -111,6 +102,9 @@ func Validate(def Definition, graph Graph) []Violation {
 func Prepare(item Canvas) (Canvas, error) {
 	item.Name = strings.TrimSpace(item.Name)
 	item.Type = strings.TrimSpace(item.Type)
+	if item.Type == "" {
+		item.Type = TypeCanvas
+	}
 	item.ScopeNodeID = strings.TrimSpace(item.ScopeNodeID)
 	item.ID = strings.TrimSpace(item.ID)
 	item.ProjectID = strings.TrimSpace(item.ProjectID)
@@ -136,12 +130,12 @@ func Prepare(item Canvas) (Canvas, error) {
 	return item, nil
 }
 
-func isAnnotation(kind string) bool {
-	return kind == KindNote || kind == KindText
+func isFreeform(kind string) bool {
+	return kind == KindNote || kind == KindText || contains(ShapeKinds, kind)
 }
 
 func nodeKindAllowed(def Definition, kind string) bool {
-	if def.Unrestricted || isAnnotation(kind) {
+	if def.Unrestricted || isFreeform(kind) {
 		return true
 	}
 	return contains(def.NodeKinds, kind)
@@ -161,28 +155,6 @@ func contains(list []string, value string) bool {
 		}
 	}
 	return false
-}
-
-func itemTimed(props map[string]any) bool {
-	if propSet(props, "quarter") {
-		return true
-	}
-	return propSet(props, "start") && propSet(props, "end")
-}
-
-func propSet(props map[string]any, key string) bool {
-	if props == nil {
-		return false
-	}
-	value, ok := props[key]
-	if !ok || value == nil {
-		return false
-	}
-	text, ok := value.(string)
-	if !ok {
-		return true
-	}
-	return strings.TrimSpace(text) != ""
 }
 
 func structureRef(ref *Ref) bool {

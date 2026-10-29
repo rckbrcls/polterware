@@ -137,6 +137,12 @@ func parseTiers(b []byte) (Table, error) {
 	if err := json.Unmarshal(b, &t); err != nil {
 		return Table{}, err
 	}
+	return t.Validated()
+}
+
+// Validated fills missing providers and rejects unknown tiers, invalid efforts, provider/model
+// disagreements, empty agent or model, and speed or strength outside 1–5.
+func (t Table) Validated() (Table, error) {
 	for tier, es := range t.Tiers {
 		if !tier.Valid() {
 			return Table{}, fmt.Errorf("unknown tier %q", tier)

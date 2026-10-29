@@ -11,9 +11,49 @@
   justify-content: space-between;
   gap: 8px 12px;
   flex-shrink: 0;
+  box-sizing: border-box;
+  min-height: 44px;
   /* Spacing only under tabs — no hairline divider to content */
   padding: 8px 8px 4px;
   border-bottom: none;
+}
+
+/*
+ * Floating toolbar: no band of its own. Where a toolbar sits beside a PageContent (or heads a DetailPanel collection),
+ * it pulls the content up under itself with a negative margin and lets clicks through its empty space, so its
+ * controls float over the content as it scrolls. The content's first child starts below the toolbar
+ * (--pw-content-overlay); an ActiveFilterBar, when shown, takes that place instead.
+ */
+:where(*):has(> .pw-page-toolbar):has(> .pw-page-content),
+.pw-detail-panel-root:has(> .pw-detail-panel__collection-header .pw-page-toolbar) {
+  --pw-toolbar-overlay: 44px;
+  --pw-content-overlay: 44px;
+}
+
+:where(*):has(> .pw-page-toolbar):has(> .pw-page-content):has(.pw-active-filter-bar),
+.pw-detail-panel-root:has(> .pw-detail-panel__collection-header .pw-page-toolbar):has(.pw-active-filter-bar) {
+  --pw-content-overlay: 0px;
+}
+
+/* Zero specificity, so toolbars placed by their page (the absolute Canvas top bar) keep their own position. */
+:where(.pw-page-toolbar) {
+  position: relative;
+  z-index: 6;
+  margin-bottom: calc(-1 * var(--pw-toolbar-overlay, 0px));
+  pointer-events: none;
+}
+
+.pw-page-toolbar > *,
+.pw-page-toolbar :is(.pw-page-toolbar-tabs, .pw-page-toolbar-leading, .pw-page-toolbar-actions) {
+  pointer-events: none;
+}
+
+.pw-page-toolbar :is(.pw-page-toolbar-tabs, .pw-page-toolbar-leading, .pw-page-toolbar-actions) > * {
+  pointer-events: auto;
+}
+
+.pw-page-content > :first-child {
+  margin-top: var(--pw-content-overlay, 0px);
 }
 
 .pw-page-toolbar-tabs,

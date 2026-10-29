@@ -68,7 +68,7 @@ function offlineCards(message: string): CommanderOverviewCard[] {
       title: "Integrations",
       subtitle: message,
       tone: "integration",
-      openCommandId: "nav.integrations",
+      openCommandId: "nav.platforms",
     },
   ];
 }
@@ -152,7 +152,7 @@ export async function loadCommanderOverview(): Promise<CommanderOverviewSnapshot
                 ? `${connected} connected · ${failed} failed`
                 : `${connected} connected`,
           tone: "integration",
-          openCommandId: "nav.integrations",
+          openCommandId: "nav.platforms",
         },
       ],
       detail: { features, integrations },

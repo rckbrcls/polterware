@@ -216,6 +216,11 @@ func (s *Store) ListAllChanges(projectID, actorKind string) ([]ChangeRow, error)
 	return s.queryChanges(projectID, actorKind, 0)
 }
 
+// historyHiddenTools are write tools whose change steps stay audited (change_ops
+// keep the run) but are left out of the history: canvas edits and board views
+// are workspace layout, not project truth, and every autosave would add a row.
+var historyHiddenTools = []string{"desktop.canvas.%", "desktop.work.board.%", "polter.board.%"}
+
 func (s *Store) queryChanges(projectID, actorKind string, limit int) ([]ChangeRow, error) {
 	query := `
 		SELECT s.id, s.agent_run_id, r.project_id, r.actor_kind, r.agent_label, r.status, r.task,
@@ -224,6 +229,10 @@ func (s *Store) queryChanges(projectID, actorKind string, limit int) ([]ChangeRo
 		INNER JOIN agent_runs r ON r.id = s.agent_run_id
 		WHERE r.project_id = ? AND s.kind = 'change'`
 	args := []any{projectID}
+	for _, pattern := range historyHiddenTools {
+		query += ` AND COALESCE(json_extract(s.payload_json, '$.tool'), '') NOT LIKE ?`
+		args = append(args, pattern)
+	}
 	if actorKind != "" {
 		query += ` AND r.actor_kind = ?`
 		args = append(args, actorKind)

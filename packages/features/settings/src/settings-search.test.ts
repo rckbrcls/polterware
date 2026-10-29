@@ -29,7 +29,11 @@ describe("searchSettings", () => {
     ]) {
       expect(searchSettings(SETTINGS_SEARCH_ENTRIES, query!)).toContainEqual(expect.objectContaining({ tab, section }));
     }
-    expect(dynamicSettingsEntries().every((entry) => entry.tab === "shortcuts" && entry.section === "Shortcuts")).toBe(true);
+    expect(dynamicSettingsEntries().every((entry) =>
+      (entry.tab === "shortcuts" && entry.section === "Shortcuts") || (entry.tab === "cli-reference" && entry.section === "Commands"),
+    )).toBe(true);
+    expect(searchSettings(SETTINGS_SEARCH_ENTRIES, "vercel")).toContainEqual(expect.objectContaining({ tab: "platforms-connected" }));
+    expect(searchSettings(dynamicSettingsEntries(), "polterware wait")).toContainEqual(expect.objectContaining({ tab: "cli-reference" }));
   });
 
   it("requires every term to match", () => {

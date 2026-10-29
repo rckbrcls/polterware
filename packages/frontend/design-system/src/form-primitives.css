@@ -29,3 +29,13 @@
 .pw-slider[data-disabled] .pw-slider__range { background: linear-gradient(to bottom, #333333, #2a2a2a); box-shadow: inset 0 0 0 1px var(--field-frame); }
 .pw-slider[data-disabled] .pw-slider__thumb { background: linear-gradient(to bottom, #3a3a3a, #2c2c2c); box-shadow: 0 0 0 1px var(--field-frame); }
 @media (prefers-reduced-motion: reduce) { .pw-checkbox__control { transition: none; } }
+/* Selection row: same metrics as .pw-switch-row, with the checkbox leading the row. */
+.pw-checkbox-row { position: relative; display: flex; width: 100%; box-sizing: border-box; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--radius-item); color: var(--color-text-secondary); user-select: none; transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard); }
+.pw-checkbox-row:not([data-disabled]):hover { background: var(--color-surface-hover); }
+.pw-checkbox-row[data-state="checked"] { color: var(--color-text-primary); }
+.pw-checkbox-row .pw-checkbox__control { width: 16px; height: 16px; flex-shrink: 0; border-radius: 4px; }
+.pw-checkbox-row[data-shape="round"] .pw-checkbox__control { border-radius: 9999px; }
+.pw-checkbox-row__label { min-width: 0; flex: 1 1 0%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pw-checkbox-row__side { display: inline-flex; flex-shrink: 0; align-items: center; color: var(--color-text-muted); }
+.pw-checkbox-row__trailing { display: inline-flex; flex-shrink: 0; align-items: center; color: var(--color-text-muted); font-size: 11px; }
+@media (prefers-reduced-motion: reduce) { .pw-checkbox-row { transition: none; } }

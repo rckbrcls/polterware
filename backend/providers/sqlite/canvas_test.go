@@ -35,14 +35,14 @@ func TestCanvasRoundTrip(t *testing.T) {
 	created, err := store.CreateCanvas(canvas.Canvas{
 		ProjectID:    "proj-canvas",
 		Name:         "Platform",
-		Type:         canvas.TypeRoadmap,
+		Type:         canvas.TypeCanvas,
 		AgentVisible: true,
 		ScopeNodeID:  "node-1",
 		LayoutJSON:   layout,
 		Graph: canvas.Graph{
 			Nodes: []canvas.Node{
-				{ID: "lane", Kind: canvas.KindLane, Label: "Platform"},
-				{ID: "a", Kind: canvas.KindItem, Label: "Import", Props: map[string]any{"quarter": "2026Q1"}},
+				{ID: "lane", Kind: "frame", Label: "Platform"},
+				{ID: "a", Kind: "service", Label: "Import", Props: map[string]any{"technology": "Go"}},
 				{ID: "n", Kind: canvas.KindNote, Label: "ask design"},
 			},
 			Edges: []canvas.Edge{{ID: "e", From: "a", To: "lane", Kind: canvas.EdgeDependsOn}},
@@ -55,7 +55,7 @@ func TestCanvasRoundTrip(t *testing.T) {
 		t.Fatalf("created = %+v", created)
 	}
 	if _, err := store.CreateCanvas(canvas.Canvas{
-		ProjectID: "proj-other", Name: "Other", Type: canvas.TypeFree,
+		ProjectID: "proj-other", Name: "Other", Type: canvas.TypeCanvas,
 	}, "run-1", "batch-other"); err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func TestCanvasRoundTrip(t *testing.T) {
 	}
 
 	listed, err := store.ListCanvases("proj-canvas")
-	if err != nil || len(listed) != 1 || listed[0].ID != created.ID || listed[0].Graph.Nodes[1].Props["quarter"] != "2026Q1" {
+	if err != nil || len(listed) != 1 || listed[0].ID != created.ID || listed[0].Graph.Nodes[1].Props["technology"] != "Go" {
 		t.Fatalf("list = %+v err=%v", listed, err)
 	}
 
@@ -89,7 +89,7 @@ func TestCanvasRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if updated.Name != "Platform map" || updated.AgentVisible || updated.Type != canvas.TypeRoadmap || len(updated.Graph.Edges) != 1 {
+	if updated.Name != "Platform map" || updated.AgentVisible || updated.Type != canvas.TypeCanvas || len(updated.Graph.Edges) != 1 {
 		t.Fatalf("updated = %+v", updated)
 	}
 	if updated.Graph.Edges[0].From != "a" || updated.LayoutJSON == layout {
@@ -139,14 +139,14 @@ func TestCanvasRejectsInvalidGraphAndScope(t *testing.T) {
 	_, err := store.CreateCanvas(canvas.Canvas{
 		ProjectID: "proj-canvas",
 		Name:      "Broken",
-		Type:      canvas.TypeRoadmap,
-		Graph:     canvas.Graph{Nodes: []canvas.Node{{ID: "a", Kind: canvas.KindDatabase}}},
+		Type:      canvas.TypeCanvas,
+		Graph:     canvas.Graph{Nodes: []canvas.Node{{ID: "a", Kind: "spaceship"}}},
 	}, "run-1", "batch-bad")
 	if err == nil || !errors.Is(err, canvas.ErrInvalidGraph) {
 		t.Fatalf("invalid graph err = %v", err)
 	}
 	_, err = store.CreateCanvas(canvas.Canvas{
-		ProjectID: "proj-canvas", Name: "Scoped", Type: canvas.TypeFree, ScopeNodeID: "missing",
+		ProjectID: "proj-canvas", Name: "Scoped", Type: canvas.TypeCanvas, ScopeNodeID: "missing",
 	}, "run-1", "batch-scope")
 	if err == nil || !errors.Is(err, canvas.ErrUnknownScope) {
 		t.Fatalf("scope err = %v", err)

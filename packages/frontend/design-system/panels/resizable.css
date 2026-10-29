@@ -121,3 +121,12 @@
     transition: none;
   }
 }
+
+/* A controlled `open={false}` sidebar takes no space and offers no handle. */
+.pw-resizable-sidebar__handle[data-hidden] {
+  display: none;
+}
+
+.pw-resizable-sidebar[data-hidden] {
+  visibility: hidden;
+}

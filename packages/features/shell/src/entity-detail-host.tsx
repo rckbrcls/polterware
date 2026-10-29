@@ -11,7 +11,7 @@ import { EntityDocumentContext } from "./entity-document";
 
 export type EntityDetailHostProps = Pick<
   ComponentProps<typeof DetailPanel.Root>,
-  "children" | "mode" | "resizable" | "class"
+  "children" | "mode" | "resizable" | "class" | "pinned" | "storageKey"
 >;
 
 const ITEM_SELECTOR = "tr, [role='row'], [role='option'], [role='treeitem'], [aria-selected], [aria-current], [data-selected], article, li, [data-detail-opener]";
@@ -60,7 +60,8 @@ export function EntityDetailHost(props: EntityDetailHostProps) {
       <DetailPanel.Root
         mode={documentKind() ? "overlay" : props.mode}
         resizable={props.resizable}
-        expandable={expandable()}
+        expandable={expandable() && !props.pinned}
+        pinned={props.pinned}
         class={props.class}
         open={panelOpen()}
         expanded={expanded()}
@@ -72,8 +73,8 @@ export function EntityDetailHost(props: EntityDetailHostProps) {
           else state.hide();
         }}
         onExpandedChange={(next) => { if (!documentKind()) requestDetailExpanded(next); }}
-        storageKey="polterware.shell.detail.sidebar.width"
-        legacyStorageKey="polterware.shell.detail.width"
+        storageKey={props.storageKey ?? "polterware.shell.detail.sidebar.width"}
+        legacyStorageKey={props.storageKey ? undefined : "polterware.shell.detail.width"}
         aria-label="Entity details"
       >
         <DetailPanel.Collection>
@@ -89,7 +90,7 @@ export function EntityDetailHost(props: EntityDetailHostProps) {
                 .elementsFromPoint(event.clientX, event.clientY)
                 .find((element) => element.closest(ITEM_SELECTOR) && event.currentTarget.contains(element));
               const node = hit ?? (event.target instanceof Element ? event.target : null);
-              if (!node || expanded() || !node.closest(ITEM_SELECTOR) || node.closest(CONTROL_SELECTOR)) return;
+              if (props.pinned || !node || expanded() || !node.closest(ITEM_SELECTOR) || node.closest(CONTROL_SELECTOR)) return;
               const state = detailPanelStore.getState();
               if (state.activeTarget ?? (state.lastTarget?.scopeId === state.activeScope ? state.lastTarget : null)) requestDetailExpanded(true);
             }}

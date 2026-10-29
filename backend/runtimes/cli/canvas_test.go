@@ -79,8 +79,8 @@ func TestParseCanvasShare(t *testing.T) {
 
 func TestFormatCanvasListShowsVisibleColumn(t *testing.T) {
 	text := formatCanvasList([]*localv1.Canvas{
-		{Id: "c1", Name: "Map", Type: "flow", AgentVisible: true, ScopeNodeId: "n1"},
-		{Id: "c2", Name: "Draft", Type: "free", AgentVisible: false},
+		{Id: "c1", Name: "Map", Type: "canvas", AgentVisible: true, ScopeNodeId: "n1"},
+		{Id: "c2", Name: "Draft", Type: "canvas", AgentVisible: false},
 	}, false)
 	if !strings.Contains(text, "visible") || !strings.Contains(text, "c1") || !strings.Contains(text, "yes") || !strings.Contains(text, "no") || !strings.Contains(text, "n1") {
 		t.Fatalf("list =\n%s", text)

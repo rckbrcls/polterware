@@ -42,6 +42,12 @@ export const SHORTCUT_CATALOG: readonly ShortcutCommand[] = [
     defaultChord: chord({ key: "c", mod: true, shift: true }),
   },
   {
+    id: "shell.open_filter",
+    label: "Add filter",
+    group: "shell",
+    defaultChord: chord({ key: "f" }),
+  },
+  {
     id: "structure.add_node",
     label: "Add structure node",
     group: "structure",

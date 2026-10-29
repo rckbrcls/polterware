@@ -1,4 +1,5 @@
 import { For, createSignal, type Accessor, type Setter } from "solid-js";
+import { Check, InformationCircle } from "./hugeicons";
 import "./toast.css";
 
 export type ToastItem = { id: string; message: string; tone?: "default" | "danger" | "success" };
@@ -54,7 +55,7 @@ export function ToastRegion() {
       <For each={toasts()}>
         {(t) => (
           <div
-            class={`pw-toast-item menu-panel pointer-events-auto px-3 py-2 text-[13px] ${
+            class={`pw-toast-item menu-panel pointer-events-auto flex items-start gap-2 px-3 py-2 text-[13px] ${
               t.tone === "danger"
                 ? "text-[var(--color-danger)]"
                 : t.tone === "success"
@@ -72,7 +73,10 @@ export function ToastRegion() {
               }
             }}
           >
-            {t.message}
+            <span class="mt-0.5 flex-none" aria-hidden="true">
+              {t.tone === "success" ? <Check size={14} /> : <InformationCircle size={14} />}
+            </span>
+            <span class="min-w-0">{t.message}</span>
           </div>
         )}
       </For>

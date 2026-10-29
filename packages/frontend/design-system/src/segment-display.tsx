@@ -2,7 +2,7 @@ import { For, splitProps, type JSX } from "solid-js";
 import "./segment-display.css";
 
 export type SegmentDisplayProps = Omit<JSX.HTMLAttributes<HTMLSpanElement>, "children"> & {
-  /** Text to show; supports digits, `:`, `%`, `-`, `.` and spaces. Other characters render blank. */
+  /** Text to show; supports digits, `#`, `:`, `%`, `-`, `.` and spaces. Other characters render blank. */
   value: string | number;
   /** Glyph height in px; the width follows. */
   size?: number;
@@ -35,6 +35,11 @@ function Glyph(props: { char: string }) {
       <path d="M2 2H4M4.5 2.5V4.5M4.5 5.5V7.5M2 8H4M1.5 5.5V7.5M1.5 2.5V4.5" class="pw-segment-display__stroke pw-segment-display__lit" />
       <path d="M6 10H8M8.5 10.5V12.5M8.5 13.5V15.5M6 16H8M5.5 13.5V15.5M5.5 10.5V12.5" class="pw-segment-display__stroke pw-segment-display__lit" />
       <path d="M8.5 3L1.5 15" class="pw-segment-display__stroke pw-segment-display__lit" />
+    </svg>;
+  }
+  if (props.char === "#") {
+    return <svg class="pw-segment-display__glyph" viewBox="0 0 10 18" aria-hidden="true">
+      <path d="M4 4L3 14M7.5 4L6.5 14M1.5 7.5H8.5M1 11H8" class="pw-segment-display__stroke pw-segment-display__lit" />
     </svg>;
   }
   if (props.char === " ") return <svg class="pw-segment-display__glyph pw-segment-display__glyph--narrow" viewBox="0 0 4 18" aria-hidden="true" />;

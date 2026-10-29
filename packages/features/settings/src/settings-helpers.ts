@@ -15,14 +15,20 @@ import {
   Cpu,
   Shield,
   Database,
+  ShieldCheck,
+  Package,
+  Terminal,
   type TabItem,
 } from "@polterware/frontend-design-system";
 import type { ProjectEnvironment, SettingsTabId } from "./types";
 
+/** Project settings live in the sidebar footer; app settings sit next to Commander in the title bar. */
+export type SettingsScope = "project" | "app";
+
 /** A settings rail entry; every page has a group and a distinct icon. */
 export type SettingsTab = TabItem & {
   id: SettingsTabId;
-  group: "Project" | "Agents" | "App";
+  group: "Project" | "Context" | "Platforms" | "Agents" | "App";
   tooltip: NonNullable<TabItem["tooltip"]> & { icon: typeof Folder };
 };
 
@@ -68,6 +74,56 @@ export const SETTINGS_TABS: SettingsTab[] = [
     },
   },
   {
+    id: "agents-oracle",
+    group: "Context",
+    label: "Oracle",
+    tooltip: {
+      title: "Oracle",
+      description: "Preview the exact text an agent receives for one node, card, or title.",
+      icon: Eye,
+    },
+  },
+  {
+    id: "agents-compile",
+    group: "Context",
+    label: "Compile context",
+    tooltip: {
+      title: "Compile context",
+      description: "Preview the ranked context package within a token budget.",
+      icon: Layers,
+    },
+  },
+  {
+    id: "agents-drift",
+    group: "Context",
+    label: "Drift check",
+    tooltip: {
+      title: "Drift check",
+      description: "Run the narrow drift checker over the project model.",
+      icon: GitCompare,
+    },
+  },
+  {
+    id: "platforms-connected",
+    group: "Platforms",
+    label: "Connected",
+    tooltip: {
+      title: "Connected platforms",
+      description: "Platform CLIs connected to this project and their last metadata refresh.",
+      icon: ShieldCheck,
+    },
+  },
+  {
+    id: "platforms-catalog",
+    group: "Platforms",
+    label: "Catalog",
+    tooltip: {
+      title: "Platform catalog",
+      description: "Platform CLIs Polterware can detect, with their install and sign-in state.",
+      icon: Package,
+    },
+  },
+  {
     id: "agents-mcp",
     group: "Agents",
     label: "MCP server",
@@ -108,33 +164,13 @@ export const SETTINGS_TABS: SettingsTab[] = [
     },
   },
   {
-    id: "agents-oracle",
+    id: "cli-reference",
     group: "Agents",
-    label: "Oracle",
+    label: "CLI reference",
     tooltip: {
-      title: "Oracle",
-      description: "Preview the exact text an agent receives for one node, card, or title.",
-      icon: Eye,
-    },
-  },
-  {
-    id: "agents-compile",
-    group: "Agents",
-    label: "Compile context",
-    tooltip: {
-      title: "Compile context",
-      description: "Preview the ranked context package within a token budget.",
-      icon: Layers,
-    },
-  },
-  {
-    id: "agents-drift",
-    group: "Agents",
-    label: "Drift check",
-    tooltip: {
-      title: "Drift check",
-      description: "Run the narrow drift checker over the project model.",
-      icon: GitCompare,
+      title: "CLI reference",
+      description: "Every polterware command, its options, and the interactive keys.",
+      icon: Terminal,
     },
   },
   {
@@ -188,6 +224,18 @@ export const SETTINGS_TABS: SettingsTab[] = [
     },
   },
 ];
+
+const PROJECT_GROUPS: ReadonlySet<SettingsTab["group"]> = new Set(["Project", "Context", "Platforms"]);
+
+/** Project, Context, and Platforms pages belong to the open project; the rest apply to this computer. */
+export function settingsTabScope(id: SettingsTabId): SettingsScope {
+  const group = SETTINGS_TABS.find((item) => item.id === id)?.group;
+  return group && PROJECT_GROUPS.has(group) ? "project" : "app";
+}
+
+export function settingsTabsFor(scope: SettingsScope): SettingsTab[] {
+  return SETTINGS_TABS.filter((item) => settingsTabScope(item.id) === scope);
+}
 
 /** Preserve links to the former pages by opening their first focused concern. */
 export function normalizeSettingsTab(raw?: string): SettingsTabId {

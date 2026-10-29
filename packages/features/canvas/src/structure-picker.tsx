@@ -1,6 +1,6 @@
 import { Show, createMemo, createSignal } from "solid-js";
 import { A11yDialog, Button, DataTable, Input } from "@polterware/frontend-design-system";
-import { structureEntities } from "./types/architecture";
+import { structureEntities } from "./references";
 import type { StoreEntity } from "./references";
 
 export function StructurePicker(props: { open: boolean; entities: readonly StoreEntity[]; onClose: () => void; onAdd: (entity: StoreEntity) => void }) {

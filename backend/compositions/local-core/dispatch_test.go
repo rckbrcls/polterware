@@ -147,3 +147,52 @@ func TestDispatchTiersStatsResultAndWatch(t *testing.T) {
 		t.Fatalf("stats = %+v", statsRes.Msg)
 	}
 }
+
+func TestDispatchReplaceTiersStoresOrderAndRejectsInvalidRows(t *testing.T) {
+	_, url := startCore(t)
+	ctx := context.Background()
+	client := localv1connect.NewDispatchServiceClient(http.DefaultClient, url)
+
+	res, err := client.ReplaceTiers(ctx, withToken(connect.NewRequest(&localv1.ReplaceTiersRequest{Tiers: []*localv1.DispatchTier{
+		{Name: "easy", Agent: "grok", Model: "grok-4.7", Speed: 4, Strength: 2, Position: 9},
+		{Name: "easy", Agent: "codex", Model: "gpt-5.6-luna"},
+		{Name: "hard", Agent: "codex", Model: "gpt-6.1-sol", Strength: 5},
+	}}), testToken))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var easy []string
+	for _, tier := range res.Msg.Tiers {
+		if tier.Name == "easy" {
+			easy = append(easy, tier.Agent)
+			if tier.Agent == "codex" && tier.Position != 1 {
+				t.Fatalf("codex position = %d, want 1", tier.Position)
+			}
+			if tier.Agent == "grok" && tier.Provider != "xai" {
+				t.Fatalf("grok provider = %q, want derived xai", tier.Provider)
+			}
+		}
+	}
+	if strings.Join(easy, ",") != "grok,codex" {
+		t.Fatalf("easy order = %v", easy)
+	}
+
+	listed, err := client.ListTiers(ctx, withToken(connect.NewRequest(&localv1.ListTiersRequest{}), testToken))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(listed.Msg.Tiers) != 3 {
+		t.Fatalf("stored %d tiers, want 3", len(listed.Msg.Tiers))
+	}
+
+	for _, bad := range []*localv1.DispatchTier{
+		{Name: "extreme", Agent: "codex", Model: "gpt-5.6-luna"},
+		{Name: "easy", Agent: "", Model: "gpt-5.6-luna"},
+		{Name: "easy", Agent: "codex", Model: "gpt-5.6-luna", Speed: 9},
+	} {
+		_, err := client.ReplaceTiers(ctx, withToken(connect.NewRequest(&localv1.ReplaceTiersRequest{Tiers: []*localv1.DispatchTier{bad}}), testToken))
+		if connect.CodeOf(err) != connect.CodeInvalidArgument {
+			t.Fatalf("row %+v: code = %v, want invalid argument", bad, connect.CodeOf(err))
+		}
+	}
+}

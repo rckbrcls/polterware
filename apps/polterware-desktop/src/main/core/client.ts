@@ -12,6 +12,7 @@ import {
   MaintenanceService,
   ProjectModelService,
   ProjectService,
+  SavedFilterService,
   TerminalService,
   WorkService,
 } from "@polterware/contracts";
@@ -29,6 +30,7 @@ export type CoreClients = {
   canvas: Client<typeof CanvasService>;
   knowledge: Client<typeof KnowledgeService>;
   work: Client<typeof WorkService>;
+  savedFilters: Client<typeof SavedFilterService>;
   canon: Client<typeof ProjectModelService>;
   context: Client<typeof ContextService>;
   agentRuns: Client<typeof AgentRunService>;
@@ -55,6 +57,7 @@ export function createCoreClients(endpoint: string, token: string): CoreClients 
     canvas: createClient(CanvasService, transport),
     knowledge: createClient(KnowledgeService, transport),
     work: createClient(WorkService, transport),
+    savedFilters: createClient(SavedFilterService, transport),
     canon: createClient(ProjectModelService, transport),
     context: createClient(ContextService, transport),
     agentRuns: createClient(AgentRunService, transport),

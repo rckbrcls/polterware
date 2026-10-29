@@ -1,6 +1,6 @@
 import Resizable, { type Size } from "@corvu/resizable";
 import type { JSX } from "solid-js";
-import { createSignal, onCleanup, onMount } from "solid-js";
+import { createEffect, createSignal, on, onCleanup, onMount } from "solid-js";
 import { isServer } from "solid-js/web";
 import { useDesignSystem } from "../src/provider";
 import "./resizable.css";
@@ -34,6 +34,8 @@ export type ResizableSidebarProps = {
   class?: string;
   mainClass?: string;
   ariaLabel?: string;
+  /** Controlled visibility: `false` hides the sidebar and its handle without forgetting its width. */
+  open?: boolean;
 };
 
 const DEFAULT_WIDTH = 232;
@@ -136,6 +138,7 @@ export function ResizableSidebar(props: ResizableSidebarProps) {
   const collapseThreshold = () => props.collapseThreshold ?? DEFAULT_COLLAPSE_THRESHOLD;
   const collapsible = () => props.collapsible ?? true;
   const sidebarIndex = () => side() === "left" ? 0 : 1;
+  const hidden = () => props.open === false;
   const storedState = readStoredSidebarState(
     storageKey(),
     sidebarIndex(),
@@ -196,7 +199,7 @@ export function ResizableSidebar(props: ResizableSidebarProps) {
     const rootWidth = rootElement?.getBoundingClientRect().width ?? 0;
     if (rootWidth <= 0 || !setPanelSizes) return;
 
-    const targetWidth = collapsed()
+    const targetWidth = collapsed() || hidden()
       ? 0
       : Math.min(clampWidth(lastExpandedWidth, minWidth(), maxWidth()), rootWidth);
 
@@ -263,7 +266,7 @@ export function ResizableSidebar(props: ResizableSidebarProps) {
   }
 
   function toggle() {
-    if (!collapsible()) return;
+    if (!collapsible() || hidden()) return;
     if (settleFrame !== undefined && !isServer) {
       window.cancelAnimationFrame(settleFrame);
       settleFrame = undefined;
@@ -274,6 +277,8 @@ export function ResizableSidebar(props: ResizableSidebarProps) {
       applySettledWidth(0, true);
     }
   }
+
+  createEffect(on(hidden, () => syncPanelSizes(), { defer: true }));
 
   onMount(() => {
     syncPanelSizes();
@@ -310,13 +315,15 @@ export function ResizableSidebar(props: ResizableSidebarProps) {
         collapsedSize={0}
         collapseThreshold={0}
         onCollapse={() => {
-          setCollapsed(true);
+          // Hiding a controlled sidebar zeroes it too; that is not the person collapsing it.
+          if (!hidden()) setCollapsed(true);
         }}
         onExpand={() => {
           setCollapsed(false);
         }}
         style={`--pw-resizable-sidebar-min-width: ${minWidth()}px; --pw-resizable-sidebar-max-width: ${maxWidth()}px`}
         aria-label={props.ariaLabel}
+        data-hidden={hidden() ? "" : undefined}
       >
         <div class="pw-resizable-sidebar__viewport">
           <div class="pw-resizable-sidebar__content">
@@ -351,6 +358,7 @@ export function ResizableSidebar(props: ResizableSidebarProps) {
           <Resizable.Handle
             class="pw-resizable-sidebar__handle"
             data-side={side()}
+            data-hidden={hidden() ? "" : undefined}
             aria-label={`Resize ${props.ariaLabel ?? "sidebar"}`}
             title={collapsible() ? "Drag to resize · Click to toggle" : "Drag to resize"}
             onHandleDragStart={(event) => {
@@ -413,7 +421,7 @@ export function ResizableSidebar(props: ResizableSidebarProps) {
           </Resizable.Panel>
         );
 
-        const initialSidebarSize = collapsed() ? 0 : pixels(storedState.width);
+        const initialSidebarSize = collapsed() || hidden() ? 0 : pixels(storedState.width);
         return side() === "left" ? (
           <>
             {sidebarPanel(initialSidebarSize)}

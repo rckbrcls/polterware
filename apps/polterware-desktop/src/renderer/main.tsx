@@ -1,6 +1,6 @@
 /* @refresh reload */
 import { render } from "solid-js/web";
-import { DesignSystemProvider } from "@polterware/frontend-design-system";
+import { DesignSystemProvider, TextureFaceProvider } from "@polterware/frontend-design-system";
 import { App } from "./App";
 import { CommanderApp } from "./CommanderApp";
 import { attachDesktopDropGuards } from "./desktop-drop-guards.js";
@@ -23,7 +23,7 @@ const surface = new URLSearchParams(window.location.search).get("surface");
 if (surface === "commander") {
   document.documentElement.classList.add("commander-surface");
   hideBootSplash({ immediate: true });
-  render(() => <DesignSystemProvider storagePrefix="polterware"><CommanderApp /></DesignSystemProvider>, root);
+  render(() => <DesignSystemProvider storagePrefix="polterware"><TextureFaceProvider><CommanderApp /></TextureFaceProvider></DesignSystemProvider>, root);
 } else {
-  render(() => <DesignSystemProvider storagePrefix="polterware"><App /></DesignSystemProvider>, root);
+  render(() => <DesignSystemProvider storagePrefix="polterware"><TextureFaceProvider><App /></TextureFaceProvider></DesignSystemProvider>, root);
 }

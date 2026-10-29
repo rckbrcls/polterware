@@ -125,6 +125,7 @@ function createHandlers(emit: (changes: { entity: string; id: string; op: string
     focusNotifications: true, mapOnline: false, mapProvider: "osm", agentsMcpPort: 47321, agentsMcpEnabled: true,
     agentsAllowFileAttach: false, appKeepRunningInBackground: true, linksFetchTitles: false, calendarWeekStart: "monday", mapGeocoding: false,
   };
+  const savedFilters: Row[] = [];
   const focusSessions: Row[] = [-2, -1, 0].flatMap(offset => [0, 1].map(slot => ({
     id: `fs-${offset}-${slot}`, noteId: "mem-10", phase: "work", plannedS: 1500, elapsedS: 1500, state: "completed",
     startedAt: at(offset, 9 + slot * 3), endedAt: at(offset, 9 + slot * 3, 25),
@@ -385,6 +386,35 @@ function createHandlers(emit: (changes: { entity: string; id: string; op: string
     "activity.list": () => ({ events: activity, nextCursor: "" }),
     "settings.get": () => ({ settings }),
     "settings.set": input => { Object.assign(settings, input.settings ?? {}, { appearanceTheme: "dark" }); return { settings }; },
+    "savedFilters.list": input => ({
+      filters: savedFilters.filter(item => item.surface === String(input.surface ?? "").trim()).sort((a, b) => a.position - b.position),
+    }),
+    "savedFilters.save": input => {
+      const surface = String(input.surface ?? "").trim();
+      const name = String(input.name ?? "").trim();
+      let payload: unknown;
+      try { payload = JSON.parse(input.payloadJson ?? ""); } catch { payload = null; }
+      if (!surface || !name || !payload || typeof payload !== "object" || Array.isArray(payload) ||
+        !Number.isInteger((payload as Row).version)) throw new Error("Invalid saved filter");
+      const now = new Date().toISOString();
+      let filter = savedFilters.find(item => item.surface === surface && item.name === name);
+      const op = filter ? "update" : "create";
+      if (filter) Object.assign(filter, { payloadJson: input.payloadJson, updatedAt: now });
+      else {
+        const position = Math.max(-1, ...savedFilters.filter(item => item.surface === surface).map(item => item.position)) + 1;
+        filter = { id: nextId("filter"), surface, name, payloadJson: input.payloadJson, position, createdAt: now, updatedAt: now };
+        savedFilters.push(filter);
+      }
+      emit([{ entity: "saved_filter", id: filter.id, op }]);
+      return { filter };
+    },
+    "savedFilters.delete": input => {
+      const index = savedFilters.findIndex(item => item.id === input.id);
+      if (index < 0) throw new Error("Saved filter not found");
+      savedFilters.splice(index, 1);
+      emit([{ entity: "saved_filter", id: input.id, op: "delete" }]);
+      return {};
+    },
     "agents.getInfo": () => ({ mcpPort: settings.agentsMcpPort, tokenPresent: true, token: "notes_preview_token", enabled: settings.agentsMcpEnabled,
       allowFileAttach: settings.agentsAllowFileAttach, claudeStdio: "claude mcp add pwnotes -- pwnotes mcp", claudeHttp: "claude mcp add --transport http pwnotes http://127.0.0.1:47321/mcp",
       cursorStdioJson: "{\n  \"mcpServers\": { \"pwnotes\": { \"command\": \"pwnotes\", \"args\": [\"mcp\"] } }\n}", cursorHttpJson: "{\n  \"mcpServers\": { \"pwnotes\": { \"url\": \"http://127.0.0.1:47321/mcp\" } }\n}" }),

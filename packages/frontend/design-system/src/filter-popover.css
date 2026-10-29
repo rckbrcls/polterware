@@ -12,3 +12,163 @@
   --count-badge-font-size: 10px;
   --count-badge-padding: 0;
 }
+
+/* Filter value rows (Linear): [checkbox] [icon] [label] [muted count]. The checkbox of an
+ * unchecked row stays hidden until the row is hovered or focused. */
+.pw-filter-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-item);
+  color: var(--color-text-secondary);
+  transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+
+.pw-filter-option:hover,
+.pw-filter-option:focus-within,
+.pw-filter-option[data-active] {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.pw-filter-option[data-checked] {
+  color: var(--color-text-primary);
+}
+
+.pw-filter-option__check {
+  flex-shrink: 0;
+  padding: 0 2px 0 8px;
+}
+
+.pw-filter-option__check .pw-checkbox__control {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.pw-filter-option:not(:hover):not(:focus-within) .pw-checkbox__control[data-state="unchecked"] {
+  visibility: hidden;
+}
+
+.pw-filter-option__body {
+  appearance: none;
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0%;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pw-filter-option__body:focus {
+  outline: none;
+}
+
+.pw-filter-option__body:disabled {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.pw-filter-option__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.pw-filter-option__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pw-filter-option__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pw-filter-option__trailing {
+  display: inline-flex;
+  flex: 1 0 auto;
+  align-items: center;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.pw-filter-option[data-kind="single"] .pw-filter-option__label {
+  flex: 1 1 0%;
+}
+
+.pw-filter-option[data-kind="single"] .pw-filter-option__trailing {
+  flex: 0 0 auto;
+}
+
+/* Root search results: "Field › Value". */
+.pw-filter-path {
+  color: var(--color-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pw-filter-option {
+    transition: none;
+  }
+}
+
+.pw-filter-popover-kbd {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 4px;
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+/* Saved filter row: the remove action shows on row hover or focus. */
+.pw-saved-filter-row__delete {
+  appearance: none;
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 3px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+  visibility: hidden;
+}
+
+.pw-saved-filter-row:hover .pw-saved-filter-row__delete,
+.pw-saved-filter-row:focus-within .pw-saved-filter-row__delete {
+  visibility: visible;
+}
+
+.pw-saved-filter-row__delete:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.pw-saved-filter-row__delete:focus {
+  outline: none;
+}
+
+.pw-saved-filter-row__delete:focus-visible {
+  outline: 2px solid var(--color-border-strong);
+  outline-offset: 1px;
+}

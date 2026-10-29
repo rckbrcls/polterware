@@ -11,12 +11,15 @@ export function Card(props: {
   variant?: "rings" | "texture";
   /** `compact` uses the field gradient and a single rim. The default texture palette is the quieter content surface. */
   texture?: "compact";
+  /** Inline overrides for surfaces that recolor the material, such as a tinted face or border. */
+  style?: JSX.CSSProperties;
   ref?: HTMLDivElement | ((element: HTMLDivElement) => void);
 }) {
   return (
     <div
       ref={props.ref}
-      data-texture={props.variant === "texture" && props.texture === "compact" ? "compact" : undefined}
+      style={props.style}
+      data-texture={props.variant === "texture" ? props.texture : undefined}
       class={`${props.variant === "texture" ? "card-texture-framed" : "card-panel"} p-3 ${props.class ?? ""}`}
     >
       {props.children}

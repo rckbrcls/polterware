@@ -1,5 +1,5 @@
 import { For, Show, createMemo, createSignal, type JSX } from "solid-js";
-import { A11yDialog, ArrowUp, Button, DataTable, DetailPanel, Field, FormStack, GitBranch, Input, Link2, ListChecks, ScrollText, ShieldCheck, StatusChip } from "@polterware/frontend-design-system";
+import { A11yDialog, ArrowUp, Button, CollapsibleSection, DataTable, Field, FormStack, GitBranch, Input, Link2, ListChecks, ScrollText, ShieldCheck, StatusChip } from "@polterware/frontend-design-system";
 import { buildRef, canPromote, kindLabel, readRef, referenceState, type CanvasRef, type StoreEntity } from "./references";
 import { deriveSlug, PromotionAppliedError, promotionText, type PromotionInput, type PromotionKind } from "./promotion";
 import type { ArchNode } from "@polterware/frontend-canvas";
@@ -43,35 +43,32 @@ export function NodeInspector(props: {
     } finally { setBusy(false); }
   }
   return <>
-    <DetailPanel.Header />
-    <DetailPanel.Body><DetailPanel.Main>
-      <DetailPanel.Title title={ref() ? state().title : props.node.name || props.node.type} />
-      {props.children}
-      <DetailPanel.Section title="Project reference" icon={<Link2 size={14} />}>
-        <div class="flex items-center gap-2"><StatusChip tone={state().trust === "referenced" ? "muted" : "warn"} label={ref() ? state().trust === "referenced" ? kindLabel(ref()!.kind) : "Missing reference · Unverified" : "Unverified"} />
-          <Show when={ref() && !props.structureRequired}><Button size="sm" variant="ghost" onClick={() => props.onLink()}>Unlink</Button></Show>
-        </div>
-        <Show when={ref()}><p class="text-sm text-[var(--color-text-primary)]">{state().title}</p>
-          <Show when={!state().entity}><p class="text-xs text-[var(--color-text-muted)]">The referenced entity is missing from the loaded project data. It may have been deleted or excluded by the current scope.</p></Show>
-        </Show>
-        <Show when={props.structureRequired}><p class="text-xs text-[var(--color-text-muted)]">This shape requires a Structure reference. Choose another Structure node to replace it.</p></Show>
-        <Input aria-label="Search project entities" placeholder={props.structureRequired ? "Search Structure" : "Search cards, Decisions, Facts or Structure"} value={search()} onInput={(e) => setSearch(e.currentTarget.value)} />
-        <div class="max-h-64 overflow-auto">
-          <DataTable.Root rows={matches()} getRowId={(entity) => `${entity.kind}:${entity.id}`}>
-            <DataTable.Table aria-label="Project entities">
-              <DataTable.Header><DataTable.ColumnHeader id="title" sortBy={(entity) => entity.title}>Entity</DataTable.ColumnHeader></DataTable.Header>
-              <DataTable.Body>{(entity) => <DataTable.Row row={entity} rowId={`${entity.kind}:${entity.id}`} aria-label={`Link ${kindLabel(entity.kind)}: ${entity.title}`} onActivate={() => props.onLink(buildRef(entity))}>
-                <DataTable.Cell><span class="flex items-center gap-2"><EntityIcon kind={entity.kind} /><span>{entity.title}</span><span class="text-xs text-[var(--color-text-muted)]">{kindLabel(entity.kind)}</span></span></DataTable.Cell>
-              </DataTable.Row>}</DataTable.Body>
-            </DataTable.Table>
-          </DataTable.Root>
-          <Show when={!matches().length}><p class="text-xs text-[var(--color-text-muted)]">No matching project entities.</p></Show>
-        </div>
-      </DetailPanel.Section>
-      <Show when={canPromote(props.node)}><DetailPanel.Section title="Promote" icon={<ArrowUp size={14} />}>
-        <div class="flex flex-col items-start gap-1"><For each={["card", "decision", "fact"] as const}>{(kind) => <Button size="sm" variant="ghost" disabled={!props.promote} onClick={() => open(kind)}><EntityIcon kind={kind} />Promote to {kindLabel(kind)}</Button>}</For></div>
-      </DetailPanel.Section></Show>
-    </DetailPanel.Main></DetailPanel.Body>
+    {props.children}
+    <CollapsibleSection title="Project reference" icon={<Link2 size={14} />}>
+      {/* Only Structure kinds must be linked; an unlinked component or drawing shape is not unverified. */}
+      <Show when={ref() || props.structureRequired}><div class="flex items-center gap-2"><StatusChip tone={state().trust === "referenced" ? "muted" : "warn"} label={ref() ? state().trust === "referenced" ? kindLabel(ref()!.kind) : "Missing reference · Unverified" : "Unverified"} />
+        <Show when={ref() && !props.structureRequired}><Button size="sm" variant="ghost" onClick={() => props.onLink()}>Unlink</Button></Show>
+      </div></Show>
+      <Show when={ref()}><p class="text-sm text-[var(--color-text-primary)]">{state().title}</p>
+        <Show when={!state().entity}><p class="text-xs text-[var(--color-text-muted)]">The referenced entity is missing from the loaded project data. It may have been deleted or excluded by the current scope.</p></Show>
+      </Show>
+      <Show when={props.structureRequired}><p class="text-xs text-[var(--color-text-muted)]">This shape requires a Structure reference. Choose another Structure node to replace it.</p></Show>
+      <Input aria-label="Search project entities" placeholder={props.structureRequired ? "Search Structure" : "Search cards, Decisions, Facts or Structure"} value={search()} onInput={(e) => setSearch(e.currentTarget.value)} />
+      <div class="max-h-64 overflow-auto">
+        <DataTable.Root rows={matches()} getRowId={(entity) => `${entity.kind}:${entity.id}`}>
+          <DataTable.Table aria-label="Project entities">
+            <DataTable.Header><DataTable.ColumnHeader id="title" sortBy={(entity) => entity.title}>Entity</DataTable.ColumnHeader></DataTable.Header>
+            <DataTable.Body>{(entity) => <DataTable.Row row={entity} rowId={`${entity.kind}:${entity.id}`} aria-label={`Link ${kindLabel(entity.kind)}: ${entity.title}`} onActivate={() => props.onLink(buildRef(entity))}>
+              <DataTable.Cell><span class="flex items-center gap-2"><EntityIcon kind={entity.kind} /><span>{entity.title}</span><span class="text-xs text-[var(--color-text-muted)]">{kindLabel(entity.kind)}</span></span></DataTable.Cell>
+            </DataTable.Row>}</DataTable.Body>
+          </DataTable.Table>
+        </DataTable.Root>
+        <Show when={!matches().length}><p class="text-xs text-[var(--color-text-muted)]">No matching project entities.</p></Show>
+      </div>
+    </CollapsibleSection>
+    <Show when={canPromote(props.node)}><CollapsibleSection title="Promote" icon={<ArrowUp size={14} />}>
+      <div class="flex flex-col items-start gap-1"><For each={["card", "decision", "fact"] as const}>{(kind) => <Button size="sm" variant="ghost" disabled={!props.promote} onClick={() => open(kind)}><EntityIcon kind={kind} />Promote to {kindLabel(kind)}</Button>}</For></div>
+    </CollapsibleSection></Show>
     <A11yDialog open={!!promotion()} title={`Promote to ${kindLabel(promotion() ?? "card")}`} onClose={() => { if (!busy()) setPromotion(undefined); }} dismissible={!busy()}
       footer={<><Button variant="ghost" disabled={busy()} onClick={() => setPromotion(undefined)}>Cancel</Button><Button disabled={busy() || applied() || !title().trim()} onClick={() => void submit()}>{busy() ? "Promoting…" : "Promote"}</Button></>}>
       <FormStack>

@@ -81,6 +81,11 @@ export const RPC_METHODS = {
     "get",
     "set"
   ],
+  "savedFilters": [
+    "list",
+    "save",
+    "delete"
+  ],
   "agents": [
     "getInfo",
     "rotateToken",

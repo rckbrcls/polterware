@@ -508,10 +508,22 @@ const previewDispatchQuota = [
   },
 ];
 
-const previewDispatchTiers = [
-  { name: "easy", provider: "openai", agent: "codex", model: "gpt-5-codex-mini", speed: 9, strength: 6, position: 1 },
-  { name: "normal", provider: "openai", agent: "codex", model: "gpt-5-codex", speed: 7, strength: 8, position: 2 },
-  { name: "hard", provider: "xai", agent: "grok", model: "grok-4.7", speed: 5, strength: 10, position: 3 },
+type PreviewDispatchTier = { name: string; provider: string; agent: string; model: string; speed: number; strength: number; position: number };
+
+let previewDispatchTiers: PreviewDispatchTier[] = [
+  { name: "easy", provider: "openai", agent: "codex", model: "gpt-5-codex-mini", speed: 5, strength: 2, position: 0 },
+  { name: "easy", provider: "xai", agent: "grok", model: "grok-4.7-build-fast", speed: 4, strength: 2, position: 1 },
+  { name: "normal", provider: "openai", agent: "codex", model: "gpt-5-codex", speed: 4, strength: 3, position: 0 },
+  { name: "normal", provider: "xai", agent: "grok", model: "grok-4.7", speed: 2, strength: 3, position: 1 },
+  { name: "hard", provider: "xai", agent: "grok", model: "grok-4.7", speed: 2, strength: 5, position: 0 },
+];
+
+const previewDispatchModels = [
+  { agent: "codex", model: "gpt-5-codex-mini", provider: "openai", tier: "easy" },
+  { agent: "codex", model: "gpt-5-codex", provider: "openai", tier: "normal" },
+  { agent: "codex", model: "gpt-6.1-sol", provider: "openai", tier: "hard" },
+  { agent: "grok", model: "grok-4.7-build-fast", provider: "xai", tier: "easy" },
+  { agent: "grok", model: "grok-4.7", provider: "xai", tier: "normal" },
 ];
 
 const previewDispatchAgents = [
@@ -637,6 +649,28 @@ function createBrowserDevBridge(): PolterwareBridge {
     const value = name.trim();
     if (!value || [...value].length > 80) throw new Error("Use a board name with 1 to 80 characters.");
     if (projectBoards(projectId).some((board) => board.id !== exceptId && board.name === value)) throw new Error("A board already uses this name.");
+    return value;
+  }
+  // Saved filters start empty and live only in this bridge instance, like the core:
+  // upsert by (project, surface, name), and an empty projectId is app-level.
+  type PreviewSavedFilter = {
+    id: string; projectId: string; surface: string; name: string; payloadJson: string;
+    position: number; createdAt: string; updatedAt: string;
+  };
+  let savedFilters: PreviewSavedFilter[] = [];
+  let nextSavedFilter = 0;
+  function surfaceFilters(projectId: string, surface: string) {
+    return savedFilters.filter((item) => item.projectId === projectId && item.surface === surface)
+      .sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
+  }
+  function savedFilterPayload(payloadJson: string) {
+    const value = payloadJson.trim();
+    let parsed: unknown;
+    try { parsed = JSON.parse(value); } catch { parsed = undefined; }
+    const version = (parsed as { version?: unknown } | undefined)?.version;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || !Number.isInteger(version) || (version as number) < 1) {
+      throw new Error("saved filter payload must be a JSON object with an integer version");
+    }
     return value;
   }
   const appearance = { version: 1, reduceTransparency: true as const };
@@ -801,6 +835,12 @@ function createBrowserDevBridge(): PolterwareBridge {
           return { events: filtered.slice(offset, offset + limit) };
         },
         checkTiers: async () => ({ problems: [] }),
+        listModels: async () => ({ models: previewDispatchModels, problems: [] }),
+        replaceTiers: async (payload?: { tiers?: PreviewDispatchTier[] }) => {
+          const counts: Record<string, number> = {};
+          previewDispatchTiers = (payload?.tiers ?? []).map((tier) => ({ ...tier, position: (counts[tier.name] = (counts[tier.name] ?? -1) + 1) }));
+          return { tiers: previewDispatchTiers };
+        },
         stats: async (args?: ProjectArgs & { by?: string; since?: string }) => ({
           by: args?.by || "tier",
           since: args?.since || "",
@@ -909,6 +949,38 @@ function createBrowserDevBridge(): PolterwareBridge {
         },
         setScope: async () => ({}),
         listAtlasHistory: scoped({ entries: previewAtlasHistory }, { entries: [] }),
+      }),
+      savedFilters: browserDevApi({
+        list: async ({ projectId = "", surface }: { projectId?: string; surface: string }) => {
+          if (!surface.trim()) throw new Error("saved filter surface is required");
+          return { filters: surfaceFilters(projectId.trim(), surface.trim()) };
+        },
+        save: async (input: { projectId?: string; surface: string; name: string; payloadJson: string }) => {
+          const projectId = (input.projectId ?? "").trim();
+          const surface = input.surface.trim();
+          const name = input.name.trim();
+          if (!surface) throw new Error("saved filter surface is required");
+          if (!name || [...name].length > 80) throw new Error("Use a saved filter name with 1 to 80 characters.");
+          const payloadJson = savedFilterPayload(input.payloadJson);
+          const now = new Date().toISOString();
+          const current = surfaceFilters(projectId, surface);
+          const existing = current.find((item) => item.name === name);
+          if (existing) {
+            if (existing.payloadJson !== payloadJson) Object.assign(existing, { payloadJson, updatedAt: now });
+            return { filter: existing };
+          }
+          const filter = {
+            id: `preview-filter-${nextSavedFilter++}`, projectId, surface, name, payloadJson,
+            position: current.reduce((next, item) => Math.max(next, item.position + 1), 0), createdAt: now, updatedAt: now,
+          };
+          savedFilters.push(filter);
+          return { filter };
+        },
+        delete: async ({ id }: { id: string }) => {
+          if (!savedFilters.some((item) => item.id === id)) throw new Error("saved filter not found");
+          savedFilters = savedFilters.filter((item) => item.id !== id);
+          return {};
+        },
       }),
       integrations: browserDevApi({
         listProviders: async () => ({ providers: previewProviders }),

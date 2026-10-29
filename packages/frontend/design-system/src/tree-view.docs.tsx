@@ -23,6 +23,18 @@ export default {
       <TreeView nodes={nodes} label="Project files" defaultExpandedValue={["project"]} fluidHover />
       // #endregion
     ) },
+    { id: "branches", title: "Branches", render: () => (
+      // #region branches
+      <TreeView branches nodes={[
+        { id: "project", label: "Project", icon: <Folder size={14} />, children: [
+          { id: "app", label: "app", icon: <Folder size={14} />, children: [{ id: "main", label: "main.ts", icon: <File size={14} /> }, { id: "view", label: "view.tsx", icon: <File size={14} /> }] },
+          { id: "readme", label: "README.md", icon: <File size={14} /> },
+          { id: "src", label: "src", icon: <Folder size={14} />, children: [{ id: "index", label: "index.ts", icon: <File size={14} /> }] },
+        ] },
+        { id: "archive", label: "Archive", icon: <Folder size={14} /> },
+      ]} label="Project files" defaultExpandedValue={["project", "app", "src"]} />
+      // #endregion
+    ) },
     { id: "minimal", title: "Without guides", render: () => (
       // #region minimal
       <TreeView nodes={nodes} label="Project files" defaultExpandedValue={["project"]} indicator={false} guides={false} />

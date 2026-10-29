@@ -1,7 +1,6 @@
 import { Match, Show, Switch, Suspense, createEffect, createMemo, createSignal, lazy, onCleanup, onMount } from "solid-js";
 import {
   Shell,
-  CliReferencePage,
   InboxPage,
   ProjectsScreen,
   CreateProjectDialog,
@@ -46,11 +45,11 @@ import { StructureView, STRUCTURE_SCOPE, filterStructureNodes } from "@polterwar
 import { CanvasWorkspace } from "./canvas-workspace";
 import type { WorkBoardAction } from "@polterware/feature-knowledge";
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
-import { hydrateAppearancePreferences, hydrateShortcutPreferences } from "@polterware/feature-settings/boot";
+import { hydrateAppearancePreferences, hydrateShortcutPreferences, settingsTabScope } from "@polterware/feature-settings/boot";
 import type { ProjectSettingsPageId } from "@polterware/feature-settings";
 import { CommandPalette } from "@polterware/feature-commander";
 import { PageLoading, pushToast, type TabItem } from "@polterware/frontend-design-system";
-import { detailDisplayFor, detailPanelStore, matchesShortcut, readRemembered, writeRemembered } from "@polterware/frontend-state";
+import { detailDisplayFor, detailPanelStore, matchesShortcut, readRemembered, setActiveProjectId, writeRemembered } from "@polterware/frontend-state";
 import { hideBootSplash } from "./boot-splash";
 import { bootstrapPlatform } from "./platform-bootstrap";
 
@@ -74,9 +73,6 @@ const TruthFactsPage = lazy(() =>
 );
 const DispatchPage = lazy(() =>
   import("@polterware/feature-dispatch").then((m) => ({ default: m.DispatchPage })),
-);
-const AiIntegrationsPanel = lazy(() =>
-  import("@polterware/feature-settings").then((m) => ({ default: m.AiIntegrationsPanel })),
 );
 const ActivityPage = lazy(() =>
   import("@polterware/feature-settings").then((m) => ({ default: m.ActivityPage })),
@@ -392,6 +388,12 @@ export function App() {
     const dialog = route().dialog;
     return dialog?.type === "settings" ? dialog.tab : null;
   };
+  /** The provider sign-in flow opened over Project settings › Platforms; it is not a route of its own. */
+  const [connectIntegration, setConnectIntegration] = createSignal<{ providerId?: string } | null>(null);
+  const settingsDialogScope = () => {
+    const tab = settingsDialogTab();
+    return tab ? settingsTabScope(tab) : null;
+  };
 
   function applyRoute(next: ClientRoute, mode: NavigationMode = "push") {
     const availableRoute = ensureRouteAvailable(next, PLATFORM_CONTEXT);
@@ -512,6 +514,18 @@ export function App() {
       applyRoute(openDialog(route(), { type: "settings", tab: "general" }), "silent");
       return;
     }
+    if (id === "nav.app-settings") {
+      applyRoute(openDialog(route(), { type: "settings", tab: "agents-mcp" }), "silent");
+      return;
+    }
+    if (id === "nav.platforms") {
+      applyRoute(openDialog(route(), { type: "settings", tab: "platforms-connected" }), "silent");
+      return;
+    }
+    if (id === "nav.cli-reference") {
+      applyRoute(openDialog(route(), { type: "settings", tab: "cli-reference" }), "silent");
+      return;
+    }
     if (id.startsWith("nav.")) {
       navigateSection(id.slice(4));
       return;
@@ -527,12 +541,10 @@ export function App() {
       return;
     }
     if (id === "action.connect-integration") {
-      const current = route();
-      const base = routeWithProject(current);
+      const base = routeWithProject(route());
       if (!base) return;
-      const onIntegrations = !isHomeRoute(current) && current.section === "integrations";
-      const target = onIntegrations ? base : setTab(goSection(base, "integrations"), "catalog");
-      applyRoute(openDialog(target, { type: "connect-integration" }), onIntegrations ? "silent" : "push");
+      applyRoute(openDialog(base, { type: "settings", tab: "platforms-catalog" }), "silent");
+      setConnectIntegration({});
     }
   }
 
@@ -590,6 +602,7 @@ export function App() {
   }
 
   const currentProjectId = () => route().projectId ?? workspace().settings.projectId;
+  createEffect(() => setActiveProjectId(currentProjectId() ?? ""));
 
   async function reloadScoped(projectId: string, stamp: string) {
     try {
@@ -971,41 +984,6 @@ export function App() {
             .finally(() => setImportSourcesBusy(false));
         }}
         importBusy={importSourcesBusy()}
-        onCreateFromTemplate={(template) => {
-          if (template.kind === "card") {
-            createWorkCard(template.title);
-            return;
-          }
-          const isVerdict = template.kind === "verdict";
-          // Evidence has no type: the template only seeds a tag.
-          const templateTag = template.kind === "doc" ? "documentation" : template.kind;
-          void justifyChange({
-            title: "Justify create",
-            defaultSummary: `Create ${isVerdict ? "verdict" : "evidence"}: ${template.title}`,
-          }).then((change) => {
-            if (!change) return;
-            return persistKnowledgeCreate({
-              projectId: currentProjectId(),
-              kind: isVerdict ? "verdict" : "evidence",
-              title: template.title,
-              body: template.body,
-              extraJson: template.extraJson,
-              tags: isVerdict ? undefined : [templateTag],
-              change,
-            }).then(async (id) => {
-              await refreshWorkspace(currentProjectId());
-              if (isVerdict) {
-                activateDetail("knowledge:library", id, "verdict");
-                pushToast("Verdict saved locally.", "success");
-              } else {
-                activateDetail("knowledge:evidence", id, "evidence");
-                pushToast("Evidence saved locally.", "success");
-              }
-            });
-          }).catch((error: unknown) => {
-            pushToast(error instanceof Error ? error.message : "Could not create knowledge.", "danger");
-          });
-        }}
         onCreateCard={(title, stage) => createWorkCard(title, stage)}
         onNewFeature={openFeatureFlow}
         onContinueFeature={continueFeatureFlow}
@@ -1190,8 +1168,10 @@ export function App() {
       }
       onOpenCommander={() => setPaletteOpen(true)}
       onOpenSettings={() => applyRoute(openDialog(route(), { type: "settings", tab: "general" }), "silent")}
+      onOpenAppSettings={() => applyRoute(openDialog(route(), { type: "settings", tab: "agents-mcp" }), "silent")}
       onOpenProjectSettings={() => applyRoute(openDialog(route(), { type: "project-settings" }), "silent")}
-      settingsOpen={settingsDialogTab() !== null}
+      settingsOpen={settingsDialogScope() === "project"}
+      appSettingsOpen={settingsDialogScope() === "app"}
       canGoBack={historyIndex() > 0}
       canGoForward={historyIndex() < history().length - 1}
       onBack={goBack}
@@ -1382,38 +1362,50 @@ export function App() {
           />
         </Match>
 
-        <Match when={route().section === "agents"}>
-          <Show when={currentProjectId()} keyed>
-            {(projectId) => (
-              <AiIntegrationsPanel
-                projectId={projectId}
-                tab={route().tab}
-                onTabChange={(next) => applyRoute(setTab(route(), next))}
-                cliPage={(tabs) => <CliReferencePage tabs={tabs} />}
-              />
-            )}
-          </Show>
+        <Match when={route().section === "activity"}>
+          <ActivityPage
+            projectId={currentProjectId()}
+            scopeNodes={scopeNodeIdList()}
+            scopeTokens={scopeTokens()}
+            scopeCatalogNodes={scopeNodes()}
+            scopeEnvironments={scopeEnvironmentCatalog()}
+            onScopeTokensChange={applyScopeTokens}
+            loadChanges={loadChanges}
+          />
         </Match>
 
-        <Match when={route().section === "integrations"}>
-          <Show when={currentProjectId()} keyed>
-            {(projectId) => (
+      </Switch>
+      </Show>
+      </Suspense>
+
+      <Show when={settingsDialogTab()}>
+        <Suspense>
+          <SettingsView
+            open
+            tab={settingsDialogTab() ?? undefined}
+            onClose={() => {
+              setConnectIntegration(null);
+              applyRoute(closeDialog(route()), "silent");
+            }}
+            projectId={currentProjectId()}
+            loading={loading()}
+            onTabChange={(tab) => applyRoute(openDialog(route(), { type: "settings", tab: tab as ProjectSettingsTabId }), "silent")}
+            renderProjectSettings={(tab) => <ProjectSettings embedded tab={tab} />}
+            renderPlatforms={(tab) => (
               <IntegrationsView
-                projectId={projectId}
+                embedded
+                projectId={currentProjectId()}
                 providers={workspace().providers}
-                connectOpen={route().dialog?.type === "connect-integration"}
-                connectProviderId={(() => {
-                  const dialog = route().dialog;
-                  return dialog?.type === "connect-integration" ? dialog.providerId : undefined;
-                })()}
-                onOpenConnect={(providerId) => applyRoute(openDialog(route(), { type: "connect-integration", providerId }), "silent")}
-                onCloseConnect={() => applyRoute(closeDialog(route()), "silent")}
+                connectOpen={connectIntegration() !== null}
+                connectProviderId={connectIntegration()?.providerId}
+                onOpenConnect={(providerId) => setConnectIntegration({ providerId })}
+                onCloseConnect={() => setConnectIntegration(null)}
                 integrations={workspace().integrations}
                 resources={workspace().integrationResources}
                 syncRuns={workspace().syncRuns}
-                tab={route().tab}
+                tab={tab}
                 loading={loading() || !workspace().extensionsReady}
-                onTabChange={(next) => applyRoute(setTab(route(), next))}
+                onTabChange={(next) => applyRoute(openDialog(route(), { type: "settings", tab: next === "catalog" ? "platforms-catalog" : "platforms-connected" }), "silent")}
                 onConnect={(provider) => {
                   void persistIntegrationConnection({
                     projectId: currentProjectId(),
@@ -1441,35 +1433,6 @@ export function App() {
                 }}
               />
             )}
-          </Show>
-        </Match>
-
-        <Match when={route().section === "activity"}>
-          <ActivityPage
-            projectId={currentProjectId()}
-            scopeNodes={scopeNodeIdList()}
-            scopeTokens={scopeTokens()}
-            scopeCatalogNodes={scopeNodes()}
-            scopeEnvironments={scopeEnvironmentCatalog()}
-            onScopeTokensChange={applyScopeTokens}
-            loadChanges={loadChanges}
-          />
-        </Match>
-
-      </Switch>
-      </Show>
-      </Suspense>
-
-      <Show when={settingsDialogTab()}>
-        <Suspense>
-          <SettingsView
-            open
-            tab={settingsDialogTab() ?? undefined}
-            onClose={() => applyRoute(closeDialog(route()), "silent")}
-            projectId={currentProjectId()}
-            loading={loading()}
-            onTabChange={(tab) => applyRoute(openDialog(route(), { type: "settings", tab: tab as ProjectSettingsTabId }), "silent")}
-            renderProjectSettings={(tab) => <ProjectSettings embedded tab={tab} />}
             onResetLocalStore={() => {
               void resetLocalStore().then(async () => {
                 pushToast("Local store reset to the demonstration project.", "success");

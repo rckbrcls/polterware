@@ -4,7 +4,7 @@ import { Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
  * Toggle switch: **Ark UI Switch** (behavior) + fluid thumb motion (look).
  * The thumb stretches on hover, squashes on press, follows the pointer on drag,
  * and settles on the shared `spring.moderate` (Motion, vanilla).
- * Use for on/off settings and for option rows, including single-select groups.
+ * Use for on/off settings; selection lists use `CheckboxRow`.
  */
 import { Switch as ArkSwitch } from "@ark-ui/solid/switch";
 import { animate, motionValue } from "motion";

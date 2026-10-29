@@ -30,6 +30,7 @@ const expected = {
   ReminderService: ["Plan", "Ack", "Snooze", "ArmOneOff", "CancelOneOff", "Heartbeat", "Status"],
   ActivityService: ["List"],
   SettingsService: ["Get", "Set"],
+  SavedFilterService: ["List", "Save", "Delete"],
   AgentAccessService: ["GetInfo", "RotateToken", "SetEnabled", "SetAllowFileAttach"],
   ChangeService: ["Watch"],
   MaintenanceService: ["Export", "Backup", "Doctor"],

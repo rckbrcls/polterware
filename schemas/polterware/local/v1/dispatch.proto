@@ -223,6 +223,32 @@ message ListHistoryResponse {
   repeated DispatchRunEvent events = 1;
 }
 
+// A model an installed agent CLI lists, for building the tier table.
+message DispatchModel {
+  string agent = 1;
+  string model = 2;
+  string provider = 3;
+  // The tier the agent suggests for the model, when it reports one.
+  string tier = 4;
+}
+
+message ListModelsRequest {}
+
+message ListModelsResponse {
+  repeated DispatchModel models = 1;
+  // Agents that are installed but could not list their models.
+  repeated string problems = 2;
+}
+
+// Replaces the whole tier table. Rows keep their order within each tier; position is recomputed.
+message ReplaceTiersRequest {
+  repeated DispatchTier tiers = 1;
+}
+
+message ReplaceTiersResponse {
+  repeated DispatchTier tiers = 1;
+}
+
 message CheckTiersRequest {}
 
 message CheckTiersResponse {
@@ -423,6 +449,8 @@ service DispatchService {
   rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse);
   rpc ListHistory(ListHistoryRequest) returns (ListHistoryResponse);
   rpc CheckTiers(CheckTiersRequest) returns (CheckTiersResponse);
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse);
+  rpc ReplaceTiers(ReplaceTiersRequest) returns (ReplaceTiersResponse);
   rpc Stats(StatsRequest) returns (StatsResponse);
   rpc GetClassifier(GetClassifierRequest) returns (GetClassifierResponse);
   rpc Capacity(CapacityRequest) returns (CapacityResponse);

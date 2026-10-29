@@ -15,6 +15,7 @@ import (
 	"github.com/polterware/polterware/notes/backend/domains/place"
 	"github.com/polterware/polterware/notes/backend/domains/reminder"
 	"github.com/polterware/polterware/notes/backend/domains/review"
+	"github.com/polterware/polterware/notes/backend/domains/savedfilter"
 	"github.com/polterware/polterware/notes/backend/domains/schedule"
 	"github.com/polterware/polterware/notes/backend/domains/search"
 	"github.com/polterware/polterware/notes/backend/domains/settings"
@@ -44,33 +45,35 @@ type Store struct {
 }
 
 type (
-	Spaces      struct{ *Store }
-	Notes       struct{ *Store }
-	Tags        struct{ *Store }
-	Schedules   struct{ *Store }
-	Places      struct{ *Store }
-	Attachments struct{ *Store }
-	Focus       struct{ *Store }
-	Activity    struct{ *Store }
-	Settings    struct{ *Store }
-	Reminders   struct{ *Store }
-	Review      struct{ *Store }
+	Spaces       struct{ *Store }
+	Notes        struct{ *Store }
+	Tags         struct{ *Store }
+	Schedules    struct{ *Store }
+	Places       struct{ *Store }
+	Attachments  struct{ *Store }
+	Focus        struct{ *Store }
+	Activity     struct{ *Store }
+	Settings     struct{ *Store }
+	Reminders    struct{ *Store }
+	Review       struct{ *Store }
+	SavedFilters struct{ *Store }
 )
 
 var (
-	_ tx.Manager           = (*Store)(nil)
-	_ space.Repository     = Spaces{}
-	_ note.Repository      = Notes{}
-	_ tag.Repository       = Tags{}
-	_ schedule.Repository  = Schedules{}
-	_ place.Repository     = Places{}
-	_ attachments.Store    = Attachments{}
-	_ focus.Repository     = Focus{}
-	_ activity.Repository  = Activity{}
-	_ settings.Repository  = Settings{}
-	_ reminder.Repository  = Reminders{}
-	_ review.Reader        = Review{}
-	_ maintenance.Archiver = (*Store)(nil)
+	_ tx.Manager             = (*Store)(nil)
+	_ space.Repository       = Spaces{}
+	_ note.Repository        = Notes{}
+	_ tag.Repository         = Tags{}
+	_ schedule.Repository    = Schedules{}
+	_ place.Repository       = Places{}
+	_ attachments.Store      = Attachments{}
+	_ focus.Repository       = Focus{}
+	_ activity.Repository    = Activity{}
+	_ settings.Repository    = Settings{}
+	_ reminder.Repository    = Reminders{}
+	_ review.Reader          = Review{}
+	_ savedfilter.Repository = SavedFilters{}
+	_ maintenance.Archiver   = (*Store)(nil)
 )
 
 func Open(path string) (*Store, error) {
@@ -109,6 +112,7 @@ func (s *Store) Activity() Activity            { return Activity{s} }
 func (s *Store) Settings() Settings            { return Settings{s} }
 func (s *Store) Reminders() Reminders          { return Reminders{s} }
 func (s *Store) Review() Review                { return Review{s} }
+func (s *Store) SavedFilters() SavedFilters    { return SavedFilters{s} }
 
 func (s *Store) Within(ctx context.Context, fn func(context.Context) error) error {
 	return s.h.Within(ctx, fn)

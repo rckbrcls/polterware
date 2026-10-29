@@ -60,6 +60,20 @@
   --tx-ink: #333333;
 }
 
+/* Primary: the blue of the info badge (--tone-info-*), in the same build as the other tones. */
+.pw-texture-button[data-texture-tone="primary"] {
+  --tx-frame: var(--tone-info-frame);
+  --tx-outer-top: var(--tone-info-rim);
+  --tx-outer-bottom: color-mix(in oklab, var(--tone-info-rim), black 22%);
+  --tx-face-top: var(--tone-info-top);
+  --tx-face-bottom: var(--tone-info-bottom);
+  --tx-face-hover-top: color-mix(in oklab, var(--tone-info-top), white 10%);
+  --tx-face-hover-bottom: color-mix(in oklab, var(--tone-info-bottom), white 10%);
+  --tx-face-active-top: var(--tone-info-top);
+  --tx-face-active-bottom: color-mix(in oklab, var(--tone-info-bottom), white 14%);
+  --tx-ink: var(--tone-info-ink);
+}
+
 .pw-texture-button[data-texture-tone="danger"] {
   --tx-frame: #5e2323;
   --tx-outer-top: #fca5a5;
@@ -112,7 +126,8 @@
   --tx-ink: var(--tone-info-ink);
 }
 
-.pw-texture-button:is(.rounded-full)::before {
+/* A pill button keeps a pill face, whether the radius came from `rounded-full` or an `!rounded-full` override. */
+.pw-texture-button:is(.rounded-full, .\!rounded-full)::before {
   border-radius: 9999px;
 }
 

@@ -96,3 +96,4 @@ export { useNotesShell } from "./context";
 export { NoteDetailHost } from "./note-detail-host";
 export type { NotesShellContext, NoteDetailRenderer } from "./context";
 export type { NoteShortcut } from "./shortcuts";
+export { notesSavedFiltersApi } from "./saved-filters";

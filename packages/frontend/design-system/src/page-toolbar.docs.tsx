@@ -21,7 +21,7 @@ function Navigation() {
         />
       </PageToolbar.Tabs>
       <PageToolbar.Actions>
-        <FilterPopover groups={[]} ariaLabel="Truth filters" />
+        <FilterPopover fields={[]} clauses={[]} onClausesChange={() => {}} ariaLabel="Truth filters" />
         <Button size="sm" disabled><PlusIcon size={14} aria-hidden /> Add item</Button>
       </PageToolbar.Actions>
     </PageToolbar.Root>
@@ -46,7 +46,7 @@ export default {
           <PageToolbar.Leading><span>12 work cards</span></PageToolbar.Leading>
           <PageToolbar.Actions>
             <Input size="sm" type="search" aria-label="Search work cards" placeholder="Search work…" />
-            <FilterPopover groups={[]} ariaLabel="Work filters" />
+            <FilterPopover fields={[]} clauses={[]} onClausesChange={() => {}} ariaLabel="Work filters" />
           </PageToolbar.Actions>
         </PageToolbar.Root>
         // #endregion

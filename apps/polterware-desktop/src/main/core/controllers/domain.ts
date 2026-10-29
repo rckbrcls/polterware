@@ -70,6 +70,9 @@ export function createCoreDomainControllers(
     updateWorkBoard: async (input?: JsonObject) => toJsonObject(await clients.work.updateWorkBoard(requestMessage(input))),
     deleteWorkBoard: async (input?: JsonObject) => toJsonObject(await clients.work.deleteWorkBoard(requestMessage(input))),
     reorderWorkBoards: async (input?: JsonObject) => toJsonObject(await clients.work.reorderWorkBoards(requestMessage(input))),
+    listSavedFilters: async (input?: JsonObject) => toJsonObject(await clients.savedFilters.listSavedFilters(requestMessage(input))),
+    saveSavedFilter: async (input?: JsonObject) => toJsonObject(await clients.savedFilters.saveSavedFilter(requestMessage(input))),
+    deleteSavedFilter: async (input?: JsonObject) => toJsonObject(await clients.savedFilters.deleteSavedFilter(requestMessage(input))),
     listWorkCards: async (input?: JsonObject) => toJsonObject(await clients.work.listWorkCards(requestMessage(input))),
     listAtlas: async (input?: JsonObject) => toJsonObject(await clients.work.listAtlas(requestMessage(input))),
     listAgentSessions: async (input?: JsonObject) =>
@@ -163,6 +166,8 @@ export function createCoreDomainControllers(
     listAgents: async (input?: JsonObject) => toJsonObject(await clients.dispatch.listAgents(requestMessage(input))),
     listHistory: async (input?: JsonObject) => toJsonObject(await clients.dispatch.listHistory(requestMessage(input))),
     checkTiers: async (input?: JsonObject) => toJsonObject(await clients.dispatch.checkTiers(requestMessage(input))),
+    listModels: async (input?: JsonObject) => toJsonObject(await clients.dispatch.listModels(requestMessage(input))),
+    replaceTiers: async (input?: JsonObject) => toJsonObject(await clients.dispatch.replaceTiers(requestMessage(input))),
     stats: async (input?: JsonObject) => toJsonObject(await clients.dispatch.stats(requestMessage(input))),
     getClassifier: async (input?: JsonObject) => toJsonObject(await clients.dispatch.getClassifier(requestMessage(input))),
     capacity: async (input?: JsonObject) => toJsonObject(await clients.dispatch.capacity(requestMessage(input))),

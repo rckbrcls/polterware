@@ -1,13 +1,22 @@
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount, type JSX } from "solid-js";
 import {
+  AiBrain01Icon,
+  CalendarClock,
   Card,
+  Clock,
+  Cloud,
   DataTable,
+  Gauge,
+  GridTableIcon,
+  IconTile,
   type DataTableSortState,
   PageContent,
   PageEmpty,
   ProgressBar,
   SparkChart,
+  ThumbsDownIcon,
   pushToast,
+  type IconTileTone,
 } from "@polterware/frontend-design-system";
 import { dispatchBridge, mapDispatchStats } from "./dispatch-bridge";
 import type { DispatchStatRankView, DispatchStatsRowView, DispatchStatsView } from "./dispatch-types";
@@ -114,17 +123,22 @@ function displayKey(key: string): string {
 
 function RankingCard(props: {
   title: string;
+  icon: JSX.Element;
+  tone: IconTileTone;
   rank: DispatchStatRankView;
   detail: (rank: DispatchStatRankView) => string;
 }) {
   const hasReason = () => Boolean(props.rank.reason.trim()) || !props.rank.key || props.rank.key === "desconhecido";
   return (
-    <Card class="flex h-full min-w-0 flex-col gap-1 p-3.5">
-      <span class="text-[11.5px] font-medium text-[var(--color-text-muted)]">{props.title}</span>
-      <span class="truncate font-mono text-[14px] font-semibold text-[var(--color-text-primary)]">
-        {hasReason() ? "Unknown" : displayKey(props.rank.key)}
-      </span>
-      <span class="mt-auto text-[12px] leading-5 text-[var(--color-text-secondary)]">
+    <Card class="flex h-full min-w-0 items-start gap-3 p-3.5">
+      <IconTile size={28} tone={props.tone} seed={props.title} class="shrink-0">{props.icon}</IconTile>
+      <div class="flex min-w-0 flex-1 flex-col gap-1">
+        <span class="text-[11.5px] font-medium text-[var(--color-text-muted)]">{props.title}</span>
+        <span class="truncate font-mono text-[14px] font-semibold text-[var(--color-text-primary)]">
+          {hasReason() ? "Unknown" : displayKey(props.rank.key)}
+        </span>
+      </div>
+      <span class="max-w-[45%] self-center text-right text-[12px] leading-5 text-[var(--color-text-secondary)]">
         {props.rank.reason.trim() ? props.rank.reason : props.detail(props.rank)}
       </span>
     </Card>
@@ -181,21 +195,29 @@ export function DispatchStatsPage(props: {
         <div class="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <RankingCard
             title="Most used model"
+            icon={<AiBrain01Icon size={14} aria-hidden />}
+            tone="execution"
             rank={stats().rankings.mostUsedModel}
             detail={(r) => `${r.runs} run(s)`}
           />
           <RankingCard
             title="Most used provider"
+            icon={<Cloud size={14} aria-hidden />}
+            tone="integration"
             rank={stats().rankings.mostUsedProvider}
             detail={(r) => `${r.runs} run(s)`}
           />
           <RankingCard
             title="Slowest model"
+            icon={<Clock size={14} aria-hidden />}
+            tone="observability"
             rank={stats().rankings.slowestModel}
             detail={(r) => `p50 ${formatDurationMs(r.p50Ms)} (${r.samples} samples)`}
           />
           <RankingCard
             title="Most failed model"
+            icon={<ThumbsDownIcon size={14} aria-hidden />}
+            tone="security"
             rank={stats().rankings.mostFailedModel}
             detail={(r) =>
               r.successPct !== undefined
@@ -211,7 +233,8 @@ export function DispatchStatsPage(props: {
             when={isTimeSeries()}
             fallback={
               <Card class="flex flex-col gap-2.5 p-4">
-                <div class="text-[12.5px] font-medium text-[var(--color-text-secondary)]">
+                <div class="flex items-center gap-2 text-[12.5px] font-medium text-[var(--color-text-secondary)]">
+                  <IconTile size={24} tone="execution" seed="dispatch-runs-by-group" class="shrink-0"><Gauge size={12} aria-hidden /></IconTile>
                   Runs by {props.by}
                 </div>
                 <div class="flex flex-col gap-2">
@@ -245,7 +268,8 @@ export function DispatchStatsPage(props: {
             }
           >
             <Card class="flex min-w-0 flex-col gap-3 p-4 pb-5">
-              <div class="text-[12.5px] font-medium text-[var(--color-text-secondary)]">
+              <div class="flex items-center gap-2 text-[12.5px] font-medium text-[var(--color-text-secondary)]">
+                <IconTile size={24} tone="observability" seed="dispatch-runs-over-time" class="shrink-0"><CalendarClock size={12} aria-hidden /></IconTile>
                 Runs over time ({props.by})
               </div>
               <SparkChart
@@ -259,141 +283,147 @@ export function DispatchStatsPage(props: {
           </Show>
         </Show>
 
-      <DispatchTable rows={stats().rows} getRowId={(row) => row.key}>
-        {(compact) => (
-          <DataTable.Table aria-label="Dispatch statistics">
-            <DataTable.Header>
-              <DataTable.ColumnHeader<DispatchStatsRowView> id="key" sortBy={(row) => row.key}>
-                Group
-              </DataTable.ColumnHeader>
-              <DataTable.ColumnHeader<DispatchStatsRowView>
-                id="runs"
-                align="right"
-                width="4.25rem"
-                minWidth={56}
-                sortBy={(row) => row.runs}
-              >
-                Runs
-              </DataTable.ColumnHeader>
-              <DataTable.ColumnHeader<DispatchStatsRowView>
-                id="success"
-                align="right"
-                width="5.25rem"
-                minWidth={84}
-                sortBy={(row) => row.successPct}
-              >
-                Success
-              </DataTable.ColumnHeader>
-              <Show when={!compact}>
+      <Card class="flex min-w-0 flex-col gap-3 p-4">
+        <div class="flex items-center gap-2 text-[12.5px] font-medium text-[var(--color-text-secondary)]">
+          <IconTile size={24} tone="data" seed="dispatch-stats-breakdown" class="shrink-0"><GridTableIcon size={12} aria-hidden /></IconTile>
+          Breakdown by {props.by}
+        </div>
+        <DispatchTable rows={stats().rows} getRowId={(row) => row.key}>
+          {(compact) => (
+            <DataTable.Table aria-label="Dispatch statistics">
+              <DataTable.Header>
+                <DataTable.ColumnHeader<DispatchStatsRowView> id="key" sortBy={(row) => row.key}>
+                  Group
+                </DataTable.ColumnHeader>
                 <DataTable.ColumnHeader<DispatchStatsRowView>
-                  id="firstTry"
+                  id="runs"
+                  align="right"
+                  width="4.25rem"
+                  minWidth={56}
+                  sortBy={(row) => row.runs}
+                >
+                  Runs
+                </DataTable.ColumnHeader>
+                <DataTable.ColumnHeader<DispatchStatsRowView>
+                  id="success"
                   align="right"
                   width="5.25rem"
                   minWidth={84}
-                  sortBy={(row) => row.firstTryPct}
+                  sortBy={(row) => row.successPct}
                 >
-                  First try
+                  Success
                 </DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<DispatchStatsRowView>
-                  id="p50"
-                  align="right"
-                  width="6rem"
-                  minWidth={96}
-                  sortBy={(row) => row.p50Ms ?? -1}
-                >
-                  p50
-                </DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<DispatchStatsRowView>
-                  id="p90"
-                  align="right"
-                  width="6rem"
-                  minWidth={96}
-                  sortBy={(row) => row.p90Ms ?? -1}
-                >
-                  p90
-                </DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<DispatchStatsRowView>
-                  id="fallbacks"
-                  align="right"
-                  width="5.5rem"
-                  minWidth={88}
-                  sortBy={(row) => row.fallbacks}
-                >
-                  Fallbacks
-                </DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<DispatchStatsRowView>
-                  id="rateLimits"
-                  align="right"
-                  width="6rem"
-                  minWidth={96}
-                  sortBy={(row) => row.rateLimits}
-                >
-                  Rate limits
-                </DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<DispatchStatsRowView>
-                  id="orphans"
-                  align="right"
-                  width="5rem"
-                  minWidth={80}
-                  sortBy={(row) => row.orphans}
-                >
-                  Orphans
-                </DataTable.ColumnHeader>
-              </Show>
-            </DataTable.Header>
-            <DataTable.Body<DispatchStatsRowView>>
-              {(row) => (
-                <DataTable.Row row={row} rowId={row.key}>
-                  <DataTable.Cell wrap>
-                    <div class="min-w-0 [overflow-wrap:anywhere]">
-                      <span class="font-mono text-[12px]">{displayKey(row.key)}</span>
-                      <Show when={compact}>
-                        <div class="mt-1 text-[11px] leading-4 text-[var(--color-text-muted)]">
-                          First try {row.firstTryPct.toFixed(1)}% · p50 {formatDurationMs(row.p50Ms)} · p90 {formatDurationMs(row.p90Ms)}
-                          <br />
-                          {row.fallbacks} fallbacks · {row.rateLimits} rate limits · {row.orphans} orphans
-                        </div>
-                      </Show>
-                    </div>
-                  </DataTable.Cell>
-                  <DataTable.Cell align="right">
-                    <span class="tabular-nums">{row.runs}</span>
-                  </DataTable.Cell>
-                  <DataTable.Cell align="right">
-                    <span class="tabular-nums">{row.successPct.toFixed(1)}%</span>
-                  </DataTable.Cell>
-                  <Show when={!compact}>
-                    <DataTable.Cell align="right">
-                      <span class="tabular-nums">{row.firstTryPct.toFixed(1)}%</span>
-                    </DataTable.Cell>
-                    <DataTable.Cell align="right" class="whitespace-nowrap">
-                      <span class="font-mono text-[12px] tabular-nums">{formatDurationMs(row.p50Ms)}</span>
-                    </DataTable.Cell>
-                    <DataTable.Cell align="right" class="whitespace-nowrap">
-                      <span class="font-mono text-[12px] tabular-nums">{formatDurationMs(row.p90Ms)}</span>
+                <Show when={!compact}>
+                  <DataTable.ColumnHeader<DispatchStatsRowView>
+                    id="firstTry"
+                    align="right"
+                    width="5.25rem"
+                    minWidth={84}
+                    sortBy={(row) => row.firstTryPct}
+                  >
+                    First try
+                  </DataTable.ColumnHeader>
+                  <DataTable.ColumnHeader<DispatchStatsRowView>
+                    id="p50"
+                    align="right"
+                    width="6rem"
+                    minWidth={96}
+                    sortBy={(row) => row.p50Ms ?? -1}
+                  >
+                    p50
+                  </DataTable.ColumnHeader>
+                  <DataTable.ColumnHeader<DispatchStatsRowView>
+                    id="p90"
+                    align="right"
+                    width="6rem"
+                    minWidth={96}
+                    sortBy={(row) => row.p90Ms ?? -1}
+                  >
+                    p90
+                  </DataTable.ColumnHeader>
+                  <DataTable.ColumnHeader<DispatchStatsRowView>
+                    id="fallbacks"
+                    align="right"
+                    width="5.5rem"
+                    minWidth={88}
+                    sortBy={(row) => row.fallbacks}
+                  >
+                    Fallbacks
+                  </DataTable.ColumnHeader>
+                  <DataTable.ColumnHeader<DispatchStatsRowView>
+                    id="rateLimits"
+                    align="right"
+                    width="6rem"
+                    minWidth={96}
+                    sortBy={(row) => row.rateLimits}
+                  >
+                    Rate limits
+                  </DataTable.ColumnHeader>
+                  <DataTable.ColumnHeader<DispatchStatsRowView>
+                    id="orphans"
+                    align="right"
+                    width="5rem"
+                    minWidth={80}
+                    sortBy={(row) => row.orphans}
+                  >
+                    Orphans
+                  </DataTable.ColumnHeader>
+                </Show>
+              </DataTable.Header>
+              <DataTable.Body<DispatchStatsRowView>>
+                {(row) => (
+                  <DataTable.Row row={row} rowId={row.key}>
+                    <DataTable.Cell wrap>
+                      <div class="min-w-0 [overflow-wrap:anywhere]">
+                        <span class="font-mono text-[12px]">{displayKey(row.key)}</span>
+                        <Show when={compact}>
+                          <div class="mt-1 text-[11px] leading-4 text-[var(--color-text-muted)]">
+                            First try {row.firstTryPct.toFixed(1)}% · p50 {formatDurationMs(row.p50Ms)} · p90 {formatDurationMs(row.p90Ms)}
+                            <br />
+                            {row.fallbacks} fallbacks · {row.rateLimits} rate limits · {row.orphans} orphans
+                          </div>
+                        </Show>
+                      </div>
                     </DataTable.Cell>
                     <DataTable.Cell align="right">
-                      <span class="tabular-nums">{row.fallbacks}</span>
+                      <span class="tabular-nums">{row.runs}</span>
                     </DataTable.Cell>
                     <DataTable.Cell align="right">
-                      <span class="tabular-nums">{row.rateLimits}</span>
+                      <span class="tabular-nums">{row.successPct.toFixed(1)}%</span>
                     </DataTable.Cell>
-                    <DataTable.Cell align="right">
-                      <span class="tabular-nums">{row.orphans}</span>
-                    </DataTable.Cell>
-                  </Show>
-                </DataTable.Row>
-              )}
-            </DataTable.Body>
-            <DataTable.Empty>
-              <PageEmpty
-                title="No stats yet"
-                mood="sleeping"
-              />
-            </DataTable.Empty>
-          </DataTable.Table>
-        )}
-      </DispatchTable>
+                    <Show when={!compact}>
+                      <DataTable.Cell align="right">
+                        <span class="tabular-nums">{row.firstTryPct.toFixed(1)}%</span>
+                      </DataTable.Cell>
+                      <DataTable.Cell align="right" class="whitespace-nowrap">
+                        <span class="font-mono text-[12px] tabular-nums">{formatDurationMs(row.p50Ms)}</span>
+                      </DataTable.Cell>
+                      <DataTable.Cell align="right" class="whitespace-nowrap">
+                        <span class="font-mono text-[12px] tabular-nums">{formatDurationMs(row.p90Ms)}</span>
+                      </DataTable.Cell>
+                      <DataTable.Cell align="right">
+                        <span class="tabular-nums">{row.fallbacks}</span>
+                      </DataTable.Cell>
+                      <DataTable.Cell align="right">
+                        <span class="tabular-nums">{row.rateLimits}</span>
+                      </DataTable.Cell>
+                      <DataTable.Cell align="right">
+                        <span class="tabular-nums">{row.orphans}</span>
+                      </DataTable.Cell>
+                    </Show>
+                  </DataTable.Row>
+                )}
+              </DataTable.Body>
+              <DataTable.Empty>
+                <PageEmpty
+                  title="No stats yet"
+                  mood="sleeping"
+                />
+              </DataTable.Empty>
+            </DataTable.Table>
+          )}
+        </DispatchTable>
+      </Card>
       </PageContent>
   );
 }

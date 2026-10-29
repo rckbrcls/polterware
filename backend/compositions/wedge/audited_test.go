@@ -78,6 +78,39 @@ func TestExecuteAuditedWriteHumanAutoRun(t *testing.T) {
 	}
 }
 
+func TestListChangesHidesWorkspaceLayoutWrites(t *testing.T) {
+	root := t.TempDir()
+	store, err := storepkg.New(filepath.Join(t.TempDir(), "history.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+
+	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", RootPath: root})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tool := range []string{"desktop.canvas.update", "desktop.work.board.create", "polter.board.update", "desktop.knowledge.save"} {
+		if _, err := wedge.ExecuteAuditedWrite(
+			store,
+			wedge.ChangeEnvelope{Summary: tool, Rationale: "test", ProjectID: project.ID},
+			agentrun.ActorKindHuman,
+			tool,
+			func(run agentrun.Run) ([]string, any, error) { return nil, nil, nil },
+		); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	changes, err := store.ListAllChanges(project.ID, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(changes) != 1 || changes[0].Summary != "desktop.knowledge.save" {
+		t.Fatalf("changes: %+v", changes)
+	}
+}
+
 func TestExecuteAuditedWriteAgentRequiresRunID(t *testing.T) {
 	store, err := storepkg.New(filepath.Join(t.TempDir(), "audited-agent.db"))
 	if err != nil {

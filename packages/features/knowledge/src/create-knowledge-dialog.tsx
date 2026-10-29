@@ -2,8 +2,6 @@ import { Show, createEffect, createSignal } from "solid-js";
 import { A11yDialog, Button, Field, Input, Select } from "@polterware/frontend-design-system";
 import type { ScopeNodeItem } from "@polterware/feature-shell";
 import { ScopePicker } from "./scope-picker";
-import type { KnowledgeCreateTemplate } from "./create-templates";
-import { KnowledgeTemplateGrid } from "./knowledge-template-grid";
 
 export type CreateKnowledgeKind = "card" | "verdict";
 
@@ -15,7 +13,6 @@ export function CreateKnowledgeDialog(props: {
   scopeNodes?: ScopeNodeItem[];
   /** Atlas node path preselected for a new Verdict; empty is the whole project. */
   defaultScopePath?: string;
-  onCreateFromTemplate?: (template: KnowledgeCreateTemplate) => void;
 }) {
   const [title, setTitle] = createSignal("");
   const [scope, setScope] = createSignal<"principle" | "decision">("decision");
@@ -44,11 +41,6 @@ export function CreateKnowledgeDialog(props: {
     const next = title().trim();
     if (!next) return;
     props.onSubmit(next, activeKind(), activeKind() === "verdict" ? scope() : undefined, activeKind() === "verdict" && scope() === "decision" && scopePath() ? scopePath() : undefined);
-    setTitle("");
-  }
-
-  function selectTemplate(template: KnowledgeCreateTemplate) {
-    props.onCreateFromTemplate?.(template);
     setTitle("");
   }
 
@@ -98,9 +90,6 @@ export function CreateKnowledgeDialog(props: {
             onInput={(event) => setTitle(event.currentTarget.value)}
           />
         </Field>
-        {props.onCreateFromTemplate ? (
-          <KnowledgeTemplateGrid kind={activeKind()} onSelect={selectTemplate} />
-        ) : null}
       </div>
     </A11yDialog>
   );

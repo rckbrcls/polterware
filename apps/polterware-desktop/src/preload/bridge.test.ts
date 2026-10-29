@@ -90,6 +90,22 @@ describe("createPolterwareBridge", () => {
     }
   });
 
+  it("routes saved filter operations through their IPC channels and defaults to the app-level project", async () => {
+    const invoke = vi.fn().mockResolvedValue({});
+    const bridge = createPolterwareBridge({ invoke });
+
+    await bridge.core.savedFilters.list({ projectId: "project", surface: "work" });
+    expect(invoke).toHaveBeenLastCalledWith(IPC_CHANNELS.core.listSavedFilters, { projectId: "project", surface: "work" });
+    await bridge.core.savedFilters.list({ surface: "projects" });
+    expect(invoke).toHaveBeenLastCalledWith(IPC_CHANNELS.core.listSavedFilters, { projectId: "", surface: "projects" });
+    await bridge.core.savedFilters.save({ projectId: "project", surface: "work", name: "Mine", payloadJson: '{"version":1}' });
+    expect(invoke).toHaveBeenLastCalledWith(IPC_CHANNELS.core.saveSavedFilter, {
+      projectId: "project", surface: "work", name: "Mine", payloadJson: '{"version":1}',
+    });
+    await bridge.core.savedFilters.delete({ id: "filter" });
+    expect(invoke).toHaveBeenLastCalledWith(IPC_CHANNELS.core.deleteSavedFilter, { id: "filter" });
+  });
+
   it("routes CanvasService operations through declared IPC channels and preserves optional fields", async () => {
     const invoke = vi.fn().mockResolvedValue({});
     const bridge = createPolterwareBridge({ invoke });

@@ -4,7 +4,6 @@ import {
   Button,
   ChevronLeft,
   FileText,
-  FilterMark,
   FilterPopover,
   LibraryBig,
   Link,
@@ -18,8 +17,10 @@ import {
   StatusDot,
   Tabs,
   ToolbarIconButton,
-  type ActiveFilterPill,
-  type FilterPopoverGroup,
+  FILTER_IS,
+  FILTER_IS_NOT,
+  matchClauses,
+  type FilterField,
   type TabItem,
   DataTable,
 } from "@polterware/frontend-design-system";
@@ -27,8 +28,7 @@ import {
   EntityDetailHost,
   expandedDetail,
   openDetail,
-  scopeFilterMenuGroups,
-  scopeFilterPills,
+  createPageFilters,
   type EnvironmentItem,
   type ScopeFilterToken,
   type ScopeNodeItem,
@@ -43,7 +43,6 @@ import { createDetailPanelSelector, detailDisplayFor, detailPanelStore, readReme
 import { CreateKnowledgeDialog, type CreateKnowledgeKind } from "./create-knowledge-dialog";
 import { AddEvidenceDialog, type NewEvidenceInput } from "./add-evidence-dialog";
 import type { EvidenceNoteProps } from "./knowledge-document-shell";
-import type { KnowledgeCreateTemplate } from "./create-templates";
 import { createDocumentAutosave } from "./document-autosave";
 import { DecisionDetail, type DecisionAction } from "./decision-detail";
 import { EvidenceDetail } from "./evidence-detail";
@@ -54,18 +53,14 @@ import { LibraryEmpty, libraryFilterEmpty } from "./library-empty";
 import {
   EMPTY_LIBRARY_FILTERS,
   filterLibraryRows,
-  libraryFiltersActive,
   libraryRowsFromWorkspace,
-  toggleFilterValue,
   type LibraryFilters,
   type LibraryRow,
 } from "./library-row";
 import {
   EMPTY_CARD_LIST_FILTERS,
   EMPTY_EVIDENCE_LIST_FILTERS,
-  cardListFiltersActive,
   distinctEvidenceTags,
-  evidenceListFiltersActive,
   filterEvidence,
   filterWorkCards,
   type CardListFilters,
@@ -79,15 +74,11 @@ import { WorkBoardList } from "./work-board-picker";
 import { backToWorkBoards, initialWorkBoardNavigation, openWorkBoard } from "./work-board-navigation";
 import { selectedWorkBoard, type WorkBoardAction } from "./work-boards";
 import { WorkCardDetail } from "./work-card-detail";
-import { WORK_STAGES, cardTaskProgress, workStageLabel, workStageTone } from "./work-stage";
+import { WORK_STAGES, cardOpenQuestions, cardTaskProgress, workStageLabel, workStageTone } from "./work-stage";
 
 export { cardSlugFromTitle, uniqueCardSlug } from "./card-slug";
-export type { KnowledgeCreateTemplate, KnowledgeTemplateKind } from "./create-templates";
-export {
-  KNOWLEDGE_CREATE_TEMPLATES,
-  knowledgeTemplateById,
-  knowledgeTemplatesForKind,
-} from "./create-templates";
+export { KNOWLEDGE_AGENT_PROMPTS, knowledgePromptsForKind } from "./agent-prompts";
+export type { KnowledgeAgentPrompt, KnowledgePromptKind } from "./agent-prompts";
 export type { WorkBoardAction } from "./work-boards";
 export type { DecisionAction } from "./decision-detail";
 export type { NewEvidenceInput } from "./add-evidence-dialog";
@@ -209,7 +200,6 @@ export function KnowledgeView(props: {
   onNewFeature?: () => void;
   /** Reopens the flow for a card in shape or plan. */
   onContinueFeature?: (slug: string) => void;
-  onCreateFromTemplate?: (template: KnowledgeCreateTemplate) => void;
   onArchive?: (id: string) => void;
   onRemoveCard?: (slug: string) => void;
   onSetCardStage?: (slug: string, stage: WorkStage) => Promise<boolean> | void;
@@ -330,12 +320,105 @@ export function KnowledgeView(props: {
 
   const allLibraryRows = createMemo(() => libraryRowsFromWorkspace({ verdicts: props.verdicts }));
 
-  const libraryRows = createMemo(() => filterLibraryRows(allLibraryRows(), libraryFilters()));
+  const HAS_OPERATORS = [
+    { id: FILTER_IS, label: "has" },
+    { id: FILTER_IS_NOT, label: "has no" },
+  ];
+  const linkedField = (subject: string): FilterField => ({
+    id: "linked",
+    label: subject,
+    menuLabel: "Linked",
+    kind: "boolean",
+    section: "flags",
+    icon: () => <Link size={14} aria-hidden />,
+    operators: HAS_OPERATORS,
+    options: [{ id: "linked", label: "links", icon: () => <Link size={14} aria-hidden /> }],
+  });
+  const scopeFor = (allowEnv: boolean) => ({
+    tokens: () => props.scopeTokens ?? [],
+    nodes: () => props.scopeNodes ?? [],
+    environments: () => props.scopeEnvironments ?? [],
+    allowEnv,
+    onTokensChange: (tokens: ScopeFilterToken[]) => props.onScopeTokensChange?.(tokens),
+  });
+  const cardPageFilters = createPageFilters({
+    surface: "work.cards",
+    scope: scopeFor(false),
+    fields: () => [
+      {
+        id: "stage",
+        label: "Stage",
+        kind: "multi",
+        icon: () => <StatusDot tone="ok" showLabel={false} />,
+        options: WORK_STAGES.map((stage) => ({
+          id: stage.id,
+          label: stage.label,
+          icon: () => <StatusDot tone={workStageTone(stage.id)} showLabel={false} />,
+        })),
+      },
+      {
+        id: "questions",
+        label: "Card",
+        menuLabel: "Open questions",
+        kind: "boolean",
+        section: "flags",
+        icon: () => <ListChecks size={14} aria-hidden />,
+        operators: HAS_OPERATORS,
+        options: [{ id: "open", label: "open questions", icon: () => <ListChecks size={14} aria-hidden /> }],
+      },
+    ],
+  });
+  const libraryPageFilters = createPageFilters({
+    surface: "knowledge.library",
+    scope: scopeFor(false),
+    fields: () => [
+      {
+        id: "status",
+        label: "Status",
+        pluralLabel: "statuses",
+        kind: "multi",
+        icon: () => <StatusDot tone="ok" showLabel={false} />,
+        options: ["active", "challenged", "proposed", "superseded"].map((id) => ({
+          id,
+          label: id[0]!.toUpperCase() + id.slice(1),
+          icon: () => <StatusDot tone={libraryStatusTone(id)} showLabel={false} />,
+        })),
+      },
+      linkedField("Verdict"),
+    ],
+  });
+  const evidencePageFilters = createPageFilters({
+    surface: "truth.evidence",
+    scope: scopeFor(true),
+    fields: () => [
+      {
+        id: "tags",
+        label: "Tag",
+        kind: "multi",
+        icon: () => <FileText size={14} aria-hidden />,
+        options: distinctEvidenceTags(props.evidence ?? []).map((name) => ({ id: name, label: name })),
+      },
+      linkedField("Evidence"),
+    ],
+  });
+  const pageFilters = () => (cardTab() ? cardPageFilters : evidenceTab() ? evidencePageFilters : libraryPageFilters);
 
-  const evidenceRows = createMemo(() => filterEvidence(props.evidence ?? [], evidenceFilters()));
+  const libraryRows = createMemo(() =>
+    filterLibraryRows(allLibraryRows(), libraryFilters()).filter((row) =>
+      matchClauses(row, libraryPageFilters.pageClauses(), { status: (item) => item.statusLabel, linked: (item) => item.hasLinks }),
+    ),
+  );
+
+  const evidenceRows = createMemo(() =>
+    filterEvidence(props.evidence ?? [], evidenceFilters()).filter((item) =>
+      matchClauses(item, evidencePageFilters.pageClauses(), { tags: (entry) => entry.tags, linked: (entry) => entry.entityLinks.length > 0 }),
+    ),
+  );
 
   const cards = createMemo(() =>
-    filterWorkCards(props.workCards ?? [], cardFilters()),
+    filterWorkCards(props.workCards ?? [], cardFilters()).filter((card) =>
+      matchClauses(card, cardPageFilters.pageClauses(), { stage: (item) => item.stage, questions: (item) => cardOpenQuestions(item) > 0 }),
+    ),
   );
 
   let lastCollectionFingerprint = "";
@@ -467,239 +550,6 @@ export function KnowledgeView(props: {
     return "New Verdict";
   });
 
-  const linkedGroup = (
-    current: { linked: "any" | "linked" | "unlinked" },
-    onChange: (linked: "any" | "linked" | "unlinked") => void,
-  ): FilterPopoverGroup => ({
-    id: "linked",
-    label: "Linked",
-    leading: <Link size={14} aria-hidden />,
-    selectionMode: "single" as const,
-    options: [
-      { id: "linked", label: "Has links", leading: <Link size={14} aria-hidden /> },
-      {
-        id: "unlinked",
-        label: "No links",
-        leading: <FilterMark shape="circle" tone="muted" variant="outline" />,
-      },
-    ].map((option) => ({
-      ...option,
-      checked: current.linked === option.id,
-      onCheckedChange: (checked: boolean) => onChange(checked ? (option.id as "linked" | "unlinked") : "any"),
-    })),
-  });
-
-  const libraryFilterGroups = createMemo((): FilterPopoverGroup[] => {
-    const current = libraryFilters();
-    return [
-      {
-        id: "status",
-        label: "Status",
-        leading: <StatusDot tone="ok" showLabel={false} />,
-        options: [
-          { id: "active", label: "Active" },
-          { id: "challenged", label: "Challenged" },
-          { id: "proposed", label: "Proposed" },
-          { id: "superseded", label: "Superseded" },
-        ].map((option) => ({
-          ...option,
-          leading: <StatusDot tone={libraryStatusTone(option.id)} showLabel={false} />,
-          checked: current.statuses.includes(option.id),
-          onCheckedChange: (checked: boolean) =>
-            setLibraryFilters((prev) => ({
-              ...prev,
-              statuses: toggleFilterValue(prev.statuses, option.id, checked),
-            })),
-        })),
-      },
-      linkedGroup(current, (linked) => setLibraryFilters((prev) => ({ ...prev, linked }))),
-    ];
-  });
-
-  const evidenceFilterGroups = createMemo((): FilterPopoverGroup[] => {
-    const current = evidenceFilters();
-    const groups: FilterPopoverGroup[] = [];
-    const names = distinctEvidenceTags(props.evidence ?? []);
-    if (names.length > 0) {
-      groups.push({
-        id: "tags",
-        label: "Tags",
-        leading: <FileText size={14} aria-hidden />,
-        options: names.map((name) => ({
-          id: name,
-          label: name,
-          checked: current.tags.includes(name),
-          onCheckedChange: (checked: boolean) =>
-            setEvidenceFilters((prev) => ({
-              ...prev,
-              tags: toggleFilterValue(prev.tags, name, checked),
-            })),
-        })),
-      });
-    }
-    groups.push(linkedGroup(current, (linked) => setEvidenceFilters((prev) => ({ ...prev, linked }))));
-    return groups;
-  });
-
-  const cardFilterGroups = createMemo((): FilterPopoverGroup[] => {
-    const current = cardFilters();
-    const icon = (node: typeof FileText) => {
-      const Icon = node;
-      return <Icon size={14} aria-hidden />;
-    };
-    return [
-      {
-        id: "stage",
-        label: "Stage",
-        leading: <StatusDot tone="ok" showLabel={false} />,
-        options: WORK_STAGES.map((stage) => ({
-          id: stage.id,
-          label: stage.label,
-          leading: <StatusDot tone={workStageTone(stage.id)} showLabel={false} />,
-          checked: current.stages.includes(stage.id),
-          onCheckedChange: (checked: boolean) =>
-            setCardFilters((prev) => ({
-              ...prev,
-              stages: toggleFilterValue(prev.stages, stage.id, checked),
-            })),
-        })),
-      },
-      {
-        id: "questions",
-        label: "Questions",
-        leading: icon(ListChecks),
-        selectionMode: "single" as const,
-        options: [
-          {
-            id: "open",
-            label: "Open questions",
-            leading: icon(ListChecks),
-          },
-          {
-            id: "clear",
-            label: "No open questions",
-            leading: <StatusDot tone="healthy" showLabel={false} />,
-          },
-        ].map((option) => ({
-          ...option,
-          checked: current.questions === option.id,
-          onCheckedChange: (checked: boolean) =>
-            setCardFilters((prev) => ({
-              ...prev,
-              questions: checked
-                ? (option.id as "open" | "clear")
-                : "any",
-            })),
-        })),
-      },
-    ];
-  });
-
-  const filterPopoverProps = createMemo(() => {
-    if (cardTab()) {
-      return {
-        ariaLabel: "Card filters",
-        title: "Filter cards",
-        active: cardListFiltersActive(cardFilters()),
-        onClear: () =>
-          setCardFilters((current) => ({
-            ...EMPTY_CARD_LIST_FILTERS,
-            query: current.query,
-          })),
-        groups: cardFilterGroups(),
-      };
-    }
-    if (evidenceTab()) {
-      return {
-        ariaLabel: "Evidence filters",
-        title: "Filter evidence",
-        active: evidenceListFiltersActive(evidenceFilters()),
-        onClear: () =>
-          setEvidenceFilters((current) => ({
-            ...EMPTY_EVIDENCE_LIST_FILTERS,
-            query: current.query,
-          })),
-        groups: evidenceFilterGroups(),
-      };
-    }
-    return {
-      ariaLabel: "Library filters",
-      title: "Filter library",
-      active: libraryFiltersActive(libraryFilters()),
-      onClear: () =>
-        setLibraryFilters((current) => ({
-          ...EMPTY_LIBRARY_FILTERS,
-          query: current.query,
-        })),
-      groups: libraryFilterGroups(),
-    };
-  });
-
-  const activeFilterPills = createMemo((): ActiveFilterPill[] => {
-    if (libraryTab()) {
-      const current = libraryFilters();
-      const pills: ActiveFilterPill[] = current.statuses.map((status) => ({
-        id: `status:${status}`,
-        label: `Status: ${status}`,
-        onRemove: () =>
-          setLibraryFilters((prev) => ({
-            ...prev,
-            statuses: prev.statuses.filter((value) => value !== status),
-          })),
-      }));
-      if (current.linked !== "any") {
-        pills.push({
-          id: "linked",
-          label: current.linked === "linked" ? "Linked: Has links" : "Linked: No links",
-          onRemove: () => setLibraryFilters((prev) => ({ ...prev, linked: "any" })),
-        });
-      }
-      return pills;
-    }
-    if (evidenceTab()) {
-      const current = evidenceFilters();
-      const pills: ActiveFilterPill[] = current.tags.map((tag) => ({
-        id: `tag:${tag}`,
-        label: `Tag: ${tag}`,
-        onRemove: () =>
-          setEvidenceFilters((prev) => ({ ...prev, tags: prev.tags.filter((value) => value !== tag) })),
-      }));
-      if (current.linked !== "any") {
-        pills.push({
-          id: "linked",
-          label: current.linked === "linked" ? "Linked: Has links" : "Linked: No links",
-          onRemove: () => setEvidenceFilters((prev) => ({ ...prev, linked: "any" })),
-        });
-      }
-      return pills;
-    }
-    if (cardTab()) {
-      const current = cardFilters();
-      const pills: ActiveFilterPill[] = current.stages.map((stage) => ({
-        id: `stage:${stage}`,
-        label: `Stage: ${workStageLabel(stage)}`,
-        onRemove: () =>
-          setCardFilters((prev) => ({
-            ...prev,
-            stages: prev.stages.filter((value) => value !== stage),
-          })),
-      }));
-      if (current.questions !== "any") {
-        pills.push({
-          id: "questions",
-          label:
-            current.questions === "open"
-              ? "Questions: Open"
-              : "Questions: None open",
-          onRemove: () =>
-            setCardFilters((prev) => ({ ...prev, questions: "any" })),
-        });
-      }
-      return pills;
-    }
-    return [];
-  });
-
   function linksFor(
     knowledgeId: string,
     links: WorkspaceVerdict["entityLinks"] | WorkspaceEvidence["entityLinks"],
@@ -728,6 +578,9 @@ export function KnowledgeView(props: {
     setLibraryFilters({ ...EMPTY_LIBRARY_FILTERS });
     setEvidenceFilters({ ...EMPTY_EVIDENCE_LIST_FILTERS });
     setCardFilters({ ...EMPTY_CARD_LIST_FILTERS });
+    cardPageFilters.clearPage();
+    libraryPageFilters.clearPage();
+    evidencePageFilters.clearPage();
     setCreateOpen(false);
     setEvidenceAddOpen(false);
     props.onTabChange?.(next);
@@ -788,23 +641,13 @@ export function KnowledgeView(props: {
               aria-label={listSearch().placeholder}
             />
             <FilterPopover
-              ariaLabel={filterPopoverProps().ariaLabel}
-              title={filterPopoverProps().title}
-              active={filterPopoverProps().active || (props.scopeTokens?.length ?? 0) > 0}
-              onClear={() => {
-                filterPopoverProps().onClear();
-                props.onScopeTokensChange?.([]);
-              }}
-              groups={[
-                ...scopeFilterMenuGroups({
-                  tokens: props.scopeTokens ?? [],
-                  nodes: props.scopeNodes ?? [],
-                  environments: props.scopeEnvironments ?? [],
-                  allowEnv: evidenceTab(),
-                  onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
-                }),
-                ...filterPopoverProps().groups,
-              ]}
+              ariaLabel={cardTab() ? "Card filters" : evidenceTab() ? "Evidence filters" : "Library filters"}
+              title={cardTab() ? "Filter cards" : evidenceTab() ? "Filter evidence" : "Filter library"}
+              shortcut
+              fields={pageFilters().fields()}
+              clauses={pageFilters().clauses()}
+              onClausesChange={pageFilters().onClausesChange}
+              saved={pageFilters().saved()}
             />
             <Show when={cardTab() ? props.onCreateCard : evidenceTab() ? canAddEvidence() : props.onCreate}>
               <ToolbarIconButton
@@ -823,14 +666,10 @@ export function KnowledgeView(props: {
         </PageToolbar.Root>
 
         <ActiveFilterBar
-          items={[
-            ...scopeFilterPills(props.scopeTokens ?? [], (tokens) => props.onScopeTokensChange?.(tokens)),
-            ...activeFilterPills(),
-          ]}
-          onClear={() => {
-            filterPopoverProps().onClear();
-            props.onScopeTokensChange?.([]);
-          }}
+          fields={pageFilters().fields()}
+          clauses={pageFilters().clauses()}
+          onClausesChange={pageFilters().onClausesChange}
+          saved={pageFilters().saved()}
         />
 
         <Show when={libraryTab()}>
@@ -840,7 +679,6 @@ export function KnowledgeView(props: {
               fallback={
                 <LibraryEmpty
                   onCreate={props.onCreate ? () => setCreateOpen(true) : undefined}
-                  onCreateFromTemplate={props.onCreateFromTemplate}
                 />
               }
             >
@@ -868,7 +706,6 @@ export function KnowledgeView(props: {
                   onCreate={canAddEvidence() ? () => setEvidenceAddOpen(true) : undefined}
                   onImport={props.onImportProjectSources ? () => props.onImportProjectSources?.() : undefined}
                   importBusy={props.importBusy}
-                  onCreateFromTemplate={props.onCreateFromTemplate}
                 />
               }
             >
@@ -919,7 +756,6 @@ export function KnowledgeView(props: {
               fallback={
                 <WorkCardsEmpty
                   onCreate={props.onNewFeature ?? (props.onCreateCard ? () => setCreateOpen(true) : undefined)}
-                  onCreateFromTemplate={props.onCreateFromTemplate}
                 />
               }
             >
@@ -1053,14 +889,6 @@ export function KnowledgeView(props: {
         scopeNodes={props.scopeNodes}
         defaultScopePath={props.activeScopePath}
         onClose={() => { setCreateOpen(false); setCreateStage(undefined); }}
-        onCreateFromTemplate={
-          props.onCreateFromTemplate
-            ? (template) => {
-                props.onCreateFromTemplate?.(template);
-                setCreateOpen(false);
-              }
-            : undefined
-        }
         onSubmit={(title, kind, scope, scopePath) => {
           if (kind === "card") props.onCreateCard?.(title, createStage());
           else props.onCreate?.("verdict", title, scope, scopePath);
@@ -1087,14 +915,6 @@ export function KnowledgeView(props: {
           props.onImportProjectSources
             ? () => {
                 props.onImportProjectSources?.();
-                setEvidenceAddOpen(false);
-              }
-            : undefined
-        }
-        onCreateFromTemplate={
-          props.onCreateFromTemplate
-            ? (template) => {
-                props.onCreateFromTemplate?.(template);
                 setEvidenceAddOpen(false);
               }
             : undefined

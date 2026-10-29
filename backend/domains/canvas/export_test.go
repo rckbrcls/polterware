@@ -67,6 +67,18 @@ func TestExportNodeLinkShape(t *testing.T) {
 	}
 }
 
+func TestExportOmitsStyle(t *testing.T) {
+	body, err := Export(Graph{Nodes: []Node{
+		{ID: "r", Kind: "database", Props: map[string]any{"style": map[string]any{"fill": "blue"}, "technology": "Postgres"}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(body), "style") || !strings.Contains(string(body), "Postgres") {
+		t.Fatalf("export = %s", body)
+	}
+}
+
 func TestExportEmptyGraph(t *testing.T) {
 	body, err := Export(Graph{})
 	if err != nil {
@@ -144,10 +156,10 @@ func TestExportMermaidAndDot(t *testing.T) {
 func TestExportMermaidSanitizesIDs(t *testing.T) {
 	text := ExportMermaid(Graph{
 		Nodes: []Node{
-			{ID: "a-b", Kind: KindIdea, Label: `say "hi"`},
-			{ID: "a_b", Kind: KindIdea, Label: "Two"},
-			{ID: "end", Kind: KindEnd, Label: "Stop"},
-			{ID: "9x", Kind: KindIdea, Label: "Nine"},
+			{ID: "a-b", Kind: "idea", Label: `say "hi"`},
+			{ID: "a_b", Kind: "idea", Label: "Two"},
+			{ID: "end", Kind: "end", Label: "Stop"},
+			{ID: "9x", Kind: "idea", Label: "Nine"},
 		},
 		Edges: []Edge{{ID: "e", From: "end", To: "9x", Kind: "uses|sync"}},
 	})
@@ -171,7 +183,7 @@ func TestExportMermaidSanitizesIDs(t *testing.T) {
 
 func TestMarshalGraphKeepsStorageShape(t *testing.T) {
 	raw, err := MarshalGraph(Graph{
-		Nodes: []Node{{ID: "a", Kind: KindIdea, Label: "One"}},
+		Nodes: []Node{{ID: "a", Kind: "idea", Label: "One"}},
 		Edges: []Edge{{ID: "e", From: "a", To: "a", Kind: EdgeRelates}},
 	})
 	if err != nil {

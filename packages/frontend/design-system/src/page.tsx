@@ -126,7 +126,7 @@ export const PageToolbar = {
 export function PageContent(props: { children: JSX.Element; class?: string }) {
   return (
     <div
-      class={`min-h-0 flex-1 overflow-auto ${props.class ?? ""}`}
+      class={`pw-page-content min-h-0 flex-1 overflow-auto ${props.class ?? ""}`}
       style={{ "min-height": 0, flex: "1 1 auto", overflow: "auto" }}
     >
       {props.children}

@@ -1,6 +1,7 @@
 import { For, Index, Match, Show, Switch, createEffect, createMemo, createSignal, on, onCleanup, onMount, type JSX } from "solid-js";
+import { Portal } from "solid-js/web";
 import { BotAvatar, agentMarkFor, botAvatarTypes, type BotAvatarType } from "@polterware/bot-avatars";
-import { EntityDetailHost } from "@polterware/feature-shell";
+import { EntityDetailHost, createPageFilters, type PageFilters } from "@polterware/feature-shell";
 import {
   Bot,
   Badge,
@@ -12,6 +13,10 @@ import {
   Dialog,
   ChevronLeft,
   Field,
+  FilterPopover,
+  IconTile,
+  InformationCircle,
+  FloatingWindow,
   FileDiff,
   FileText,
   Folder,
@@ -21,8 +26,10 @@ import {
   PageContent,
   PageEmpty,
   PageToolbar,
+  SearchBar,
   Tabs,
   Play,
+  Plus,
   ProgressBar,
   Route,
   RefreshCw,
@@ -39,6 +46,10 @@ import {
   Textarea,
   ToolbarIconButton,
   pushToast,
+  ActiveFilterBar,
+  matchClauses,
+  type FilterField,
+  type IconTileTone,
 } from "@polterware/frontend-design-system";
 import { detailPanelStore } from "@polterware/frontend-state";
 import {
@@ -53,11 +64,13 @@ import {
   mapDispatchRun,
   mapDispatchRuns,
   mapDispatchTiers,
+  mapDispatchModels,
   mapDispatchWorktrees,
 } from "./dispatch-bridge";
 import type {
   DispatchAgentView,
   DispatchCapacityView,
+  DispatchModelView,
   DispatchQuotaSnapshotView,
   DispatchRunEventView,
   DispatchRunView,
@@ -67,6 +80,8 @@ import type {
   DispatchWorktreeView,
 } from "./dispatch-types";
 import { DispatchLearningPage } from "./learning-page";
+import { TierBoard, TierModelPalette } from "./tier-board";
+import { placeTierCard } from "./tier-board-model";
 import { DISPATCH_STATS_BY_OPTIONS, DISPATCH_STATS_SINCE_OPTIONS, DispatchStatsPage } from "./stats-page";
 
 export * from "./dispatch-types";
@@ -302,19 +317,6 @@ function DispatchAgentAvatar(props: { agent?: string; seed?: string; status?: st
   );
 }
 
-function TierMeter(props: { label: string; value: number; tone: "blue" | "violet" }) {
-  const value = () => Math.max(0, Math.min(10, props.value));
-  return (
-    <div class="flex min-w-0 flex-col gap-1.5">
-      <div class="flex items-center justify-between gap-2 text-[11px] text-[var(--color-text-secondary)]">
-        <span>{props.label}</span>
-        <span class="tabular-nums">{props.value}/10</span>
-      </div>
-      <ProgressBar label={props.label} value={value() * 10} aria-valuetext={`${value()} out of 10`} tone={props.tone} size="sm" />
-    </div>
-  );
-}
-
 function formatWhen(value: string): string {
   if (!value) return "—";
   const date = new Date(value);
@@ -439,6 +441,23 @@ export function DispatchEventSummaryDetail(props: {
   );
 }
 
+/** Lowercased text match over the fields a list shows. */
+function matchesQuery(query: string, values: readonly (string | undefined)[]): boolean {
+  const needle = query.trim().toLowerCase();
+  return !needle || values.some((value) => value?.toLowerCase().includes(needle));
+}
+
+/** One multi-select filter field over the distinct values a list has. */
+function valueFilterField(id: string, label: string, values: readonly string[], icon?: () => JSX.Element): FilterField {
+  return {
+    id,
+    label,
+    kind: "multi",
+    icon,
+    options: [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b)).map((value) => ({ id: value, label: value })),
+  };
+}
+
 const DEFAULT_DISPATCH_TABS = [
   { id: "runs", label: "Runs" },
   { id: "agents", label: "Agents" },
@@ -461,11 +480,6 @@ export function DispatchPage(props: {
   const [quotaSnapshots, setQuotaSnapshots] = createSignal<DispatchQuotaSnapshotView[]>([]);
   const [capacity, setCapacity] = createSignal<DispatchCapacityView>({ since: "", note: "", keys: [] });
   const [tiers, setTiers] = createSignal<DispatchTierView[]>([]);
-  const tierCards = createMemo(() => DEFAULT_TIER_OPTIONS.map((tier) => ({
-    ...tier,
-    candidates: tiers().filter((candidate) => candidate.name === tier.value)
-      .sort((a, b) => a.position - b.position),
-  })).filter((tier) => tier.candidates.length > 0));
   const [agents, setAgents] = createSignal<DispatchAgentView[]>([]);
   const [tierProblems, setTierProblems] = createSignal<string[]>([]);
 
@@ -486,6 +500,31 @@ export function DispatchPage(props: {
   const [statsSince, setStatsSince] = createSignal("7d");
   const [statsInFlight, setStatsInFlight] = createSignal(0);
   const routeTabs = () => props.tabs ?? DEFAULT_DISPATCH_TABS;
+
+  // Search and filters are kept per tab, so switching tabs does not carry a query across lists.
+  const [runQuery, setRunQuery] = createSignal("");
+  const [agentQuery, setAgentQuery] = createSignal("");
+  const [tierQuery, setTierQuery] = createSignal("");
+  const [learningQuery, setLearningQuery] = createSignal("");
+  const learningFilters = createPageFilters({
+    surface: "dispatch.learning",
+    fields: () => [
+      valueFilterField("tier", "Tier", ["easy", "normal", "hard"], () => <Gauge size={14} aria-hidden />),
+      valueFilterField("state", "State", ["Prior", "Learned"]),
+    ],
+  });
+  const runFilters = createPageFilters({
+    surface: "dispatch.runs",
+    fields: () => [
+      valueFilterField("status", "Status", runs().map((run) => run.status)),
+      valueFilterField("agent", "Agent", runs().map((run) => run.agent), () => <Bot size={14} aria-hidden />),
+      valueFilterField("tier", "Tier", runs().map((run) => run.tier), () => <Gauge size={14} aria-hidden />),
+    ],
+  });
+
+  const visibleRuns = createMemo(() => runs().filter((run) =>
+    matchClauses(run, runFilters.pageClauses(), { status: (item) => item.status, agent: (item) => item.agent, tier: (item) => item.tier })
+    && matchesQuery(runQuery(), [run.prompt, run.agent, run.model, run.tier, run.branch, run.cardSlug, run.id, run.status])));
 
   // Runs open as a page inside this tab. Drop any leftover side-panel selection for this scope.
   onCleanup(() => detailPanelStore.getState().unregisterCollection(DISPATCH_RUNS_SCOPE));
@@ -733,7 +772,7 @@ export function DispatchPage(props: {
   });
 
   const moveRun = (key: "up" | "down" | "home" | "end") => {
-    const items = runs();
+    const items = visibleRuns();
     if (items.length === 0) return;
     const index = items.findIndex((item) => item.id === selectedRunId());
     const next = key === "home"
@@ -788,6 +827,83 @@ export function DispatchPage(props: {
     return [...entries.values()].sort((a, b) => a.agent.localeCompare(b.agent));
   });
 
+  const agentProvider = (name: string) =>
+    knownText(agents().find((agent) => agent.name === name)?.provider)
+    ?? knownText(quotaSnapshots().find((snap) => snap.agent === name)?.provider)
+    ?? "";
+  const agentFilters = createPageFilters({
+    surface: "dispatch.agents",
+    fields: () => [valueFilterField("provider", "Provider", agentCards().map((entry) => agentProvider(entry.agent)), () => <Cpu size={14} aria-hidden />)],
+  });
+  const visibleAgentCards = createMemo(() => agentCards().filter((entry) =>
+    matchClauses(entry, agentFilters.pageClauses(), { provider: (item) => agentProvider(item.agent) })
+    && matchesQuery(agentQuery(), [entry.agent, agentProvider(entry.agent)])));
+  // The board keeps every card in place so drag targets stay stable; search and filters dim the rest instead.
+  const tierMatches = (tier: DispatchTierView) => matchesQuery(tierQuery(), [tier.name, tier.agent, tier.provider, tier.model]);
+  // Always editable; a desktop or core that predates ReplaceTiers says so when a change is saved.
+  const tiersEditable = () => true;
+  const [paletteModels, setPaletteModels] = createSignal<DispatchModelView[]>([]);
+  const [paletteProblems, setPaletteProblems] = createSignal<string[]>([]);
+  const [paletteLoading, setPaletteLoading] = createSignal(false);
+  const [paletteOpen, setPaletteOpen] = createSignal(false);
+  let paletteLoaded = false;
+  const loadPaletteModels = async () => {
+    const bridge = dispatchBridge();
+    if (paletteLoaded) return;
+    if (!bridge?.listModels) {
+      setPaletteProblems(["This desktop build cannot list models yet. Restart the desktop app and the local core."]);
+      return;
+    }
+    paletteLoaded = true;
+    setPaletteLoading(true);
+    try {
+      const raw = await bridge.listModels({});
+      setPaletteModels(mapDispatchModels(raw));
+      const problems = (raw as { problems?: unknown }).problems;
+      setPaletteProblems(Array.isArray(problems) ? problems.filter((item): item is string => typeof item === "string") : []);
+    } catch (error: unknown) {
+      paletteLoaded = false;
+      pushToast(error instanceof Error ? error.message : "Could not list models.", "danger");
+    } finally {
+      setPaletteLoading(false);
+    }
+  };
+  // Optimistic: the board moves at once, then the core's validated table replaces it (or the old one comes back).
+  const saveTiers = async (next: DispatchTierView[]) => {
+    const bridge = dispatchBridge();
+    if (!bridge?.replaceTiers) {
+      pushToast("This desktop build cannot save tiers yet. Restart the desktop app and the local core.", "danger");
+      return;
+    }
+    const previous = tiers();
+    setTiers(next);
+    try {
+      setTiers(mapDispatchTiers(await bridge.replaceTiers({ tiers: next })));
+      setTierProblems(mapCheckTiersProblems(await bridge.checkTiers({})));
+    } catch (error: unknown) {
+      setTiers(previous);
+      pushToast(error instanceof Error ? error.message : "Could not save the tiers.", "danger");
+    }
+  };
+
+  const toolbarSearch = () => {
+    switch (activeTab()) {
+      case "runs": return { placeholder: "Search runs…", value: runQuery(), onInput: setRunQuery };
+      case "agents": return { placeholder: "Search agents…", value: agentQuery(), onInput: setAgentQuery };
+      case "tiers": return { placeholder: "Search tiers…", value: tierQuery(), onInput: setTierQuery };
+      case "learning": return { placeholder: "Search features…", value: learningQuery(), onInput: setLearningQuery };
+      default: return undefined;
+    }
+  };
+  const toolbarFilters = (): { label: string; filters: PageFilters } | undefined => {
+    switch (activeTab()) {
+      case "runs": return { label: "Run filters", filters: runFilters };
+      case "agents": return { label: "Agent filters", filters: agentFilters };
+      case "learning": return { label: "Learning filters", filters: learningFilters };
+      default: return undefined;
+    }
+  };
+
   const runDetailOpen = () => activeTab() === "runs" && Boolean(selectedRun());
 
   return (
@@ -812,6 +928,36 @@ export function DispatchPage(props: {
             </PageToolbar.Tabs>
           </Show>
           <PageToolbar.Actions>
+            <Show when={toolbarSearch()}>
+              {(search) => <SearchBar placeholder={search().placeholder} aria-label={search().placeholder.replace("…", "")} value={search().value} onInput={search().onInput} />}
+            </Show>
+            <Show when={toolbarFilters()}>
+              {(toolbar) => (
+                <FilterPopover
+                  ariaLabel={toolbar().label}
+                  title={toolbar().label}
+                  shortcut
+                  fields={toolbar().filters.fields()}
+                  clauses={toolbar().filters.clauses()}
+                  onClausesChange={toolbar().filters.onClausesChange}
+                  saved={toolbar().filters.saved()}
+                />
+              )}
+            </Show>
+            <Show when={activeTab() === "tiers" && tiersEditable()}>
+              <span class="inline-flex" data-floating-window-opener="">
+                <ToolbarIconButton
+                  label={paletteOpen() ? "Close model palette" : "Add model"}
+                  onClick={() => {
+                    const next = !paletteOpen();
+                    setPaletteOpen(next);
+                    if (next) void loadPaletteModels();
+                  }}
+                >
+                  <Plus size={14} />
+                </ToolbarIconButton>
+              </span>
+            </Show>
             <Show when={activeTab() === "runs"}>
               <ToolbarIconButton label="Start run" onClick={() => setStartOpen(true)}>
                 <Play size={14} />
@@ -858,6 +1004,16 @@ export function DispatchPage(props: {
             </Show>
           </PageToolbar.Actions>
         </PageToolbar.Root>
+        <Show when={toolbarFilters()}>
+          {(toolbar) => (
+            <ActiveFilterBar
+              fields={toolbar().filters.fields()}
+              clauses={toolbar().filters.clauses()}
+              onClausesChange={toolbar().filters.onClausesChange}
+              saved={toolbar().filters.saved()}
+            />
+          )}
+        </Show>
       </Show>
       <Switch>
         <Match when={activeTab() === "runs" && selectedRun()}>
@@ -882,7 +1038,7 @@ export function DispatchPage(props: {
           <PageContent class="flex min-h-0 flex-1 flex-col p-0">
             <div class="min-h-0 flex-1 overflow-auto p-3">
               <Show
-                when={runs().length > 0}
+                when={visibleRuns().length > 0}
                 fallback={
                   <Show
                     when={!busy()}
@@ -901,8 +1057,8 @@ export function DispatchPage(props: {
                     }
                   >
                     <PageEmpty
-                      title="No runs yet"
-                      mood="sleeping"
+                      title={runs().length > 0 ? "No matches" : "No runs yet"}
+                      mood={runs().length > 0 ? "lost" : "sleeping"}
                     />
                   </Show>
                 }
@@ -928,7 +1084,7 @@ export function DispatchPage(props: {
                     }
                   }}
                 >
-                  <Index each={runs()}>
+                  <Index each={visibleRuns()}>
                     {(run, index) => (
                       <DispatchRunCard
                         run={run()}
@@ -952,11 +1108,11 @@ export function DispatchPage(props: {
         <Match when={activeTab() === "agents"}>
           <PageContent class="flex min-h-0 flex-1 flex-col overflow-auto p-4">
             <Show
-              when={agentCards().length > 0}
-              fallback={<PageEmpty title="No agents found" mood="sad" />}
+              when={visibleAgentCards().length > 0}
+              fallback={<PageEmpty title={agentCards().length > 0 ? "No matches" : "No agents found"} mood={agentCards().length > 0 ? "lost" : "sad"} />}
             >
               <div class="grid auto-rows-fr items-stretch gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,17.5rem),1fr))]">
-                <For each={agentCards()}>
+                <For each={visibleAgentCards()}>
                   {(entry) => {
                     const latest = createMemo(() => quotaSnapshots()
                       .filter((snap) => snap.agent === entry.agent)
@@ -978,25 +1134,24 @@ export function DispatchPage(props: {
                       return delta > 2 ? "ahead" : delta < -2 ? "behind" : "on pace";
                     });
                     const reset = () => parseTime(latest()?.resetsAt ?? "");
+                    // Key-value facts for the card foot: where the quota number comes from and how the windows went.
                     const facts = createMemo(() => {
                       const source = knownText(latest()?.source) || knownText(agentView()?.quotaSource);
                       const confidence = knownText(latest()?.confidence) || knownText(agentView()?.confidence);
-                      const items = [
-                        `Quota source: ${source ?? "unknown"}`,
-                        `Confidence: ${confidence ?? "unknown"}`,
+                      const items: { label: string; value: string }[] = [
+                        { label: "Source", value: source ?? "unknown" },
+                        { label: "Confidence", value: confidence ?? "unknown" },
                       ];
                       for (const pool of pools()) {
-                        const rollup = [
-                          `${pool.windows} ${pool.windows === 1 ? "window" : "windows"}`,
-                          `${pool.hitFull} hit 100%`,
-                        ];
+                        const prefix = pools().length > 1 ? `${pool.key} ` : "";
+                        items.push({ label: `${prefix}Windows`, value: String(pool.windows) });
+                        items.push({ label: `${prefix}Hit 100%`, value: String(pool.hitFull) });
                         const leftover = pool.leftoverPct !== undefined && Number.isFinite(pool.leftoverPct)
                           ? formatUsedPercent(pool.leftoverPct)
                           : knownText(capacityPaceLabel(pool.leftover));
-                        if (leftover) rollup.push(`${leftover} leftover`);
-                        items.push(`${pools().length > 1 ? `${pool.key}: ` : ""}${rollup.join(" · ")}`);
+                        if (leftover) items.push({ label: `${prefix}Leftover`, value: leftover });
                       }
-                      return items.join(" · ");
+                      return items;
                     });
                     const cooldownUntil = () => agentView()?.cooldownUntil ?? "";
                     const cooldownActive = () => {
@@ -1026,22 +1181,27 @@ export function DispatchPage(props: {
                             label={pace() ?? "unknown"}
                           />
                         </div>
-                        <div class="flex flex-col gap-2">
-                          <div class="flex items-baseline gap-2 text-[var(--color-text-primary)]">
-                            <SegmentDisplay
-                              value={used() === undefined ? "--" : formatUsedPercent(used())}
-                              size={28}
-                              aria-label={`${entry.agent} quota usage: ${formatUsedPercent(used())}`}
-                            />
-                            <Show when={used() === undefined}><span class="text-[11px] text-[var(--color-text-muted)]">unknown</span></Show>
+                        <div class="flex flex-col gap-2.5">
+                          <div class="flex items-end justify-between gap-3">
+                            <div class="flex items-baseline gap-2 text-[var(--color-text-primary)]">
+                              <SegmentDisplay
+                                value={used() === undefined ? "--" : formatUsedPercent(used())}
+                                size={28}
+                                aria-label={`${entry.agent} quota usage: ${formatUsedPercent(used())}`}
+                              />
+                              <Show when={used() === undefined}><span class="text-[11px] text-[var(--color-text-muted)]">unknown</span></Show>
+                            </div>
+                            <div class="flex min-w-0 flex-col items-end gap-0.5 text-right text-[11px] tabular-nums">
+                              <Show when={quotaWindow(latest())}>
+                                {(window) => <span class="text-[var(--color-text-secondary)]">of {window()} window</span>}
+                              </Show>
+                              <Show when={reset() !== undefined}>
+                                <span class="text-[var(--color-text-muted)]" title={formatWhen(latest()!.resetsAt)}>
+                                  Resets {relativeWhen(latest()!.resetsAt, now())}
+                                </span>
+                              </Show>
+                            </div>
                           </div>
-                          <Show when={quotaWindow(latest())}>
-                            {(window) => (
-                              <span class="text-[12px] text-[var(--color-text-secondary)]">
-                                used of {window()} window
-                              </span>
-                            )}
-                          </Show>
                           <ProgressBar
                             label={`${entry.agent} quota usage`}
                             value={used() ?? null}
@@ -1049,14 +1209,6 @@ export function DispatchPage(props: {
                             tone="blue"
                           />
                         </div>
-                        <Show when={reset() !== undefined}>
-                          <span
-                            class="text-[11px] tabular-nums text-[var(--color-text-muted)]"
-                            title={formatWhen(latest()!.resetsAt)}
-                          >
-                            Resets {relativeWhen(latest()!.resetsAt, now())}
-                          </span>
-                        </Show>
                         <Show when={entry.series.length >= 3}>
                           {/* Clip the shared chart's value-axis gutter only in cards. */}
                           <div class="overflow-hidden">
@@ -1071,25 +1223,37 @@ export function DispatchPage(props: {
                             </div>
                           </div>
                         </Show>
-                        <div class="mt-auto flex flex-col gap-2 text-[11px] leading-4 tabular-nums text-[var(--color-text-muted)] [overflow-wrap:anywhere]">
-                          <div class="flex flex-wrap items-center gap-2">
-                            <span>Binary: <span class="font-mono">{agentView()?.bin || "—"}</span></span>
-                            <span class="inline-flex items-center gap-1">
-                              Probe risk
-                              <StatusChip
-                                tone={dispatchStatusTone(agentView()?.risk ?? "")}
-                                label={agentView()?.risk || "unknown"}
-                              />
-                            </span>
-                            <Show when={cooldownActive()}>
-                              <StatusChip tone="warn" label="Cooldown" />
-                            </Show>
+                        <dl class="m-0 mt-auto grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-[var(--color-border-subtle)] pt-3 text-[11px] leading-5 tabular-nums">
+                          <div class="flex min-w-0 items-center justify-between gap-2">
+                            <dt class="text-[var(--color-text-muted)]">Binary</dt>
+                            <dd class="m-0 truncate font-mono text-[var(--color-text-secondary)]">{agentView()?.bin || "—"}</dd>
                           </div>
-                          <span>{facts()}</span>
+                          <div class="flex min-w-0 items-center justify-between gap-2">
+                            <dt class="text-[var(--color-text-muted)]">Probe risk</dt>
+                            <dd class="m-0">
+                              <StatusChip tone={dispatchStatusTone(agentView()?.risk ?? "")} label={agentView()?.risk || "unknown"} />
+                            </dd>
+                          </div>
+                          <For each={facts()}>
+                            {(fact) => (
+                              <div class="flex min-w-0 items-center justify-between gap-2">
+                                <dt class="truncate text-[var(--color-text-muted)]">{fact.label}</dt>
+                                <dd class="m-0 truncate text-[var(--color-text-secondary)]">{fact.value}</dd>
+                              </div>
+                            )}
+                          </For>
                           <Show when={cooldownUntil()}>
-                            {(until) => <span>Cooldown until {formatWhen(until())}</span>}
+                            {(until) => (
+                              <div class="col-span-2 flex min-w-0 items-center justify-between gap-2">
+                                <dt class="text-[var(--color-text-muted)]">Cooldown until</dt>
+                                <dd class="m-0 flex items-center gap-1.5 text-[var(--color-text-secondary)]">
+                                  <Show when={cooldownActive()}><StatusChip tone="warn" label="Cooldown" /></Show>
+                                  {formatWhen(until())}
+                                </dd>
+                              </div>
+                            )}
                           </Show>
-                        </div>
+                        </dl>
                       </Card>
                     );
                   }}
@@ -1117,55 +1281,41 @@ export function DispatchPage(props: {
               </Card>
             </Show>
 
-            <Show
-              when={tierCards().length > 0}
-              fallback={<PageEmpty title="No tiers" mood="sad" />}
-            >
-              <div class="grid auto-rows-fr items-stretch gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,17.5rem),1fr))]">
-                <For each={tierCards()}>
-                  {(tier) => (
-                    <Card class="flex h-full min-w-0 flex-col gap-4 p-3.5">
-                      <div class="flex items-center justify-between gap-2">
-                        <span class="text-[13px] font-semibold text-[var(--color-text-primary)]">
-                          {tier.label}
-                        </span>
-                        <StatusChip tone="muted" label={`#${tier.candidates[0]!.position}`} />
-                      </div>
-                      <div class="flex flex-col gap-4">
-                        <For each={tier.candidates}>
-                          {(candidate, index) => (
-                            <div class="flex min-w-0 flex-col gap-3">
-                              <div class="flex min-w-0 items-center gap-2">
-                                <DispatchAgentAvatar agent={candidate.agent} seed={candidate.agent} />
-                                <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-                                  <span class="truncate text-[13px] font-medium text-[var(--color-text-primary)]" title={candidate.agent}>
-                                    {candidate.agent || "—"}
-                                  </span>
-                                  <span class="truncate text-[11px] text-[var(--color-text-secondary)]" title={candidate.provider}>
-                                    {candidate.provider || "—"}
-                                  </span>
-                                </div>
-                                <Show when={index() > 0}>
-                                  <StatusChip tone="muted" label={`#${candidate.position}`} />
-                                </Show>
-                              </div>
-                              <span class="font-mono text-[12px] text-[var(--color-text-secondary)] [overflow-wrap:anywhere]">
-                                {candidate.model || "—"}
-                              </span>
-                              <div class="grid grid-cols-2 gap-3">
-                                <TierMeter label="Speed" value={candidate.speed} tone="blue" />
-                                <TierMeter label="Strength" value={candidate.strength} tone="violet" />
-                              </div>
-                            </div>
-                          )}
-                        </For>
-                      </div>
-                    </Card>
-                  )}
-                </For>
-              </div>
-            </Show>
+            <TierBoard
+              tiers={tiers()}
+              editable={tiersEditable()}
+              matches={tierMatches}
+              avatar={(agent) => <DispatchAgentAvatar agent={agent} seed={agent} />}
+              onChange={(next) => void saveTiers(next)}
+            />
           </PageContent>
+          {/* The model palette is a movable window over the whole app, so models drag straight from it onto cells. */}
+          <Portal>
+            <FloatingWindow.Root
+              class="pw-tier-palette-window"
+              open={paletteOpen()}
+              expanded={false}
+              minimized={false}
+              controls="close"
+              storageKey="polterware.dispatch.model-palette.window"
+              defaultGeometry={{ dock: "bottom-left", width: 360, height: 480 }}
+              aria-label="Add model"
+              onOpenChange={setPaletteOpen}
+              onExpandedChange={() => undefined}
+              onMinimizedChange={() => undefined}
+            >
+              <FloatingWindow.Workspace>{null}</FloatingWindow.Workspace>
+              <FloatingWindow.Content>
+                <TierModelPalette
+                  models={paletteModels()}
+                  loading={paletteLoading()}
+                  problems={paletteProblems()}
+                  onAdd={(card, tier) => void saveTiers(placeTierCard(tiers(), card, { tier, index: Number.MAX_SAFE_INTEGER }))}
+                  avatar={(agent) => <DispatchAgentAvatar agent={agent} seed={agent} />}
+                />
+              </FloatingWindow.Content>
+            </FloatingWindow.Root>
+          </Portal>
         </Match>
 
         <Match when={activeTab() === "stats"}>
@@ -1178,7 +1328,7 @@ export function DispatchPage(props: {
         </Match>
 
         <Match when={activeTab() === "learning"}>
-          <DispatchLearningPage />
+          <DispatchLearningPage query={learningQuery()} clauses={learningFilters.pageClauses()} />
         </Match>
       </Switch>
 
@@ -1246,6 +1396,20 @@ export function DispatchPage(props: {
   );
 }
 
+/** Heading of a run detail card panel (Details, Agents involved, Log): an icon tile, the title, and an aside. */
+function RunPanelLabel(props: { title: string; icon: JSX.Element; tone: IconTileTone; aside?: JSX.Element }) {
+  return (
+    <div class="flex min-w-0 items-center justify-between gap-2 px-1">
+      <span class="inline-flex min-w-0 items-center gap-2">
+        <IconTile size={24} tone={props.tone} seed={`run-panel-${props.title}`} class="shrink-0">{props.icon}</IconTile>
+        <span class="truncate text-[13px] font-medium text-[var(--color-text-primary)]">{props.title}</span>
+      </span>
+      {props.aside}
+    </div>
+  );
+}
+
+/** One fact of the run detail: a nested card inside the shared facts panel. */
 function RunFact(props: {
   title: string;
   icon: JSX.Element;
@@ -1267,19 +1431,21 @@ function RunFact(props: {
 
 type RunFactKey = "agents" | "model" | "route" | "timing" | "worktree" | "files" | "verification" | "note";
 
+/** The run facts share one "Details" card panel; each fact is a nested card of its grid. */
 function RunFactGrid(props: { layout: "list" | "detail"; children: JSX.Element }) {
   return (
-    <div class="@container min-w-0">
+    <Card class="@container flex min-w-0 flex-col gap-3 !p-3">
+      <RunPanelLabel title="Details" icon={<InformationCircle size={14} />} tone="knowledge" />
       <div
         class={
           props.layout === "detail"
             ? "grid grid-cols-1 items-stretch gap-3 @sm:grid-cols-2 @xl:grid-cols-6"
-            : "grid items-stretch gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,13.5rem),1fr))]"
+            : "grid items-stretch gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,13.5rem),1fr))]"
         }
       >
         {props.children}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -1653,22 +1819,31 @@ function DispatchRunDetail(props: {
     return measuredDuration(props.run.queuedMs);
   };
   const attempts = () => agentAttemptCards(props.run);
+  // The header holds the prompt's first line; a longer prompt keeps its full text in a card below.
+  const promptTitle = () => props.run.prompt.trim().split("\n")[0]?.trim() ?? "";
+  const promptRest = () => {
+    const prompt = props.run.prompt.trim();
+    return prompt.includes("\n") || prompt.length > 120 ? prompt : "";
+  };
   return (
     <PageContent class="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4">
-      <div class="flex min-w-0 flex-wrap items-center gap-2">
-        <Button size="sm" variant="ghost" onClick={() => props.onBack()}>
-          <ChevronLeft size={14} />
-          Back
+      {/* Header: back on the left, the prompt's first line centred, status and run id on the right. */}
+      <div class="grid min-w-0 items-center gap-3 [grid-template-columns:minmax(max-content,1fr)_minmax(0,auto)_minmax(max-content,1fr)]">
+        <Button size="icon" variant="texture" class="!rounded-full justify-self-start" aria-label="Back to runs" onClick={() => props.onBack()}>
+          <ChevronLeft size={14} aria-hidden />
         </Button>
-        <StatusChip tone={dispatchStatusTone(props.run.status)} label={props.run.status || "unknown"} />
-        <span class="min-w-0 truncate font-mono text-[12px] text-[var(--color-text-muted)]" title={props.run.id}>
-          {props.run.id}
-        </span>
-        <span class="ml-auto inline-flex shrink-0 items-center gap-2">
+        <h2 class="m-0 min-w-0 truncate text-center text-[13px] font-medium text-[var(--color-text-primary)]" title={props.run.prompt}>
+          {promptTitle() || "—"}
+        </h2>
+        <span class="inline-flex min-w-0 items-center justify-self-end gap-2">
           <span class="inline-flex items-center gap-1 text-[12px] tabular-nums text-[var(--color-text-muted)]">
             <Clock size={12} />
             {duration()}
           </span>
+          <StatusChip tone={dispatchStatusTone(props.run.status)} label={props.run.status || "unknown"} />
+          <Badge tone="muted" title={props.run.id}>
+            <span class="font-mono">{props.run.id}</span>
+          </Badge>
           <Show when={isRunActive(props.run.status)}>
             <Button size="sm" variant="ghost" disabled={props.cancelling} onClick={() => props.onCancel()}>
               <Stop size={12} />
@@ -1677,20 +1852,26 @@ function DispatchRunDetail(props: {
           </Show>
         </span>
       </div>
-      <p class="m-0 whitespace-pre-wrap text-[13px] leading-5 text-[var(--color-text-primary)]">
-        {props.run.prompt || "—"}
-      </p>
+      <Show when={promptRest()}>
+        {(rest) => (
+          <Card class="flex min-w-0 flex-col gap-3 !p-3">
+            <RunPanelLabel title="Prompt" icon={<FileText size={14} />} tone="knowledge" />
+            <p class="m-0 whitespace-pre-wrap text-[12px] leading-5 text-[var(--color-text-secondary)]">{rest()}</p>
+          </Card>
+        )}
+      </Show>
       <RunFacts run={props.run} worktree={props.worktree} showVerification layout="detail" />
-      <DetailPanel.Section
-        class="!mt-0"
-        title="Agents involved"
-        icon={<Bot size={14} />}
-        aside={
-          <span class="text-[12px] tabular-nums text-[var(--color-text-muted)]">
-            {attempts().length} {attempts().length === 1 ? "agent" : "agents"}
-          </span>
-        }
-      >
+      <Card class="flex min-w-0 flex-col gap-3 !p-3">
+        <RunPanelLabel
+          title="Agents involved"
+          icon={<Bot size={14} />}
+          tone="execution"
+          aside={
+            <span class="text-[12px] tabular-nums text-[var(--color-text-muted)]">
+              {attempts().length} {attempts().length === 1 ? "agent" : "agents"}
+            </span>
+          }
+        />
         <div class="flex flex-col gap-2">
           <For each={attempts()}>
             {(attempt) => (
@@ -1771,27 +1952,28 @@ function DispatchRunDetail(props: {
             )}
           </For>
         </div>
-      </DetailPanel.Section>
-      <DetailPanel.Section
-        class="!mt-0"
-        title="Log"
-        icon={<Terminal size={14} />}
-        aside={
-          <span class="inline-flex items-center gap-2">
-            <span class="text-[12px] text-[var(--color-text-muted)]">
-              {props.log.trim()
-                ? `${props.log.split("\n").length} ${props.log.split("\n").length === 1 ? "line" : "lines"}`
-                : props.live
-                  ? "Waiting"
-                  : "No output"}
+      </Card>
+      <Card class="flex min-w-0 flex-col gap-3 !p-3">
+        <RunPanelLabel
+          title="Log"
+          icon={<Terminal size={14} />}
+          tone="observability"
+          aside={
+            <span class="inline-flex items-center gap-2">
+              <span class="text-[12px] text-[var(--color-text-muted)]">
+                {props.log.trim()
+                  ? `${props.log.split("\n").length} ${props.log.split("\n").length === 1 ? "line" : "lines"}`
+                  : props.live
+                    ? "Waiting"
+                    : "No output"}
+              </span>
+              <Show when={props.live}>
+                <StatusChip tone="syncing" label="Live" />
+              </Show>
             </span>
-            <Show when={props.live}>
-              <StatusChip tone="syncing" label="Live" />
-            </Show>
-          </span>
-        }
-      >
-        <div class="pw-scroll-fade max-h-72 overflow-auto font-mono text-[12px] leading-5 whitespace-pre-wrap text-[var(--color-text-secondary)]">
+          }
+        />
+        <div class="pw-scroll-fade max-h-72 overflow-auto px-1 font-mono text-[12px] leading-5 whitespace-pre-wrap text-[var(--color-text-secondary)]">
           <Show
             when={props.log.trim()}
             fallback={
@@ -1804,7 +1986,7 @@ function DispatchRunDetail(props: {
           </Show>
           <div ref={logEnd} />
         </div>
-      </DetailPanel.Section>
+      </Card>
     </PageContent>
   );
 }

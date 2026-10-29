@@ -27,3 +27,6 @@ export function setReference(doc: ArchitectureDocument, id: string, ref?: Canvas
 export function canPromote(node: { type: string; metadata?: Record<string, unknown> }) {
   return !readRef(node) && ["note", "text", "rectangle", "ellipse", "shape"].includes(node.type);
 }
+export function structureEntities(entities: readonly StoreEntity[]): StoreEntity[] {
+  return entities.filter((entity) => entity.kind === "node" && ["system", "domain", "component"].includes(entity.level ?? ""));
+}

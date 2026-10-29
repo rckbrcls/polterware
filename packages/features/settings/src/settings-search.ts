@@ -1,4 +1,5 @@
 import { SHORTCUT_GROUP_LABELS, shortcutsInGroup } from "@polterware/frontend-state";
+import { CLI_COMMANDS } from "@polterware/feature-shell";
 import type { SettingsTabId } from "./types";
 
 export type SettingsSearchEntry = {
@@ -107,6 +108,30 @@ export const SETTINGS_SEARCH_ENTRIES: SettingsSearchEntry[] = [
     keywords: "findings advisory",
   },
   {
+    id: "platforms-connected",
+    tab: "platforms-connected",
+    section: "Connected",
+    label: "Connected platforms",
+    description: "Platform CLIs connected to this project.",
+    keywords: "integrations providers vercel github aws sync refresh",
+  },
+  {
+    id: "platforms-catalog",
+    tab: "platforms-catalog",
+    section: "Catalog",
+    label: "Platform catalog",
+    description: "Platform CLIs Polterware can detect and sign in to.",
+    keywords: "integrations providers connect install login",
+  },
+  {
+    id: "cli-reference",
+    tab: "cli-reference",
+    section: "CLI reference",
+    label: "CLI reference",
+    description: "Every polterware command, its options, and the interactive keys.",
+    keywords: "command line terminal flags markdown",
+  },
+  {
     id: "reduce-transparency",
     tab: "appearance",
     section: "Appearance",
@@ -132,9 +157,17 @@ export const SETTINGS_SEARCH_ENTRIES: SettingsSearchEntry[] = [
   },
 ];
 
-/** Shortcut commands, which depend on the live shortcut catalog. */
+/** Shortcut commands, which depend on the live shortcut catalog, and every CLI command. */
 export function dynamicSettingsEntries(): SettingsSearchEntry[] {
-  return (["shell", "structure"] as const).flatMap((group) =>
+  const commands = CLI_COMMANDS.map<SettingsSearchEntry>((command) => ({
+    id: `cli-${command.id}`,
+    tab: "cli-reference",
+    section: "Commands",
+    label: command.name,
+    description: command.summary,
+    keywords: "cli command",
+  }));
+  const shortcuts = (["shell", "structure"] as const).flatMap((group) =>
     shortcutsInGroup(group).map<SettingsSearchEntry>((command) => ({
       id: `shortcut-${command.id}`,
       tab: "shortcuts",
@@ -143,4 +176,5 @@ export function dynamicSettingsEntries(): SettingsSearchEntry[] {
       keywords: `${SHORTCUT_GROUP_LABELS[group]} keyboard chord`,
     })),
   );
+  return [...shortcuts, ...commands];
 }

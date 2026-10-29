@@ -8,6 +8,7 @@ import (
 	"github.com/polterware/polterware/notes/backend/domains/focus"
 	"github.com/polterware/polterware/notes/backend/domains/note"
 	"github.com/polterware/polterware/notes/backend/domains/review"
+	"github.com/polterware/polterware/notes/backend/domains/savedfilter"
 	"github.com/polterware/polterware/notes/backend/domains/schedule"
 	"github.com/polterware/polterware/notes/backend/domains/settings"
 	"github.com/polterware/polterware/notes/backend/domains/space"
@@ -65,13 +66,14 @@ func OpenRuntime(_ context.Context, dbPath string) (Runtime, error) {
 		return Runtime{}, fmt.Errorf("load MCP token: %w", err)
 	}
 	services := Services{
-		Notes:    notes,
-		Spaces:   space.NewService(store.Spaces(), store.Notes(), audit),
-		Tags:     tag.NewService(store.Tags(), audit),
-		Focus:    focus.NewService(store.Focus(), store.Settings(), store.Notes(), audit),
-		Review:   review.NewService(store.Review()),
-		Activity: activity.NewService(store.Activity()),
-		Settings: settingsSvc,
+		Notes:        notes,
+		Spaces:       space.NewService(store.Spaces(), store.Notes(), audit),
+		Tags:         tag.NewService(store.Tags(), audit),
+		Focus:        focus.NewService(store.Focus(), store.Settings(), store.Notes(), audit),
+		Review:       review.NewService(store.Review()),
+		Activity:     activity.NewService(store.Activity()),
+		Settings:     settingsSvc,
+		SavedFilters: savedfilter.NewService(store.SavedFilters(), clk, idgen),
 		Places: placeService{
 			repo: store.Places(), notes: store.Notes(), clock: clk, audit: audit,
 		},

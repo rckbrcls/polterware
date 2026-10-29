@@ -46,6 +46,31 @@ const PROJECT_FLAG: CliFlag = {
   description: "Project id. Defaults to the project whose root contains the current directory.",
 };
 
+const SCOPE_FLAGS: readonly CliFlag[] = [
+  {
+    name: "--scope",
+    value: "node[,node]",
+    description: "Narrow to Structure nodes; a parent includes its children. Repeatable.",
+  },
+  { name: "--exact", description: "Match only the named nodes, not their ancestors." },
+];
+
+const DIR_FLAG: CliFlag = {
+  name: "--dir",
+  value: "repo",
+  description: "Repository to work in. Defaults to the current directory.",
+};
+
+const ROUTE_FLAGS: readonly CliFlag[] = [
+  { name: "--tier", value: "tier", description: "Difficulty tier: easy, normal, or hard." },
+  { name: "--provider", value: "provider", description: "Restrict to one provider." },
+  { name: "--model", value: "model", description: "Restrict to one model." },
+  { name: "--effort", value: "effort", description: "Restrict to an effort: low, medium, high, or xhigh." },
+  { name: "--priority", value: "priority", description: "speed, balanced, or quality." },
+  { name: "--relax", description: "Fall back to tier routing when the filters match nothing." },
+  { name: "--as", value: "profile", description: "Subagent profile from agents.json." },
+];
+
 const AGENT_FLAG: CliFlag = {
   name: "--agent",
   value: "name",
@@ -165,6 +190,21 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     example: "polterware atlas --node backend/domains/work --at 2026-09-01",
   },
   {
+    id: "canvas",
+    name: "polterware canvas",
+    synopsis:
+      "polterware canvas ls [--agents] [--scope <node>] [--exact] | show <id|name> [--format json|mermaid|dot] | share <id|name> on|off [--project <id>]",
+    summary:
+      "List canvases, print one as JSON, Mermaid, or DOT, or switch whether agents can read it. Agents only see canvases that are shared.",
+    flags: [
+      { name: "--agents", description: "ls: list only the canvases agents can read." },
+      ...SCOPE_FLAGS,
+      { name: "--format", value: "format", description: "show: json (default), mermaid, or dot." },
+      PROJECT_FLAG,
+    ],
+    example: "polterware canvas show architecture --format mermaid",
+  },
+  {
     id: "export",
     name: "polterware export",
     synopsis: "polterware export [--dry-run] [--json] [--project <id>]",
@@ -239,10 +279,11 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "query",
     name: "polterware query",
     synopsis:
-      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "atlas [<path>] [at <point>]" | "atlas history" | "decisions [state]" | "decision <verdict>" | "feature <slug> [step]" | "verify <slug>" [--project <id>]',
+      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "oracle <path>" | "atlas [<path>] [at <point>]" | "atlas history" | "decisions [state]" | "decision <verdict>" | "feature <slug> [step]" | "verify <slug>" | "canvas [<name|id>]" [--scope <node>] [--exact] [--project <id>]',
     summary:
-      "Read project state in Polter format: cards, one card, status, inbox, handoffs, Atlas, decisions, feature steps, or verification.",
+      "Read project state in Polter format: cards, one card, status, inbox, handoffs, Atlas, decisions, feature steps, verification, or a shared canvas.",
     flags: [
+      ...SCOPE_FLAGS,
       {
         name: "--project",
         value: "id",
@@ -254,10 +295,10 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
   {
     id: "status",
     name: "polterware status",
-    synopsis: "polterware status [--project <id>]",
+    synopsis: "polterware status [--scope <node>] [--exact] [--project <id>]",
     summary:
       "Current card, branch, last handoff on that branch, open questions (blocking first), and stage. Start a session with this.",
-    flags: [PROJECT_FLAG],
+    flags: [...SCOPE_FLAGS, PROJECT_FLAG],
     example: "polterware status",
   },
   {
@@ -335,10 +376,19 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "inbox",
     name: "polterware inbox",
     synopsis:
-      'polterware inbox [<id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore | verify | reject] [--agent <name>] [--project <id>]',
+      'polterware inbox [<id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore | verify | reject] [--agent <name>] [--scope <node>] [--exact] [--project <id>]',
     summary: "List the Inbox, or apply one action to one item.",
-    flags: [AGENT_FLAG, PROJECT_FLAG],
+    flags: [...SCOPE_FLAGS, AGENT_FLAG, PROJECT_FLAG],
     example: "polterware inbox",
+  },
+  {
+    id: "scope",
+    name: "polterware scope",
+    synopsis: "polterware scope <decision|fact|evidence|item> <id> [<node path>] [--project <id>]",
+    summary:
+      "Scope a Decision, Fact, Evidence item, or derived Inbox item to a Structure node. Leave the node out to clear the scope.",
+    flags: [PROJECT_FLAG],
+    example: "polterware scope fact f-12 backend/domains/work",
   },
   {
     id: "setup",
@@ -359,8 +409,9 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
   {
     id: "hooks",
     name: "polterware hooks",
-    synopsis: "polterware hooks [list] | enable|disable <status|stop|lint|session|all>",
-    summary: "List the plugin hooks, or switch one on or off.",
+    synopsis: "polterware hooks [list] | enable|disable <status|stop|lint|session|dispatch|all>",
+    summary:
+      "List the plugin hooks, or switch one on or off. dispatch is a SessionStart hint that points agents at the delegation skill.",
     flags: [],
     example: "polterware hooks enable lint",
   },
@@ -378,6 +429,214 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
       },
     ],
     example: "polterware hook lint",
+  },
+  {
+    id: "run",
+    name: "polterware run",
+    synopsis: "polterware run [--tier <tier>] [--card <slug>] [--agent <name>] [filters] [--readonly] [--no-verify] [--timeout <dur>] <prompt|->",
+    summary:
+      "Delegate a task to another coding agent, routed by difficulty tier. The core runs it in its own worktree under a linked AgentRun.",
+    flags: [
+      ...ROUTE_FLAGS,
+      { name: "--card", value: "slug", description: "Work card the run belongs to." },
+      { name: "--agent", value: "name", description: "Pin one agent." },
+      { name: "--worktree", value: "path", description: "Use this worktree instead of creating one." },
+      { name: "--readonly", description: "Run read-only; no worktree changes." },
+      { name: "--no-verify", description: "Skip verification after the run." },
+      { name: "--timeout", value: "duration", description: "Per-attempt timeout. 0 uses the default." },
+      DIR_FLAG,
+      PROJECT_FLAG,
+      JSON_FLAG,
+      { name: "--compact", description: "Compact output." },
+    ],
+    example: 'polterware run --tier easy "Add a unit test for parseTiers"',
+  },
+  {
+    id: "runs",
+    name: "polterware runs",
+    synopsis: "polterware runs [--limit N] [--project <id>] [--json]",
+    summary: "List recent delegation runs.",
+    flags: [
+      { name: "--limit", value: "N", description: "Most runs to list. Defaults to 20." },
+      PROJECT_FLAG,
+      JSON_FLAG,
+      { name: "--compact", description: "Compact output." },
+    ],
+    example: "polterware runs --limit 5",
+  },
+  {
+    id: "wait",
+    name: "polterware wait",
+    synopsis: "polterware wait <id> [--timeout <dur>] [--json=false]",
+    summary: "Block until a run finishes and print its summary as JSON.",
+    flags: [
+      { name: "--timeout", value: "duration", description: "Stop waiting after this long. 0 waits without limit." },
+      { name: "--json", description: "Print compact JSON (default). --json=false prints text." },
+      PROJECT_FLAG,
+    ],
+    example: "polterware wait drun-12 --timeout 10m",
+  },
+  {
+    id: "result",
+    name: "polterware result",
+    synopsis: "polterware result <id> [--section summary|agent|verification|files|attempts|meta|output]",
+    summary: "Print one section of a finished run.",
+    flags: [
+      { name: "--section", value: "section", description: "summary (default), agent, verification, files, attempts, meta, or output." },
+      PROJECT_FLAG,
+      JSON_FLAG,
+    ],
+    example: "polterware result drun-12 --section files",
+  },
+  {
+    id: "cancel",
+    name: "polterware cancel",
+    synopsis: "polterware cancel <id>",
+    summary: "Stop a queued or running run.",
+    flags: [PROJECT_FLAG],
+    example: "polterware cancel drun-12",
+  },
+  {
+    id: "merge",
+    name: "polterware merge",
+    synopsis: "polterware merge <id> [--force] [--no-verify]",
+    summary: "Merge a run's worktree branch into the repository.",
+    flags: [
+      { name: "--force", description: "Merge even when verification failed." },
+      { name: "--no-verify", description: "Skip verification before merging." },
+    ],
+    example: "polterware merge drun-12",
+  },
+  {
+    id: "clean",
+    name: "polterware clean",
+    synopsis: "polterware clean <id> [--force]",
+    summary: "Remove a run's worktree and branch.",
+    flags: [{ name: "--force", description: "Discard the branch even if it is not merged." }],
+    example: "polterware clean drun-12",
+  },
+  {
+    id: "recover",
+    name: "polterware recover",
+    synopsis: "polterware recover <id>",
+    summary: "Resume a run that was interrupted, from its last attempt.",
+    flags: [],
+    example: "polterware recover drun-12",
+  },
+  {
+    id: "verify-run",
+    name: "polterware verify run",
+    synopsis: "polterware verify run <id> | verify --init",
+    summary: "Run a repository's verification checks against a run. --init writes an example .dispatch/verify.json.",
+    flags: [{ name: "--init", description: "Write an example .dispatch/verify.json in the current repository." }],
+    example: "polterware verify run drun-12",
+  },
+  {
+    id: "route",
+    name: "polterware route",
+    synopsis: "polterware route [filters] [--readonly] [--json]",
+    summary: "Show which agent and model a run would get, without starting it.",
+    flags: [
+      ...ROUTE_FLAGS,
+      { name: "--agent", value: "name", description: "Restrict to one agent." },
+      { name: "--readonly", description: "Require read-only capability." },
+      DIR_FLAG,
+      { name: "--json", description: "Print the full report as JSON." },
+    ],
+    example: "polterware route --tier hard --priority quality",
+  },
+  {
+    id: "classify",
+    name: "polterware classify",
+    synopsis: 'polterware classify "<prompt>" [--tier <tier>] [--explain] [--reset] [--json]',
+    summary: "Score a task's failure risk with the tier classifier.",
+    flags: [
+      { name: "--tier", value: "tier", description: "Requested tier. Defaults to normal." },
+      { name: "--readonly", description: "Read-only task context." },
+      { name: "--explain", description: "Show every normalized feature and its contribution." },
+      { name: "--reset", description: "Reset all tier weights and counts to the prior." },
+      { name: "--dir", value: "repo", description: "Repository for cited paths. Defaults to the current directory." },
+      { name: "--json", description: "Print JSON." },
+    ],
+    example: 'polterware classify "Migrate the billing tables" --explain',
+  },
+  {
+    id: "tiers",
+    name: "polterware tiers",
+    synopsis: "polterware tiers [--check]",
+    summary: "Print the routing tiers: the ordered agent and model candidates for easy, normal, and hard.",
+    flags: [{ name: "--check", description: "Validate the tiers against installed agents and models." }],
+    example: "polterware tiers --check",
+  },
+  {
+    id: "usage",
+    name: "polterware usage",
+    synopsis: "polterware usage [--by model|agent|provider|tier|effort] [--since 7d|24h|all]",
+    summary: "Summarize delegation runs: counts, success, first-try rate, and latency.",
+    flags: [
+      { name: "--by", value: "group", description: "Group by model (default), agent, provider, tier, or effort." },
+      { name: "--since", value: "window", description: "Window such as 7d (default), 24h, or all." },
+      PROJECT_FLAG,
+      JSON_FLAG,
+    ],
+    example: "polterware usage --by tier --since 24h",
+  },
+  {
+    id: "agents",
+    name: "polterware agents",
+    synopsis: "polterware agents [--json]",
+    summary: "List the installed coding agent CLIs with their quota and pace when the CLI reports it.",
+    flags: [PROJECT_FLAG, JSON_FLAG, { name: "--compact", description: "Compact output." }],
+    example: "polterware agents",
+  },
+  {
+    id: "doctor",
+    name: "polterware doctor",
+    synopsis: "polterware doctor [--json]",
+    summary: "Check the delegation setup: agents, tiers, worktrees, and config.",
+    flags: [{ name: "--json", description: "Print JSON." }],
+    example: "polterware doctor",
+  },
+  {
+    id: "subagents",
+    name: "polterware subagents",
+    synopsis: "polterware subagents [--init | --check]",
+    summary: "Show the subagent profiles from agents.json, write an example file, or validate it.",
+    flags: [
+      { name: "--init", description: "Write an example agents.json to edit." },
+      { name: "--check", description: "Validate profiles against known and installed agents." },
+    ],
+    example: "polterware subagents --check",
+  },
+  {
+    id: "config",
+    name: "polterware config",
+    synopsis: "polterware config get|set|allow|deny [--project] [--dir <repo>]",
+    summary: "Read or change delegation settings, globally or for one repository.",
+    flags: [
+      { name: "--project", description: "Read or write <repo>/.dispatch/config.json instead of the global file." },
+      DIR_FLAG,
+    ],
+    example: "polterware config get",
+  },
+  {
+    id: "skill",
+    name: "polterware skill",
+    synopsis: "polterware skill install [--agent <name>] [--force] | show | refresh",
+    summary: "Install, print, or refresh the delegation skill for coding agents.",
+    flags: [
+      { name: "--agent", value: "name", description: "install: one agent (claude, cursor, codex, grok, antigravity). Defaults to all." },
+      { name: "--force", description: "install: overwrite an existing skill." },
+    ],
+    example: "polterware skill install --agent claude",
+  },
+  {
+    id: "update",
+    name: "polterware update",
+    synopsis: "polterware update [--check]",
+    summary: "Update the delegation tooling.",
+    flags: [{ name: "--check", description: "Report only." }],
+    example: "polterware update --check",
   },
   {
     id: "serve",
@@ -426,6 +685,18 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
   },
 ];
 
+/** Sidebar and page sections: every command id appears in exactly one group. */
+export const CLI_COMMAND_GROUPS: readonly { id: string; label: string; commands: readonly string[] }[] = [
+  { id: "setup", label: "Setup", commands: ["tui", "init", "scan", "repo", "setup", "hooks", "hook", "serve", "mcp", "help"] },
+  { id: "read", label: "Read", commands: ["context", "oracle", "atlas", "canvas", "query", "status", "inbox", "export", "drift"] },
+  { id: "write", label: "Write", commands: ["apply", "lint", "format", "handoff", "task", "decision", "feature", "verify", "scope"] },
+  {
+    id: "delegation",
+    label: "Delegation",
+    commands: ["run", "runs", "wait", "result", "cancel", "merge", "clean", "recover", "verify-run", "route", "classify", "tiers", "usage", "agents", "doctor", "subagents", "config", "skill", "update"],
+  },
+];
+
 export const CLI_TUI_KEYS: readonly CliKey[] = [
   { keys: "Tab / Shift+Tab", description: "Next or previous section." },
   { keys: "↑ ↓ / k j", description: "Move between sections." },
@@ -463,7 +734,7 @@ function commandIndexMarkdown(commands: readonly CliCommand[]): string[] {
 }
 
 function commandMarkdown(command: CliCommand): string[] {
-  const lines = [`### ${command.name}`, "", command.summary, "", "```sh", command.synopsis, "```"];
+  const lines = [`#### ${command.name}`, "", command.summary, "", "```sh", command.synopsis, "```"];
   if (command.flags.length > 0) {
     lines.push("", "Options:", "", ...flagTableMarkdown(command.flags, true));
   }
@@ -476,7 +747,7 @@ export function cliReferenceMarkdown(): string {
   const lines = [
     "# polterware CLI reference",
     "",
-    "The polterware CLI reads and writes the same local database as the Desktop. init, scan, repo, export, and drift accept --json for scripts and agents.",
+    "The polterware CLI reads and writes the same local database as the Desktop, through the local core. Commands that list --json in their options print JSON for scripts and agents.",
     "",
     "## Usage",
     "",
@@ -488,9 +759,10 @@ export function cliReferenceMarkdown(): string {
     "",
     "## Commands",
     "",
-    ...commandIndexMarkdown(CLI_COMMANDS),
-    "",
-    ...CLI_COMMANDS.flatMap((command) => [...commandMarkdown(command), ""]),
+    ...CLI_COMMAND_GROUPS.flatMap((group) => {
+      const commands = group.commands.flatMap((id) => CLI_COMMANDS.filter((command) => command.id === id));
+      return [`### ${group.label}`, "", ...commandIndexMarkdown(commands), "", ...commands.flatMap((command) => [...commandMarkdown(command), ""])];
+    }),
     "## Interactive keys",
     "",
     "| Key | Action |",

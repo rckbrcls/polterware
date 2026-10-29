@@ -15,6 +15,7 @@ import (
 	"github.com/polterware/polterware/notes/backend/domains/place"
 	"github.com/polterware/polterware/notes/backend/domains/reminder"
 	"github.com/polterware/polterware/notes/backend/domains/review"
+	"github.com/polterware/polterware/notes/backend/domains/savedfilter"
 	"github.com/polterware/polterware/notes/backend/domains/schedule"
 	"github.com/polterware/polterware/notes/backend/domains/search"
 	"github.com/polterware/polterware/notes/backend/domains/settings"
@@ -31,6 +32,7 @@ type Services struct {
 	Review         review.Service
 	Activity       activity.Service
 	Settings       settings.Service
+	SavedFilters   savedfilter.Service
 	Places         place.Service
 	Attachments    attachments.Service
 	Search         search.Service

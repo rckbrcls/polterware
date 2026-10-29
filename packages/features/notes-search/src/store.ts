@@ -1,9 +1,9 @@
 import { batch, createSignal } from "solid-js";
 import { browserBridge } from "./bridge";
 import {
-  DEBOUNCE_MS, EMPTY_FILTERS, RECENT_KEY, SAVED_KEY, RESULT_WINDOW, buildSearchRequest, errorText, filtersActive,
+  DEBOUNCE_MS, EMPTY_FILTERS, RECENT_KEY, RESULT_WINDOW, buildSearchRequest, errorText, filtersActive,
   honestyLabel, indexHonesty, isUnavailable, readJson, rememberRecent, routeSearchQuery, windowHits, writeJson,
-  type Honesty, type SavedFilter, type SearchBridge, type SearchFilters, type SearchHitJSON, type SpaceJSON, type TagJSON,
+  type Honesty, type SearchBridge, type SearchFilters, type SearchHitJSON, type SpaceJSON, type TagJSON,
 } from "./model";
 
 export function createSearchStore(
@@ -22,7 +22,6 @@ export function createSearchStore(
   const [spaces, setSpaces] = createSignal<SpaceJSON[]>([]);
   const [tags, setTags] = createSignal<TagJSON[]>([]);
   const [recent, setRecent] = createSignal<string[]>([]);
-  const [saved, setSaved] = createSignal<SavedFilter[]>([]);
   const [loadState, setLoadState] = createSignal<Honesty>("queued");
   const [searchState, setSearchState] = createSignal<Honesty>("live");
   const [loadError, setLoadError] = createSignal("");
@@ -33,7 +32,6 @@ export function createSearchStore(
   let generation = 0, timer: ReturnType<typeof setTimeout> | undefined, unsubscribe: (() => void) | undefined, users = 0;
 
   function persistRecent(items: string[]) { if (storage) writeJson(storage, RECENT_KEY, items); }
-  function persistSaved(items: SavedFilter[]) { if (storage) writeJson(storage, SAVED_KEY, items); }
 
   async function loadMeta(): Promise<void> {
     setLoadState("queued"); setLoadError("");
@@ -97,7 +95,7 @@ export function createSearchStore(
   }
 
   const store = {
-    query, filters, hits, visibleHits, notice, ftsDocuments, spaces, tags, recent, saved,
+    query, filters, hits, visibleHits, notice, ftsDocuments, spaces, tags, recent,
     loadState, searchState, loadError, searchError, searched, activeId,
     emptyQuery: () => !query().trim() && !searched(),
     noResults: () => searched() && searchState() === "live" && visibleHits().length === 0,
@@ -128,23 +126,6 @@ export function createSearchStore(
     openHit(id: string) { return getBridge().app.openDeepLink(`pwnotes://note/${encodeURIComponent(id)}`); },
     setActiveId,
     applyRecent(value: string) { setQueryValue(value); void run(value, filters()); },
-    saveFilters(name: string) {
-      const label = name.trim();
-      if (!label) return;
-      const snapshot: SavedFilter = { id: `saved-${Date.now()}`, name: label, filters: { ...filters(), tagIds: [...filters().tagIds] } };
-      const next = [snapshot, ...saved().filter(item => item.name !== label)];
-      setSaved(next); persistSaved(next);
-    },
-    applySaved(id: string) {
-      const item = saved().find(entry => entry.id === id);
-      if (!item) return;
-      setFiltersValue({ ...item.filters, tagIds: [...item.filters.tagIds] });
-      if (query().trim()) schedule();
-    },
-    removeSaved(id: string) {
-      const next = saved().filter(item => item.id !== id);
-      setSaved(next); persistSaved(next);
-    },
     clearFilters() {
       setFiltersValue({ ...EMPTY_FILTERS });
       if (query().trim()) schedule();
@@ -154,7 +135,6 @@ export function createSearchStore(
       if (users === 1) {
         if (storage) {
           setRecent(readJson(storage, RECENT_KEY, [] as string[]));
-          setSaved(readJson(storage, SAVED_KEY, [] as SavedFilter[]));
         }
         try {
           unsubscribe = getBridge().onChange(event => {

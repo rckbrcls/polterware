@@ -22,6 +22,7 @@ type Clients struct {
 	Review      rpc.ReviewServiceClient
 	Activity    rpc.ActivityServiceClient
 	Settings    rpc.SettingsServiceClient
+	SavedFilter rpc.SavedFilterServiceClient
 	Search      rpc.SearchServiceClient
 	Attachment  rpc.AttachmentServiceClient
 	Place       rpc.PlaceServiceClient
@@ -52,6 +53,7 @@ func NewWithHTTP(state runstate.Core, client string, httpClient connect.HTTPClie
 		Review:      rpc.NewReviewServiceClient(httpClient, state.Endpoint, options),
 		Activity:    rpc.NewActivityServiceClient(httpClient, state.Endpoint, options),
 		Settings:    rpc.NewSettingsServiceClient(httpClient, state.Endpoint, options),
+		SavedFilter: rpc.NewSavedFilterServiceClient(httpClient, state.Endpoint, options),
 		Search:      rpc.NewSearchServiceClient(httpClient, state.Endpoint, options),
 		Attachment:  rpc.NewAttachmentServiceClient(httpClient, state.Endpoint, options),
 		Place:       rpc.NewPlaceServiceClient(httpClient, state.Endpoint, options),

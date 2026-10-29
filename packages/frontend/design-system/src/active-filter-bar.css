@@ -1,11 +1,13 @@
 /* The whole bar is a recessed track like .pw-tabs, so it needs no divider: the pills are raised
- * faces sitting inside it and Clear all closes the row. */
+ * faces sitting inside it, and Clear / Save close the row. */
 .pw-active-filter-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 2px;
   margin: 8px;
+  /* Below a floating PageToolbar (tabs.css), the bar starts under the toolbar's controls. */
+  margin-top: calc(8px + var(--pw-toolbar-overlay, 0px));
   padding: 2px;
   border: 1px solid var(--field-frame);
   border-radius: 14px;
@@ -19,20 +21,28 @@
   flex: 1;
   flex-wrap: wrap;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
 }
 
-.pw-active-filter-bar__pills + * {
+.pw-active-filter-bar__actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
   margin-right: 2px;
 }
 
-/* Texture pill: button.css supplies the frame, lit ring and gradient face. */
-.pw-active-filter-pill {
+.pw-active-filter-bar__add {
+  width: 24px;
+  height: 24px;
+}
+
+/* Segmented pill (Linear): [icon Field] [operator] [value] [×]. button.css supplies the
+ * texture frame, lit ring and gradient face; segments are split by thin dividers. */
+.pw-filter-pill {
   display: inline-flex;
   max-width: 100%;
-  align-items: center;
-  gap: 2px;
-  padding: 4px 5px 4px 11px;
+  align-items: stretch;
   border: 1px solid var(--tx-frame);
   border-radius: 11px;
   background: linear-gradient(to bottom, var(--tx-outer-top), var(--tx-outer-bottom));
@@ -43,38 +53,125 @@
   line-height: 1.2;
 }
 
-.pw-active-filter-pill__label {
+.pw-filter-pill__seg {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+}
+
+.pw-filter-pill__seg + .pw-filter-pill__seg,
+.pw-filter-pill__seg + .pw-filter-pill__remove {
+  border-left: 1px solid var(--color-border-subtle);
+}
+
+.pw-filter-pill__seg:first-child {
+  padding-left: 10px;
+}
+
+.pw-filter-pill__operator {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.pw-filter-pill__button {
+  appearance: none;
+  margin: 0;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+
+.pw-filter-pill__operator.pw-filter-pill__button {
+  color: var(--color-text-muted);
+}
+
+.pw-filter-pill__value.pw-filter-pill__button {
+  color: var(--color-text-primary);
+}
+
+.pw-filter-pill__button:hover,
+.pw-filter-pill__button[aria-expanded="true"],
+.pw-filter-pill__button[data-state="open"] {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.pw-filter-pill__button:focus {
+  outline: none;
+}
+
+.pw-filter-pill__button:focus-visible {
+  outline: 2px solid var(--color-border-strong);
+  outline-offset: -2px;
+}
+
+.pw-filter-pill__text {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.pw-active-filter-pill__remove {
+.pw-filter-pill__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.pw-filter-pill__icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Up to three value icons overlap, like Linear's status stack. */
+.pw-filter-pill__stack {
+  display: inline-flex;
+  align-items: center;
+}
+
+.pw-filter-pill__stack .pw-filter-pill__icon + .pw-filter-pill__icon {
+  margin-left: -4px;
+}
+
+.pw-filter-pill__remove {
   appearance: none;
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
   margin: 0;
-  padding: 2px;
-  border: 0;
-  border-radius: 999px;
+  padding: 0 6px;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 0 10px 10px 0;
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
 }
 
-.pw-active-filter-pill__remove:hover {
+.pw-filter-pill__remove:hover {
   background: var(--color-surface-hover);
   color: var(--color-text-primary);
 }
 
-.pw-active-filter-pill__remove:focus {
+.pw-filter-pill__remove:focus {
   outline: none;
 }
 
-.pw-active-filter-pill__remove:focus-visible {
+.pw-filter-pill__remove:focus-visible {
   outline: 2px solid var(--color-border-strong);
-  outline-offset: 1px;
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pw-filter-pill__button {
+    transition: none;
+  }
 }

@@ -67,6 +67,12 @@ const (
 	// DispatchServiceCheckTiersProcedure is the fully-qualified name of the DispatchService's
 	// CheckTiers RPC.
 	DispatchServiceCheckTiersProcedure = "/polterware.local.v1.DispatchService/CheckTiers"
+	// DispatchServiceListModelsProcedure is the fully-qualified name of the DispatchService's
+	// ListModels RPC.
+	DispatchServiceListModelsProcedure = "/polterware.local.v1.DispatchService/ListModels"
+	// DispatchServiceReplaceTiersProcedure is the fully-qualified name of the DispatchService's
+	// ReplaceTiers RPC.
+	DispatchServiceReplaceTiersProcedure = "/polterware.local.v1.DispatchService/ReplaceTiers"
 	// DispatchServiceStatsProcedure is the fully-qualified name of the DispatchService's Stats RPC.
 	DispatchServiceStatsProcedure = "/polterware.local.v1.DispatchService/Stats"
 	// DispatchServiceGetClassifierProcedure is the fully-qualified name of the DispatchService's
@@ -113,6 +119,8 @@ type DispatchServiceClient interface {
 	ListAgents(context.Context, *connect.Request[v1.ListAgentsRequest]) (*connect.Response[v1.ListAgentsResponse], error)
 	ListHistory(context.Context, *connect.Request[v1.ListHistoryRequest]) (*connect.Response[v1.ListHistoryResponse], error)
 	CheckTiers(context.Context, *connect.Request[v1.CheckTiersRequest]) (*connect.Response[v1.CheckTiersResponse], error)
+	ListModels(context.Context, *connect.Request[v1.ListModelsRequest]) (*connect.Response[v1.ListModelsResponse], error)
+	ReplaceTiers(context.Context, *connect.Request[v1.ReplaceTiersRequest]) (*connect.Response[v1.ReplaceTiersResponse], error)
 	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
 	GetClassifier(context.Context, *connect.Request[v1.GetClassifierRequest]) (*connect.Response[v1.GetClassifierResponse], error)
 	Capacity(context.Context, *connect.Request[v1.CapacityRequest]) (*connect.Response[v1.CapacityResponse], error)
@@ -209,6 +217,18 @@ func NewDispatchServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(dispatchServiceMethods.ByName("CheckTiers")),
 			connect.WithClientOptions(opts...),
 		),
+		listModels: connect.NewClient[v1.ListModelsRequest, v1.ListModelsResponse](
+			httpClient,
+			baseURL+DispatchServiceListModelsProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("ListModels")),
+			connect.WithClientOptions(opts...),
+		),
+		replaceTiers: connect.NewClient[v1.ReplaceTiersRequest, v1.ReplaceTiersResponse](
+			httpClient,
+			baseURL+DispatchServiceReplaceTiersProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("ReplaceTiers")),
+			connect.WithClientOptions(opts...),
+		),
 		stats: connect.NewClient[v1.StatsRequest, v1.StatsResponse](
 			httpClient,
 			baseURL+DispatchServiceStatsProcedure,
@@ -292,6 +312,8 @@ type dispatchServiceClient struct {
 	listAgents    *connect.Client[v1.ListAgentsRequest, v1.ListAgentsResponse]
 	listHistory   *connect.Client[v1.ListHistoryRequest, v1.ListHistoryResponse]
 	checkTiers    *connect.Client[v1.CheckTiersRequest, v1.CheckTiersResponse]
+	listModels    *connect.Client[v1.ListModelsRequest, v1.ListModelsResponse]
+	replaceTiers  *connect.Client[v1.ReplaceTiersRequest, v1.ReplaceTiersResponse]
 	stats         *connect.Client[v1.StatsRequest, v1.StatsResponse]
 	getClassifier *connect.Client[v1.GetClassifierRequest, v1.GetClassifierResponse]
 	capacity      *connect.Client[v1.CapacityRequest, v1.CapacityResponse]
@@ -365,6 +387,16 @@ func (c *dispatchServiceClient) CheckTiers(ctx context.Context, req *connect.Req
 	return c.checkTiers.CallUnary(ctx, req)
 }
 
+// ListModels calls polterware.local.v1.DispatchService.ListModels.
+func (c *dispatchServiceClient) ListModels(ctx context.Context, req *connect.Request[v1.ListModelsRequest]) (*connect.Response[v1.ListModelsResponse], error) {
+	return c.listModels.CallUnary(ctx, req)
+}
+
+// ReplaceTiers calls polterware.local.v1.DispatchService.ReplaceTiers.
+func (c *dispatchServiceClient) ReplaceTiers(ctx context.Context, req *connect.Request[v1.ReplaceTiersRequest]) (*connect.Response[v1.ReplaceTiersResponse], error) {
+	return c.replaceTiers.CallUnary(ctx, req)
+}
+
 // Stats calls polterware.local.v1.DispatchService.Stats.
 func (c *dispatchServiceClient) Stats(ctx context.Context, req *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {
 	return c.stats.CallUnary(ctx, req)
@@ -434,6 +466,8 @@ type DispatchServiceHandler interface {
 	ListAgents(context.Context, *connect.Request[v1.ListAgentsRequest]) (*connect.Response[v1.ListAgentsResponse], error)
 	ListHistory(context.Context, *connect.Request[v1.ListHistoryRequest]) (*connect.Response[v1.ListHistoryResponse], error)
 	CheckTiers(context.Context, *connect.Request[v1.CheckTiersRequest]) (*connect.Response[v1.CheckTiersResponse], error)
+	ListModels(context.Context, *connect.Request[v1.ListModelsRequest]) (*connect.Response[v1.ListModelsResponse], error)
+	ReplaceTiers(context.Context, *connect.Request[v1.ReplaceTiersRequest]) (*connect.Response[v1.ReplaceTiersResponse], error)
 	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
 	GetClassifier(context.Context, *connect.Request[v1.GetClassifierRequest]) (*connect.Response[v1.GetClassifierResponse], error)
 	Capacity(context.Context, *connect.Request[v1.CapacityRequest]) (*connect.Response[v1.CapacityResponse], error)
@@ -524,6 +558,18 @@ func NewDispatchServiceHandler(svc DispatchServiceHandler, opts ...connect.Handl
 		DispatchServiceCheckTiersProcedure,
 		svc.CheckTiers,
 		connect.WithSchema(dispatchServiceMethods.ByName("CheckTiers")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dispatchServiceListModelsHandler := connect.NewUnaryHandler(
+		DispatchServiceListModelsProcedure,
+		svc.ListModels,
+		connect.WithSchema(dispatchServiceMethods.ByName("ListModels")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dispatchServiceReplaceTiersHandler := connect.NewUnaryHandler(
+		DispatchServiceReplaceTiersProcedure,
+		svc.ReplaceTiers,
+		connect.WithSchema(dispatchServiceMethods.ByName("ReplaceTiers")),
 		connect.WithHandlerOptions(opts...),
 	)
 	dispatchServiceStatsHandler := connect.NewUnaryHandler(
@@ -618,6 +664,10 @@ func NewDispatchServiceHandler(svc DispatchServiceHandler, opts ...connect.Handl
 			dispatchServiceListHistoryHandler.ServeHTTP(w, r)
 		case DispatchServiceCheckTiersProcedure:
 			dispatchServiceCheckTiersHandler.ServeHTTP(w, r)
+		case DispatchServiceListModelsProcedure:
+			dispatchServiceListModelsHandler.ServeHTTP(w, r)
+		case DispatchServiceReplaceTiersProcedure:
+			dispatchServiceReplaceTiersHandler.ServeHTTP(w, r)
 		case DispatchServiceStatsProcedure:
 			dispatchServiceStatsHandler.ServeHTTP(w, r)
 		case DispatchServiceGetClassifierProcedure:
@@ -695,6 +745,14 @@ func (UnimplementedDispatchServiceHandler) ListHistory(context.Context, *connect
 
 func (UnimplementedDispatchServiceHandler) CheckTiers(context.Context, *connect.Request[v1.CheckTiersRequest]) (*connect.Response[v1.CheckTiersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.CheckTiers is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) ListModels(context.Context, *connect.Request[v1.ListModelsRequest]) (*connect.Response[v1.ListModelsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.ListModels is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) ReplaceTiers(context.Context, *connect.Request[v1.ReplaceTiersRequest]) (*connect.Response[v1.ReplaceTiersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.ReplaceTiers is not implemented"))
 }
 
 func (UnimplementedDispatchServiceHandler) Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error) {

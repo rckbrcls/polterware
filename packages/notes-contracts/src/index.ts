@@ -11,6 +11,7 @@ export * from "./gen/notes/v1/space_pb.js";
 export * from "./gen/notes/v1/place_pb.js";
 export * from "./gen/notes/v1/reminder_pb.js";
 export * from "./gen/notes/v1/review_pb.js";
+export * from "./gen/notes/v1/saved_filter_pb.js";
 export * from "./gen/notes/v1/schedule_pb.js";
 export * from "./gen/notes/v1/search_pb.js";
 export * from "./gen/notes/v1/settings_pb.js";

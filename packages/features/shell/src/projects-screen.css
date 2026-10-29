@@ -5,6 +5,34 @@
   flex-direction: column;
 }
 
+.pw-projects-column {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 16px 16px 0;
+  box-sizing: border-box;
+}
+
+/* Title on the left edge of the grid; search, filters, and actions on the right edge. */
+.pw-projects-bar {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pw-projects-bar-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.pw-projects-column .pw-active-filter-bar {
+  margin: 8px 0 0;
+}
+
 .pw-projects-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -12,7 +40,7 @@
   align-content: start;
   width: 100%;
   max-width: 1120px;
-  margin: 0;
+  margin: 0 auto;
   padding: 16px;
   box-sizing: border-box;
   list-style: none;
@@ -59,8 +87,7 @@
 
 .pw-projects-card:hover,
 .pw-projects-card:focus-visible {
-  --tx-face-top: var(--color-surface-hover);
-  --tx-face-bottom: var(--color-surface-hover);
+  background: linear-gradient(to bottom, var(--color-surface-hover), var(--color-surface-subtle));
 }
 
 .pw-projects-card-folder {

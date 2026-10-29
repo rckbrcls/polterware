@@ -5,6 +5,7 @@ export * from "./gen/polterware/local/v1/canvas_pb.js";
 export * from "./gen/polterware/local/v1/changes_pb.js";
 export * from "./gen/polterware/local/v1/context_pb.js";
 export * from "./gen/polterware/local/v1/dispatch_pb.js";
+export * from "./gen/polterware/local/v1/filters_pb.js";
 export * from "./gen/polterware/local/v1/health_pb.js";
 export * from "./gen/polterware/local/v1/integration_pb.js";
 export * from "./gen/polterware/local/v1/knowledge_pb.js";

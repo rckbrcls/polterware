@@ -41,6 +41,7 @@ Category: **Project Context & Change Intelligence for AI Coding.** Polterware ke
 11. **Engineering packs** that generate Inbox *questions*, never rules.
 12. **Similarity beyond word sets.** Add an FTS5 index when a ranked-search consumer needs it. Add local embeddings (`sqlite-vec`, small local model, opt-in download) only if measured misses are material.
 13. **Weak spots to close:** Structure timeline by commit is weak for rebased history (no per-batch commit stamp); automatic challenge from a decision review trigger; decision status chips on Canvas nodes; importing projected Verdict files.
+14. **Scope exclusion in filters.** Scope pills are inclusion-only because reads take one `scope_nodes` union; `is not` on System / Domain / Component / Environment needs an `exclude_scope_nodes` on the scoped reads. Polterware Notes search filters are inclusion-only for the same reason (the core takes inclusion lists and caps results).
 
 ## Cloud (needs an Verdict before any code)
 

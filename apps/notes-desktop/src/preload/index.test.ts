@@ -36,6 +36,14 @@ describe("sandbox bridge", () => {
     await bridge.notes.list();
     expect(mock.invoke).toHaveBeenCalledWith("pwnotes:notes:list", {});
   });
+  it("maps saved filters to their core channels", async () => {
+    await bridge.savedFilters.list({ surface: "notes.library" });
+    expect(mock.invoke).toHaveBeenCalledWith("pwnotes:savedFilters:list", { surface: "notes.library" });
+    await bridge.savedFilters.save({ surface: "notes.library", name: "Urgent", payloadJson: "{\"version\":1}" });
+    expect(mock.invoke).toHaveBeenCalledWith("pwnotes:savedFilters:save", { surface: "notes.library", name: "Urgent", payloadJson: "{\"version\":1}" });
+    await bridge.savedFilters.delete({ id: "f1" });
+    expect(mock.invoke).toHaveBeenCalledWith("pwnotes:savedFilters:delete", { id: "f1" });
+  });
   it("exposes notification authorization through the app allowlist", async () => {
     await bridge.app.requestNotificationAuthorization();
     expect(mock.invoke).toHaveBeenCalledWith("pwnotes:app:requestNotificationAuthorization", undefined);

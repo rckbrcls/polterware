@@ -1,3 +1,7 @@
+.pw-toast-item.menu-panel {
+  border-radius: var(--radius-item);
+}
+
 .pw-toast-item {
   opacity: 1;
   transform: translateY(0);

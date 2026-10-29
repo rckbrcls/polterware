@@ -2,8 +2,6 @@ import { Show, createEffect, createMemo, createSignal } from "solid-js";
 import { A11yDialog, Button, Field, FormStack, Input, TagPicker } from "@polterware/frontend-design-system";
 import type { ScopeNodeItem } from "@polterware/feature-shell";
 import { ScopePicker } from "./scope-picker";
-import type { KnowledgeCreateTemplate } from "./create-templates";
-import { KnowledgeTemplateGrid } from "./knowledge-template-grid";
 
 export type NewEvidenceInput = { title: string; tags: string[]; path?: string; scopePath?: string };
 
@@ -18,7 +16,6 @@ export function AddEvidenceDialog(props: {
   defaultScopePath?: string;
   onImportProjectSources?: () => void;
   importBusy?: boolean;
-  onCreateFromTemplate?: (template: KnowledgeCreateTemplate) => void;
 }) {
   const [title, setTitle] = createSignal("");
   const [path, setPath] = createSignal("");
@@ -110,15 +107,6 @@ export function AddEvidenceDialog(props: {
             <ScopePicker nodes={props.scopeNodes ?? []} value={scopePath()} onChange={setScopePath} class="w-full" />
           </Field>
         </Show>
-        {props.onCreateFromTemplate ? (
-          <KnowledgeTemplateGrid
-            kind="evidence"
-            onSelect={(template) => {
-              props.onCreateFromTemplate?.(template);
-              reset();
-            }}
-          />
-        ) : null}
       </FormStack>
     </A11yDialog>
   );

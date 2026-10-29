@@ -165,7 +165,7 @@ export type Canvas = Message<"polterware.local.v1.Canvas"> & {
   name: string;
 
   /**
-   * type is "free", "architecture", "roadmap", "flow", "brainstorm", or "ideas".
+   * type is always "canvas": one generalist type of drawing shapes and semantic components.
    *
    * @generated from field: string type = 4;
    */
@@ -210,8 +210,8 @@ export const CanvasSchema: GenMessage<Canvas> = /*@__PURE__*/
   messageDesc(file_polterware_local_v1_canvas, 4);
 
 /**
- * CanvasTypeDefinition is the palette and the rules for one canvas type.
- * node_kinds includes note and text, which every type allows.
+ * CanvasTypeDefinition is the palette and the rules of the canvas type.
+ * node_kinds lists components, structure kinds, drawing shapes, note, and text.
  * unrestricted means kinds outside node_kinds and edge_kinds are still valid.
  *
  * @generated from message polterware.local.v1.CanvasTypeDefinition
@@ -561,7 +561,7 @@ export const ListCanvasTypesResponseSchema: GenMessage<ListCanvasTypesResponse> 
   messageDesc(file_polterware_local_v1_canvas, 17);
 
 /**
- * CanvasService stores typed canvases. Writes validate the graph and reject
+ * CanvasService stores canvases. Writes validate the graph and reject
  * violations. Layout is persisted and is not validated as a graph.
  *
  * @generated from service polterware.local.v1.CanvasService

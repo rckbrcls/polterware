@@ -14,7 +14,7 @@ func TestPolterQueryCanvasHidesPrivate(t *testing.T) {
 		ID:           "canvas-shared-public",
 		ProjectID:    demoseed.ProjectID,
 		Name:         "Shared map",
-		Type:         canvas.TypeFree,
+		Type:         canvas.TypeCanvas,
 		AgentVisible: true,
 		LayoutJSON:   `{"marker":"LAYOUT_ONLY_SECRET"}`,
 		Graph: canvas.Graph{Nodes: []canvas.Node{
@@ -29,7 +29,7 @@ func TestPolterQueryCanvasHidesPrivate(t *testing.T) {
 		ID:           "canvas-private-secret",
 		ProjectID:    demoseed.ProjectID,
 		Name:         "Private board",
-		Type:         canvas.TypeFree,
+		Type:         canvas.TypeCanvas,
 		AgentVisible: false,
 		Graph:        canvas.Graph{Nodes: []canvas.Node{{ID: "hid", Kind: canvas.KindNote, Label: "SECRET_CANVAS_NODE"}}},
 	}, "run-1", "batch-private")

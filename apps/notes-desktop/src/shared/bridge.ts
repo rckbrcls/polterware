@@ -22,6 +22,8 @@ export type NotesDesktopBridge = {
   reminders: Namespace<typeof Contracts.ReminderService>;
   activity: Namespace<typeof Contracts.ActivityService>;
   settings: Namespace<typeof Contracts.SettingsService>;
+  /** Named filter combinations per UI surface (for example "notes.library"); save upserts by (surface, name). */
+  savedFilters: Namespace<typeof Contracts.SavedFilterService>;
   agents: Namespace<typeof Contracts.AgentAccessService>;
   maintenance: Namespace<typeof Contracts.MaintenanceService>;
   onChange(callback: (event: ChangeEvent) => void): () => void;

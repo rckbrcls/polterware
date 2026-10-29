@@ -46,7 +46,7 @@ describe("search store against SearchService fixtures", () => {
     expect(store.visibleHits().map(hit => hit.noteId)).toEqual(["note-eggs"]);
   });
 
-  it("stores recent searches locally and restores saved filter chips", async () => {
+  it("stores recent searches locally", async () => {
     const { store } = mount();
     store.connect();
     await vi.waitFor(() => expect(store.loadState()).toBe("live"));
@@ -54,12 +54,6 @@ describe("search store against SearchService fixtures", () => {
     await store.flush();
     expect(store.recent()).toEqual(["milk"]);
     expect(JSON.parse(localStorage.getItem("pwnotes.search.recent") ?? "[]")).toEqual(["milk"]);
-    store.setFilters({ status: "completed", spaceId: "space-2" });
-    store.saveFilters("Done in Work");
-    expect(store.saved()[0]?.name).toBe("Done in Work");
-    store.clearFilters();
-    store.applySaved(store.saved()[0]!.id);
-    expect(store.filters()).toMatchObject({ status: "completed", spaceId: "space-2" });
   });
 
   it("reports an empty index as degraded FTS5 copy", async () => {

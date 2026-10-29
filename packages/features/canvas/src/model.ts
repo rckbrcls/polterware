@@ -1,6 +1,7 @@
+import { SHAPES } from "./shapes";
 import {
   createEmptyDocument, docAddNode, updateNode, addRelationship, deleteSelection,
-  type ArchitectureDocument, type Point, type SelectionState,
+  type ArchNode, type ArchitectureDocument, type Point, type SelectionState,
 } from "@polterware/frontend-canvas";
 
 /** Wire shape from CanvasService: semantic props never contain geometry. */
@@ -69,7 +70,7 @@ export function readTypes(value: unknown): CanvasType[] {
 }
 
 export function nodePalette(type: CanvasType): string[] {
-  return [...new Set([...(type.unrestricted ? ["rectangle", "ellipse"] : []), ...type.nodeKinds])];
+  return [...new Set([...(type.unrestricted ? SHAPES.map((item) => item.kind) : []), ...type.nodeKinds])];
 }
 export function edgePalette(type: CanvasType): string[] {
   return type.unrestricted ? [...new Set(["relates", ...type.edgeKinds])] : type.edgeKinds;
@@ -87,7 +88,7 @@ export function toDocument(canvas: CanvasRecord): ArchitectureDocument {
     return {
       id: node.id, name: node.label, type: node.kind, origin: "manual", state: "unknown",
       x: finite(position.x, (index % 4) * 220), y: finite(position.y, Math.floor(index / 4) * 150),
-      width: Math.max(80, finite(position.width, 180)), height: Math.max(48, finite(position.height, 100)),
+      width: Math.max(40, finite(position.width, 180)), height: Math.max(32, finite(position.height, 100)),
       zIndex: index, metadata: { propsJson: node.propsJson, ...(node.ref ? { refJson: JSON.stringify(node.ref) } : {}) },
     };
   });
@@ -134,6 +135,18 @@ export function connectNodes(doc: ArchitectureDocument, type: CanvasType, from: 
 }
 export function resizeNode(doc: ArchitectureDocument, id: string, width: number, height: number): ArchitectureDocument {
   return updateNode(doc, id, { width: Math.max(80, width), height: Math.max(48, height) });
+}
+export type ResizeHandle = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
+export const resizeHandles: readonly ResizeHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
+/** Resize from a handle of the node's pre-gesture geometry; west and north handles keep the opposite edge fixed. */
+export function resizeFrom(doc: ArchitectureDocument, node: ArchNode, handle: ResizeHandle, dx: number, dy: number): ArchitectureDocument {
+  const minWidth = 40, minHeight = 32;
+  let { x, y, width, height } = node;
+  if (handle.includes("e")) width = Math.max(minWidth, width + dx);
+  if (handle.includes("s")) height = Math.max(minHeight, height + dy);
+  if (handle.includes("w")) { const next = Math.max(minWidth, width - dx); x += width - next; width = next; }
+  if (handle.includes("n")) { const next = Math.max(minHeight, height - dy); y += height - next; height = next; }
+  return updateNode(doc, node.id, { x, y, width, height });
 }
 export function removeSelection(doc: ArchitectureDocument, selection: SelectionState): ArchitectureDocument {
   return deleteSelection(doc, selection);

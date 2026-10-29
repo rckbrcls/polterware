@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { create } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
-import { BadRequestSchema, ListNotesResponseSchema } from "@polterware/notes-contracts";
+import { BadRequestSchema, ListNotesResponseSchema, SaveSavedFilterResponseSchema } from "@polterware/notes-contracts";
 import { services, type CoreClients } from "./core/client.js";
 import { assertTrustedSender, validateAppInput, channel, createRpcHandlers, handleRequestNotificationAuthorization } from "./ipc.js";
 import { RPC_METHODS } from "../shared/channels.js";
@@ -26,6 +26,16 @@ describe("IPC allowlist and schemas", () => {
     expect(list).not.toHaveBeenCalled();
     await expect(handler({ limit: 50 })).resolves.toMatchObject({ notes: [] });
     expect(list).toHaveBeenCalledOnce();
+  });
+  it("forwards saved filter writes as protobuf messages", async () => {
+    const save = vi.fn(async (input: { surface: string; name: string; payloadJson: string }) =>
+      create(SaveSavedFilterResponseSchema, { filter: { id: "f1", surface: input.surface, name: input.name, payloadJson: input.payloadJson } }));
+    const handler = createRpcHandlers({ getClients: () => ({ savedFilters: { save } }) as unknown as CoreClients, authorizePath: () => false })[channel("savedFilters", "save")]!;
+    await expect(handler({ surface: "notes.library", name: "Urgent", payload: {} })).rejects.toThrow();
+    expect(save).not.toHaveBeenCalled();
+    await expect(handler({ surface: "notes.library", name: "Urgent", payloadJson: "{\"version\":1}" }))
+      .resolves.toMatchObject({ filter: { id: "f1", surface: "notes.library", name: "Urgent", payloadJson: "{\"version\":1}", position: 0 } });
+    expect(save).toHaveBeenCalledOnce();
   });
   it("requires native dialog grants for import and maintenance writes", async () => {
     const handlers = createRpcHandlers(options());

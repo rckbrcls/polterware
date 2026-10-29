@@ -1,43 +1,34 @@
 import { createSignal } from "solid-js";
 import { ActiveFilterBar } from "./active-filter-bar";
 import { Button } from "./button";
+import type { FilterClause, FilterField } from "./filter-model";
 import type { DocEntry } from "./docs/types";
 
-const filters = [
-  { id: "stage", label: "Stage: Build" },
-  { id: "scope", label: "Scope: Core" },
+const FIELDS: FilterField[] = [
+  {
+    id: "stage",
+    label: "Stage",
+    kind: "multi",
+    options: [
+      { id: "shape", label: "Shape" },
+      { id: "build", label: "Build" },
+      { id: "verify", label: "Verify" },
+    ],
+  },
 ];
 
-function Removable() {
-  const [items, setItems] = createSignal(filters);
-  return (
-    // #region removable
-    <div class="w-full">
-      <ActiveFilterBar
-        items={items().map((item) => ({
-          ...item,
-          onRemove: () => setItems((current) => current.filter((filter) => filter.id !== item.id)),
-        }))}
-        onClear={() => setItems([])}
-        clearLabel="Clear all"
-      />
-      <Button size="sm" variant="ghost" onClick={() => setItems(filters)}>Reset example</Button>
-    </div>
-    // #endregion
-  );
-}
+const INITIAL: FilterClause[] = [
+  { id: "stage-1", field: "stage", operator: "is", values: ["build", "verify"] },
+  { id: "stage-2", field: "stage", operator: "is_not", values: ["shape"] },
+];
 
-function Empty() {
-  const [active, setActive] = createSignal(false);
+function Pills() {
+  const [clauses, setClauses] = createSignal<FilterClause[]>(INITIAL);
   return (
-    // #region empty
+    // #region pills
     <div class="w-full">
-      <Button size="sm" onClick={() => setActive((value) => !value)}>
-        {active() ? "Hide filter" : "Add filter"}
-      </Button>
-      <ActiveFilterBar
-        items={active() ? [{ id: "stage", label: "Stage: Verify", onRemove: () => setActive(false) }] : []}
-      />
+      <ActiveFilterBar fields={FIELDS} clauses={clauses()} onClausesChange={setClauses} />
+      <Button size="sm" variant="ghost" onClick={() => setClauses(INITIAL)}>Reset example</Button>
     </div>
     // #endregion
   );
@@ -47,10 +38,7 @@ export default {
   name: "ActiveFilterBar",
   group: "Data",
   summary:
-    "Removable active-filter pills displayed under PageToolbar. The bar is hidden when no filters remain.",
+    "Linear-style filter bar under PageToolbar: one segmented pill per clause ([icon Field] [operator] [value] [×]). The operator switches between is / is any of and is not, the value opens the field's checkbox list, and the last unchecked value removes the pill. A + adds filters; Clear and Save sit on the right. Hidden while nothing filters the page.",
   exports: ["ActiveFilterBar"],
-  examples: [
-    { id: "removable", title: "Remove individual filters or clear all", wide: true, render: () => <Removable /> },
-    { id: "empty", title: "Hidden until a filter is added", wide: true, render: () => <Empty /> },
-  ],
+  examples: [{ id: "pills", title: "Edit operators and values, remove pills", wide: true, render: () => <Pills /> }],
 } satisfies DocEntry;

@@ -1,11 +1,11 @@
 import type { JSX } from "solid-js";
 import { Show, splitProps } from "solid-js";
-import { useInFloatingSurface } from "./floating-surface";
+import { useInFloatingSurface, useTextureFace } from "./floating-surface";
 import { Tooltip } from "./tooltip";
 import "./button.css";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "brand" | "icon" | "texture";
-export type ButtonTextureTone = "neutral" | "brand" | "danger" | "success" | "warn" | "info";
+export type ButtonTextureTone = "neutral" | "primary" | "brand" | "danger" | "success" | "warn" | "info";
 export type ButtonSize = "sm" | "md" | "icon";
 /** Extra palettes of the solid (keycap) variants; `primary`/`secondary`/`danger`/`brand` already map to their own. */
 export type ButtonTone = "secondary" | "brand" | "danger" | "neutral" | "success" | "warn" | "info" | "critical" | "violet" | "teal" | "pink";
@@ -85,6 +85,23 @@ function textureToneOf(value: ButtonTone | undefined): ButtonTextureTone | undef
   return value ? textureToneByTone[value as keyof typeof textureToneByTone] : undefined;
 }
 
+/** Under `TextureFaceProvider`, solid variants keep their meaning in a texture tone. */
+const textureFaceTone = {
+  primary: "primary",
+  brand: "primary",
+  danger: "danger",
+  secondary: "neutral",
+} as const satisfies Partial<Record<ButtonVariant, ButtonTextureTone>>;
+
+/** Turns a solid variant into the texture face, icon-only buttons included; ghost, icon and texture stay as declared. */
+export function resolveTextureFace(
+  variant: ButtonVariant = "secondary",
+  textureTone: ButtonTextureTone | undefined,
+): { variant: ButtonVariant; textureTone?: ButtonTextureTone } | undefined {
+  if (!(variant in textureFaceTone)) return undefined;
+  return { variant: "texture", textureTone: textureTone ?? textureFaceTone[variant as keyof typeof textureFaceTone] };
+}
+
 /**
  * Inside a floating surface every text button wears the texture face: primary and brand take the brand
  * tone, danger the danger tone, the rest neutral. Icon-only buttons stay flat.
@@ -113,7 +130,12 @@ function cn(...parts: Array<string | false | null | undefined>) {
 export function Button(props: ButtonProps) {
   const [local, rest] = splitProps(props, ["variant", "size", "tone", "selected", "textureTone", "keepVariant", "class", "classList"]);
   const inFloating = useInFloatingSurface();
-  const resolved = () => resolveFloatingVariant(inFloating, local.variant, local.size, local.textureTone ?? textureToneOf(local.tone), local.keepVariant);
+  const textureFace = useTextureFace();
+  const resolved = () => {
+    const tone = local.textureTone ?? textureToneOf(local.tone);
+    return (textureFace && !local.keepVariant ? resolveTextureFace(local.variant, tone) : undefined)
+      ?? resolveFloatingVariant(inFloating, local.variant, local.size, tone, local.keepVariant);
+  };
   const variant = () => resolved().variant;
   const className = () => buttonClassName(variant(), local.size, local.class);
   const button = (attrs: JSX.ButtonHTMLAttributes<HTMLButtonElement> = rest) => (

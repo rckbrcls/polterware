@@ -7,7 +7,6 @@ import {
 } from "solid-js";
 import {
   CountBadge,
-  Cpu,
   Briefcase06Icon,
   ChartRelationshipIcon,
   createFluidHover,
@@ -20,7 +19,6 @@ import {
   ListOrdered,
   Route,
   Settings,
-  ShieldCheck,
   spring,
   type FluidHover,
 } from "@polterware/frontend-design-system";
@@ -49,8 +47,6 @@ const icons: Record<string, (p: { size?: number; class?: string }) => JSX.Elemen
   routing: (p) => <ListOrdered size={p.size ?? 14} class={p.class} />,
   usage: (p) => <Gauge size={p.size ?? 14} class={p.class} />,
   activity: (p) => <History size={p.size ?? 14} class={p.class} />,
-  agents: (p) => <Cpu size={p.size ?? 14} class={p.class} />,
-  integrations: (p) => <ShieldCheck size={p.size ?? 14} class={p.class} />,
   settings: (p) => <Settings size={p.size ?? 14} class={p.class} />,
 };
 
@@ -167,7 +163,7 @@ function SidebarNavItem(props: {
   );
 }
 
-/** Fixed Settings and Help controls for the project sidebar. */
+/** Fixed Project settings and Help controls for the project sidebar. */
 export function SidebarSettingsItem(props: {
   active?: boolean;
   onSelect: () => void;
@@ -182,7 +178,7 @@ export function SidebarSettingsItem(props: {
           onClick={() => props.onSelect()}
           icon={icons.settings!({ size: 14 })}
         >
-          Settings
+          Project settings
         </SidebarItem>
         <HelpMenu onSelectTopic={setActiveTopicId} />
       </div>

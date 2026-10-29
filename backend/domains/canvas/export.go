@@ -36,7 +36,8 @@ type exportDoc struct {
 	Links    []exportLink `json:"links"`
 }
 
-// Export writes the graph as node-link JSON (nodes + links). Layout is omitted.
+// Export writes the graph as node-link JSON (nodes + links). Layout and the
+// visual "style" prop are omitted.
 // A node with a ref is "referenced"; a node without one is "unverified".
 func Export(graph Graph) ([]byte, error) {
 	graph = normalize(graph)
@@ -47,12 +48,12 @@ func Export(graph Graph) ([]byte, error) {
 	}
 	for _, node := range graph.Nodes {
 		doc.Nodes = append(doc.Nodes, exportNode{
-			ID: node.ID, Kind: node.Kind, Label: node.Label, Props: node.Props, Ref: node.Ref, Trust: trustOf(node),
+			ID: node.ID, Kind: node.Kind, Label: node.Label, Props: withoutStyle(node.Props), Ref: node.Ref, Trust: trustOf(node),
 		})
 	}
 	for _, edge := range graph.Edges {
 		doc.Links = append(doc.Links, exportLink{
-			ID: edge.ID, Source: edge.From, Target: edge.To, Kind: edge.Kind, Props: edge.Props,
+			ID: edge.ID, Source: edge.From, Target: edge.To, Kind: edge.Kind, Props: withoutStyle(edge.Props),
 		})
 	}
 	return json.Marshal(doc)
@@ -111,6 +112,21 @@ func ExportDot(graph Graph) string {
 	}
 	b.WriteString("}\n")
 	return b.String()
+}
+
+// withoutStyle drops the presentation-only "style" prop the Desktop editor
+// stores; it is not part of the graph's meaning.
+func withoutStyle(props map[string]any) map[string]any {
+	if _, ok := props["style"]; !ok {
+		return props
+	}
+	out := make(map[string]any, len(props)-1)
+	for key, value := range props {
+		if key != "style" {
+			out[key] = value
+		}
+	}
+	return out
 }
 
 func trustOf(node Node) string {

@@ -290,7 +290,7 @@ type Canvas struct {
 	Id        string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	ProjectId string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	Name      string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	// type is "free", "architecture", "roadmap", "flow", "brainstorm", or "ideas".
+	// type is always "canvas": one generalist type of drawing shapes and semantic components.
 	Type          string       `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
 	AgentVisible  bool         `protobuf:"varint,5,opt,name=agent_visible,json=agentVisible,proto3" json:"agent_visible,omitempty"`
 	Graph         *CanvasGraph `protobuf:"bytes,6,opt,name=graph,proto3" json:"graph,omitempty"`
@@ -402,8 +402,8 @@ func (x *Canvas) GetUpdatedAt() string {
 	return ""
 }
 
-// CanvasTypeDefinition is the palette and the rules for one canvas type.
-// node_kinds includes note and text, which every type allows.
+// CanvasTypeDefinition is the palette and the rules of the canvas type.
+// node_kinds lists components, structure kinds, drawing shapes, note, and text.
 // unrestricted means kinds outside node_kinds and edge_kinds are still valid.
 type CanvasTypeDefinition struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`

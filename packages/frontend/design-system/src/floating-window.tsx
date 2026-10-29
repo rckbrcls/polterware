@@ -42,6 +42,8 @@ export type FloatingWindowRootProps = {
   onExpandedChange: (expanded: boolean) => void;
   /** localStorage key for versioned floating geometry (accepts a legacy numeric width). */
   storageKey?: string;
+  /** Dock and size used until the person moves or resizes the window (bottom right, 520 by 420 by default). */
+  defaultGeometry?: Partial<Pick<FloatingWindowGeometry, "dock" | "width" | "height">>;
   children: JSX.Element;
   class?: string;
   "aria-label"?: string;
@@ -76,7 +78,8 @@ const DEAD_ZONE = 3;
 function FloatingWindowRoot(props: FloatingWindowRootProps) {
   const [contentHost, setContentHost] = createSignal<HTMLElement>();
   const [headerClass, setHeaderClass] = createSignal("");
-  const [geometry, setGeometry] = createSignal(readStoredGeometry(props.storageKey));
+  const fallbackGeometry = (): FloatingWindowGeometry => ({ ...defaultFloatingWindowGeometry, ...props.defaultGeometry });
+  const [geometry, setGeometry] = createSignal(readStoredGeometry(props.storageKey, fallbackGeometry()));
   const [bounds, setBounds] = createSignal<FloatingWindowBounds>({ width: 0, height: 0 });
   const [gesturing, setGesturing] = createSignal(false);
   const [settled, setSettled] = createSignal(true);
@@ -428,8 +431,9 @@ function FloatingWindowRoot(props: FloatingWindowRootProps) {
 
   function resetSize(edge: FloatingWindowResizeEdge) {
     const rect = floatingRect();
-    const dx = edge.includes("w") ? rect.width - FLOATING_WINDOW_DEFAULT_WIDTH : edge.includes("e") ? FLOATING_WINDOW_DEFAULT_WIDTH - rect.width : 0;
-    const dy = edge.includes("n") ? rect.height - FLOATING_WINDOW_DEFAULT_HEIGHT : edge.includes("s") ? FLOATING_WINDOW_DEFAULT_HEIGHT - rect.height : 0;
+    const size = fallbackGeometry();
+    const dx = edge.includes("w") ? rect.width - size.width : edge.includes("e") ? size.width - rect.width : 0;
+    const dy = edge.includes("n") ? rect.height - size.height : edge.includes("s") ? size.height - rect.height : 0;
     dockSettlement = true;
     persist(windowGeometryAt(resizeFloatingWindowRect(rect, edge, dx, dy, bounds()), bounds(), geometry(), true));
   }
@@ -453,7 +457,7 @@ function FloatingWindowRoot(props: FloatingWindowRootProps) {
       // Viewport changes fit the preferred box without writing storage.
       stopMotion();
       firstPaint = false;
-      if (migrate) { migrate = false; setGeometry(readStoredGeometry(props.storageKey, measured)); }
+      if (migrate) { migrate = false; setGeometry(readStoredGeometry(props.storageKey, fallbackGeometry(), measured)); }
       setBounds(measured);
       paint();
       firstPaint = true;
@@ -572,10 +576,12 @@ function FloatingWindowRoot(props: FloatingWindowRootProps) {
   );
 }
 
-function readStoredGeometry(key: string | undefined, bounds?: FloatingWindowBounds): FloatingWindowGeometry {
-  if (isServer || !key) return { ...defaultFloatingWindowGeometry };
-  try { return readFloatingWindowGeometry(window.localStorage.getItem(key), bounds); }
-  catch { return { ...defaultFloatingWindowGeometry }; }
+function readStoredGeometry(key: string | undefined, fallback: FloatingWindowGeometry, bounds?: FloatingWindowBounds): FloatingWindowGeometry {
+  if (isServer || !key) return { ...fallback };
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw === null ? { ...fallback } : readFloatingWindowGeometry(raw, bounds);
+  } catch { return { ...fallback }; }
 }
 
 function FloatingWindowWorkspace(props: { children: JSX.Element; class?: string }) {

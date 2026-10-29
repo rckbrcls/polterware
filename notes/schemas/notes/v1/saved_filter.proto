@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package notes.v1;
+
+option go_package = "github.com/polterware/polterware/notes/backend/platform/gen/notes/v1;notesv1";
+
+import "google/protobuf/timestamp.proto";
+
+// SavedFilter is a named filter combination for one UI surface
+// (for example "notes.library" or "notes.search"). Names are unique per surface.
+message SavedFilter {
+  string id = 1;
+  string surface = 2;
+  string name = 3;
+  // Opaque UI JSON object with an integer "version", e.g. {"version":1,"clauses":[],"extra":{}}.
+  string payload_json = 4;
+  int32 position = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message ListSavedFiltersRequest {
+  string surface = 1;
+}
+
+message ListSavedFiltersResponse {
+  repeated SavedFilter filters = 1;
+}
+
+// SaveSavedFilterRequest upserts by (surface, name): an existing filter keeps its id and position.
+message SaveSavedFilterRequest {
+  string surface = 1;
+  string name = 2;
+  string payload_json = 3;
+}
+
+message SaveSavedFilterResponse {
+  SavedFilter filter = 1;
+}
+
+message DeleteSavedFilterRequest {
+  string id = 1;
+}
+
+message DeleteSavedFilterResponse {}
+
+service SavedFilterService {
+  rpc List(ListSavedFiltersRequest) returns (ListSavedFiltersResponse);
+  rpc Save(SaveSavedFilterRequest) returns (SaveSavedFilterResponse);
+  rpc Delete(DeleteSavedFilterRequest) returns (DeleteSavedFilterResponse);
+}

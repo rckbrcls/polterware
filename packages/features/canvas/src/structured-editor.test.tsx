@@ -29,6 +29,10 @@ function input(label: string, value: string) {
   const element = container.querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)!;
   element.value = value; element.dispatchEvent(new Event("input", { bubbles: true }));
 }
+async function openTab(label: string) {
+  const tab = () => [...container.querySelectorAll<HTMLElement>('[role="tab"]')].find((item) => item.textContent?.includes(label))!;
+  tab().click(); await vi.waitFor(() => expect(tab().getAttribute("aria-selected")).toBe("true"));
+}
 function button(text: string, root: ParentNode = container) { return [...root.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent === text)!; }
 
 beforeEach(() => {
@@ -37,66 +41,90 @@ beforeEach(() => {
 });
 afterEach(async () => { dispose?.(); dispose = undefined; await Promise.resolve(); container.remove(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
-describe("structured Desktop canvases", () => {
-  it("renders roadmap lanes, arrows and shared date fields; stages incomplete timing without sending it", async () => {
-    const canvas = record("roadmap", [
-      { id: "lane", kind: "lane", label: "Delivery", propsJson: "{}" },
-      { id: "item", kind: "item", label: "Build", propsJson: '{"lane":"lane","start":"2026-10-01","end":"2026-10-15","status":"Planned","future":42}' },
-      { id: "milestone", kind: "milestone", label: "Ship", propsJson: '{"lane":"lane","start":"2026-10-20"}' },
-    ], [{ id: "dependency", from: "milestone", to: "item", kind: "depends_on", propsJson: "{}" }]);
-    const { api, host } = mount(canvas, ["lane", "milestone", "item"], ["depends_on", "precedes"]);
-    expect(container.querySelector('[data-variant="lane"]')).toBeTruthy();
-    expect(container.querySelector('[data-variant="milestone"] polygon')).toBeTruthy();
-    expect(host.textContent).toContain("Planned");
-    expect(container.querySelector('path[marker-end]')?.getAttribute("stroke-dasharray")).toBe("6 4");
-    select(host, 310, 120); // Date-derived x=240; lane y=48; viewport offset=40.
-    expect(container.querySelectorAll('[data-scope="date-picker"][data-part="root"]')).toHaveLength(2);
-    expect(container.querySelector('[aria-label="Lane"]')).toBeTruthy();
-    expect(api.update).not.toHaveBeenCalled();
-    container.querySelector<HTMLButtonElement>('[aria-label="Clear date"]')!.click();
-    await vi.waitFor(() => expect(button("Apply properties").disabled).toBe(true));
-    expect(api.update).not.toHaveBeenCalled();
-    input("Quarter", "2026-Q4"); input("Status", "In progress");
-    expect(button("Apply properties").disabled).toBe(false);
-    button("Apply properties").click();
-    await vi.waitFor(() => expect(api.update).toHaveBeenCalledOnce());
-    const patch = vi.mocked(api.update).mock.calls[0]![2];
-    expect(JSON.parse(patch.graph!.nodes.find((node) => node.id === "item")!.propsJson)).toMatchObject({ start: "", end: "2026-10-15", quarter: "2026-Q4", status: "In progress", future: 42 });
-    expect(host.textContent).toContain("In progress");
-  });
+const kinds = ["system", "domain", "component", "frontend", "service", "database", "cache", "queue", "rectangle", "cylinder"];
+const edges = ["relates", "calls", "reads", "depends_on"];
 
-  it("renders flow variants, persists a decision arrow label and keeps its degree warning advisory", async () => {
-    const canvas = record("flow", [
-      { id: "d", kind: "decision", label: "Ready?", propsJson: "{}" }, { id: "s", kind: "step", label: "Work", propsJson: "{}" },
-      { id: "start", kind: "start", label: "Start", propsJson: "{}" }, { id: "end", kind: "end", label: "End", propsJson: "{}" },
-    ], [{ id: "next", from: "d", to: "s", kind: "next", propsJson: '{"future":42}' }], {
-      d: { x: 100, y: 100, width: 240, height: 180 }, s: { x: 500, y: 140 }, start: { x: 100, y: 400 }, end: { x: 500, y: 400 },
-    });
-    const { api, host } = mount(canvas, ["step", "decision", "start", "end"], ["next"]);
-    expect(container.querySelector('[data-variant="decision"] polygon')).toBeTruthy();
-    expect(container.querySelectorAll('[data-variant="terminal"] ellipse')).toHaveLength(2);
-    expect(container.textContent).toContain("fewer than two outgoing arrows");
-    expect(container.querySelector('path[marker-end]')).toBeTruthy();
-    select(host, 460, 230);
-    input("Arrow label", "Yes");
+describe("generalist canvas with semantic components", () => {
+  it("adds a component from the library without a Structure picker or an Unverified chip", async () => {
+    const { api, host } = mount(record("canvas", []), kinds, edges);
+    container.querySelector<HTMLButtonElement>('[aria-label="Shape library"] button[aria-label="Compute"]')!.click();
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull();
     await vi.waitFor(() => expect(api.update).toHaveBeenCalled());
-    expect(JSON.parse(vi.mocked(api.update).mock.calls.at(-1)![2].graph!.edges[0]!.propsJson)).toEqual({ future: 42, label: "Yes" });
-    expect(host.querySelector("text")?.textContent).toBe("Yes");
-    expect(container.textContent).toContain("fewer than two outgoing arrows");
-    expect(container.textContent).toContain("Saved");
+    const node = vi.mocked(api.update).mock.calls.at(-1)![2].graph!.nodes[0]!;
+    expect(node).toMatchObject({ kind: "service", label: "Compute" }); expect(node.ref).toBeUndefined();
+    expect(container.querySelector('[data-variant="component"][data-kind="service"][data-family="compute"]')).toBeTruthy();
+    expect(host.textContent).not.toContain("Unverified");
   });
 
-  it("adds architecture shapes with an atomic Structure reference and offers no invalid unlink", async () => {
-    const canvas = record("architecture", []);
+  it("edits a component's technology from suggestions or free text, renders it, and undoes it", async () => {
+    const canvas = record("canvas", [{ id: "c", kind: "cache", label: "Sessions", propsJson: '{"future":42}' }], [], { c: { x: 100, y: 100, width: 200, height: 120 } });
+    const { api, host } = mount(canvas, kinds, edges);
+    select(host, 240, 200);
+    await openTab("Data");
+    expect(container.textContent).toContain("Project reference");
+    expect(container.textContent).not.toContain("Unverified");
+    container.querySelector<HTMLButtonElement>('button[aria-label="Use Redis"]')!.click();
+    await vi.waitFor(() => expect(api.update).toHaveBeenCalled());
+    expect(JSON.parse(vi.mocked(api.update).mock.calls.at(-1)![2].graph!.nodes[0]!.propsJson)).toEqual({ future: 42, technology: "Redis" });
+    expect(host.textContent).toContain("Redis");
+    input("Technology", "Valkey 8");
+    await vi.waitFor(() => expect(JSON.parse(vi.mocked(api.update).mock.calls.at(-1)![2].graph!.nodes[0]!.propsJson).technology).toBe("Valkey 8"));
+    container.querySelector<HTMLButtonElement>('button[aria-label="Undo"]')!.click();
+    await vi.waitFor(() => expect(host.textContent).toContain("Redis"));
+    expect(host.textContent).not.toContain("Valkey 8");
+  });
+
+  it("draws each library entry as it lands on the canvas, with its name", () => {
+    mount(record("canvas", []), kinds, edges);
+    const library = container.querySelector('[aria-label="Shape library"]')!;
+    expect(library.querySelector('button[aria-label="Storage"] [data-family="storage"] path[data-face]')).toBeTruthy();
+    expect(library.querySelector('button[aria-label="Cylinder"] [data-shape="cylinder"]')).toBeTruthy();
+    expect(library.querySelector('button[aria-label="Storage"] .pw-canvas-library-name')?.textContent).toBe("Storage");
+    // Connections are drawn from shapes with the Connect tool, not picked from the library.
+    expect(library.textContent).not.toContain("Connections");
+  });
+
+  it("finds components by technology name in the library search", () => {
+    mount(record("canvas", []), kinds, edges);
+    input("Search shapes", "redis");
+    const library = container.querySelector('[aria-label="Shape library"]')!;
+    expect(library.querySelector('button[aria-label="Storage"]')).toBeTruthy();
+    expect(library.querySelector('button[aria-label="Compute"]')).toBeNull();
+    expect(library.querySelector('button[aria-label="Rectangle"]')).toBeNull();
+  });
+
+  it("keeps drawing shapes free of claims and labels edges", async () => {
+    const canvas = record("canvas", [
+      { id: "a", kind: "rectangle", label: "Box", propsJson: "{}" }, { id: "b", kind: "service", label: "Orders", propsJson: "{}" },
+    ], [{ id: "e", from: "b", to: "a", kind: "reads", propsJson: '{"future":42}' }], { a: { x: 100, y: 100 }, b: { x: 500, y: 100 } });
+    const { api, host } = mount(canvas, kinds, edges);
+    expect(host.textContent).not.toContain("Unverified");
+    expect(container.querySelector('path[marker-end]')).toBeTruthy();
+    expect(host.querySelector("text")?.textContent).toBe("Reads");
+    select(host, 460, 190);
+    input("Edge label", "order rows");
+    await vi.waitFor(() => expect(api.update).toHaveBeenCalled());
+    expect(JSON.parse(vi.mocked(api.update).mock.calls.at(-1)![2].graph!.edges[0]!.propsJson)).toEqual({ future: 42, label: "order rows" });
+    expect(host.querySelector("text")?.textContent).toBe("order rows");
+  });
+
+  it("adds a Structure node with an atomic reference and offers no invalid unlink", async () => {
     const entities: StoreEntity[] = [{ kind: "node", id: "core", title: "Core", level: "component" }, { kind: "fact", id: "fact", title: "A fact" }];
-    const { api } = mount(canvas, ["system", "domain", "component", "service", "database", "queue"], ["uses", "contains"], entities);
-    container.querySelector<HTMLButtonElement>('button[aria-label="Add from Structure"]')!.click();
-    await vi.waitFor(() => expect(document.body.querySelector('[role="dialog"]')).toBeTruthy());
-    const row = document.body.querySelector<HTMLElement>('[aria-label="Add component: Core"]')!;
-    expect(row).toBeTruthy(); row.click();
+    const { api } = mount(record("canvas", []), kinds, edges, entities);
+    expect(container.querySelector('[aria-label="Add fact: A fact"]')).toBeNull();
+    container.querySelector<HTMLButtonElement>('button[aria-label="Add component: Core"]')!.click();
     await vi.waitFor(() => expect(api.update).toHaveBeenCalled());
     expect(vi.mocked(api.update).mock.calls.at(-1)![2].graph!.nodes[0]).toMatchObject({ kind: "component", label: "Core", ref: { kind: "node", id: "core" } });
     expect(button("Unlink")).toBeUndefined();
     expect(container.querySelector('[aria-label="Link Fact: A fact"]')).toBeNull();
   });
+
+  it("offers Structure nodes only from the project's own nodes, never as blank tiles", () => {
+    const entities: StoreEntity[] = [{ kind: "node", id: "core", title: "Core", level: "component" }];
+    mount(record("canvas", []), kinds, edges, entities);
+    const library = container.querySelector('[aria-label="Shape library"]')!;
+    for (const label of ["System", "Domain", "Component"]) expect(library.querySelector(`button[aria-label="${label}"]`)).toBeNull();
+    expect(library.querySelector('button[aria-label="Add component: Core"]')).toBeTruthy();
+  });
+
 });

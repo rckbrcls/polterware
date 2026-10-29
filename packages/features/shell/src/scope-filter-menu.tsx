@@ -1,45 +1,61 @@
-import { Box, Boxes, Cloud, Layers, type ActiveFilterPill, type FilterPopoverGroup } from "@polterware/frontend-design-system";
+import { Box, Boxes, Cloud, Layers, type FilterClause, type FilterField } from "@polterware/frontend-design-system";
 import type { ScopeFilterEnvironment, ScopeFilterKey, ScopeFilterNode, ScopeFilterToken } from "./scope-filter";
-import { SCOPE_FILTER_MENU_LABELS, scopeFilterMenuSections, toggleScopeFilterMenuToken } from "./scope-filter-menu-state";
+import { dedupeScopeTokens } from "./scope-filter";
+import { scopeFilterMenuSections } from "./scope-filter-menu-state";
 
 function ScopeIcon(props: { kind: ScopeFilterKey }) {
   const Icon = props.kind === "system" ? Boxes : props.kind === "domain" ? Layers : props.kind === "component" ? Box : Cloud;
   return <Icon size={14} aria-hidden />;
 }
 
-/** Scope groups fit into each page's existing FilterPopover while the selection remains shell-owned. */
-export function scopeFilterMenuGroups(props: {
-  tokens: readonly ScopeFilterToken[];
+const SCOPE_FIELD_PREFIX = "scope-";
+
+export function isScopeFieldId(fieldId: string): boolean {
+  return fieldId.startsWith(SCOPE_FIELD_PREFIX);
+}
+
+/**
+ * Scope levels as filter fields. Backend reads take scope as one inclusion-only union, so
+ * these fields offer no `is not` and keep one pill per level.
+ */
+export function scopeFilterFields(props: {
   nodes: readonly ScopeFilterNode[];
   environments: readonly ScopeFilterEnvironment[];
   allowEnv: boolean;
-  onTokensChange: (tokens: ScopeFilterToken[]) => void;
-}): FilterPopoverGroup[] {
+}): FilterField[] {
   return scopeFilterMenuSections(props).map((section) => ({
-    id: `scope-${section.key}`,
+    id: `${SCOPE_FIELD_PREFIX}${section.key}`,
     label: section.label,
-    leading: <ScopeIcon kind={section.key} />,
-    options: section.options.map((option) => {
-        const token: ScopeFilterToken = { key: section.key, value: option.label, id: option.id };
-        return {
-          id: option.id,
-          label: option.label,
-          leading: <ScopeIcon kind={section.key} />,
-          checked: props.tokens.some((item) => item.key === section.key && item.id === option.id),
-          onCheckedChange: (checked: boolean) => props.onTokensChange(toggleScopeFilterMenuToken(props.tokens, token, checked)),
-        };
-      }),
+    icon: () => <ScopeIcon kind={section.key} />,
+    kind: "multi",
+    negatable: false,
+    repeatable: false,
+    section: "scope",
+    options: section.options.map((option) => ({
+      id: option.id,
+      label: option.label,
+      icon: () => <ScopeIcon kind={section.key} />,
+    })),
   }));
 }
 
-/** Active scopes render with the same removable-filter treatment as local page filters. */
-export function scopeFilterPills(
-  tokens: readonly ScopeFilterToken[],
-  onTokensChange: (tokens: ScopeFilterToken[]) => void,
-): ActiveFilterPill[] {
-  return tokens.map((token) => ({
-    id: `scope-${token.key}-${token.id}`,
-    label: `${SCOPE_FILTER_MENU_LABELS[token.key]}: ${token.value}`,
-    onRemove: () => onTokensChange(tokens.filter((item) => item.key !== token.key || item.id !== token.id)),
-  }));
+/** One clause per scope level, holding that level's tokens. */
+export function scopeTokensToClauses(tokens: readonly ScopeFilterToken[]): FilterClause[] {
+  const byKey = new Map<ScopeFilterKey, string[]>();
+  for (const token of tokens) byKey.set(token.key, [...(byKey.get(token.key) ?? []), token.id]);
+  return [...byKey].map(([key, ids]) => ({ id: `${SCOPE_FIELD_PREFIX}${key}`, field: `${SCOPE_FIELD_PREFIX}${key}`, operator: "is", values: ids }));
+}
+
+/** Scope clauses back to tokens; labels come from the fields so tokens keep their display value. */
+export function clausesToScopeTokens(clauses: readonly FilterClause[], fields: readonly FilterField[]): ScopeFilterToken[] {
+  const tokens: ScopeFilterToken[] = [];
+  for (const clause of clauses) {
+    if (!isScopeFieldId(clause.field)) continue;
+    const key = clause.field.slice(SCOPE_FIELD_PREFIX.length) as ScopeFilterKey;
+    const field = fields.find((item) => item.id === clause.field);
+    for (const id of clause.values) {
+      tokens.push({ key, id, value: field?.options.find((option) => option.id === id)?.label ?? id });
+    }
+  }
+  return dedupeScopeTokens(tokens);
 }

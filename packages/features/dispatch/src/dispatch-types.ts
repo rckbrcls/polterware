@@ -100,6 +100,14 @@ export type DispatchTierView = {
   position: number;
 };
 
+/** A model an installed agent CLI lists, offered in the tier palette. */
+export type DispatchModelView = {
+  agent: string;
+  model: string;
+  provider: string;
+  tier: string;
+};
+
 export type DispatchAgentView = {
   name: string;
   bin: string;

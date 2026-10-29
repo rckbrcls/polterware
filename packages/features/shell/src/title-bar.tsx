@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Home01Icon,
   Search,
+  Settings,
   TextureButtonGroup,
 } from "@polterware/frontend-design-system";
 import { createShortcutLabel } from "@polterware/frontend-state";
@@ -16,6 +17,9 @@ export type TitleBarProps = {
   onForward: () => void;
   onGoHome?: () => void;
   onOpenCommander?: () => void;
+  onOpenAppSettings?: () => void;
+  /** True while App settings is open. */
+  appSettingsOpen?: boolean;
 };
 
 export function TitleBar(props: TitleBarProps) {
@@ -55,6 +59,17 @@ export function TitleBar(props: TitleBarProps) {
             onClick={() => props.onOpenCommander?.()}
           >
             <Search size={14} />
+          </Button>
+          <Button
+            variant="texture"
+            size="icon"
+            class="!h-[var(--control-height-md)] !w-[var(--control-height-md)]"
+            aria-label="App settings"
+            aria-pressed={Boolean(props.appSettingsOpen)}
+            title="App settings"
+            onClick={() => props.onOpenAppSettings?.()}
+          >
+            <Settings size={14} />
           </Button>
         </div>
     </TitleBarFrame>

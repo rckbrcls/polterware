@@ -10,6 +10,7 @@ import type {
   DispatchRunView,
   DispatchStatRankView,
   DispatchStatsView,
+  DispatchModelView,
   DispatchTierView,
   DispatchWatchEventView,
   DispatchWorktreeView,
@@ -42,6 +43,10 @@ export type DispatchBridge = {
     offset?: number;
   }) => Promise<unknown>;
   checkTiers: (payload?: Record<string, never>) => Promise<unknown>;
+  /** Models the installed agent CLIs list; absent on cores that predate it. */
+  listModels?: (payload?: Record<string, never>) => Promise<unknown>;
+  /** Replaces the whole tier table; absent on cores that predate it. */
+  replaceTiers?: (payload: { tiers: DispatchTierView[] }) => Promise<unknown>;
   stats: (payload: { projectId: string; by?: string; since?: string }) => Promise<unknown>;
   getClassifier: (payload?: Record<string, never>) => Promise<unknown>;
   capacity: (payload?: { since?: string }) => Promise<unknown>;
@@ -90,6 +95,8 @@ export function dispatchBridge(): DispatchBridge | undefined {
     listAgents: d.listAgents,
     listHistory: d.listHistory,
     checkTiers: d.checkTiers,
+    listModels: d.listModels,
+    replaceTiers: d.replaceTiers,
     stats: d.stats,
     getClassifier: d.getClassifier,
     capacity: d.capacity,
@@ -295,6 +302,18 @@ export function mapDispatchTiers(raw: unknown): DispatchTierView[] {
       strength: asNumber(row.strength),
       position: asNumber(row.position),
     }];
+  });
+}
+
+export function mapDispatchModels(raw: unknown): DispatchModelView[] {
+  const record = asRecord(raw);
+  const models = Array.isArray(record.models) ? record.models : [];
+  return models.flatMap((item) => {
+    const row = asRecord(item);
+    const agent = asString(row.agent);
+    const model = asString(row.model);
+    if (!agent || !model) return [];
+    return [{ agent, model, provider: asString(row.provider), tier: asString(row.tier) }];
   });
 }
 

@@ -45,6 +45,8 @@ export type {
   TemplateCardGridProps,
   TemplateCardProps,
 } from "./template-card";
+export { PromptCardGrid, copyAgentPrompt } from "./prompt-card";
+export type { PromptCardGridItem, PromptCardGridProps } from "./prompt-card";
 export { EmptyBot, type EmptyBotMood } from "./empty-bot";
 export { PageLoading, PageEmpty, PageError, FixtureBanner, PageOffline, PageForbidden } from "./feedback";
 export { Skeleton, PageSkeleton } from "./skeleton";
@@ -120,16 +122,45 @@ export type {
 } from "./fluid-hover";
 export { Switch, SwitchRow } from "./switch";
 export type { SwitchProps, SwitchRowProps, SwitchSize } from "./switch";
-export { FilterPopover, FilterCategoryPopover } from "./filter-popover";
+export { FilterPopover } from "./filter-popover";
+export type { FilterPopoverProps } from "./filter-popover";
+export { createSavedFilters } from "./saved-filters";
+export type { CreateSavedFiltersOptions, SavedFilterRecord, SavedFiltersApi } from "./saved-filters";
+export { FilterOptionsPanel } from "./filter-options-panel";
+export type { FilterOptionsPanelProps } from "./filter-options-panel";
+export {
+  FILTER_IS,
+  FILTER_IS_NOT,
+  addClause,
+  clausesFor,
+  createClauseId,
+  filterOperators,
+  matchClauses,
+  operatorLabel,
+  parseFilterPayload,
+  pluralize,
+  removeClause,
+  sameClauses,
+  serializeFilterPayload,
+  setClauseOperator,
+  setClauseValues,
+  toggleClauseValue,
+  valueSummary,
+} from "./filter-model";
 export type {
-  FilterPopoverProps,
-  FilterPopoverGroup,
-  FilterPopoverOption,
-  FilterPopoverAction,
-  FilterPopoverSearch,
-  FilterCategoryOption,
-  FilterCategoryPopoverProps,
-} from "./filter-popover";
+  FilterAccessors,
+  FilterClause,
+  FilterField,
+  FilterFieldKind,
+  FilterFieldOption,
+  FilterFieldValue,
+  FilterIcon,
+  FilterMatcher,
+  FilterOperatorDef,
+  FilterPayload,
+  SavedFilter,
+  SavedFiltersController,
+} from "./filter-model";
 export { DataTable, DataTableSelectionToolbarHost } from "./table";
 export type {
   DataTableColumnHeaderProps,
@@ -216,10 +247,10 @@ export type { DisclosureButtonProps } from "./disclosure-button";
 export { SwitcherTrigger } from "./switcher-trigger";
 export type { SwitcherTriggerProps } from "./switcher-trigger";
 export { ActiveFilterBar } from "./active-filter-bar";
-export type { ActiveFilterPill } from "./active-filter-bar";
+export type { ActiveFilterBarProps, ActiveFilterPill } from "./active-filter-bar";
 export * from "./hugeicons";
 
-export { FloatingSurfaceProvider, useInFloatingSurface } from "./floating-surface";
+export { FloatingSurfaceProvider, TextureFaceProvider, useInFloatingSurface, useTextureFace } from "./floating-surface";
 export { FloatingWindow } from "./floating-window";
 export type { FloatingWindowRootProps, FloatingWindowHeaderProps } from "./floating-window";
 export type { FloatingWindowDock, FloatingWindowGeometry } from "./floating-window-geometry";
@@ -228,7 +259,7 @@ export { DesignSystemProvider, useDesignSystem, type DesignSystemProviderProps, 
 export { registerIconTileAccents } from "./icon-tile";
 export { CHROME_PRESETS, CHROME_VARIANTS, chromeStopsFromTint, chromeVariant, chromeVariantIndex, type ChromePreset, type ChromeStop } from "./chrome-finish";
 export { EmptyIllustration } from "./feedback";
-export { Checkbox, type CheckboxProps } from "./checkbox";
+export { Checkbox, CheckboxRow, type CheckboxProps, type CheckboxRowProps } from "./checkbox";
 export { SegmentedControl, type SegmentedControlProps, type SegmentOption } from "./segmented-control";
 export { NumberStepper, type NumberStepperProps } from "./number-stepper";
 export { Slider, type SliderProps } from "./slider";

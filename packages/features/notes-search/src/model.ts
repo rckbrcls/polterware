@@ -38,7 +38,6 @@ export type SearchFilters = {
   updatedFrom: string;
   updatedTo: string;
 };
-export type SavedFilter = { id: string; name: string; filters: SearchFilters };
 export type SnippetPart = { text: string; highlight: boolean };
 export type IndexHonesty = { tone: "ok" | "degraded" | "syncing" | "danger" | "muted"; label: string; detail: string };
 
@@ -47,7 +46,6 @@ export const SEARCH_LIMIT = 50;
 export const RECENT_LIMIT = 8;
 export const DEBOUNCE_MS = 180;
 export const RECENT_KEY = "pwnotes.search.recent";
-export const SAVED_KEY = "pwnotes.search.saved";
 export const SEARCH_QUERY_MAX_LENGTH = 512;
 export const SNIPPET_OPEN = "<b>";
 export const SNIPPET_CLOSE = "</b>";

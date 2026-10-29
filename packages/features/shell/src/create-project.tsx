@@ -1,5 +1,5 @@
 import { Show, createSignal } from "solid-js";
-import { Button, SwitchRow, Input, Surface } from "@polterware/frontend-design-system";
+import { Button, CheckboxRow, Input, Surface } from "@polterware/frontend-design-system";
 
 /**
  * Neutral full-page create project form.
@@ -63,17 +63,17 @@ export function CreateProjectPage(props: {
             <legend class="mb-1.5 text-[12.5px] text-[var(--color-text-secondary)]">
               Initial environments
             </legend>
-            <SwitchRow
+            <CheckboxRow
               checked={envs().development}
               label="Development"
               onCheckedChange={(checked) => setEnvs((v) => ({ ...v, development: checked }))}
             />
-            <SwitchRow
+            <CheckboxRow
               checked={envs().staging}
               label="Staging"
               onCheckedChange={(checked) => setEnvs((v) => ({ ...v, staging: checked }))}
             />
-            <SwitchRow
+            <CheckboxRow
               checked={envs().production}
               label="Production"
               onCheckedChange={(checked) => setEnvs((v) => ({ ...v, production: checked }))}

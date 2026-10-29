@@ -11,7 +11,7 @@ const rows = readFileSync(resolve(root, "environment-rows.tsx"), "utf8");
 describe("Settings dialog composition contract", () => {
   it("renders the app settings dialog with a tab nav and section cards", () => {
     expect(source).toContain("<SettingsDialog");
-    expect(source).toContain('title="Settings"');
+    expect(source).toContain('"Project settings" : "App settings"');
     expect(source).toContain("SETTINGS_TABS");
     expect(source).toContain("<SettingsSection");
     expect(source).toContain("<SettingsRow");
