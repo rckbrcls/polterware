@@ -61,12 +61,14 @@ func toolDefinitions() []map[string]any {
 	return []map[string]any{
 		{
 			"name":        ToolPolterFormat,
-			"description": "Return the Polter format spec (about 150 tokens). Read it once before writing Work cards with polter.apply.",
-			"inputSchema": map[string]any{"type": "object", "properties": map[string]any{}},
+			"description": fmt.Sprintf("Polter format core (about %d tokens); read once before polter.apply. topic adds one part.", polter.SpecCoreTokens),
+			"inputSchema": map[string]any{"type": "object", "properties": map[string]any{
+				"topic": map[string]any{"type": "string", "enum": polter.SpecTopicNames},
+			}},
 		},
 		{
 			"name":        ToolPolterQuery,
-			"description": "Read project state as compact text. Before working on a card, node, or file, read \"brief <slug|path|file>\": target, open tasks and questions, last handoff, invariants, governing decisions, scope facts, milestone, canvas links, and docs. \"search <terms>\" finds nodes, cards, decisions, docs, and facts. Also \"cards\", \"card <slug>\", \"status\", \"handoff <slug>\", and \"canvas [<name|id>]\" (agent-visible only).",
+			"description": "Read project state as compact text. Read \"brief <slug|path|file>\" before working on a card, node, or file; \"search <terms>\" finds anything. The query field lists the other reads.",
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": map[string]any{
@@ -288,7 +290,7 @@ func toolDefinitions() []map[string]any {
 func (s *Server) invokeTool(name string, args map[string]any) (string, error) {
 	switch name {
 	case ToolPolterFormat:
-		return polter.Spec, nil
+		return polter.FormatSpec(stringFrom(args["topic"]))
 	case ToolPolterQuery:
 		return s.polterQuery(args)
 	case ToolPolterApply:

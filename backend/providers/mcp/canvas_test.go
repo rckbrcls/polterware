@@ -87,7 +87,8 @@ func TestPolterQueryMentionsCanvas(t *testing.T) {
 		props := tool["inputSchema"].(map[string]any)["properties"].(map[string]any)
 		query = props["query"].(map[string]any)["description"].(string)
 	}
-	if !strings.Contains(desc, "canvas") || !strings.Contains(query, "canvas <name|id>") {
+	// The description stays short; the query field lists every read, canvas included.
+	if desc == "" || !strings.Contains(query, "canvas <name|id>") {
 		t.Fatalf("description=%s query=%s", desc, query)
 	}
 	server := testServer(t)

@@ -123,10 +123,18 @@ func runLint(dbPath string, args []string) error {
 }
 
 func runFormat(args []string) error {
-	if len(args) > 0 {
-		return errors.New("usage: polterware format")
+	if len(args) > 1 {
+		return errors.New("usage: polterware format [" + strings.Join(polter.SpecTopicNames, "|") + "]")
 	}
-	fmt.Print(polter.Spec)
+	topic := ""
+	if len(args) == 1 {
+		topic = args[0]
+	}
+	text, err := polter.FormatSpec(topic)
+	if err != nil {
+		return err
+	}
+	fmt.Print(text)
 	return nil
 }
 

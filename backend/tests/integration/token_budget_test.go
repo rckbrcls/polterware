@@ -21,8 +21,9 @@ import (
 // the new number in the change that made the read cheaper.
 var tokenCeilings = map[string]int{
 	"mcp.initialize": 344,
-	"mcp.tools_list": 2251,
-	"polter.format":  1266,
+	"mcp.tools_list": 2199,
+	// The core alone; topics are read on demand (the whole spec was 1266).
+	"polter.format": 379,
 	// One brief replaces oracle + decision + handoff + context.get (461).
 	"card.context": 297,
 	// One brief replaces oracle + context.get (273).

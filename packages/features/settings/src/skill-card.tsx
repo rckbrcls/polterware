@@ -24,7 +24,7 @@ export function SkillCard() {
         tone="knowledge"
         seed="ai-skill"
         label="Polterware AI skill"
-        description="Markdown that teaches any agent the Polterware MCP tools and local CLI."
+        description="Short Markdown that points any agent at polterware status, brief, search, and format."
       >
         <Button
           size="sm"

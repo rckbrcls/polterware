@@ -48,8 +48,15 @@ func TestPolterFormatReturnsSpec(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if text != polter.Spec {
+	if text != polter.SpecCore {
 		t.Fatalf("polter.format returned %q", text)
+	}
+	topic, err := server.callTool(ToolPolterFormat, map[string]any{"topic": "decisions"})
+	if err != nil || topic != polter.SpecTopics["decisions"] {
+		t.Fatalf("polter.format decisions = %q, %v", topic, err)
+	}
+	if _, err := server.callTool(ToolPolterFormat, map[string]any{"topic": "nope"}); err == nil {
+		t.Fatal("an unknown topic must fail")
 	}
 }
 

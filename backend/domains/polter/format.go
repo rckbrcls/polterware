@@ -8,9 +8,11 @@ import (
 	"github.com/polterware/polterware/backend/domains/decision"
 )
 
-// Spec is the whole Polter format, small enough to teach an agent in one read.
-// `polterware format`, the plugin skill, and polter.format all print this text.
-const Spec = "Polter format v1: markdown that writes Work cards, Structure nodes, Decisions, and canon Facts.\n" +
+// SpecCore is the part of the Polter format every agent needs: Work cards,
+// tasks, questions, invariants, handoffs, claims, and where to read first.
+// `polterware format`, the plugin skill, and polter.format print it; the
+// rest is in SpecTopics, read on demand.
+const SpecCore = "Polter format v1: markdown that writes Work cards. One apply is one audited change.\n" +
 	"\n" +
 	"---\n" +
 	"polter: 1\n" +
@@ -19,9 +21,9 @@ const Spec = "Polter format v1: markdown that writes Work cards, Structure nodes
 	"---\n" +
 	"\n" +
 	"## git-import: Git metadata import\n" +
-	"stage: plan · owner: erick · under: core/import · decisions: Decision-0007\n" +
+	"stage: build · under: core/import · milestone: beta · decisions: Decision-0007\n" +
 	"\n" +
-	"Intent paragraph: what we want and why.\n" +
+	"Intent: what we want and why.\n" +
 	"\n" +
 	"- [ ] T1 Upsert commit evidence `backend/import/*`\n" +
 	"- [x] T2 Stamp revision on facts\n" +
@@ -30,38 +32,80 @@ const Spec = "Polter format v1: markdown that writes Work cards, Structure nodes
 	"\n" +
 	"handoff:\n" +
 	"branch: feat/git-import\n" +
-	"agent: codex\n" +
-	"goal: import HEAD, branch and recent commits as evidence\n" +
-	"done: commit evidence upsert in core\n" +
-	"in_progress: stamping revision on observed facts\n" +
 	"next: wire into ImportProjectSources\n" +
-	"touched: backend/import.go, docs/spec.md\n" +
-	"\n" +
-	"### new: Local SQLite authority\n" +
-	"status: active · trigger: multi-user sync · supersedes: Decision-0003 · reason: why\n" +
-	"\n" +
-	"Decision body: context, decision, consequences.\n" +
-	"\n" +
-	"#### local-authority: One local core owns SQLite.\n" +
-	"kind: declared · scope: core · evidence: ev-existing-id\n" +
 	"\n" +
 	"Rules:\n" +
-	"- `## slug: Title` is a card; the lowercase-kebab slug is its identity.\n" +
-	"- `# path: Title` is a Structure node. level: system, domain, or component. under: names the parent path. A component may also sit directly under its system (outside any domain). kind: says what a component is (frontend, service, api, worker, database, cache, queue, storage, auth, llm, and the other canvas component kinds; only components have one, empty clears) and tech: names its technology in free text (Go, Postgres; empty clears). A different under: on an existing node moves it and rewrites descendant paths. uses: lists the node paths it depends on (comma separated; empty clears); the map draws them as edges. deploys: lists env=provider:resource links (comma separated; a present line replaces them, empty clears). A card under: names a component path once any component exists. repo: names a checkout from `polterware repo add` (empty is the project root); path: is a folder inside it, not the node path. migrating: old design -> new design marks a node in transition (empty clears it).\n" +
-	"- `### ref: Title` is a Decision lifecycle block. `new` proposes one (a number is assigned); a ref such as `Decision-0003` or an id changes an existing one. States: proposed → active → challenged → active or superseded. `status: challenged` needs a reason:; `level: principle` pins it for the whole project; `trigger:` is the review condition; `scope:` is the Structure node path the decision applies to (omit for the whole project); `supersedes: Decision-0003` on the newer decision marks the older one superseded. Decisions are never removed. The body is plain text: no # lines.\n" +
-	"- `#### slug: Statement` creates a canon Fact or updates it by its lowercase-kebab slug; an existing Fact id can replace the slug. Omit the heading statement on updates to keep it. `kind:` is declared (default on create), observed, inferred, or verified. `scope:` names a Structure node path (empty clears; omit for the whole project on create). `evidence:` lists existing canon evidence ids, comma separated (a present line replaces links, empty clears). Omitted fields stay unchanged. Plan output uses the Fact id. Facts have no body text.\n" +
-	"- Stages: shape, plan, build, verify, delivered.\n" +
-	"- `milestone:` puts a card in a milestone by its slug (`polterware query milestones`; empty moves it back to the Backlog). Milestones are created in the Desktop; `query roadmap` lists the active ones with their goal and cards.\n" +
-	"- `kind: architecture` marks a card as an Architecture Change (default feature). Its under: names the node it changes; set `migrating:` on that node while the change is in flight, and clear it when the card is delivered.\n" +
-	"- Tasks: [ ] open, [x] done, [-] dropped; T<n>, `[repo: api]`, and a trailing `scope` glob are optional. A scope may carry its checkout: `api:src/auth/*`.\n" +
-	"- `?` is an open question, `!` a contract invariant. `? Question -> answer` records the decision and closes its Inbox item.\n" +
-	"- `handoff:` records one session on `branch:` (required): goal, done, in_progress, next, touched, agent.\n" +
-	"- Claim before editing: `claim: T2` in the card or `polterware task claim slug#T2`; `done: T2` finishes, `release: T2` lets go. The holder is the session agent; a task or overlapping scope held by another agent is refused. Scopes in different checkouts never overlap.\n" +
-	"- A text only changes what it mentions. Remove with status: removed, [-], or a trailing [removed].\n" +
-	"- New feature: `polterware feature new \"<intent>\"`, then `feature shape|contract|plan <slug>` (`--accept` / `--approve` pass the gate); check with `polterware verify <slug>`.\n" +
-	"- Start with `polterware status`. End with `polterware handoff --card <slug> --note \"...\"`.\n" +
-	"- Before you work on a card, a node, or a file, read `polterware brief <slug|path|file>`: tasks, invariants, governing decisions, facts, and milestone in one read. Find anything with `polterware search <terms>`.\n" +
-	"- Check with `polterware lint file.pw.md`; write with `polterware apply file.pw.md [--dry-run]`.\n"
+	"- `## slug: Title` is a card; the lowercase-kebab slug is its identity. Stages: shape, plan, build, verify, delivered. under: is a Structure component path; milestone: is a milestone slug (empty is the Backlog).\n" +
+	"- Tasks: [ ] open, [x] done, [-] dropped; T<n> and a trailing `scope` glob are optional. `?` is a question (`? Question -> answer` answers it), `!` an invariant.\n" +
+	"- handoff: needs branch:; it also takes goal, done, in_progress, next, touched, agent.\n" +
+	"- Claim a task before editing it: `claim: T2`; `done: T2` finishes it, `release: T2` lets go.\n" +
+	"- A text changes only what it mentions. Remove with status: removed, [-], or a trailing [removed].\n" +
+	"- Read `polterware brief <slug|path|file>` before you work; find with `polterware search <terms>`. Start with `polterware status`; end with a handoff.\n" +
+	"- More: `polterware format structure|decisions|facts|feature`. Check with `polterware lint <file>`; write with `polterware apply <file|-> [--dry-run]`.\n"
+
+// SpecCoreTokens is the size polter.format declares for SpecCore; a test
+// keeps it within 10% of the measured text.
+const SpecCoreTokens = 360
+
+// SpecTopics are the rest of the format, one block per topic.
+var SpecTopics = map[string]string{
+	"structure": "Polter Structure nodes.\n" +
+		"\n" +
+		"# core/import: Import\n" +
+		"level: component · under: core · kind: service · tech: Go · repo: api · path: src/import · uses: core/store\n" +
+		"\n" +
+		"Intent paragraph.\n" +
+		"\n" +
+		"! No network calls during scan\n" +
+		"\n" +
+		"- `# path: Title` is a Structure node. level: system, domain, or component. under: names the parent path. A component may also sit directly under its system (outside any domain). A different under: on an existing node moves it and rewrites descendant paths.\n" +
+		"- kind: says what a component is (frontend, service, api, worker, database, cache, queue, storage, auth, llm, and the other canvas component kinds; only components have one, empty clears); tech: names its technology in free text (Go, Postgres; empty clears).\n" +
+		"- uses: lists the node paths it depends on (comma separated; empty clears); the map draws them as edges. deploys: lists env=provider:resource links (comma separated; a present line replaces them, empty clears).\n" +
+		"- repo: names a checkout from `polterware repo add` (empty is the project root); path: is a folder inside it, not the node path. A brief of a file finds the node with the longest repo + path prefix.\n" +
+		"- migrating: old design -> new design marks a node in transition (empty clears it). A card with `kind: architecture` is an Architecture Change: its under: names the node it changes; clear migrating: when the card is delivered.\n" +
+		"- A card under: names a component path once any component exists.\n",
+	"decisions": "Polter Decisions.\n" +
+		"\n" +
+		"### new: Local SQLite authority\n" +
+		"status: active · trigger: multi-user sync · supersedes: Decision-0003 · reason: why\n" +
+		"\n" +
+		"Decision body: context, decision, consequences.\n" +
+		"\n" +
+		"- `### ref: Title` is a Decision lifecycle block. `new` proposes one (a number is assigned); a ref such as `Decision-0003` or an id changes an existing one.\n" +
+		"- States: proposed → active → challenged → active or superseded. `status: challenged` needs a reason:. `supersedes: Decision-0003` on the newer decision marks the older one superseded. Decisions are never removed.\n" +
+		"- `level: principle` pins it for the whole project; `trigger:` is the review condition; `scope:` is the Structure node path it applies to (omit for the whole project).\n" +
+		"- The body is plain text: no # lines. A card cites decisions with `decisions: Decision-0007`.\n",
+	"facts": "Polter Facts.\n" +
+		"\n" +
+		"#### local-authority: One local core owns SQLite.\n" +
+		"kind: declared · scope: core · evidence: ev-existing-id\n" +
+		"\n" +
+		"- `#### slug: Statement` creates a canon Fact or updates it by its lowercase-kebab slug; an existing Fact id can replace the slug. Omit the heading statement on updates to keep it.\n" +
+		"- `kind:` is declared (default on create), observed, inferred, or verified. `scope:` names a Structure node path (empty clears; omit for the whole project on create).\n" +
+		"- `evidence:` lists existing canon evidence ids, comma separated (a present line replaces links, empty clears). Omitted fields stay unchanged. Plan output uses the Fact id. Facts have no body text.\n",
+	"feature": "Polter feature flow, tasks, and claims.\n" +
+		"\n" +
+		"- New feature: `polterware feature new \"<intent>\"`, then `feature shape|contract|plan <slug>` (`--accept` / `--approve` pass the gate); check with `polterware verify <slug>`.\n" +
+		"- A card also takes owner: and decisions: (comma-separated refs). Tasks take `[repo: api]`; a scope may carry its checkout: `api:src/auth/*`.\n" +
+		"- Claims: `claim: T2` in a card or `polterware task claim slug#T2`. The holder is the session agent; a task or overlapping scope held by another agent is refused. Scopes in different checkouts never overlap.\n" +
+		"- handoff: records one session on branch: with goal, done, in_progress, next, touched (comma separated), and agent. End a session with `polterware handoff --card <slug> --note \"...\"`.\n" +
+		"- Milestones are created in the Desktop; `polterware query milestones` lists them and `query roadmap` the active ones with their goal and cards.\n",
+}
+
+// SpecTopicNames lists the topics in the order the help prints them.
+var SpecTopicNames = []string{"structure", "decisions", "facts", "feature"}
+
+// FormatSpec returns SpecCore for an empty topic, or one topic's block.
+func FormatSpec(topic string) (string, error) {
+	topic = strings.TrimSpace(topic)
+	if topic == "" {
+		return SpecCore, nil
+	}
+	if text, ok := SpecTopics[topic]; ok {
+		return text, nil
+	}
+	return "", fmt.Errorf("unknown format topic %q: use %s", topic, strings.Join(SpecTopicNames, ", "))
+}
 
 // Query is a parsed read request.
 type Query struct {

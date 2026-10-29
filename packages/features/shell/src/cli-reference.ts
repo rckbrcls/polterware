@@ -260,10 +260,11 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
   {
     id: "format",
     name: "polterware format",
-    synopsis: "polterware format",
-    summary: "Print the Polter format spec, short enough to teach an agent in one read.",
+    synopsis: "polterware format [structure|decisions|facts|feature]",
+    summary:
+      "Print the Polter format core (Work cards, tasks, handoffs, claims; about 360 tokens), or one topic: Structure nodes, Decisions, Facts, or the feature flow.",
     flags: [],
-    example: "polterware format",
+    example: "polterware format decisions",
   },
   {
     id: "query",
