@@ -5,7 +5,7 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
   overflow: auto;
   padding: 4px 8px;
 }
@@ -16,14 +16,16 @@
   gap: 2px;
 }
 
+/* Linear section label: a 28px row in sentence case, quieter than the items below it. */
 .pw-sidebar-group-label {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
   margin: 0;
-  padding: 0 8px 4px;
-  font-size: 10px;
+  padding: 0 8px;
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-text-disabled);
+  color: var(--color-text-muted);
 }
 
 .pw-sidebar-item {
@@ -32,11 +34,12 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-height: 30px;
-  padding: 6px 8px;
+  /* Linear rows: 28px on a ~30px pitch. */
+  min-height: 28px;
+  padding: 0 9px 0 8px;
   margin: 0;
   border: none;
-  border-radius: var(--radius-item, 8px);
+  border-radius: 8px;
   background: transparent;
   color: var(--color-text-muted);
   font-family: inherit;
@@ -93,12 +96,12 @@
 }
 
 .pw-sidebar-active {
-  border-radius: var(--radius-item, 8px);
+  border-radius: 8px;
   background: var(--color-surface-selected);
 }
 
 .pw-sidebar-hover {
-  border-radius: var(--radius-item, 8px);
+  border-radius: 8px;
 }
 
 .pw-sidebar-item:focus {
