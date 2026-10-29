@@ -613,6 +613,13 @@ export async function persistProjectSettings(
   await syncEnvironmentDefaultFlags(projectId, environments, settings.defaultEnvironmentId);
 }
 
+/** Turns AGENTS.md sync on or off; on writes each checkout's block at once. Returns the files written. */
+export async function persistAgentsSync(projectId: string, enabled: boolean): Promise<number> {
+  const response = await core().projects.setAgentsSync({ projectId, enabled });
+  const files: unknown[] = Array.isArray(response.files) ? response.files : [];
+  return files.filter((file) => (file as { action?: string }).action === "write").length;
+}
+
 export async function persistEnvironment(input: {
   projectId: string;
   name: string;

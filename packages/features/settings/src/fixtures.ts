@@ -52,6 +52,7 @@ export const PROJECT_GENERAL_SETTINGS_MOCK: ProjectGeneralSettings = {
   name: "Polter",
   description: "Local project context for AI coding",
   defaultEnvironmentId: "env-prod",
+  agentsSync: false,
   projectId: "polter_01H7E2K3Q8V6",
   repository: "polterware/polter",
   dataSource: "fixture",

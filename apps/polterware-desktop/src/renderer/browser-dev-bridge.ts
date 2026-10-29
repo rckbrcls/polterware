@@ -37,8 +37,8 @@ const previewEnvironments = [
 ];
 
 const previewSettings = [
-  { projectId: PREVIEW_PROJECT_ID, description: "Sample project with data in every surface.", defaultEnvironmentId: "env-local", repository: "polterware" },
-  { projectId: EMPTY_PROJECT_ID, description: "", defaultEnvironmentId: "env-empty-local", repository: "" },
+  { projectId: PREVIEW_PROJECT_ID, description: "Sample project with data in every surface.", defaultEnvironmentId: "env-local", repository: "polterware", agentsSync: false },
+  { projectId: EMPTY_PROJECT_ID, description: "", defaultEnvironmentId: "env-empty-local", repository: "", agentsSync: false },
 ];
 
 const previewRepos = [
@@ -786,6 +786,11 @@ function createBrowserDevBridge(): PolterwareBridge {
         getSettings: async (args?: ProjectArgs) => ({
           settings: previewSettings.find((item) => item.projectId === args?.projectId) ?? previewSettings[1],
         }),
+        setAgentsSync: async (args?: ProjectArgs & { enabled?: boolean }) => {
+          const settings = previewSettings.find((item) => item.projectId === args?.projectId);
+          if (settings) settings.agentsSync = args?.enabled === true;
+          return { enabled: args?.enabled === true, files: args?.enabled ? [{ repo: "", path: "AGENTS.md", action: "write", reason: "" }] : [] };
+        },
         listRepos: scoped({ repos: previewRepos }, { repos: [] }),
       }),
       canvas: createBrowserCanvas(),

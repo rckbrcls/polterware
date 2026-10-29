@@ -7,6 +7,7 @@ import {
   Plus,
   Select,
   SettingsDialog,
+  SwitchRow,
   Textarea,
   pushToast,
 } from "@polterware/frontend-design-system";
@@ -39,6 +40,7 @@ export function ProjectSettingsDialog(props: {
   onAddRepository?: (draft: { name: string; path: string }) => Promise<void> | void;
   onRemoveRepository?: (name: string) => Promise<void> | void;
   onBrowseRepository?: () => Promise<string | null | undefined>;
+  onAgentsSyncChange?: (enabled: boolean) => Promise<void> | void;
   onCreateEnvironment?: (draft: CreateEnvironmentDraft) => void;
   onSetDefaultEnvironment?: (environmentId: string) => void;
   onDeleteEnvironment?: (environmentId: string) => void;
@@ -54,6 +56,7 @@ export function ProjectSettingsDialog(props: {
   const [repoName, setRepoName] = createSignal("");
   const [repoPath, setRepoPath] = createSignal("");
   const [repoBusy, setRepoBusy] = createSignal(false);
+  const [syncBusy, setSyncBusy] = createSignal(false);
   const [archiveOpen, setArchiveOpen] = createSignal(false);
   const [createOpen, setCreateOpen] = createSignal(false);
   const [activeSection, setActiveSection] = createSignal<string>(props.tab ?? "general");
@@ -109,6 +112,7 @@ export function ProjectSettingsDialog(props: {
       defaultEnvironmentId: defaultEnvironmentId(),
       projectId: current?.projectId ?? "",
       repository: repository(),
+      agentsSync: current?.agentsSync ?? false,
       dataSource: current?.dataSource ?? "empty",
     });
     if (!props.onSaveGeneral) {
@@ -272,6 +276,25 @@ export function ProjectSettingsDialog(props: {
                   Add repository
                 </Button>
               </div>
+            </SettingsSection>
+            <SettingsSection
+              title="AGENTS.md"
+              description="The generated Polterware block in each checkout's AGENTS.md: principles, Structure, decisions, and invariants. The rest of the file is left alone."
+            >
+              <SettingsRow
+                label="Keep in sync"
+                description="Rewrite the block a moment after project state changes, only when it differs. Off, it changes only on polterware export."
+              >
+                <SwitchRow
+                  checked={general()?.agentsSync ?? false}
+                  disabled={syncBusy() || !props.onAgentsSyncChange}
+                  label={<span class="sr-only">Keep AGENTS.md in sync</span>}
+                  onCheckedChange={(checked) => {
+                    setSyncBusy(true);
+                    void Promise.resolve(props.onAgentsSyncChange?.(checked)).finally(() => setSyncBusy(false));
+                  }}
+                />
+              </SettingsRow>
             </SettingsSection>
           </Show>
 

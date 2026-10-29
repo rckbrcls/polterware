@@ -29,6 +29,8 @@ export type ProjectGeneralSettings = {
   defaultEnvironmentId: string;
   projectId: string;
   repository: string;
+  /** Whether the core keeps each checkout's AGENTS.md block current. */
+  agentsSync: boolean;
   dataSource: DataSource;
 };
 

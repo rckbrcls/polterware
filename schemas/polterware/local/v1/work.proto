@@ -355,6 +355,18 @@ message ProjectionFile {
 
 message ExportProjectionsResponse { repeated ProjectionFile files = 1; }
 
+// SetAgentsSync turns on or off rewriting the generated AGENTS.md block of
+// every checkout after project state changes (Decision files stay on
+// ExportProjections). Turning it on syncs at once and returns those files.
+message SetAgentsSyncRequest {
+  string project_id = 1;
+  bool enabled = 2;
+}
+message SetAgentsSyncResponse {
+  bool enabled = 1;
+  repeated ProjectionFile files = 2;
+}
+
 // Feature flow (slice 9): Intent creates a card in shape, Shape shows its
 // impact, and the contract (shape → plan) and plan (plan → build) gates move
 // the stage. An open blocking question stops a gate; other checks are hints.
@@ -553,6 +565,7 @@ service WorkService {
   rpc ResolveInboxItem(ResolveInboxItemRequest) returns (ResolveInboxItemResponse);
   rpc SetScope(SetScopeRequest) returns (SetScopeResponse);
   rpc ExportProjections(ExportProjectionsRequest) returns (ExportProjectionsResponse);
+  rpc SetAgentsSync(SetAgentsSyncRequest) returns (SetAgentsSyncResponse);
   rpc ReviewFeature(ReviewFeatureRequest) returns (ReviewFeatureResponse);
   rpc CreateFeature(CreateFeatureRequest) returns (CreateFeatureResponse);
   rpc AdvanceFeature(AdvanceFeatureRequest) returns (AdvanceFeatureResponse);

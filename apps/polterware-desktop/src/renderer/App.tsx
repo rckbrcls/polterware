@@ -120,6 +120,7 @@ import {
   persistAddProjectRepo,
   persistProjectSettings,
   persistRemoveProjectRepo,
+  persistAgentsSync,
   persistDecisionAction,
   persistWorkCreateCard,
   persistWorkRestoreCard,
@@ -1155,6 +1156,17 @@ export function App() {
         onBrowseRepository={async () => {
           const selected = await window.polterware.app.selectDirectory();
           return selected.path;
+        }}
+        onAgentsSyncChange={async (enabled) => {
+          try {
+            const written = await persistAgentsSync(currentProjectId(), enabled);
+            pushToast(enabled
+              ? `AGENTS.md sync on${written > 0 ? `: ${written} ${written === 1 ? "file" : "files"} updated` : ""}.`
+              : "AGENTS.md sync off.", "success");
+            await refreshWorkspace(currentProjectId());
+          } catch (error: unknown) {
+            pushToast(error instanceof Error ? error.message : "Could not change AGENTS.md sync.", "danger");
+          }
         }}
         onSaveGeneral={(settings) => {
           void persistProjectSettings(

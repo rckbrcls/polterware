@@ -15,10 +15,37 @@ func (s *Store) SaveProjectSettings(settings projects.Settings) error {
 func (s *Store) GetProjectSettings(projectID string) (projects.Settings, error) {
 	var item projects.Settings
 	var defaultEnv string
-	err := s.DB.QueryRow(`SELECT project_id,description,COALESCE(default_environment_id,''),repository FROM project_settings WHERE project_id=?`, projectID).
-		Scan(&item.ProjectID, &item.Description, &defaultEnv, &item.Repository)
+	err := s.DB.QueryRow(`SELECT project_id,description,COALESCE(default_environment_id,''),repository,agents_sync FROM project_settings WHERE project_id=?`, projectID).
+		Scan(&item.ProjectID, &item.Description, &defaultEnv, &item.Repository, &item.AgentsSync)
 	item.DefaultEnvironmentID = defaultEnv
 	return item, err
+}
+
+// SetAgentsSync turns AGENTS.md sync on or off for a project, creating its
+// settings row when it has none.
+func (s *Store) SetAgentsSync(projectID string, on bool) error {
+	_, err := s.DB.Exec(`INSERT INTO project_settings(project_id,agents_sync) VALUES(?,?)
+		ON CONFLICT(project_id) DO UPDATE SET agents_sync=excluded.agents_sync`, projectID, on)
+	return err
+}
+
+// AgentsSyncProjects lists the projects with AGENTS.md sync on.
+func (s *Store) AgentsSyncProjects() ([]string, error) {
+	rows, err := s.DB.Query(`SELECT ps.project_id FROM project_settings ps JOIN projects p ON p.id = ps.project_id
+		WHERE ps.agents_sync = 1 AND p.status = 'active' ORDER BY ps.project_id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out = append(out, id)
+	}
+	return out, rows.Err()
 }
 
 func (s *Store) SaveIntegrationResource(resource integrations.Resource) error {

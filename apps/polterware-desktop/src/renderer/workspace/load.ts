@@ -94,6 +94,7 @@ const emptySettings: ProjectGeneralSettings = {
   name: "",
   description: "",
   defaultEnvironmentId: "",
+  agentsSync: false,
   projectId: "",
   repository: "",
   dataSource: "unavailable",

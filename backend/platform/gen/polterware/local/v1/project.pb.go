@@ -211,8 +211,11 @@ type ProjectSettings struct {
 	Description          string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	DefaultEnvironmentId string                 `protobuf:"bytes,3,opt,name=default_environment_id,json=defaultEnvironmentId,proto3" json:"default_environment_id,omitempty"`
 	Repository           string                 `protobuf:"bytes,4,opt,name=repository,proto3" json:"repository,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// agents_sync is read-only here: SaveProjectSettings ignores it and
+	// WorkService.SetAgentsSync changes it.
+	AgentsSync    bool `protobuf:"varint,5,opt,name=agents_sync,json=agentsSync,proto3" json:"agents_sync,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ProjectSettings) Reset() {
@@ -271,6 +274,13 @@ func (x *ProjectSettings) GetRepository() string {
 		return x.Repository
 	}
 	return ""
+}
+
+func (x *ProjectSettings) GetAgentsSync() bool {
+	if x != nil {
+		return x.AgentsSync
+	}
+	return false
 }
 
 type ListProjectsRequest struct {
@@ -1556,7 +1566,7 @@ const file_polterware_local_v1_project_proto_rawDesc = "" +
 	"protection\x12\x1d\n" +
 	"\n" +
 	"is_default\x18\x06 \x01(\bR\tisDefault\x12 \n" +
-	"\vdescription\x18\a \x01(\tR\vdescription\"\xa8\x01\n" +
+	"\vdescription\x18\a \x01(\tR\vdescription\"\xc9\x01\n" +
 	"\x0fProjectSettings\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12 \n" +
@@ -1564,7 +1574,9 @@ const file_polterware_local_v1_project_proto_rawDesc = "" +
 	"\x16default_environment_id\x18\x03 \x01(\tR\x14defaultEnvironmentId\x12\x1e\n" +
 	"\n" +
 	"repository\x18\x04 \x01(\tR\n" +
-	"repository\"@\n" +
+	"repository\x12\x1f\n" +
+	"\vagents_sync\x18\x05 \x01(\bR\n" +
+	"agentsSync\"@\n" +
 	"\x13ListProjectsRequest\x12)\n" +
 	"\x10include_archived\x18\x01 \x01(\bR\x0fincludeArchived\"P\n" +
 	"\x14ListProjectsResponse\x128\n" +

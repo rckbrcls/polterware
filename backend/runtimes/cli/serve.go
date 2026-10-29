@@ -71,6 +71,7 @@ func runServe(dbPath string, args []string) error {
 		core.Build = coreclient.BuildID(exe)
 	}
 	hs := localcore.ServeConnect(ln, core)
+	go core.RunAgentsSync(core.Done(), agentsSyncDelay, os.Stderr)
 
 	if err := runstate.WriteJSON(runstate.CorePath(dbPath), runstate.Core{
 		PID:       os.Getpid(),
@@ -109,6 +110,9 @@ wait:
 	_ = hs.Shutdown(ctx)
 	return nil
 }
+
+// agentsSyncDelay lets a burst of writes land before AGENTS.md is rewritten.
+const agentsSyncDelay = 2 * time.Second
 
 func idleFromEnv() time.Duration {
 	if value := os.Getenv("POLTERWARE_CORE_IDLE"); value != "" {

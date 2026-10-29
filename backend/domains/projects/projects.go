@@ -36,6 +36,9 @@ type Settings struct {
 	Description          string
 	DefaultEnvironmentID string
 	Repository           string
+	// AgentsSync keeps the generated AGENTS.md block of each checkout current.
+	// It is set on its own (SetAgentsSync), never by a settings save.
+	AgentsSync bool
 }
 
 // Repository is one extra local Git checkout registered on a project.

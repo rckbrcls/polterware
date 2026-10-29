@@ -58,6 +58,7 @@ export const IPC_CHANNELS = {
     deleteEnvironment: "core:delete-environment",
     getProjectSettings: "core:get-project-settings",
     saveProjectSettings: "core:save-project-settings",
+    setAgentsSync: "core:set-agents-sync",
     listProjectRepos: "core:list-project-repos",
     addProjectRepo: "core:add-project-repo",
     removeProjectRepo: "core:remove-project-repo",

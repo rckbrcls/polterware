@@ -112,6 +112,7 @@ export function mapSettings(
     defaultEnvironmentId: asString(settings.defaultEnvironmentId),
     projectId: asString(settings.projectId),
     repository: asString(settings.repository),
+    agentsSync: settings.agentsSync === true,
     dataSource: "empty",
   };
 }

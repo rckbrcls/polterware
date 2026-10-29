@@ -117,3 +117,37 @@ func TestReplaceBlock(t *testing.T) {
 		t.Fatalf("missing end sentinel must fail")
 	}
 }
+
+func TestBlockListsPrinciplesStructureAndTheBriefLine(t *testing.T) {
+	nodes, decisions := testGraph()
+	nodes = append(nodes, structure.Node{ID: "c", ParentID: "d", Path: "shop/auth/session", Level: structure.LevelComponent, Title: "Sessions",
+		Status: structure.NodeActive, Repo: "api", Folder: "src/auth/session", Kind: "service", Tech: "Go"})
+	decisions = append(decisions, Decision{ID: "decision-local", Title: "Local first", Status: "active", Principle: true})
+	governed := Govern(nodes, decisions)
+	want := BlockBegin + `
+## Polterware project context
+
+Generated from the Polterware project store by ` + "`polterware export`" + `, or on every change when AGENTS.md sync is on. Edits inside this block are replaced; change the source with ` + "`polterware apply`" + `. Before you work on a card, a Structure node, or a file, read ` + "`polterware brief <slug|path|file>`" + `.
+
+Principles:
+- Local first
+
+Structure:
+- shop/auth (domain) Auth · path: src/auth
+- shop/auth/session (component) Sessions · service · Go · path: src/auth/session
+
+Decisions:
+- Decision 0001: Integer cents (accepted)
+- Decision 0002: Short tokens
+
+Invariants:
+- Money is integer cents (from shop)
+- Tokens expire in 15 minutes (from shop/auth)
+` + BlockEnd + "\n"
+	if got := Block("api", nodes, governed["api"], decisions); got != want {
+		t.Fatalf("block:\n%s\nwant:\n%s", got, want)
+	}
+	if root := Block("", nodes, governed[""], decisions); !strings.Contains(root, "Principles:\n- Local first\n") || strings.Contains(root, "- Local first (active)") {
+		t.Fatalf("a principle is listed once, under Principles:\n%s", root)
+	}
+}

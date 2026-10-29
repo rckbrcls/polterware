@@ -197,11 +197,12 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
   {
     id: "export",
     name: "polterware export",
-    synopsis: "polterware export [--dry-run] [--json] [--project <id>]",
+    synopsis: "polterware export [--dry-run] [--sync on|off] [--json] [--project <id>]",
     summary:
-      "Write Decision files and the generated AGENTS.md block into every checkout of the project.",
+      "Write Decision files and the generated AGENTS.md block (principles, Structure, decisions, invariants) into every checkout of the project.",
     flags: [
       { name: "--dry-run", description: "Print what would change without writing." },
+      { name: "--sync", value: "on|off", description: "Keep the AGENTS.md blocks current after every change instead of exporting once." },
       PROJECT_FLAG,
       JSON_FLAG,
     ],

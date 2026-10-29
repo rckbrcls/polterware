@@ -9,6 +9,7 @@ import (
 
 	"github.com/polterware/polterware/backend/domains/decision"
 	"github.com/polterware/polterware/backend/domains/projection"
+	"github.com/polterware/polterware/backend/domains/structure"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
@@ -39,42 +40,13 @@ type checkout struct {
 // the source of truth: files are replaced, never read back into SQLite. A
 // file under docs/decision/ that Polterware did not write is never overwritten.
 func ExportProjections(store *storepkg.Store, projectID string, dryRun bool) ([]ProjectionFile, error) {
-	project, err := store.GetProject(projectID)
-	if err != nil {
-		return nil, fmt.Errorf("unknown project %q", projectID)
-	}
-	snapshot, err := store.LoadWorkSnapshot(projectID)
+	in, err := loadProjections(store, projectID)
 	if err != nil {
 		return nil, err
 	}
-	items, err := store.ListKnowledge(projectID, "decision")
-	if err != nil {
-		return nil, err
-	}
-	// Every Decision is projected as a file (history stays readable); superseded
-	// ones are left out of the AGENTS.md block, which agents follow.
-	decisions := make([]projection.Decision, 0, len(items))
-	binding := make([]projection.Decision, 0, len(items))
-	for _, item := range items {
-		record := projection.Decision{ID: item.ID, Title: item.Title, Body: item.Body, Status: decision.Normalize(item.Status)}
-		decisions = append(decisions, record)
-		if record.Status != decision.StateSuperseded {
-			binding = append(binding, record)
-		}
-	}
-	repos, err := store.ListProjectRepos(projectID)
-	if err != nil {
-		return nil, err
-	}
-	checkouts := []checkout{{name: "", dir: ExpandRootPath(project.RootPath)}}
-	for _, repo := range repos {
-		checkouts = append(checkouts, checkout{name: repo.Name, dir: ExpandRootPath(repo.Path)})
-	}
-
-	governed := projection.Govern(snapshot.Nodes, decisions)
-	governedBinding := projection.Govern(snapshot.Nodes, binding)
+	governed := projection.Govern(in.nodes, in.decisions)
 	var out []ProjectionFile
-	for _, co := range checkouts {
+	for _, co := range in.checkouts {
 		if info, err := os.Stat(co.dir); err != nil || !info.IsDir() {
 			out = append(out, ProjectionFile{Repo: co.name, Path: ".", Action: ProjectionSkip, Reason: "checkout directory not found"})
 			continue
@@ -89,14 +61,86 @@ func ExportProjections(store *storepkg.Store, projectID string, dryRun bool) ([]
 			return out, err
 		}
 		out = append(out, legacy...)
-		block := projection.Block(co.name, snapshot.Nodes, governedBinding[co.name], binding)
-		file, err := exportAgentsBlock(co, block, dryRun)
+		file, err := exportAgentsBlock(co, in.block(co.name), dryRun)
 		if err != nil {
 			return out, err
 		}
 		out = append(out, file)
 	}
 	return out, nil
+}
+
+// SyncAgentsBlocks rewrites only the generated AGENTS.md block of each
+// checkout, and only where it changed; Decision files stay on export. A
+// checkout whose directory is missing is skipped.
+func SyncAgentsBlocks(store *storepkg.Store, projectID string) ([]ProjectionFile, error) {
+	in, err := loadProjections(store, projectID)
+	if err != nil {
+		return nil, err
+	}
+	var out []ProjectionFile
+	for _, co := range in.checkouts {
+		if info, err := os.Stat(co.dir); err != nil || !info.IsDir() {
+			out = append(out, ProjectionFile{Repo: co.name, Path: ".", Action: ProjectionSkip, Reason: "checkout directory not found"})
+			continue
+		}
+		file, err := exportAgentsBlock(co, in.block(co.name), false)
+		if err != nil {
+			return out, err
+		}
+		out = append(out, file)
+	}
+	return out, nil
+}
+
+type projections struct {
+	checkouts []checkout
+	nodes     []structure.Node
+	// decisions are every Decision, each projected as a file so history stays
+	// readable; binding leaves out superseded ones, which agents do not follow.
+	decisions, binding []projection.Decision
+	governed           map[string][]projection.Decision
+}
+
+func (p projections) block(checkout string) string {
+	return projection.Block(checkout, p.nodes, p.governed[checkout], p.binding)
+}
+
+func loadProjections(store *storepkg.Store, projectID string) (projections, error) {
+	project, err := store.GetProject(projectID)
+	if err != nil {
+		return projections{}, fmt.Errorf("unknown project %q", projectID)
+	}
+	snapshot, err := store.LoadWorkSnapshot(projectID)
+	if err != nil {
+		return projections{}, err
+	}
+	principles := map[string]bool{}
+	for _, item := range snapshot.Decisions {
+		principles[item.ID] = item.Level == decision.LevelPrinciple
+	}
+	items, err := store.ListKnowledge(projectID, "decision")
+	if err != nil {
+		return projections{}, err
+	}
+	in := projections{nodes: snapshot.Nodes}
+	for _, item := range items {
+		record := projection.Decision{ID: item.ID, Title: item.Title, Body: item.Body, Status: decision.Normalize(item.Status), Principle: principles[item.ID]}
+		in.decisions = append(in.decisions, record)
+		if record.Status != decision.StateSuperseded {
+			in.binding = append(in.binding, record)
+		}
+	}
+	in.governed = projection.Govern(in.nodes, in.binding)
+	repos, err := store.ListProjectRepos(projectID)
+	if err != nil {
+		return projections{}, err
+	}
+	in.checkouts = []checkout{{name: "", dir: ExpandRootPath(project.RootPath)}}
+	for _, repo := range repos {
+		in.checkouts = append(in.checkouts, checkout{name: repo.Name, dir: ExpandRootPath(repo.Path)})
+	}
+	return in, nil
 }
 
 func exportDecisions(co checkout, decisions []projection.Decision, dryRun bool) ([]ProjectionFile, error) {

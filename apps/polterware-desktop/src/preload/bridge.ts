@@ -110,6 +110,7 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         deleteEnvironment: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.deleteEnvironment, payload),
         getSettings: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.getProjectSettings, payload),
         saveSettings: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.saveProjectSettings, payload),
+        setAgentsSync: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.setAgentsSync, payload),
         listRepos: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listProjectRepos, payload),
         addRepo: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.addProjectRepo, payload),
         removeRepo: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.removeProjectRepo, payload),

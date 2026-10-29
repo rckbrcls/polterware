@@ -305,6 +305,7 @@ export function createPolterwareIpcHandlers(controllers: PolterwareIpcController
     [IPC_CHANNELS.core.deleteEnvironment]: coreHandler(controllers, "deleteEnvironment"),
     [IPC_CHANNELS.core.getProjectSettings]: coreHandler(controllers, "getProjectSettings"),
     [IPC_CHANNELS.core.saveProjectSettings]: coreHandler(controllers, "saveProjectSettings"),
+    [IPC_CHANNELS.core.setAgentsSync]: coreHandler(controllers, "setAgentsSync"),
     [IPC_CHANNELS.core.listProjectRepos]: coreHandler(controllers, "listProjectRepos"),
     [IPC_CHANNELS.core.addProjectRepo]: coreHandler(controllers, "addProjectRepo"),
     [IPC_CHANNELS.core.removeProjectRepo]: coreHandler(controllers, "removeProjectRepo"),

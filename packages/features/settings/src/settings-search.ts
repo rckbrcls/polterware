@@ -30,6 +30,13 @@ export const SETTINGS_SEARCH_ENTRIES: SettingsSearchEntry[] = [
     keywords: "git checkout path browse add repository",
   },
   {
+    id: "project-agents-sync",
+    tab: "repositories",
+    section: "AGENTS.md",
+    label: "AGENTS.md sync",
+    keywords: "agents md sync generated block principles structure decisions invariants export",
+  },
+  {
     id: "project-environments",
     tab: "environments",
     section: "Environments",

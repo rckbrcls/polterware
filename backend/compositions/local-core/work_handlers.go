@@ -407,11 +407,7 @@ func (core *Core) ExportProjections(_ context.Context, request *connect.Request[
 	if err != nil {
 		return nil, internal(err)
 	}
-	out := make([]*localv1.ProjectionFile, 0, len(files))
-	for _, file := range files {
-		out = append(out, &localv1.ProjectionFile{Repo: file.Repo, Path: file.Path, Action: file.Action, Reason: file.Reason})
-	}
-	return connect.NewResponse(&localv1.ExportProjectionsResponse{Files: out}), nil
+	return connect.NewResponse(&localv1.ExportProjectionsResponse{Files: projectionFilesProto(files)}), nil
 }
 
 func (core *Core) ListMilestones(_ context.Context, request *connect.Request[localv1.ListMilestonesRequest]) (*connect.Response[localv1.ListMilestonesResponse], error) {

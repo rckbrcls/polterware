@@ -373,6 +373,32 @@ func TestMilestonesMigration(t *testing.T) {
 	}
 }
 
+func TestAgentsSyncMigrationKeepsSettingsAndDefaultsOff(t *testing.T) {
+	db, err := Open(filepath.Join(t.TempDir(), "agents-sync.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	migrateBefore(t, db, "0041")
+	for _, stmt := range []string{
+		`INSERT INTO projects(id,name,root_path,created_at,updated_at) VALUES('p','Project','/tmp','now','now')`,
+		`INSERT INTO project_settings(project_id,description,repository) VALUES('p','Shop','api')`,
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatal(err)
+		}
+	}
+	applyMigration(t, db, "0041_agents_sync.sql")
+	var description, repository string
+	var sync int
+	if err := db.QueryRow(`SELECT description, repository, agents_sync FROM project_settings WHERE project_id='p'`).Scan(&description, &repository, &sync); err != nil {
+		t.Fatal(err)
+	}
+	if description != "Shop" || repository != "api" || sync != 0 {
+		t.Fatalf("settings = %q %q %d", description, repository, sync)
+	}
+}
+
 func migrateBefore(t *testing.T, db *sql.DB, prefix string) {
 	t.Helper()
 	entries, err := migrationFS.ReadDir("migrations")

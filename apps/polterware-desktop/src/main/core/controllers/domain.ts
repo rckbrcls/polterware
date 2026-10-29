@@ -49,6 +49,7 @@ export function createCoreDomainControllers(
     deleteEnvironment: async (input?: JsonObject) => toJsonObject(await clients.projects.deleteEnvironment(requestMessage(input))),
     getProjectSettings: async (input?: JsonObject) => toJsonObject(await clients.projects.getProjectSettings(requestMessage(input))),
     saveProjectSettings: async (input?: JsonObject) => toJsonObject(await clients.projects.saveProjectSettings(requestMessage(input))),
+    setAgentsSync: async (input?: JsonObject) => toJsonObject(await clients.work.setAgentsSync(requestMessage(input))),
     listProjectRepos: async (input?: JsonObject) => toJsonObject(await clients.projects.listProjectRepos(requestMessage(input))),
     addProjectRepo: async (input?: JsonObject) => toJsonObject(await clients.projects.addProjectRepo(requestMessage(input))),
     removeProjectRepo: async (input?: JsonObject) => toJsonObject(await clients.projects.removeProjectRepo(requestMessage(input))),

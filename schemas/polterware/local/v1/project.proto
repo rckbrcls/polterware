@@ -27,6 +27,9 @@ message ProjectSettings {
   string description = 2;
   string default_environment_id = 3;
   string repository = 4;
+  // agents_sync is read-only here: SaveProjectSettings ignores it and
+  // WorkService.SetAgentsSync changes it.
+  bool agents_sync = 5;
 }
 
 message ListProjectsRequest {

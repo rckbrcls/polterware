@@ -63,7 +63,7 @@ func usage() {
   polterware [-db path] canvas ls [--agents] [--scope <node>[,<node>]] [--exact] [--project <id>]
   polterware [-db path] canvas show <id|name> [--format mermaid|json|dot] [--project <id>]
   polterware [-db path] canvas share <id|name> on|off [--project <id>]
-  polterware [-db path] export [--dry-run] [--json] [--project <id>]
+  polterware [-db path] export [--dry-run] [--sync on|off] [--json] [--project <id>]
   polterware [-db path] drift --project <id> [--entity ...] [--agent-run-id ...] [--json]
   polterware [-db path] apply <file|-> [--dry-run] [--project <id>] [--summary ...] [--rationale ...] [--agent-run-id ...]
   polterware [-db path] lint <file|dir|-> [--project <id>]   (silent on success)

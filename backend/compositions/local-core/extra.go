@@ -34,7 +34,11 @@ func (core *Core) SaveProjectSettings(_ context.Context, request *connect.Reques
 	if err := core.Store.SaveProjectSettings(settings); err != nil {
 		return nil, internal(err)
 	}
-	return connect.NewResponse(&localv1.SaveProjectSettingsResponse{Settings: settingsProto(settings)}), nil
+	saved, err := core.Store.GetProjectSettings(settings.ProjectID)
+	if err != nil {
+		return nil, internal(err)
+	}
+	return connect.NewResponse(&localv1.SaveProjectSettingsResponse{Settings: settingsProto(saved)}), nil
 }
 
 func (core *Core) ListIntegrationResources(_ context.Context, request *connect.Request[localv1.ListIntegrationResourcesRequest]) (*connect.Response[localv1.ListIntegrationResourcesResponse], error) {
@@ -114,7 +118,7 @@ func (core *Core) BeginCliAuth(_ context.Context, request *connect.Request[local
 }
 
 func settingsProto(item projects.Settings) *localv1.ProjectSettings {
-	return &localv1.ProjectSettings{ProjectId: item.ProjectID, Description: item.Description, DefaultEnvironmentId: item.DefaultEnvironmentID, Repository: item.Repository}
+	return &localv1.ProjectSettings{ProjectId: item.ProjectID, Description: item.Description, DefaultEnvironmentId: item.DefaultEnvironmentID, Repository: item.Repository, AgentsSync: item.AgentsSync}
 }
 
 func integrationResourceProto(item integrations.Resource) *localv1.IntegrationResource {
