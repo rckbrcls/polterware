@@ -64,8 +64,9 @@
 .pw-detail-panel__header[data-expandable="false"] .pw-detail-panel__identity { justify-content: flex-start; }
 .pw-detail-panel__identity-meta { margin-bottom: 12px; }
 /* Chips flow after the title's last word and wrap with the text, so the title is not clamped. */
-.pw-detail-panel__title--inline { display: block; overflow: visible; -webkit-line-clamp: none; }
-.pw-detail-panel__title-aside { display: inline-flex; gap: 6px; margin-left: 8px; vertical-align: 1px; font-weight: 400; }
+.pw-detail-panel__title.pw-detail-panel__title--inline { display: block; overflow: visible; -webkit-line-clamp: none; line-height: 30px; }
+/* A plain space before the chips gives the gap on the title's line and disappears when they wrap. */
+.pw-detail-panel__title-aside { display: inline-flex; gap: 6px; vertical-align: 1px; font-weight: 400; line-height: normal; }
 .pw-detail-panel__footer {
   display: flex;
   flex: 0 0 auto;

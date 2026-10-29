@@ -84,7 +84,7 @@ function DetailPanelHeader(props: DetailPanelHeaderProps) {
     <Show when={props.title}><Portal mount={host()}>
       <Show when={props.aside} fallback={<h2 class="pw-detail-panel__title">{props.title}</h2>}>
         <h2 class="pw-detail-panel__title pw-detail-panel__title--inline">
-          {props.title}<span class="pw-detail-panel__title-aside">{props.aside}</span>
+          {props.title}{" "}<span class="pw-detail-panel__title-aside">{props.aside}</span>
         </h2>
       </Show>
     </Portal></Show>
