@@ -246,5 +246,60 @@
     "Empty property values render as muted prompts instead of blanks.",
     "Row checkbox appears on hover only.",
     "Dialogs anchor near the top third, not the vertical center, and grow in place."
-  ]
+  ],
+  "behavior": {
+    "method": "driven live with keyboard and pointer; motion timed with requestAnimationFrame",
+    "sidebar": {
+      "toggle": "[ toggles; the sidebar is absolutely positioned while a spacer column animates 244px to 8px and the nav translates -260px, ~350ms spring-like (fast start, long settle)",
+      "collapsed_header": "the page header gains a 28px Menu button before the title; hovering it peeks the sidebar, clicking it docks the sidebar again",
+      "peek": "resting the pointer on the left edge (~5px) for ~250ms slides the sidebar in as a floating card: 42px from the top (below the header row), radius 0 12px 12px 0, one step lighter surface, 0.5px hairline ring plus layered drop shadow; content is neither dimmed nor pushed; leaving it slides it out at once (~300ms)",
+      "resize": "7px col-resize handle; min 192px, max 330px; dragging below the minimum clamps instead of collapsing",
+      "groups": "section headers (Workspace, Your teams, Try) are 28px buttons that collapse their group, height ~200ms ease-out",
+      "item_menu": "right-click on an item: Visibility (Always show, Show when badged, Don't show), Badge, Customize sidebar, Copy link"
+    },
+    "header_and_breadcrumb": {
+      "row": "44px: crumbs are links (24px pill, hover fill and white text) separated by a chevron; the current crumb is the 16px entity icon, the ID and the title at 13px/500, followed by a favorite star and a ... entity menu (28px); page-level icons or a New X pill on the right",
+      "second_row": "44px: view tabs as pills (active is filled and white) plus Add view; on the right filter, display options and the details toggle (])",
+      "detail_navigation": "an issue opened from a list shows 'n / total' with Navigate up and down (K, J) to walk that list without going back",
+      "live_title": "renaming commits on blur and updates the crumb, the window title and the URL slug"
+    },
+    "lists": {
+      "rows": "issue rows are whole-row links, 44px, radius 8px, no separators; group headers are 36px filled rows inset 8px (radius 8px) with a collapse chevron, the status icon, label and count, and a + that creates in that group",
+      "hover": "subtle fill; the checkbox fades in at the start of the row",
+      "peek": "Space opens a non-modal floating preview (416px wide on the right, radius 12px, float shadow) of the hovered or focused row; J and K move focus and the preview follows; Space closes it",
+      "selection": "X selects, J/K then X extends, shift-click selects a range, Cmd+A selects all; selected rows take a brand-tinted fill; a floating bulk bar (254x44 pill, centred 16px above the panel bottom) shows 'n selected', Cmd Actions (the palette scoped to the selection) and a clear button; property shortcuts apply to the whole selection",
+      "display_options": "Shift+V popover, 301px: List or Board, Grouping, Sub-grouping, Ordering with direction, switches (completed by recency, sub-issues, empty groups) and Display properties as toggle chips; once changed it offers Reset and Set default for everyone",
+      "board": "Cmd+B toggles list and board; cards 322px, radius 8px, padding 8px, gap 8px (ID and avatar, status and title, priority, created date); empty columns fold into a Hidden columns list with counts",
+      "split_views": "Inbox and Reviews are master/detail: a list pane (Inbox ~400px with two-line 55px rows, Reviews 482px) plus a 7px resize handle and a detail pane with an illustrated empty state until something is selected"
+    },
+    "properties": {
+      "issue": "a right rail of plain groups (Properties, Labels, Project) with ghost-pill values; empty values read as muted prompts",
+      "project": "an inline pill row under the title (status, priority, lead, target date, team, more) plus a right column of stacked collapsible cards (Properties, Milestones, Activity) with label/value rows on a 36px pitch and a + in each card header",
+      "review": "an inline key/value table under the title and byline (label column ~68px: Status, Reviewers, Branch, Issues), then collapsible sections such as Description",
+      "pickers": "every property opens the same picker: a search field on top ('Change status...'), 32px options with icon, label, check and a number key; the number applies and closes, and focus returns to the trigger",
+      "keyboard": "single keys open the picker on the focused entity: S status, P priority, A assignee, L labels, Shift+D due date, Shift+P project, Shift+R rename"
+    },
+    "create": {
+      "issue": "C, or the + in a group header, opens a composer anchored near the top (750px wide, radius 21px, black/40 scrim): team chip and 'New issue', an autofocused 18px/600 title, the description, AI quick-suggestion chips, property pills (status, priority, assignee, project, labels, more), attach, a Create more switch and the primary Create (Cmd+Enter); Save as draft appears once something is typed",
+      "inline_create_in_picker": "typing a missing label offers 'Create new label', then its scope, then its colour, all inside the same popover",
+      "sub_issue": "Add sub-issues opens an inline card composer under the description (no modal) that stays open for the next one; the section becomes 'Sub-issues 0/1' with a progress ring",
+      "project": "N then P opens a large modal (919x775) that mirrors the project page (icon, name, summary, property pills, description, milestones) with Create with Agent and Create project",
+      "feedback": "the new row appears in place, creating its group when needed, and a toast confirms with the entity and a View link"
+    },
+    "edit": {
+      "model": "everything is edited in place and saved optimistically: no Save buttons, no saved indicator, no toast for property changes",
+      "activity": "an Activity section under the body: event rows (avatar, name, action, relative time with a full-date tooltip) and comment cards with a reply field; the composer card sits at the bottom and Cmd+Enter posts",
+      "menus": "the row context menu and the ... entity menu share one structure: property submenus first, then create related and mark as, copy, convert, make a copy and open in, then favourite, subscribe and remind, and Delete last; shortcut hints are right-aligned and typing filters the menu"
+    },
+    "delete": {
+      "confirm": "a centred 480px dialog whose title names the scope ('Delete \"ERI-5 - Title\" and 1 sub-issue?') and whose body explains recovery (Recently deleted keeps it for 30 days); Delete is the danger pill and holds focus, so Enter confirms",
+      "after": "rows disappear at once and a toast says 'Deleted 2 issues' with 'View recently deleted'; deleting from a detail page returns to the list",
+      "archive": "G then X opens the archive with tabs for archived and recently deleted issues, projects, initiatives and documents",
+      "deleted_entity": "a deleted entity still opens, read-only, with a Deleted badge next to the crumb and a 'deleted the issue' activity row; its menu shrinks to Copy, Restore (#) and Permanently delete"
+    },
+    "toasts": "bottom-right stack, 384x93, 24px from the right edge, radius 12px, raised surface, 0.5px border, padding 12px: status icon and title, the entity line with its icon, an accent link action, close on hover; about 5 to 8 seconds; Cmd+Opt+O opens the last toast's link",
+    "command_menu": "Cmd+K, 720px wide at 13% from the top: a context chip for the current selection (Backspace drops it), the input with 'Ask Linear  Tab', context actions first, then grouped sections with shortcut hints",
+    "shortcuts": "about 150 bindings in a Cmd+/ panel grouped General, Navigation (G then X go to, O then X open), Issues, Projects, List/Board, Comments, Reviews, Inbox, Filters and Editor; tooltips show the key next to the label",
+    "motion": "overlays fade in 150ms ease; sidebar dock and peek slide in ~300-350ms, spring-like; group collapse ~200ms; list mutations are instant with the new row highlighted"
+  }
 }
