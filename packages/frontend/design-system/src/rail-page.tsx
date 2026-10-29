@@ -15,7 +15,7 @@ const NARROW_WIDTH = 900;
 const RAIL_WIDTH = 376;
 const RAIL_GAP = 48;
 /** The scroll row's right padding, and how far before the page edge the leaving content fades out. */
-const PAGE_PADDING = 24;
+const PAGE_PADDING = 62;
 const EDGE_FADE = 120;
 
 /**
