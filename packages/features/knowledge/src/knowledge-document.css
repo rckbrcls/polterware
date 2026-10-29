@@ -45,14 +45,19 @@
   flex-direction: column;
 }
 
+/* Three columns: Back at the start, the breadcrumb centered, the actions at the end. */
 .pw-document__header {
-  display: flex;
+  display: grid;
   height: var(--page-header-height);
   flex-shrink: 0;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   padding: 0 8px;
+}
+
+.pw-document__actions {
+  justify-self: end;
 }
 
 .pw-document__trail,
@@ -63,63 +68,10 @@
   gap: 8px;
 }
 
+/* The trail sits centered between the Back button and the actions. */
 .pw-document__crumbs {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 6px;
-  color: var(--color-text-muted);
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.pw-document__crumb {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.pw-document__crumb--link {
-  appearance: none;
-  margin: 0 -4px;
-  padding: 2px 4px;
-  border: none;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  transition:
-    color var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard);
-}
-
-.pw-document__crumb--link:hover,
-.pw-document__crumb--link:focus-visible {
-  background: var(--color-surface-hover);
-  color: var(--color-text-primary);
-}
-
-.pw-document__crumb--current {
-  overflow: hidden;
-  flex-shrink: 1;
-  color: var(--color-text-primary);
-  text-overflow: ellipsis;
-}
-
-.pw-document__crumb-separator {
-  flex-shrink: 0;
-  color: var(--color-text-disabled);
-}
-
-.pw-document__crumb-icon {
-  display: inline-flex;
-  flex-shrink: 0;
-  color: var(--color-text-muted);
-}
-
-.pw-document__crumb-icon svg {
-  width: 16px;
-  height: 16px;
+  max-width: 40vw;
+  justify-content: center;
 }
 
 .pw-document__status {

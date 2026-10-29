@@ -61,7 +61,7 @@ function offlineCards(message: string): CommanderOverviewCard[] {
       title: "Knowledge",
       subtitle: message,
       tone: "knowledge",
-      openCommandId: "nav.work",
+      openCommandId: "nav.milestones",
     },
     {
       id: "integrations",
@@ -140,7 +140,7 @@ export async function loadCommanderOverview(): Promise<CommanderOverviewSnapshot
               ? "No Work cards"
               : `${cardsList.length} ${cardsList.length === 1 ? "card" : "cards"} · ${deliveredCount} delivered`,
           tone: "knowledge",
-          openCommandId: "nav.work",
+          openCommandId: "nav.milestones",
         },
         {
           id: "integrations",

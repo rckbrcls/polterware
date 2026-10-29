@@ -13,7 +13,7 @@ export type PaletteItem = {
 
 export const DEFAULT_PALETTE_ITEMS: PaletteItem[] = [
   { id: "nav.inbox", label: "Inbox", group: "Navigation", sequenceId: "go.inbox" },
-  { id: "nav.work", label: "Work", group: "Navigation", sequenceId: "go.work" },
+  { id: "nav.milestones", label: "Milestones", group: "Navigation", sequenceId: "go.milestones" },
   { id: "nav.canvas", label: "Canvas", group: "Navigation", shortcutId: "shell.open_canvas" },
   { id: "nav.structure", label: "Structure", group: "Navigation", sequenceId: "go.structure" },
   { id: "nav.truth", label: "Truth", group: "Navigation", sequenceId: "go.truth" },

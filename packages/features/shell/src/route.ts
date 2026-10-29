@@ -11,7 +11,7 @@ import {
 export type NavSectionId =
   | "inbox"
   | "structure"
-  | "work"
+  | "milestones"
   | "canvas"
   | "truth"
   | "dispatch"
@@ -69,8 +69,8 @@ export type ClientRoute = {
   /** The entity whose detail fills the page; a history entry of its own, like opening a note. */
   expandedDetail?: { scopeId: string; entityId: string; entityKind: string } | null;
   /**
-   * Work's open view, a history entry of its own: `all` (every card), `backlog` (cards with no
-   * milestone), or a milestone id. Absent is the Roadmap.
+   * The open Milestones view, a history entry of its own: `all` (every card), `backlog` (cards
+   * with no milestone), or a milestone id (its board). Absent is the Roadmap.
    */
   milestone?: string | null;
 };
@@ -95,7 +95,7 @@ const DEFAULT_SECTION = "inbox" as const satisfies NavSectionId;
 export const DEFAULT_TABS = {
   inbox: "all",
   structure: "all",
-  work: "board",
+  milestones: "board",
   canvas: "all",
   truth: "decisions",
   dispatch: "runs",
@@ -109,7 +109,8 @@ export const SECTION_TABS = {
   inbox: [{ id: "all", label: "All" }],
   canvas: [{ id: "all", label: "All" }],
   structure: [{ id: "all", label: "All" }],
-  work: [
+  // The layout of a milestone's cards; the Roadmap, All cards, and Backlog tabs are views.
+  milestones: [
     { id: "board", label: "Board" },
     { id: "specs", label: "List" },
   ],
@@ -138,7 +139,7 @@ export const SECTION_TABS = {
 const NAV_SECTIONS = {
   inbox: true,
   structure: true,
-  work: true,
+  milestones: true,
   canvas: true,
   truth: true,
   dispatch: true,
@@ -222,10 +223,12 @@ export function resolveRoute(
       section = "truth";
       tab = "decisions";
     } else {
-      section = "work";
+      section = "milestones";
       tab = "specs";
     }
   }
+  // Work became Milestones: each milestone is a board.
+  if (section === "work") section = "milestones";
   // Settings is a dialog; the legacy Sync section lands on the default surface.
   if (section === "sync" || section === "settings") {
     section = DEFAULT_SECTION;
@@ -420,7 +423,7 @@ export function setExpandedDetail(route: ClientRoute, expandedDetail: ClientRout
   return { ...route, expandedDetail };
 }
 
-/** Opens a Work view (`all`, `backlog`, or a milestone id), or the Roadmap with null. */
+/** Opens a Milestones view (`all`, `backlog`, or a milestone's board), or the Roadmap with null. */
 export function setMilestoneView(route: ClientRoute, milestone: string | null): ClientRoute {
   return { ...route, milestone, selectedNodeId: null, expandedDetail: null };
 }

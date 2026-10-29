@@ -3,13 +3,13 @@ import {
   ActiveFilterBar,
   Archive,
   ArchivedList,
+  Breadcrumb,
   Button,
   DisplayOptions,
   FileText,
   FilterPopover,
   LibraryBig,
   Link,
-  FolderKanban,
   ListChecks,
   PropertyPicker,
   PageContent,
@@ -86,7 +86,7 @@ import { libraryStatusTone } from "./knowledge-document-helpers";
 import { WorkCardsEmpty, workCardsFilterEmpty } from "./knowledge-empty";
 import { WorkBoard } from "./work-board";
 import { MilestoneList } from "./milestone-list";
-import { ALL_WORK, BACKLOG, ROADMAP_VIEW, cardsInView, listedMilestones, selectedMilestoneView, viewIdOfRoute, workViewTabs, type MilestoneAction } from "./milestones";
+import { ALL_WORK, BACKLOG, ROADMAP_VIEW, cardsInView, listedMilestones, selectedMilestoneView, viewIdOfRoute, type MilestoneAction } from "./milestones";
 import { WorkCardDetail } from "./work-card-detail";
 import { WorkListTable } from "./work-list-table";
 import {
@@ -182,9 +182,9 @@ export function KnowledgeView(props: {
   decisions?: WorkspaceDecision[];
   docs?: WorkspaceDoc[];
   workCards?: WorkspaceWorkCard[];
-  /** Milestones own their cards; All work and the Backlog are implicit views. */
+  /** Milestones own their cards; All cards and the Backlog are implicit views. */
   milestones?: WorkspaceMilestone[];
-  /** Work's open view from the route: `all`, `backlog`, or a milestone id; null is the Roadmap. */
+  /** The open Milestones view from the route: `all`, `backlog`, or a milestone id (its board); null is the Roadmap. */
   milestoneView?: string | null;
   onMilestoneViewChange?: (view: string | null) => void;
   onMilestoneAction?: (action: MilestoneAction) => Promise<string | null>;
@@ -246,7 +246,7 @@ export function KnowledgeView(props: {
   scopeEnvironments?: readonly EnvironmentItem[];
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
 }) {
-  // The open Work view comes from the route, so Back returns to the Roadmap and the section
+  // The open Milestones view comes from the route, so Back returns to the Roadmap and the section
   // remembers it: null is the Roadmap.
   const viewId = () => viewIdOfRoute(props.milestoneView);
   const viewOpen = () => viewId() !== null;
@@ -586,7 +586,7 @@ export function KnowledgeView(props: {
     activate(row.id, row.entityKind);
   }
 
-  /** The open milestone a new card ships in; All work and the Backlog leave it out. */
+  /** The open milestone a new card ships in; All cards and the Backlog leave it out. */
   const composeMilestoneId = () => {
     const id = selectedBoard().id;
     return id && id !== BACKLOG.id ? id : undefined;
@@ -654,8 +654,8 @@ export function KnowledgeView(props: {
 
   const hasLibraryItems = createMemo(() => allLibraryRows().length > 0);
 
-  // Cmd+B switches Work between the board and the list, outside fields and pages. C opens
-  // the composer for the open tab; the shell leaves C to this view on Work and Truth.
+  // Cmd+B switches Milestones between the board and the list, outside fields and pages. C opens
+  // the composer for the open tab; the shell leaves C to this view on Milestones and Truth.
   onMount(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.repeat || isTypingTarget(event.target)) return;
@@ -670,7 +670,7 @@ export function KnowledgeView(props: {
         if (slugs.length === 0) return;
         event.preventDefault();
         const focused = document.activeElement;
-        setMilestonePick({ slugs, anchor: focused instanceof HTMLElement && focused !== document.body ? focused : layoutButton });
+        setMilestonePick({ slugs, anchor: focused instanceof HTMLElement && focused !== document.body ? focused : viewAnchor });
         return;
       }
       if (!cardTab() || pageRoute() || !matchesShortcut("work.toggle_layout", event)) return;
@@ -710,7 +710,7 @@ export function KnowledgeView(props: {
   // M moves the focused card, or the List's selection, to a milestone.
   const [listSelection, setListSelection] = createSignal<string[]>([]);
   const [milestonePick, setMilestonePick] = createSignal<{ slugs: string[]; anchor?: HTMLElement } | null>(null);
-  let layoutButton: HTMLButtonElement | undefined;
+  let viewAnchor: HTMLElement | undefined;
   const activeCardSlug = () => {
     const target = activeTarget();
     return target?.entityKind === "card" && (target.scopeId === "knowledge:board" || target.scopeId === "knowledge:specs") ? target.entityId : null;
@@ -728,15 +728,6 @@ export function KnowledgeView(props: {
     return id ? (props.milestones ?? []).find((item) => item.id === id)?.slug : "";
   };
 
-  /** Work's tabs are its views: the Roadmap, All work, the Backlog, and each milestone. */
-  const workViewRail = () => (
-    <Tabs
-      items={workViewTabs(props.milestones ?? [])}
-      value={props.milestoneView ?? ROADMAP_VIEW}
-      onChange={openView}
-      aria-label="Work views"
-    />
-  );
 
   return (
     <EntityDetailHost>
@@ -748,7 +739,10 @@ export function KnowledgeView(props: {
       <div class="flex h-full min-h-0 flex-col">
         <PageToolbar.Root>
           <PageToolbar.Leading class="gap-1">
-            <Show when={cardTab()}>{workViewRail()}</Show>
+            {/* A board's Board and List tabs; its trail back to the Roadmap is centered. */}
+            <Show when={cardTab()}>
+              <Tabs items={[...railItems()]} value={tab()} onChange={changeTab} aria-label={`${selectedBoard().name} layout`} />
+            </Show>
             <Show
               when={!cardTab() && railItems().length > 1}
               fallback={
@@ -767,6 +761,13 @@ export function KnowledgeView(props: {
               />
             </Show>
           </PageToolbar.Leading>
+          <Show when={cardTab()}>
+            <PageToolbar.Center>
+              <div ref={(element) => { viewAnchor = element; }} class="flex min-w-0">
+                <Breadcrumb items={[{ label: "Milestones", onSelect: () => openView(null) }]} current={selectedBoard().name} />
+              </div>
+            </PageToolbar.Center>
+          </Show>
           <PageToolbar.Actions>
             <Show when={docsTab() && props.loadArchivedDocs}>
               <Button
@@ -778,19 +779,6 @@ export function KnowledgeView(props: {
                 onClick={() => setShowArchived((value) => !value)}
               >
                 <Archive size={14} />
-              </Button>
-            </Show>
-            <Show when={cardTab()}>
-              <Button
-                ref={layoutButton}
-                variant="texture"
-                size="icon"
-                aria-label={tab() === "board" ? "Show as list" : "Show as board"}
-                onClick={() => changeTab(tab() === "board" ? "specs" : "board")}
-              >
-                <Show when={tab() === "board"} fallback={<FolderKanban size={14} />}>
-                  <ListChecks size={14} />
-                </Show>
               </Button>
             </Show>
             <Show when={!archivedDocsView()}>
@@ -851,7 +839,7 @@ export function KnowledgeView(props: {
           value={pickedMilestone()}
           open={milestonePick() !== null}
           onClose={() => setMilestonePick(null)}
-          anchorRef={() => milestonePick()?.anchor ?? layoutButton}
+          anchorRef={() => milestonePick()?.anchor ?? viewAnchor}
           onChange={(slug) => {
             const slugs = milestonePick()?.slugs ?? [];
             setMilestonePick(null);
@@ -1001,7 +989,6 @@ export function KnowledgeView(props: {
         <MilestoneList
           milestones={props.milestones ?? []}
           cards={props.workCards ?? []}
-          leading={workViewRail()}
           onOpen={(id) => openView(id)}
           onArchive={() => openView(null)}
           onAction={props.onMilestoneAction}

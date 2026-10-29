@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { WorkspaceMilestone } from "@polterware/feature-shell";
-import { ALL_WORK, BACKLOG, cardsInView, listedMilestones, milestoneProgress, moveMilestone, selectedMilestoneView, viewIdOfRoute, workViewTabs } from "./milestones";
+import { ALL_WORK, BACKLOG, cardsInView, listedMilestones, milestoneProgress, moveMilestone, selectedMilestoneView, viewIdOfRoute } from "./milestones";
 
 const milestone = (id: string, position: number, archivedAt = ""): WorkspaceMilestone => ({
   id, position, name: id, slug: id, projectId: "project", goal: "", exitCriteria: [], targetDate: "", state: "planned", archivedAt,
@@ -13,7 +13,7 @@ describe("milestone views", () => {
     expect(items.map((item) => item.id)).toEqual(["z", "b", "a", "gone"]);
   });
 
-  it("opens All work, the Backlog, or a listed milestone", () => {
+  it("opens All cards, the Backlog, or a listed milestone", () => {
     const items = [milestone("a", 0), milestone("gone", 1, "2026-10-01")];
     expect(selectedMilestoneView(items, "")).toBe(ALL_WORK);
     expect(selectedMilestoneView(items, BACKLOG.id)).toBe(BACKLOG);
@@ -38,9 +38,7 @@ describe("milestone views", () => {
     expect(moveMilestone(items, "a", -1)).toBeNull();
   });
 
-  it("names the Work tabs and maps the route's view to a milestone view", () => {
-    expect(workViewTabs([milestone("beta", 2), milestone("alpha", 1), milestone("old", 0, "2026-10-01")]).map((tab) => tab.label))
-      .toEqual(["Roadmap", "All work", "Backlog", "alpha", "beta"]);
+  it("maps the route's view to a milestone view", () => {
     expect(viewIdOfRoute(null)).toBeNull();
     expect(viewIdOfRoute("roadmap")).toBeNull();
     expect(viewIdOfRoute("all")).toBe(ALL_WORK.id);

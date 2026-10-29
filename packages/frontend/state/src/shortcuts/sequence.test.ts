@@ -65,7 +65,7 @@ describe("shortcut sequences", () => {
 describe("shortcut reference", () => {
   it("lists about twenty shortcuts with the person's bindings", () => {
     const groups = shortcutReference({ "shell.toggle_sidebar": { key: "b", mod: true, shift: false, alt: false } }, true);
-    expect(groups.map((group) => group.label)).toEqual(["General", "Navigation", "Lists", "Composer", "Work", "Structure"]);
+    expect(groups.map((group) => group.label)).toEqual(["General", "Navigation", "Lists", "Composer", "Milestones", "Structure"]);
     const rows = groups.flatMap((group) => group.rows);
     expect(rows.length).toBeGreaterThanOrEqual(20);
     expect(rows.find((row) => row.id === "shell.toggle_sidebar")?.keys).toEqual(["⌘", "B"]);

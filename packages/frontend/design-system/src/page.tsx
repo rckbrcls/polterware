@@ -108,6 +108,15 @@ function PageToolbarLeading(props: PageToolbarSlotProps) {
   );
 }
 
+/** The middle of the toolbar, such as a `Breadcrumb`; it stays centered while tabs sit at the start. */
+function PageToolbarCenter(props: PageToolbarSlotProps) {
+  return (
+    <div class={`pw-page-toolbar-center ${props.class ?? ""}`}>
+      {props.children}
+    </div>
+  );
+}
+
 function PageToolbarActions(props: PageToolbarSlotProps) {
   return (
     <div class={`pw-page-toolbar-actions flex shrink-0 items-center gap-2 ${props.class ?? ""}`}>
@@ -120,6 +129,7 @@ export const PageToolbar = {
   Root: PageToolbarRoot,
   Tabs: PageToolbarTabs,
   Leading: PageToolbarLeading,
+  Center: PageToolbarCenter,
   Actions: PageToolbarActions,
 };
 

@@ -1,6 +1,6 @@
 import type { JSX } from "solid-js";
-import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
-import { Button, ChevronLeft, ChevronRight, Input, MarkdownEditor, SidebarRightIcon, TagPicker, useDesignSystem } from "@polterware/frontend-design-system";
+import { Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
+import { Breadcrumb, Button, ChevronLeft, Input, MarkdownEditor, SidebarRightIcon, TagPicker, useDesignSystem } from "@polterware/frontend-design-system";
 import { EntityDocumentCanvas, requestDetailExpanded, requestSectionNavigate } from "@polterware/feature-shell";
 import { KnowledgeDocumentProperties } from "./knowledge-document-properties";
 import "./knowledge-document.css";
@@ -101,16 +101,13 @@ export function KnowledgeDocumentShell(props: {
       <header class="pw-document__header">
         <div class="pw-document__trail">
           <Button size="icon" variant="texture" aria-label="Back" onClick={() => requestDetailExpanded(false)}><ChevronLeft size={14} /></Button>
-          <nav class="pw-document__crumbs" aria-label="Breadcrumb">
-            <For each={props.trail ?? []}>{crumb => <>
-              <button type="button" class="pw-document__crumb pw-document__crumb--link"
-                onClick={() => requestSectionNavigate(crumb.section, crumb.tab)}>{crumb.label}</button>
-              <ChevronRight size={12} aria-hidden="true" class="pw-document__crumb-separator" />
-            </>}</For>
-            <span class="pw-document__crumb-icon" aria-hidden="true">{props.icon}</span>
-            <span class="pw-document__crumb pw-document__crumb--current">{props.title || "Untitled"}</span>
-          </nav>
         </div>
+        <Breadcrumb
+          class="pw-document__crumbs"
+          items={(props.trail ?? []).map(crumb => ({ label: crumb.label, onSelect: () => requestSectionNavigate(crumb.section, crumb.tab) }))}
+          icon={props.icon}
+          current={props.title || "Untitled"}
+        />
         <div class="pw-document__actions">
           <Show when={props.status}><span role="status" aria-live="polite" class="pw-document__status">{props.status}</span></Show>
           <Button size="icon" variant="icon" aria-label={railVisible() ? "Hide properties" : "Show properties"}

@@ -49,7 +49,7 @@ const PALETTE_TILES: Record<string, { tone: IconTileTone; icon: () => JSX.Elemen
   "nav.inbox": { tone: "knowledge", icon: () => <Inbox size={12} /> },
   "nav.canvas": { tone: "neutral", icon: () => <Pencil size={12} /> },
   "nav.structure": { tone: "architecture", icon: () => <ChartRelationshipIcon size={12} /> },
-  "nav.work": { tone: "execution", icon: () => <Briefcase06Icon size={12} /> },
+  "nav.milestones": { tone: "execution", icon: () => <Briefcase06Icon size={12} /> },
   "nav.truth": { tone: "knowledge", icon: () => <Layers size={12} /> },
   "nav.dispatch": { tone: "execution", icon: () => <Route size={12} /> },
   "nav.dispatch-routing": { tone: "execution", icon: () => <ListOrdered size={12} /> },

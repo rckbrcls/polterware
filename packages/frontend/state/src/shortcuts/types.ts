@@ -35,7 +35,7 @@ export type ShortcutCommand = {
 export type ShortcutSequenceId =
   | "go.inbox"
   | "go.activity"
-  | "go.work"
+  | "go.milestones"
   | "go.canvas"
   | "go.structure"
   | "go.truth"

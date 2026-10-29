@@ -9,10 +9,10 @@ describe("first version routes", () => {
 
   it("exposes the exact project navigation and keeps Canvas after Work", () => {
     expect(
-      ["inbox", "structure", "work", "canvas", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "activity"].every(isNavSectionId),
+      ["inbox", "structure", "milestones", "canvas", "truth", "dispatch", "dispatch-routing", "dispatch-usage", "activity"].every(isNavSectionId),
     ).toBe(true);
     expect(DEFAULT_NAV.map((item) => item.section)).toEqual([
-      "inbox", "activity", "work", "canvas", "structure", "truth", "dispatch", "dispatch-routing", "dispatch-usage",
+      "inbox", "activity", "milestones", "canvas", "structure", "truth", "dispatch", "dispatch-routing", "dispatch-usage",
     ]);
     expect(resolveRoute("canvas")).toEqual({ section: "canvas", tab: "all" });
     expect(DEFAULT_TABS.canvas).toBe("all");
@@ -27,12 +27,12 @@ describe("first version routes", () => {
     expect(isNavSectionId("operations")).toBe(false);
     expect(isNavSectionId("terminal")).toBe(false);
     expect(SECTION_TABS.structure?.map((tab) => tab.id)).toEqual(["all"]);
-    expect(SECTION_TABS.work?.map((tab) => tab.id)).toEqual(["board", "specs"]);
+    expect(SECTION_TABS.milestones?.map((tab) => tab.id)).toEqual(["board", "specs"]);
     expect(SECTION_TABS.truth?.map((tab) => tab.id)).toEqual(["decisions", "facts", "docs"]);
     expect(SECTION_TABS.dispatch?.map((tab) => tab.id)).toEqual(["runs"]);
     expect(SECTION_TABS["dispatch-usage"]?.map((tab) => tab.id)).toEqual(["agents", "stats"]);
     expect(SECTION_TABS["dispatch-routing"]?.map((tab) => tab.id)).toEqual(["tiers", "learning"]);
-    expect(DEFAULT_TABS.work).toBe("board");
+    expect(DEFAULT_TABS.milestones).toBe("board");
     expect(DEFAULT_TABS.dispatch).toBe("runs");
     expect(DEFAULT_TABS["dispatch-routing"]).toBe("tiers");
     expect(DEFAULT_TABS["dispatch-usage"]).toBe("agents");
@@ -78,8 +78,9 @@ describe("first version routes", () => {
     expect(resolveRoute("architecture", "views")).toEqual({ section: "structure", tab: "all" });
     expect(resolveRoute("architecture", "components")).toEqual({ section: "structure", tab: "all" });
     expect(resolveRoute("resources", "nodes")).toEqual({ section: "structure", tab: "all" });
-    expect(resolveRoute("knowledge")).toEqual({ section: "work", tab: "specs" });
-    expect(resolveRoute("knowledge", "specs")).toEqual({ section: "work", tab: "specs" });
+    expect(resolveRoute("knowledge")).toEqual({ section: "milestones", tab: "specs" });
+    expect(resolveRoute("knowledge", "specs")).toEqual({ section: "milestones", tab: "specs" });
+    expect(resolveRoute("work", "board")).toEqual({ section: "milestones", tab: "board" });
     expect(resolveRoute("knowledge", "library")).toEqual({ section: "truth", tab: "decisions" });
     expect(resolveRoute("knowledge", "decisions")).toEqual({ section: "truth", tab: "decisions" });
     expect(resolveRoute("knowledge", "docs")).toEqual({ section: "truth", tab: "docs" });
@@ -173,19 +174,19 @@ describe("section memory", () => {
   it("restores the tab, search, filters and open detail a section was left with", () => {
     const entered = enterProject(createHomeRoute(), "proj-1");
     const left = { ...setTab(goSection(entered, "truth"), "docs"), search: "auth", filters: { kind: ["doc"] }, expandedDetail: { scopeId: "knowledge:docs", entityId: "ev-1", entityKind: "doc" } };
-    const restored = withSectionMemory(goSection(goSection(left, "work"), "truth"), sectionMemory(left));
+    const restored = withSectionMemory(goSection(goSection(left, "milestones"), "truth"), sectionMemory(left));
     expect(restored).toMatchObject({ section: "truth", tab: "docs", search: "auth", filters: { kind: ["doc"] }, expandedDetail: { entityId: "ev-1" } });
   });
 
   it("keeps Work's open milestone across a layout switch, and remembers it for the section", () => {
-    const work = goSection(enterProject(createHomeRoute(), "proj-1"), "work");
+    const work = goSection(enterProject(createHomeRoute(), "proj-1"), "milestones");
     expect(work.milestone).toBeNull();
     const beta = setMilestoneView(work, "ms-beta");
     expect(setTab(beta, "specs")).toMatchObject({ tab: "specs", milestone: "ms-beta" });
     expect(routesEqual(beta, work)).toBe(false);
     const away = goSection(beta, "truth");
     expect(away.milestone).toBeNull();
-    expect(withSectionMemory(goSection(away, "work"), sectionMemory(beta)).milestone).toBe("ms-beta");
+    expect(withSectionMemory(goSection(away, "milestones"), sectionMemory(beta)).milestone).toBe("ms-beta");
   });
 
   it("falls back to the default tab when the remembered one no longer exists", () => {

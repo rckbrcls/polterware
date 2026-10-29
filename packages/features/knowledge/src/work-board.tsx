@@ -182,7 +182,7 @@ export function WorkBoard(props: {
   };
 
   return (
-    <div ref={board} class="pw-work-board" role="list" aria-label={props.selectedBoard?.name ?? "All work"} data-board-id={props.selectedBoard?.id ?? ""} {...hover.handlers}>
+    <div ref={board} class="pw-work-board" role="list" aria-label={props.selectedBoard?.name ?? "All cards"} data-board-id={props.selectedBoard?.id ?? ""} {...hover.handlers}>
       {/* A card changing stage keeps its slug: the marker follows it without a spring. */}
       <FluidHoverHighlight
         class="pw-work-board-active"

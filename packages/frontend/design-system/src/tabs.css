@@ -44,12 +44,31 @@
 }
 
 .pw-page-toolbar > *,
-.pw-page-toolbar :is(.pw-page-toolbar-tabs, .pw-page-toolbar-leading, .pw-page-toolbar-actions) {
+.pw-page-toolbar :is(.pw-page-toolbar-tabs, .pw-page-toolbar-leading, .pw-page-toolbar-center, .pw-page-toolbar-actions) {
   pointer-events: none;
 }
 
-.pw-page-toolbar :is(.pw-page-toolbar-tabs, .pw-page-toolbar-leading, .pw-page-toolbar-actions) > * {
+.pw-page-toolbar :is(.pw-page-toolbar-tabs, .pw-page-toolbar-leading, .pw-page-toolbar-center, .pw-page-toolbar-actions) > * {
   pointer-events: auto;
+}
+
+/* With a center slot the toolbar is three columns: the start and the end share the leftover
+   width equally, so the breadcrumb stays centered on the page whatever the tabs and actions hold. */
+.pw-page-toolbar:has(> .pw-page-toolbar-center) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.pw-page-toolbar-center {
+  display: flex;
+  min-width: 0;
+  max-width: 40vw;
+  align-items: center;
+  justify-content: center;
+}
+
+.pw-page-toolbar:has(> .pw-page-toolbar-center) > .pw-page-toolbar-actions {
+  justify-self: end;
 }
 
 .pw-page-content > :first-child {

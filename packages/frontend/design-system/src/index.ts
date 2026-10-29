@@ -56,6 +56,8 @@ export { ToastRegion, pushToast } from "./toast";
 export type { ToastAction, ToastItem, ToastOptions } from "./toast";
 export { ConfirmRegion, requestConfirm, requestReason } from "./confirm";
 export type { ConfirmOptions, ReasonOptions } from "./confirm";
+export { Breadcrumb } from "./breadcrumb";
+export type { BreadcrumbItem, BreadcrumbProps } from "./breadcrumb";
 export { Composer } from "./composer";
 export type { ComposerDraft, ComposerField, ComposerProperty, ComposerProps } from "./composer";
 export { ArchivedList } from "./archived-list";

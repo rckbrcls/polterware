@@ -84,7 +84,7 @@ export const SHORTCUT_CATALOG: readonly ShortcutCommand[] = [
 export const SHORTCUT_SEQUENCES: readonly ShortcutSequence[] = [
   { id: "go.inbox", label: "Go to Inbox", keys: ["g", "i"] },
   { id: "go.activity", label: "Go to Activity", keys: ["g", "a"] },
-  { id: "go.work", label: "Go to Work", keys: ["g", "w"] },
+  { id: "go.milestones", label: "Go to Milestones", keys: ["g", "m"] },
   { id: "go.canvas", label: "Go to Canvas", keys: ["g", "c"] },
   { id: "go.structure", label: "Go to Structure", keys: ["g", "s"] },
   { id: "go.truth", label: "Go to Truth", keys: ["g", "t"] },
@@ -115,7 +115,7 @@ export function shortcutsInGroup(group: ShortcutCommand["group"]): ShortcutComma
 
 export const SHORTCUT_GROUP_LABELS: Record<ShortcutCommand["group"], string> = {
   shell: "Shell",
-  work: "Work",
+  work: "Milestones",
   structure: "Structure",
 };
 

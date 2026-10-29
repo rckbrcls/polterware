@@ -421,14 +421,14 @@ export function App() {
         handlePaletteCommand("nav.canvas");
         return;
       }
-      // C creates a card from anywhere; Work and Truth open the composer for their own tab.
+      // C creates a card from anywhere; Milestones and Truth open the composer for their own tab.
       if (
         matchesShortcut("shell.create", event)
         && !event.repeat
         && !route().home
         && !route().dialog
         && !paletteOpen()
-        && route().section !== "work"
+        && route().section !== "milestones"
         && route().section !== "truth"
         && !isTypingTarget(event.target)
       ) {
@@ -630,7 +630,7 @@ export function App() {
   const SEQUENCE_SECTIONS: Record<Exclude<ShortcutSequenceId, "go.projects">, string> = {
     "go.inbox": "inbox",
     "go.activity": "activity",
-    "go.work": "work",
+    "go.milestones": "milestones",
     "go.canvas": "canvas",
     "go.structure": "structure",
     "go.truth": "truth",
@@ -824,9 +824,9 @@ export function App() {
     }
   }
 
-  /** Cards open in the Board or Specs detail scope, matching the visible Work tab. */
+  /** Cards open in the Board or Specs detail scope, matching the visible Milestones layout. */
   const cardScopeId = () =>
-    route().section === "work" && route().tab === "board" ? "knowledge:board" : "knowledge:specs";
+    route().section === "milestones" && route().tab === "board" ? "knowledge:board" : "knowledge:specs";
 
   function importProjectSources() {
     if (importSourcesBusy()) return;
@@ -888,7 +888,7 @@ export function App() {
           change,
         });
         return () => {
-          const next = sectionRoute("work");
+          const next = sectionRoute("milestones");
           navigateToDetail(next, next.tab === "board" ? "knowledge:board" : "knowledge:specs", slug, "card");
         };
       },
@@ -1018,7 +1018,7 @@ export function App() {
     return selectedId;
   }
 
-  /** Knowledge content hosted by Work and Truth with their own tab rails. */
+  /** Knowledge content hosted by Milestones and Truth with their own tab rails. */
   function KnowledgeSurface(surface: {
     tab: string;
     tabs: TabItem[];
@@ -1639,11 +1639,11 @@ export function App() {
           />
         </Match>
 
-        <Match when={route().section === "work"}>
+        <Match when={route().section === "milestones"}>
           <KnowledgeSurface
             tab={route().tab}
-            tabs={[...SECTION_TABS.work]}
-            tabsLabel="Work"
+            tabs={[...SECTION_TABS.milestones]}
+            tabsLabel="Milestones"
           />
         </Match>
 
