@@ -38,7 +38,7 @@ export function InboxItemDetail(props: {
       <DetailPanel.Header title={props.item.title} />
       <DetailPanel.Body>
         <DetailPanel.Main>
-          <div class="mb-3 flex flex-wrap gap-1.5">
+          <div class="-mt-2 mb-6 flex flex-wrap gap-1.5">
             <StatusChip tone="muted" label={KIND_LABEL[props.item.kind]} />
             <StatusChip tone={props.item.blocking && props.item.state === "open" ? "danger" : "muted"} label={statusLabel()} />
           </div>
