@@ -15,6 +15,7 @@ import {
 import type { WorkStage, WorkspaceWorkCard, WorkspaceWorkTask } from "@polterware/feature-shell";
 import { KnowledgeDocumentNotFound, KnowledgeDocumentShell } from "./knowledge-document-shell";
 import { WORK_STAGES, cardTaskProgress, isWorkStage } from "./work-stage";
+import { WorkCardWork } from "./work-card-work";
 
 function TaskStateIcon(props: { state: WorkspaceWorkTask["state"] }) {
   if (props.state === "done") return <Check size={14} aria-label="Done" />;
@@ -27,8 +28,8 @@ export function WorkCardDetail(props: {
   notFound?: boolean;
   onSetStage?: (stage: WorkStage) => void;
   onRemove?: () => void;
-  /** Reopens the new-feature flow; shown while the card is in shape or plan. */
-  onContinueFlow?: () => void;
+  /** Passes the card's next gate (shape → plan, plan → build); resolves with the refusal lines. */
+  onAdvance?: (step: "contract" | "plan") => Promise<string[]>;
 }) {
   return (
     <Show
@@ -41,8 +42,6 @@ export function WorkCardDetail(props: {
     >
       {(card) => {
         const progress = createMemo(() => cardTaskProgress(card()));
-        const continuable = () =>
-          Boolean(props.onContinueFlow) && (card().stage === "shape" || card().stage === "plan");
         return (
           <KnowledgeDocumentShell
             trail={[{ label: "Milestones", section: "milestones" }]}
@@ -68,11 +67,6 @@ export function WorkCardDetail(props: {
               </>
             }
             metadataActions={<>
-              <Show when={continuable()}>
-                <Button variant="secondary" size="sm" onClick={() => props.onContinueFlow?.()}>
-                  {card().stage === "shape" ? "Continue shaping" : "Continue planning"}
-                </Button>
-              </Show>
               <p class="pw-detail-panel__text" data-empty>Agents edit tasks, questions, and invariants with polterware apply.</p>
             </>}
             footerActions={
@@ -173,7 +167,9 @@ export function WorkCardDetail(props: {
               </RailGroup>
             </Show>
             </>}
-          />
+          >
+            <WorkCardWork slug={card().slug} stage={card().stage} onAdvance={props.onAdvance} />
+          </KnowledgeDocumentShell>
         );
       }}
     </Show>

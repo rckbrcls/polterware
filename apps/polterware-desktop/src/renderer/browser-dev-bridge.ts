@@ -279,6 +279,18 @@ const previewCards = cardSeeds.map(([slug, title, stage, kind, under, taskStates
   invariants: [{ id: `inv-${slug}`, text: "Never persist provider credentials." }],
 }));
 
+/** The gate checks of a preview card: a blocking question holds both gates; no open tasks is a Plan hint. */
+function previewGateChecks(card: (typeof previewCards)[number]) {
+  const checks: { step: string; severity: string; message: string }[] = [];
+  for (const question of card.questions) {
+    if (!question.blocking || question.state !== "open") continue;
+    for (const step of ["contract", "plan"]) checks.push({ step, severity: "error", message: `blocking question open: "${question.text}": answer it with \`? ${question.text} -> <answer>\`` });
+  }
+  if (card.invariants.length === 0) checks.push({ step: "contract", severity: "hint", message: "no contract: add `! invariant` lines the feature must keep" });
+  if (!card.tasks.some((task) => task.state === "open")) checks.push({ step: "plan", severity: "hint", message: "no open tasks: add `- [ ] task` lines before Build" });
+  return checks;
+}
+
 const inboxItem = (
   id: string, kind: string, blocking: boolean, title: string, detail: string, options: string[],
   where: string, source: string, state: string, actions: string[],
@@ -1135,6 +1147,49 @@ function createBrowserDevBridge(): PolterwareBridge {
             .filter((card) => (card as { status?: string }).status !== "removed"),
         }),
         listInbox: async (args?: ProjectArgs) => inboxFor(args?.projectId ?? ""),
+        // The feature gates, Verify, handoffs, and brief the card page reads, over the preview cards.
+        reviewFeature: async (args?: ProjectArgs & { slug?: string }) => {
+          const card = args?.projectId === PREVIEW_PROJECT_ID ? structureCards.find((item) => item.slug === args.slug) : undefined;
+          return card ? { review: { card, checks: previewGateChecks(card) } } : { review: {} };
+        },
+        advanceFeature: async (args?: ProjectArgs & { slug?: string; step?: string }) => {
+          const card = args?.projectId === PREVIEW_PROJECT_ID ? structureCards.find((item) => item.slug === args.slug) : undefined;
+          if (!card) throw new Error("unknown card");
+          const refused = previewGateChecks(card).filter((check) => check.step === args?.step && check.severity === "error");
+          if (refused.length) throw new Error(`[invalid_argument] ${refused.map((check) => `line 1: ${check.message}`).join("; ")}`);
+          card.stage = args?.step === "contract" ? "plan" : "build";
+          card.updatedAt = new Date().toISOString();
+          return { stage: card.stage, review: { card, checks: previewGateChecks(card) } };
+        },
+        verifyFeature: async (args?: ProjectArgs & { target?: string }) => {
+          const card = structureCards.find((item) => item.slug === args?.target);
+          const checks = (card?.tasks ?? []).map((task) => ({
+            status: task.state === "open" ? "fail" : "pass",
+            message: `T${task.number} ${task.title}: ${task.state === "open" ? "still open" : task.state}`,
+          }));
+          return { target: args?.target ?? "", passed: checks.length > 0 && checks.every((check) => check.status === "pass"), checks: [...checks, { status: "manual", message: "Run the card's checks in its checkout before Delivered." }] };
+        },
+        query: async (args?: ProjectArgs & { query?: string }) => {
+          const slug = (args?.query ?? "").replace(/^brief\s+/, "");
+          const card = structureCards.find((item) => item.slug === slug);
+          if (!card) return { text: "" };
+          return { text: [
+            `card ${card.slug}: ${card.title} [${card.stage}]`,
+            `under ${card.under} (component / Go)`,
+            ...card.tasks.filter((task) => task.state === "open").map((task) => `- [ ] T${task.number} ${task.title}`),
+            ...card.questions.filter((question) => question.state === "open").map((question) => `? ${question.text}${question.blocking ? " [blocking]" : ""}`),
+            ...card.invariants.map((invariant) => `! ${invariant.text}`),
+            "decision Decision-0001 Local-first truth: Project state must stay useful on one machine without a hosted account.",
+          ].join("\n") };
+        },
+        listAgentSessions: async (args?: ProjectArgs) => ({
+          sessions: [],
+          branch: "develop",
+          handoffs: args?.projectId === PREVIEW_PROJECT_ID ? [{
+            slug: "split-api", branch: "develop", goal: "Split the API layer into read and write services.", done: "Moved the read handlers into api/read.",
+            inProgress: "The write handlers still share the old router.", next: "Move the write handlers and delete the shared router.", agent: "codex", at: "2026-10-28T16:40:00.000Z",
+          }] : [],
+        }),
         resolveInboxItem: async (args?: { projectId?: string; itemId?: string; action?: string; answer?: string }) => {
           const index = args?.projectId === PREVIEW_PROJECT_ID ? inboxItems.findIndex((item) => item.id === args?.itemId) : -1;
           const item = inboxItems[index];

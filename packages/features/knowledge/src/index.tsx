@@ -231,7 +231,8 @@ export function KnowledgeView(props: {
   /** Opens the composer for a card, a decision, or a doc, with what this view already knows. */
   onCompose?: (request: ComposeRequest) => void;
   /** Reopens the flow for a card in shape or plan. */
-  onContinueFeature?: (slug: string) => void;
+  /** Passes a card's next gate inline; resolves with the refusal lines, empty when it moved on. */
+  onAdvanceCard?: (slug: string, step: "contract" | "plan") => Promise<string[]>;
   onArchive?: (id: string) => void;
   /** Lists archived docs; when set, the Docs tab shows the archive toggle. */
   loadArchivedDocs?: () => Promise<ArchivedListItem[]>;
@@ -1062,9 +1063,9 @@ export function KnowledgeView(props: {
                 ? () => props.onRemoveCard?.(item().slug)
                 : undefined
             }
-            onContinueFlow={
-              props.onContinueFeature
-                ? () => props.onContinueFeature?.(item().slug)
+            onAdvance={
+              props.onAdvanceCard
+                ? (step) => props.onAdvanceCard!(item().slug, step)
                 : undefined
             }
           />

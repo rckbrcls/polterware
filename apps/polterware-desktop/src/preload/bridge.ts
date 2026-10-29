@@ -152,6 +152,7 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         reviewFeature: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.reviewFeature, payload),
         createFeature: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.createFeature, payload),
         advanceFeature: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.advanceFeature, payload),
+        verifyFeature: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.verifyFeature, payload),
       },
       savedFilters: {
         list: ({ projectId, surface }: SavedFilterListInput) =>

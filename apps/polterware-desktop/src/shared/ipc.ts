@@ -97,6 +97,7 @@ export const IPC_CHANNELS = {
     reviewFeature: "core:review-feature",
     createFeature: "core:create-feature",
     advanceFeature: "core:advance-feature",
+    verifyFeature: "core:verify-feature",
     listCanonEntities: "core:list-canon-entities",
     syncProjectModel: "core:sync-project-model",
     importProjectSources: "core:import-project-sources",

@@ -151,7 +151,6 @@ import {
   persistFeatureAdvance,
   persistFeatureCreate,
   persistFeatureLine,
-  loadFeatureReview,
   persistWorkRemoveCard,
   persistStructureCreateNode,
   persistStructureMoveNode,
@@ -948,19 +947,6 @@ export function App() {
       .filter((node) => node.level === "component")
       .map((node) => ({ path: node.path, title: node.title }));
 
-  function continueFeatureFlow(slug: string) {
-    void loadFeatureReview(currentProjectId(), slug)
-      .then((review) => {
-        setFlowReview(review);
-        setFlowErrors([]);
-        setFlowStep(review.card.stage === "plan" ? "plan" : "shape");
-        setFlowOpen(true);
-      })
-      .catch((error: unknown) => {
-        pushToast(error instanceof Error ? error.message : "Could not load the feature.", "danger");
-      });
-  }
-
   function closeFeatureFlow() {
     const slug = flowReview()?.card.slug;
     setFlowOpen(false);
@@ -1228,7 +1214,21 @@ export function App() {
         onCompose={setComposeRequest}
         onImportProjectSources={importProjectSources}
         importBusy={importSourcesBusy()}
-        onContinueFeature={continueFeatureFlow}
+        onAdvanceCard={async (slug, step) => {
+          // Passing a gate moves the card forward, which asks no why; a refusal stays on the page.
+          try {
+            await persistFeatureAdvance({
+              projectId: currentProjectId(),
+              slug,
+              step,
+              change: { summary: step === "contract" ? `Accept contract for ${slug}` : `Approve plan for ${slug}`, rationale: "" },
+            });
+            await refreshWorkspace(currentProjectId());
+            return [];
+          } catch (error: unknown) {
+            return gateErrorLines(error instanceof Error ? error.message : "The gate refused the card.");
+          }
+        }}
         onArchive={(id) => {
           // Archiving asks why, then runs at once; the toast offers Undo.
           const title = workspace().docs.find((item) => item.id === id)?.title ?? "item";

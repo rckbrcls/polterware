@@ -344,6 +344,7 @@ export function createPolterwareIpcHandlers(controllers: PolterwareIpcController
     [IPC_CHANNELS.core.reviewFeature]: coreHandler(controllers, "reviewFeature"),
     [IPC_CHANNELS.core.createFeature]: coreHandler(controllers, "createFeature"),
     [IPC_CHANNELS.core.advanceFeature]: coreHandler(controllers, "advanceFeature"),
+    [IPC_CHANNELS.core.verifyFeature]: coreHandler(controllers, "verifyFeature"),
     [IPC_CHANNELS.core.listCanonEntities]: coreHandler(controllers, "listCanonEntities"),
     [IPC_CHANNELS.core.syncProjectModel]: coreHandler(controllers, "syncProjectModel"),
     [IPC_CHANNELS.core.importProjectSources]: coreHandler(controllers, "importProjectSources"),
