@@ -149,7 +149,7 @@
   /* Lit material: the near-flat face of a small control and its 0.5px rim, no thick frame. */
   border: 1px solid var(--field-frame);
   border-radius: 11px;
-  background: linear-gradient(to bottom, #303030, #2b2b2b);
+  background: linear-gradient(to bottom, var(--material-face-top), var(--material-face-bottom));
   box-shadow: var(--material-control);
 }
 

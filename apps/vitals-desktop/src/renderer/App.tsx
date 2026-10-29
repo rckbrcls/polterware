@@ -331,7 +331,7 @@ export function App() {
             <Separator orientation="vertical" class="vitals-titlebar-divider" />
             <For each={tabs()}>
               {(tab) => (
-                <div class="vitals-tab-row" data-active={tab.sessionId === activeId() ? "true" : "false"}>
+                <div class="vitals-tab-row material-rim-fade" data-active={tab.sessionId === activeId() ? "true" : "false"}>
                   <Button
                     variant="ghost"
                     class="vitals-tab"
@@ -348,7 +348,7 @@ export function App() {
             </For>
             <button
               type="button"
-              class="vitals-tab-new"
+              class="vitals-tab-new material-rim-fade"
               aria-label="New connection"
               data-active={activeId() === null ? "true" : "false"}
               onClick={() => setActiveId(null)}
@@ -358,7 +358,7 @@ export function App() {
             <div class="vitals-settings-button">
               <Tooltip.Root>
                 <Tooltip.Trigger asChild={(triggerProps) => (
-                  <button {...triggerProps()} type="button" class="vitals-settings-card" aria-label="Settings"
+                  <button {...triggerProps()} type="button" class="vitals-settings-card material-rim-fade" aria-label="Settings"
                     data-active={settingsOpen() ? "true" : "false"} onClick={() => setSettingsOpen(true)}>
                     <Settings size={12} />
                   </button>

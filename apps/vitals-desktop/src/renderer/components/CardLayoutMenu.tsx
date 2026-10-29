@@ -22,7 +22,7 @@ export function CardLayoutMenu(props: { layout: CardLayoutState }) {
   };
   return (
     <DropdownMenu positioning={{ placement: "bottom-end" }}>
-      <DropdownMenuTrigger class="vitals-layout-trigger" aria-label="Layout" title="Layout">
+      <DropdownMenuTrigger class="vitals-layout-trigger material-rim-fade" aria-label="Layout" title="Layout">
         <LayoutDashboard size={12} />
       </DropdownMenuTrigger>
       <DropdownMenuContent class="vitals-card-menu">

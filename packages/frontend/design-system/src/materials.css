@@ -60,7 +60,7 @@
   --card-fill-top: var(--color-surface-subtle);
   --card-fill-bottom: var(--color-surface-subtle);
   --card-fill: linear-gradient(to bottom, var(--card-fill-top), var(--card-fill-bottom));
-  --card-rings: 0 0 0 0.5px var(--material-rim), 0 -0.5px 0 0 var(--material-highlight);
+  --card-rings: 0 0 0 0.5px var(--material-rim), inset 0 0.5px 0 0 var(--material-highlight-strong);
 }
 
 /**

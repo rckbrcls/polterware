@@ -9,7 +9,7 @@
   box-sizing: border-box;
   border: 1px solid var(--field-frame);
   border-radius: 4px;
-  background: linear-gradient(to bottom, #333333, #2e2e2e);
+  background: linear-gradient(to bottom, var(--material-face-top), var(--material-face-bottom));
   box-shadow: var(--material-well);
   color: var(--color-text-primary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;

@@ -6,13 +6,13 @@
 /* Ark sets stroke-width inline per circle; the layers below widen or narrow it, so they win with !important. */
 .pw-progress-ring__stop-track-top { stop-color: var(--field-fill-top); }
 .pw-progress-ring__stop-track-bottom { stop-color: var(--field-fill-bottom); }
-.pw-progress-ring__stop-face-top { stop-color: #5a5a5a; }
-.pw-progress-ring__stop-face-bottom { stop-color: #3d3d3d; }
+.pw-progress-ring__stop-face-top { stop-color: var(--material-face-top); }
+.pw-progress-ring__stop-face-bottom { stop-color: var(--material-face-bottom); }
 .pw-progress-ring__track-frame { stroke: var(--field-frame); stroke-width: calc(var(--thickness) + 2px) !important; }
 .pw-progress-ring__track { stroke-width: var(--thickness) !important; }
 .pw-progress-ring__range-frame, .pw-progress-ring__range-rim, .pw-progress-ring__range { stroke-linecap: round; transition: stroke-dashoffset var(--spring-moderate-duration) var(--spring-moderate-ease); }
 .pw-progress-ring__range-frame { stroke: var(--field-frame); stroke-width: calc(var(--thickness) + 2px) !important; }
-.pw-progress-ring__range-rim { stroke: #6a6a6a; stroke-width: var(--thickness) !important; }
+.pw-progress-ring__range-rim { stroke: #3a3a3a; stroke-width: var(--thickness) !important; }
 .pw-progress-ring__range { stroke-width: calc(var(--thickness) - 2px) !important; }
 .pw-progress-ring__value { display: inline-flex; }
 @media (prefers-reduced-motion: reduce) { .pw-progress-ring__range-frame, .pw-progress-ring__range-rim, .pw-progress-ring__range { transition: none; } }

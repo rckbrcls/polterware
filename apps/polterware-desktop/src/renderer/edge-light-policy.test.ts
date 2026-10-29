@@ -86,8 +86,7 @@ describe("edge-light policy", () => {
 
     expect(surface).toContain("transform-origin: top left");
     expect(surface).toContain("background: var(--card-fill)");
-    expect(surface).toContain("inset 0 1px 0 var(--edge-light-surface-highlight)");
-    expect(surface).toContain("inset 0 0 0 1px var(--edge-light-surface-rim)");
+    expect(surface).toContain("box-shadow: var(--material-float)");
     expect(surface).not.toContain("border-left");
   });
 });

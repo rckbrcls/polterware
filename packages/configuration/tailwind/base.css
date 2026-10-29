@@ -200,8 +200,10 @@
   --edge-light-surface-highlight: rgb(255 255 255 / 0.1);
   --edge-light-surface-rim: rgb(255 255 255 / 0.1);
   /* Lit material (DESIGN.md Materials), measured from OpenCode: every raised object is lit from
-   * above with a dark drop, a 0.5px light rim and a 0.5px brighter top edge. Fills stay opaque;
-   * alpha lives only in these edge and shadow tokens. */
+   * above with a dark drop, a 0.5px light rim and a 0.5px brighter top edge. The top edge is an
+   * inset shifted down, so it follows any radius and fades out along the corners instead of
+   * stepping away from the rim the way an outside shifted copy does. Fills stay opaque; alpha
+   * lives only in these edge and shadow tokens. */
   --material-rim: rgb(255 255 255 / 0.16);
   --material-rim-strong: rgb(255 255 255 / 0.2);
   --material-highlight: rgb(255 255 255 / 0.06);
@@ -209,17 +211,20 @@
   --material-drop: rgb(0 0 0 / 0.3);
   --material-drop-strong: rgb(0 0 0 / 0.4);
   /* Small raised controls: buttons, chips, active pills. */
-  --material-control: 0 1px 2px var(--material-drop-strong), 0 0 0 0.5px var(--material-rim-strong), 0 -0.5px 0 0 var(--material-highlight-strong);
+  --material-control: 0 1px 2px var(--material-drop-strong), 0 0 0 0.5px var(--material-rim-strong), inset 0 0.5px 0 0 var(--material-rim);
   /* Host panels and cards. */
-  --material-raised: 0 2px 4px var(--material-drop), 0 1px 2px var(--material-drop), 0 0 0 0.5px var(--material-rim), 0 -0.5px 0 0 var(--material-highlight);
+  --material-raised: 0 2px 4px var(--material-drop), 0 1px 2px var(--material-drop), 0 0 0 0.5px var(--material-rim), inset 0 0.5px 0 0 var(--material-highlight-strong);
   /* Menus, popovers, dialogs, tooltips. */
-  --material-float: 0 8px 16px var(--material-drop), 0 4px 8px var(--material-drop), 0 0 0 0.5px var(--material-rim), 0 -0.5px 0 0 var(--material-highlight);
+  --material-float: 0 8px 16px var(--material-drop), 0 4px 8px var(--material-drop), 0 0 0 0.5px var(--material-rim), inset 0 0.5px 0 0 var(--material-highlight-strong);
   /* Groups nested inside a raised host: a hairline, no drop. */
-  --material-hairline: 0 0 0 0.5px var(--color-border-default), 0 -0.5px 0 0 var(--material-highlight);
+  --material-hairline: 0 0 0 0.5px var(--color-border-default), inset 0 0.5px 0 0 var(--material-highlight);
   /* Lit-from-above rim for large radii and pills, where a shifted top edge would read as a
    * crescent: one 0.5px ring just outside the box, brightest on top and fading down. */
   --material-rim-fade: linear-gradient(to bottom, var(--material-rim-strong), var(--material-highlight));
   --material-rim-fade-quiet: linear-gradient(to bottom, var(--material-rim), var(--material-highlight) 70%);
+  /* The near-flat face of a raised neutral control (active pills, checked boxes, chips). */
+  --material-face-top: #303030;
+  --material-face-bottom: #2b2b2b;
   /* Inset chip rim, drawn inside the box: for wells and edges a parent would otherwise clip. */
   --material-well: inset 0 0 0 0.5px var(--material-highlight-strong);
   /* Card edge: the lit rim drawn outside the box (cards add their own drop through --card-lift). */
@@ -272,7 +277,7 @@
   --card-fill-top: var(--color-surface-subtle);
   --card-fill-bottom: var(--color-surface-subtle);
   --card-fill: linear-gradient(to bottom, var(--card-fill-top), var(--card-fill-bottom));
-  --card-rings: 0 0 0 0.5px var(--material-rim), 0 -0.5px 0 0 var(--material-highlight);
+  --card-rings: 0 0 0 0.5px var(--material-rim), inset 0 0.5px 0 0 var(--material-highlight-strong);
 
   /* Keycap buttons: an opaque body (white falling to grey) around a dished face that runs
    * the other way (shaded under the top rim, catching light at the bottom), a solid lip for
@@ -511,6 +516,10 @@ input[type="number"]::-webkit-outer-spin-button {
 
 /* Pills and large panels draw their rim as a fading ring hugging the outside of the box, where
    OpenCode's 0.5px spread sits (see `--material-rim-fade`). */
+.material-rim-fade {
+  position: relative;
+}
+
 .material-rim-fade::after,
 .pw-texture-button:is(.rounded-full, .\!rounded-full)::after,
 .pw-texture-group::after {
