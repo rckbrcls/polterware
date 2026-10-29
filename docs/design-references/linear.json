@@ -29,7 +29,13 @@
       "dialog_title_input": "18px / 24px / 600",
       "dialog_body_input": "15px / 22.5px / 450"
     },
-    "weights": [400, 450, 500, 550, 600]
+    "weights": [
+      400,
+      450,
+      500,
+      550,
+      600
+    ]
   },
   "color": {
     "note": "Neutrals carry a faint cool hue (lch hue 272). Text never pure white except primary.",
@@ -68,16 +74,74 @@
     "accent": {
       "brand": "#5e6ad2",
       "focus_ring": "#5e69d1",
-      "brand_tints": ["#1b1e37", "#1f223e", "#2b2d4b", "#303250", "#6974e1", "#6f7ffe"]
+      "brand_tints": [
+        "#1b1e37",
+        "#1f223e",
+        "#2b2d4b",
+        "#303250",
+        "#6974e1",
+        "#6f7ffe"
+      ]
     },
     "status_scales": {
-      "cyan": ["#0e272b", "#00889c", "#00b8cb", "#00c4d8", "#00ccdf", "#00e8ff", "#c9ffff"],
-      "green": ["#122315", "#008a2a", "#26a544", "#37b24f", "#40b956", "#3de261", "#d5ffd6"],
-      "yellow": ["#322810", "#967000", "#edbf0a", "#f0bf00", "#fecb00", "#ffd200", "#fffaa6"],
-      "orange": ["#351b14", "#cf4608", "#ff7235", "#ff7e40", "#ff8647", "#ff9958", "#ffeac6"],
-      "red": ["#d9343f", "#f34e52", "#ff5b5d", "#ff6363"]
+      "cyan": [
+        "#0e272b",
+        "#00889c",
+        "#00b8cb",
+        "#00c4d8",
+        "#00ccdf",
+        "#00e8ff",
+        "#c9ffff"
+      ],
+      "green": [
+        "#122315",
+        "#008a2a",
+        "#26a544",
+        "#37b24f",
+        "#40b956",
+        "#3de261",
+        "#d5ffd6"
+      ],
+      "yellow": [
+        "#322810",
+        "#967000",
+        "#edbf0a",
+        "#f0bf00",
+        "#fecb00",
+        "#ffd200",
+        "#fffaa6"
+      ],
+      "orange": [
+        "#351b14",
+        "#cf4608",
+        "#ff7235",
+        "#ff7e40",
+        "#ff8647",
+        "#ff9958",
+        "#ffeac6"
+      ],
+      "red": [
+        "#d9343f",
+        "#f34e52",
+        "#ff5b5d",
+        "#ff6363"
+      ]
     },
-    "white_alpha_ladder": ["4%", "6%", "8%", "9%", "11%", "13%", "16%", "23%", "25%", "45%", "55%", "59%", "75%"],
+    "white_alpha_ladder": [
+      "4%",
+      "6%",
+      "8%",
+      "9%",
+      "11%",
+      "13%",
+      "16%",
+      "23%",
+      "25%",
+      "45%",
+      "55%",
+      "59%",
+      "75%"
+    ],
     "scrim": "#000000 @ 40%"
   },
   "layout": {
@@ -112,6 +176,21 @@
       "title_top_margin": "32px",
       "properties_column": "376px, sticky, right side; groups separated by 20px + 10px padding",
       "property_value": "pill button 28px, radius full, padding 0 10px 0 6px, gap 6px, stacked with 4px gap; empty values in tertiary text (\"Set priority\")"
+    },
+    "issue_page": {
+      "header": "44px row: breadcrumb 'ID Title' 13px/500, star and more icon buttons (28px, round, flat); icon actions on the right",
+      "text_column": "654px wide, starting ~62px from the panel edge; 48px gap to the rail",
+      "title": "24px/32px/600, letter-spacing -0.16px, margin 32px 0 8px",
+      "body": "15px/24px/450, letter-spacing -0.1px, 16px between paragraphs; h3 17px/24px/600; links brand tint, no underline",
+      "rail": "376px, no fill or frame, sticky; section headings 13px/500 tertiary with padding 0 8px; groups 20px apart plus 10px padding",
+      "rail_values": "ghost pill buttons 28px, radius full, padding 0 10px 0 6px, gap 6px, 13px/500, ~31px pitch; empty values read as muted prompts ('Set priority', 'Add label')",
+      "below_body": "24px ghost pill action ('Add sub-issues', 12px/500), a hairline, then sections such as 'Activity' (15px/600) and a comment composer card"
+    },
+    "projects_list": {
+      "header": "44px: 'Projects' 13px/500 left; 'New project' ghost pill right (28px, 12px/500, tertiary)",
+      "view_bar": "44px: 'All projects' pill (28px, radius full, 12px/500, raised fill) and view settings; filter and display icon buttons on the right",
+      "column_header": "32px row; labels 12px/450 tertiary as 24px pill sort buttons",
+      "rows": "48px, no separators; name cell = 16px icon + name 13px/500; other cells 12px/500 tertiary; checkbox on hover only"
     }
   },
   "components": {
