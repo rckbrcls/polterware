@@ -7,6 +7,7 @@ import {
   Button,
   Card,
   Cpu,
+  DataTable,
   DetailPanel,
   Dialog,
   Field,
@@ -729,11 +730,6 @@ export function DispatchPage(props: {
   const runLogText = createMemo(() => runLog(selectedRunResult(), liveEvents()));
 
   const [focusRunId, setFocusRunId] = createSignal("");
-  const selectRun = (id: string, focus = false) => {
-    if (!id) return;
-    setSelectedRunId(id);
-    if (focus) setFocusRunId(id);
-  };
   const openRun = (id: string) => {
     if (!id) return;
     if (activeTab() !== "runs") {
@@ -756,7 +752,7 @@ export function DispatchPage(props: {
     const id = focusRunId();
     if (!id || activeTab() !== "runs" || openedRunId()) return;
     const frame = requestAnimationFrame(() => {
-      const node = document.getElementById(`dispatch-run-${id}`);
+      const node = document.querySelector<HTMLElement>(`[aria-label="Dispatch runs"] [data-row-id="${CSS.escape(id)}"]`);
       if (!node) return;
       node.focus({ preventScroll: true });
       node.scrollIntoView({ block: "nearest" });
@@ -764,21 +760,6 @@ export function DispatchPage(props: {
     });
     onCleanup(() => cancelAnimationFrame(frame));
   });
-
-  const moveRun = (key: "up" | "down" | "home" | "end") => {
-    const items = visibleRuns();
-    if (items.length === 0) return;
-    const index = items.findIndex((item) => item.id === selectedRunId());
-    const next = key === "home"
-      ? 0
-      : key === "end"
-        ? items.length - 1
-        : key === "down"
-          ? Math.min(items.length - 1, index < 0 ? 0 : index + 1)
-          : Math.max(0, index < 0 ? 0 : index - 1);
-    const run = items[next];
-    if (run) selectRun(run.id, true);
-  };
 
   const tierSelectOptions = createMemo(() => {
     const dynamic = tiers().map((tier) => ({ value: tier.name, label: `${tier.name} (${tier.agent})` }));
@@ -1061,43 +1042,28 @@ export function DispatchPage(props: {
                   </Show>
                 }
               >
-                <div
-                  role="listbox"
-                  aria-label="Dispatch runs"
-                  class="flex flex-col gap-0.5"
-                  onKeyDown={(event) => {
-                    if (event.target !== event.currentTarget) return;
-                    if (event.key === "ArrowDown") {
-                      event.preventDefault();
-                      moveRun("down");
-                    } else if (event.key === "ArrowUp") {
-                      event.preventDefault();
-                      moveRun("up");
-                    } else if (event.key === "Home") {
-                      event.preventDefault();
-                      moveRun("home");
-                    } else if (event.key === "End") {
-                      event.preventDefault();
-                      moveRun("end");
-                    }
-                  }}
-                >
-                  <Index each={visibleRuns()}>
-                    {(run, index) => (
-                      <DispatchRunCard
-                        run={run()}
-                        worktree={worktreeByRunId().get(run().id)}
-                        selected={selectedRunId() === run().id}
-                        tabStop={selectedRunId() === run().id || (!selectedRunId() && index === 0)}
-                        now={now()}
-                        cancelling={cancellingId() === run().id}
-                        onOpen={() => openRun(run().id)}
-                        onMove={moveRun}
-                        onCancel={() => void handleCancelRun(run().id)}
-                      />
-                    )}
-                  </Index>
-                </div>
+                <DataTable.Root rows={visibleRuns()} getRowId={(run) => run.id} columnWidthsKey="dispatch-runs" density="list">
+                  <DataTable.Table aria-label="Dispatch runs">
+                    <DataTable.Header>
+                      <DataTable.ColumnHeader<DispatchRunView> id="prompt" width="44%">Run</DataTable.ColumnHeader>
+                      <DataTable.ColumnHeader<DispatchRunView> id="status" sortBy={(run) => run.status}>Status</DataTable.ColumnHeader>
+                      <DataTable.ColumnHeader<DispatchRunView> id="agent" sortBy={(run) => dotted(run.agent, run.model)}>Agent</DataTable.ColumnHeader>
+                      <DataTable.ColumnHeader<DispatchRunView> id="changes" sortable={false}>Changes</DataTable.ColumnHeader>
+                      <DataTable.ColumnHeader<DispatchRunView> id="created" align="right" sortBy={(run) => run.createdAt || run.startedAt}>Started</DataTable.ColumnHeader>
+                    </DataTable.Header>
+                    <DataTable.Body<DispatchRunView>>
+                      {(run) => (
+                        <DispatchRunRow
+                          run={run}
+                          now={now()}
+                          cancelling={cancellingId() === run.id}
+                          onOpen={() => openRun(run.id)}
+                          onCancel={() => void handleCancelRun(run.id)}
+                        />
+                      )}
+                    </DataTable.Body>
+                  </DataTable.Table>
+                </DataTable.Root>
               </Show>
             </div>
           </PageContent>
@@ -1395,86 +1361,45 @@ export function DispatchPage(props: {
 }
 
 /** A run card's facts: its route, worktree branch and status, and a trailing slot. */
-function DispatchRunCard(props: {
+/** One run in the Runs table: its bot in place of an icon tile, then status, agent, changes, and when it started. */
+function DispatchRunRow(props: {
   run: DispatchRunView;
-  worktree?: DispatchWorktreeView;
-  selected: boolean;
-  tabStop: boolean;
   now: number;
   cancelling: boolean;
   onOpen: () => void;
-  onMove: (key: "up" | "down" | "home" | "end") => void;
   onCancel: () => void;
 }) {
-  const failed = () => dispatchStatusTone(props.run.status) === "danger";
-  /** The run's last word: its error or note, else its status. */
-  const subtitle = () => (failed() && props.run.error.trim()) || props.run.note.trim() || props.run.status || "—";
-  const statusDot = () => {
-    const tone = dispatchStatusTone(props.run.status);
-    if (tone === "danger") return "bg-[var(--color-danger)]";
-    if (tone === "syncing") return "bg-[var(--color-info)]";
-    if (tone === "ok") return "bg-[var(--color-success)]";
-    return "bg-[var(--color-text-disabled)]";
-  };
-  const fromControl = (target: EventTarget | null) =>
-    target instanceof Element && Boolean(target.closest("button, a, input, textarea, select"));
   return (
-    <article
-      id={`dispatch-run-${props.run.id}`}
-      role="option"
-      aria-selected={props.selected}
-      aria-current={props.selected ? "true" : undefined}
-      aria-label={`Open run ${props.run.id}`}
-      data-detail-opener=""
-      data-selected={props.selected ? "true" : undefined}
-      tabIndex={props.tabStop ? 0 : -1}
-      class={`flex min-w-0 cursor-pointer items-center gap-3 rounded-[var(--radius-control)] px-3 py-2 outline-none transition-colors duration-[var(--duration-fast)] ease-[var(--ease-standard)] hover:bg-[var(--color-surface-hover)] focus-visible:bg-[var(--color-surface-hover)] motion-reduce:transition-none ${props.selected ? "bg-[var(--color-surface-selected)]" : ""}`}
-      onClick={(event) => {
-        if (fromControl(event.target)) return;
-        props.onOpen();
-      }}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget) return;
-        if (event.key === "ArrowDown") {
-          event.preventDefault();
-          props.onMove("down");
-        } else if (event.key === "ArrowUp") {
-          event.preventDefault();
-          props.onMove("up");
-        } else if (event.key === "Home") {
-          event.preventDefault();
-          props.onMove("home");
-        } else if (event.key === "End") {
-          event.preventDefault();
-          props.onMove("end");
-        } else if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          props.onOpen();
+    <DataTable.Row row={props.run} rowId={props.run.id} aria-label={`Open run ${props.run.id}`} onActivate={() => props.onOpen()}>
+      <DataTable.PrimaryCell
+        leading={<DispatchAgentAvatar agent={props.run.agent} seed={props.run.id} status={props.run.status} size={32} />}
+        title={props.run.prompt || shortRunId(props.run.id)}
+        trailing={
+          <Show when={isRunActive(props.run.status)}>
+            <Button size="sm" variant="ghost" disabled={props.cancelling} onClick={(event) => { event.stopPropagation(); props.onCancel(); }}>
+              <Stop size={12} />
+              Cancel
+            </Button>
+          </Show>
         }
-      }}
-    >
-      <DispatchAgentAvatar agent={props.run.agent} seed={props.run.id} status={props.run.status} size={40} />
-      <span class="flex min-w-0 flex-1 flex-col">
-        <span class="truncate text-[13px] font-medium leading-5 text-[var(--color-text-primary)]" title={props.run.prompt || "—"}>
-          {props.run.prompt || "—"}
+      />
+      <DataTable.Cell>
+        <StatusChip tone={dispatchStatusTone(props.run.status)} label={props.run.status || "unknown"} />
+      </DataTable.Cell>
+      <DataTable.Cell>
+        <span class="truncate font-mono text-[12px] text-[var(--color-text-secondary)]" title={dotted(props.run.agent, props.run.model, props.run.provider)}>
+          {dotted(props.run.agent, props.run.model)}
         </span>
-        <span class={`truncate text-[12px] leading-5 ${failed() ? "text-[var(--color-danger)]" : "text-[var(--color-text-muted)]"}`} title={subtitle()}>
-          {subtitle()}
-        </span>
-      </span>
-      <Show when={isRunActive(props.run.status)}>
-        <Button size="sm" variant="ghost" disabled={props.cancelling} onClick={() => props.onCancel()}>
-          <Stop size={12} />
-          Cancel
-        </Button>
-      </Show>
-      <span class="max-w-[16rem] shrink truncate font-mono text-[11px] text-[var(--color-text-muted)]" title={dotted(props.run.agent, props.run.model, props.run.provider)}>
-        {dotted(props.run.agent, props.run.model)}
-      </span>
-      <FileChangeLine run={props.run} />
-      <span class="shrink-0 whitespace-nowrap text-[11px] tabular-nums text-[var(--color-text-muted)]">{formatAgo(props.run.createdAt || props.run.startedAt, props.now)}</span>
-      <span aria-label={props.run.status || "unknown"} title={props.run.status || "unknown"} class={`size-2 shrink-0 rounded-full ${statusDot()}`} />
-    </article>
+      </DataTable.Cell>
+      <DataTable.Cell>
+        <Show when={formatFiles(props.run)} fallback={<span class="text-[var(--color-text-muted)]">—</span>}>
+          <FileChangeLine run={props.run} />
+        </Show>
+      </DataTable.Cell>
+      <DataTable.Cell align="right">
+        <span class="whitespace-nowrap tabular-nums text-[12px] text-[var(--color-text-muted)]">{formatAgo(props.run.createdAt || props.run.startedAt, props.now)}</span>
+      </DataTable.Cell>
+    </DataTable.Row>
   );
 }
 
