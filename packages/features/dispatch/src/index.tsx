@@ -1533,17 +1533,14 @@ function DispatchRunCard(props: {
 }
 
 /**
- * A run's output as its agent's CLI prints it: a header with the agent and model, what the agent
+ * A run's output as its agent's CLI prints it, under the pinned agent bar: what the agent
  * did as `›` steps, its reasoning dimmed, its reply in compact Markdown, the CLI's raw output in
  * mono, and the lines the core recorded (`✓ verified …`). No title or frame: it is the page's content.
  */
-function RunTranscript(props: { log: string; answer: string; header: string; live: boolean }) {
+function RunTranscript(props: { log: string; answer: string; live: boolean }) {
   const entries = createMemo(() => buildTranscript(props.log, props.answer));
   return (
     <div class="pw-run-transcript flex min-w-0 flex-col gap-2 font-mono text-[12px] leading-5">
-      <Show when={props.header}>
-        <div class="text-[var(--color-text-muted)]">{props.header}</div>
-      </Show>
       <Show
         when={entries().length > 0}
         fallback={<div class="text-[var(--color-text-muted)]">{props.live ? "Waiting for agent output…" : "No agent output recorded."}</div>}
@@ -1596,6 +1593,36 @@ function TranscriptLine(props: { entry: TranscriptEntry }) {
         )}
       </Match>
     </Switch>
+  );
+}
+
+/**
+ * The agent that runs (or ran) the job, pinned above the transcript: its bot, animated while
+ * it works, and agent · model · provider. Failed attempts before it show as quiet bots and a
+ * line each with their error.
+ */
+function RunAgentBar(props: { run: DispatchRunView; attempts: readonly AgentAttemptCard[] }) {
+  const current = () => props.attempts[props.attempts.length - 1];
+  const earlier = () => props.attempts.slice(0, -1);
+  return (
+    <div class="flex min-w-0 flex-col gap-1.5">
+      <div class="flex min-w-0 items-center gap-2.5">
+        <DispatchAgentAvatar agent={current()?.agent} seed={current()?.key} status={props.run.status} size={28} />
+        <span class="min-w-0 truncate text-[13px] font-medium text-[var(--color-text-primary)]">{current()?.title}</span>
+        <Show when={current()?.durationMs !== undefined}>
+          <span class="shrink-0 tabular-nums text-[12px] text-[var(--color-text-muted)]">{measuredDuration(current()?.durationMs)}</span>
+        </Show>
+      </div>
+      <For each={earlier()}>
+        {(attempt) => (
+          <div class="flex min-w-0 items-center gap-2 pl-1 text-[12px] text-[var(--color-text-muted)]">
+            <DispatchAgentAvatar agent={attempt.agent} seed={attempt.key} status="failed" size={18} />
+            <span class="shrink-0">{attempt.title}</span>
+            <Show when={attempt.error}><span class="min-w-0 truncate text-[var(--color-danger)]">{attempt.error}</span></Show>
+          </div>
+        )}
+      </For>
+    </div>
   );
 }
 
@@ -1709,31 +1736,6 @@ function DispatchRunDetail(props: {
           <DetailPanel.Property label="Merged" mono value={text(props.run.mergeSha)} />
         </DetailPanel.Properties>
       </RailGroup>
-      <RailGroup
-        title="Agents"
-        icon={<Bot size={14} />}
-        aside={`${attempts().length} ${attempts().length === 1 ? "agent" : "agents"}`}
-      >
-        <div class="flex flex-col gap-1 px-1">
-          <For each={attempts()}>
-            {(attempt) => (
-              <div class="flex min-w-0 flex-col gap-1 px-2 py-1.5">
-                <div class="flex min-w-0 items-center gap-2">
-                  <DispatchAgentAvatar agent={attempt.agent} seed={attempt.key} status={attempt.status} size={18} />
-                  <span class="min-w-0 flex-1 truncate text-[12px] text-[var(--color-text-secondary)]">{attempt.title}</span>
-                  <Show when={attempt.durationMs !== undefined}>
-                    <span class="tabular-nums text-[11px] text-[var(--color-text-muted)]">{measuredDuration(attempt.durationMs)}</span>
-                  </Show>
-                  <StatusChip tone={dispatchStatusTone(attempt.status)} label={attempt.status} />
-                </div>
-                <Show when={attempt.error}>
-                  <p class="m-0 whitespace-pre-wrap text-[12px] text-[var(--color-danger)]">{attempt.error}</p>
-                </Show>
-              </div>
-            )}
-          </For>
-        </div>
-      </RailGroup>
       <Show when={linked()}>
         <RailGroup title="Linked runs" icon={<Route size={14} />}>
           <div class="flex flex-col gap-0.5 px-1">
@@ -1764,9 +1766,10 @@ function DispatchRunDetail(props: {
         actions={actions()}
         rail={rail()}
         railStorageKey="polterware.run.rail"
+        lead={<RunAgentBar run={props.run} attempts={attempts()} />}
         wide
       >
-        <div class="flex min-w-0 flex-col gap-6 pt-6">
+        <div class="flex min-w-0 flex-col gap-6 pt-2">
           <Show when={promptRest()}>
             {(rest) => (
               <RailGroup title="Prompt" icon={<FileText size={14} />}>
@@ -1774,7 +1777,7 @@ function DispatchRunDetail(props: {
               </RailGroup>
             )}
           </Show>
-          <RunTranscript log={props.log} answer={props.answer} header={dotted(props.run.agent, props.run.model)} live={props.live} />
+          <RunTranscript log={props.log} answer={props.answer} live={props.live} />
           <div ref={logEnd} />
         </div>
       </RailPage>

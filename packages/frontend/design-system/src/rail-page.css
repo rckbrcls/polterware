@@ -40,6 +40,15 @@
   font-size: 12px;
 }
 
+/* Pinned above the scroll, so content never passes under it; lined up with the column. */
+.pw-document__lead {
+  display: flex;
+  min-width: 0;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 12px 24px 12px 62px;
+}
+
 .pw-document__scroll {
   display: flex;
   min-height: 0;

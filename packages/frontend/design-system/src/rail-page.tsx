@@ -44,6 +44,8 @@ export type RailPageProps = {
   wide?: boolean;
   /** Shared by every page that should remember the rail together. Defaults to the documents' key. */
   railStorageKey?: string;
+  /** Pinned above the scrolling content, aligned with the column, such as a run's agent. */
+  lead?: JSX.Element;
   children: JSX.Element;
 };
 
@@ -94,6 +96,7 @@ export function RailPage(props: RailPageProps) {
           </Show>
         </div>
       </header>
+      <Show when={props.lead}><div class="pw-document__lead">{props.lead}</div></Show>
       <div class="pw-document__scroll">
         <div class="pw-document__column">{props.children}</div>
         <Show when={railVisible()}>
