@@ -14,14 +14,16 @@ const NARROW_WIDTH = 900;
 /** The rail's width and the scroll row's gap before it, from rail-page.css. */
 const RAIL_WIDTH = 376;
 const RAIL_GAP = 48;
+/** The scroll row's right padding, and how far before the page edge the leaving content fades out. */
+const PAGE_PADDING = 24;
+const EDGE_FADE = 120;
 
 /**
  * Keeps the rail mounted while it leaves and moves it like the detail panel: it slides 16px
  * to the right and fades on `spring.slow` (a quicker tween out), and beside the text its width
- * closes too: its content, kept at full width, travels to the page's right edge as it fades,
- * and the centered column glides to the middle at the same time instead of jumping. Snaps on
- * first paint; under reduced motion
- * only the fade remains.
+ * closes too: its content, kept at full width, travels to the page's right edge and fades out
+ * before it (a moving mask), and the centered column glides to the middle at the same time
+ * instead of jumping. Snaps on first paint; under reduced motion only the fade remains.
  */
 function createRailPresence(options: { rail: () => HTMLElement | undefined; visible: () => boolean; narrow: () => boolean }) {
   const [present, setPresent] = createSignal(untrack(options.visible));
@@ -38,12 +40,17 @@ function createRailPresence(options: { rail: () => HTMLElement | undefined; visi
     rail.style.transform = offset.get() ? `translate3d(${offset.get()}px, 0, 0)` : "";
     const alpha = Math.min(1, Math.max(0, opacity.get()));
     rail.style.opacity = alpha === 1 ? "" : String(alpha);
+    const inner = rail.firstElementChild as HTMLElement | null;
     if (options.narrow() || width.get() >= RAIL_WIDTH) {
       rail.style.width = rail.style.flexBasis = rail.style.marginLeft = "";
+      if (inner) inner.style.maskImage = "";
       return;
     }
     rail.style.width = rail.style.flexBasis = `${width.get()}px`;
     rail.style.marginLeft = `${-RAIL_GAP * (1 - width.get() / RAIL_WIDTH)}px`;
+    // The content fades out before the page edge instead of being cut by it.
+    const edge = width.get() + PAGE_PADDING - offset.get();
+    if (inner) inner.style.maskImage = `linear-gradient(to right, #000 ${Math.max(0, edge - EDGE_FADE)}px, transparent ${Math.max(0, edge)}px)`;
   }
   function stop() {
     run++;
