@@ -1,12 +1,14 @@
 import { children, Show, type JSX } from "solid-js";
-import { DetailPanel } from "@polterware/frontend-design-system";
+import { DetailPanel, InformationCircle, Link, RailGroup, Tag } from "@polterware/frontend-design-system";
 
-/** Properties rail for every full Markdown document: plain titled groups, as in a Linear issue. */
+/** Properties rail for every full Markdown document: groups titled with an icon tile, never cards. */
 export function KnowledgeDocumentProperties(props: {
   properties?: JSX.Element;
   /** Tag picker, shown under "Labels". */
   labels?: JSX.Element;
   links?: JSX.Element;
+  /** More rail groups after Links, such as a card's tasks and invariants. */
+  groups?: JSX.Element;
   metadataActions?: JSX.Element;
   footerActions?: JSX.Element;
 }) {
@@ -17,24 +19,21 @@ export function KnowledgeDocumentProperties(props: {
   const footerActions = children(() => props.footerActions);
   return <>
     <Show when={properties() || metadataActions()}>
-      <section class="pw-document__group">
-        <h3 class="pw-document__group-title">Properties</h3>
+      <RailGroup title="Properties" icon={<InformationCircle size={14} />} actions={metadataActions()}>
         <DetailPanel.Properties variant="rail">{properties()}</DetailPanel.Properties>
-        <Show when={metadataActions()}><div class="pw-document__group-actions">{metadataActions()}</div></Show>
-      </section>
+      </RailGroup>
     </Show>
     <Show when={labels()}>
-      <section class="pw-document__group">
-        <h3 class="pw-document__group-title">Labels</h3>
+      <RailGroup title="Labels" icon={<Tag size={14} />}>
         <div class="pw-document__group-body">{labels()}</div>
-      </section>
+      </RailGroup>
     </Show>
     <Show when={links()}>
-      <section class="pw-document__group">
-        <h3 class="pw-document__group-title">Links</h3>
+      <RailGroup title="Links" icon={<Link size={14} />}>
         <div class="pw-document__group-body">{links()}</div>
-      </section>
+      </RailGroup>
     </Show>
+    {props.groups}
     <Show when={footerActions()}>
       <div class="pw-document__rail-footer">{footerActions()}</div>
     </Show>

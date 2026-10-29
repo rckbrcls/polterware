@@ -37,6 +37,8 @@ export function KnowledgeDocumentShell(props: {
   /** Shared Property rows, rendered in the properties rail. */
   properties?: JSX.Element;
   links?: JSX.Element;
+  /** More rail groups after Links (`RailGroup`), such as a card's tasks and invariants. */
+  railGroups?: JSX.Element;
   metadataActions?: JSX.Element;
   footerActions?: JSX.Element;
   /** Additional document content, such as structured Work tasks. */
@@ -59,7 +61,7 @@ export function KnowledgeDocumentShell(props: {
       icon={props.icon}
       onBack={() => requestDetailExpanded(false)}
       status={props.status}
-      rail={<KnowledgeDocumentProperties properties={props.properties} links={props.links} metadataActions={props.metadataActions} footerActions={props.footerActions}
+      rail={<KnowledgeDocumentProperties properties={props.properties} links={props.links} groups={props.railGroups} metadataActions={props.metadataActions} footerActions={props.footerActions}
         labels={props.onTagsChange ? <TagPicker tags={tagOptions()} selectedIds={props.tags ?? []}
           onChange={ids => props.onTagsChange?.(ids)} onCreate={async name => name.trim() || undefined} /> : undefined} />}
     >

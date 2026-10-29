@@ -10,6 +10,7 @@ import {
   X,
   HelpCircle,
   ShieldCheck,
+  RailGroup,
 } from "@polterware/frontend-design-system";
 import type { WorkStage, WorkspaceWorkCard, WorkspaceWorkTask } from "@polterware/feature-shell";
 import { KnowledgeDocumentNotFound, KnowledgeDocumentShell } from "./knowledge-document-shell";
@@ -78,8 +79,8 @@ export function WorkCardDetail(props: {
                 <Button variant="danger" size="sm" onClick={() => props.onRemove?.()}>Remove from board</Button>
               </Show>
             }
-          >
-            <DetailPanel.Section
+            railGroups={<>
+            <RailGroup
               title="Tasks" icon={<ListChecks size={14} />}
               aside={
                 progress().total > 0 ? (
@@ -92,9 +93,9 @@ export function WorkCardDetail(props: {
             >
               <Show
                 when={card().tasks.length > 0}
-                fallback={<p class="pw-detail-panel__text" data-empty>No tasks yet.</p>}
+                fallback={<p class="pw-detail-panel__text px-1" data-empty>No tasks yet.</p>}
               >
-                <ul class="m-0 grid list-none gap-1.5 p-0" aria-label="Tasks">
+                <ul class="m-0 grid list-none gap-1.5 px-1 py-0" aria-label="Tasks">
                   <For each={card().tasks}>
                     {(task) => (
                       <li
@@ -128,11 +129,11 @@ export function WorkCardDetail(props: {
                   </For>
                 </ul>
               </Show>
-            </DetailPanel.Section>
+            </RailGroup>
 
             <Show when={card().questions.length > 0}>
-              <DetailPanel.Section title="Questions" icon={<HelpCircle size={14} />}>
-                <ul class="m-0 grid list-none gap-2 p-0" aria-label="Questions">
+              <RailGroup title="Questions" icon={<HelpCircle size={14} />}>
+                <ul class="m-0 grid list-none gap-2 px-1 py-0" aria-label="Questions">
                   <For each={card().questions}>
                     {(question) => (
                       <li class="grid gap-1 text-[12.5px] text-[var(--color-text-secondary)]">
@@ -157,20 +158,21 @@ export function WorkCardDetail(props: {
                     )}
                   </For>
                 </ul>
-              </DetailPanel.Section>
+              </RailGroup>
             </Show>
 
             <Show when={card().invariants.length > 0}>
-              <DetailPanel.Section title="Invariants" icon={<ShieldCheck size={14} />}>
+              <RailGroup title="Invariants" icon={<ShieldCheck size={14} />}>
                 <ul
-                  class="m-0 list-disc space-y-1 pl-4 text-[12.5px] text-[var(--color-text-secondary)]"
+                  class="m-0 list-disc space-y-1 pl-5 pr-1 text-[12.5px] text-[var(--color-text-secondary)]"
                   aria-label="Invariants"
                 >
                   <For each={card().invariants}>{(invariant) => <li>{invariant.text}</li>}</For>
                 </ul>
-              </DetailPanel.Section>
+              </RailGroup>
             </Show>
-          </KnowledgeDocumentShell>
+            </>}
+          />
         );
       }}
     </Show>

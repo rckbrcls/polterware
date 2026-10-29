@@ -4,6 +4,7 @@ import { animate, type AnimationPlaybackControls } from "motion";
 import { prefersReducedMotion } from "./reduced-motion";
 import { spring } from "./springs";
 import { ChevronDown } from "./hugeicons";
+import { IconTile, type IconTileTone } from "./icon-tile";
 import { FloatingSurfaceProvider } from "./floating-surface";
 import { PanelInteractionContext } from "./panel-interaction";
 import { DetailPanelLinkedEntities } from "./detail-panel-linked-entities";
@@ -48,10 +49,12 @@ export type DetailPanelSectionProps = {
   title?: JSX.Element;
   /** Right-aligned element on the section title row. */
   aside?: JSX.Element;
-  /** Renders the section as a card whose body folds behind its title. */
+  /** Folds the section's body behind its title. */
   collapsible?: boolean;
-  /** Decorative leading icon for the section heading. */
+  /** Leading icon, shown in a 24px icon tile before the title. */
   icon?: JSX.Element;
+  /** Tone of the icon tile (default neutral). */
+  tone?: IconTileTone;
   /** Initial state of a collapsible section (default open). */
   defaultOpen?: boolean;
 };
@@ -148,21 +151,27 @@ function DetailPanelRail(props: DetailPanelRailProps) {
   );
 }
 
+/** The section heading's icon: a 24px tile, as in `RailGroup`. Sections are separated by space, never cards. */
+function SectionIcon(props: { icon: JSX.Element; tone?: IconTileTone; seed: string }) {
+  return <IconTile size={24} tone={props.tone ?? "neutral"} seed={`detail-section-${props.seed}`} class="pw-detail-panel__section-tile">{props.icon}</IconTile>;
+}
+
 function DetailPanelSection(props: DetailPanelSectionProps) {
   const titleId = createUniqueId();
   const bodyId = createUniqueId();
   const [open, setOpen] = createSignal(props.defaultOpen !== false);
+  const seed = () => (typeof props.title === "string" ? props.title : titleId);
   return (
     <Show when={props.collapsible} fallback={
       <section
-        class={`pw-detail-panel__section surface-panel surface-panel--nested ${props.class ?? ""}`}
+        class={`pw-detail-panel__section ${props.class ?? ""}`}
         aria-labelledby={props.title ? titleId : undefined}
       >
         <Show when={props.title || props.aside}>
           <div class="pw-detail-panel__section-heading">
             <div class="pw-detail-panel__section-label">
-              <Show when={props.title && props.icon}><span class="pw-detail-panel__section-icon" aria-hidden>{props.icon}</span></Show>
-              <h3 id={titleId} class="pw-detail-panel__section-title">
+              <Show when={props.title && props.icon}><SectionIcon icon={props.icon} tone={props.tone} seed={seed()} /></Show>
+              <h3 id={titleId} class="pw-detail-panel__section-title" data-tiled={Boolean(props.icon) || undefined}>
                 {props.title}
               </h3>
             </div>
@@ -172,11 +181,11 @@ function DetailPanelSection(props: DetailPanelSectionProps) {
         {props.children}
       </section>
     }>
-      <section class={`pw-detail-panel__section pw-detail-panel__section--card surface-panel surface-panel--nested ${props.class ?? ""}`} aria-labelledby={titleId} data-open={open()}>
+      <section class={`pw-detail-panel__section pw-detail-panel__section--card ${props.class ?? ""}`} aria-labelledby={titleId} data-open={open()}>
         <div class="pw-detail-panel__section-heading">
           <button type="button" class="pw-detail-panel__section-toggle" aria-expanded={open()} aria-controls={bodyId} onClick={() => setOpen(value => !value)}>
-            <Show when={props.icon}><span class="pw-detail-panel__section-icon" aria-hidden>{props.icon}</span></Show>
-            <h3 id={titleId} class="pw-detail-panel__section-title">{props.title}</h3>
+            <Show when={props.icon}><SectionIcon icon={props.icon} tone={props.tone} seed={seed()} /></Show>
+            <h3 id={titleId} class="pw-detail-panel__section-title" data-tiled={Boolean(props.icon) || undefined}>{props.title}</h3>
             <ChevronDown size={14} class="pw-detail-panel__section-chevron" aria-hidden />
           </button>
           <Show when={props.aside}>{props.aside}</Show>

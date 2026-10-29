@@ -210,20 +210,17 @@
   padding: 0;
 }
 
-.pw-detail-panel__section.surface-panel {
-  padding: 12px;
+/* Sections are separated by space and their icon-tiled titles, never cards. */
+.pw-detail-panel__section + .pw-detail-panel__section {
+  margin-top: 24px;
 }
 
-.pw-detail-panel__section.surface-panel + .pw-detail-panel__section.surface-panel {
-  margin-top: 12px;
-}
-
-.pw-detail-panel__section.surface-panel > .pw-detail-panel__section-heading > .pw-detail-panel__section-toggle {
+.pw-detail-panel__section-heading > .pw-detail-panel__section-toggle {
   padding: 0;
 }
 
-.pw-detail-panel__section.surface-panel > .pw-detail-panel__section-clip > .pw-detail-panel__section-body {
-  padding: 12px 0 0;
+.pw-detail-panel__section--card > .pw-detail-panel__section-clip > .pw-detail-panel__section-body {
+  padding: 10px 0 0;
 }
 
 .pw-detail-panel__section-toggle {
@@ -294,7 +291,17 @@
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+.pw-detail-panel__section-tile {
+  flex: none;
+}
+
+/* Beside its tile the title reads like a RailGroup title. */
+.pw-detail-panel__section-title[data-tiled] {
+  color: var(--color-text-primary);
+  font-size: 13px;
 }
 
 .pw-detail-panel__section-title {
