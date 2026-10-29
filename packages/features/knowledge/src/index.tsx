@@ -5,6 +5,7 @@ import {
   ArchivedList,
   Breadcrumb,
   Button,
+  ChevronLeft,
   DisplayOptions,
   FileText,
   FilterPopover,
@@ -739,8 +740,11 @@ export function KnowledgeView(props: {
       <div class="flex h-full min-h-0 flex-col">
         <PageToolbar.Root>
           <PageToolbar.Leading class="gap-1">
-            {/* A board's Board and List tabs; its trail back to the Roadmap is centered. */}
+            {/* Back to the Roadmap, then a board's Board and List tabs; its trail is centered. */}
             <Show when={cardTab()}>
+              <Button size="icon" variant="texture" aria-label="Back to Milestones" onClick={() => openView(null)}>
+                <ChevronLeft size={14} />
+              </Button>
               <Tabs items={[...railItems()]} value={tab()} onChange={changeTab} aria-label={`${selectedBoard().name} layout`} />
             </Show>
             <Show
