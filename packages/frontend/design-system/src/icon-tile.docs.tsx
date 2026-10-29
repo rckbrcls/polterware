@@ -6,7 +6,7 @@ import type { DocEntry } from "./docs/types";
 export default {
   name: "Icon Tile",
   group: "Layout",
-  summary: "IconTile places a dark mark over a light, seeded chrome finish, while AuroraCover supplies the matching decorative cover strip. Seeds vary the angle, phase, and split of the chromatic metal. Pin chromePreset to change the reflection shape. Choose a semantic tone, recognized brand, or aurora palette instead of custom dark accents.",
+  summary: "IconTile places a dark mark over a light, seeded chrome finish, while AuroraCover supplies the matching decorative cover strip. Seeds vary the angle, phase, and split of the chromatic metal. Pin chromePreset to change the reflection shape. Choose a semantic tone, recognized brand, or aurora palette instead of custom dark accents. finish=\"plain\" drops the chrome for a neutral opaque tile with a neutral mark.",
   exports: ["AuroraCover", "IconTile"],
   examples: [
     { id: "tones", title: "Semantic tones", render: () => (
@@ -17,6 +17,11 @@ export default {
     { id: "brand", title: "Brand and dimmed", render: () => (
       // #region brand
       <><IconTile brand="github" seed="github"><Folder size={14} /></IconTile><IconTile dimmed><Folder size={14} /></IconTile></>
+      // #endregion
+    ) },
+    { id: "plain", title: "Plain finish", render: () => (
+      // #region plain
+      <><IconTile finish="plain"><Folder size={14} /></IconTile><IconTile finish="plain" size={28}><Database size={16} /></IconTile><IconTile finish="plain" size={36}><Shield size={18} /></IconTile><IconTile finish="plain" size={36} dimmed><Folder size={18} /></IconTile></>
       // #endregion
     ) },
     { id: "reflections", title: "Chrome reflection families", wide: true, render: () => (

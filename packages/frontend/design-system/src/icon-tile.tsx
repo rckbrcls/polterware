@@ -16,6 +16,9 @@ export type IconTileTone =
 
 export type IconTileSize = 16 | 20 | 24 | 28 | 36;
 
+/** `chrome` paints the seeded metal finish; `plain` is a neutral opaque tile with a neutral mark. */
+export type IconTileFinish = "chrome" | "plain";
+
 export const AURORA_PALETTES = ["dusk", "ember", "ocean", "meadow", "orchid", "sand"] as const;
 export type AuroraPalette = (typeof AURORA_PALETTES)[number];
 
@@ -104,6 +107,8 @@ export type IconTileProps = {
   accent?: string;
   dimmed?: boolean;
   class?: string;
+  /** Tile material. `plain` ignores tone, brand, accent, and aurora. Defaults to `chrome`. */
+  finish?: IconTileFinish;
   /** Aurora palette; renders the chrome finish tinted with the per-id accent. */
   aurora?: AuroraPalette;
   /** Chrome gradient stops; derived from the accent when omitted. */
@@ -247,6 +252,7 @@ export function resolveIconTileAccent(
 
 export function IconTile(props: IconTileProps) {
   const size = () => props.size ?? 24;
+  const finish = () => props.finish ?? "chrome";
   const accent = () =>
     props.dimmed
       ? "var(--color-icon-tile-accent-neutral)"
@@ -258,6 +264,7 @@ export function IconTile(props: IconTileProps) {
   // with horizon-metal lighting varied by the seed. Until then (SSR, first paint, no WebGL2)
   // the tile shows its flat accent tint.
   onMount(() => {
+    if (finish() === "plain") return;
     const style = getComputedStyle(tile);
     const tint = parseComputedColor(style.color);
     const variant = chromeVariant(chromeVariantIndex(props.seed), props.chromePreset);
@@ -268,8 +275,8 @@ export function IconTile(props: IconTileProps) {
     const cssRadius = Number.isFinite(parsedRadius) ? parsedRadius : 8;
     // A circle uses a huge specified radius. The shader needs the used corner, or the mask leaves the tile.
     const radius = Math.min(cssRadius, size() / 2);
-    const finish = renderChromeFinish(size() * dpr, dpr, { ...variant.options, stops, radius });
-    if (finish) setChrome(finish);
+    const rendered = renderChromeFinish(size() * dpr, dpr, { ...variant.options, stops, radius });
+    if (rendered) setChrome(rendered);
   });
 
   return (
@@ -277,22 +284,23 @@ export function IconTile(props: IconTileProps) {
       ref={tile}
       data-icon-tile
       data-size={size()}
-      data-aurora={props.aurora}
-      class={`pw-icon-tile ${props.dimmed ? "pw-icon-tile--dimmed" : ""} ${props.class ?? ""}`}
+      data-finish={finish()}
+      data-aurora={finish() === "plain" ? undefined : props.aurora}
+      class={`pw-icon-tile ${finish() === "plain" ? "pw-icon-tile--plain" : ""} ${props.dimmed ? "pw-icon-tile--dimmed" : ""} ${props.class ?? ""}`}
       style={{
         width: `${size()}px`,
         height: `${size()}px`,
-        color: accent(),
+        color: finish() === "plain" ? undefined : accent(),
       }}
       aria-hidden="true"
     >
       <Show when={chrome()}>
-        {(finish) => (
+        {(chromeFinish) => (
           <canvas
             class="pw-icon-tile-finish"
-            width={finish().width}
-            height={finish().height}
-            ref={(canvas) => queueMicrotask(() => canvas.getContext("2d")?.drawImage(finish(), 0, 0))}
+            width={chromeFinish().width}
+            height={chromeFinish().height}
+            ref={(canvas) => queueMicrotask(() => canvas.getContext("2d")?.drawImage(chromeFinish(), 0, 0))}
           />
         )}
       </Show>

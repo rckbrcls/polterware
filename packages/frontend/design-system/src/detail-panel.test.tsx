@@ -286,9 +286,6 @@ describe("lateral DetailPanel", () => {
         expect(panel.host.querySelector('[role="separator"]')?.getAttribute("aria-controls")).toBe(panel.sidebar().id);
       }
       first.host.querySelector<HTMLButtonElement>(".pw-detail-panel__body button")!.focus();
-      press({ key: "j", metaKey: true, shiftKey: true });
-      expect(first.expanded()).toBe(true);
-      expect(second.expanded()).toBe(false);
       press({ key: "j", metaKey: true });
       expect(first.open()).toBe(false);
       expect(second.open()).toBe(true);
@@ -350,10 +347,10 @@ describe("lateral DetailPanel", () => {
   it("retains shell shortcuts and leaves selection activation separate", () => {
     const panel = mount({ open: false });
     press({ key: "j", metaKey: true }); expect(panel.open()).toBe(false);
-    press({ key: "j", metaKey: true, shiftKey: true }); expect(panel.expanded()).toBe(false);
     panel.host.querySelector<HTMLButtonElement>("[data-detail-opener]")!.click();
     expect(panel.open()).toBe(true);
-    press({ key: "j", metaKey: true, shiftKey: true }); expect(panel.expanded()).toBe(true);
+    // Expanding has no shortcut; only the header button does it.
+    press({ key: "j", metaKey: true, shiftKey: true }); expect(panel.expanded()).toBe(false);
     press({ key: "j", metaKey: true }); expect(panel.open()).toBe(false);
     panel.dispose();
   });
@@ -363,6 +360,7 @@ describe("lateral DetailPanel", () => {
       "Collection",
       "CollectionHeader",
       "Header",
+      "Footer",
       "Title",
       "PrimaryAction",
       "MenuItem",
@@ -560,7 +558,8 @@ describe("lateral DetailPanel", () => {
   it("keeps expanded geometry for the whole exit and limits the frame to the workspace", async () => {
     const panel = mount({ expanded: true });
     await nextPaint();
-    panel.host.querySelector<HTMLButtonElement>('[aria-label="Close details"]')!.click();
+    // Expanded, the header offers Back instead of Close; the shell shortcut still closes.
+    press({ key: "j", metaKey: true });
     expect(panel.expanded()).toBe(false);
     expect(panel.sidebar().dataset.expanded).toBe("true");
     expect(panel.root().style.getPropertyValue("--detail-panel-space")).toBe("0px");
@@ -588,14 +587,11 @@ describe("lateral DetailPanel", () => {
   it("places primary collection creation after search, filters and auxiliary actions", () => {
     const knowledge = readFileSync(repoPath("packages/features/knowledge/src/index.tsx"), "utf8");
     const actions = knowledge.slice(knowledge.indexOf("<PageToolbar.Actions>"), knowledge.indexOf("</PageToolbar.Actions>"));
+    expect(actions.indexOf("<SearchBar")).toBeGreaterThanOrEqual(0);
     expect(actions.indexOf("<SearchBar")).toBeLessThan(actions.indexOf("<FilterPopover"));
-    expect(actions.indexOf('label="Import from project root"')).toBeLessThan(actions.indexOf('label="Add source"'));
-    expect(actions.indexOf('label="Add source"')).toBeLessThan(actions.indexOf("label={createLabel()}"));
-    const atlas = readFileSync(repoPath("packages/features/architecture/src/index.tsx"), "utf8");
-    const atlasActions = atlas.slice(atlas.indexOf("<PageToolbar.Actions>"), atlas.indexOf("</PageToolbar.Actions>"));
-    // Auto layout lives on the canvas (bottom-left), not in the toolbar.
-    expect(atlasActions).not.toContain("Auto layout");
-    expect(atlas).toContain('aria-label="Auto layout"');
+    expect(actions.indexOf("<FilterPopover")).toBeLessThan(actions.indexOf("label={createLabel()}"));
+    // Importing and adding sources live in the add-evidence dialog, not in the toolbar.
+    expect(actions).not.toContain("Import from project root");
   });
   it("registers callback-owned sibling confirmations", async () => {
     const [confirm, setConfirm] = createSignal(false);
@@ -696,7 +692,7 @@ describe("lateral DetailPanel", () => {
 
     panel.dispose();
   });
-  it("keeps only panel controls in the header and identity in the body", async () => {
+  it("keeps identity in the fixed header and metadata in the body", async () => {
     const panel = mount({
       content: () => (
         <>
@@ -712,11 +708,11 @@ describe("lateral DetailPanel", () => {
       expect(panel.host.querySelector(".pw-detail-panel__header")).not.toBeNull(),
     );
     const header = panel.host.querySelector(".pw-detail-panel__header")!;
-    expect(header.querySelector(".pw-detail-panel__title")).toBeNull();
+    await vi.waitFor(() => expect(header.querySelector(".pw-detail-panel__title")?.textContent).toBe("Alpha detail"));
     expect(header.querySelector("[data-testid='meta']")).toBeNull();
     expect(header.querySelector("[aria-label='More actions']")).toBeNull();
     const body = panel.host.querySelector(".pw-detail-panel__body")!;
-    expect(body.querySelector(".pw-detail-panel__title")?.textContent).toBe("Alpha detail");
+    expect(body.querySelector(".pw-detail-panel__title")).toBeNull();
     expect(body.querySelector("[data-testid='meta']")?.textContent).toBe("Active");
     (header.querySelector("[aria-label='Expand details']") as HTMLButtonElement).click();
     expect(panel.expanded()).toBe(true);
@@ -726,11 +722,11 @@ describe("lateral DetailPanel", () => {
   });
   it("keeps retained entity surfaces on the shared DetailPanel", () => {
     const featureFiles = [
-      "packages/features/architecture/src/node-detail.tsx",
-      "packages/features/architecture/src/view-detail.tsx",
       "packages/features/knowledge/src/knowledge-document-shell.tsx",
-      "packages/features/knowledge/src/work-card-detail.tsx",
       "packages/features/settings/src/agent-run-history-card.tsx",
+      "packages/features/settings/src/canon-facts-panel.tsx",
+      "packages/features/shell/src/inbox-item-detail.tsx",
+      "packages/features/dispatch/src/index.tsx",
     ];
 
     for (const file of featureFiles) {

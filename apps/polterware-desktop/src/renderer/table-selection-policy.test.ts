@@ -66,8 +66,8 @@ describe("product table selection policy", () => {
   it("uses fill-only active and focus states without a left edge accent", () => {
     const css = readFileSync(at("packages/frontend/design-system/src/table.css"), "utf8");
     expect(css).not.toContain("inset 2px 0 0");
-    expect(css).toMatch(
-      /\.pw-data-table-row:focus-visible > \.pw-data-table-cell[\s\S]*?background: var\(--color-surface-hover\)/,
-    );
+    // Focus and activation light the row through the shared fill highlight, not an outline.
+    expect(css).toMatch(/\.pw-data-table-row:focus-visible\s*{\s*outline: none;/);
+    expect(css).toMatch(/\.pw-data-table-active\s*{[^}]*background: var\(--color-surface-raised\)/);
   });
 });

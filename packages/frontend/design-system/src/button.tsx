@@ -172,7 +172,7 @@ export function buttonClassName(variant: ButtonVariant = "secondary", size?: But
   const actualSize = size ?? (variant === "icon" ? "icon" : "md");
   const radius = variant === "texture"
     ? actualSize === "icon" ? "rounded-full" : actualSize === "sm" ? "rounded-[6px] [--tx-face-radius:4px]" : "rounded-[12px] [--tx-face-radius:10px]"
-    : variant === "icon" || actualSize === "icon"
+    : variant === "ghost" || variant === "icon" || actualSize === "icon"
       ? "rounded-full" : "rounded-[var(--radius-control)]";
   const pill = variant === "texture" && actualSize !== "icon" ? "!px-4" : undefined;
   return cn(base, variantClass[variant], sizeClass[actualSize], radius, pill, className);

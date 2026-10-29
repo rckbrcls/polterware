@@ -38,7 +38,7 @@ export function getAppIconResourceDirectories(adapter: ElectronAppIconAdapter = 
     join(process.resourcesPath, "resources", "app-icons"),
     join(adapter.getAppPath(), "resources", "app-icons"),
     join(process.cwd(), "resources", "app-icons"),
-    join(process.cwd(), "apps", "desktop", "resources", "app-icons"),
+    join(process.cwd(), "apps", "polterware-desktop", "resources", "app-icons"),
     join(__dirname, "..", "..", "resources", "app-icons"),
   ]);
 }

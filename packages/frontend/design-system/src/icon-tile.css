@@ -77,3 +77,29 @@
 
 .pw-icon-tile--circle { border-radius: 999px; }
 
+
+/*
+ * Plain finish: the lit control material (DESIGN.md Surface and color rules) instead of chrome.
+ * A near-flat opaque face, no painted frame, the edge drawn by --material-control, a neutral mark.
+ * Tone, brand, and aurora do not apply.
+ */
+.pw-icon-tile--plain {
+  border-color: var(--field-frame);
+  background: var(--color-surface-active);
+  box-shadow: var(--material-control);
+}
+
+.pw-icon-tile--plain .pw-icon-tile-mark {
+  color: var(--color-text-secondary);
+  --pw-icon-tile-stroke-width: 2;
+}
+
+/* Dimmed drops the lift: a recessed well with a hairline and a muted mark. */
+.pw-icon-tile--plain.pw-icon-tile--dimmed {
+  background: var(--color-field-background);
+  box-shadow: var(--material-hairline);
+}
+
+.pw-icon-tile--plain.pw-icon-tile--dimmed .pw-icon-tile-mark {
+  color: var(--color-text-muted);
+}

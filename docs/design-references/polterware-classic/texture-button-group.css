@@ -1,0 +1,60 @@
+/*
+ * Split texture pill: the group is the framed shell (palette and frame come from
+ * materials.css `.pw-texture-group`), each segment is a face inside it. The 1px gap shows
+ * the lit shell as the divider between segments.
+ */
+.pw-texture-group {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: stretch;
+  gap: 1px;
+  height: var(--control-height-md);
+  padding: 1px;
+  border-radius: 9999px;
+}
+
+.pw-texture-group__segment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  padding: 0;
+  border: 0;
+  background: linear-gradient(to bottom, var(--tx-face-top), var(--tx-face-bottom));
+  color: var(--tx-ink);
+  cursor: pointer;
+  transition: background var(--duration-control) var(--ease-standard);
+}
+
+.pw-texture-group__segment:first-child {
+  border-radius: 9999px 3px 3px 9999px;
+}
+
+.pw-texture-group__segment:last-child {
+  border-radius: 3px 9999px 9999px 3px;
+}
+
+.pw-texture-group__segment svg {
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.pw-texture-group__segment:hover:not(:disabled) {
+  background: linear-gradient(to bottom, var(--tx-face-hover-top), var(--tx-face-hover-bottom));
+}
+
+.pw-texture-group__segment:active:not(:disabled) {
+  background: linear-gradient(to bottom, var(--tx-face-active-top), var(--tx-face-active-bottom));
+}
+
+.pw-texture-group__segment:disabled {
+  background: linear-gradient(to bottom, #262626, #2e2e2e);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.pw-texture-group__segment:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}

@@ -1,0 +1,89 @@
+/* No-paint clock: Ark unmounts on animationend, so it outlasts the JS exit tween
+ * (popup-motion.ts), which owns the visible enter/exit. */
+@keyframes pw-tooltip-presence {
+  from {
+    --pw-tooltip-presence-clock: 0;
+  }
+  to {
+    --pw-tooltip-presence-clock: 1;
+  }
+}
+
+.pw-tooltip-positioner {
+  z-index: var(--z-tooltip, 110);
+  pointer-events: none;
+}
+
+/* Texture balloon: materials.css supplies the frame, lit ring and gradient face. The padding sits
+ * on the face; a tooltip is too small for the card rings, so it keeps only the drop shadow. */
+.pw-tooltip-content.menu-panel.pw-texture-button {
+  padding: 7px 9px;
+  border: 1px solid var(--tx-frame);
+  border-radius: 10px;
+  background: linear-gradient(to bottom, var(--tx-outer-top), var(--tx-outer-bottom));
+  --tx-face-radius: 9px;
+  box-shadow: 0 8px 28px var(--color-shadow);
+}
+
+.pw-tooltip-content {
+  z-index: var(--z-tooltip, 110);
+  width: max-content;
+  max-width: min(240px, calc(100vw - 16px));
+  padding: 6px 8px;
+  color: var(--color-text-primary);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+  white-space: nowrap;
+  transform-origin: var(--transform-origin, center);
+  animation: pw-tooltip-presence var(--duration-fast, 120ms) forwards;
+}
+
+.pw-tooltip-content.pw-tooltip-content--rich {
+  max-width: min(288px, calc(100vw - 16px));
+  font-weight: 400;
+  text-align: left;
+  white-space: normal;
+}
+
+.pw-tooltip-content.menu-panel.pw-texture-button.pw-tooltip-content--rich { padding: 9px 11px; }
+
+.pw-tab-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pw-tab-tooltip__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pw-tab-tooltip__icon {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+}
+
+.pw-tab-tooltip__title {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--color-text-primary);
+}
+
+.pw-tab-tooltip__description {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--color-text-muted);
+}
+
+/* base.css collapses animations under reduced motion; keep the clock so the fade runs. */
+@media (prefers-reduced-motion: reduce) {
+  .pw-tooltip-content {
+    animation-duration: var(--duration-fast, 120ms) !important;
+  }
+}

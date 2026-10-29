@@ -57,7 +57,7 @@ const CANVAS_HOST_PATH =
 const ALPHA_TOKEN_DECLARATIONS = new Map([
   [
     "packages/configuration/tailwind/base.css",
-    /--(?:color-border-(?:subtle|default|strong)|color-overlay|color-shadow(?:-(?:subtle|float|outline))?|keycap-(?:sheen|face-edge|shadow)|color-(?:shell|sidebar)-glass|edge-light-(?:field|surface)-(?:highlight|rim))\s*:/,
+    /--(?:color-border-(?:subtle|default|strong)|color-overlay|color-shadow(?:-(?:subtle|float|outline))?|keycap-(?:sheen|face-edge|shadow)|material-(?:rim|highlight|drop)(?:-strong)?|color-(?:shell|sidebar)-glass|edge-light-(?:field|surface)-(?:highlight|rim))\s*:/,
   ],
   [
     "packages/frontend/design-system/src/materials.css",

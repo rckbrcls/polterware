@@ -34,6 +34,7 @@ export {
 } from "./icon-tile";
 export type {
   IconTileSize,
+  IconTileFinish,
   IconTileProps,
   IconTileTone,
   AuroraPalette,

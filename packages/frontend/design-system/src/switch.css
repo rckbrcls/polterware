@@ -21,9 +21,10 @@
   box-sizing: border-box;
   width: 38px;
   height: 22px;
-  border-radius: 8px;
-  background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
-  box-shadow: inset 0 0 0 1px var(--field-frame), inset 0 0 0 2px var(--field-ring-soft, #2b2b2b);
+  border-radius: 6px;
+  /* Lit material: a grey track with a bottom sheen and the inset chip rim. */
+  background: linear-gradient(to bottom, #3a3a3a, #4a4a4a);
+  box-shadow: var(--material-well);
   transition:
     background-color var(--duration-fast) var(--ease-standard),
     box-shadow var(--duration-fast) var(--ease-standard);
@@ -32,24 +33,23 @@
 .pw-switch__control[data-size="sm"] {
   width: 30px;
   height: 18px;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
-/* Lit track: a mid-grey gradient, not the white primary, so it stays quiet next to the dark thumb. */
+/* On: the info blue, the one place a switch carries colour (state, never decoration). */
 .pw-switch__control[data-state="checked"] {
-  background: linear-gradient(to bottom, #a3a3a3, #787878);
-  box-shadow: inset 0 0 0 1px var(--field-frame);
+  background: linear-gradient(to bottom, var(--color-info), color-mix(in srgb, var(--color-info), white 12%));
 }
 
 @media (hover: hover) {
   :where(.pw-switch, .pw-switch-row):not([data-disabled]):hover
     .pw-switch__control:not([data-state="checked"]) {
-    background: linear-gradient(to bottom, var(--field-fill-hover-top), var(--field-fill-hover-bottom));
+    background: linear-gradient(to bottom, #424242, #525252);
   }
 
   :where(.pw-switch, .pw-switch-row):not([data-disabled]):hover
     .pw-switch__control[data-state="checked"] {
-    background: linear-gradient(to bottom, #b0b0b0, #828282);
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--color-info), white 8%), color-mix(in srgb, var(--color-info), white 20%));
   }
 }
 
@@ -60,7 +60,7 @@
 
 .pw-switch__control[data-disabled] {
   background: var(--color-surface-subtle);
-  box-shadow: inset 0 0 0 1px var(--field-frame);
+  box-shadow: var(--material-well);
 }
 
 .pw-switch__thumb {
@@ -68,10 +68,10 @@
   top: 0;
   left: 0;
   display: block;
-  border-radius: 4px;
-  /* Texture face: lit 1px rim, glossy gradient, dark frame (same palette as the texture button). */
-  background: linear-gradient(to bottom, #5a5a5a, #3d3d3d);
-  box-shadow: 0 0 0 1px var(--field-frame), inset 0 0 0 1px #6b6b6b, 0 1px 2px var(--color-shadow);
+  border-radius: 3px;
+  /* A light squared knob with a white rim, lit from above. */
+  background: linear-gradient(to bottom, #ffffff, #e4e4e4);
+  box-shadow: 0 0 0 0.5px #ffffff, 0 0.5px 0.5px var(--material-drop-strong);
   will-change: transform, width, height;
   transition: background var(--duration-fast) var(--ease-standard);
 }
@@ -81,14 +81,12 @@
 }
 
 .pw-switch__thumb[data-state="checked"] {
-  background: linear-gradient(to bottom, #3b3b3b, #262626);
-  /* Same dark frame as the resting thumb, so the face reads as raised on the grey track. */
-  box-shadow: 0 0 0 1px var(--field-frame), inset 0 0 0 1px #5c5c5c, 0 1px 2px var(--color-shadow);
+  background: linear-gradient(to bottom, #ffffff, #eeeeee);
 }
 
 .pw-switch__control[data-disabled] .pw-switch__thumb {
-  background: linear-gradient(to bottom, #3a3a3a, #2c2c2c);
-  box-shadow: 0 0 0 1px var(--field-frame);
+  background: linear-gradient(to bottom, #5c5c5c, #4a4a4a);
+  box-shadow: none;
 }
 
 .pw-switch-row {

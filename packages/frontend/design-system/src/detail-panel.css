@@ -432,8 +432,9 @@
   height: 24px;
   align-items: center;
   border-radius: var(--radius-control);
-  background-color: var(--color-surface-subtle);
-  box-shadow: inset 0 0 0 1px var(--color-border-subtle);
+  /* A raised control on the section card: one layer step up, lit by the control material. */
+  background-color: var(--color-surface-raised);
+  box-shadow: var(--material-control);
 }
 
 .pw-detail-panel__link-open {
@@ -478,9 +479,13 @@
 }
 
 .pw-detail-panel__link-caption {
-  flex: 0 0 auto;
+  overflow: hidden;
+  min-width: 0;
+  /* The caption gives way before the entity name does. */
+  flex: 0 999 auto;
   color: var(--color-text-muted);
   font-size: 11px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

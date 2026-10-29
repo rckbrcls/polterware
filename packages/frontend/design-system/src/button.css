@@ -40,8 +40,8 @@
 }
 
 /*
- * Texture button: a 1px frame, a 1px lit ring, then a gradient face (outer shell + inner face).
- * Tones swap the palette through custom properties; every colour is opaque.
+ * Texture button: one opaque face lit by the control material (materials.css). The frame and
+ * outer shell only show while pressed. Tones swap the palette through custom properties.
  */
 .pw-texture-button {
   padding: 1px;
@@ -51,13 +51,13 @@
   --tx-frame: #1a1a1a;
   --tx-outer-top: #ffffff;
   --tx-outer-bottom: #d4d4d4;
-  --tx-face-top: #e5e5e5;
-  --tx-face-bottom: #fafafa;
-  --tx-face-hover-top: #e7e5e4;
-  --tx-face-hover-bottom: #e5e5e5;
-  --tx-face-active-top: #d6d3d1;
-  --tx-face-active-bottom: #d4d4d4;
-  --tx-ink: #333333;
+  --tx-face-top: #fafafa;
+  --tx-face-bottom: #e8e8e8;
+  --tx-face-hover-top: #ffffff;
+  --tx-face-hover-bottom: #efefef;
+  --tx-face-active-top: #e2e2e2;
+  --tx-face-active-bottom: #dcdcdc;
+  --tx-ink: #1b1b1b;
 }
 
 /* Primary: the blue of the info badge (--tone-info-*), in the same build as the other tones. */
@@ -140,14 +140,14 @@
   background: linear-gradient(to bottom, var(--tx-face-active-top), var(--tx-face-active-bottom));
 }
 
-/* A disabled texture button keeps the framed build but is cut from grey in every tone. */
+/* A disabled texture button keeps the build but is cut from flat grey in every tone. */
 .pw-texture-button:disabled,
 .pw-texture-button[data-texture-tone]:disabled {
   --tx-frame: #1c1c1c;
-  --tx-outer-top: #3a3a3a;
-  --tx-outer-bottom: #2f2f2f;
+  --tx-outer-top: #262626;
+  --tx-outer-bottom: #262626;
   --tx-face-top: #262626;
-  --tx-face-bottom: #2e2e2e;
+  --tx-face-bottom: #262626;
   --tx-ink: var(--color-text-disabled);
   color: var(--color-text-disabled);
   cursor: not-allowed;

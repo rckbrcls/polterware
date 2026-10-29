@@ -1,0 +1,594 @@
+/* Tailwind v4 — Polter quiet dark operator tokens (DESIGN.md SSOT) */
+@import "tailwindcss";
+
+/* Scan monorepo UI sources (base.css lives under packages/configuration/tailwind) */
+@source "../../../apps/polterware-desktop/src/**/*.{html,ts,tsx}";
+@source "../../../apps/notes-desktop/src/**/*.{html,ts,tsx}";
+@source "../../../apps/vitals-desktop/src/**/*.{html,ts,tsx}";
+@source "../../../packages/features/**/*.{ts,tsx}";
+@source "../../../packages/frontend/**/*.{ts,tsx}";
+
+@theme {
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Surfaces — lifted neutral gray ladder shared by Polterware, Polterware Notes and Polterware Vitals (no cool/blue cast) */
+  --color-app-background: #161616;
+  --color-shell-background: #161616;
+  --color-sidebar-background: #161616;
+  /* Marketing site canvas, one step below the ladder so app mockups read as raised windows */
+  --color-site-background: #0f0f0f;
+  --color-surface: #1b1b1b;
+  --color-surface-subtle: #242424;
+  --color-surface-raised: #292929;
+  --color-surface-hover: #2c2c2c;
+  --color-surface-active: #303030;
+  --color-surface-selected: #343434;
+
+  /* Border hierarchy may use alpha; structural fills stay opaque. */
+  --color-border-subtle: rgb(255 255 255 / 0.045);
+  --color-border-default: rgb(255 255 255 / 0.07);
+  --color-border-strong: rgb(255 255 255 / 0.12);
+
+  /* Text and icons always use solid neutral paint. */
+  --color-text-primary: #ececec;
+  --color-text-secondary: #a4a4a4;
+  --color-text-muted: #8f8f8f;
+  --color-text-disabled: #4b4b4b;
+
+  /* Primary accent — ice white on the dark theme (a dark gray on light themes); the brand token follows it */
+  --color-primary: #eef1f3;
+  --color-primary-foreground: var(--color-surface-selected);
+
+  --color-brand: var(--color-primary);
+
+  --color-danger: #e46666;
+  --color-warning: #d8a85d;
+  --color-info: #7e9fd8;
+  --color-success: #01dd96;
+
+  /* Operational chart series — opaque categorical paints. */
+  --color-chart-cyan: #8eccc9;
+  --color-chart-blue: #7e9fd8;
+  --color-chart-green: #5bbf93;
+  --color-chart-amber: #d8a85d;
+  --color-chart-red: #e46666;
+  --color-chart-violet: #9c8fce;
+  --color-chart-gray: #6f6f6f;
+  --color-chart-axis: var(--color-text-muted);
+  /* Opaque contribution ramp; independent of the app accent override. */
+  --color-heatmap-0: #1e1e1e;
+  --color-heatmap-1: #164b3a;
+  --color-heatmap-2: #167451;
+  --color-heatmap-3: #159f6d;
+  --color-heatmap-4: #01dd96;
+  --color-chart-grid: var(--color-border-default);
+
+  /* Identity icon tiles — light accent chrome + dark marks (never text-primary). */
+  --color-icon-tile-accent-neutral: #a8a8a8;
+  --color-icon-tile-base: #f4f4f4;
+  --color-icon-tile-edge: #d0d0d0;
+  --color-icon-tile-mark: #121212;
+  --color-icon-tile-mark-dimmed: #3a3a3a;
+
+  /* Compact semantic status badges — opaque tone pairs. */
+  --color-status-success-background: #3d8f74;
+  --color-status-success-foreground: #071c16;
+  --color-status-warning-background: var(--color-warning);
+  --color-status-warning-foreground: #4a310f;
+  --color-status-danger-background: var(--color-danger);
+  --color-status-danger-foreground: #47171a;
+  --color-status-info-background: var(--color-info);
+  --color-status-info-foreground: #26364f;
+  --color-status-muted-background: var(--color-surface-selected);
+  --color-status-muted-foreground: var(--color-text-secondary);
+  --radius-window: 24px;
+  --color-chart-cyan: #8eccc9;
+  --color-chart-blue: #7e9fd8;
+  --color-chart-green: #5bbf93;
+  --color-chart-amber: #d8a85d;
+  --color-chart-red: #e46666;
+  --color-chart-violet: #9c8fce;
+  --color-chart-gray: #6f6f6f;
+  --color-chart-axis: var(--color-text-muted);
+  /* Opaque contribution ramp; independent of the app accent override. */
+  --color-heatmap-0: #1e1e1e;
+  --color-heatmap-1: #164b3a;
+  --color-heatmap-2: #167451;
+  --color-heatmap-3: #159f6d;
+  --color-heatmap-4: #01dd96;
+  --color-chart-grid: var(--color-border-default);
+  --chart-bloom-blur: 6;
+  --chart-bloom-strength-rest: 0.12;
+  --chart-bloom-strength-active: 0.28;
+  /* Functional alpha: modal context separation and elevation only. */
+  --color-overlay: rgb(0 0 0 / 0.6);
+  --color-shadow-subtle: rgb(0 0 0 / 0.22);
+  --color-shadow: rgb(0 0 0 / 0.32);
+  --color-shadow-float: rgb(0 0 0 / 0.42);
+  --color-shadow-outline: rgb(0 0 0 / 0.18);
+
+  /* Legacy aliases (transition) */
+  --color-bg: var(--color-app-background);
+  --color-fg: var(--color-text-primary);
+  --color-muted: var(--color-text-muted);
+  --color-border: var(--color-border-default);
+  --color-accent: var(--color-info);
+  --color-success-legacy: var(--color-success);
+
+  --radius-control: 8px;
+  --radius-item: 10px;
+  --radius-card: 14px;
+  --radius-surface: 22px;
+  --radius-menu: 16px;
+  --radius-dialog: 30px;
+  --radius-window: 24px;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --duration-fast: 120ms;
+  --duration-control: 160ms;
+  --duration-enter: 200ms;
+
+  --sidebar-width: 232px;
+  --titlebar-height: 44px;
+  /* macOS traffic lights clearance when titleBarStyle is hidden */
+  --titlebar-traffic-inset: 78px;
+  --page-header-height: 52px;
+  --control-height-sm: 28px;
+  --control-height-md: 32px;
+  /* Text inputs and selects sit taller than buttons. */
+  --field-height-sm: 32px;
+  --field-height-md: 36px;
+
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 105;
+  --z-toast: 50;
+  --z-dialog: 100;
+  --z-tooltip: 110;
+}
+
+:root {
+  color-scheme: dark;
+  /* macOS vibrancy chrome — one wash for title bar, sidebar, and gutters. */
+  --color-shell-glass: rgb(19 19 19 / 0.7);
+  --color-sidebar-glass: var(--color-shell-glass);
+  --foreground: var(--color-text-primary);
+  --primary: var(--color-text-primary);
+  --primary-foreground: var(--color-primary-foreground);
+  --secondary: var(--color-surface-raised);
+  --secondary-foreground: var(--color-text-primary);
+  --card: var(--color-surface);
+  --destructive: var(--color-danger);
+  --signal-info: var(--color-info);
+  --signal-success: var(--color-brand);
+  --signal-warning: var(--color-warning);
+  --signal-danger: var(--color-danger);
+  --ease-out-cubic: var(--ease-standard);
+  --ring: var(--color-border-strong);
+
+  /*
+   * Always emit tokens consumed by authored CSS here (not only @theme).
+   * Tailwind v4 may tree-shake theme variables without utility consumers.
+   */
+  --color-primary: #eef1f3;
+  --color-surface-active: #303030;
+  --color-status-success-background: #3d8f74;
+  --color-status-success-foreground: #071c16;
+  --color-status-warning-background: var(--color-warning);
+  --color-status-warning-foreground: #4a310f;
+  --color-status-danger-background: var(--color-danger);
+  --color-status-danger-foreground: #47171a;
+  --color-status-info-background: var(--color-info);
+  --color-status-info-foreground: #26364f;
+  --color-status-muted-background: var(--color-surface-selected);
+  --color-status-muted-foreground: var(--color-text-secondary);
+  --color-heatmap-0: #1e1e1e;
+  --color-heatmap-1: #164b3a;
+  --color-heatmap-2: #167451;
+  --color-heatmap-3: #159f6d;
+  --color-heatmap-4: #01dd96;
+  /* Tokenized edge light — real border + top highlight (see DESIGN.md Materials).
+   * Structural fills remain opaque; these low-alpha highlights describe edges.
+   * field   = inputs/selects
+   * surface = MainSurface / panels
+   */
+  --edge-light-field-highlight: rgb(255 255 255 / 0.1);
+  --edge-light-field-rim: rgb(255 255 255 / 0.1);
+  --edge-light-surface-highlight: rgb(255 255 255 / 0.1);
+  --edge-light-surface-rim: rgb(255 255 255 / 0.1);
+  /* Card rings: opaque alternating dark/light hairlines stepped inward from the rim (Card texture). */
+  --card-ring-dark-outer: #1d1d1d;
+  --card-ring-light: #323232;
+  --card-ring-dark-inner: #191919;
+  --card-ring-light-inner: #2e2e2e;
+  /* Input wells: lighter than the app background so fields read inside cards, popovers and dialogs. */
+  --color-field-background: #1f1f1f;
+  --color-field-background-hover: #252525;
+  --field-frame: #141414;
+  --field-fill-top: #1b1b1b;
+  --field-fill-bottom: #292929;
+  --field-fill-hover-top: #222222;
+  --field-fill-hover-bottom: #303030;
+  --field-rings: inset 0 0 0 1px #383838;
+  /* Texture tones for chips and badges: frame, lit rim, gradient face, ink. Opaque. */
+  --tone-neutral-frame: #141414;
+  --tone-neutral-rim: #4c4c4c;
+  --tone-neutral-top: #262626;
+  --tone-neutral-bottom: #3b3b3b;
+  --tone-neutral-ink: var(--color-text-secondary);
+  --tone-brand-frame: #1a1a1a;
+  --tone-brand-rim: #ffffff;
+  --tone-brand-top: #e5e5e5;
+  --tone-brand-bottom: #fafafa;
+  --tone-brand-ink: #333333;
+  --tone-success-frame: #14301d;
+  --tone-success-rim: #6ee7a0;
+  --tone-success-top: #2f7a4a;
+  --tone-success-bottom: #3a9a5c;
+  --tone-success-ink: #effff4;
+  --tone-warn-frame: #5e3f0e;
+  --tone-warn-rim: #fcd34d;
+  --tone-warn-top: #a8741a;
+  --tone-warn-bottom: #c28a22;
+  --tone-warn-ink: #fff8e6;
+  --tone-danger-frame: #5e2323;
+  --tone-danger-rim: #f87171;
+  --tone-danger-top: #a64545;
+  --tone-danger-bottom: #b83c3c;
+  --tone-danger-ink: #fff1f1;
+  --tone-info-frame: #1c3560;
+  --tone-info-rim: #93c5fd;
+  --tone-info-top: #2f5fa8;
+  --tone-info-bottom: #3b74c4;
+  --tone-info-ink: #eef5ff;
+  --card-fill-top: var(--color-surface-raised);
+  --card-fill-bottom: var(--color-surface-subtle);
+  --card-fill: linear-gradient(to bottom, var(--card-fill-top), var(--card-fill-bottom));
+  --card-rings:
+    inset 0 0 0 1px var(--card-ring-dark-outer),
+    inset 0 0 0 2px var(--card-ring-light),
+    inset 0 0 0 3px var(--card-ring-dark-inner),
+    inset 0 0 0 4px var(--card-ring-light-inner);
+
+  /* Keycap buttons: an opaque body (white falling to grey) around a dished face that runs
+   * the other way (shaded under the top rim, catching light at the bottom), a solid lip for
+   * the key's height, and alpha only for sheen, the face rim and shadow. Tone buttons
+   * derive their own set from --color-brand. */
+  --keycap-body-top: #ffffff;
+  --keycap-body-bottom: #d9d9d9;
+  --keycap-face-top: #efefef;
+  --keycap-face-bottom: #fcfcfc;
+  --keycap-lip: #bababa;
+  --keycap-rim: #c2c2c2;
+  --keycap-rim-top: #c8c8c8;
+  --keycap-ink: #505050;
+  --keycap-ink-hover: #3c3c3c;
+  --keycap-sheen: rgb(255 255 255 / 0.9);
+  --keycap-face-edge: rgb(0 0 0 / 0.06);
+  --keycap-shadow: rgb(0 0 0 / 0.22);
+  --keycap-travel: 2px;
+  --keycap-inset-top: 3px;
+  --keycap-inset-x: 3px;
+  --keycap-inset-bottom: 4px;
+
+  --radius-control: 8px;
+  --radius-item: 10px;
+  --radius-card: 14px;
+  --radius-surface: 22px;
+  --radius-menu: 16px;
+  --radius-dialog: 30px;
+  --radius-window: 24px;
+
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 105;
+  --z-toast: 50;
+  --z-dialog: 100;
+  --z-tooltip: 110;
+
+  /* Inter Variable weight + optical size pairs (after fluid-functionalism): a heavier
+   * wght is paired with a tighter opsz so a weight change barely moves advance width. */
+  --font-variation-medium: "wght" 450, "opsz" 15;
+  --font-variation-semibold: "wght" 550, "opsz" 18;
+}
+
+/*
+ * Desktop text selection — chrome is not selectable; editable and copyable
+ * values opt in. Do not put user-select: text on .control-field (Select
+ * triggers and action buttons share that chrome).
+ */
+html,
+body,
+#root {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]),
+textarea,
+[contenteditable="true"],
+.ProseMirror,
+code,
+pre,
+.pw-selectable {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Native number spinners clash with control chrome; arrow keys still step the value. */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Edge light utilities (also in design-system materials.css; mirrored so shell tokens always exist) */
+.edge-light-surface {
+  border: 1px solid var(--edge-light-surface-rim);
+  border-top-color: var(--edge-light-surface-highlight);
+}
+
+.edge-light-surface-top {
+  border-top-color: var(--edge-light-surface-highlight);
+}
+
+/**
+ * Canonical quiet product surface (MainSurface / dialogs / popovers / elevated panels).
+ * Prefer this over ad-hoc border + bg. The border is the edge-light rim.
+ */
+.surface-panel {
+  border: 1px solid var(--field-frame);
+  border-radius: var(--radius-surface);
+  background: var(--color-surface);
+  box-shadow: var(--field-rings);
+}
+
+/* Content groups retain the main surface frame with a smaller radius and lighter fill. */
+.surface-panel.surface-panel--nested {
+  border-radius: var(--radius-card);
+  background: var(--color-surface-subtle);
+}
+
+
+/** Floating overlay on shell — same edge-light + soft outer lift. */
+.surface-panel-float {
+  border: 1px solid var(--edge-light-surface-rim);
+  border-top-color: var(--edge-light-surface-highlight);
+  border-radius: var(--radius-surface);
+  background: var(--card-fill);
+  box-shadow:
+    var(--card-rings),
+    0 20px 56px var(--color-shadow-float),
+    0 0 0 1px var(--color-shadow-subtle);
+}
+
+/**
+ * Canonical form control chrome (Input / Select / Textarea).
+ * Field-weight edge-light border (quieter than buttons).
+ * Prefer design-system Input/Select/Textarea over ad-hoc field classes.
+ */
+.control-field {
+  border: 1px solid var(--edge-light-field-rim);
+  border-top-color: var(--edge-light-field-highlight);
+  border-radius: var(--radius-control);
+  /* Inset well, a step darker than the card it sits in. */
+  background: var(--color-field-background);
+  color: var(--color-text-primary);
+  transition:
+    background var(--duration-control) var(--ease-standard),
+    border-color var(--duration-control) var(--ease-standard);
+}
+
+/* Form fields stay quiet on focus — no outline ring (caret / value change is enough). */
+.control-field:focus,
+.control-field:focus-visible {
+  outline: none;
+}
+
+.control-field::placeholder {
+  color: var(--color-text-disabled);
+}
+
+.control-field:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--color-field-background-hover);
+}
+
+.control-field:disabled,
+.control-field[aria-disabled="true"] {
+  background: var(--color-surface);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.control-field-sm {
+  height: var(--control-height-sm);
+  padding-inline: 0.5rem;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.control-field-md {
+  height: var(--control-height-md);
+  padding-inline: 0.625rem;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+/* Inputs and selects (marked .pw-field-control) are taller than the buttons that share the chrome. */
+/* Same frame and gradient face as the texture button; focus swaps the frame for the primary colour. */
+.pw-field-control {
+  border: 1px solid var(--field-frame);
+  border-radius: 12px;
+  background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
+  box-shadow: var(--field-rings);
+}
+.pw-field-control:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: linear-gradient(to bottom, var(--field-fill-hover-top), var(--field-fill-hover-bottom));
+}
+.pw-field-control:focus,
+.pw-field-control:focus-visible,
+.pw-field-control[data-state="open"] {
+  border-color: var(--color-primary);
+}
+.pw-field-control.control-field-sm { height: var(--field-height-sm); border-radius: 6px; }
+.pw-field-control.control-field-md { height: var(--field-height-md); }
+
+/** Textarea: same chrome, auto height */
+.control-field-area {
+  min-height: 4rem;
+  padding: 0.5rem 0.625rem;
+  font-size: 13px;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+/**
+ * Nested product card — hairline + whisper outer lift (design-system Card).
+ */
+/* Shared framed texture: buttons add interaction states; cards keep a stable face. */
+.pw-texture-button,
+.card-texture-framed {
+  --tx-frame: #141414;
+  --tx-outer-top: #5c5c5c;
+  --tx-outer-bottom: #3d3d3d;
+  --tx-face-top: #262626;
+  --tx-face-bottom: #3b3b3b;
+  --tx-face-hover-top: #404040;
+  --tx-face-hover-bottom: #454545;
+  --tx-face-active-top: #262626;
+  --tx-face-active-bottom: #404040;
+  --tx-ink: var(--color-text-primary);
+
+  position: relative;
+  isolation: isolate;
+  border: 1px solid var(--tx-frame);
+  background: linear-gradient(to bottom, var(--tx-outer-top), var(--tx-outer-bottom));
+  color: var(--tx-ink);
+  transition: filter var(--duration-control) var(--ease-standard);
+}
+
+.pw-button.pw-texture-button::before,
+.pw-texture-button::before,
+.card-texture-framed::before {
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: var(--tx-face-radius, 10px);
+  background: linear-gradient(to bottom, var(--tx-face-top), var(--tx-face-bottom));
+  content: "";
+  pointer-events: none;
+  transition: background var(--duration-control) var(--ease-standard);
+}
+
+.card-texture-framed:not([data-texture="compact"]) {
+  /* Large content surfaces use a quieter palette than compact texture buttons. */
+  --tx-frame: var(--field-frame);
+  --tx-outer-top: var(--card-ring-light);
+  --tx-outer-bottom: var(--card-ring-light-inner);
+  --tx-face-top: var(--color-surface);
+  --tx-face-bottom: color-mix(in srgb, var(--color-surface) 85%, var(--color-surface-subtle));
+  --tx-face-radius: calc(var(--radius-card) - 2px);
+  border-radius: var(--radius-card);
+}
+
+/* Compact controls: the field gradient and one rim, without the button metal or the four card rings. */
+.card-texture-framed[data-texture="compact"] {
+  --tx-frame: var(--field-frame);
+  --tx-outer-top: #383838;
+  --tx-outer-bottom: #2e2e2e;
+  --tx-face-top: var(--field-fill-top);
+  --tx-face-bottom: var(--field-fill-bottom);
+  border-radius: 12px;
+  --tx-face-radius: 10px;
+}
+
+.card-panel,
+.card-texture {
+  border: 1px solid var(--edge-light-surface-rim);
+  border-radius: var(--radius-card);
+  background: var(--card-fill);
+  /* Four concentric hairlines inside the border (dark, light, dark, light), then the raised lift (`--card-lift` overrides it). */
+  box-shadow:
+    var(--card-rings),
+    var(--card-lift, 0 2px 4px var(--color-shadow), 0 1px 2px var(--color-shadow));
+}
+
+/**
+ * Canonical product overlay frame — dialogs AND command palette (same box).
+ * Also applied as .pw-dialog-content in design-system dialog.css.
+ */
+.pw-product-frame {
+  width: min(72rem, calc(100vw - 2.5rem));
+  max-width: min(72rem, calc(100vw - 2.5rem));
+  height: min(78vh, 760px);
+  max-height: min(92vh, 900px);
+  min-height: min(78vh, 760px);
+}
+
+/**
+ * Compact dropdown / context menu panel (canvas tools, small menus).
+ * Large menus (org/project) use surface-panel-float via Popover.
+ */
+.menu-panel {
+  border: 1px solid var(--edge-light-surface-rim);
+  border-radius: var(--radius-menu);
+  background: var(--card-fill);
+  overflow: hidden;
+  box-shadow:
+    var(--card-rings),
+    0 8px 28px var(--color-shadow),
+    0 0 0 1px var(--color-shadow-outline);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* No focus rings anywhere: the product relies on hover/selected surfaces, not outlines. */
+:focus,
+:focus-visible,
+[data-focus],
+[data-focus-visible],
+[data-focus-visible]::before,
+[data-focus-visible]::after,
+:focus-visible::before,
+:focus-visible::after {
+  outline: none !important;
+}
+
+/* Scrollbars: slim, rounded, transparent track; the thumb only becomes prominent on hover. */
+*::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-color: var(--color-border-strong);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-muted);
+}

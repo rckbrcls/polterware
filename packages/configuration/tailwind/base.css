@@ -199,20 +199,44 @@
   --edge-light-field-rim: rgb(255 255 255 / 0.1);
   --edge-light-surface-highlight: rgb(255 255 255 / 0.1);
   --edge-light-surface-rim: rgb(255 255 255 / 0.1);
-  /* Card rings: opaque alternating dark/light hairlines stepped inward from the rim (Card texture). */
+  /* Lit material (DESIGN.md Materials), measured from OpenCode: every raised object is lit from
+   * above with a dark drop, a 0.5px light rim and a 0.5px brighter top edge. Fills stay opaque;
+   * alpha lives only in these edge and shadow tokens. */
+  --material-rim: rgb(255 255 255 / 0.16);
+  --material-rim-strong: rgb(255 255 255 / 0.2);
+  --material-highlight: rgb(255 255 255 / 0.06);
+  --material-highlight-strong: rgb(255 255 255 / 0.1);
+  --material-drop: rgb(0 0 0 / 0.3);
+  --material-drop-strong: rgb(0 0 0 / 0.4);
+  /* Small raised controls: buttons, chips, active pills. */
+  --material-control: 0 1px 2px var(--material-drop-strong), 0 0 0 0.5px var(--material-rim-strong), 0 -0.5px 0 0 var(--material-highlight-strong);
+  /* Host panels and cards. */
+  --material-raised: 0 2px 4px var(--material-drop), 0 1px 2px var(--material-drop), 0 0 0 0.5px var(--material-rim), 0 -0.5px 0 0 var(--material-highlight);
+  /* Menus, popovers, dialogs, tooltips. */
+  --material-float: 0 8px 16px var(--material-drop), 0 4px 8px var(--material-drop), 0 0 0 0.5px var(--material-rim), 0 -0.5px 0 0 var(--material-highlight);
+  /* Groups nested inside a raised host: a hairline, no drop. */
+  --material-hairline: 0 0 0 0.5px var(--color-border-default), 0 -0.5px 0 0 var(--material-highlight);
+  /* Lit-from-above rim for large radii and pills, where a shifted top edge would read as a
+   * crescent: one 0.5px ring just outside the box, brightest on top and fading down. */
+  --material-rim-fade: linear-gradient(to bottom, var(--material-rim-strong), var(--material-highlight));
+  --material-rim-fade-quiet: linear-gradient(to bottom, var(--material-rim), var(--material-highlight) 70%);
+  /* Inset chip rim, drawn inside the box: for wells and edges a parent would otherwise clip. */
+  --material-well: inset 0 0 0 0.5px var(--material-highlight-strong);
+  /* Card edge: the lit rim drawn outside the box (cards add their own drop through --card-lift). */
   --card-ring-dark-outer: #1d1d1d;
   --card-ring-light: #323232;
   --card-ring-dark-inner: #191919;
   --card-ring-light-inner: #2e2e2e;
-  /* Input wells: lighter than the app background so fields read inside cards, popovers and dialogs. */
-  --color-field-background: #1f1f1f;
-  --color-field-background-hover: #252525;
-  --field-frame: #141414;
-  --field-fill-top: #1b1b1b;
-  --field-fill-bottom: #292929;
-  --field-fill-hover-top: #222222;
-  --field-fill-hover-bottom: #303030;
-  --field-rings: inset 0 0 0 1px #383838;
+  /* Input wells are recessed: a step darker than the surface they sit on, lit by the control rim. */
+  --color-field-background: #171717;
+  --color-field-background-hover: #1b1b1b;
+  /* Controls carry no painted frame; the material shadow draws their edge. Borders keep their width so geometry is stable. */
+  --field-frame: transparent;
+  --field-fill-top: #1a1a1a;
+  --field-fill-bottom: #171717;
+  --field-fill-hover-top: #1e1e1e;
+  --field-fill-hover-bottom: #1b1b1b;
+  --field-rings: var(--material-control);
   /* Texture tones for chips and badges: frame, lit rim, gradient face, ink. Opaque. */
   --tone-neutral-frame: #141414;
   --tone-neutral-rim: #4c4c4c;
@@ -244,14 +268,11 @@
   --tone-info-top: #2f5fa8;
   --tone-info-bottom: #3b74c4;
   --tone-info-ink: #eef5ff;
-  --card-fill-top: var(--color-surface-raised);
+  /* Cards are flat: one opaque layer step; depth comes from the lit edge, not a fill gradient. */
+  --card-fill-top: var(--color-surface-subtle);
   --card-fill-bottom: var(--color-surface-subtle);
   --card-fill: linear-gradient(to bottom, var(--card-fill-top), var(--card-fill-bottom));
-  --card-rings:
-    inset 0 0 0 1px var(--card-ring-dark-outer),
-    inset 0 0 0 2px var(--card-ring-light),
-    inset 0 0 0 3px var(--card-ring-dark-inner),
-    inset 0 0 0 4px var(--card-ring-light-inner);
+  --card-rings: 0 0 0 0.5px var(--material-rim), 0 -0.5px 0 0 var(--material-highlight);
 
   /* Keycap buttons: an opaque body (white falling to grey) around a dished face that runs
    * the other way (shaded under the top rim, catching light at the bottom), a solid lip for
@@ -348,26 +369,25 @@ input[type="number"]::-webkit-outer-spin-button {
   border: 1px solid var(--field-frame);
   border-radius: var(--radius-surface);
   background: var(--color-surface);
-  box-shadow: var(--field-rings);
+  box-shadow: var(--material-raised);
 }
 
 /* Content groups retain the main surface frame with a smaller radius and lighter fill. */
 .surface-panel.surface-panel--nested {
   border-radius: var(--radius-card);
   background: var(--color-surface-subtle);
+  box-shadow: var(--material-hairline);
 }
 
 
 /** Floating overlay on shell — same edge-light + soft outer lift. */
 .surface-panel-float {
-  border: 1px solid var(--edge-light-surface-rim);
-  border-top-color: var(--edge-light-surface-highlight);
+  border: 1px solid var(--field-frame);
   border-radius: var(--radius-surface);
   background: var(--card-fill);
   box-shadow:
-    var(--card-rings),
-    0 20px 56px var(--color-shadow-float),
-    0 0 0 1px var(--color-shadow-subtle);
+    var(--material-float),
+    0 20px 56px var(--color-shadow-float);
 }
 
 /**
@@ -376,12 +396,12 @@ input[type="number"]::-webkit-outer-spin-button {
  * Prefer design-system Input/Select/Textarea over ad-hoc field classes.
  */
 .control-field {
-  border: 1px solid var(--edge-light-field-rim);
-  border-top-color: var(--edge-light-field-highlight);
+  border: 1px solid var(--field-frame);
   border-radius: var(--radius-control);
-  /* Inset well, a step darker than the card it sits in. */
+  /* Recessed well, a step darker than the card it sits in, lit by the control rim. */
   background: var(--color-field-background);
   color: var(--color-text-primary);
+  box-shadow: var(--material-control);
   transition:
     background var(--duration-control) var(--ease-standard),
     border-color var(--duration-control) var(--ease-standard);
@@ -423,7 +443,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 /* Inputs and selects (marked .pw-field-control) are taller than the buttons that share the chrome. */
-/* Same frame and gradient face as the texture button; focus swaps the frame for the primary colour. */
+/* Recessed well with the control rim; focus paints the frame in the primary colour. */
 .pw-field-control {
   border: 1px solid var(--field-frame);
   border-radius: 12px;
@@ -456,15 +476,16 @@ input[type="number"]::-webkit-outer-spin-button {
 /* Shared framed texture: buttons add interaction states; cards keep a stable face. */
 .pw-texture-button,
 .card-texture-framed {
-  --tx-frame: #141414;
-  --tx-outer-top: #5c5c5c;
-  --tx-outer-bottom: #3d3d3d;
-  --tx-face-top: #262626;
-  --tx-face-bottom: #3b3b3b;
-  --tx-face-hover-top: #404040;
-  --tx-face-hover-bottom: #454545;
-  --tx-face-active-top: #262626;
-  --tx-face-active-bottom: #404040;
+  /* Lit material: a near-flat opaque face, no painted frame, the edge drawn by --material-control. */
+  --tx-frame: var(--field-frame);
+  --tx-outer-top: var(--tx-face-top);
+  --tx-outer-bottom: var(--tx-face-bottom);
+  --tx-face-top: #303030;
+  --tx-face-bottom: #2b2b2b;
+  --tx-face-hover-top: #383838;
+  --tx-face-hover-bottom: #333333;
+  --tx-face-active-top: #2b2b2b;
+  --tx-face-active-bottom: #2b2b2b;
   --tx-ink: var(--color-text-primary);
 
   position: relative;
@@ -488,34 +509,61 @@ input[type="number"]::-webkit-outer-spin-button {
   transition: background var(--duration-control) var(--ease-standard);
 }
 
+/* Pills and large panels draw their rim as a fading ring hugging the outside of the box, where
+   OpenCode's 0.5px spread sits (see `--material-rim-fade`). */
+.material-rim-fade::after,
+.pw-texture-button:is(.rounded-full, .\!rounded-full)::after,
+.pw-texture-group::after {
+  position: absolute;
+  z-index: 1;
+  inset: -0.5px;
+  padding: 0.5px;
+  border-radius: inherit;
+  background: var(--rim-fade, var(--material-rim-fade));
+  content: "";
+  pointer-events: none;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* Their outside keeps only the drop. */
+.pw-texture-button:is(.rounded-full, .\!rounded-full),
+.pw-texture-group {
+  box-shadow: 0 1px 2px var(--material-drop-strong);
+}
+
+/* Buttons paint one face over the whole border box, so hover and press never reveal a second ring. */
+.pw-button.pw-texture-button::before,
+.pw-texture-button::before {
+  inset: -1px;
+  border-radius: inherit;
+}
+
 .card-texture-framed:not([data-texture="compact"]) {
   /* Large content surfaces use a quieter palette than compact texture buttons. */
   --tx-frame: var(--field-frame);
-  --tx-outer-top: var(--card-ring-light);
-  --tx-outer-bottom: var(--card-ring-light-inner);
   --tx-face-top: var(--color-surface);
   --tx-face-bottom: color-mix(in srgb, var(--color-surface) 85%, var(--color-surface-subtle));
   --tx-face-radius: calc(var(--radius-card) - 2px);
   border-radius: var(--radius-card);
+  box-shadow: var(--card-rings), 0 1px 2px var(--material-drop);
 }
 
 /* Compact controls: the field gradient and one rim, without the button metal or the four card rings. */
 .card-texture-framed[data-texture="compact"] {
   --tx-frame: var(--field-frame);
-  --tx-outer-top: #383838;
-  --tx-outer-bottom: #2e2e2e;
   --tx-face-top: var(--field-fill-top);
   --tx-face-bottom: var(--field-fill-bottom);
   border-radius: 12px;
   --tx-face-radius: 10px;
+  box-shadow: var(--material-control);
 }
 
 .card-panel,
 .card-texture {
-  border: 1px solid var(--edge-light-surface-rim);
+  border: 1px solid var(--field-frame);
   border-radius: var(--radius-card);
   background: var(--card-fill);
-  /* Four concentric hairlines inside the border (dark, light, dark, light), then the raised lift (`--card-lift` overrides it). */
+  /* The lit rim and top edge, then the raised drop (`--card-lift` overrides it). */
   box-shadow:
     var(--card-rings),
     var(--card-lift, 0 2px 4px var(--color-shadow), 0 1px 2px var(--color-shadow));
@@ -538,14 +586,11 @@ input[type="number"]::-webkit-outer-spin-button {
  * Large menus (org/project) use surface-panel-float via Popover.
  */
 .menu-panel {
-  border: 1px solid var(--edge-light-surface-rim);
+  border: 1px solid var(--field-frame);
   border-radius: var(--radius-menu);
   background: var(--card-fill);
   overflow: hidden;
-  box-shadow:
-    var(--card-rings),
-    0 8px 28px var(--color-shadow),
-    0 0 0 1px var(--color-shadow-outline);
+  box-shadow: var(--material-float);
 }
 
 @media (prefers-reduced-motion: reduce) {

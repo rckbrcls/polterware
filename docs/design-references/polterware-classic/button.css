@@ -1,0 +1,350 @@
+/* Flat (ghost / icon) button press layer. */
+
+/*
+ * Press geometry, after fluid-functionalism's Button: every button paints its surface
+ * (fill + rim) on a `::before` that fills the border box, and pressing pulls that layer
+ * 1px in on every side, so the surface shrinks exactly 1px at any width. A scale would
+ * warp (2% of a wide button is several pixels sideways, under 1px vertically). The
+ * press lands on the fast tier; the release eases back slower.
+ */
+.pw-button {
+  position: relative;
+  isolation: isolate;
+}
+
+.pw-button::before {
+  position: absolute;
+  z-index: -1;
+  inset: -1px;
+  border: 1px solid transparent;
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+  transition:
+    inset var(--duration-control) var(--ease-enter),
+    background-color var(--spring-fast-duration, var(--duration-fast)) var(--ease-standard);
+}
+
+.pw-button:active:not(:disabled)::before {
+  inset: 0;
+  transition-duration: var(--spring-fast-duration, var(--duration-fast));
+}
+
+/* Ghost and icon buttons: a flat fill that appears on hover and deepens on press. */
+.pw-button-flat:hover:not(:disabled)::before {
+  background-color: var(--color-surface-hover);
+}
+
+.pw-button-flat:active:not(:disabled)::before {
+  background-color: var(--color-surface-active);
+}
+
+/*
+ * Texture button: a 1px frame, a 1px lit ring, then a gradient face (outer shell + inner face).
+ * Tones swap the palette through custom properties; every colour is opaque.
+ */
+.pw-texture-button {
+  padding: 1px;
+}
+
+.pw-texture-button[data-texture-tone="brand"] {
+  --tx-frame: #1a1a1a;
+  --tx-outer-top: #ffffff;
+  --tx-outer-bottom: #d4d4d4;
+  --tx-face-top: #e5e5e5;
+  --tx-face-bottom: #fafafa;
+  --tx-face-hover-top: #e7e5e4;
+  --tx-face-hover-bottom: #e5e5e5;
+  --tx-face-active-top: #d6d3d1;
+  --tx-face-active-bottom: #d4d4d4;
+  --tx-ink: #333333;
+}
+
+/* Primary: the blue of the info badge (--tone-info-*), in the same build as the other tones. */
+.pw-texture-button[data-texture-tone="primary"] {
+  --tx-frame: var(--tone-info-frame);
+  --tx-outer-top: var(--tone-info-rim);
+  --tx-outer-bottom: color-mix(in oklab, var(--tone-info-rim), black 22%);
+  --tx-face-top: var(--tone-info-top);
+  --tx-face-bottom: var(--tone-info-bottom);
+  --tx-face-hover-top: color-mix(in oklab, var(--tone-info-top), white 10%);
+  --tx-face-hover-bottom: color-mix(in oklab, var(--tone-info-bottom), white 10%);
+  --tx-face-active-top: var(--tone-info-top);
+  --tx-face-active-bottom: color-mix(in oklab, var(--tone-info-bottom), white 14%);
+  --tx-ink: var(--tone-info-ink);
+}
+
+.pw-texture-button[data-texture-tone="danger"] {
+  --tx-frame: #5e2323;
+  --tx-outer-top: #fca5a5;
+  --tx-outer-bottom: #ef4444;
+  --tx-face-top: #a64545;
+  --tx-face-bottom: #b83c3c;
+  --tx-face-hover-top: #b34e4e;
+  --tx-face-hover-bottom: #c64545;
+  --tx-face-active-top: #c04848;
+  --tx-face-active-bottom: #d04848;
+  --tx-ink: #fff1f1;
+}
+
+.pw-texture-button[data-texture-tone="success"] {
+  --tx-frame: var(--tone-success-frame);
+  --tx-outer-top: var(--tone-success-rim);
+  --tx-outer-bottom: color-mix(in oklab, var(--tone-success-rim), black 22%);
+  --tx-face-top: var(--tone-success-top);
+  --tx-face-bottom: var(--tone-success-bottom);
+  --tx-face-hover-top: color-mix(in oklab, var(--tone-success-top), white 10%);
+  --tx-face-hover-bottom: color-mix(in oklab, var(--tone-success-bottom), white 10%);
+  --tx-face-active-top: var(--tone-success-top);
+  --tx-face-active-bottom: color-mix(in oklab, var(--tone-success-bottom), white 14%);
+  --tx-ink: var(--tone-success-ink);
+}
+
+.pw-texture-button[data-texture-tone="warn"] {
+  --tx-frame: var(--tone-warn-frame);
+  --tx-outer-top: var(--tone-warn-rim);
+  --tx-outer-bottom: color-mix(in oklab, var(--tone-warn-rim), black 22%);
+  --tx-face-top: var(--tone-warn-top);
+  --tx-face-bottom: var(--tone-warn-bottom);
+  --tx-face-hover-top: color-mix(in oklab, var(--tone-warn-top), white 10%);
+  --tx-face-hover-bottom: color-mix(in oklab, var(--tone-warn-bottom), white 10%);
+  --tx-face-active-top: var(--tone-warn-top);
+  --tx-face-active-bottom: color-mix(in oklab, var(--tone-warn-bottom), white 14%);
+  --tx-ink: var(--tone-warn-ink);
+}
+
+.pw-texture-button[data-texture-tone="info"] {
+  --tx-frame: var(--tone-info-frame);
+  --tx-outer-top: var(--tone-info-rim);
+  --tx-outer-bottom: color-mix(in oklab, var(--tone-info-rim), black 22%);
+  --tx-face-top: var(--tone-info-top);
+  --tx-face-bottom: var(--tone-info-bottom);
+  --tx-face-hover-top: color-mix(in oklab, var(--tone-info-top), white 10%);
+  --tx-face-hover-bottom: color-mix(in oklab, var(--tone-info-bottom), white 10%);
+  --tx-face-active-top: var(--tone-info-top);
+  --tx-face-active-bottom: color-mix(in oklab, var(--tone-info-bottom), white 14%);
+  --tx-ink: var(--tone-info-ink);
+}
+
+/* A pill button keeps a pill face, whether the radius came from `rounded-full` or an `!rounded-full` override. */
+.pw-texture-button:is(.rounded-full, .\!rounded-full)::before {
+  border-radius: 9999px;
+}
+
+.pw-texture-button:hover:not(:disabled)::before {
+  background: linear-gradient(to bottom, var(--tx-face-hover-top), var(--tx-face-hover-bottom));
+}
+
+.pw-texture-button[data-selected]:not(:disabled)::before,
+.pw-texture-button:active:not(:disabled)::before {
+  background: linear-gradient(to bottom, var(--tx-face-active-top), var(--tx-face-active-bottom));
+}
+
+/* A disabled texture button keeps the framed build but is cut from grey in every tone. */
+.pw-texture-button:disabled,
+.pw-texture-button[data-texture-tone]:disabled {
+  --tx-frame: #1c1c1c;
+  --tx-outer-top: #3a3a3a;
+  --tx-outer-bottom: #2f2f2f;
+  --tx-face-top: #262626;
+  --tx-face-bottom: #2e2e2e;
+  --tx-ink: var(--color-text-disabled);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+/*
+ * Keycap buttons. Solid variants are a two-layer key: the button is the key body (white
+ * falling to grey, a 1px rim, a solid lip below it for the key's height) and `::before` is
+ * the dished face inset inside it. The face is concave, so its gradient runs the other way:
+ * shaded under the top rim, catching light at the bottom, rounder at the bottom corners.
+ * More body shows below the face than above it, which gives the key its profile.
+ *
+ * Pressing drops the body by the travel on the fast spring and flattens the lip; the face
+ * sinks a pixel further and darkens. The release comes back on the moderate spring, which
+ * is critically damped, so the key settles without bouncing. Hover only tints: keys do
+ * not move until pressed. Tones only swap the --key-* palette.
+ */
+.control-field.pw-control-button {
+  --key-body-top: var(--keycap-body-top);
+  --key-body-bottom: var(--keycap-body-bottom);
+  --key-face-top: var(--keycap-face-top);
+  --key-face-bottom: var(--keycap-face-bottom);
+  --key-lip: var(--keycap-lip);
+  --key-rim: var(--keycap-rim);
+  --key-rim-top: var(--keycap-rim-top);
+  --key-ink: var(--keycap-ink);
+  --key-ink-hover: var(--keycap-ink-hover);
+
+  position: relative;
+  isolation: isolate;
+  /* The legend sits a hair above centre, on the face rather than on the whole key. */
+  padding-bottom: 2px;
+  border-color: var(--key-rim);
+  border-top-color: var(--key-rim-top);
+  background: linear-gradient(180deg, var(--key-body-top) 12%, var(--key-body-bottom));
+  color: var(--key-ink);
+  box-shadow:
+    0 var(--keycap-travel) 0 var(--key-lip),
+    0 calc(var(--keycap-travel) + 1px) 2px var(--keycap-shadow),
+    inset 0 1px 0 var(--key-sheen, var(--keycap-sheen));
+  transform: translateY(0);
+  transition:
+    transform var(--spring-moderate-duration, 160ms) var(--spring-moderate-ease, var(--ease-enter)),
+    box-shadow var(--spring-moderate-duration, 160ms) var(--spring-moderate-ease, var(--ease-enter)),
+    filter var(--spring-moderate-duration, 160ms) var(--spring-moderate-ease, var(--ease-enter)),
+    color var(--duration-control) var(--ease-standard);
+}
+
+.control-field.pw-control-button::before {
+  position: absolute;
+  z-index: -1;
+  inset: var(--keycap-inset-top) var(--keycap-inset-x) var(--keycap-inset-bottom);
+  border-radius:
+    calc(var(--radius-control) - 3px) calc(var(--radius-control) - 3px)
+    calc(var(--radius-control) - 1px) calc(var(--radius-control) - 1px);
+  background: linear-gradient(180deg, var(--key-face-top), var(--key-face-bottom));
+  box-shadow:
+    inset 0 1px 1px var(--key-face-edge, var(--keycap-face-edge)),
+    inset 0 -1px 0 var(--key-sheen, var(--keycap-sheen));
+  content: "";
+  pointer-events: none;
+  transform: translateY(0);
+  transition:
+    transform var(--spring-moderate-duration, 160ms) var(--spring-moderate-ease, var(--ease-enter)),
+    filter var(--spring-moderate-duration, 160ms) var(--spring-moderate-ease, var(--ease-enter));
+}
+
+.control-field.pw-control-button:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: linear-gradient(180deg, var(--key-body-top) 12%, var(--key-body-bottom));
+  color: var(--key-ink-hover);
+  filter: brightness(0.985);
+}
+
+.control-field.pw-control-button:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(var(--keycap-travel));
+  box-shadow:
+    0 0 0 var(--key-lip),
+    0 1px 1px var(--keycap-shadow),
+    inset 0 1px 0 var(--key-sheen, var(--keycap-sheen));
+  filter: brightness(0.97);
+  transition:
+    transform var(--spring-fast-duration, 80ms) var(--spring-fast-ease, var(--ease-enter)),
+    box-shadow var(--spring-fast-duration, 80ms) var(--spring-fast-ease, var(--ease-enter)),
+    filter var(--spring-fast-duration, 80ms) var(--spring-fast-ease, var(--ease-enter)),
+    color var(--duration-control) var(--ease-standard);
+}
+
+.control-field.pw-control-button:active:not(:disabled):not([aria-disabled="true"])::before {
+  transform: translateY(1px);
+  filter: brightness(0.95);
+  transition-duration: var(--spring-fast-duration, 80ms);
+  transition-timing-function: var(--spring-fast-ease, var(--ease-enter));
+}
+
+/* A disabled key keeps the keycap build (body, lip, face) but is cut from grey in every tone. */
+.control-field.pw-control-button:disabled,
+.control-field.pw-control-button[data-tone]:disabled,
+.control-field.pw-control-button[aria-disabled="true"] {
+  --key-body-top: #4a4a4a;
+  --key-body-bottom: #3c3c3c;
+  --key-face-top: #333333;
+  --key-face-bottom: #3a3a3a;
+  --key-lip: #2a2a2a;
+  --key-rim: #2e2e2e;
+  --key-rim-top: #585858;
+  --key-face-edge: rgb(0 0 0 / 0.3);
+  --key-sheen: rgb(255 255 255 / 0.08);
+  box-shadow: 0 var(--keycap-travel) 0 var(--key-lip), inset 0 1px 0 var(--key-sheen);
+  --key-ink: var(--color-text-disabled);
+  --key-ink-hover: var(--color-text-disabled);
+  background: linear-gradient(180deg, var(--key-body-top) 12%, var(--key-body-bottom));
+  color: var(--key-ink);
+}
+
+/* Brand: the same key, cut from the accent (ice white, or dark gray on a light theme).
+ * The mixes stay close to the accent so a dark accent stays a dark key; ink is the
+ * accent's own foreground. */
+.control-field.pw-control-button[data-tone="brand"] {
+  --key-body-top: color-mix(in srgb, var(--color-brand) 78%, white);
+  --key-body-bottom: color-mix(in srgb, var(--color-brand) 88%, black);
+  --key-face-top: color-mix(in srgb, var(--color-brand) 92%, black);
+  --key-face-bottom: color-mix(in srgb, var(--color-brand) 85%, white);
+  --key-lip: color-mix(in srgb, var(--color-brand) 66%, black);
+  --key-rim: color-mix(in srgb, var(--color-brand) 74%, black);
+  --key-rim-top: color-mix(in srgb, var(--color-brand) 78%, black);
+  --key-ink: var(--color-primary-foreground);
+  --key-ink-hover: var(--color-primary-foreground);
+}
+
+.control-field.pw-control-button[data-tone="danger"] {
+  --key-ink: color-mix(in srgb, var(--color-danger) 78%, black);
+  --key-ink-hover: color-mix(in srgb, var(--color-danger) 66%, black);
+}
+
+.control-field.pw-control-button[data-tone="secondary"] {
+  --key-ink: var(--keycap-ink);
+  --key-ink-hover: var(--keycap-ink-hover);
+}
+
+/* Tinted keys: the white keycap palette mixed toward one hue, with ink cut from the same hue.
+ * Same body, lip and dished face as the white key, so every variant keeps the keycap profile. */
+.control-field.pw-control-button[data-tone="neutral"],
+.control-field.pw-control-button[data-tone="success"],
+.control-field.pw-control-button[data-tone="warn"],
+.control-field.pw-control-button[data-tone="info"],
+.control-field.pw-control-button[data-tone="critical"],
+.control-field.pw-control-button[data-tone="violet"],
+.control-field.pw-control-button[data-tone="teal"],
+.control-field.pw-control-button[data-tone="pink"] {
+  --key-body-top: color-mix(in srgb, #ffffff, var(--key-hue) 22%);
+  --key-body-bottom: color-mix(in srgb, #d9d9d9, var(--key-hue) 42%);
+  --key-face-top: color-mix(in srgb, #efefef, var(--key-hue) 34%);
+  --key-face-bottom: color-mix(in srgb, #fcfcfc, var(--key-hue) 20%);
+  --key-lip: color-mix(in srgb, #bababa, var(--key-hue) 52%);
+  --key-rim: color-mix(in srgb, #c2c2c2, var(--key-hue) 56%);
+  --key-rim-top: color-mix(in srgb, #c8c8c8, var(--key-hue) 44%);
+  --key-sheen: color-mix(in srgb, #ffffff, var(--key-hue) 38%);
+  --key-face-edge: color-mix(in srgb, #d0d0d0, var(--key-hue) 60%);
+  --key-ink: color-mix(in srgb, var(--key-hue), black 58%);
+  --key-ink-hover: color-mix(in srgb, var(--key-hue), black 70%);
+}
+
+.control-field.pw-control-button[data-tone="neutral"] { --key-hue: #7d7d7d; }
+.control-field.pw-control-button[data-tone="success"] { --key-hue: #2f9e5c; }
+.control-field.pw-control-button[data-tone="warn"] { --key-hue: #e0a020; }
+.control-field.pw-control-button[data-tone="info"] { --key-hue: #3b74c4; }
+.control-field.pw-control-button[data-tone="critical"] { --key-hue: #dc4c4c; }
+.control-field.pw-control-button[data-tone="violet"] { --key-hue: #8b5cf6; }
+.control-field.pw-control-button[data-tone="teal"] { --key-hue: #14b8a6; }
+.control-field.pw-control-button[data-tone="pink"] { --key-hue: #ec4899; }
+
+/* Icon buttons are round keys: the face is a circle, the lip a crescent. */
+.control-field.pw-control-button.pw-control-button--icon {
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  padding: 0 0 1px;
+  border-radius: 9999px;
+}
+
+.control-field.pw-control-button.pw-control-button--icon::before {
+  inset: 3px 3px 4px;
+  border-radius: 9999px;
+}
+
+/* Keys rounded through a utility (round icon keys, pills) keep a face of the same shape. */
+.control-field.pw-control-button:is(.rounded-full, .\!rounded-full) {
+  padding-bottom: 1px;
+}
+
+.control-field.pw-control-button:is(.rounded-full, .\!rounded-full)::before {
+  inset: 3px 3px 4px;
+  border-radius: 9999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control-field.pw-control-button,
+  .control-field.pw-control-button::before {
+    transition-duration: 0.01ms;
+  }
+}

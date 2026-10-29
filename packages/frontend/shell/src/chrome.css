@@ -50,7 +50,8 @@
 }
 
 .pw-shell-main-frame {
-  padding: 0 8px 8px 0;
+  /* 1px on the sidebar side leaves room for the panel's outside rim, which the column would clip. */
+  padding: 0 8px 8px 1px;
 }
 
 /* No sidebar before the frame (Projects home): keep the gutter symmetric. */
@@ -87,19 +88,24 @@ html[data-shell-chrome="solid"] .pw-shell-main-frame--opaque {
   isolation: isolate;
 }
 
-/* The lit rim sits on an overlay: an inset box-shadow is painted under children, so the
-   toolbar's opaque fade-edge background would otherwise cover it. */
+/* The lit rim hugs the outside of the panel, brightest on top and fading down; it sits on an
+   overlay so it stays above the drop. */
 .pw-main-surface.surface-panel {
+  /* Clip like overflow-hidden, but leave 1px outside for the rim overlay below. */
+  overflow: clip;
+  overflow-clip-margin: 1px;
   background: linear-gradient(to bottom, var(--color-surface), #1c1c1c);
-  box-shadow: none;
+  box-shadow: 0 2px 4px var(--material-drop), 0 1px 2px var(--material-drop);
 }
 
 .pw-main-surface::after {
   position: absolute;
   z-index: 50;
-  inset: 0;
+  inset: -0.5px;
+  padding: 0.5px;
   border-radius: inherit;
-  box-shadow: var(--field-rings);
+  background: var(--material-rim-fade-quiet);
   content: "";
   pointer-events: none;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }

@@ -1,0 +1,21 @@
+{
+  "name": "Polterware classic material",
+  "snapshot": "2026-10-29, taken from commit b3e0b12 working tree before the OpenCode material change",
+  "purpose": "Exact copies of the previous material so it can be compared or restored. Reference only: these files are not imported or built.",
+  "files": {
+    "base.css": "packages/configuration/tailwind/base.css (tokens: edge light, card rings, field wells, texture tones, keycaps, radii; mirrored material classes)",
+    "materials.css": "packages/frontend/design-system/src/materials.css (surface-panel, surface-panel-float, control-field, pw-field-control, menu-panel, texture faces, card-panel rings)",
+    "button.css": "packages/frontend/design-system/src/button.css (press geometry, texture tones, keycap buttons)",
+    "switch.css": "packages/frontend/design-system/src/switch.css (field-well track, texture thumb)",
+    "tooltip.css": "packages/frontend/design-system/src/tooltip.css (texture balloon)",
+    "form-primitives.css": "packages/frontend/design-system/src/form-primitives.css (checkbox, segmented control wells)",
+    "texture-button-group.css": "packages/frontend/design-system/src/texture-button-group.css (framed segment groups)"
+  },
+  "material_summary": {
+    "cards": "card fill gradient (#292929 → #242424) with four inset concentric hairlines (#1d1d1d, #323232, #191919, #2e2e2e) inside a 1px white 10% border, plus a 2px/1px drop",
+    "fields": "1px #141414 frame, gradient well #1b1b1b → #292929, inset 1px #383838 ring",
+    "texture_buttons": "1px dark frame, lit outer gradient (#5c5c5c → #3d3d3d), inner face gradient (#262626 → #3b3b3b) on ::before",
+    "keycaps": "white-to-grey key body with a dished face, solid lip and 2px press travel",
+    "switch": "field-well track, grey gradient when on, raised texture thumb"
+  }
+}

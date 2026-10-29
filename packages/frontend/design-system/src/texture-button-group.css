@@ -1,15 +1,19 @@
 /*
- * Split texture pill: the group is the framed shell (palette and frame come from
- * materials.css `.pw-texture-group`), each segment is a face inside it. The 1px gap shows
- * the lit shell as the divider between segments.
+ * Split texture pill: the group is one lit shell (palette comes from materials.css
+ * `.pw-texture-group`), each segment is a face filling it edge to edge. The 1px gap shows
+ * the shell's lighter divider tone between segments.
  */
 .pw-texture-group {
+  --tx-outer-top: #474747;
+  --tx-outer-bottom: #474747;
   display: inline-flex;
   flex-shrink: 0;
   align-items: stretch;
   gap: 1px;
   height: var(--control-height-md);
-  padding: 1px;
+  padding: 0;
+  border-width: 0;
+  position: relative;
   border-radius: 9999px;
 }
 

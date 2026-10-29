@@ -6,8 +6,8 @@
 .pw-checkbox__control[data-disabled] { background: #242424; box-shadow: none; color: var(--color-text-disabled); }
 .pw-checkbox__control[data-focus-visible], .pw-slider__thumb:focus-visible { outline: 2px solid var(--color-border-strong); outline-offset: 2px; }
 /* Same texture as .pw-tabs: a recessed track with a raised face gliding under the checked item. */
-.pw-segmented { position: relative; display: inline-flex; max-width: 100%; gap: 2px; padding: 2px; border: 1px solid var(--field-frame); border-radius: 14px; background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom)); box-shadow: var(--field-rings); isolation: isolate; }
-.pw-segmented__indicator { position: absolute; top: 2px; bottom: 2px; left: 0; width: 0; box-sizing: border-box; border: 1px solid var(--field-frame); border-radius: 11px; background: linear-gradient(to bottom, #5a5a5a, #3d3d3d); box-shadow: inset 0 0 0 1px #6a6a6a, 0 1px 2px var(--color-shadow); z-index: -1; }
+.pw-segmented { position: relative; display: inline-flex; max-width: 100%; gap: 2px; padding: 2px; border: 1px solid var(--field-frame); border-radius: 14px; background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom)); box-shadow: var(--material-well); isolation: isolate; }
+.pw-segmented__indicator { position: absolute; top: 2px; bottom: 2px; left: 0; width: 0; box-sizing: border-box; border: 1px solid var(--field-frame); border-radius: 11px; background: linear-gradient(to bottom, #303030, #2b2b2b); box-shadow: var(--material-control); z-index: -1; }
 .pw-segmented__item { display: flex; flex: 1 1 auto; align-items: center; justify-content: center; min-height: calc(var(--control-height-md) - 6px); padding: 2px 12px; border-radius: 11px; font-size: 12px; letter-spacing: -0.01em; cursor: pointer; color: var(--color-text-muted); }
 .pw-segmented__item[data-state="checked"] { color: var(--color-text-primary); }
 .pw-segmented__item[data-focus-visible] { outline: 2px solid var(--color-border-strong); border-radius: 11px; }

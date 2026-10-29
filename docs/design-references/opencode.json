@@ -1,0 +1,139 @@
+{
+  "source": "opencode.ai/console (logged-in workspace, dark theme): Activity, Settings, Models",
+  "measured": "2026-10-29",
+  "viewport": "1440x900",
+  "method": "getComputedStyle on live elements; colors normalized to sRGB hex (@n% = alpha)",
+  "typography": {
+    "family": "Inter (\"Console Controls Inter\" for controls)",
+    "mono": "IBM Plex Mono",
+    "uses": {
+      "body_and_controls": "13px / 20px / 440, letter-spacing -0.04px",
+      "emphasis_and_buttons": "13px / 20px / 530, letter-spacing -0.04px",
+      "page_title": "15px / 20px / 530, letter-spacing -0.13px",
+      "section_title": "13px / 20px / 530, letter-spacing -0.13px, 16px below",
+      "small_label_and_badge": "11px / 11-16px / 440-530, letter-spacing +0.05px",
+      "table_header": "13px / 16.25px / 500, faint text",
+      "inline_code": "13px / 16px / 500 IBM Plex Mono"
+    },
+    "weights": [440, 530],
+    "note": "Two weights only (440 regular, 530 emphasis). Negative tracking on 13-15px, positive on 11px."
+  },
+  "color": {
+    "grey_scale": {
+      "50": "#ffffff",
+      "100": "#fafafa",
+      "200": "#f2f2f2",
+      "300": "#eeeeee",
+      "400": "#dbdbdb",
+      "500": "#aeaeae",
+      "600": "#808080",
+      "700": "#5c5c5c",
+      "800": "#3a3a3a",
+      "900": "#2e2e2e",
+      "1000": "#242424",
+      "1100": "#161616",
+      "1200": "#080808"
+    },
+    "background": {
+      "deep_window": "#080808",
+      "base_panel": "#161616",
+      "layer_01_card": "#242424",
+      "layer_02_code_badge": "#2e2e2e",
+      "layer_03": "#3a3a3a",
+      "layer_04_contrast": "#5c5c5c",
+      "button_neutral": "#ffffff @ 6%",
+      "button_hover": "#ffffff @ 6% plus two stacked #ffffff @ 6% gradients (~12%)",
+      "nav_hover": "#ffffff @ 6%",
+      "nav_active": "#ffffff @ 10%",
+      "input_recessed": "#161616 with linear-gradient(#ffffff@2%, transparent)",
+      "accent": "#3b5cf6"
+    },
+    "border": {
+      "base": "#ffffff @ 10%",
+      "muted": "#ffffff @ 8%",
+      "strong": "#ffffff @ 20%",
+      "focus": "#7698fd"
+    },
+    "text": {
+      "base": "#fafafa",
+      "muted": "#aeaeae",
+      "faint": "#808080",
+      "accent": "#a2bcff",
+      "accent_hover": "#c3d4fd",
+      "success": "#6bd586"
+    },
+    "state": {
+      "danger": { "bg": "#461516", "border": "#97252b" },
+      "warning": { "bg": "#4b4025", "border": "#ac8833" },
+      "success": { "bg": "#14361d", "border": "#1d783c" },
+      "info": { "bg": "#1b2852", "border": "#263fa9" }
+    },
+    "avatar_pairs": {
+      "red": ["#7a1f23", "#d92e3c"],
+      "orange": ["#723d22", "#ff8648"],
+      "yellow": ["#68552b", "#e7af36"],
+      "green": ["#196130", "#49c970"],
+      "cyan": ["#005a6e", "#0096b8"],
+      "blue": ["#263fa9", "#7698fd"],
+      "purple": ["#361f83", null],
+      "pink": ["#8c2d61", null]
+    }
+  },
+  "material": {
+    "summary": "Every raised object is lit from above: a dark drop, a 0.5px white rim, and a 0.5px brighter top edge (negative y offset). Fills are translucent white over the panel, so the same component works on every layer.",
+    "raised_panel": "box-shadow: 0 2px 4px #000@30%, 0 1px 2px #000@30%, 0 0 0 0.5px #fff@16%, 0 -0.5px 0 0 #fff@6%",
+    "small_control": "box-shadow: 0 1px 2px #000@40%, 0 0 0 0.5px #fff@20%, 0 -0.5px 0 0 #fff@10%",
+    "menu_popover": "box-shadow: 0 8px 16px #000@30%, 0 4px 8px #000@30%, 0 0 0 0.5px #fff@16%, 0 -0.5px 0 0 #fff@6%",
+    "inset_chip": "box-shadow: inset 0 0 0 0.5px #fff@10%",
+    "switch_track": "inset 0 -0.5px 0 #fff@10%, inset 0 0 0 0.5px #fff@16%; fill gets linear-gradient(transparent, #fff@10-20%) bottom sheen",
+    "switch_knob": "linear-gradient(#fff, transparent) over #eee-#f2f2f2, 0.5px white border, 0 0.5px 0.5px #000@40%",
+    "inline_code": "bg #2e2e2e + linear-gradient(#fff@6%, transparent), inset 0 0 0 0.5px #fff@10%, radius 2px",
+    "card": "bg #242424, 0.5px border #fff@8%, radius 6px, no shadow",
+    "hairlines": "0.5px everywhere; table rows use 1px #fff@8%; tab underline is a 1px white bar inset 11px from the tab edges; header rule is a 0.25px #fff@20% ::after"
+  },
+  "radius": {
+    "xs": "2px (badges, inline code, switch knob)",
+    "sm": "4px (menu items, switch track, first table cell)",
+    "md": "6px (buttons, inputs, cards, menus, nav items)",
+    "panel": "10px top / 14px bottom (the main window panel)",
+    "full": "step number bubbles, avatars"
+  },
+  "layout": {
+    "frame": "Top bar (44px, 8px padding) on the deep #080808 window; the app is one panel inset 8px left/right/bottom with 10/14px corners and the raised-panel shadow.",
+    "tab_bar": "49px, padding 0 24px 0 13px, items 28px tall with 0 11px padding and 2px gap, sliding 1px underline",
+    "content": "64px top padding, 32px side margins, 960px centered column (Activity) or 244px sticky aside + 640px column (Settings)",
+    "settings_nav": "180px items, 28px tall, padding 0 6px, gap 8px, 16px icons, search field 28px on top with 16px below",
+    "settings_group": "title above the card (16px gap); card padding 20px; rows separated by 0.5px #fff@10% lines with 20px bottom padding; label 13/530 over description 13/440 muted, control right-aligned, 24px gap",
+    "card_header": "padding 16px, title row + muted description with 4px gap",
+    "card_footer": "padding 16px, actions left, 1x12px #fff@20% vertical divider, muted hint",
+    "table": "header 32px 13/500 faint, rows 48px, cells padding 0 12px, 1px #fff@8% row lines",
+    "steps": "20px numbered bubble + 1px #fff@20% connector line, 24px gap to content, 16px between title block and actions"
+  },
+  "components": {
+    "button": "32px (page) / 28px (nav, header), padding 0 15px (0 11-12px small), radius 6px, 13/530, bg #fff@6% + small_control shadow",
+    "split_button": "one 32px raised shell, radius 6px, two halves separated by a 1px #fff@20% line",
+    "nav_item": "28px, padding 0 11px, radius 6px, text #808080 idle → #fafafa active, hover bg #fff@6%",
+    "tab": "48px hit area, 28px label pill, idle #808080, active #fafafa, underline slides",
+    "input": "28px, radius 6px, recessed #161616 with 2% top gradient, small_control shadow, padding 0 8px",
+    "switch": "24x16 track, radius 4px, padding 2px; 12x12 knob radius 2px (squared, not round); on = #3b5cf6",
+    "badge": "16px, padding 0 4px, radius 2px, bg #2e2e2e, 0.5px #fff@10% border, 11/530 muted",
+    "menu": "bg #242424, padding 2px, radius 6px, menu_popover shadow; items 27px, padding 0 12px, radius 4px, 13/440",
+    "step_bubble": "20x20, radius full, bg #fff@6%, small_control shadow, 11/530 muted"
+  },
+  "motion": {
+    "hover": "background-color 85ms ease-out (nav, inputs), 150ms ease (buttons)",
+    "menu_enter": "menu-v2-in 120ms: opacity 0 → 1 and scale(0.96) → scale(1)",
+    "menu_exit": "opacity 200ms ease",
+    "tab_underline": "transform, width 250ms cubic-bezier(0.77, 0, 0.175, 1)",
+    "tab_press": "transform 160ms cubic-bezier(0.23, 1, 0.32, 1)",
+    "collapse": "grid-template-rows 250ms + opacity 200ms cubic-bezier(0.23, 1, 0.32, 1)",
+    "switch": "90ms ease-out for knob transform and track background"
+  },
+  "ux_patterns": [
+    "Monochrome UI; color only for state (Connected in green, accent blue for on switches and links).",
+    "Translucent white fills instead of fixed greys, so controls adapt to whichever layer they sit on.",
+    "Square-ish geometry: 2/4/6px radii, squared switch knob; only bubbles and avatars are round.",
+    "Settings as label + description on the left, control on the right, one card per group.",
+    "Hairlines at 0.5px and a lit top edge give depth without heavy shadows."
+  ]
+}

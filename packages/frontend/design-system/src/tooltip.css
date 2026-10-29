@@ -14,15 +14,14 @@
   pointer-events: none;
 }
 
-/* Texture balloon: materials.css supplies the frame, lit ring and gradient face. The padding sits
- * on the face; a tooltip is too small for the card rings, so it keeps only the drop shadow. */
+/* Texture balloon: materials.css supplies the flat face; the float material draws its lit edge and lift. */
 .pw-tooltip-content.menu-panel.pw-texture-button {
   padding: 7px 9px;
   border: 1px solid var(--tx-frame);
   border-radius: 10px;
   background: linear-gradient(to bottom, var(--tx-outer-top), var(--tx-outer-bottom));
   --tx-face-radius: 9px;
-  box-shadow: 0 8px 28px var(--color-shadow);
+  box-shadow: var(--material-float);
 }
 
 .pw-tooltip-content {

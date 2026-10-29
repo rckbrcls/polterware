@@ -63,30 +63,29 @@ describe("edge-light policy", () => {
     }
   });
 
-  it("uses a crisp rim and top highlight at the component edge", () => {
+  it("lights component edges with the shared material, never a painted frame", () => {
     const materials = readWorkspaceFile(sharedMaterialFiles[1]);
+    const panel = ruleBody(materials, ".surface-panel");
+    const field = ruleBody(materials, ".control-field");
 
-    expect(ruleBody(materials, ".surface-panel")).toContain(
-      "border: 1px solid var(--edge-light-surface-rim)",
-    );
-    expect(ruleBody(materials, ".surface-panel")).toContain(
-      "border-top-color: var(--edge-light-surface-highlight)",
-    );
-    expect(ruleBody(materials, ".control-field")).toContain(
-      "border: 1px solid var(--edge-light-field-rim)",
-    );
+    expect(panel).toContain("border: 1px solid var(--field-frame)");
+    expect(panel).toContain("box-shadow: var(--material-raised)");
+    expect(field).toContain("border: 1px solid var(--field-frame)");
+    expect(field).toContain("box-shadow: var(--material-control)");
+    expect(ruleBody(materials, ".surface-panel-float")).toContain("var(--material-float)");
   });
 
   it("keeps sidebar details opaque and preserves the reusable floating shell", () => {
     const detailPanel = readWorkspaceFile(detailPanelFile);
-    expect(ruleBody(detailPanel, ".pw-detail-panel__frame")).toContain("background-color: var(--color-surface-raised)");
+    // The frame takes its opaque fill and lit edge from the shared floating surface.
+    expect(ruleBody(detailPanel, ".pw-detail-panel__frame")).not.toMatch(/background(?:-color)?:/);
     const detailSource = readWorkspaceFile("packages/frontend/design-system/src/side-panel/side-panel.tsx");
-    expect(detailSource).toContain("pw-detail-panel__frame surface-panel");
+    expect(detailSource).toContain("pw-detail-panel__frame surface-panel-float");
     const floatingWindow = readWorkspaceFile("packages/frontend/design-system/src/floating-window.css");
     const surface = ruleBody(floatingWindow, ".pw-floating-window__shell");
 
     expect(surface).toContain("transform-origin: top left");
-    expect(surface).toContain("background-color: var(--color-surface-raised)");
+    expect(surface).toContain("background: var(--card-fill)");
     expect(surface).toContain("inset 0 1px 0 var(--edge-light-surface-highlight)");
     expect(surface).toContain("inset 0 0 0 1px var(--edge-light-surface-rim)");
     expect(surface).not.toContain("border-left");

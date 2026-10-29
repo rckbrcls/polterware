@@ -66,6 +66,20 @@ describe("IconTile", () => {
     expect(html).not.toContain("gradient");
   });
 
+  it("renders the plain finish without accent tint or aurora", () => {
+    const html = renderHtml(() => (
+      <IconTile finish="plain" tone="data" brand="postgres" aurora="ocean">
+        <svg data-mark viewBox="0 0 16 16" />
+      </IconTile>
+    ));
+
+    expect(html).toContain("pw-icon-tile--plain");
+    expect(html).toContain('data-finish="plain"');
+    expect(html).not.toContain("data-aurora");
+    expect(html).not.toContain("color:");
+    expect(styles).toMatch(/\.pw-icon-tile--plain \.pw-icon-tile-mark \{\s*color: var\(--color-text-secondary\)/);
+  });
+
   it("keeps a light accent-tinted base under the chrome finish", () => {
     expect(styles).toContain("var(--color-icon-tile-base)");
     expect(styles).toContain("var(--color-icon-tile-edge)");

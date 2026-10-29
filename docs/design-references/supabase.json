@@ -1,0 +1,117 @@
+{
+  "source": "supabase.com/dashboard (logged-in project, dark theme): Table Editor home and a table grid",
+  "measured": "2026-10-29",
+  "viewport": "~800x810 (pane size)",
+  "method": "getComputedStyle on live elements; colors normalized to sRGB hex (@n% = alpha)",
+  "typography": {
+    "family": "Inter (UI), Manrope 600 (panel and section titles)",
+    "mono": "Source Code Pro",
+    "scale": { "xs": "12px", "sm": "13px", "base": "15px" },
+    "uses": {
+      "body": "13px / 18.57px / 450",
+      "controls_and_buttons": "12px / 16px / 500",
+      "secondary": "12px / 16px / 450",
+      "panel_and_section_title": "13px / 18.57px / 600 Manrope",
+      "badge": "9px / 9px / 500, letter-spacing 0.63px, uppercase",
+      "kbd": "11px / 11px / 450, letter-spacing -0.275px"
+    },
+    "note": "Controls are one step smaller (12px) than body text (13px)."
+  },
+  "color": {
+    "note": "Neutrals carry a faint green hue (oklch hue 157.5). Layers above the base are white alphas, not fixed greys.",
+    "background": {
+      "base": "#131413",
+      "card_and_tabs": "#181a19",
+      "dialog_and_popover": "#1b1d1c",
+      "secondary_overlay": "#1e201f",
+      "muted_button": "#dfdfdf @ 3%",
+      "control_and_selection": "#ebebeb @ 5%",
+      "tertiary": "#f0f0f0 @ 7%",
+      "hover_row": "#ffffff @ 2%",
+      "input": "#000000 @ 12%"
+    },
+    "border": {
+      "default": "#f2f2f2 @ 7%",
+      "control": "#f0f0f0 @ 13%",
+      "control_hover": "#edf1ed @ 28%",
+      "stronger": "#eeeeee @ 17%",
+      "status": "status hue @ 30%"
+    },
+    "text": {
+      "foreground": "#edefee",
+      "light": "#bcbdbc",
+      "lighter_muted": "#989a99",
+      "grid_cell": "#dddddd"
+    },
+    "brand": {
+      "primary": "#4acd8b",
+      "primary_hover": "#59da97",
+      "solid_button": "#006338",
+      "solid_hover": "#076e43",
+      "ring": "#4bce8a @ 55%"
+    },
+    "status": {
+      "warning": "#f2af48 (hover #ffbc56)",
+      "destructive": "#b54a46 (hover #c35651)",
+      "badge_production": "bg #f5b145@10%, border #693f05, text #db8e00",
+      "badge_new": "bg #3bce89@10%, border #006239, text #85e0ba"
+    },
+    "chart_pairs": {
+      "1": ["#3fcf8e", "#006239"],
+      "2": ["#52a9ff", "#0f3058"],
+      "3": ["#f65cb6", "#501b3f"],
+      "4": ["#9e8cfc", "#32275f"],
+      "5": ["#f16a50", "#541c15"],
+      "6": ["#849dff", "#1f2c5c"],
+      "7": ["#4cc38a", "#133929"],
+      "8": ["#bf7af0", "#432155"],
+      "muted": ["#505050", "#282828"]
+    }
+  },
+  "material": {
+    "button": "bg #dfdfdf@3% + linear-gradient(#fff@2%, #000@1%); box-shadow 0 1px 3px #000@20%, inset 0 1px 0 #fff@4%, inset 0 0 0 1px #000@6%, inset 0 -1px 0 #000@6%, inset 0 0 0 1px #fff@10%",
+    "primary_button": "bg #006338 with the same gradient and inset rim, no bottom shade",
+    "card": "bg #181a19, 1px #f2f2f2@7% border, radius ~10.7px, 0 1px 2px #000@5%",
+    "empty_state": "transparent fill, 1px #f2f2f2@7% border, radius 8px, 32px padding, centered icon + two text lines",
+    "tooltip": "bg #131413, 1px #f2f2f2@7% border, radius 8px, padding 6px 12px, 0 4px 6px -1px #000@10%, 0 2px 4px -2px #000@10%",
+    "kbd": "bg #181a1a@50%, 1px #f2f2f2@7% border, radius ~5.3px, padding 3px 5px",
+    "input": "bg #000@12%, 1px #f0f0f0@13% border, radius ~5.3px, 28px tall",
+    "pinned_column_shadow": "2px 0 5px -2px #888@30%"
+  },
+  "radius": {
+    "base": "0.333rem on a 16px root (≈5.3px) for inputs and kbd",
+    "control": "8px (buttons, rail items, tooltips, empty states)",
+    "card": "≈10.7px",
+    "xl": "16px",
+    "pill": "full for badges and the Connect button"
+  },
+  "layout": {
+    "frame": "Flush, no inset panel: 48px top bar with breadcrumb, 48px icon rail, 256px secondary sidebar, content.",
+    "top_bar": "48px; breadcrumb of org / project / branch with chevron switchers and inline badges; actions right with 8px gap",
+    "icon_rail": "48px wide, items 32x32 (padding 8px 8px 8px 6px, 20px icons, radius 8px), groups padded 8px with 2-4px gaps; on hover the rail expands over the content to 208px with labels (width 100ms linear, items 150ms)",
+    "secondary_sidebar": "256px, 48px header (padding 0 24px, 1px bottom border), controls with 16px side margin, list rows 28px with padding 0 4px 0 16px, 12px icon gap, 15px icons",
+    "content": "tab strip 48px (#181a19 tabs with 1px bottom border), toolbar 26px controls, content padding 40px with 40px gaps between sections",
+    "data_grid": "35px rows and header, cells padding 0 8px, 1px right and bottom #f2f2f2@7% lines, pinned first column with a soft side shadow, 16px checkbox"
+  },
+  "components": {
+    "button": "26px, padding 4px 10px, radius 8px, 12px/500, 14px icon with 8px gap",
+    "pill_button": "26px, radius full (Connect in the top bar)",
+    "badge": "17px, padding 3px 5.5px, radius full, 9px uppercase tracked text, 1px border; status badges use a 10% fill, a dark border and a mid-tone text",
+    "select_trigger": "label + value inline: muted \"schema\" then \"public\"",
+    "rail_item": "32x32, active bg #ebebeb@5%, idle icon #989a99, hover bg #fff@2%",
+    "tooltip_with_shortcut": "label + sequence keys (G then F)",
+    "action_card": "icon tile 32px round with a dark tinted fill (#0f3058) + title 13/600 Manrope + 12px description, padding 12px"
+  },
+  "motion": {
+    "default": "150ms cubic-bezier(0.4, 0, 0.2, 1) for color, background and border",
+    "buttons": "background, border, color and scale 200ms cubic-bezier(0.22, 1, 0.36, 1)",
+    "rail_expand": "width 100ms linear; items width, height, padding 150ms"
+  },
+  "ux_patterns": [
+    "Navigation shortcuts are taught in tooltips (G then F).",
+    "Breadcrumb top bar doubles as the context switcher (org, project, branch) with environment badges.",
+    "Icon rail that expands as an overlay on hover instead of pushing content.",
+    "Promotional and empty states share one card language: thin border, centered icon, two lines, one action.",
+    "Display font (Manrope) only for titles; everything else Inter."
+  ]
+}

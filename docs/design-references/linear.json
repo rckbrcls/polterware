@@ -1,0 +1,171 @@
+{
+  "source": "linear.app (logged-in workspace, dark theme)",
+  "measured": "2026-10-29",
+  "viewport": "1440x900",
+  "method": "getComputedStyle on live elements; colors normalized to sRGB hex (@n% = alpha)",
+  "typography": {
+    "family": "Inter Variable, SF Pro Display, -apple-system",
+    "mono": "Berkeley Mono, SFMono Regular",
+    "scale": {
+      "micro": "11px (0.6875rem)",
+      "mini": "12px",
+      "small": "13px",
+      "regular": "15px",
+      "large": "18px",
+      "title3": "20px",
+      "title2": "24px",
+      "title1": "36px"
+    },
+    "uses": {
+      "ui_label": "13px / normal / 500",
+      "issue_id": "13px / 450, tertiary text",
+      "meta_and_chips": "12px / 500",
+      "kbd_hint": "11px / 12.1px / 500, color #9c9da0, no background",
+      "menu_item": "13px / 450",
+      "section_label": "13px / 500, tertiary text",
+      "document_title": "24px / 32px / 600, letter-spacing -0.16px",
+      "document_h3": "17px / 24px / 600, letter-spacing 0.1px",
+      "document_body": "15px / 24px / 450, letter-spacing -0.1px",
+      "dialog_title_input": "18px / 24px / 600",
+      "dialog_body_input": "15px / 22.5px / 450"
+    },
+    "weights": [400, 450, 500, 550, 600]
+  },
+  "color": {
+    "note": "Neutrals carry a faint cool hue (lch hue 272). Text never pure white except primary.",
+    "background": {
+      "sidebar_and_window": "#09090a",
+      "main_panel": "#121213",
+      "secondary": "#161617",
+      "tertiary": "#17181a",
+      "quaternary_group_header": "#1a1a1b",
+      "row_hover": "#1a1a1b (pseudo-element, inset 8px)",
+      "sidebar_hover": "#18181a",
+      "sidebar_active": "#232325",
+      "chip": "#1c1c1d",
+      "chip_selected": "#29292b",
+      "dialog": "#1a1a1b",
+      "menu": "#212122",
+      "menu_highlight": "#313234",
+      "pill_button_in_dialog": "#2a2b2d"
+    },
+    "border": {
+      "panel": "0.5px #212224",
+      "primary": "#1a1b1d",
+      "secondary": "#232426",
+      "tertiary": "#28282b",
+      "menu": "0.5px #3c3d40",
+      "dialog": "0.5px #343538",
+      "separator": "0.5px line"
+    },
+    "text": {
+      "primary": "#ffffff / #e3e4e6",
+      "secondary": "#e3e4e6",
+      "tertiary": "#959597",
+      "quaternary": "#565759",
+      "sidebar_label": "#919294"
+    },
+    "accent": {
+      "brand": "#5e6ad2",
+      "focus_ring": "#5e69d1",
+      "brand_tints": ["#1b1e37", "#1f223e", "#2b2d4b", "#303250", "#6974e1", "#6f7ffe"]
+    },
+    "status_scales": {
+      "cyan": ["#0e272b", "#00889c", "#00b8cb", "#00c4d8", "#00ccdf", "#00e8ff", "#c9ffff"],
+      "green": ["#122315", "#008a2a", "#26a544", "#37b24f", "#40b956", "#3de261", "#d5ffd6"],
+      "yellow": ["#322810", "#967000", "#edbf0a", "#f0bf00", "#fecb00", "#ffd200", "#fffaa6"],
+      "orange": ["#351b14", "#cf4608", "#ff7235", "#ff7e40", "#ff8647", "#ff9958", "#ffeac6"],
+      "red": ["#d9343f", "#f34e52", "#ff5b5d", "#ff6363"]
+    },
+    "white_alpha_ladder": ["4%", "6%", "8%", "9%", "11%", "13%", "16%", "23%", "25%", "45%", "55%", "59%", "75%"],
+    "scrim": "#000000 @ 40%"
+  },
+  "layout": {
+    "frame": "Sidebar sits on the window background; the main content is one rounded panel inset 8px top/right/bottom (0 left) from the window.",
+    "sidebar": {
+      "width": "244px (resizable, 7px col-resize handle on its right edge)",
+      "padding_x": "12px",
+      "header": "52px tall; workspace switcher row 44px at 8px from top",
+      "nav_top_padding": "26px",
+      "item": "220x28, radius 8px, padding 0 9px 0 8px, 1px vertical margin (29px pitch)",
+      "child_item_indent": "19px",
+      "section_gap": "8px top margin; section header is a 28px collapsible button",
+      "footer": "44px, padding 10px, gap 8px"
+    },
+    "main_panel": {
+      "radius": "12px",
+      "background": "#121213",
+      "border": "0.5px #212224",
+      "shadow": "0 0.5px 1px 1px #000@30%",
+      "inset": "8px 8px 8px 0"
+    },
+    "page_header": "44px, padding 0 8px, 0.5px bottom border; breadcrumb left, icon buttons and primary action right, gap 4-6px",
+    "view_bar": "44px row of pill view tabs (28px, radius full, padding 0 10px, 12px/500)",
+    "list": {
+      "group_header": "36px, sticky, radius 8px, background #1a1a1b, 2px bottom margin",
+      "row": "44px, radius 8px, grid, column gap 8px; hover is a ::before inset 8px left/right with radius 8px",
+      "row_columns": "checkbox 18 (hidden until hover), priority 16, id 36, status 14, title 13px/500 flex, labels, right meta (date) right-aligned",
+      "content_start": "16px from panel edge"
+    },
+    "detail_page": {
+      "content_column": "668px wide, text column 654px, starts 47px from panel edge",
+      "title_top_margin": "32px",
+      "properties_column": "376px, sticky, right side; groups separated by 20px + 10px padding",
+      "property_value": "pill button 28px, radius full, padding 0 10px 0 6px, gap 6px, stacked with 4px gap; empty values in tertiary text (\"Set priority\")"
+    }
+  },
+  "components": {
+    "icon_button": "28x28, radius full, 0.5px transparent border, padding 0 2px",
+    "primary_button": "28px, radius full, padding 0 10px, 12px/500, bg #5e6ad2, shadow 0 0.5px 1px 1px #000@30%",
+    "secondary_button_header": "28px, radius full, padding 0 10px 0 8px, text #959597",
+    "chip_pill": "24px, radius full, padding 0 8px 0 6px, bg #2a2b2d, text #9c9da0",
+    "context_menu": {
+      "width": "180px",
+      "background": "#212122",
+      "border": "0.5px #3c3d40",
+      "radius": "12px",
+      "shadow": "0 3px 8px #000@13%, 0 2px 5px #000@13%, 0 1px 1px #000@13%",
+      "padding_top": "6px",
+      "item": "32px, padding 0 18px 0 14px, 16px icon, gap 8px, 13px/450, shortcut hint 11px right, submenu chevron",
+      "highlight": "one absolute element that slides between items, inset 6px, radius 8px, bg #313234",
+      "separator": "0.5px line full width"
+    },
+    "command_palette": {
+      "width": "717px",
+      "radius": "12px",
+      "background": "#212122 range (lch 12.7)",
+      "border": "0.5px lch 25.7",
+      "input": "40px, 13px, padding 12px",
+      "item": "46px rows, grouped with small section labels",
+      "shadow": "0 4px 40px #000@10%, 0 3px 20px #000@13%, 0 3px 12px #000@13%, 0 2px 8px #000@13%, 0 1px 1px #000@13%"
+    },
+    "dialog_create": {
+      "width": "750px",
+      "radius": "21px",
+      "background": "#1a1a1b",
+      "border": "0.5px #343538 (separate absolutely positioned ring)",
+      "top_offset": "117px from top (not vertically centered)",
+      "padding_x": "~18px",
+      "shadow": "same five-layer stack as the command palette",
+      "footer": "property chips left in a row, switch + primary pill right"
+    },
+    "switch": "22x14, radius full, off bg #727375"
+  },
+  "motion": {
+    "hover": "instant on (0s background), color transitions 150ms ease",
+    "buttons": "border, background-color, color, opacity 150ms ease",
+    "popover_and_palette": "opacity 0 → 1, 150ms ease",
+    "dialog_enter": "300ms spring as linear() easing (overshoot-free critically damped curve)",
+    "dialog_resize": "max-width 220ms cubic-bezier(0.43, 0.07, 0.59, 0.94)",
+    "menu_highlight": "single sliding highlight element between items",
+    "easing_library": "ease-out-quint cubic-bezier(.23,1,.32,1), ease-out-expo cubic-bezier(.19,1,.22,1), ease-in-out-cubic cubic-bezier(.645,.045,.355,1)"
+  },
+  "ux_patterns": [
+    "Everything keyboard-first: C creates, Cmd+K opens the palette, shortcuts shown inline in menus.",
+    "Calm hierarchy: almost no borders inside the panel; spacing and a single 0.5px header rule separate regions.",
+    "Pills everywhere for actions and property values; rectangles only for rows, panels and menus.",
+    "Empty property values render as muted prompts instead of blanks.",
+    "Row checkbox appears on hover only.",
+    "Dialogs anchor near the top third, not the vertical center, and grow in place."
+  ]
+}
