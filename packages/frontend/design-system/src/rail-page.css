@@ -1,7 +1,8 @@
 /* RailPage: the page structure of docs, decisions, cards, facts, and runs (classes keep the pw-document prefix). */
 /*
  * Document page, organized like a Linear issue: a 44px header with the trail, a 654px text column
- * 62px from the panel edge, and a 376px properties rail 48px to its right. The page scrolls as one.
+ * centered in the room the rail leaves, and a 376px properties rail on the right edge. The page
+ * scrolls as one.
  */
 .pw-document {
   position: relative;
@@ -40,13 +41,31 @@
   font-size: 12px;
 }
 
-/* Pinned above the scroll, so content never passes under it; lined up with the column. */
+/*
+ * Pinned above the scroll, so content never passes under it. Its row mirrors the scroll's (the
+ * same padding, gap, and a spacer that holds the rail's room), so it stays lined up with the
+ * centered column while the rail comes and goes.
+ */
 .pw-document__lead {
   display: flex;
   min-width: 0;
   flex-shrink: 0;
-  align-items: center;
+  gap: 48px;
   padding: 12px 24px 12px 62px;
+}
+
+.pw-document__lead-inner {
+  display: flex;
+  min-width: 0;
+  max-width: 654px;
+  flex: 1 1 654px;
+  align-items: center;
+  margin-inline: auto;
+}
+
+.pw-document__lead-spacer {
+  width: 376px;
+  flex: 0 0 376px;
 }
 
 /* With a lead, the rail starts level with the content below it instead of a document title. */
@@ -76,9 +95,11 @@
   margin-inline: auto;
 }
 
-/* A wide column (a run's log) takes the width the rail leaves. */
-.pw-document[data-wide="true"] .pw-document__column {
-  max-width: none;
+/* A wide column (a run's log) has a longer measure, still centered. */
+.pw-document[data-wide="true"] .pw-document__column,
+.pw-document[data-wide="true"] .pw-document__lead-inner {
+  max-width: 880px;
+  flex-basis: 880px;
 }
 
 /* Rail: no frame or fill, sticky beside the text. */

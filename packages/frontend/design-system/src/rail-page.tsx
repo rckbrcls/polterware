@@ -25,7 +25,13 @@ const EDGE_FADE = 120;
  * before it (a moving mask), and the centered column glides to the middle at the same time
  * instead of jumping. Snaps on first paint; under reduced motion only the fade remains.
  */
-function createRailPresence(options: { rail: () => HTMLElement | undefined; visible: () => boolean; narrow: () => boolean }) {
+function createRailPresence(options: {
+  rail: () => HTMLElement | undefined;
+  /** Holds the rail's room in the lead's row, so the lead stays lined up with the column. */
+  spacer: () => HTMLElement | undefined;
+  visible: () => boolean;
+  narrow: () => boolean;
+}) {
   const [present, setPresent] = createSignal(untrack(options.visible));
   const offset = motionValue(0), opacity = motionValue(1), width = motionValue(RAIL_WIDTH);
   let animations: AnimationPlaybackControls[] = [];
@@ -37,6 +43,12 @@ function createRailPresence(options: { rail: () => HTMLElement | undefined; visi
   function paint() {
     const rail = options.rail();
     if (!rail) return;
+    const spacer = options.spacer();
+    if (spacer) {
+      const closing = !options.narrow() && width.get() < RAIL_WIDTH;
+      spacer.style.width = spacer.style.flexBasis = closing ? `${width.get()}px` : "";
+      spacer.style.marginLeft = closing ? `${-RAIL_GAP * (1 - width.get() / RAIL_WIDTH)}px` : "";
+    }
     rail.style.transform = offset.get() ? `translate3d(${offset.get()}px, 0, 0)` : "";
     const alpha = Math.min(1, Math.max(0, opacity.get()));
     rail.style.opacity = alpha === 1 ? "" : String(alpha);
@@ -95,7 +107,7 @@ function createRailPresence(options: { rail: () => HTMLElement | undefined; visi
   });
 
   // A rail that mounts to enter starts from the values set above, not a frame at full size.
-  createEffect(() => { if (options.rail()) paint(); });
+  createEffect(() => { if (options.rail() || options.spacer()) paint(); });
 
   onMount(() => {
     const stops = [offset, opacity, width].map((value) => value.on("change", paint));
@@ -141,7 +153,7 @@ export type RailPageProps = {
   status?: JSX.Element;
   /** The floating properties rail; leave it out for a page with none. */
   rail?: JSX.Element;
-  /** The column takes the width the rail leaves (a log) instead of the 654px text measure. */
+  /** An 880px measure (a log) instead of the 654px text column, centered the same way. */
   wide?: boolean;
   /** Shared by every page that should remember the rail together. Defaults to the documents' key. */
   railStorageKey?: string;
@@ -164,7 +176,8 @@ export function RailPage(props: RailPageProps) {
   const railVisible = () => Boolean(props.rail) && (narrow() ? drawerOpen() : railOpen());
   let root: HTMLDivElement | undefined;
   const [railElement, setRailElement] = createSignal<HTMLElement>();
-  const railPresent = createRailPresence({ rail: railElement, visible: railVisible, narrow });
+  const [leadSpacer, setLeadSpacer] = createSignal<HTMLElement>();
+  const railPresent = createRailPresence({ rail: railElement, spacer: leadSpacer, visible: railVisible, narrow });
 
   onMount(() => {
     if (!root || typeof ResizeObserver === "undefined") return;
@@ -199,7 +212,12 @@ export function RailPage(props: RailPageProps) {
           </Show>
         </div>
       </header>
-      <Show when={props.lead}><div class="pw-document__lead">{props.lead}</div></Show>
+      <Show when={props.lead}>
+        <div class="pw-document__lead">
+          <div class="pw-document__lead-inner">{props.lead}</div>
+          <Show when={railPresent() && !narrow()}><div ref={setLeadSpacer} class="pw-document__lead-spacer" aria-hidden="true" /></Show>
+        </div>
+      </Show>
       <div class="pw-document__scroll">
         <div class="pw-document__column">{props.children}</div>
         <Show when={railPresent()}>
