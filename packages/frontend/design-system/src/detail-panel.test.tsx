@@ -737,7 +737,8 @@ describe("lateral DetailPanel", () => {
   it("lays out Markdown documents as a page with a properties rail, not the floating panel", () => {
     const shell = readFileSync(repoPath("packages/features/knowledge/src/knowledge-document-shell.tsx"), "utf8");
     expect(shell).not.toContain("<DetailPanel.Content>");
-    expect(shell).toContain('class="pw-document__rail"');
+    expect(shell).toContain("<RailPage");
+    expect(readFileSync(repoPath("packages/frontend/design-system/src/rail-page.tsx"), "utf8")).toContain('class="pw-document__rail"');
     expect(readFileSync(repoPath("packages/features/knowledge/src/knowledge-document-properties.tsx"), "utf8")).toContain('variant="rail"');
     expect(readFileSync(repoPath("packages/features/shell/src/entity-detail-host.tsx"), "utf8")).toContain("!documentPage()");
   });

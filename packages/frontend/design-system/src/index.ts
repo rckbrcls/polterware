@@ -57,6 +57,8 @@ export type { ToastAction, ToastItem, ToastOptions } from "./toast";
 export { ConfirmRegion, requestConfirm, requestReason } from "./confirm";
 export type { ConfirmOptions, ReasonOptions } from "./confirm";
 export { Breadcrumb } from "./breadcrumb";
+export { RailGroup, RailPage } from "./rail-page";
+export type { RailPageProps } from "./rail-page";
 export type { BreadcrumbItem, BreadcrumbProps } from "./breadcrumb";
 export { Composer } from "./composer";
 export type { ComposerDraft, ComposerField, ComposerProperty, ComposerProps } from "./composer";

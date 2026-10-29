@@ -11,10 +11,8 @@ import {
   Cpu,
   DetailPanel,
   Dialog,
-  ChevronLeft,
   Field,
   FilterPopover,
-  IconTile,
   FloatingWindow,
   FileDiff,
   FileText,
@@ -26,7 +24,9 @@ import {
   PageToolbar,
   SearchBar,
   Tabs,
-  Breadcrumb,
+  RailGroup,
+  RailPage,
+  InformationCircle,
   Play,
   Plus,
   ProgressBar,
@@ -47,7 +47,6 @@ import {
   ActiveFilterBar,
   matchClauses,
   type FilterField,
-  type IconTileTone,
 } from "@polterware/frontend-design-system";
 import { detailPanelStore } from "@polterware/frontend-state";
 import {
@@ -669,9 +668,6 @@ export function DispatchPage(props: {
 
   // Verify runs the project checks in the run's worktree; Merge lands a verified branch.
   const [reviewing, setReviewing] = createSignal<"" | "verify" | "merge">("");
-  // The open run's tab lives here, so a refresh that remounts the detail keeps it.
-  const [runTab, setRunTab] = createSignal("overview");
-  createEffect(on(openedRunId, () => setRunTab("overview"), { defer: true }));
   const handleReviewRun = async (id: string, action: "verify" | "merge") => {
     const bridge = dispatchBridge();
     const call = action === "verify" ? bridge?.verifyRun : bridge?.mergeRun;
@@ -1029,8 +1025,6 @@ export function DispatchPage(props: {
               now={now()}
               cancelling={cancellingId() === run().id}
               onCancel={() => void handleCancelRun(run().id)}
-              tab={runTab()}
-              onTabChange={setRunTab}
               reviewing={reviewing()}
               onVerify={dispatchBridge()?.verifyRun ? () => void handleReviewRun(run().id, "verify") : undefined}
               onMerge={dispatchBridge()?.mergeRun ? () => void handleReviewRun(run().id, "merge") : undefined}
@@ -1400,19 +1394,6 @@ export function DispatchPage(props: {
   );
 }
 
-/** Heading of a run detail card panel (Details, Agents involved, Log): an icon tile, the title, and an aside. */
-function RunPanelLabel(props: { title: string; icon: JSX.Element; tone: IconTileTone; aside?: JSX.Element }) {
-  return (
-    <div class="flex min-w-0 items-center justify-between gap-2 px-1">
-      <span class="inline-flex min-w-0 items-center gap-2">
-        <IconTile size={24} tone={props.tone} seed={`run-panel-${props.title}`} class="shrink-0">{props.icon}</IconTile>
-        <span class="truncate text-[13px] font-medium text-[var(--color-text-primary)]">{props.title}</span>
-      </span>
-      {props.aside}
-    </div>
-  );
-}
-
 /** A run card's facts: its route, worktree branch and status, and a trailing slot. */
 function RunFacts(props: {
   run: DispatchRunView;
@@ -1549,50 +1530,25 @@ function DispatchRunCard(props: {
   );
 }
 
-function LinkedRunCard(props: {
-  label: string;
-  title: string;
-  agent?: string;
-  seed: string;
-  status?: string;
-  onOpen: () => void;
-}) {
+/** A linked run in the rail: the agent's avatar, the link, and its status; a plain row, not a card. */
+function LinkedRunRow(props: { label: string; agent?: string; seed: string; status?: string; onOpen: () => void }) {
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label={props.label}
-      class="cursor-pointer rounded-[var(--radius-card)] outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-border-strong)]"
+    <button
+      type="button"
+      class="flex w-full min-w-0 items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-start hover:bg-[var(--color-surface-hover)]"
       onClick={() => props.onOpen()}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget) return;
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          props.onOpen();
-        }
-      }}
     >
-      <DetailPanel.Section
-        class="!mt-0"
-        title={props.title}
-        icon={<DispatchAgentAvatar agent={props.agent} seed={props.seed} status={props.status} size={18} />}
-        aside={props.status ? <StatusChip tone={dispatchStatusTone(props.status)} label={props.status} /> : undefined}
-      >
-        <span class="font-mono text-[12px] text-[var(--color-text-muted)]">{props.label}</span>
-      </DetailPanel.Section>
-    </div>
+      <DispatchAgentAvatar agent={props.agent} seed={props.seed} status={props.status} size={18} />
+      <span class="min-w-0 flex-1 truncate font-mono text-[12px] text-[var(--color-text-secondary)]">{props.label}</span>
+      <Show when={props.status}>{(status) => <StatusChip tone={dispatchStatusTone(status())} label={status()} />}</Show>
+    </button>
   );
 }
 
-const RUN_TABS = [
-  { id: "overview", label: "Overview" },
-  { id: "log", label: "Log" },
-  { id: "diff", label: "Diff" },
-];
-
 /**
- * A run opens like a review: the header has Back, the breadcrumb Runs › prompt, and the next
- * step (Verify or Merge, or Cancel while it runs); Overview, Log, and Diff tabs sit below it.
+ * A run opens in the page structure of docs, in two columns: its output in the center and its
+ * metadata in the rail on the right, each group under a title with an icon tile, with no cards.
+ * The header has Back, the breadcrumb Runs › prompt, and the next step (Verify, Merge, or Cancel).
  */
 function DispatchRunDetail(props: {
   run: DispatchRunView;
@@ -1606,17 +1562,14 @@ function DispatchRunDetail(props: {
   now: number;
   cancelling: boolean;
   onCancel: () => void;
-  tab: string;
-  onTabChange: (tab: string) => void;
   reviewing: "" | "verify" | "merge";
   onVerify?: () => void;
   onMerge?: () => void;
 }) {
-  const tab = () => props.tab;
   let logEnd: HTMLDivElement | undefined;
   createEffect(() => {
     props.log;
-    if (!props.live || tab() !== "log") return;
+    if (!props.live) return;
     logEnd?.scrollIntoView({ block: "nearest" });
   });
   const branch = () => (props.worktree?.branch || props.run.branch).trim();
@@ -1639,181 +1592,144 @@ function DispatchRunDetail(props: {
   const logLines = () => (props.log.trim() ? props.log.split("\n").length : 0);
   const review = () => runReviewAction(props.run, Boolean(branch() || path()));
   const text = (value: string | undefined) => (value?.trim() ? value.trim() : undefined);
-  return (
-    <PageContent class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto p-4">
-      <div class="flex min-w-0 items-center justify-between gap-3">
-        <Button size="icon" variant="texture" class="!rounded-full shrink-0" aria-label="Back to runs" onClick={() => props.onBack()}>
-          <ChevronLeft size={14} aria-hidden />
+  const linked = () => props.run.resumedOf.trim() || props.resumedBy.length > 0 || props.childRuns.length > 0;
+  const actions = () => (
+    <>
+      <StatusChip tone={dispatchStatusTone(props.run.status)} label={props.run.status || "unknown"} />
+      <Show when={isRunActive(props.run.status)}>
+        <Button size="sm" variant="ghost" disabled={props.cancelling} onClick={() => props.onCancel()}>
+          <Stop size={12} />
+          Cancel
         </Button>
-        <Breadcrumb items={[{ label: "Runs", onSelect: () => props.onBack() }]} current={promptTitle() || shortRunId(props.run.id)} />
-        <span class="inline-flex shrink-0 items-center gap-2">
-          <StatusChip tone={dispatchStatusTone(props.run.status)} label={props.run.status || "unknown"} />
-          <Show when={isRunActive(props.run.status)}>
-            <Button size="sm" variant="ghost" disabled={props.cancelling} onClick={() => props.onCancel()}>
-              <Stop size={12} />
-              Cancel
-            </Button>
-          </Show>
-          <Show when={review() === "verify" && props.onVerify}>
-            <Button size="sm" variant="primary" disabled={props.reviewing !== ""} onClick={() => props.onVerify?.()}>
-              <ShieldCheck size={12} />
-              {props.reviewing === "verify" ? "Verifying…" : "Verify"}
-            </Button>
-          </Show>
-          <Show when={review() === "merge" && props.onMerge}>
-            <Button size="sm" variant="primary" disabled={props.reviewing !== ""} onClick={() => props.onMerge?.()}>
-              <GitBranch size={12} />
-              {props.reviewing === "merge" ? "Merging…" : "Merge"}
-            </Button>
-          </Show>
-        </span>
-      </div>
-      <Tabs items={RUN_TABS} value={tab()} onChange={props.onTabChange} aria-label="Run" />
-
-      <Show when={tab() === "overview"}>
-        <Card class="flex min-w-0 flex-col gap-3 !p-3">
-          <DetailPanel.Properties>
-            <DetailPanel.Property label="Run" mono value={props.run.id} />
-            <DetailPanel.Property label="Status" value={<StatusChip tone={dispatchStatusTone(props.run.status)} label={props.run.status || "unknown"} />} />
-            <DetailPanel.Property label="Model" value={modelLabel(props.run)} />
-            <DetailPanel.Property label="Route" value={routeLabel(props.run)} />
-            <DetailPanel.Property label="Duration" value={duration() === "—" ? undefined : duration()} />
-            <DetailPanel.Property label="Timing" value={timingLabel(props.run)} />
-            <DetailPanel.Property label="Card" mono value={text(props.run.cardSlug)} />
-            <DetailPanel.Property label="Branch" mono value={text(branch())} />
-            <DetailPanel.Property label="Worktree" value={worktreeStatus() ? <StatusChip tone={dispatchStatusTone(worktreeStatus())} label={worktreeStatus()} /> : undefined} />
-            <DetailPanel.Property label="Files" value={formatFiles(props.run) ? <FileChangeLine run={props.run} /> : undefined} />
-            <DetailPanel.Property label="Verification" value={text(props.run.verification)} />
-            <DetailPanel.Property label="Merged" mono value={text(props.run.mergeSha)} />
-            <DetailPanel.Property label="Note" value={text(props.run.note)} />
-          </DetailPanel.Properties>
-        </Card>
-        <Show when={promptRest()}>
-          {(rest) => (
-            <Card class="flex min-w-0 flex-col gap-3 !p-3">
-              <RunPanelLabel title="Prompt" icon={<FileText size={14} />} tone="knowledge" />
-              <p class="m-0 whitespace-pre-wrap text-[12px] leading-5 text-[var(--color-text-secondary)]">{rest()}</p>
-            </Card>
-          )}
-        </Show>
-        <Card class="flex min-w-0 flex-col gap-3 !p-3">
-          <RunPanelLabel
-            title="Agents involved"
-            icon={<Bot size={14} />}
-            tone="execution"
-            aside={
-              <span class="text-[12px] tabular-nums text-[var(--color-text-muted)]">
-                {attempts().length} {attempts().length === 1 ? "agent" : "agents"}
-              </span>
-            }
-          />
-          <div class="flex flex-col gap-2">
-            <For each={attempts()}>
-              {(attempt) => (
-                <DetailPanel.Section
-                  class="!mt-0"
-                  title={attempt.title}
-                  icon={<DispatchAgentAvatar agent={attempt.agent} seed={attempt.key} status={attempt.status} size={18} />}
-                  aside={
-                    <span class="inline-flex items-center gap-2">
-                      <StatusChip tone={dispatchStatusTone(attempt.status)} label={attempt.status} />
-                      <Show when={attempt.durationMs !== undefined}>
-                        <span class="tabular-nums text-[11px] text-[var(--color-text-muted)]">{measuredDuration(attempt.durationMs)}</span>
-                      </Show>
-                    </span>
-                  }
-                >
-                  <Show when={attempt.error}>
-                    <p class="m-0 whitespace-pre-wrap text-[12px] text-[var(--color-danger)]">{attempt.error}</p>
+      </Show>
+      <Show when={review() === "verify" && props.onVerify}>
+        <Button size="sm" variant="primary" disabled={props.reviewing !== ""} onClick={() => props.onVerify?.()}>
+          <ShieldCheck size={12} />
+          {props.reviewing === "verify" ? "Verifying…" : "Verify"}
+        </Button>
+      </Show>
+      <Show when={review() === "merge" && props.onMerge}>
+        <Button size="sm" variant="primary" disabled={props.reviewing !== ""} onClick={() => props.onMerge?.()}>
+          <GitBranch size={12} />
+          {props.reviewing === "merge" ? "Merging…" : "Merge"}
+        </Button>
+      </Show>
+    </>
+  );
+  const rail = () => (
+    <>
+      <RailGroup title="Run" icon={<InformationCircle size={14} />} tone="knowledge">
+        <DetailPanel.Properties variant="rail">
+          <DetailPanel.Property label="Run" mono value={props.run.id} />
+          <DetailPanel.Property label="Model" value={modelLabel(props.run)} />
+          <DetailPanel.Property label="Route" value={routeLabel(props.run)} />
+          <DetailPanel.Property label="Duration" value={duration() === "—" ? undefined : duration()} />
+          <DetailPanel.Property label="Timing" value={timingLabel(props.run)} />
+          <DetailPanel.Property label="Card" mono value={text(props.run.cardSlug)} />
+          <DetailPanel.Property label="Verification" value={text(props.run.verification)} />
+          <DetailPanel.Property label="Note" value={text(props.run.note)} />
+        </DetailPanel.Properties>
+      </RailGroup>
+      <RailGroup title="Changes" icon={<FileDiff size={14} />} tone="architecture">
+        <DetailPanel.Properties variant="rail">
+          <DetailPanel.Property label="Files" value={formatFiles(props.run) ? <FileChangeLine run={props.run} /> : undefined} />
+          <DetailPanel.Property label="Branch" mono value={text(branch())} />
+          <DetailPanel.Property label="Worktree" value={worktreeStatus() ? <StatusChip tone={dispatchStatusTone(worktreeStatus())} label={worktreeStatus()} /> : undefined} />
+          <DetailPanel.Property label="Path" mono value={text(path())} />
+          <DetailPanel.Property label="Merged" mono value={text(props.run.mergeSha)} />
+        </DetailPanel.Properties>
+      </RailGroup>
+      <RailGroup
+        title="Agents"
+        icon={<Bot size={14} />}
+        tone="execution"
+        aside={`${attempts().length} ${attempts().length === 1 ? "agent" : "agents"}`}
+      >
+        <div class="flex flex-col gap-1 px-1">
+          <For each={attempts()}>
+            {(attempt) => (
+              <div class="flex min-w-0 flex-col gap-1 px-2 py-1.5">
+                <div class="flex min-w-0 items-center gap-2">
+                  <DispatchAgentAvatar agent={attempt.agent} seed={attempt.key} status={attempt.status} size={18} />
+                  <span class="min-w-0 flex-1 truncate text-[12px] text-[var(--color-text-secondary)]">{attempt.title}</span>
+                  <Show when={attempt.durationMs !== undefined}>
+                    <span class="tabular-nums text-[11px] text-[var(--color-text-muted)]">{measuredDuration(attempt.durationMs)}</span>
                   </Show>
-                </DetailPanel.Section>
-              )}
-            </For>
+                  <StatusChip tone={dispatchStatusTone(attempt.status)} label={attempt.status} />
+                </div>
+                <Show when={attempt.error}>
+                  <p class="m-0 whitespace-pre-wrap text-[12px] text-[var(--color-danger)]">{attempt.error}</p>
+                </Show>
+              </div>
+            )}
+          </For>
+        </div>
+      </RailGroup>
+      <Show when={linked()}>
+        <RailGroup title="Linked runs" icon={<Route size={14} />} tone="neutral">
+          <div class="flex flex-col gap-0.5 px-1">
             <Show when={props.run.resumedOf.trim()}>
-              <LinkedRunCard
-                label={`Resumed from ${shortRunId(props.run.resumedOf)}`}
-                title="Resumed from"
-                seed={`${props.run.id}:resumed-of`}
-                onOpen={() => props.onSelect(props.run.resumedOf)}
-              />
+              <LinkedRunRow label={`Resumed from ${shortRunId(props.run.resumedOf)}`} seed={`${props.run.id}:resumed-of`} onOpen={() => props.onSelect(props.run.resumedOf)} />
             </Show>
             <For each={props.resumedBy}>
               {(next) => (
-                <LinkedRunCard
-                  label={`Resumed by ${next.agent || "agent"} · ${shortRunId(next.id)}`}
-                  title={`Resumed by ${next.agent || "agent"}`}
-                  agent={next.agent}
-                  seed={next.id}
-                  status={next.status}
-                  onOpen={() => props.onSelect(next.id)}
-                />
+                <LinkedRunRow label={`Resumed by ${next.agent || "agent"} · ${shortRunId(next.id)}`} agent={next.agent} seed={next.id} status={next.status} onOpen={() => props.onSelect(next.id)} />
               )}
             </For>
             <For each={props.childRuns}>
               {(child) => (
-                <LinkedRunCard
-                  label={`Child ${child.agent || "agent"} · ${shortRunId(child.id)}`}
-                  title={`Child ${child.agent || "agent"}`}
-                  agent={child.agent}
-                  seed={child.id}
-                  status={child.status}
-                  onOpen={() => props.onSelect(child.id)}
-                />
+                <LinkedRunRow label={`Child ${child.agent || "agent"} · ${shortRunId(child.id)}`} agent={child.agent} seed={child.id} status={child.status} onOpen={() => props.onSelect(child.id)} />
               )}
             </For>
           </div>
-        </Card>
+        </RailGroup>
       </Show>
-
-      <Show when={tab() === "log"}>
-        <Card class="flex min-h-0 min-w-0 flex-1 flex-col gap-3 !p-3">
-          <RunPanelLabel
+    </>
+  );
+  return (
+    <div class="flex min-h-0 flex-1 flex-col">
+      <RailPage
+        trail={[{ label: "Runs", onSelect: () => props.onBack() }]}
+        title={promptTitle() || shortRunId(props.run.id)}
+        onBack={() => props.onBack()}
+        actions={actions()}
+        rail={rail()}
+        railStorageKey="polterware.run.rail"
+        wide
+      >
+        <div class="flex min-w-0 flex-col gap-6 pt-6">
+          <Show when={promptRest()}>
+            {(rest) => (
+              <RailGroup title="Prompt" icon={<FileText size={14} />} tone="knowledge">
+                <p class="m-0 whitespace-pre-wrap px-1 text-[13px] leading-5 text-[var(--color-text-secondary)]">{rest()}</p>
+              </RailGroup>
+            )}
+          </Show>
+          <RailGroup
             title="Log"
             icon={<Terminal size={14} />}
             tone="observability"
             aside={
               <span class="inline-flex items-center gap-2">
-                <span class="text-[12px] text-[var(--color-text-muted)]">
-                  {logLines() ? `${logLines()} ${logLines() === 1 ? "line" : "lines"}` : props.live ? "Waiting" : "No output"}
-                </span>
+                {logLines() ? `${logLines()} ${logLines() === 1 ? "line" : "lines"}` : props.live ? "Waiting" : "No output"}
                 <Show when={props.live}>
                   <StatusChip tone="syncing" label="Live" />
                 </Show>
               </span>
             }
-          />
-          <div class="pw-scroll-fade min-h-0 flex-1 overflow-auto px-1 font-mono text-[12px] leading-5 whitespace-pre-wrap text-[var(--color-text-secondary)]">
-            <Show
-              when={props.log.trim()}
-              fallback={<p class="m-0 text-[var(--color-text-muted)]">{props.live ? "Waiting for agent output…" : "No agent output recorded."}</p>}
-            >
-              {props.log}
-            </Show>
-            <div ref={logEnd} />
-          </div>
-        </Card>
-      </Show>
-
-      <Show when={tab() === "diff"}>
-        <Card class="flex min-w-0 flex-col gap-3 !p-3">
-          <RunPanelLabel title="Changes" icon={<FileDiff size={14} />} tone="knowledge" />
-          <Show
-            when={formatFiles(props.run) || branch()}
-            fallback={<p class="m-0 px-1 text-[12px] text-[var(--color-text-muted)]">This run recorded no file changes.</p>}
           >
-            <DetailPanel.Properties>
-              <DetailPanel.Property label="Files" value={formatFiles(props.run) ? <FileChangeLine run={props.run} /> : undefined} />
-              <DetailPanel.Property label="Branch" mono value={text(branch())} />
-              <DetailPanel.Property label="Worktree" mono value={text(path())} />
-              <DetailPanel.Property label="Merged" mono value={text(props.run.mergeSha)} />
-            </DetailPanel.Properties>
-            {/* The core keeps the change counts, not the patch. */}
-            <p class="m-0 px-1 text-[12px] text-[var(--color-text-muted)]">
-              The patch lives in the run's worktree; open it there to read every line.
-            </p>
-          </Show>
-        </Card>
-      </Show>
-    </PageContent>
+            <div class="px-1 font-mono text-[12px] leading-5 whitespace-pre-wrap text-[var(--color-text-secondary)]">
+              <Show
+                when={props.log.trim()}
+                fallback={<p class="m-0 text-[var(--color-text-muted)]">{props.live ? "Waiting for agent output…" : "No agent output recorded."}</p>}
+              >
+                {props.log}
+              </Show>
+              <div ref={logEnd} />
+            </div>
+          </RailGroup>
+        </div>
+      </RailPage>
+    </div>
   );
 }
