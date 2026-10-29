@@ -60,7 +60,7 @@
   --card-fill-top: var(--color-surface-subtle);
   --card-fill-bottom: var(--color-surface-subtle);
   --card-fill: linear-gradient(to bottom, var(--card-fill-top), var(--card-fill-bottom));
-  --card-rings: 0 0 0 0.5px var(--material-rim), inset 0 0.5px 0 0 var(--material-highlight-strong);
+  --card-rings: var(--material-edge-quiet);
 }
 
 /**
@@ -328,11 +328,13 @@
   transition: background var(--duration-control) var(--ease-standard);
 }
 
-/* Buttons paint one face over the whole border box, so hover and press never reveal a second ring. */
+/* Buttons paint one face over the whole border box, so hover and press never reveal a second ring.
+   The face covers the button's own inset edge, so it carries the lit edge itself. */
 .pw-button.pw-texture-button::before,
 .pw-texture-button::before {
   inset: -1px;
   border-radius: inherit;
+  box-shadow: var(--tx-face-edge, var(--material-edge));
 }
 
 .card-texture-framed:not([data-texture="compact"]) {
