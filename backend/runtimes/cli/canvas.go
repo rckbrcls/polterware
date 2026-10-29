@@ -18,7 +18,7 @@ import (
 )
 
 const canvasUsage = `usage: polterware canvas ls [--agents] [--scope <node>[,<node>]] [--exact] [--project <id>]
-       polterware canvas show <id|name> [--format json|mermaid|dot] [--project <id>]
+       polterware canvas show <id|name> [--format mermaid|json|dot] [--project <id>]
        polterware canvas share <id|name> on|off [--project <id>]`
 
 type canvasListArgs struct {
@@ -93,7 +93,7 @@ func parseCanvasShow(args []string) (canvasShowArgs, error) {
 	flags := flag.NewFlagSet("canvas show", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	projectID := flags.String("project", "", "project id (default: project containing the cwd)")
-	format := flags.String("format", "json", "json, mermaid, or dot")
+	format := flags.String("format", "mermaid", "mermaid, json, or dot")
 	positional, err := parseInterspersed(flags, args)
 	if err != nil {
 		return canvasShowArgs{}, err
@@ -104,7 +104,7 @@ func parseCanvasShow(args []string) (canvasShowArgs, error) {
 	switch strings.ToLower(strings.TrimSpace(*format)) {
 	case "json", "mermaid", "dot":
 	default:
-		return canvasShowArgs{}, fmt.Errorf("unknown format %q: use json, mermaid, or dot", *format)
+		return canvasShowArgs{}, fmt.Errorf("unknown format %q: use mermaid, json, or dot", *format)
 	}
 	return canvasShowArgs{project: *projectID, ref: positional[0], format: strings.ToLower(strings.TrimSpace(*format))}, nil
 }
@@ -158,7 +158,7 @@ func canvasShow(dbPath string, args canvasShowArgs) error {
 	if err != nil {
 		return err
 	}
-	text, err := canvas.ExportFormat(graph, args.format)
+	text, err := canvas.ExportFormat(graph, item.GetLayoutJson(), args.format)
 	if err != nil {
 		return err
 	}

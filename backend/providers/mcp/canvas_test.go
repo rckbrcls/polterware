@@ -18,7 +18,8 @@ func TestPolterQueryCanvasHidesPrivate(t *testing.T) {
 		AgentVisible: true,
 		LayoutJSON:   `{"marker":"LAYOUT_ONLY_SECRET"}`,
 		Graph: canvas.Graph{Nodes: []canvas.Node{
-			{ID: "api", Kind: canvas.KindNote, Label: "Public API", Ref: &canvas.Ref{Kind: canvas.RefFact, ID: "fact-1"}},
+			{ID: "api", Kind: "service", Label: "Public API", Ref: &canvas.Ref{Kind: canvas.RefFact, ID: "fact-1"}},
+			{ID: "db", Kind: "database", Label: "Store"},
 			{ID: "note", Kind: canvas.KindNote, Label: "Sketch"},
 		}},
 	}, "run-1", "batch-shared")
@@ -65,8 +66,8 @@ func TestPolterQueryCanvasHidesPrivate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(body, `"trust":"referenced"`) || !strings.Contains(body, `"trust":"unverified"`) {
-		t.Fatalf("export trust missing:\n%s", body)
+	if want := "flowchart LR\n  n1[\"Public API · service\"]\n  n2[\"Store · database\"]\n  %% note: Sketch\n  class n2 unverified\n"; body != want {
+		t.Fatalf("export:\n%s\nwant:\n%s", body, want)
 	}
 	if strings.Contains(body, "LAYOUT_ONLY_SECRET") || strings.Contains(body, "layout") || strings.Contains(body, "SECRET_CANVAS_NODE") {
 		t.Fatalf("export leaked layout or the private canvas:\n%s", body)

@@ -49,7 +49,7 @@ func TestParseCanvasShow(t *testing.T) {
 		t.Fatalf("show = %+v err=%v", got, err)
 	}
 	def, err := parseCanvasShow([]string{"id-1"})
-	if err != nil || def.format != "json" {
+	if err != nil || def.format != "mermaid" {
 		t.Fatalf("default = %+v err=%v", def, err)
 	}
 	if _, err := parseCanvasShow(nil); err == nil {

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/polterware/polterware/backend/domains/canvas"
 	contextpkg "github.com/polterware/polterware/backend/domains/context"
 	"github.com/polterware/polterware/backend/providers/mcp"
 	"github.com/polterware/polterware/backend/providers/seed"
@@ -31,6 +32,8 @@ var tokenCeilings = map[string]int{
 	"node.context": 222,
 	// Compact lines replace the context.get JSON package (340).
 	"search": 87,
+	// Mermaid with frames as subgraphs replaces node-link JSON (312).
+	"canvas.show": 91,
 }
 
 func TestAgentReadTokenBudget(t *testing.T) {
@@ -43,6 +46,7 @@ func TestAgentReadTokenBudget(t *testing.T) {
 	if err := seed.Polterware(store, t.TempDir()); err != nil {
 		t.Fatal(err)
 	}
+	seedArchitectureCanvas(t, store)
 
 	reads := map[string][]map[string]any{
 		"mcp.initialize": {{"method": "initialize", "params": map[string]any{}}},
@@ -53,6 +57,7 @@ func TestAgentReadTokenBudget(t *testing.T) {
 		"card.context": {toolCall(mcp.ToolPolterQuery, map[string]any{"project_id": seed.ProjectID, "query": "brief local-build-dogfood"})},
 		"node.context": {toolCall(mcp.ToolPolterQuery, map[string]any{"project_id": seed.ProjectID, "query": "brief polterware/cli/commands"})},
 		"search":       {toolCall(mcp.ToolPolterQuery, map[string]any{"project_id": seed.ProjectID, "query": "search drift"})},
+		"canvas.show":  {toolCall(mcp.ToolPolterQuery, map[string]any{"project_id": seed.ProjectID, "query": "canvas Architecture"})},
 	}
 
 	measured := map[string]int{}
@@ -83,6 +88,56 @@ func TestAgentReadTokenBudget(t *testing.T) {
 		case got*10 < ceiling*9:
 			t.Errorf("%s fell to %d tokens: lower its ceiling from %d to %d", name, got, ceiling, got)
 		}
+	}
+}
+
+// seedArchitectureCanvas shares one canvas the way people draw them: a frame
+// around two Structure components, a free database, a note, an unlabeled
+// shape, and the links between them.
+func seedArchitectureCanvas(t *testing.T, store *storepkg.Store) {
+	t.Helper()
+	nodes, err := store.StructureNodes(seed.ProjectID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ref := func(path string) *canvas.Ref {
+		for _, node := range nodes {
+			if node.Path == path {
+				return &canvas.Ref{Kind: canvas.RefNode, ID: node.ID}
+			}
+		}
+		t.Fatalf("no Structure node %s", path)
+		return nil
+	}
+	graph := canvas.Graph{
+		Nodes: []canvas.Node{
+			{ID: "node-frame-core", Kind: "frame", Label: "Local core"},
+			{ID: "node-core-server", Kind: "service", Label: "Server", Ref: ref("polterware/core/server")},
+			{ID: "node-core-store", Kind: "database", Label: "Store", Ref: ref("polterware/core/store")},
+			{ID: "node-renderer", Kind: "frontend", Label: "Renderer", Props: map[string]any{"technology": "Solid", "style": map[string]any{"fill": "blue"}}},
+			{ID: "node-sqlite", Kind: "database", Label: "SQLite file", Props: map[string]any{"technology": "SQLite"}},
+			{ID: "node-note-lock", Kind: canvas.KindNote, Label: "One serve process per database, guarded by a lock."},
+			{ID: "node-blank", Kind: "rectangle", Label: ""},
+		},
+		Edges: []canvas.Edge{
+			{ID: "edge-renderer-server", From: "node-renderer", To: "node-core-server", Kind: canvas.EdgeCalls},
+			{ID: "edge-server-store", From: "node-core-server", To: "node-core-store", Kind: canvas.EdgeUses},
+			{ID: "edge-store-sqlite", From: "node-core-store", To: "node-sqlite", Kind: canvas.EdgeWrites},
+		},
+	}
+	layout := `{"version":1,"viewport":{"x":0,"y":0,"zoom":1},"nodes":{` +
+		`"node-frame-core":{"x":300,"y":0,"width":520,"height":400},` +
+		`"node-core-server":{"x":340,"y":60,"width":180,"height":100},` +
+		`"node-core-store":{"x":340,"y":240,"width":180,"height":100},` +
+		`"node-note-lock":{"x":580,"y":60,"width":200,"height":120},` +
+		`"node-renderer":{"x":0,"y":60,"width":180,"height":100},` +
+		`"node-sqlite":{"x":900,"y":240,"width":180,"height":100},` +
+		`"node-blank":{"x":900,"y":0,"width":120,"height":80}}}`
+	if _, err := store.CreateCanvas(canvas.Canvas{
+		ID: "canvas-architecture", ProjectID: seed.ProjectID, Name: "Architecture", Type: canvas.TypeCanvas,
+		AgentVisible: true, Graph: graph, LayoutJSON: layout,
+	}, "", ""); err != nil {
+		t.Fatal(err)
 	}
 }
 

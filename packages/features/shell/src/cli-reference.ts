@@ -183,16 +183,16 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "canvas",
     name: "polterware canvas",
     synopsis:
-      "polterware canvas ls [--agents] [--scope <node>] [--exact] | show <id|name> [--format json|mermaid|dot] | share <id|name> on|off [--project <id>]",
+      "polterware canvas ls [--agents] [--scope <node>] [--exact] | show <id|name> [--format mermaid|json|dot] | share <id|name> on|off [--project <id>]",
     summary:
       "List canvases, print one as JSON, Mermaid, or DOT, or switch whether agents can read it. Agents only see canvases that are shared.",
     flags: [
       { name: "--agents", description: "ls: list only the canvases agents can read." },
       ...SCOPE_FLAGS,
-      { name: "--format", value: "format", description: "show: json (default), mermaid, or dot." },
+      { name: "--format", value: "format", description: "show: mermaid (default, frames as subgraphs), json, or dot." },
       PROJECT_FLAG,
     ],
-    example: "polterware canvas show architecture --format mermaid",
+    example: "polterware canvas show architecture",
   },
   {
     id: "export",

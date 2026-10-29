@@ -1,6 +1,7 @@
 package wedge
 
 import (
+	"cmp"
 	"fmt"
 	"strings"
 
@@ -9,8 +10,8 @@ import (
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
-// queryCanvas lists agent-visible canvases, or returns the node-link export
-// of one of them. A canvas with agent_visible false is omitted from the list
+// queryCanvas lists agent-visible canvases, or returns one of them as a
+// Mermaid flowchart. A canvas with agent_visible false is omitted from the list
 // and answers as unknown, including when the caller names its id.
 func queryCanvas(store *storepkg.Store, projectID, ref string, scope structure.MultiScope) (string, error) {
 	items, err := store.ListCanvases(projectID)
@@ -28,41 +29,37 @@ func queryCanvas(store *storepkg.Store, projectID, ref string, scope structure.M
 		}
 		visible = append(visible, item)
 	}
+	nodes, err := store.StructureNodes(projectID)
+	if err != nil {
+		return "", err
+	}
 	ref = strings.TrimSpace(ref)
 	if ref == "" {
-		return formatAgentCanvases(visible), nil
+		return formatAgentCanvases(visible, nodes), nil
 	}
 	item, err := findAgentCanvas(visible, ref)
 	if err != nil {
 		return "", err
 	}
-	nodes, err := store.StructureNodes(projectID)
-	if err != nil {
-		return "", err
-	}
-	body, err := canvas.Export(canvas.WithStructure(item.Graph, nodes))
-	if err != nil {
-		return "", err
-	}
-	text := string(body)
-	if !strings.HasSuffix(text, "\n") {
-		text += "\n"
-	}
-	return text, nil
+	return canvas.ExportMermaid(canvas.WithStructure(item.Graph, nodes), item.LayoutJSON), nil
 }
 
-func formatAgentCanvases(items []canvas.Canvas) string {
+func formatAgentCanvases(items []canvas.Canvas, nodes []structure.Node) string {
 	if len(items) == 0 {
 		return "no canvases\n"
 	}
+	paths := make(map[string]string, len(nodes))
+	for _, node := range nodes {
+		paths[node.ID] = node.Path
+	}
 	var b strings.Builder
-	b.WriteString("id  type  scope  name\n")
+	b.WriteString("id  scope  name\n")
 	for _, item := range items {
-		scope := item.ScopeNodeID
-		if scope == "" {
-			scope = "-"
+		scope := "-"
+		if item.ScopeNodeID != "" {
+			scope = cmp.Or(paths[item.ScopeNodeID], item.ScopeNodeID)
 		}
-		fmt.Fprintf(&b, "%s  %s  %s  %s\n", item.ID, item.Type, scope, item.Name)
+		fmt.Fprintf(&b, "%s  %s  %s\n", item.ID, scope, item.Name)
 	}
 	return b.String()
 }

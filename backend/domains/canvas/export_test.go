@@ -125,7 +125,71 @@ func TestExportTrustClearsEmptyRef(t *testing.T) {
 	}
 }
 
-func TestExportMermaidAndDot(t *testing.T) {
+func TestExportMermaidNestsByLayoutAndDropsBlankShapes(t *testing.T) {
+	graph := Graph{
+		Nodes: []Node{
+			{ID: "frame", Kind: "frame", Label: "Backend"},
+			{ID: "api", Kind: "service", Label: "API", Props: map[string]any{"technology": "Go", "style": map[string]any{"fill": "red"}}, Ref: &Ref{Kind: RefNode, ID: "c"}},
+			{ID: "inner", Kind: "frame", Label: "Workers"},
+			{ID: "job", Kind: "worker", Label: "Mailer"},
+			{ID: "db", Kind: "database", Label: "Postgres"},
+			{ID: "note-frame", Kind: KindNote, Label: "Writes are\nidempotent"},
+			{ID: "note-db", Kind: KindNote, Label: "Backups nightly"},
+			{ID: "note-linked", Kind: KindNote, Label: "Hot path"},
+			{ID: "blank", Kind: "rectangle", Label: ""},
+			{ID: "placeholder", Kind: "ellipse", Label: "New ellipse"},
+			{ID: "decision", Kind: "diamond", Label: ""},
+			{ID: "loose", Kind: "cache", Label: "Redis"},
+		},
+		Edges: []Edge{
+			{ID: "e1", From: "api", To: "db", Kind: EdgeReads},
+			{ID: "e2", From: "job", To: "decision", Kind: EdgeRelates},
+			{ID: "e3", From: "note-linked", To: "api", Kind: EdgeRelates},
+			{ID: "e4", From: "api", To: "inner", Kind: "uses|sync"},
+		},
+	}
+	layout := `{"nodes":{` +
+		`"frame":{"x":0,"y":0,"width":1000,"height":600},` +
+		`"api":{"x":40,"y":40},` +
+		`"inner":{"x":400,"y":200,"width":500,"height":300},` +
+		`"job":{"x":450,"y":250},` +
+		`"note-frame":{"x":40,"y":400,"width":200,"height":100},` +
+		`"db":{"x":1200,"y":40},` +
+		`"note-db":{"x":1210,"y":50,"width":100,"height":40},` +
+		`"blank":{"x":1500,"y":0},` +
+		`"placeholder":{"x":1500,"y":300},` +
+		`"decision":{"x":700,"y":250,"width":80,"height":80}}}`
+	want := `flowchart LR
+  subgraph n1["Backend"]
+    n2["API · service · Go"]
+    subgraph n3["Workers"]
+      n4["Mailer · worker"]
+      n6["diamond"]
+    end
+    %% note: Writes are idempotent
+  end
+  n5["Postgres · database"]
+  %% note on Postgres: Backups nightly
+  n7["Redis · cache"]
+  %% note on API: Hot path
+  n2 -->|reads| n5
+  n4 --> n6
+  n2 -->|uses#124;sync| n3
+  class n4,n5,n7 unverified
+`
+	if got := ExportMermaid(graph, layout); got != want {
+		t.Fatalf("mermaid:\n%s\nwant:\n%s", got, want)
+	}
+	if got := ExportMermaid(graph, layout); strings.Contains(got, "fill") || strings.Contains(got, "1200") {
+		t.Fatal("style or layout leaked into the export")
+	}
+	flat := ExportMermaid(graph, "not json")
+	if strings.Contains(flat, "subgraph") || !strings.Contains(flat, "  n1[\"Backend\"]\n") {
+		t.Fatalf("without a layout every node is top level:\n%s", flat)
+	}
+}
+
+func TestExportFormatDefaultsToMermaid(t *testing.T) {
 	graph := Graph{
 		Nodes: []Node{
 			{ID: "s", Kind: KindSystem, Label: "API", Ref: &Ref{Kind: RefNode, ID: "structure-1"}},
@@ -133,49 +197,27 @@ func TestExportMermaidAndDot(t *testing.T) {
 		},
 		Edges: []Edge{{ID: "e", From: "s", To: "n", Kind: EdgeUses}},
 	}
-	mermaid := ExportMermaid(graph)
-	wantMermaid := "flowchart LR\n  s[\"API (referenced)\"]\n  n[\"later (unverified)\"]\n  s -->|\"uses\"| n\n"
-	if mermaid != wantMermaid {
-		t.Fatalf("mermaid =\n%s", mermaid)
+	if text, err := ExportFormat(graph, "", ""); err != nil || text != "flowchart LR\n  n1[\"API · system\"]\n  %% note on API: later\n" {
+		t.Fatalf("default = %q err=%v", text, err)
 	}
-	dot := ExportDot(graph)
+	dot, err := ExportFormat(graph, "", "dot")
 	wantDot := "digraph canvas {\n  rankdir=LR;\n  \"s\" [label=\"API\" kind=\"system\" trust=\"referenced\"];\n  \"n\" [label=\"later\" kind=\"note\" trust=\"unverified\"];\n  \"s\" -> \"n\" [label=\"uses\"];\n}\n"
-	if dot != wantDot {
+	if err != nil || dot != wantDot {
 		t.Fatalf("dot =\n%s", dot)
 	}
-	if strings.Contains(mermaid, "layout") || strings.Contains(dot, "layout") {
-		t.Fatal("layout leaked into a diagram export")
-	}
-	if _, err := ExportFormat(graph, "yaml"); err == nil {
+	if _, err := ExportFormat(graph, "", "yaml"); err == nil {
 		t.Fatal("expected unknown format")
 	}
-	text, err := ExportFormat(graph, "json")
-	if err != nil || !strings.Contains(text, `"trust":"referenced"`) || strings.Contains(text, "layout") {
+	text, err := ExportFormat(graph, `{"nodes":{}}`, "json")
+	if err != nil || !strings.Contains(text, `"trust":"referenced"`) || strings.Contains(text, "nodes\":{}") {
 		t.Fatalf("json format = %s err=%v", text, err)
 	}
 }
 
-func TestExportMermaidSanitizesIDs(t *testing.T) {
-	text := ExportMermaid(Graph{
-		Nodes: []Node{
-			{ID: "a-b", Kind: "idea", Label: `say "hi"`},
-			{ID: "a_b", Kind: "idea", Label: "Two"},
-			{ID: "end", Kind: "end", Label: "Stop"},
-			{ID: "9x", Kind: "idea", Label: "Nine"},
-		},
-		Edges: []Edge{{ID: "e", From: "end", To: "9x", Kind: "uses|sync"}},
-	})
-	for _, want := range []string{
-		"flowchart LR\n",
-		"  a_b[\"say #quot;hi#quot; (unverified)\"]\n",
-		"  a_b_2[",
-		"  n_end[",
-		"  n_9x[",
-		`n_end -->|"uses|sync"| n_9x`,
-	} {
-		if !strings.Contains(text, want) {
-			t.Fatalf("missing %q in\n%s", want, text)
-		}
+func TestExportMermaidEscapesLabels(t *testing.T) {
+	text := ExportMermaid(Graph{Nodes: []Node{{ID: "a-b", Kind: "service", Label: `say "hi" #1`}}}, "")
+	if !strings.Contains(text, `n1["say #quot;hi#quot; #35;1 · service"]`) {
+		t.Fatalf("escape:\n%s", text)
 	}
 	dot := ExportDot(Graph{Nodes: []Node{{ID: `a"b`, Kind: KindNote, Label: "line\n2"}}})
 	if !strings.Contains(dot, "label=\"line\\n2\"") || !strings.Contains(dot, "a\\\"b") || !strings.Contains(dot, "trust=\"unverified\"") {
