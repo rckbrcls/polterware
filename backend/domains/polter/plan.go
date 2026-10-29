@@ -1,6 +1,7 @@
 package polter
 
 import (
+	"cmp"
 	"fmt"
 	"slices"
 	"strings"
@@ -165,6 +166,12 @@ func (p *planner) createNode(node StructureNode, path, level, parentID string) {
 	uses, _ := node.MetaValue("uses")
 	repo, _ := node.MetaValue("repo")
 	folder, _ := node.MetaValue("path")
+	kind, _ := node.MetaValue("kind")
+	tech, _ := node.MetaValue("tech")
+	if kind != "" && level != structure.LevelComponent {
+		p.errorf(metaLine(node, "kind"), "kind %q on %s %q: only components have a kind", kind, level, path)
+		return
+	}
 	migrating, _ := node.MetaValue("migrating")
 	migrationFrom, migrationTo, _ := ParseMigration(migrating)
 	deploys, _, err := resolveDeploys(node, nil, p.snapshot.Environments)
@@ -176,8 +183,8 @@ func (p *planner) createNode(node StructureNode, path, level, parentID string) {
 	created := structure.Node{
 		ID: id, Slug: node.Slug, Path: path, Title: node.Title, Intent: node.Intent,
 		Level: level, Status: structure.NodeActive, ParentID: parentID, Position: p.nextNode,
-		Uses: splitList(uses), Repo: repo, Folder: folder, MigrationFrom: migrationFrom, MigrationTo: migrationTo,
-		Deploys: deploys,
+		Uses: splitList(uses), Repo: repo, Folder: folder, Kind: kind, Tech: tech,
+		MigrationFrom: migrationFrom, MigrationTo: migrationTo, Deploys: deploys,
 	}
 	p.ops = append(p.ops, work.Op{
 		Entity: work.EntityNode, Kind: work.OpCreate, EntityID: id, CardSlug: path, Label: node.Title,
@@ -185,7 +192,7 @@ func (p *planner) createNode(node StructureNode, path, level, parentID string) {
 			"slug": node.Slug, "title": node.Title, "intent": node.Intent, "level": level,
 			"status": structure.NodeActive, "path": path, "parent_id": parentID,
 			"decisions": splitList(decisions), "uses": splitList(uses), "position": p.nextNode,
-			"repo": repo, "folder": folder,
+			"repo": repo, "folder": folder, "kind": kind, "tech": tech,
 			"migration_from": migrationFrom, "migration_to": migrationTo,
 			"deploys": nonNilDeploys(deploys),
 		},
@@ -247,6 +254,22 @@ func (p *planner) updateNode(node StructureNode, existing structure.Node, path, 
 	if folder, ok := node.MetaValue("path"); ok && folder != existing.Folder {
 		set("folder", existing.Folder, folder)
 	}
+	// A present kind: or tech: is authoritative; an empty value clears it. A
+	// node that stops being a component must clear its kind in the same block.
+	kind := existing.Kind
+	if value, ok := node.MetaValue("kind"); ok {
+		kind = value
+		if kind != existing.Kind {
+			set("kind", existing.Kind, kind)
+		}
+	}
+	if effective := cmp.Or(level, existing.Level); kind != "" && effective != structure.LevelComponent {
+		p.errorf(metaLine(node, "kind"), "kind %q on %s %q: only components have a kind (write kind: to clear it)", kind, effective, path)
+		return
+	}
+	if tech, ok := node.MetaValue("tech"); ok && tech != existing.Tech {
+		set("tech", existing.Tech, tech)
+	}
 	// A present migrating: is authoritative; an empty value clears the state.
 	migrationFrom, migrationTo := existing.MigrationFrom, existing.MigrationTo
 	if value, ok := node.MetaValue("migrating"); ok {
@@ -288,6 +311,10 @@ func (p *planner) updateNode(node StructureNode, existing structure.Node, path, 
 	}
 	if folder, ok := node.MetaValue("path"); ok {
 		existing.Folder = folder
+	}
+	existing.Kind = kind
+	if tech, ok := node.MetaValue("tech"); ok {
+		existing.Tech = tech
 	}
 	existing.MigrationFrom, existing.MigrationTo = migrationFrom, migrationTo
 	p.nodeInvariants(node, &existing)

@@ -177,10 +177,26 @@ func nodeHeading(node *structure.Node) string {
 		return ""
 	}
 	heading := fmt.Sprintf("# %s: %s\nlevel: %s", node.Path, node.Title, node.Level)
+	if line := kindTechLine(node); line != "" {
+		heading += "\n" + line
+	}
 	if line := checkoutLine(node); line != "" {
 		heading += "\n" + line
 	}
 	return heading
+}
+
+// kindTechLine is `kind: database · tech: Postgres`, or empty when the node
+// has neither.
+func kindTechLine(node *structure.Node) string {
+	var parts []string
+	if node.Kind != "" {
+		parts = append(parts, "kind: "+node.Kind)
+	}
+	if node.Tech != "" {
+		parts = append(parts, "tech: "+node.Tech)
+	}
+	return strings.Join(parts, " · ")
 }
 
 // checkoutLine is `repo: api · path: src/auth`, or empty when the node sits
@@ -446,6 +462,9 @@ func EncodeStructure(projectName string, rows []structure.Row, cards []work.Card
 func writeStructureRow(b *strings.Builder, projectName string, row structure.Row, rows []structure.Row, cards []work.Card) {
 	fmt.Fprintf(b, "%s\n", structureBreadcrumb(projectName, row, rows))
 	fmt.Fprintf(b, "%s  %s  %s\n", row.Path, row.Level, statusLabel(row.Derived))
+	if line := kindTechLine(&row.Node); line != "" {
+		fmt.Fprintf(b, "%s\n", line)
+	}
 	if row.Intent != "" {
 		fmt.Fprintf(b, "Intent: %s\n", row.Intent)
 	}

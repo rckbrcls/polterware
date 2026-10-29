@@ -37,12 +37,17 @@ export function createBrowserStructure(seedProjectId: string, seed: readonly Par
         const [provider, resource] = rest?.split(":") ?? [];
         return { id: `deploy-${crypto.randomUUID()}`, environmentId: env?.trim() ?? "", environment: env?.trim() ?? "", provider: provider?.trim() ?? "", resource: resource?.trim() ?? "" };
       }).filter((d) => d.environmentId && d.provider && d.resource);
+      const kind = metadata("kind");
+      if (kind && level !== "component") throw new Error("Only components have a kind.");
+      const tech = metadata("tech");
       if (dryRun) return { applied: false, diagnostics: [], ops: [`${existing ? "~" : "+"} node ${nextPath}`] };
       if (existing) {
         const oldPath = existing.path;
         existing.title = heading[2]!.trim();
         if (uses) existing.uses = uses;
         if (deploys !== undefined) existing.deploys = deploys;
+        if (kind !== undefined) existing.kind = kind;
+        if (tech !== undefined) existing.tech = tech;
         if (under !== undefined) {
           existing.parentId = parent?.id ?? "";
           const rewrite = (path: string) => path === oldPath || path.startsWith(`${oldPath}/`) ? nextPath + path.slice(oldPath.length) : path;
@@ -52,7 +57,7 @@ export function createBrowserStructure(seedProjectId: string, seed: readonly Par
           }
         }
       } else {
-        nodes.push({ id: `structure-${crypto.randomUUID()}`, parentId: parent?.id ?? "", level, slug, path: nextPath, title: heading[2]!.trim(), intent: "", decisions: [], invariants: [], status: "proposed", childCount: 0, featureCount: 0, openQuestions: 0, repo: "", folder: "", migrationFrom: "", migrationTo: "", uses: uses ?? [], deploys: [] });
+        nodes.push({ id: `structure-${crypto.randomUUID()}`, parentId: parent?.id ?? "", level, slug, path: nextPath, title: heading[2]!.trim(), intent: "", decisions: [], invariants: [], status: "proposed", childCount: 0, featureCount: 0, openQuestions: 0, repo: "", folder: "", kind: kind ?? "", tech: tech ?? "", migrationFrom: "", migrationTo: "", uses: uses ?? [], deploys: [] });
       }
       for (const node of nodes) node.childCount = nodes.filter((child) => child.parentId === node.id).length;
       return { applied: true, diagnostics: [], ops: [`${existing ? "~" : "+"} node ${nextPath}`] };

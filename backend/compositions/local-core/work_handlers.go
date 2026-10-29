@@ -338,6 +338,8 @@ func structureNodeProto(row structure.Row) *localv1.StructureNode {
 		OpenQuestions: int32(row.OpenQuestions),
 		Repo:          row.Repo,
 		Folder:        row.Folder,
+		Kind:          row.Kind,
+		Tech:          row.Tech,
 		MigrationFrom: row.MigrationFrom,
 		MigrationTo:   row.MigrationTo,
 		Uses:          row.Uses,

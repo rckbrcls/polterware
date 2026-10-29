@@ -151,6 +151,20 @@ const structureSeeds: StructureSeed[] = [
   ["comp-plugin", "n-agents", "component", "plugin", "polterware/agents/plugin", "Agent plugin", "proposed", [], 0, 0, 0, "plugins/polterware"],
 ];
 
+/** Component kind and technology per node id; the plugin leaves its technology empty. */
+const previewKindTech: Record<string, [kind: string, tech: string]> = {
+  "comp-core": ["service", "Go"],
+  "comp-cli": ["cli", "Go"],
+  "comp-api": ["api", "ConnectRPC"],
+  "comp-desktop": ["desktop", "Electron"],
+  "comp-structure": ["frontend", "Solid"],
+  "comp-inbox": ["frontend", "Solid"],
+  "comp-store": ["database", "SQLite"],
+  "comp-contracts": ["spec", "Protobuf"],
+  "comp-mcp": ["mcp", "Go"],
+  "comp-plugin": ["agent", ""],
+};
+
 /** `uses:` per node id: the node paths it depends on. The map draws them as edges. */
 const previewUses: Record<string, string[]> = {
   "comp-cli": ["polterware/platform/core"],
@@ -165,6 +179,8 @@ const previewStructure = {
   nodes: structureSeeds.map(([id, parentId, level, slug, path, title, status, decisions, childCount, featureCount, openQuestions, folder]) => ({
     id, parentId, level, slug, path, title, status, decisions, childCount, featureCount, openQuestions, folder,
     uses: previewUses[id] ?? [],
+    kind: previewKindTech[id]?.[0] ?? "",
+    tech: previewKindTech[id]?.[1] ?? "",
     intent: `${title} keeps its part of the system coherent.`,
     invariants: level === "component" ? [{ id: `inv-${slug}`, text: `${title} never writes outside its own folder.` }] : [],
     repo: level === "component" ? "polterware" : "",

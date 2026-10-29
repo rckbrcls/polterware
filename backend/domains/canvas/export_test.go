@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/polterware/polterware/backend/domains/structure"
 )
 
 func TestExportNodeLinkShape(t *testing.T) {
@@ -195,5 +197,28 @@ func TestMarshalGraphKeepsStorageShape(t *testing.T) {
 	graph, err := UnmarshalGraph(raw)
 	if err != nil || len(graph.Edges) != 1 || graph.Edges[0].From != "a" || graph.Edges[0].To != "a" {
 		t.Fatalf("round trip = %+v err=%v", graph, err)
+	}
+}
+
+func TestWithStructureLetsTheLinkedNodeWin(t *testing.T) {
+	graph := Graph{Nodes: []Node{
+		{ID: "a", Kind: "service", Label: "Old", Props: map[string]any{"technology": "Node.js"}, Ref: &Ref{Kind: RefNode, ID: "db"}},
+		{ID: "b", Kind: KindComponent, Label: "Box", Ref: &Ref{Kind: RefNode, ID: "db"}},
+		{ID: "c", Kind: "cache", Label: "Free", Props: map[string]any{"technology": "Redis"}},
+		{ID: "d", Kind: "queue", Label: "Gone", Ref: &Ref{Kind: RefNode, ID: "missing"}},
+	}}
+	nodes := []structure.Node{{ID: "db", Title: "Database", Kind: "database", Tech: "Postgres", Status: structure.NodeActive}}
+	out := WithStructure(graph, nodes)
+	if a := out.Nodes[0]; a.Kind != "database" || a.Label != "Database" || a.Props["technology"] != "Postgres" {
+		t.Fatalf("linked component = %+v", a)
+	}
+	if b := out.Nodes[1]; b.Kind != KindComponent || b.Label != "Database" || b.Props["technology"] != "Postgres" {
+		t.Fatalf("structure kind keeps its kind: %+v", b)
+	}
+	if c, d := out.Nodes[2], out.Nodes[3]; c.Props["technology"] != "Redis" || d.Label != "Gone" || d.Kind != "queue" {
+		t.Fatalf("unlinked nodes change: %+v %+v", c, d)
+	}
+	if graph.Nodes[0].Props["technology"] != "Node.js" || graph.Nodes[0].Label != "Old" {
+		t.Fatal("WithStructure must not change its input")
 	}
 }

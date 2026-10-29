@@ -263,6 +263,10 @@ message StructureNode {
   repeated string uses = 18;
   // deploys lists this node's links, one per environment.
   repeated NodeDeployment deploys = 19;
+  // kind is what a component is (a canvas component kind); empty on other levels.
+  string kind = 20;
+  // tech is the free-text technology, such as Go or Postgres.
+  string tech = 21;
 }
 
 // ListStructure reads the live graph, or the graph replayed at as_of (an RFC3339

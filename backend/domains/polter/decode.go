@@ -196,8 +196,9 @@ type InvariantNode struct {
 var MetaKeys = []string{"stage", "owner", "under", "decisions", "status", "kind"}
 
 // NodeMetaKeys are the Structure node metadata keys. repo: names a registered
-// checkout (empty is the project root); path: is a folder inside it.
-var NodeMetaKeys = []string{"level", "under", "repo", "path", "decisions", "uses", "deploys", "status", "migrating"}
+// checkout (empty is the project root); path: is a folder inside it. kind: is
+// what a component is and tech: its technology.
+var NodeMetaKeys = []string{"level", "kind", "tech", "under", "repo", "path", "decisions", "uses", "deploys", "status", "migrating"}
 
 var frontmatterKeys = map[string]bool{"polter": true, "summary": true, "rationale": true}
 
@@ -813,6 +814,15 @@ func (d *decoder) nodeMeta(n int, line string) {
 			if !structure.ValidLevel(value) {
 				d.errorf(n, "unknown level %q: use %s", value, strings.Join(structure.Levels, "|"))
 			}
+		case "kind":
+			value = strings.ToLower(value)
+			if !structure.ValidComponentKind(value) {
+				d.errorf(n, "unknown kind %q: use one of %s", value, strings.Join(structure.ComponentKinds, ", "))
+			}
+		case "tech":
+			if len([]rune(value)) > maxTechRunes {
+				d.errorf(n, "tech is too long: keep it under %d characters, like Go or Postgres", maxTechRunes)
+			}
 		case "status":
 			value = strings.ToLower(value)
 			if !work.ValidCardStatus(value) {
@@ -851,6 +861,9 @@ func (d *decoder) nodeMeta(n int, line string) {
 		d.node.Meta = append(d.node.Meta, MetaEntry{Key: key, Value: value, Line: n})
 	}
 }
+
+// maxTechRunes bounds tech: so it stays a technology name, not prose.
+const maxTechRunes = 80
 
 // CleanFolder normalizes a node path: value, a folder relative to its
 // checkout. Empty is the checkout root. Absolute paths and ".." are refused.

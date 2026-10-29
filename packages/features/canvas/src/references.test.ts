@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRef, canPromote, readRef, referenceState, setReference, type StoreEntity } from "./references";
+import { buildRef, canPromote, linkedFacts, readRef, referenceState, setReference, type StoreEntity } from "./references";
 import { toDocument, serializeCanvas, type CanvasRecord } from "./model";
 const entity: StoreEntity = { kind: "card", id: "store-id", title: "Store title", slug: "store-title" };
 const canvas: CanvasRecord = { id: "c", projectId: "p", name: "Sketch", type: "free", agentVisible: false, scopeNodeId: "", updatedAt: "", layoutJson: "{}", graph: { nodes: [{ id: "a", kind: "note", label: "Local label", propsJson: '{"unknown":true}' }], edges: [] } };
@@ -26,5 +26,16 @@ describe("store references", () => {
     for (const type of ["note", "text", "rectangle", "ellipse", "shape"]) expect(canPromote({ type })).toBe(true);
     expect(canPromote({ type: "component" })).toBe(false);
     expect(canPromote({ type: "note", metadata: { refJson: JSON.stringify(buildRef(entity)) } })).toBe(false);
+  });
+  it("takes kind and technology from the referenced Structure node", () => {
+    const linked = { metadata: { refJson: JSON.stringify({ kind: "node", id: "db" }) } };
+    const nodes: StoreEntity[] = [
+      { kind: "node", id: "db", title: "DB", level: "component", componentKind: "database", tech: "Postgres" },
+      { kind: "node", id: "bare", title: "Bare", level: "component" },
+    ];
+    expect(linkedFacts(linked, nodes)).toEqual({ kind: "database", tech: "Postgres" });
+    expect(linkedFacts({ metadata: { refJson: JSON.stringify({ kind: "node", id: "bare" }) } }, nodes)).toBeUndefined();
+    expect(linkedFacts({ metadata: { refJson: JSON.stringify({ kind: "card", id: "db" }) } }, nodes)).toBeUndefined();
+    expect(linkedFacts({}, nodes)).toBeUndefined();
   });
 });

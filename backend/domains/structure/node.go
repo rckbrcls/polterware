@@ -74,6 +74,10 @@ type Node struct {
 	// Folder is a directory inside that checkout (`src/auth`). Path stays
 	// the node identity and is never a filesystem folder.
 	Folder string
+	// Kind is what a component is (see ComponentKinds); other levels have none.
+	Kind string
+	// Tech is the free-text technology (`Go`, `Postgres`), the canvas technology prop.
+	Tech string
 	// MigrationFrom and MigrationTo describe a node moving between designs.
 	// Both empty means it is not migrating.
 	MigrationFrom string

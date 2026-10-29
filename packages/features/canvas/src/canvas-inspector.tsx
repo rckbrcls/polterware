@@ -6,7 +6,7 @@ import {
 } from "@polterware/frontend-design-system";
 import { component, COMPONENTS, FAMILIES, family, structureKind } from "./components";
 import { NodeInspector } from "./inspector";
-import { readRef, referenceState, setReference, type StoreEntity } from "./references";
+import { linkedFacts, readRef, referenceState, setReference, type StoreEntity } from "./references";
 import { kindLabel, shape } from "./shapes";
 import { colorTags, fillToken, readStyle, strokeToken, withStyle, type ShapeStyle } from "./style";
 import { TypeInspector } from "./type-inspector";
@@ -74,6 +74,7 @@ function NodePanel(props: Parameters<typeof CanvasInspector>[0] & { id: string }
   const style = () => readStyle(node());
   const setStyle = (patch: Partial<ShapeStyle>) => props.change({ ...props.doc, nodes: props.doc.nodes.map((item) => item.id === props.id ? withStyle(item, patch) : item) });
   const title = () => ref() ? referenceState(ref(), props.entities).title : node().name || kindLabel(node().type);
+  const linked = () => linkedFacts(node(), props.entities);
   const geometry = (key: "x" | "y" | "width" | "height", value: number) => {
     if (!Number.isFinite(value)) return;
     const min = key === "width" ? 40 : key === "height" ? 32 : -Infinity;
@@ -94,7 +95,7 @@ function NodePanel(props: Parameters<typeof CanvasInspector>[0] & { id: string }
     props.change({ ...props.doc, nodes: nodes.map((item, zIndex) => ({ ...item, zIndex })) });
   };
   return <>
-    <Heading title={title()} detail={[kindLabel(node().type), propertyText(node(), "technology")].filter(Boolean).join(" · ")} />
+    <Heading title={title()} detail={[kindLabel(linked()?.kind ?? node().type), linked()?.tech ?? propertyText(node(), "technology")].filter(Boolean).join(" · ")} />
     <div class="pw-canvas-panel-tabs"><Tabs aria-label="Shape inspector" items={tabs()} value={tabs().some((item) => item.id === tab()) ? tab() : "text"} onChange={(id) => setTab(id as Tab)} /></div>
     <Body>
       <TabPanel id="canvas-style" active={tab() === "style" && library()}><FormStack class="w-full pt-3">
@@ -139,7 +140,7 @@ function NodePanel(props: Parameters<typeof CanvasInspector>[0] & { id: string }
         <NodeInspector node={node()} entities={props.entities} canvasName={props.canvasName}
           structureRequired={!!props.behavior.structureReferences && structureKind(node().type)}
           onLink={(next) => props.change(setReference(props.doc, props.id, next))} promote={props.promote}>
-          <Show when={component(node().type)}><ComponentFields node={node()}
+          <Show when={component(node().type)}><ComponentFields node={node()} linkedTech={linked()?.tech}
             change={(next, mode) => props.change(updateNode(props.doc, props.id, next), mode)} /></Show>
           <TypeInspector node={node()} fields={props.behavior.fields(node().type)}
             onApply={(values) => props.change(updateNode(props.doc, props.id, withProperties(node(), values)))} />
@@ -150,7 +151,7 @@ function NodePanel(props: Parameters<typeof CanvasInspector>[0] & { id: string }
 }
 
 /** What the component is and what it runs on; technology is free text with per-kind suggestions. */
-function ComponentFields(props: { node: ArchNode; change: (next: Partial<ArchNode>, mode?: "immediately" | "eventually") => void }) {
+function ComponentFields(props: { node: ArchNode; linkedTech?: string; change: (next: Partial<ArchNode>, mode?: "immediately" | "eventually") => void }) {
   const setProp = (key: string, value: string, mode?: "immediately" | "eventually") => {
     const { [key]: _previous, ...rest } = properties(props.node);
     props.change(withProperties(props.node, value.trim() ? { ...rest, [key]: value } : rest), mode);
@@ -158,9 +159,11 @@ function ComponentFields(props: { node: ArchNode; change: (next: Partial<ArchNod
   const suggestions = () => (component(props.node.type)?.technologies ?? []).filter((item) => item !== propertyText(props.node, "technology"));
   return <CollapsibleSection title="Component" icon={<Server size={14} />}>
     <FormStack>
-      <Field label="Technology"><Input aria-label="Technology" placeholder="e.g. Postgres, React, Go" value={propertyText(props.node, "technology")}
-        onInput={(event) => setProp("technology", event.currentTarget.value, "eventually")} /></Field>
-      <Show when={suggestions().length}><div class="flex flex-wrap gap-1" role="list" aria-label="Technology suggestions">
+      <Show when={props.linkedTech} fallback={<Field label="Technology"><Input aria-label="Technology" placeholder="e.g. Postgres, React, Go" value={propertyText(props.node, "technology")}
+        onInput={(event) => setProp("technology", event.currentTarget.value, "eventually")} /></Field>}>
+        {(tech) => <Field label="Technology" hint="Set on the linked Structure node."><Input aria-label="Technology" value={tech()} disabled /></Field>}
+      </Show>
+      <Show when={!props.linkedTech && suggestions().length}><div class="flex flex-wrap gap-1" role="list" aria-label="Technology suggestions">
         <For each={suggestions()}>{(item) => <div role="listitem"><Button size="sm" variant="ghost" aria-label={`Use ${item}`} onClick={() => setProp("technology", item)}>{item}</Button></div>}</For>
       </div></Show>
       <Field label="Description"><Textarea aria-label="Description" rows={3} value={propertyText(props.node, "description")}

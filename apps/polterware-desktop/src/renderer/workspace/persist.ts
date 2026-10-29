@@ -383,6 +383,23 @@ export async function persistStructureUpdateDeploys(input: {
   await applyPolter(input.projectId, `${text}${deploysLine}`, input.change);
 }
 
+/**
+ * Set a component's `kind:` and `tech:`. Both lines are written, so an empty value
+ * clears it. The heading is the node's current path.
+ */
+export async function persistStructureKindTech(input: {
+  projectId: string;
+  path: string;
+  title: string;
+  level: string;
+  kind: string;
+  tech: string;
+  change: ChangeEnvelope;
+}): Promise<void> {
+  const text = structureNodeText({ heading: input.path, title: input.title, level: input.level });
+  await applyPolter(input.projectId, `${text}kind: ${input.kind}\ntech: ${polterValue(input.tech)}\n`, input.change);
+}
+
 async function applyPolter(projectId: string, text: string, change: ChangeEnvelope): Promise<void> {
   await core().work.apply({ projectId, text, change: changePayload(change) });
 }

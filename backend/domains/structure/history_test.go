@@ -84,3 +84,25 @@ func TestHistoryGroupsBatches(t *testing.T) {
 		t.Fatalf("entries = %+v", entries)
 	}
 }
+
+func TestReplayKindAndTech(t *testing.T) {
+	t0 := time.Date(2026, 9, 1, 10, 0, 0, 0, time.UTC)
+	ops := []HistoryOp{
+		{Seq: 1, BatchID: "b1", Kind: "create", EntityID: "n1", CreatedAt: t0, Fields: map[string]any{
+			"path": "db", "slug": "db", "title": "DB", "level": "component", "status": "active", "kind": "database", "tech": "Postgres",
+		}},
+		{Seq: 2, BatchID: "b2", Kind: "update", EntityID: "n1", CreatedAt: t0.Add(time.Hour), Fields: map[string]any{"tech": "SQLite"}},
+	}
+	if nodes := Replay("p", ops[:1]); nodes[0].Kind != "database" || nodes[0].Tech != "Postgres" {
+		t.Fatalf("at b1 = %+v", nodes[0])
+	}
+	if nodes := Replay("p", ops); nodes[0].Kind != "database" || nodes[0].Tech != "SQLite" {
+		t.Fatalf("latest = %+v", nodes[0])
+	}
+}
+
+func TestComponentKinds(t *testing.T) {
+	if !ValidComponentKind("") || !ValidComponentKind("database") || ValidComponentKind("Database") || ValidComponentKind("spaceship") {
+		t.Fatal("component kinds are the lowercase canvas list, and empty is no kind")
+	}
+}

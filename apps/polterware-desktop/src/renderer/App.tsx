@@ -136,6 +136,7 @@ import {
   persistStructureMoveNode,
   persistStructureUses,
   persistStructureUpdateDeploys,
+  persistStructureKindTech,
   persistWorkSetStage,
   resetLocalStore,
 } from "./workspace/persist";
@@ -1313,6 +1314,15 @@ export function App() {
               const change = await justifyChange({ title: "Update deploys", defaultSummary: `Update deploys for ${node.title}` });
               if (!change) throw new Error("Cancelled.");
               await persistStructureUpdateDeploys({ projectId, path: node.path, title: node.title, level: node.level, deploys, change });
+              await refreshWorkspace(projectId);
+            }}
+            onKindTechChange={async (nodeId, kind, tech) => {
+              const projectId = currentProjectId();
+              const node = workspace().structure.nodes.find((item) => item.id === nodeId);
+              if (!projectId || !node) throw new Error("Structure node not found.");
+              const change = await justifyChange({ title: "Update kind and technology", defaultSummary: `Describe what ${node.title} is` });
+              if (!change) throw new Error("Cancelled.");
+              await persistStructureKindTech({ projectId, path: node.path, title: node.title, level: node.level, kind, tech, change });
               await refreshWorkspace(projectId);
             }}
             onMove={async (nodeId, parentId) => {

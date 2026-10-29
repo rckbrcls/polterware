@@ -3,12 +3,13 @@ import { createPageFilters, type EnvironmentItem, type ScopeFilterToken, type Sc
 import {
   A11yDialog, Badge, Boxes, Button, Card, PromptCardGrid, Checkbox, Field, Folder, FormStack, Input,
   ActiveFilterBar, FilterPopover, IconTile, Layers, ListChecks, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
-  Cloud, Delete, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, GitBranch, Link2, MoreHorizontal, Route,
-  ScrollText, SearchBar, Select, ShieldCheck, StatusChip, TreeView, User, buttonClassName, pushToast,
+  Cloud, Cpu, Delete, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, GitBranch, Link2, MoreHorizontal, Package, Route,
+  ScrollText, SearchBar, Select, ShieldCheck, StatusChip, TreeView, buttonClassName, pushToast,
   type TreeViewNode,
   ToolbarIconButton,
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore, readRemembered, writeRemembered } from "@polterware/frontend-state";
+import { COMPONENTS, component } from "@polterware/feature-canvas/components";
 import { STRUCTURE_AGENT_PROMPTS } from "./agent-prompts";
 import { buildStructureTree, flattenStructureTree, structureParents, type StructureKind, type StructureNode, type StructureTreeItem } from "./structure-tree";
 import type { ProjectEnvironment } from "./domain/project-environments";
@@ -53,36 +54,53 @@ function MetaBadge(props: { icon: JSX.Element; label: string; children: JSX.Elem
 
 function RecordCounts(props: { counts: Counts }) {
   return <>
-    <Show when={props.counts.work > 0}><MetaBadge icon={<ListChecks size={12} aria-hidden="true" />} label={countTitle(props.counts.work, "Work card")}>{props.counts.work}</MetaBadge></Show>
-    <Show when={props.counts.decisions > 0}><MetaBadge icon={<ShieldCheck size={12} aria-hidden="true" />} label={countTitle(props.counts.decisions, "Decision")}>{props.counts.decisions}</MetaBadge></Show>
-    <Show when={props.counts.facts > 0}><MetaBadge icon={<ScrollText size={12} aria-hidden="true" />} label={countTitle(props.counts.facts, "Fact")}>{props.counts.facts}</MetaBadge></Show>
+    <Show when={props.counts.work > 0}><MetaBadge icon={<ListChecks size={12} aria-hidden="true" />} label={countTitle(props.counts.work, "Work card")}>{countTitle(props.counts.work, "card")}</MetaBadge></Show>
+    <Show when={props.counts.decisions > 0}><MetaBadge icon={<ShieldCheck size={12} aria-hidden="true" />} label={countTitle(props.counts.decisions, "Decision")}>{countTitle(props.counts.decisions, "decision")}</MetaBadge></Show>
+    <Show when={props.counts.facts > 0}><MetaBadge icon={<ScrollText size={12} aria-hidden="true" />} label={countTitle(props.counts.facts, "Fact")}>{countTitle(props.counts.facts, "fact")}</MetaBadge></Show>
   </>;
 }
 
+/** The component kind's palette label (`database` reads Database); unknown kinds read as written. */
+export function componentKindLabel(kind: string): string {
+  return component(kind)?.label ?? kind;
+}
+
+/** `repo/folder`, the repo, or the folder alone; empty at the project checkout root. */
+export function checkoutLabel(repo = "", folder = ""): string {
+  return repo && folder ? `${repo}/${folder}` : repo || folder;
+}
+
 type NodeDetailsProps = {
-  kind: StructureKind | "project";
+  level: StructureKind | "project";
   description?: string;
+  kind?: string;
+  tech?: string;
   repo?: string;
-  owner?: string;
+  folder?: string;
   uses?: readonly string[];
   deploys?: StructureNode["deploys"];
   counts: Counts;
   isProviderConnected: (provider: string) => boolean;
 };
 
-/** Everything Structure knows about a node, shown inside its tree card: badges for metadata, compact cards for deploys. */
+/**
+ * Everything Structure knows about a node, shown inside its tree card: badges for metadata,
+ * compact cards for deploys. A component's kind replaces its level badge; empty fields are left out.
+ */
 function NodeDetails(props: NodeDetailsProps) {
+  const checkout = () => checkoutLabel(props.repo, props.folder);
   return <div class="pw-structure-node">
     <Show when={props.description}>{(description) => <p class="pw-structure-node__description">{description()}</p>}</Show>
     <div class="pw-structure-node__meta">
-      <Badge tone="info">{kindLabel(props.kind)}</Badge>
-      <Show when={props.repo}>{(repo) => <MetaBadge icon={<GitBranch size={12} aria-hidden="true" />} label={`Repository ${repo()}`}>{repo()}</MetaBadge>}</Show>
-      <Show when={props.owner}>{(owner) => <MetaBadge icon={<User size={12} aria-hidden="true" />} label={`Owner ${owner()}`}>{owner()}</MetaBadge>}</Show>
+      <Show when={props.kind} fallback={<Badge tone="info">{kindLabel(props.level)}</Badge>}>
+        {(kind) => <Badge tone="info"><span class="pw-structure-node__badge" aria-label={`Kind ${componentKindLabel(kind())}`} title={`Kind ${componentKindLabel(kind())}`}><Package size={12} aria-hidden="true" />{componentKindLabel(kind())}</span></Badge>}
+      </Show>
+      <Show when={props.tech}>{(tech) => <MetaBadge icon={<Cpu size={12} aria-hidden="true" />} label={`Technology ${tech()}`}>{tech()}</MetaBadge>}</Show>
+      <Show when={checkout()}>{(path) => <MetaBadge icon={<GitBranch size={12} aria-hidden="true" />} label={`Checkout ${path()}`}>{path()}</MetaBadge>}</Show>
       <For each={props.uses ?? []}>{(use) => <MetaBadge icon={<Link2 size={12} aria-hidden="true" />} label={`Uses ${use}`}>{use}</MetaBadge>}</For>
       <RecordCounts counts={props.counts} />
     </div>
-    <Show when={props.kind === "component"}>
-      <Show when={props.deploys?.length} fallback={<p class="pw-structure-node__empty">No deploy targets yet.</p>}>
+    <Show when={props.level === "component" && props.deploys?.length}>
         <ul class="pw-structure-node__deploys" aria-label="Deploys">
           <For each={props.deploys!}>{(deploy) => <li>
             <Card variant="texture" texture="compact" class="pw-structure-node__deploy">
@@ -95,10 +113,12 @@ function NodeDetails(props: NodeDetailsProps) {
             </Card>
           </li>}</For>
         </ul>
-      </Show>
     </Show>
   </div>;
 }
+
+const NO_KIND = "none";
+const KIND_OPTIONS = [{ value: NO_KIND, label: "None" }, ...COMPONENTS.map((item) => ({ value: item.kind, label: item.label }))];
 
 type NodeAction = { id: string; label: string; icon: () => JSX.Element; disabled?: boolean; run: () => void };
 
@@ -141,6 +161,8 @@ export function StructureView(props: {
   integrations?: readonly WorkspaceIntegration[];
   /** Called when deploys change for a component node. */
   onDeploysChange?: (nodeId: string, deploys: { environmentId: string; provider: string; resource: string }[]) => Promise<void>;
+  /** Writes a component's kind and technology; empty values clear them. */
+  onKindTechChange?: (nodeId: string, kind: string, tech: string) => Promise<void>;
   scopeTokens?: readonly ScopeFilterToken[];
   scopeNodes?: readonly ScopeNodeItem[];
   scopeEnvironments?: readonly EnvironmentItem[];
@@ -159,6 +181,13 @@ export function StructureView(props: {
   const [useTargets, setUseTargets] = createSignal<string[]>([]);
   const [formError, setFormError] = createSignal("");
   const [deploysOpen, setDeploysOpen] = createSignal(false);
+  const [kindTechOpen, setKindTechOpen] = createSignal(false);
+  const [draftKind, setDraftKind] = createSignal("");
+  const [draftTech, setDraftTech] = createSignal("");
+  const techHint = () => {
+    const suggestions = component(draftKind())?.technologies ?? [];
+    return suggestions.length ? `e.g. ${suggestions.slice(0, 3).join(", ")}` : "e.g. Go, Postgres";
+  };
   const [editingDeploys, setEditingDeploys] = createSignal<{ environmentId: string; provider: string; resource: string }[]>([]);
   const target = createDetailPanelSelector((state) => state.activeTarget);
   const tree = createMemo(() => buildStructureTree(props.nodes, query()));
@@ -229,18 +258,19 @@ export function StructureView(props: {
     ...(node.level === "component" ? [] : [{ id: "add-child", label: node.level === "system" ? "Add domain" : "Add component", icon: () => <Plus size={14} aria-hidden="true" />, run: () => { open(node.id); props.onOpenCreate(); } }]),
     { id: "move", label: "Move", icon: () => <Route size={14} aria-hidden="true" />, disabled: node.level === "system", run: () => { open(node.id); setParent(node.parentId); setFormError(""); setMoveOpen(true); } },
     { id: "uses", label: "Dependencies", icon: () => <Link2 size={14} aria-hidden="true" />, run: () => { open(node.id); setUseTargets(registry().filter((item) => node.uses?.includes(item.path)).map((item) => item.id)); setFormError(""); setUsesOpen(true); } },
+    ...(node.level === "component" && props.onKindTechChange ? [{ id: "kind-tech", label: "Kind and technology", icon: () => <Package size={14} aria-hidden="true" />, run: () => { open(node.id); setDraftKind(node.kind ?? ""); setDraftTech(node.tech ?? ""); setFormError(""); setKindTechOpen(true); } }] : []),
     ...(node.level === "component" && props.onDeploysChange ? [{ id: "deploys", label: "Edit deploys", icon: () => <Cloud size={14} aria-hidden="true" />, run: () => { open(node.id); openDeploysDialog(node); } }] : []),
   ];
   const toTreeNode = (item: StructureTreeItem): TreeViewNode => ({
     id: item.node.id, label: item.node.title, icon: <IconTile size={20} tone="neutral" seed={item.node.id}><KindIcon kind={item.node.level} size={12} /></IconTile>,
     trailing: <NodeActions title={item.node.title} actions={nodeActions(item.node)} />,
-    details: <NodeDetails kind={item.node.level} description={item.node.intent} repo={item.node.repo} owner={item.node.owner} uses={usesTitles(item.node)} deploys={item.node.deploys} counts={props.counts[item.node.id] ?? { work: 0, decisions: 0, facts: 0 }} isProviderConnected={isProviderConnected} />,
+    details: <NodeDetails level={item.node.level} description={item.node.intent} kind={item.node.level === "component" ? item.node.kind : undefined} tech={item.node.tech} repo={item.node.repo} folder={item.node.folder} uses={usesTitles(item.node)} deploys={item.node.deploys} counts={props.counts[item.node.id] ?? { work: 0, decisions: 0, facts: 0 }} isProviderConnected={isProviderConnected} />,
     children: item.children.map(toTreeNode),
   });
   const treeNodes = createMemo<TreeViewNode[]>(() => props.loading || props.error ? [] : [{
     id: PROJECT_ID, label: props.projectName, icon: <IconTile size={20} tone="neutral" seed={PROJECT_ID}><KindIcon kind="project" size={12} /></IconTile>,
     trailing: <NodeActions title={props.projectName} actions={[{ id: "add-system", label: "Add system", icon: () => <Plus size={14} aria-hidden="true" />, disabled: !!props.loading || !!props.error, run: () => { open(PROJECT_ID); props.onOpenCreate(); } }]} />,
-    details: <NodeDetails kind="project" description={props.projectDescription} repo={props.projectRepository} counts={props.projectCounts} isProviderConnected={isProviderConnected} />,
+    details: <NodeDetails level="project" description={props.projectDescription} repo={props.projectRepository} counts={props.projectCounts} isProviderConnected={isProviderConnected} />,
     children: tree().map(toTreeNode),
   }]);
 
@@ -331,6 +361,20 @@ export function StructureView(props: {
     <A11yDialog open={usesOpen()} title="Dependencies" dismissible={!busy()} onClose={() => { if (!busy()) setUsesOpen(false); }} footer={<><Button variant="ghost" disabled={busy()} onClick={() => setUsesOpen(false)}>Cancel</Button><Button disabled={busy()} onClick={() => void save(() => props.onUses(selected()!.id, useTargets()), () => setUsesOpen(false))}>{busy() ? "Saving…" : "Save"}</Button></>}>
       <Show when={registry().some((node) => node.id !== selectedId())} fallback={<p class="text-sm text-[var(--color-text-muted)]">No other structure nodes yet.</p>}><FormStack><For each={registry().filter((node) => node.id !== selectedId())}>{(node) => <Checkbox label={node.title} checked={useTargets().includes(node.id)} onCheckedChange={(event) => setUseTargets((ids) => event.checked === true ? [...ids, node.id] : ids.filter((id) => id !== node.id))} />}</For></FormStack></Show>
       <Show when={formError()}><p role="alert" class="text-sm text-[var(--color-danger)]">{formError()}</p></Show>
+    </A11yDialog>
+    <A11yDialog open={kindTechOpen()} title="Kind and technology" dismissible={!busy()} onClose={() => { if (!busy()) setKindTechOpen(false); }} footer={<>
+      <Button variant="ghost" disabled={busy()} onClick={() => setKindTechOpen(false)}>Cancel</Button>
+      <Button disabled={busy()} onClick={() => void save(() => props.onKindTechChange!(selected()!.id, draftKind(), draftTech().trim()), () => setKindTechOpen(false))}>{busy() ? "Saving…" : "Save"}</Button>
+    </>}>
+      <FormStack>
+        <Field label="Kind" hint="What this component is. The canvas uses the same kinds.">
+          <Select aria-label="Component kind" value={draftKind() || NO_KIND} options={KIND_OPTIONS} onChange={(value) => setDraftKind(value === NO_KIND ? "" : value)} />
+        </Field>
+        <Field label="Technology" hint="Free text: the language, framework, or product it is built with.">
+          <Input aria-label="Technology" value={draftTech()} placeholder={techHint()} onInput={(event) => setDraftTech(event.currentTarget.value)} />
+        </Field>
+        <Show when={formError()}><p role="alert" class="text-sm text-[var(--color-danger)]">{formError()}</p></Show>
+      </FormStack>
     </A11yDialog>
     <A11yDialog open={deploysOpen()} title="Edit deploys" dismissible={!busy()} onClose={() => { if (!busy()) setDeploysOpen(false); }} footer={<>
       <Button variant="ghost" disabled={busy()} onClick={() => setDeploysOpen(false)}>Cancel</Button>

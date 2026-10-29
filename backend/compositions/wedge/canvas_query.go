@@ -36,7 +36,11 @@ func queryCanvas(store *storepkg.Store, projectID, ref string, scope structure.M
 	if err != nil {
 		return "", err
 	}
-	body, err := canvas.Export(item.Graph)
+	nodes, err := store.StructureNodes(projectID)
+	if err != nil {
+		return "", err
+	}
+	body, err := canvas.Export(canvas.WithStructure(item.Graph, nodes))
 	if err != nil {
 		return "", err
 	}

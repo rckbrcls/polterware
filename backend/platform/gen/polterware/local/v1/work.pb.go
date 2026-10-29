@@ -1989,7 +1989,11 @@ type StructureNode struct {
 	// uses lists the node paths this node depends on; the map draws them as edges.
 	Uses []string `protobuf:"bytes,18,rep,name=uses,proto3" json:"uses,omitempty"`
 	// deploys lists this node's links, one per environment.
-	Deploys       []*NodeDeployment `protobuf:"bytes,19,rep,name=deploys,proto3" json:"deploys,omitempty"`
+	Deploys []*NodeDeployment `protobuf:"bytes,19,rep,name=deploys,proto3" json:"deploys,omitempty"`
+	// kind is what a component is (a canvas component kind); empty on other levels.
+	Kind string `protobuf:"bytes,20,opt,name=kind,proto3" json:"kind,omitempty"`
+	// tech is the free-text technology, such as Go or Postgres.
+	Tech          string `protobuf:"bytes,21,opt,name=tech,proto3" json:"tech,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2155,6 +2159,20 @@ func (x *StructureNode) GetDeploys() []*NodeDeployment {
 		return x.Deploys
 	}
 	return nil
+}
+
+func (x *StructureNode) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *StructureNode) GetTech() string {
+	if x != nil {
+		return x.Tech
+	}
+	return ""
 }
 
 // ListStructure reads the live graph, or the graph replayed at as_of (an RFC3339
@@ -4778,7 +4796,7 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x0eenvironment_id\x18\x02 \x01(\tR\renvironmentId\x12 \n" +
 	"\venvironment\x18\x03 \x01(\tR\venvironment\x12\x1a\n" +
 	"\bprovider\x18\x04 \x01(\tR\bprovider\x12\x1a\n" +
-	"\bresource\x18\x05 \x01(\tR\bresource\"\xdd\x04\n" +
+	"\bresource\x18\x05 \x01(\tR\bresource\"\x85\x05\n" +
 	"\rStructureNode\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tparent_id\x18\x02 \x01(\tR\bparentId\x12\x14\n" +
@@ -4802,7 +4820,9 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x0emigration_from\x18\x10 \x01(\tR\rmigrationFrom\x12!\n" +
 	"\fmigration_to\x18\x11 \x01(\tR\vmigrationTo\x12\x12\n" +
 	"\x04uses\x18\x12 \x03(\tR\x04uses\x12=\n" +
-	"\adeploys\x18\x13 \x03(\v2#.polterware.local.v1.NodeDeploymentR\adeploys\"J\n" +
+	"\adeploys\x18\x13 \x03(\v2#.polterware.local.v1.NodeDeploymentR\adeploys\x12\x12\n" +
+	"\x04kind\x18\x14 \x01(\tR\x04kind\x12\x12\n" +
+	"\x04tech\x18\x15 \x01(\tR\x04tech\"J\n" +
 	"\x14ListStructureRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x13\n" +

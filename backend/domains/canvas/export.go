@@ -3,7 +3,11 @@ package canvas
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
+
+	"github.com/polterware/polterware/backend/domains/structure"
 )
 
 const (
@@ -34,6 +38,41 @@ type exportDoc struct {
 	Directed bool         `json:"directed"`
 	Nodes    []exportNode `json:"nodes"`
 	Links    []exportLink `json:"links"`
+}
+
+// WithStructure gives each node that references a Structure node that node's
+// title and technology, and a semantic component its kind, the way the Desktop
+// draws it. Refs to missing nodes and other entities are left as written.
+func WithStructure(graph Graph, nodes []structure.Node) Graph {
+	byID := make(map[string]structure.Node, len(nodes))
+	for _, node := range nodes {
+		byID[node.ID] = node
+	}
+	out := graph
+	out.Nodes = make([]Node, len(graph.Nodes))
+	for i, node := range graph.Nodes {
+		out.Nodes[i] = node
+		if node.Ref == nil || node.Ref.Kind != RefNode {
+			continue
+		}
+		linked, ok := byID[node.Ref.ID]
+		if !ok || linked.Status == structure.NodeRemoved {
+			continue
+		}
+		next := &out.Nodes[i]
+		next.Label = linked.Title
+		if linked.Tech != "" {
+			next.Props = maps.Clone(node.Props)
+			if next.Props == nil {
+				next.Props = map[string]any{}
+			}
+			next.Props["technology"] = linked.Tech
+		}
+		if linked.Kind != "" && slices.Contains(ComponentKinds, node.Kind) {
+			next.Kind = linked.Kind
+		}
+	}
+	return out
 }
 
 // Export writes the graph as node-link JSON (nodes + links). Layout and the

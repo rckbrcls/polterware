@@ -1,11 +1,12 @@
 import { render } from "solid-js/web";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { detailPanelDefaultState, detailPanelStore } from "@polterware/frontend-state";
-import { STRUCTURE_SCOPE, StructureView, type StructureNode } from "./index";
+import { STRUCTURE_SCOPE, StructureView, checkoutLabel, componentKindLabel, type StructureNode } from "./index";
 
 const nodes: StructureNode[] = [
   { id: "sys", parentId: "", level: "system", path: "app", title: "Application", intent: "", repo: "", decisions: [] },
-  { id: "api", parentId: "sys", level: "component", path: "app/api", title: "API", intent: "Serves the project", repo: "backend", decisions: [] },
+  { id: "api", parentId: "sys", level: "component", path: "app/api", title: "API", intent: "Serves the project", repo: "backend", folder: "src/api", kind: "api", tech: "Go", decisions: [] },
+  { id: "web", parentId: "sys", level: "component", path: "app/web", title: "Web", intent: "", repo: "", decisions: [] },
 ];
 let dispose: (() => void) | undefined;
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -34,8 +35,13 @@ describe("Structure collection", () => {
     const api = host.querySelector<HTMLElement>('[data-part="item"][data-value="api"]')!;
     expect(api).not.toBeNull();
     expect(api.textContent).toContain("Serves the project");
-    expect(api.textContent).toContain("backend");
-    expect(api.textContent).toContain("No deploy targets yet.");
+    expect(api.querySelector('[aria-label="Kind API"]')).not.toBeNull();
+    expect(api.querySelector('[aria-label="Technology Go"]')).not.toBeNull();
+    expect(api.querySelector('[aria-label="Checkout backend/src/api"]')).not.toBeNull();
+    // A component's kind replaces its level badge, and empty fields are left out.
+    expect(api.textContent).not.toContain("Component");
+    expect(api.textContent).not.toContain("No deploy targets yet.");
+    expect(api.textContent).toContain("2 cards");
     expect(api.querySelector('[aria-label="2 Work cards"]')).not.toBeNull();
     expect(api.querySelector('[aria-label="1 Decision"]')).not.toBeNull();
     expect(api.querySelector('[aria-label="3 Facts"]')).not.toBeNull();
@@ -49,6 +55,12 @@ describe("Structure collection", () => {
     await tick();
     expect(open).toHaveBeenCalledWith("api");
     expect(detailPanelStore.getState().activeTarget?.entityId).toBe("api");
+    search.value = "web";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+    await tick();
+    const web = host.querySelector<HTMLElement>('[data-part="item"][data-value="web"]')!;
+    expect(web.textContent).toContain("Component");
+    expect(web.querySelector('[aria-label^="Technology"], [aria-label^="Checkout"]')).toBeNull();
   });
   it("retains the toolbar and exposes a collection error", async () => {
     const { host } = mount({ error: "Core unavailable" });
@@ -56,5 +68,17 @@ describe("Structure collection", () => {
     expect(host.querySelector('[role="searchbox"]')).not.toBeNull();
     expect(host.textContent).toContain("Core unavailable");
     expect(host.querySelector<HTMLButtonElement>('button[aria-label="Add node"]')?.disabled).toBe(true);
+  });
+});
+
+describe("component labels", () => {
+  it("reads kinds from the canvas palette and joins the checkout", () => {
+    expect(componentKindLabel("frontend")).toBe("Web app");
+    expect(componentKindLabel("database")).toBe("Database");
+    expect(componentKindLabel("custom")).toBe("custom");
+    expect(checkoutLabel("api", "src/auth")).toBe("api/src/auth");
+    expect(checkoutLabel("api", "")).toBe("api");
+    expect(checkoutLabel("", "src/auth")).toBe("src/auth");
+    expect(checkoutLabel()).toBe("");
   });
 });

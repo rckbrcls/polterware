@@ -13,7 +13,7 @@ import (
 )
 
 func (s *Store) loadStructureNodes(projectID string) ([]structure.Node, error) {
-	rows, err := s.DB.Query(`SELECT id,project_id,COALESCE(parent_id,''),level,slug,path,title,intent,status,decisions_json,uses_json,position,repo,folder,migration_from,migration_to
+	rows, err := s.DB.Query(`SELECT id,project_id,COALESCE(parent_id,''),level,slug,path,title,intent,status,decisions_json,uses_json,position,repo,folder,kind,tech,migration_from,migration_to
 		FROM structure_nodes WHERE project_id=? ORDER BY position, created_at`, projectID)
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func (s *Store) loadStructureNodes(projectID string) ([]structure.Node, error) {
 		var node structure.Node
 		var decisions, uses string
 		if err := rows.Scan(&node.ID, &node.ProjectID, &node.ParentID, &node.Level, &node.Slug, &node.Path,
-			&node.Title, &node.Intent, &node.Status, &decisions, &uses, &node.Position, &node.Repo, &node.Folder, &node.MigrationFrom, &node.MigrationTo); err != nil {
+			&node.Title, &node.Intent, &node.Status, &decisions, &uses, &node.Position, &node.Repo, &node.Folder, &node.Kind, &node.Tech, &node.MigrationFrom, &node.MigrationTo); err != nil {
 			_ = rows.Close()
 			return nil, err
 		}
@@ -89,12 +89,14 @@ func applyStructureOp(tx *sql.Tx, projectID string, op work.Op, now string) erro
 		}
 		repo, _ := op.Fields["repo"].(string)
 		folder, _ := op.Fields["folder"].(string)
+		kind, _ := op.Fields["kind"].(string)
+		tech, _ := op.Fields["tech"].(string)
 		migrationFrom, _ := op.Fields["migration_from"].(string)
 		migrationTo, _ := op.Fields["migration_to"].(string)
-		_, err = tx.Exec(`INSERT INTO structure_nodes(id,project_id,parent_id,level,slug,path,title,intent,status,decisions_json,uses_json,position,repo,folder,migration_from,migration_to,created_at,updated_at)
-			VALUES(?,?,NULLIF(?,''),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		_, err = tx.Exec(`INSERT INTO structure_nodes(id,project_id,parent_id,level,slug,path,title,intent,status,decisions_json,uses_json,position,repo,folder,kind,tech,migration_from,migration_to,created_at,updated_at)
+			VALUES(?,?,NULLIF(?,''),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 			op.EntityID, projectID, parent, op.Fields["level"], op.Fields["slug"], op.Fields["path"],
-			op.Fields["title"], op.Fields["intent"], op.Fields["status"], decisions, uses, op.Fields["position"], repo, folder, migrationFrom, migrationTo, now, now)
+			op.Fields["title"], op.Fields["intent"], op.Fields["status"], decisions, uses, op.Fields["position"], repo, folder, kind, tech, migrationFrom, migrationTo, now, now)
 		if err != nil {
 			return err
 		}
@@ -214,7 +216,7 @@ func updateStructureNode(tx *sql.Tx, op work.Op, now string) error {
 			}
 			sets = append(sets, "uses_json=?")
 			values = append(values, encoded)
-		case "slug", "path", "title", "intent", "level", "status", "position", "repo", "folder", "migration_from", "migration_to":
+		case "slug", "path", "title", "intent", "level", "status", "position", "repo", "folder", "kind", "tech", "migration_from", "migration_to":
 			sets = append(sets, field+"=?")
 			values = append(values, value)
 		default:

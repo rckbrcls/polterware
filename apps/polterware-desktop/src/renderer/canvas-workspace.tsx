@@ -20,7 +20,7 @@ export function CanvasWorkspace(props: { projectId: string; workspace: Workspace
     const loaded: StoreEntity[] = [
       ...props.workspace.workCards.map((card): StoreEntity => ({ kind: "card", id: card.id, title: card.title, slug: card.slug })),
       ...props.workspace.decisions.map((decision): StoreEntity => ({ kind: "decision", id: decision.id, title: decision.title })),
-      ...props.workspace.structure.nodes.map((node): StoreEntity => ({ kind: "node", id: node.id, title: node.title, level: node.level })),
+      ...props.workspace.structure.nodes.map((node): StoreEntity => ({ kind: "node", id: node.id, title: node.title, level: node.level, componentKind: node.kind, tech: node.tech })),
       ...props.workspace.docs.map((item): StoreEntity => ({ kind: "evidence", id: item.id, title: item.title })),
       ...(facts()?.entities ?? []),
     ];

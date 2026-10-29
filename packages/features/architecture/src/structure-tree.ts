@@ -7,7 +7,12 @@ export type StructureNode = {
   title: string;
   intent: string;
   repo: string;
-  owner?: string;
+  /** Folder inside the checkout. */
+  folder?: string;
+  /** What a component is (a canvas component kind). */
+  kind?: string;
+  /** Free-text technology. */
+  tech?: string;
   decisions: string[];
   uses?: string[];
   deploys?: { id: string; environmentId: string; environment: string; provider: string; resource: string }[];

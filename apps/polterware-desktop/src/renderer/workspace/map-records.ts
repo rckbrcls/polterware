@@ -334,6 +334,8 @@ export function mapStructure(raw: Record<string, unknown>): WorkspaceStructure {
       openQuestions: asNumber(item.openQuestions),
       repo: asString(item.repo),
       folder: asString(item.folder),
+      kind: asString(item.kind),
+      tech: asString(item.tech),
       migrationFrom: asString(item.migrationFrom),
       migrationTo: asString(item.migrationTo),
       uses: asStringArray(item.uses),

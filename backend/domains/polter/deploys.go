@@ -144,8 +144,13 @@ func resolveDeploys(node StructureNode, existing []structure.Deployment, envs []
 }
 
 func deploysLine(node StructureNode) int {
+	return metaLine(node, "deploys")
+}
+
+// metaLine is the line of the node's key: entry, or the node heading.
+func metaLine(node StructureNode, key string) int {
 	for _, entry := range node.Meta {
-		if entry.Key == "deploys" {
+		if entry.Key == key {
 			return entry.Line
 		}
 	}

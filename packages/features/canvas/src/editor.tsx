@@ -14,7 +14,7 @@ import { connectNodes, insertNode, removeSelection, resizeFrom, resizeHandles, s
   type CanvasPort, type CanvasRecord, type CanvasType, type ResizeHandle } from "./model";
 import { CanvasInspector } from "./canvas-inspector";
 import { EntityIcon } from "./inspector";
-import { readRef, referenceState, setReference, structureEntities, type StoreEntity } from "./references";
+import { linkedFacts, readRef, referenceState, setReference, structureEntities, type StoreEntity } from "./references";
 import { ENTITY_MIME, SHAPE_MIME, ShapeLibrary } from "./shape-library";
 import { component, structureKind } from "./components";
 import { kindLabel, paletteGroups, paletteLabel, shape } from "./shapes";
@@ -192,7 +192,7 @@ export function CanvasEditor(props: {
   function renderNode(node: () => ArchNode) {
     const handles = () => selection().nodeIds.length === 1 && selection().nodeIds[0] === node().id;
     return <g onDblClick={() => { if (!readRef(node())) setEditing(node().id); }}>
-      <CanvasNode node={node()} variant={behavior.variant(node().type)} selected={selection().nodeIds.includes(node().id)}>
+      <CanvasNode node={node()} variant={behavior.variant(node().type)} selected={selection().nodeIds.includes(node().id)} linked={linkedFacts(node(), props.entities ?? [])}>
         {/* The semantic card already shows its sign in the icon tile. */}
         <Show when={!component(node().type) && !structureKind(node().type) && readRef(node())}>{(ref) => <EntityIcon kind={ref().kind} />}</Show>
         <Show when={unverified(node())}><StatusChip tone="warn" label={readRef(node()) ? "Missing · Unverified" : "Unverified"} /></Show>

@@ -178,6 +178,10 @@ func applyNodeFields(node *Node, fields map[string]any) {
 			node.Repo = text
 		case "folder":
 			node.Folder = text
+		case "kind":
+			node.Kind = text
+		case "tech":
+			node.Tech = text
 		case "migration_from":
 			node.MigrationFrom = text
 		case "migration_to":

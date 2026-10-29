@@ -4,6 +4,7 @@ import { Box, Boxes, IconTile, Layers, type HugeiconComponent } from "@polterwar
 import { componentIcons } from "./component-icons";
 import { component, silhouette, structureKind } from "./components";
 import { roundedBy } from "./outlines";
+import type { LinkedFacts } from "./references";
 import { kindLabel, shape, type ShapeDefinition } from "./shapes";
 import { fillTextToken, fillToken, readStyle, strokeToken, type ShapeStyle } from "./style";
 import { propertyText, type NodeVariant } from "./types/shared";
@@ -21,13 +22,15 @@ function SelectionFrame(props: { node: ArchNode }) {
  * Components and Structure nodes are drawn in their family's silhouette as a flat face with one thin line: a cylinder
  * for storage, a hexagon for the edge, a dashed line for what is outside. The type is the icon tile; the subtitle names it and its technology.
  */
-function SemanticCard(props: { node: ArchNode; selected: boolean; children: JSX.Element }) {
+function SemanticCard(props: { node: ArchNode; selected: boolean; linked?: LinkedFacts; children: JSX.Element }) {
   const style = () => readStyle(props.node);
   const outline = () => silhouette(props.node.type)!;
   const inset = () => outline().inset(props.node.width, props.node.height);
-  const technology = () => propertyText(props.node, "technology");
-  const icon = () => nodeIcon(props.node.type) ?? Box;
-  const subtitle = () => [component(props.node.type)?.label ?? kindLabel(props.node.type), technology()].filter(Boolean).join(" · ");
+  // A referenced Structure node's kind and technology win over the canvas props.
+  const kind = () => props.linked?.kind ?? props.node.type;
+  const technology = () => props.linked?.tech ?? propertyText(props.node, "technology");
+  const icon = () => nodeIcon(kind()) ?? nodeIcon(props.node.type) ?? Box;
+  const subtitle = () => [component(kind())?.label ?? kindLabel(props.node.type), technology()].filter(Boolean).join(" · ");
   return <g data-node-id={props.node.id} data-variant={structureKind(props.node.type) ? "structure" : "component"} data-kind={props.node.type} data-family={outline().id}>
     <ShapeSurface node={props.node} definition={outline()} style={style()} dashed={outline().dashed} />
     <Show when={outline().marks}>{(marks) => <path transform={`translate(${props.node.x} ${props.node.y})`} d={marks()(props.node.width, props.node.height)}
@@ -35,7 +38,7 @@ function SemanticCard(props: { node: ArchNode; selected: boolean; children: JSX.
     <foreignObject x={props.node.x + inset().left} y={props.node.y + inset().top}
       width={Math.max(0, props.node.width - inset().left - inset().right)} height={Math.max(0, props.node.height - inset().top - inset().bottom)}>
       <div class="pw-canvas-node-card" style={{ color: fillTextToken(style().fill) }}>
-        <IconTile size={28} tone="architecture" brand={[technology(), props.node.type]} seed={props.node.id} class={outline().round ? "pw-icon-tile--circle" : undefined}>{icon()({ size: 16 })}</IconTile>
+        <IconTile size={28} tone="architecture" brand={[technology(), kind()]} seed={props.node.id} class={outline().round ? "pw-icon-tile--circle" : undefined}>{icon()({ size: 16 })}</IconTile>
         <div class="pw-canvas-node-card-text">
           {props.children}
           <span class="pw-canvas-node-card-sub">{subtitle()}</span>
@@ -80,11 +83,11 @@ function StickyNoteSurface(props: { node: ArchNode }) {
 }
 
 /** Drawing shapes draw their outline path; components and Structure nodes draw the semantic card. */
-export function CanvasNode(props: { node: ArchNode; variant: NodeVariant; selected: boolean; children: JSX.Element }) {
+export function CanvasNode(props: { node: ArchNode; variant: NodeVariant; selected: boolean; linked?: LinkedFacts; children: JSX.Element }) {
   const outline = () => shape(props.node.type);
   const style = () => readStyle(props.node);
   const semantic = () => !!component(props.node.type) || structureKind(props.node.type);
-  return <Show when={!semantic()} fallback={<SemanticCard node={props.node} selected={props.selected}>{props.children}</SemanticCard>}>
+  return <Show when={!semantic()} fallback={<SemanticCard node={props.node} selected={props.selected} linked={props.linked}>{props.children}</SemanticCard>}>
     <Show when={outline()} fallback={<g data-node-id={props.node.id} data-variant={props.variant}>
       <Show when={props.variant === "sticky"} fallback={<Show when={props.variant !== "text"}><ShapeSurface node={props.node} definition={{ path: roundedBy(8) }} style={style()} /></Show>}>
         <StickyNoteSurface node={props.node} />

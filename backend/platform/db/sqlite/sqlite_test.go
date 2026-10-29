@@ -275,6 +275,43 @@ func TestDecisionDocKindsMigration(t *testing.T) {
 }
 
 // migrateBefore applies the embedded migrations whose names sort before prefix.
+func TestStructureKindTechMigration(t *testing.T) {
+	db, err := Open(filepath.Join(t.TempDir(), "kind-tech.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	migrateBefore(t, db, "0039")
+	for _, stmt := range []string{
+		`INSERT INTO projects(id,name,root_path,created_at,updated_at) VALUES('p','Project','/tmp','now','now')`,
+		`INSERT INTO structure_nodes(id,project_id,level,slug,path,title,created_at,updated_at) VALUES('n1','p','component','db','db','DB','now','now')`,
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatal(err)
+		}
+	}
+	applyMigration(t, db, "0039_structure_kind_tech.sql")
+	var kind, tech string
+	var count int
+	if err := db.QueryRow(`SELECT kind, tech, (SELECT COUNT(*) FROM structure_nodes) FROM structure_nodes WHERE id='n1'`).Scan(&kind, &tech, &count); err != nil {
+		t.Fatal(err)
+	}
+	if kind != "" || tech != "" || count != 1 {
+		t.Fatalf("kind=%q tech=%q count=%d", kind, tech, count)
+	}
+	if _, err := db.Exec(`UPDATE structure_nodes SET kind='database', tech='Postgres' WHERE id='n1'`); err != nil {
+		t.Fatal(err)
+	}
+	if rows, err := db.Query(`PRAGMA foreign_key_check`); err != nil {
+		t.Fatal(err)
+	} else {
+		defer rows.Close()
+		if rows.Next() {
+			t.Fatal("foreign key violations after 0039")
+		}
+	}
+}
+
 func migrateBefore(t *testing.T, db *sql.DB, prefix string) {
 	t.Helper()
 	entries, err := migrationFS.ReadDir("migrations")

@@ -236,6 +236,10 @@ export type WorkspaceStructureNode = {
   repo: string;
   /** Folder inside that checkout; `path` stays the node identity. */
   folder: string;
+  /** What a component is (a canvas component kind); empty on other levels. */
+  kind?: string;
+  /** Free-text technology, the canvas technology prop. */
+  tech?: string;
   /** Both empty unless the node is moving between designs. */
   migrationFrom: string;
   migrationTo: string;

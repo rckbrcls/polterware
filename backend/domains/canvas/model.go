@@ -7,6 +7,8 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/polterware/polterware/backend/domains/structure"
 )
 
 const (
@@ -60,20 +62,9 @@ var (
 	}
 
 	// ComponentKinds are the semantic components, in palette order. Each may
-	// carry a technology prop and an optional ref to a Structure node.
-	ComponentKinds = []string{
-		"frontend", "mobile", "desktop", "cli",
-		"service", "api", "gateway", "worker", "function", "scheduler",
-		"database", "cache", "queue", "stream", "storage", "search", "warehouse",
-		"auth", "cdn", "cluster", "monitoring",
-		"external", "llm", "payment", "email",
-		"user", "team",
-		"agent", "mcp", "vector",
-		"secrets", "firewall", "kms",
-		"logs", "tracing", "alerting",
-		"pipeline", "ci", "webhook",
-		"config", "spec", "dataset",
-	}
+	// carry a technology prop and an optional ref to a Structure node. They are
+	// the Structure component kinds.
+	ComponentKinds = structure.ComponentKinds
 
 	// StructureKinds mirror Structure levels and always ref a Structure node.
 	StructureKinds = []string{KindSystem, KindDomain, KindComponent}

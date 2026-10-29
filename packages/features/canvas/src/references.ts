@@ -2,7 +2,10 @@ import type { ArchitectureDocument } from "@polterware/frontend-canvas";
 import type { GraphNode } from "./model";
 
 export type RefKind = "card" | "decision" | "fact" | "node" | "evidence";
-export type StoreEntity = { kind: RefKind; id: string; title: string; slug?: string; level?: string };
+/** A store record the canvas can reference. Structure nodes carry their component kind and technology. */
+export type StoreEntity = { kind: RefKind; id: string; title: string; slug?: string; level?: string; componentKind?: string; tech?: string };
+/** What a canvas node shows from the Structure node it references. */
+export type LinkedFacts = { kind?: string; tech?: string };
 export type CanvasRef = NonNullable<GraphNode["ref"]>;
 export const kindLabel = (kind: string) => ({ card: "Work card", decision: "Decision", fact: "Fact", node: "Structure", evidence: "Evidence" })[kind] ?? kind;
 export function buildRef(entity: StoreEntity): CanvasRef {
@@ -26,6 +29,14 @@ export function setReference(doc: ArchitectureDocument, id: string, ref?: Canvas
 }
 export function canPromote(node: { type: string; metadata?: Record<string, unknown> }) {
   return !readRef(node) && ["note", "text", "rectangle", "ellipse", "shape"].includes(node.type);
+}
+/** A referenced Structure node's kind and technology win over the canvas props, like its title wins over the label. */
+export function linkedFacts(node: { metadata?: Record<string, unknown> }, entities: readonly StoreEntity[]): LinkedFacts | undefined {
+  const ref = readRef(node);
+  if (ref?.kind !== "node") return undefined;
+  const entity = entities.find((item) => item.kind === "node" && item.id === ref.id);
+  if (!entity?.componentKind && !entity?.tech) return undefined;
+  return { kind: entity.componentKind || undefined, tech: entity.tech || undefined };
 }
 export function structureEntities(entities: readonly StoreEntity[]): StoreEntity[] {
   return entities.filter((entity) => entity.kind === "node" && ["system", "domain", "component"].includes(entity.level ?? ""));
