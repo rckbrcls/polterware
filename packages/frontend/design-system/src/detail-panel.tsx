@@ -34,6 +34,8 @@ export type DetailPanelBodyProps = {
 export type DetailPanelHeaderProps = {
   /** Optional fixed title above the scrollable body. */
   title?: JSX.Element;
+  /** Shown at the end of the title's line, such as a record's kind and status chips. */
+  aside?: JSX.Element;
   class?: string;
 };
 
@@ -79,7 +81,14 @@ function DetailPanelHeader(props: DetailPanelHeaderProps) {
   createEffect(() => context.setHeaderClass(props.class ?? ""));
   onCleanup(() => context.setHeaderClass(""));
   return <Show when={context.headerHost()}>{(host) =>
-    <Show when={props.title}><Portal mount={host()}><h2 class="pw-detail-panel__title">{props.title}</h2></Portal></Show>
+    <Show when={props.title}><Portal mount={host()}>
+      <Show when={props.aside} fallback={<h2 class="pw-detail-panel__title">{props.title}</h2>}>
+        <div class="pw-detail-panel__title-row">
+          <h2 class="pw-detail-panel__title">{props.title}</h2>
+          <span class="pw-detail-panel__title-aside">{props.aside}</span>
+        </div>
+      </Show>
+    </Portal></Show>
   }</Show>;
 }
 

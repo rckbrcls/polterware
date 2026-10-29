@@ -35,13 +35,12 @@ export function InboxItemDetail(props: {
   const statusLabel = () => (props.item.state === "deferred" ? "Deferred" : props.item.blocking ? "Blocking" : "Open");
   return (
     <DetailPanel.Content>
-      <DetailPanel.Header title={props.item.title} />
+      <DetailPanel.Header title={props.item.title} aside={<>
+        <StatusChip tone="muted" label={KIND_LABEL[props.item.kind]} />
+        <StatusChip tone={props.item.blocking && props.item.state === "open" ? "danger" : "muted"} label={statusLabel()} />
+      </>} />
       <DetailPanel.Body>
         <DetailPanel.Main>
-          <div class="-mt-2 mb-6 flex flex-wrap gap-1.5">
-            <StatusChip tone="muted" label={KIND_LABEL[props.item.kind]} />
-            <StatusChip tone={props.item.blocking && props.item.state === "open" ? "danger" : "muted"} label={statusLabel()} />
-          </div>
           <Show when={props.item.detail}>
             <DetailPanel.Section title="Detail" icon={<FileText size={14} />}>
               <p class="m-0 whitespace-pre-wrap">{props.item.detail}</p>

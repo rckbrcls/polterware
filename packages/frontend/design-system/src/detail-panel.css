@@ -63,6 +63,9 @@
 .pw-detail-panel__header[data-expandable="false"] > button[aria-label="Close details"] { grid-column: 2; }
 .pw-detail-panel__header[data-expandable="false"] .pw-detail-panel__identity { justify-content: flex-start; }
 .pw-detail-panel__identity-meta { margin-bottom: 12px; }
+/* A title with chips at the end of its line. */
+.pw-detail-panel__title-row { display: flex; min-width: 0; align-items: center; gap: 8px; }
+.pw-detail-panel__title-aside { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
 .pw-detail-panel__footer {
   display: flex;
   flex: 0 0 auto;
