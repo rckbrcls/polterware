@@ -410,6 +410,42 @@ const previewChanges = previewRunSteps.map((step) => {
   };
 }).reverse();
 
+/** What each preview run's agent answered, with the Markdown agents write. */
+const previewDispatchOutputs: Record<string, string> = {
+  "drun-1": [
+    "## Summary",
+    "",
+    "Added the dispatch RPC handlers and wired them to the core. **All checks pass.**",
+    "",
+    "### Changes",
+    "",
+    "1. `backend/domains/dispatch/rpc.go`: new `VerifyRun` and `MergeRun` handlers.",
+    "2. `schemas/polterware/local/v1/dispatch.proto`: request and response messages.",
+    "3. Tests for both handlers, including the *conflict* path.",
+    "",
+    "```go",
+    "func (s *Server) MergeRun(ctx context.Context, req *MergeRunRequest) (*MergeRunResponse, error) {",
+    "\treturn s.merge(ctx, req.GetId())",
+    "}",
+    "```",
+    "",
+    "> The merge keeps the worktree until `polterware clean` runs.",
+    "[verified] go test ./backend/... passed",
+    "[merged] dispatch/drun-1 into main",
+  ].join("\n"),
+  "drun-2": [
+    "## What I did",
+    "",
+    "- Moved the layout serializer into `structure/layout.go`.",
+    "- Kept the JSON field order stable for the golden files.",
+    "",
+    "## What failed",
+    "",
+    "`go vet` reported an unused import in `structure/layout_test.go`.",
+    "[failed] go vet reported an unused import",
+  ].join("\n"),
+};
+
 const previewDispatchRuns = [
   {
     id: "drun-1",
@@ -937,7 +973,9 @@ function createBrowserDevBridge(): PolterwareBridge {
         },
         result: async (args?: { id?: string; section?: string }) => {
           const run = previewDispatchRuns.find((item) => item.id === args?.id);
-          return { content: run ? `${args?.section ?? "summary"}: ${run.note || run.error || run.status}` : "", total: 1 };
+          if (!run) return { content: "", total: 0 };
+          const output = args?.section === "output" ? previewDispatchOutputs[run.id] : undefined;
+          return { content: output ?? `${args?.section ?? "summary"}: ${run.note || run.error || run.status}`, total: 1 };
         },
         listWorktrees: scoped({ worktrees: previewDispatchWorktrees }, { worktrees: [] }),
         listQuota: async (args?: { agent?: string }) => ({

@@ -24,6 +24,7 @@ import {
   PageToolbar,
   SearchBar,
   Tabs,
+  MarkdownEditor,
   RailGroup,
   RailPage,
   InformationCircle,
@@ -40,7 +41,6 @@ import {
   SparkChart,
   StatusChip,
   Stop,
-  Terminal,
   Textarea,
   ToolbarIconButton,
   pushToast,
@@ -78,6 +78,7 @@ import type {
   DispatchWorktreeView,
 } from "./dispatch-types";
 import { runReviewAction } from "./dispatch-bridge";
+import { splitRunLog, type RunLogSegment } from "./run-log";
 import { DispatchLearningPage } from "./learning-page";
 import { TierBoard, TierModelPalette } from "./tier-board";
 import { placeTierCard } from "./tier-board-model";
@@ -1530,6 +1531,52 @@ function DispatchRunCard(props: {
   );
 }
 
+/**
+ * A run's output as its agent wrote it: the response renders as Markdown (headings, lists,
+ * code, emphasis), and the lines the core recorded between them (`[verified] …`) show as quiet
+ * event rows. No title or frame: it is the page's content.
+ */
+function RunTranscript(props: { log: string; live: boolean }) {
+  const segments = createMemo(() => splitRunLog(props.log));
+  return (
+    <div class="pw-run-transcript flex min-w-0 flex-col gap-3">
+      <Show
+        when={segments().length > 0}
+        fallback={<p class="m-0 text-[13px] text-[var(--color-text-muted)]">{props.live ? "Waiting for agent output…" : "No agent output recorded."}</p>}
+      >
+        <Index each={segments()}>
+          {(segment) => (
+            <Show
+              when={segment().kind === "event" ? (segment() as Extract<RunLogSegment, { kind: "event" }>) : undefined}
+              fallback={
+                <MarkdownEditor
+                  class="pw-md-editor--document"
+                  value={segment().text}
+                  editable={false}
+                  aria-label="Agent response"
+                />
+              }
+            >
+              {(event) => (
+                <div class="flex min-w-0 items-center gap-2 text-[12px] text-[var(--color-text-muted)]">
+                  <StatusChip tone={dispatchStatusTone(event().event)} label={event().event} />
+                  <span class="min-w-0 truncate">{event().text}</span>
+                </div>
+              )}
+            </Show>
+          )}
+        </Index>
+      </Show>
+      <Show when={props.live}>
+        <span class="inline-flex items-center gap-2 text-[12px] text-[var(--color-text-muted)]">
+          <StatusChip tone="syncing" label="Live" />
+          The agent is still writing.
+        </span>
+      </Show>
+    </div>
+  );
+}
+
 /** A linked run in the rail: the agent's avatar, the link, and its status; a plain row, not a card. */
 function LinkedRunRow(props: { label: string; agent?: string; seed: string; status?: string; onOpen: () => void }) {
   return (
@@ -1589,7 +1636,6 @@ function DispatchRunDetail(props: {
     const prompt = props.run.prompt.trim();
     return prompt.includes("\n") || prompt.length > 120 ? prompt : "";
   };
-  const logLines = () => (props.log.trim() ? props.log.split("\n").length : 0);
   const review = () => runReviewAction(props.run, Boolean(branch() || path()));
   const text = (value: string | undefined) => (value?.trim() ? value.trim() : undefined);
   const linked = () => props.run.resumedOf.trim() || props.resumedBy.length > 0 || props.childRuns.length > 0;
@@ -1705,29 +1751,8 @@ function DispatchRunDetail(props: {
               </RailGroup>
             )}
           </Show>
-          <RailGroup
-            title="Log"
-            icon={<Terminal size={14} />}
-            tone="observability"
-            aside={
-              <span class="inline-flex items-center gap-2">
-                {logLines() ? `${logLines()} ${logLines() === 1 ? "line" : "lines"}` : props.live ? "Waiting" : "No output"}
-                <Show when={props.live}>
-                  <StatusChip tone="syncing" label="Live" />
-                </Show>
-              </span>
-            }
-          >
-            <div class="px-1 font-mono text-[12px] leading-5 whitespace-pre-wrap text-[var(--color-text-secondary)]">
-              <Show
-                when={props.log.trim()}
-                fallback={<p class="m-0 text-[var(--color-text-muted)]">{props.live ? "Waiting for agent output…" : "No agent output recorded."}</p>}
-              >
-                {props.log}
-              </Show>
-              <div ref={logEnd} />
-            </div>
-          </RailGroup>
+          <RunTranscript log={props.log} live={props.live} />
+          <div ref={logEnd} />
         </div>
       </RailPage>
     </div>
