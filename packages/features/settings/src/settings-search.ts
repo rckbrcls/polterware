@@ -1,4 +1,4 @@
-import { SHORTCUT_GROUP_LABELS, shortcutsInGroup } from "@polterware/frontend-state";
+import { SHORTCUT_GROUPS, SHORTCUT_GROUP_LABELS, shortcutsInGroup } from "@polterware/frontend-state";
 import { CLI_COMMANDS } from "@polterware/feature-shell";
 import type { SettingsTabId } from "./types";
 
@@ -151,7 +151,7 @@ export function dynamicSettingsEntries(): SettingsSearchEntry[] {
     description: command.summary,
     keywords: "cli command",
   }));
-  const shortcuts = (["shell", "structure"] as const).flatMap((group) =>
+  const shortcuts = SHORTCUT_GROUPS.flatMap((group) =>
     shortcutsInGroup(group).map<SettingsSearchEntry>((command) => ({
       id: `shortcut-${command.id}`,
       tab: "shortcuts",

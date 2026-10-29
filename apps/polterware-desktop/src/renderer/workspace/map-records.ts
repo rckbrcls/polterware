@@ -279,6 +279,7 @@ export function mapWorkCards(items: Record<string, unknown>[]): WorkspaceWorkCar
     decisions: asStringArray(item.decisions),
     milestoneId: asString(item.milestoneId),
     updatedAt: formatInstant(asString(item.updatedAt)),
+    updatedAtIso: asString(item.updatedAt),
     tasks: asObjectArray(item.tasks).map((task) => {
       const state = asString(task.state);
       return {

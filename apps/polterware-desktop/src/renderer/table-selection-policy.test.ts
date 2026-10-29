@@ -38,18 +38,26 @@ const REMOVED_SELECTION_ACTIONS = [
   "packages/features/shell/src/selection-actions.test.ts",
 ];
 
+const BULK_SELECTION_SURFACES = [
+  "packages/features/knowledge/src/work-list-table.tsx",
+  "packages/features/shell/src/inbox-page.tsx",
+];
+
 describe("product table selection policy", () => {
   it("finds the product table consumers it is meant to police", () => {
     // Guards the discovery itself: a broken walk would make the next test vacuous.
     expect(tableConsumers().length).toBeGreaterThan(0);
   });
 
-  it("keeps checkbox selection and selection toolbars out of product table consumers", () => {
+  it("keeps checkbox selection and selection toolbars to the Inbox and the Work list", () => {
+    const selecting: string[] = [];
     for (const file of tableConsumers()) {
       const source = readFileSync(file, "utf8");
-      expect(source, file).not.toMatch(/DataTable\.(?:SelectionCell|SelectionToolbar)/);
-      expect(source, file).not.toMatch(/\bselectionMode=/);
+      if (!/DataTable\.(?:SelectionCell|SelectionToolbar)|\bselectionMode=/.test(source)) continue;
+      selecting.push(file.slice(repoRoot.length));
     }
+    // A batch makes sense only where people triage many rows; it is one write under one justification.
+    expect(selecting.sort()).toEqual(BULK_SELECTION_SURFACES);
   });
 
   it("does not host a product-level selection toolbar", () => {

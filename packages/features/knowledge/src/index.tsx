@@ -1,10 +1,11 @@
-import { Show, createEffect, createMemo, createResource, createSignal, on, onCleanup } from "solid-js";
+import { Show, createEffect, createMemo, createResource, createSignal, on, onCleanup, onMount } from "solid-js";
 import {
   ActiveFilterBar,
   Archive,
   ArchivedList,
   Button,
   ChevronLeft,
+  DisplayOptions,
   FileText,
   FilterPopover,
   LibraryBig,
@@ -25,7 +26,6 @@ import {
   type FilterField,
   type ArchivedListItem,
   type TabItem,
-  DataTable,
 } from "@polterware/frontend-design-system";
 import {
   EntityDetailHost,
@@ -45,7 +45,15 @@ import {
   type WorkspaceMilestone,
   type WorkStage,
 } from "@polterware/feature-shell";
-import { createDetailPanelSelector, detailDisplayFor, detailPanelStore, readRemembered, writeRemembered } from "@polterware/frontend-state";
+import {
+  createDetailPanelSelector,
+  detailDisplayFor,
+  detailPanelStore,
+  isTypingTarget,
+  matchesShortcut,
+  readRemembered,
+  writeRemembered,
+} from "@polterware/frontend-state";
 import { CreateKnowledgeDialog, type CreateKnowledgeKind } from "./create-knowledge-dialog";
 import { AddDocDialog, type NewDocInput } from "./add-doc-dialog";
 import { KnowledgeDocumentNotFound, type DocNoteProps } from "./knowledge-document-shell";
@@ -82,6 +90,17 @@ import { MilestoneList } from "./milestone-list";
 import { backToWorkBoards, initialWorkBoardNavigation, openWorkBoard } from "./work-board-navigation";
 import { BACKLOG, cardsInView, selectedMilestoneView, type MilestoneAction } from "./milestones";
 import { WorkCardDetail } from "./work-card-detail";
+import { WorkListTable } from "./work-list-table";
+import {
+  WORK_LIST_GROUPINGS,
+  WORK_LIST_ORDERINGS,
+  WORK_LIST_PROPERTIES,
+  normalizeWorkListDisplay,
+  type WorkListDisplay,
+  type WorkListGrouping,
+  type WorkListOrdering,
+  type WorkListProperty,
+} from "./work-list";
 import { WORK_STAGES, cardOpenQuestions, cardTaskProgress, workStageLabel, workStageTone } from "./work-stage";
 
 export { cardSlugFromTitle, uniqueCardSlug } from "./card-slug";
@@ -220,6 +239,10 @@ export function KnowledgeView(props: {
   onDeleteDoc?: (item: ArchivedListItem) => Promise<void>;
   onRemoveCard?: (slug: string) => void;
   onSetCardStage?: (slug: string, stage: WorkStage) => Promise<boolean> | void;
+  /** Moves the selected cards in one justified write; resolves true once written. */
+  onSetCardsStage?: (slugs: string[], stage: WorkStage) => Promise<boolean> | void;
+  /** Archives the selected cards in one justified write. */
+  onRemoveCards?: (slugs: string[]) => void;
   scopeTokens?: readonly ScopeFilterToken[];
   scopeEnvironments?: readonly EnvironmentItem[];
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
@@ -230,6 +253,15 @@ export function KnowledgeView(props: {
   createEffect(on(() => props.boardProjectId, () => setBoardNavigation(readRemembered(boardMemoryKey(), initialWorkBoardNavigation())), { defer: true }));
   createEffect(() => { if (props.boardProjectId) writeRemembered(boardMemoryKey(), boardNavigation()); });
   const selectedBoard = createMemo(() => selectedMilestoneView(props.milestones ?? [], boardNavigation().selectedId));
+  // The list's grouping, ordering, and properties, remembered on this computer.
+  const WORK_LIST_DISPLAY_KEY = "work.list.display";
+  const [workListDisplay, setWorkListDisplay] = createSignal<WorkListDisplay>(
+    normalizeWorkListDisplay(readRemembered<unknown>(WORK_LIST_DISPLAY_KEY, undefined)),
+  );
+  function changeWorkListDisplay(next: WorkListDisplay) {
+    setWorkListDisplay(next);
+    writeRemembered(WORK_LIST_DISPLAY_KEY, next);
+  }
   const tab = () => normalizeTab(props.tab);
   /** Board and Specs both list Work cards and share the card detail. */
   const cardTab = () => tab() === "board" || tab() === "specs";
@@ -619,6 +651,18 @@ export function KnowledgeView(props: {
 
   const hasLibraryItems = createMemo(() => allLibraryRows().length > 0);
 
+  // Cmd+B switches Work between the board and the list, outside fields and pages.
+  onMount(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!cardTab() || pageRoute() || event.defaultPrevented || isTypingTarget(event.target)) return;
+      if (!matchesShortcut("work.toggle_layout", event)) return;
+      event.preventDefault();
+      changeTab(tab() === "board" ? "specs" : "board");
+    };
+    window.addEventListener("keydown", onKeyDown);
+    onCleanup(() => window.removeEventListener("keydown", onKeyDown));
+  });
+
   function changeTab(next: string) {
     setLibraryFilters({ ...EMPTY_LIBRARY_FILTERS });
     setDocFilters({ ...EMPTY_DOC_LIST_FILTERS });
@@ -718,6 +762,27 @@ export function KnowledgeView(props: {
                 onClausesChange={pageFilters().onClausesChange}
                 saved={pageFilters().saved()}
               />
+              <Show when={tab() === "specs"}>
+                <DisplayOptions
+                  grouping={{
+                    options: WORK_LIST_GROUPINGS,
+                    value: workListDisplay().grouping,
+                    onChange: (value) => changeWorkListDisplay({ ...workListDisplay(), grouping: value as WorkListGrouping }),
+                  }}
+                  ordering={{
+                    options: WORK_LIST_ORDERINGS,
+                    value: workListDisplay().ordering,
+                    onChange: (value) => changeWorkListDisplay({ ...workListDisplay(), ordering: value as WorkListOrdering }),
+                    direction: workListDisplay().direction,
+                    onDirectionChange: (direction) => changeWorkListDisplay({ ...workListDisplay(), direction }),
+                  }}
+                  properties={{
+                    options: WORK_LIST_PROPERTIES,
+                    visible: workListDisplay().properties,
+                    onChange: (visible) => changeWorkListDisplay({ ...workListDisplay(), properties: visible as WorkListProperty[] }),
+                  }}
+                />
+              </Show>
               <Show when={cardTab() ? props.onCreateCard : docsTab() ? canAddDoc() : props.onCreate}>
                 <ToolbarIconButton
                   label={createLabel()}
@@ -845,49 +910,23 @@ export function KnowledgeView(props: {
               }
             >
               <Show when={cards().length > 0} fallback={workCardsFilterEmpty()}>
-                <DataTable.Root
-                  rows={cards()}
-                  getRowId={(item) => item.slug}
-                  columnWidthsKey="specs"
-                  activeRowId={
+                <WorkListTable
+                  cards={cards()}
+                  milestones={props.milestones ?? []}
+                  display={workListDisplay()}
+                  onDisplayChange={changeWorkListDisplay}
+                  activeSlug={
                     activeTarget()?.scopeId === "knowledge:specs"
                     && activeTarget()?.entityKind === "card"
-                      ? activeTarget()?.entityId
+                      ? activeTarget()?.entityId ?? null
                       : null
                   }
-                  activateFirstRow
-                  onActiveRowChange={(id) => id && activate(id, "card")}
-                >
-                  <DataTable.Table aria-label="Cards">
-                    <DataTable.Header>
-                      <DataTable.ColumnHeader<WorkspaceWorkCard> id="title">Card</DataTable.ColumnHeader>
-                      <DataTable.ColumnHeader<WorkspaceWorkCard> id="slug">Slug</DataTable.ColumnHeader>
-                      <DataTable.ColumnHeader<WorkspaceWorkCard> id="stage">Stage</DataTable.ColumnHeader>
-                      <DataTable.ColumnHeader<WorkspaceWorkCard> id="tasks">Tasks</DataTable.ColumnHeader>
-                      <DataTable.ColumnHeader<WorkspaceWorkCard> id="updatedAt">Updated</DataTable.ColumnHeader>
-                    </DataTable.Header>
-                    <DataTable.Body<WorkspaceWorkCard>>
-                      {(item) => (
-                        <DataTable.Row
-                          row={item}
-                          rowId={item.slug}
-                          onActivate={() => activate(item.slug, "card")}
-                          onPeek={() => setPeekSlug(item.slug)}
-                        >
-                          <DataTable.PrimaryCell icon={<ListChecks size={16} />} iconTone="knowledge" iconSeed={item.slug} title={item.title} />
-                          <DataTable.Cell class="font-mono pw-selectable text-[12px]">{item.slug}</DataTable.Cell>
-                          <DataTable.Cell><StatusChip tone={workStageTone(item.stage)} label={workStageLabel(item.stage)} /></DataTable.Cell>
-                          <DataTable.Cell class="tabular-nums text-[var(--color-text-muted)]">
-                            {cardTaskProgress(item).total > 0
-                              ? `${cardTaskProgress(item).done}/${cardTaskProgress(item).total}`
-                              : "—"}
-                          </DataTable.Cell>
-                          <DataTable.Cell class="text-[var(--color-text-muted)]">{item.updatedAt}</DataTable.Cell>
-                        </DataTable.Row>
-                      )}
-                    </DataTable.Body>
-                  </DataTable.Table>
-                </DataTable.Root>
+                  onActivate={(slug) => activate(slug, "card")}
+                  onPeek={setPeekSlug}
+                  onAddToStage={addCardTo}
+                  onSetCardsStage={props.onSetCardsStage}
+                  onRemoveCards={props.onRemoveCards}
+                />
                 <CardPeek
                   card={cards().find((card) => card.slug === peekSlug()) ?? null}
                   onClose={() => setPeekSlug(null)}

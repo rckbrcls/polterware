@@ -55,6 +55,12 @@ export const SHORTCUT_CATALOG: readonly ShortcutCommand[] = [
     defaultChord: chord({ key: "f" }),
   },
   {
+    id: "work.toggle_layout",
+    label: "Switch between list and board",
+    group: "work",
+    defaultChord: chord({ key: "b", mod: true }),
+  },
+  {
     id: "structure.add_node",
     label: "Add structure node",
     group: "structure",
@@ -77,6 +83,7 @@ export const SHORTCUT_SEQUENCES: readonly ShortcutSequence[] = [
 /** Keys every list and entity page answers; listed in the shortcuts panel, not rebindable. */
 export const LIST_KEYS: readonly ShortcutReferenceRow[] = [
   { id: "list.move", label: "Next or previous row", keys: ["J", "K"], join: "or" },
+  { id: "list.select", label: "Select the row", keys: ["X"], join: "or" },
   { id: "list.peek", label: "Peek the row", keys: ["Space"], join: "or" },
   { id: "list.open", label: "Open the row", keys: ["Enter"], join: "or" },
   { id: "list.back", label: "Back to the row", keys: ["Esc"], join: "or" },
@@ -96,5 +103,9 @@ export function shortcutsInGroup(group: ShortcutCommand["group"]): ShortcutComma
 
 export const SHORTCUT_GROUP_LABELS: Record<ShortcutCommand["group"], string> = {
   shell: "Shell",
+  work: "Work",
   structure: "Structure",
 };
+
+/** Rebindable groups in the order Settings and the shortcuts panel list them. */
+export const SHORTCUT_GROUPS: readonly ShortcutCommand["group"][] = ["shell", "work", "structure"];

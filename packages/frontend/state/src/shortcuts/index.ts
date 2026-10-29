@@ -13,6 +13,7 @@ export type {
 export {
   LIST_KEYS,
   SHORTCUT_CATALOG,
+  SHORTCUT_GROUPS,
   SHORTCUT_GROUP_LABELS,
   SHORTCUT_SEQUENCES,
   getShortcutCommand,

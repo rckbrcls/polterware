@@ -6,6 +6,12 @@
   flex-direction: column;
 }
 
+/* A table that is a page's content fills it, so the selection toolbar sits at the bottom. */
+.pw-page-content > .pw-data-table-root {
+  /* The content's first child starts below the toolbar overlay; that offset must not scroll. */
+  min-height: calc(100% - var(--pw-content-overlay, 0px));
+}
+
 .pw-data-table-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -520,4 +526,55 @@
   align-items: center;
   justify-content: center;
   padding: 0;
+}
+
+/* Linear list rows: a 44px pitch (40px row and the 4px row gap), one line per row. */
+.pw-data-table-root[data-density="list"] .pw-data-table-row {
+  height: 40px;
+}
+
+.pw-data-table-root[data-density="list"] .pw-data-table-cell {
+  white-space: nowrap;
+}
+
+/* A group header: a 36px row with the collapse chevron, label, count, and "+" on hover. */
+.pw-data-table-group-row > .pw-data-table-group-cell {
+  padding: 0 4px;
+}
+
+.pw-data-table-group {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-item);
+  background: var(--color-surface-subtle);
+  padding-right: 4px;
+}
+
+.pw-data-table-group-icon {
+  display: inline-flex;
+  color: var(--color-text-muted);
+}
+
+.pw-data-table-group-label {
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pw-data-table-group-count {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pw-data-table-group-add {
+  margin-left: auto;
+  visibility: hidden;
+}
+
+.pw-data-table-group-row:hover .pw-data-table-group-add,
+.pw-data-table-group-add:focus-visible {
+  visibility: visible;
 }

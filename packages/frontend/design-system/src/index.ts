@@ -96,6 +96,8 @@ export type {
   TooltipRootProps,
   TooltipTriggerProps,
 } from "./tooltip";
+export { DisplayOptions } from "./display-options";
+export type { DisplayChoice, DisplayOptionsProps } from "./display-options";
 export { Kbd } from "./kbd";
 export type { KbdProps } from "./kbd";
 export { spring } from "./springs";
@@ -169,6 +171,9 @@ export type {
 export { DataTable, DataTableSelectionToolbarHost, focusDataTableRow } from "./table";
 export type {
   DataTableColumnHeaderProps,
+  DataTableDensity,
+  DataTableGroup,
+  DataTableGrouping,
   DataTablePrimaryCellProps,
   DataTableRootProps,
   DataTableSelectionMode,

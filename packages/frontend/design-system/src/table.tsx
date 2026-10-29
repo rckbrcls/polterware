@@ -1,4 +1,6 @@
-import { ArrowDown, ArrowUp, X } from "./hugeicons";
+import { Button } from "./button";
+import { DisclosureButton } from "./disclosure-button";
+import { ArrowDown, ArrowUp, Plus, X } from "./hugeicons";
 import { IconTile, type IconTileTone } from "./icon-tile";
 import { useDesignSystem } from "./provider";
 import {
@@ -34,6 +36,28 @@ export type DataTableSelectionState = ReadonlySet<string>;
 
 export type DataTableSelectionMode = "none" | "single" | "multiple";
 
+/** A section of a grouped table, such as a stage. */
+export type DataTableGroup = {
+  id: string;
+  label: string;
+  icon?: JSX.Element;
+  /** The header's "+", such as adding a card in this stage. */
+  onAdd?: () => void;
+  /** Accessible name of the "+"; defaults to "Add to <label>". */
+  addLabel?: string;
+};
+
+export type DataTableGrouping<T> = {
+  /** The id of the group a row belongs to; rows of an unlisted group follow under "Other". */
+  by: (row: T) => string;
+  groups: readonly DataTableGroup[];
+  /** Keep groups with no rows, so their "+" stays in reach. Defaults to true. */
+  showEmpty?: boolean;
+};
+
+/** `list` is Linear's 44px row pitch for operational lists; `default` sizes rows to content. */
+export type DataTableDensity = "default" | "list";
+
 export type DataTableRootProps<T = any> = {
   rows: readonly T[];
   getRowId?: (row: T, index: number) => string;
@@ -59,6 +83,9 @@ export type DataTableRootProps<T = any> = {
   resizableColumns?: boolean;
   /** Persists resized column widths under the design system's storage prefix. */
   columnWidthsKey?: string;
+  /** Rows in sections under collapsible headers; a grouped body renders every row (no virtualization). */
+  grouping?: DataTableGrouping<T>;
+  density?: DataTableDensity;
   children: JSX.Element;
   class?: string;
 };
@@ -110,8 +137,45 @@ type RegisteredColumn<T> = {
   maxWidth: number;
 };
 
+type DataTableSection<T> = {
+  group: DataTableGroup;
+  /** Rows shown under the header: none while the group is collapsed. */
+  rows: readonly IndexedRow<T>[];
+  count: number;
+  collapsed: boolean;
+};
+
+const OTHER_GROUP: DataTableGroup = { id: "\u0000other", label: "Other" };
+
+/**
+ * Splits sorted rows into the listed groups, in their order; each group keeps the sort.
+ * Rows of an unlisted group follow under "Other".
+ */
+export function groupDataTableRows<T>(
+  rows: readonly IndexedRow<T>[],
+  grouping: DataTableGrouping<T>,
+  collapsed: ReadonlySet<string> = new Set(),
+): DataTableSection<T>[] {
+  const byGroup = new Map<string, IndexedRow<T>[]>(grouping.groups.map((group) => [group.id, []]));
+  const other: IndexedRow<T>[] = [];
+  for (const entry of rows) (byGroup.get(grouping.by(entry.row)) ?? other).push(entry);
+  const sections = grouping.groups.map((group) => ({ group, all: byGroup.get(group.id) ?? [] }));
+  if (other.length > 0) sections.push({ group: OTHER_GROUP, all: other });
+  return sections
+    .filter((section) => grouping.showEmpty !== false || section.all.length > 0)
+    .map(({ group, all }) => ({
+      group,
+      rows: collapsed.has(group.id) ? [] : all,
+      count: all.length,
+      collapsed: collapsed.has(group.id),
+    }));
+}
+
 type DataTableContextValue<T> = {
+  /** Rows in display order: grouped and without collapsed groups when the table is grouped. */
   rows: Accessor<readonly IndexedRow<T>[]>;
+  sections: Accessor<readonly DataTableSection<T>[] | null>;
+  toggleGroup: (groupId: string) => void;
   registerColumn: (column: RegisteredColumn<T>) => VoidFunction;
   sort: Accessor<DataTableSortState>;
   cycleSort: (columnId: string) => void;
@@ -457,7 +521,7 @@ function DataTableRoot<T = any>(props: DataTableRootProps<T>) {
   const activeRowId = (): string | null =>
     props.activeRowId !== undefined ? props.activeRowId : internalActiveRowId();
 
-  const orderedRows = createMemo<readonly IndexedRow<T>[]>(() => {
+  const sortedRows = createMemo<readonly IndexedRow<T>[]>(() => {
     columnVersion();
     const currentSort = sort();
     if (!currentSort) return sourceRows();
@@ -469,6 +533,14 @@ function DataTableRoot<T = any>(props: DataTableRootProps<T>) {
         ? (left, right) => column.compare!(left.row, right.row)
         : undefined,
     });
+  });
+  const [collapsedGroups, setCollapsedGroups] = createSignal<ReadonlySet<string>>(new Set());
+  const sections = createMemo<readonly DataTableSection<T>[] | null>(() =>
+    props.grouping ? groupDataTableRows(sortedRows(), props.grouping, collapsedGroups()) : null,
+  );
+  const orderedRows = createMemo<readonly IndexedRow<T>[]>(() => {
+    const grouped = sections();
+    return grouped ? grouped.flatMap((section) => section.rows) : sortedRows();
   });
 
   const updateSelection = (next: ReadonlySet<string>) => {
@@ -560,6 +632,14 @@ function DataTableRoot<T = any>(props: DataTableRootProps<T>) {
 
   const context: DataTableContextValue<T> = {
     rows: orderedRows,
+    sections,
+    toggleGroup: (groupId) => {
+      setCollapsedGroups((current) => {
+        const next = new Set(current);
+        if (!next.delete(groupId)) next.add(groupId);
+        return next;
+      });
+    },
     registerColumn: (column) => {
       const isNew = !columns.has(column.id);
       columns.set(column.id, column);
@@ -604,8 +684,8 @@ function DataTableRoot<T = any>(props: DataTableRootProps<T>) {
     clearSelection: () => updateSelection(new Set()),
     allVisibleSelected,
     someVisibleSelected,
-    virtualized: () => Boolean(props.virtualized),
-    estimateRowHeight: () => props.fixedRowHeight ?? props.estimateRowHeight ?? 38,
+    virtualized: () => Boolean(props.virtualized) && !props.grouping,
+    estimateRowHeight: () => props.fixedRowHeight ?? props.estimateRowHeight ?? (props.density === "list" ? 44 : 38),
     fixedRowHeight: () => props.fixedRowHeight,
     overscan: () => props.overscan ?? 8,
     scrollElement,
@@ -649,6 +729,7 @@ function DataTableRoot<T = any>(props: DataTableRootProps<T>) {
         class={`pw-data-table-root ${props.class ?? ""}`}
         data-selection-active={selectedRows().length > 0 ? "true" : undefined}
         data-gutters={props.gutters === false ? "false" : undefined}
+        data-density={props.density === "list" ? "list" : undefined}
       >
         {props.children}
       </div>
@@ -1021,7 +1102,21 @@ function DataTableBody<T = any>(props: {
 
   return (
     <tbody class={props.class}>
-      <Show when={context.rows().length > 0}>
+      <Show when={context.sections()}>
+        {(sections) => (
+          <For each={sections()}>
+            {(section) => (
+              <>
+                <DataTableGroupHeader section={section} />
+                <For each={section.rows}>
+                  {(entry) => renderEntry(entry, () => rowIndices().get(entry.id) ?? 0)}
+                </For>
+              </>
+            )}
+          </For>
+        )}
+      </Show>
+      <Show when={!context.sections() && context.rows().length > 0}>
         <Show
           when={context.virtualized()}
           fallback={
@@ -1048,6 +1143,43 @@ function DataTableBody<T = any>(props: {
         </Show>
       </Show>
     </tbody>
+  );
+}
+
+/** A group's header row: its collapse control, label and count, and the optional "+". */
+function DataTableGroupHeader<T>(props: { section: DataTableSection<T> }) {
+  const context = useDataTable<T>("GroupHeader");
+  const group = () => props.section.group;
+  return (
+    <tr class="pw-data-table-group-row" data-group-id={group().id}>
+      <td class="pw-data-table-group-cell" colspan={context.columnCount()}>
+        <div class="pw-data-table-group">
+          <DisclosureButton
+            expanded={!props.section.collapsed}
+            aria-label={`${props.section.collapsed ? "Expand" : "Collapse"} ${group().label}`}
+            onClick={() => context.toggleGroup(group().id)}
+          />
+          <Show when={group().icon}>
+            <span class="pw-data-table-group-icon" aria-hidden="true">{group().icon}</span>
+          </Show>
+          <span class="pw-data-table-group-label">{group().label}</span>
+          <span class="pw-data-table-group-count">{props.section.count}</span>
+          <Show when={group().onAdd}>
+            {(onAdd) => (
+              <Button
+                size="icon"
+                variant="ghost"
+                class="pw-data-table-group-add"
+                aria-label={group().addLabel ?? `Add to ${group().label}`}
+                onClick={() => onAdd()()}
+              >
+                <Plus size={14} />
+              </Button>
+            )}
+          </Show>
+        </div>
+      </td>
+    </tr>
   );
 }
 
@@ -1171,6 +1303,12 @@ function DataTableRow<T = any>(props: {
         if (event.key === " " && props.onPeek) {
           event.preventDefault();
           props.onPeek(props.row);
+          return;
+        }
+        // X selects the focused row, as in Linear.
+        if (event.key.toLowerCase() === "x" && context.selectable() && !event.metaKey && !event.ctrlKey && !event.altKey) {
+          event.preventDefault();
+          context.toggleRow(rowId());
           return;
         }
         if (isDataTableActivationKey(event.key)) {

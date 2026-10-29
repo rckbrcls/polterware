@@ -1,13 +1,13 @@
 import { LIST_KEYS, SHORTCUT_CATALOG, SHORTCUT_GROUP_LABELS, SHORTCUT_SEQUENCES } from "./catalog";
 import { chordKeys, isApplePlatform, resolveChord } from "./chord";
-import type { ShortcutOverrides, ShortcutReferenceGroup, ShortcutReferenceRow } from "./types";
+import type { ShortcutGroup, ShortcutOverrides, ShortcutReferenceGroup, ShortcutReferenceRow } from "./types";
 
 /**
  * Every shortcut the app answers, grouped for the shortcuts panel: the rebindable chords
  * with the person's bindings, the G sequences, and the keys every list shares.
  */
 export function shortcutReference(overrides: ShortcutOverrides, apple = isApplePlatform()): ShortcutReferenceGroup[] {
-  const chords = (group: "shell" | "structure"): ShortcutReferenceRow[] =>
+  const chords = (group: ShortcutGroup): ShortcutReferenceRow[] =>
     SHORTCUT_CATALOG.filter((command) => command.group === group).map((command) => ({
       id: command.id,
       label: command.label,
@@ -26,6 +26,7 @@ export function shortcutReference(overrides: ShortcutOverrides, apple = isAppleP
       })),
     },
     { label: "Lists", rows: LIST_KEYS },
+    { label: SHORTCUT_GROUP_LABELS.work, rows: chords("work") },
     { label: SHORTCUT_GROUP_LABELS.structure, rows: chords("structure") },
   ];
 }

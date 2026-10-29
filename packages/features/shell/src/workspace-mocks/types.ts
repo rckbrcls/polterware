@@ -181,7 +181,10 @@ export type WorkspaceWorkCard = {
   decisions: string[];
   /** The milestone the card ships in; empty is the Backlog. */
   milestoneId?: string;
+  /** Display text, such as "Sep 28, 2026, 12:00 PM". */
   updatedAt: string;
+  /** The same instant as ISO text, for ordering. */
+  updatedAtIso?: string;
   tasks: WorkspaceWorkTask[];
   questions: WorkspaceWorkQuestion[];
   invariants: WorkspaceWorkInvariant[];

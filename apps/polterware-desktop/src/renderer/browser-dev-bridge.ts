@@ -292,11 +292,6 @@ const previewInboxItems = [
   inboxItem("inb-8", "verify", false, "Staging database has no owner", "Owner fact is missing.", [], "Staging database", "fact:stg-db", "deferred", ["verify", "defer"]),
 ];
 
-const previewInbox = {
-  items: previewInboxItems,
-  openCount: previewInboxItems.filter((item) => item.state === "open").length,
-  blockingCount: previewInboxItems.filter((item) => item.blocking).length,
-};
 
 const provider = (id: string, name: string, category: string, binary: string, authCommands: string[]) => ({
   id, name, category, binary, authCommands, description: `Connect ${name} through its command-line tool.`,
@@ -656,6 +651,16 @@ function browserDevApi(overrides?: Record<string, unknown>): (...args: unknown[]
 function createBrowserDevBridge(): PolterwareBridge {
   const structure = createBrowserStructure(PREVIEW_PROJECT_ID, previewStructure.nodes);
   const structureCards = structuredClone(previewCards);
+  // Inbox actions on the preview seed: defer marks an item deferred, the others clear it.
+  const inboxItems = structuredClone(previewInboxItems);
+  function inboxFor(projectId: string) {
+    if (projectId !== PREVIEW_PROJECT_ID) return { items: [], openCount: 0, blockingCount: 0 };
+    return {
+      items: inboxItems,
+      openCount: inboxItems.filter((item) => item.state === "open").length,
+      blockingCount: inboxItems.filter((item) => item.blocking).length,
+    };
+  }
   // Archived and deleted knowledge ids; the seed itself stays untouched.
   const archivedKnowledge = new Map<string, string>();
   const deletedKnowledge = new Set<string>();
@@ -1029,8 +1034,20 @@ function createBrowserDevBridge(): PolterwareBridge {
           current.forEach((item) => { item.position = milestoneIds.indexOf(item.id); });
           return { milestones: listedMilestones(projectId) };
         },
-        listCards: async (args?: ProjectArgs) => ({ cards: [...(args?.projectId === PREVIEW_PROJECT_ID ? structureCards : []), ...(promotedCards.get(args?.projectId ?? "") ?? [])] }),
-        listInbox: scoped(previewInbox, { items: [], openCount: 0, blockingCount: 0 }),
+        listCards: async (args?: ProjectArgs) => ({
+          cards: [...(args?.projectId === PREVIEW_PROJECT_ID ? structureCards : []), ...(promotedCards.get(args?.projectId ?? "") ?? [])]
+            .filter((card) => (card as { status?: string }).status !== "removed"),
+        }),
+        listInbox: async (args?: ProjectArgs) => inboxFor(args?.projectId ?? ""),
+        resolveInboxItem: async (args?: { projectId?: string; itemId?: string; action?: string; answer?: string }) => {
+          const index = args?.projectId === PREVIEW_PROJECT_ID ? inboxItems.findIndex((item) => item.id === args?.itemId) : -1;
+          const item = inboxItems[index];
+          if (!item) throw new Error("unknown Inbox item");
+          if (!item.actions.includes(args?.action ?? "")) throw new Error(`cannot ${args?.action} a ${item.kind} item`);
+          if (args?.action === "defer") item.state = "deferred";
+          else inboxItems.splice(index, 1);
+          return { item, action: args?.action ?? "", ops: [] };
+        },
         listStructure: async (args?: ProjectArgs) => structure.list(args?.projectId ?? ""),
         apply: async (args?: { projectId?: string; text?: string; dryRun?: boolean; change?: { summary?: string } }) => {
           if (/^# [^#]/m.test(args?.text ?? "")) {
@@ -1045,6 +1062,31 @@ function createBrowserDevBridge(): PolterwareBridge {
               for (const card of cards) if (typeof card.under === "string" && moved.has(card.under)) card.under = moved.get(card.under)!;
             }
             return result;
+          }
+          // `## slug` blocks without a title change existing cards: the board's moves and the list's batches.
+          const text = args?.text ?? "";
+          const blocks = [...text.matchAll(/^## ([a-z0-9-]+)\n(.*)$/gm)];
+          if (blocks.length > 0 && !/^## [a-z0-9-]+: /m.test(text)) {
+            if (![PREVIEW_PROJECT_ID, "browser-empty"].includes(args?.projectId ?? "")) throw new Error("Project not found.");
+            if (!args?.change?.summary?.trim()) throw new Error("A change needs a summary.");
+            const cards = projectCards(args!.projectId!) as { slug: string; stage?: string; status?: string; updatedAt?: string }[];
+            const changes = blocks.map(([, slug, meta]) => {
+              const card = cards.find((item) => item.slug === slug);
+              if (!card) throw new Error(`unknown card ${slug}`);
+              return { card, stage: /(?:^|· )stage: ([a-z]+)/.exec(meta)?.[1], status: /(?:^|· )status: ([a-z]+)/.exec(meta)?.[1] };
+            });
+            if (!args?.dryRun) {
+              for (const { card, stage, status } of changes) {
+                if (stage) card.stage = stage;
+                if (status) card.status = status;
+                card.updatedAt = new Date().toISOString();
+              }
+            }
+            return {
+              applied: !args?.dryRun,
+              diagnostics: [],
+              ops: changes.map(({ card, stage, status }) => `~ card ${card.slug}${stage ? ` stage ${stage}` : ""}${status ? ` status ${status}` : ""}`),
+            };
           }
           // milestone: is resolved here because milestones live in this bridge instance.
           const slug = /(?:^|· )milestone: *([a-z0-9-]*)/m.exec(args?.text ?? "")?.[1] ?? "";

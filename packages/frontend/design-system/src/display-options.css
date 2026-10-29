@@ -1,0 +1,40 @@
+.pw-display-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.pw-display-options__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pw-display-options__label {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.pw-display-options__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pw-display-options__select {
+  width: 148px;
+}
+
+.pw-display-options__properties {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pw-display-options__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}

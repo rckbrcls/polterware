@@ -155,6 +155,8 @@ import {
   persistStructureUpdateDeploys,
   persistStructureKindTech,
   persistWorkSetStage,
+  persistWorkSetStages,
+  persistWorkSetCardsStatus,
   resetLocalStore,
 } from "./workspace/persist";
 
@@ -171,6 +173,10 @@ async function justifyChange(input: {
   defaultSummary?: string;
 }): Promise<ChangeEnvelope | null> {
   return { summary: input.defaultSummary ?? input.title, rationale: "Changed in Desktop" };
+}
+
+function cardCount(count: number): string {
+  return `${count} ${count === 1 ? "card" : "cards"}`;
 }
 
 /** Archive dates read as a short local date; an unreadable stamp shows as is. */
@@ -728,6 +734,25 @@ export function App() {
     }
   }
 
+  /** One action on several Inbox items, then one refresh. */
+  async function resolveInboxItems(items: WorkspaceInboxItem[], action: WorkspaceInboxAction) {
+    const projectId = currentProjectId();
+    let done = 0;
+    try {
+      for (const item of items) {
+        await window.polterware.core.work.resolveInboxItem({ projectId, itemId: item.id, action, answer: "" });
+        done += 1;
+      }
+    } catch (error) {
+      pushToast(error instanceof Error ? error.message : "Could not update the Inbox items.", "danger");
+      throw error;
+    } finally {
+      const [workCards, structure, inbox] = await Promise.all([loadWorkCards(projectId), loadStructure(projectId), loadInbox(projectId)]);
+      if (currentProjectId() === projectId) setWorkspace((current) => ({ ...current, workCards, structure, inbox }));
+    }
+    pushToast(`${done} ${done === 1 ? "item" : "items"} updated.`, "success");
+  }
+
   /** The Inbox derives Drift on read; a re-read picks up files changed outside Polterware. */
   async function checkDrift() {
     const projectId = currentProjectId();
@@ -1164,6 +1189,38 @@ export function App() {
               pushToast(error instanceof Error ? error.message : "Could not remove card.", "danger");
             });
         }}
+        onSetCardsStage={(slugs, stage) =>
+          // One justification and one write for the whole selection.
+          justifyChange({
+            title: "Justify card stage",
+            defaultSummary: `Move ${cardCount(slugs.length)} to ${stageLabel(stage)}`,
+          }).then(async (change) => {
+            if (!change) return false;
+            await persistWorkSetStages(currentProjectId(), slugs, stage, change);
+            await refreshWorkspace(currentProjectId());
+            pushToast(`${cardCount(slugs.length)} moved to ${stageLabel(stage)}.`, "success");
+            return true;
+          }).catch((error: unknown) => {
+            pushToast(error instanceof Error ? error.message : "Could not move the cards.", "danger");
+            return false;
+          })}
+        onRemoveCards={(slugs) => {
+          const projectId = currentProjectId();
+          void justifyChange({
+            title: "Justify archiving cards",
+            defaultSummary: `Archive ${cardCount(slugs.length)}`,
+          }).then(async (change) => {
+            if (!change) return;
+            await persistWorkSetCardsStatus(projectId, slugs, "removed", change);
+            await refreshWorkspace(projectId);
+            const restore = () => void persistWorkSetCardsStatus(projectId, slugs, "active", { summary: `Restore ${cardCount(slugs.length)}`, rationale: "Undid the archive in Desktop" })
+              .then(() => refreshWorkspace(projectId))
+              .catch((error: unknown) => pushToast(error instanceof Error ? error.message : "Could not restore the cards.", "danger"));
+            pushToast(`Archived ${cardCount(slugs.length)}`, "default", { action: { label: "Undo", onClick: restore } });
+          }).catch((error: unknown) => {
+            pushToast(error instanceof Error ? error.message : "Could not archive the cards.", "danger");
+          });
+        }}
         onSetCardStage={(slug, stage) =>
           // Resolves false when the change was cancelled or failed, so the board can roll back.
           justifyChange({
@@ -1371,6 +1428,7 @@ export function App() {
             inbox={workspace().inbox}
             loading={loading() || !workspace().extensionsReady}
             onResolve={resolveInboxItem}
+            onResolveMany={resolveInboxItems}
             scopeTokens={scopeTokens()}
             scopeNodes={scopeNodes()}
             scopeEnvironments={scopeEnvironmentCatalog()}

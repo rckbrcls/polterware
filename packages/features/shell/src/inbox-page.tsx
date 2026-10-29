@@ -40,6 +40,7 @@ import type { EnvironmentItem, ScopeNodeItem } from "./types";
 import type { ScopeFilterToken } from "./scope-filter";
 import { openDetail } from "./detail-expansion";
 import { InboxItemDetail } from "./inbox-item-detail";
+import { sharedInboxActions } from "./inbox-actions";
 import type {
   WorkspaceInbox,
   WorkspaceInboxAction,
@@ -97,6 +98,8 @@ export function InboxPage(props: {
   inbox?: WorkspaceInbox;
   loading?: boolean;
   onResolve?: (item: WorkspaceInboxItem, action: WorkspaceInboxAction, answer?: string) => Promise<void>;
+  /** One action on every selected item; the host refreshes once. */
+  onResolveMany?: (items: WorkspaceInboxItem[], action: WorkspaceInboxAction) => Promise<void>;
   scopeTokens?: readonly ScopeFilterToken[];
   scopeNodes?: readonly ScopeNodeItem[];
   scopeEnvironments?: readonly EnvironmentItem[];
@@ -118,6 +121,19 @@ export function InboxPage(props: {
   const [deciding, setDeciding] = createSignal<WorkspaceInboxItem | null>(null);
   const [answer, setAnswer] = createSignal("");
   const [query, setQuery] = createSignal("");
+  const [selected, setSelected] = createSignal<ReadonlySet<string>>(new Set());
+  async function runMany(selection: readonly WorkspaceInboxItem[], action: WorkspaceInboxAction, clear: () => void) {
+    if (!props.onResolveMany || pending()) return;
+    setPending("bulk");
+    try {
+      await props.onResolveMany([...selection], action);
+      clear();
+    } catch {
+      // The host reports the failure; the selection stays to retry.
+    } finally {
+      setPending("");
+    }
+  }
 
   const items = () => props.inbox?.items ?? [];
   const countOf = (kind: WorkspaceInboxKind) =>
@@ -236,6 +252,9 @@ export function InboxPage(props: {
         class={[item().state === "deferred" ? "pw-inbox-row--deferred" : "", selectedItem()?.id === item().id ? "pw-data-table-row--active" : ""].filter(Boolean).join(" ") || undefined}
         onActivate={() => openDetail({ scopeId: INBOX_SCOPE, entityId: item().id, entityKind: "inbox-item" })}
       >
+        <Show when={props.onResolveMany}>
+          <DataTable.SelectionCell rowId={item().id} label={`Select ${item().title}`} />
+        </Show>
         <DataTable.PrimaryCell
           icon={(() => {
             const Icon = KIND_ICON[item().kind];
@@ -305,9 +324,19 @@ export function InboxPage(props: {
             </Show>
           }
         >
-          <DataTable.Root rows={rows()} getRowId={(item) => item.id} columnWidthsKey="inbox" class="pw-inbox-table">
+          <DataTable.Root
+            rows={rows()}
+            getRowId={(item) => item.id}
+            columnWidthsKey="inbox"
+            class="pw-inbox-table"
+            density="list"
+            selectionMode={props.onResolveMany ? "multiple" : "none"}
+            selectedRowIds={selected()}
+            onSelectionChange={setSelected}
+          >
             <DataTable.Table aria-label="Inbox items">
               <DataTable.Header>
+                <Show when={props.onResolveMany}><DataTable.SelectionCell /></Show>
                 <DataTable.ColumnHeader<WorkspaceInboxItem> id="title" width="38%">Item</DataTable.ColumnHeader>
                 <DataTable.ColumnHeader<WorkspaceInboxItem> id="kind" sortBy={(item) => KIND_LABEL[item.kind]}>Type</DataTable.ColumnHeader>
                 <DataTable.ColumnHeader<WorkspaceInboxItem> id="status" sortBy={statusLabel}>Status</DataTable.ColumnHeader>
@@ -319,6 +348,31 @@ export function InboxPage(props: {
                 {(item) => <Row item={item} />}
               </DataTable.Body>
             </DataTable.Table>
+            <Show when={props.onResolveMany}>
+              <DataTable.SelectionToolbar<WorkspaceInboxItem>
+                hasActions={(selection) => sharedInboxActions(selection.selectedRows()).length > 0}
+                emptyActionsLabel="No action fits every selected item"
+              >
+                {(selection) => (
+                  <For each={sharedInboxActions(selection.selectedRows())}>
+                    {(action) => {
+                      const Icon = ACTION_ICON[action];
+                      return (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={pending() !== ""}
+                          onClick={() => void runMany(selection.selectedRows(), action, selection.clearSelection)}
+                        >
+                          <Icon size={14} />
+                          {ACTION_LABEL[action]}
+                        </Button>
+                      );
+                    }}
+                  </For>
+                )}
+              </DataTable.SelectionToolbar>
+            </Show>
           </DataTable.Root>
           <EntityContextMenu menu={rowMenu} />
         </Show>

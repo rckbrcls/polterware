@@ -1,15 +1,13 @@
 import { For, createSignal } from "solid-js";
 import {
+  SHORTCUT_GROUPS,
   SHORTCUT_GROUP_LABELS,
   shortcutsInGroup,
-  type ShortcutGroup,
 } from "@polterware/frontend-state";
 import { SettingsSection } from "./settings-section";
 import { ShortcutRow } from "./shortcut-row";
 
-const GROUPS: ShortcutGroup[] = ["shell", "structure"];
-
-/** Editable keyboard shortcuts for Shell and Structure. */
+/** Editable keyboard shortcuts, by group. */
 export function ShortcutsPage() {
   const [recordingId, setRecordingId] = createSignal<string | null>(null);
 
@@ -19,7 +17,7 @@ export function ShortcutsPage() {
         title="Shortcuts"
         description="Shortcuts apply on this computer. Single-key shortcuts such as [ and N never fire while you type in a field. ⌘/ lists every shortcut, including the fixed G sequences. Escape cancels recording and stays reserved for dialogs."
       >
-        <For each={GROUPS}>
+        <For each={SHORTCUT_GROUPS}>
           {(group) => (
             <div class="flex flex-col gap-4">
               <h4 class="m-0 text-[12px] font-medium text-[var(--color-text-muted)]">{SHORTCUT_GROUP_LABELS[group]}</h4>

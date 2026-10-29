@@ -16,6 +16,7 @@ import {
   getDataTableSelectionMode,
   getNextDataTableSelectionForMode,
   getSelectedDataTableRows,
+  groupDataTableRows,
   hasDataTablePrimaryLeading,
   getNextDataTableSelection,
   getNextDataTableSort,
@@ -29,6 +30,90 @@ import {
 } from "./table";
 
 const tableSource = readFileSync(resolve(import.meta.dirname, "./table.tsx"), "utf8");
+
+describe("DataTable groups", () => {
+  const entries = [
+    { row: { id: "a", stage: "build" }, sourceIndex: 0, id: "a" },
+    { row: { id: "b", stage: "shape" }, sourceIndex: 1, id: "b" },
+    { row: { id: "c", stage: "build" }, sourceIndex: 2, id: "c" },
+    { row: { id: "d", stage: "lost" }, sourceIndex: 3, id: "d" },
+  ];
+  const grouping = {
+    by: (row: { stage: string }) => row.stage,
+    groups: [{ id: "shape", label: "Shape" }, { id: "plan", label: "Plan" }, { id: "build", label: "Build" }],
+  };
+
+  it("splits rows into the listed groups in order, keeping their sort, with the rest under Other", () => {
+    const sections = groupDataTableRows(entries, grouping);
+    expect(sections.map((section) => [section.group.label, section.rows.map((entry) => entry.id)])).toEqual([
+      ["Shape", ["b"]],
+      ["Plan", []],
+      ["Build", ["a", "c"]],
+      ["Other", ["d"]],
+    ]);
+    expect(groupDataTableRows(entries, { ...grouping, showEmpty: false }).map((section) => section.group.label)).toEqual(["Shape", "Build", "Other"]);
+  });
+
+  it("hides a collapsed group's rows but keeps its count", () => {
+    const build = groupDataTableRows(entries, grouping, new Set(["build"])).find((section) => section.group.id === "build");
+    expect(build).toMatchObject({ rows: [], count: 2, collapsed: true });
+  });
+
+  it("renders group headers, collapses a group, and runs its +", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const added: string[] = [];
+    const rows = entries.map((entry) => entry.row);
+    const dispose = render(() => (
+      <DataTable.Root rows={rows} density="list" grouping={{ ...grouping, groups: grouping.groups.map((group) => ({ ...group, onAdd: () => added.push(group.id) })) }}>
+        <DataTable.Table aria-label="Grouped fixture">
+          <DataTable.Body<{ id: string; stage: string }>>
+            {(row) => <DataTable.Row row={row} rowId={row.id} onActivate={() => {}}><DataTable.Cell>{row.id}</DataTable.Cell></DataTable.Row>}
+          </DataTable.Body>
+        </DataTable.Table>
+      </DataTable.Root>
+    ), host);
+    try {
+      expect(host.querySelector(".pw-data-table-root")?.getAttribute("data-density")).toBe("list");
+      const order = () => [...host.querySelectorAll("tbody tr")].map((row) => row.getAttribute("data-group-id") ?? row.getAttribute("data-row-id"));
+      expect(order()).toEqual(["shape", "b", "plan", "build", "a", "c", "\u0000other", "d"]);
+      host.querySelector<HTMLButtonElement>('[aria-label="Add to Plan"]')?.click();
+      expect(added).toEqual(["plan"]);
+      host.querySelector<HTMLButtonElement>('[aria-label="Collapse Build"]')?.click();
+      expect(order()).toEqual(["shape", "b", "plan", "build", "\u0000other", "d"]);
+      expect(host.querySelector('[data-group-id="build"] .pw-data-table-group-count')?.textContent).toBe("2");
+    } finally {
+      dispose();
+      host.remove();
+    }
+  });
+
+  it("selects the focused row with X", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const [selected, setSelected] = createSignal<ReadonlySet<string>>(new Set());
+    const rows = [{ id: "one" }, { id: "two" }];
+    const dispose = render(() => (
+      <DataTable.Root rows={rows} selectionMode="multiple" selectedRowIds={selected()} onSelectionChange={setSelected}>
+        <DataTable.Table aria-label="Selection fixture">
+          <DataTable.Body<{ id: string }>>
+            {(row) => <DataTable.Row row={row} rowId={row.id} onActivate={() => {}}><DataTable.Cell>{row.id}</DataTable.Cell></DataTable.Row>}
+          </DataTable.Body>
+        </DataTable.Table>
+      </DataTable.Root>
+    ), host);
+    try {
+      const row = host.querySelector<HTMLElement>('[data-row-id="two"]')!;
+      row.dispatchEvent(new KeyboardEvent("keydown", { key: "x", bubbles: true }));
+      expect([...selected()]).toEqual(["two"]);
+      row.dispatchEvent(new KeyboardEvent("keydown", { key: "x", bubbles: true }));
+      expect([...selected()]).toEqual([]);
+    } finally {
+      dispose();
+      host.remove();
+    }
+  });
+});
 
 describe("DataTable", () => {
   it("renders and scrolls a measured virtualized viewport mounted after body creation", async () => {

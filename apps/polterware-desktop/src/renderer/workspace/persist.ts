@@ -543,6 +543,32 @@ export async function persistWorkSetStage(
   await applyPolter(projectId, polterCard(slug, null, { stage }), change);
 }
 
+/** One `## slug` block per card in one Polter text: one audited write, so one change batch. */
+function polterCardsMeta(slugs: readonly string[], meta: Record<string, string>): string {
+  const metaLine = Object.entries(meta).map(([key, value]) => `${key}: ${value}`).join(" · ");
+  return `---\npolter: 1\n---\n\n${slugs.map((slug) => `## ${slug}\n${metaLine}`).join("\n\n")}\n`;
+}
+
+/** Move several cards to one stage under one justification. */
+export async function persistWorkSetStages(
+  projectId: string,
+  slugs: readonly string[],
+  stage: WorkStage,
+  change: ChangeEnvelope,
+): Promise<void> {
+  await applyPolter(projectId, polterCardsMeta(slugs, { stage }), change);
+}
+
+/** Archive several cards under one justification; Restore brings them back the same way. */
+export async function persistWorkSetCardsStatus(
+  projectId: string,
+  slugs: readonly string[],
+  status: "removed" | "active",
+  change: ChangeEnvelope,
+): Promise<void> {
+  await applyPolter(projectId, polterCardsMeta(slugs, { status }), change);
+}
+
 /** Remove a card from the board; the core keeps the row with status removed. */
 export async function persistWorkRemoveCard(
   projectId: string,
