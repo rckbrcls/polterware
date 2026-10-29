@@ -50,8 +50,7 @@
 }
 
 .pw-shell-main-frame {
-  /* 1px on the sidebar side leaves room for the panel's outside rim, which the column would clip. */
-  padding: 0 8px 8px 1px;
+  padding: 0 8px 8px 0;
 }
 
 /* No sidebar before the frame (Projects home): keep the gutter symmetric. */
@@ -88,12 +87,10 @@ html[data-shell-chrome="solid"] .pw-shell-main-frame--opaque {
   isolation: isolate;
 }
 
-/* The lit rim hugs the outside of the panel, brightest on top and fading down; it sits on an
-   overlay so it stays above the drop. */
+/* The same lit edge as every surface (`--material-edge-quiet`), on an overlay above the content:
+   an inset shadow on the panel itself would sit under the toolbar's opaque fade edge. Drawn
+   inside, the sidebar column cannot clip it. Only the drop stays outside. */
 .pw-main-surface.surface-panel {
-  /* Clip like overflow-hidden, but leave 1px outside for the rim overlay below. */
-  overflow: clip;
-  overflow-clip-margin: 1px;
   background: linear-gradient(to bottom, var(--color-surface), #1c1c1c);
   box-shadow: 0 2px 4px var(--material-drop), 0 1px 2px var(--material-drop);
 }
@@ -101,11 +98,9 @@ html[data-shell-chrome="solid"] .pw-shell-main-frame--opaque {
 .pw-main-surface::after {
   position: absolute;
   z-index: 50;
-  inset: -0.5px;
-  padding: 0.5px;
+  inset: 0;
   border-radius: inherit;
-  background: var(--material-rim-fade-quiet);
+  box-shadow: var(--material-edge-quiet);
   content: "";
   pointer-events: none;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }

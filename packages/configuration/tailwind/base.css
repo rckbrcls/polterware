@@ -226,7 +226,6 @@
   /* Lit-from-above rim for large radii and pills, where a shifted top edge would read as a
    * crescent: one 0.5px ring just outside the box, brightest on top and fading down. */
   --material-rim-fade: linear-gradient(to bottom, var(--material-rim-strong), var(--material-highlight));
-  --material-rim-fade-quiet: linear-gradient(to bottom, var(--material-rim), var(--material-highlight) 70%);
   /* The near-flat face of a raised neutral control (active pills, checked boxes, chips). */
   --material-face-top: #303030;
   --material-face-bottom: #2b2b2b;
