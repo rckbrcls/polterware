@@ -41,7 +41,7 @@ export type ProjectSettingsTabId =
   | "privacy"
   | "app-danger";
 export type WorkTabId = "board" | "specs";
-export type TruthTabId = "decisions" | "facts" | "evidence";
+export type TruthTabId = "decisions" | "facts" | "docs";
 export type DispatchTabId =
   | "runs"
   | "agents"
@@ -111,11 +111,11 @@ export const SECTION_TABS = {
     { id: "board", label: "Board" },
     { id: "specs", label: "List" },
   ],
-  // Intent (Decisions) and observed state (Facts) with the material that backs them.
+  // Intent (Decisions) and observed state (Facts) with the docs that back them.
   truth: [
     { id: "decisions", label: "Decisions" },
     { id: "facts", label: "Facts" },
-    { id: "evidence", label: "Evidence" },
+    { id: "docs", label: "Docs" },
   ],
   // A run, and the agents that can take it. Worktree info lives on the run card.
   dispatch: [
@@ -217,7 +217,7 @@ export function resolveRoute(
   if (section === "knowledge") {
     if (tab === "sources" || tab === "docs" || tab === "runbooks") {
       section = "truth";
-      tab = "evidence";
+      tab = "docs";
     } else if (tab === "library" || tab === "decisions") {
       section = "truth";
       tab = "decisions";
@@ -238,8 +238,10 @@ export function resolveRoute(
   }
   if (section === "reality") {
     section = tab === "history" ? "activity" : "truth";
-    if (tab === "sources" || tab === "docs") tab = "evidence";
+    if (tab === "sources" || tab === "docs") tab = "docs";
   }
+  // Evidence was the earlier name of Docs.
+  if (section === "truth" && tab === "evidence") tab = "docs";
   // Agents moved into the Settings dialog; their facts live in Truth and their history in Activity.
   if (section === "agents" && tab === "facts") {
     section = "truth";

@@ -1,6 +1,6 @@
 import { Show, createEffect, createSignal } from "solid-js";
 import { A11yDialog, Button, Field, Input, Select } from "@polterware/frontend-design-system";
-import type { ScopeNodeItem } from "@polterware/feature-shell";
+import type { DecisionLevel, ScopeNodeItem } from "@polterware/feature-shell";
 import { ScopePicker } from "./scope-picker";
 
 export type CreateKnowledgeKind = "card" | "decision";
@@ -9,18 +9,18 @@ export function CreateKnowledgeDialog(props: {
   open: boolean;
   kind: CreateKnowledgeKind;
   onClose: () => void;
-  onSubmit: (title: string, kind: CreateKnowledgeKind, scope?: "principle" | "decision", scopePath?: string) => void;
+  onSubmit: (title: string, kind: CreateKnowledgeKind, level?: DecisionLevel, scopePath?: string) => void;
   scopeNodes?: ScopeNodeItem[];
   /** Structure node path preselected for a new Decision; empty is the whole project. */
   defaultScopePath?: string;
 }) {
   const [title, setTitle] = createSignal("");
-  const [scope, setScope] = createSignal<"principle" | "decision">("decision");
+  const [level, setLevel] = createSignal<DecisionLevel>("decision");
   const [scopePath, setScopePath] = createSignal("");
 
   createEffect(() => {
     if (!props.open) return;
-    setScope("decision");
+    setLevel("decision");
     setScopePath(props.defaultScopePath ?? "");
   });
 
@@ -40,7 +40,7 @@ export function CreateKnowledgeDialog(props: {
   function submit() {
     const next = title().trim();
     if (!next) return;
-    props.onSubmit(next, activeKind(), activeKind() === "decision" ? scope() : undefined, activeKind() === "decision" && scope() === "decision" && scopePath() ? scopePath() : undefined);
+    props.onSubmit(next, activeKind(), activeKind() === "decision" ? level() : undefined, activeKind() === "decision" && level() === "decision" && scopePath() ? scopePath() : undefined);
     setTitle("");
   }
 
@@ -63,21 +63,21 @@ export function CreateKnowledgeDialog(props: {
     >
       <div class="grid gap-4">
         <Show when={activeKind() === "decision"}>
-          <Field label="Scope">
+          <Field label="Level">
             <Select
               size="sm"
-              value={scope()}
+              value={level()}
               options={[
-                { value: "decision", label: "Decision (linked to components)" },
+                { value: "decision", label: "Decision" },
                 { value: "principle", label: "Principle (whole project)" },
               ]}
               onChange={(value) => {
-                if (value === "decision" || value === "principle") setScope(value);
+                if (value === "decision" || value === "principle") setLevel(value);
               }}
             />
           </Field>
-          <Show when={scope() === "decision" && (props.scopeNodes?.length ?? 0) > 0}>
-            <Field label="Structure scope" hint="Optional. Leave on Whole project to show it under every filter">
+          <Show when={level() === "decision" && (props.scopeNodes?.length ?? 0) > 0}>
+            <Field label="Scope" hint="Optional. Leave on Whole project to show it under every filter">
               <ScopePicker nodes={props.scopeNodes ?? []} value={scopePath()} onChange={setScopePath} class="w-full" />
             </Field>
           </Show>

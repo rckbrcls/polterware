@@ -1,4 +1,4 @@
-import type { WorkStage, WorkspaceEvidence, WorkspaceWorkCard } from "@polterware/feature-shell";
+import type { WorkStage, WorkspaceDoc, WorkspaceWorkCard } from "@polterware/feature-shell";
 import { cardOpenQuestions } from "./work-stage";
 
 export type CardQuestionsFilter = "any" | "open" | "clear";
@@ -10,7 +10,7 @@ export type CardListFilters = {
   query: string;
 };
 
-export type EvidenceListFilters = {
+export type DocListFilters = {
   tags: readonly string[];
   linked: LinkedFilter;
   query: string;
@@ -22,7 +22,7 @@ export const EMPTY_CARD_LIST_FILTERS: CardListFilters = {
   query: "",
 };
 
-export const EMPTY_EVIDENCE_LIST_FILTERS: EvidenceListFilters = {
+export const EMPTY_DOC_LIST_FILTERS: DocListFilters = {
   tags: [],
   linked: "any",
   query: "",
@@ -32,12 +32,12 @@ export function cardListFiltersActive(filters: CardListFilters): boolean {
   return filters.stages.length > 0 || filters.questions !== "any";
 }
 
-export function evidenceListFiltersActive(filters: EvidenceListFilters): boolean {
+export function docListFiltersActive(filters: DocListFilters): boolean {
   return filters.linked !== "any" || filters.tags.length > 0;
 }
 
-/** Every tag in use across the evidence, sorted for the filter list and tag suggestions. */
-export function distinctEvidenceTags(items: readonly WorkspaceEvidence[]): string[] {
+/** Every tag in use across the docs, sorted for the filter list and tag suggestions. */
+export function distinctDocTags(items: readonly WorkspaceDoc[]): string[] {
   const values = new Set<string>();
   for (const item of items) for (const tag of item.tags) values.add(tag);
   return [...values].sort((a, b) => a.localeCompare(b));
@@ -60,10 +60,10 @@ export function filterWorkCards(
 }
 
 /** An item matches when it carries every selected tag. */
-export function filterEvidence(
-  items: readonly WorkspaceEvidence[],
-  filters: EvidenceListFilters,
-): WorkspaceEvidence[] {
+export function filterDocs(
+  items: readonly WorkspaceDoc[],
+  filters: DocListFilters,
+): WorkspaceDoc[] {
   const needle = filters.query.trim().toLowerCase();
   return items.filter((item) => {
     if (filters.linked === "linked" && item.entityLinks.length === 0) return false;

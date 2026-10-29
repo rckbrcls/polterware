@@ -28,7 +28,7 @@ describe("first version routes", () => {
     expect(isNavSectionId("terminal")).toBe(false);
     expect(SECTION_TABS.structure?.map((tab) => tab.id)).toEqual(["all"]);
     expect(SECTION_TABS.work?.map((tab) => tab.id)).toEqual(["board", "specs"]);
-    expect(SECTION_TABS.truth?.map((tab) => tab.id)).toEqual(["decisions", "facts", "evidence"]);
+    expect(SECTION_TABS.truth?.map((tab) => tab.id)).toEqual(["decisions", "facts", "docs"]);
     expect(SECTION_TABS.dispatch?.map((tab) => tab.id)).toEqual(["runs", "agents"]);
     expect(SECTION_TABS["dispatch-routing"]?.map((tab) => tab.id)).toEqual(["tiers", "learning"]);
     expect(SECTION_TABS["dispatch-usage"]?.map((tab) => tab.id)).toEqual(["stats"]);
@@ -82,14 +82,15 @@ describe("first version routes", () => {
     expect(resolveRoute("knowledge", "specs")).toEqual({ section: "work", tab: "specs" });
     expect(resolveRoute("knowledge", "library")).toEqual({ section: "truth", tab: "decisions" });
     expect(resolveRoute("knowledge", "decisions")).toEqual({ section: "truth", tab: "decisions" });
-    expect(resolveRoute("knowledge", "docs")).toEqual({ section: "truth", tab: "evidence" });
-    expect(resolveRoute("knowledge", "runbooks")).toEqual({ section: "truth", tab: "evidence" });
-    expect(resolveRoute("knowledge", "sources")).toEqual({ section: "truth", tab: "evidence" });
+    expect(resolveRoute("knowledge", "docs")).toEqual({ section: "truth", tab: "docs" });
+    expect(resolveRoute("knowledge", "runbooks")).toEqual({ section: "truth", tab: "docs" });
+    expect(resolveRoute("knowledge", "sources")).toEqual({ section: "truth", tab: "docs" });
     expect(resolveRoute("agents", "facts")).toEqual({ section: "truth", tab: "facts" });
     expect(resolveRoute("agents", "history")).toEqual({ section: "activity", tab: "all" });
     expect(resolveRoute("decisions", "challenged")).toEqual({ section: "truth", tab: "decisions" });
     expect(resolveRoute("reality", "facts")).toEqual({ section: "truth", tab: "facts" });
-    expect(resolveRoute("reality", "sources")).toEqual({ section: "truth", tab: "evidence" });
+    expect(resolveRoute("reality", "sources")).toEqual({ section: "truth", tab: "docs" });
+    expect(resolveRoute("truth", "evidence")).toEqual({ section: "truth", tab: "docs" });
     expect(resolveRoute("reality", "history")).toEqual({ section: "activity", tab: "all" });
   });
 
@@ -170,9 +171,9 @@ describe("first version routes", () => {
 describe("section memory", () => {
   it("restores the tab, search, filters and open detail a section was left with", () => {
     const entered = enterProject(createHomeRoute(), "proj-1");
-    const left = { ...setTab(goSection(entered, "truth"), "evidence"), search: "auth", filters: { kind: ["doc"] }, expandedDetail: { scopeId: "knowledge:evidence", entityId: "ev-1", entityKind: "evidence" } };
+    const left = { ...setTab(goSection(entered, "truth"), "docs"), search: "auth", filters: { kind: ["doc"] }, expandedDetail: { scopeId: "knowledge:docs", entityId: "ev-1", entityKind: "doc" } };
     const restored = withSectionMemory(goSection(goSection(left, "work"), "truth"), sectionMemory(left));
-    expect(restored).toMatchObject({ section: "truth", tab: "evidence", search: "auth", filters: { kind: ["doc"] }, expandedDetail: { entityId: "ev-1" } });
+    expect(restored).toMatchObject({ section: "truth", tab: "docs", search: "auth", filters: { kind: ["doc"] }, expandedDetail: { entityId: "ev-1" } });
   });
 
   it("falls back to the default tab when the remembered one no longer exists", () => {

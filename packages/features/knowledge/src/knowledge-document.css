@@ -214,3 +214,15 @@
   background: var(--card-fill);
   box-shadow: var(--material-float);
 }
+
+/* A Fact page lists the evidence that backs the statement under its title. */
+.pw-fact-evidence {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.pw-fact-evidence > .pw-document__group-title {
+  padding: 0;
+}

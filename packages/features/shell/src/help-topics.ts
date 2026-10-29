@@ -66,7 +66,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
       },
       {
         icon: FileText,
-        text: "Facts and evidence live under Agents → Facts, with provenance. Agents → Context compiles the smallest useful context for a task — humans and agents work from one model, not a hidden agent-only view.",
+        text: "Decisions, Facts, and Docs live under Truth, with provenance. Agents read the same model through the CLI and MCP — humans and agents work from one model, not a hidden agent-only view.",
       },
     ],
   },

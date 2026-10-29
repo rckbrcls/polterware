@@ -156,7 +156,7 @@ describe("detailPanelStore", () => {
   });
 
   it("starts document properties closed and resets visibility between documents", () => {
-    for (const entityKind of ["decision", "evidence", "card"]) {
+    for (const entityKind of ["decision", "doc", "card"]) {
       const target = { scopeId, entityId: entityKind, entityKind };
       store().activateTarget(target);
       expect(store()).toMatchObject({ activeTarget: target, open: false });
@@ -168,7 +168,7 @@ describe("detailPanelStore", () => {
   });
 
   it("keeps properties closed when a document is opened through pending navigation", () => {
-    const target = { scopeId: nextScopeId, entityId: "evidence-1", entityKind: "evidence" };
+    const target = { scopeId: nextScopeId, entityId: "doc-1", entityKind: "doc" };
     store().registerCollection({ scopeId, status: "ready", targets: [firstTarget] });
     store().show();
     store().requestTarget(target);
@@ -248,9 +248,9 @@ describe("detailPanelStore", () => {
   });
 
   it("never expands a peek-only entity kind", () => {
-    const fact: DetailTarget = { scopeId, entityId: "fact-1", entityKind: "fact" };
-    store().registerCollection({ scopeId, status: "ready", targets: [fact] });
-    store().activateTarget(fact);
+    const item: DetailTarget = { scopeId, entityId: "inbox-1", entityKind: "inbox-item" };
+    store().registerCollection({ scopeId, status: "ready", targets: [item] });
+    store().activateTarget(item);
     store().expand();
     expect(store()).toMatchObject({ open: true, expanded: false });
   });

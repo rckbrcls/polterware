@@ -256,10 +256,20 @@ export async function persistKnowledgeCreate(input: {
   return id;
 }
 
-/** The doc type named by a tag (runbook or source), and the tags without it. */
-export function docTypeFromTags(tags: readonly string[]): { docType: DocType; tags: string[] } {
-  const docType: DocType = tags.includes("source") ? "source" : tags.includes("runbook") ? "runbook" : "doc";
-  return { docType, tags: tags.filter((tag) => tag !== "doc" && tag !== "runbook" && tag !== "source") };
+/** Changes what a doc is (doc, runbook, or source), keeping the rest of the item. */
+export async function persistKnowledgeDocType(
+  workspace: WorkspaceSnapshot,
+  projectId: string,
+  itemId: string,
+  docType: DocType,
+  change: ChangeEnvelope,
+): Promise<void> {
+  const current = workspace.rawKnowledge.find((item) => asString(item.id) === itemId);
+  if (!current) return;
+  await core().knowledge.save({
+    item: { ...current, projectId, docType },
+    change: changePayload(change),
+  });
 }
 
 /** Scopes a knowledge item (Decision or Evidence) to a Structure node path; an empty path clears it. */
@@ -404,6 +414,9 @@ export async function persistDecisionAction(input: {
       break;
     case "supersede":
       block = `### ${input.action.byId}\nsupersedes: ${input.decision.id} · reason: ${reason}`;
+      break;
+    case "level":
+      block = `### ${input.decision.id}\nlevel: ${input.action.level}`;
       break;
   }
   await applyPolter(input.projectId, `---\npolter: 1\n---\n\n${block}\n`, input.change);

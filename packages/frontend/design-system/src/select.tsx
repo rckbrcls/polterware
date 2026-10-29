@@ -102,7 +102,8 @@ export function Select(props: SelectProps) {
             {selectedOption()?.icon ?? props.icon}
           </span>
         </Show>
-        <span class="min-w-0 truncate">
+        {/* The label fills the space so a leading icon keeps it start-aligned. */}
+        <span class="min-w-0 flex-1 truncate text-left">
           {selectedOption()?.label ?? props.placeholder ?? "Select"}
         </span>
         <ChevronDown

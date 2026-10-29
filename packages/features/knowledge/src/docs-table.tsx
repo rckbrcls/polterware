@@ -1,9 +1,10 @@
 import { For } from "solid-js";
-import { DataTable, FileText, StatusChip } from "@polterware/frontend-design-system";
-import type { WorkspaceEvidence } from "@polterware/feature-shell";
+import { DataTable, StatusChip } from "@polterware/frontend-design-system";
+import type { WorkspaceDoc } from "@polterware/feature-shell";
+import { docTypeIcon, docTypeLabel } from "./doc-type";
 
-export function EvidenceTable(props: {
-  rows: WorkspaceEvidence[];
+export function DocsTable(props: {
+  rows: WorkspaceDoc[];
   activeRowId?: string | null;
   onActivate: (id: string) => void;
 }) {
@@ -11,22 +12,24 @@ export function EvidenceTable(props: {
     <DataTable.Root
       rows={props.rows}
       getRowId={(item) => item.id}
-      columnWidthsKey="knowledge-evidence"
+      columnWidthsKey="knowledge-docs"
       activeRowId={props.activeRowId ?? null}
       activateFirstRow
       onActiveRowChange={(id) => id && props.onActivate(id)}
     >
-      <DataTable.Table aria-label="Evidence">
+      <DataTable.Table aria-label="Docs">
         <DataTable.Header>
-          <DataTable.ColumnHeader<WorkspaceEvidence> id="title">Title</DataTable.ColumnHeader>
-          <DataTable.ColumnHeader<WorkspaceEvidence> id="tags">Tags</DataTable.ColumnHeader>
-          <DataTable.ColumnHeader<WorkspaceEvidence> id="path">Path</DataTable.ColumnHeader>
-          <DataTable.ColumnHeader<WorkspaceEvidence> id="updatedAt">Updated</DataTable.ColumnHeader>
+          <DataTable.ColumnHeader<WorkspaceDoc> id="title">Title</DataTable.ColumnHeader>
+          <DataTable.ColumnHeader<WorkspaceDoc> id="docType" sortBy={(row) => row.docType}>Type</DataTable.ColumnHeader>
+          <DataTable.ColumnHeader<WorkspaceDoc> id="tags">Tags</DataTable.ColumnHeader>
+          <DataTable.ColumnHeader<WorkspaceDoc> id="path">Path</DataTable.ColumnHeader>
+          <DataTable.ColumnHeader<WorkspaceDoc> id="updatedAt">Updated</DataTable.ColumnHeader>
         </DataTable.Header>
-        <DataTable.Body<WorkspaceEvidence>>
+        <DataTable.Body<WorkspaceDoc>>
           {(item) => (
             <DataTable.Row row={item} rowId={item.id} onActivate={() => props.onActivate(item.id)}>
-              <DataTable.PrimaryCell icon={<FileText size={16} />} iconTone="knowledge" iconSeed={item.id} title={item.title} />
+              <DataTable.PrimaryCell icon={docTypeIcon(item.docType)} iconTone="knowledge" iconSeed={item.id} title={item.title} />
+              <DataTable.Cell>{docTypeLabel(item.docType)}</DataTable.Cell>
               <DataTable.Cell>
                 <div class="flex flex-wrap items-center gap-1">
                   <For each={item.tags}>{(tag) => <StatusChip tone="muted">{tag}</StatusChip>}</For>

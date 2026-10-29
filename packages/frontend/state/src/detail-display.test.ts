@@ -4,10 +4,10 @@ import { canExpandDetail, detailDisplayFor, isDocumentDetail } from "./detail-di
 
 describe("detailDisplayFor", () => {
   it("classifies peek, page, and both kinds", () => {
-    expect(detailDisplayFor("fact")).toBe("peek");
     expect(detailDisplayFor("inbox-item")).toBe("peek");
     expect(detailDisplayFor("change")).toBe("peek");
-    expect(detailDisplayFor("evidence")).toBe("page");
+    expect(detailDisplayFor("doc")).toBe("page");
+    expect(detailDisplayFor("fact")).toBe("page");
     expect(detailDisplayFor("decision")).toBe("page");
     expect(detailDisplayFor("card")).toBe("page");
     expect(detailDisplayFor("arch-node")).toBe("both");
@@ -19,13 +19,13 @@ describe("detailDisplayFor", () => {
   });
 
   it("only peek kinds cannot expand", () => {
-    expect(canExpandDetail("fact")).toBe(false);
-    expect(canExpandDetail("evidence")).toBe(true);
+    expect(canExpandDetail("inbox-item")).toBe(false);
+    expect(canExpandDetail("doc")).toBe(true);
     expect(canExpandDetail("card")).toBe(true);
   });
 
-  it("limits writing canvases to knowledge documents, preserving Structure and fact details", () => {
-    for (const kind of ["decision", "evidence", "card"]) expect(isDocumentDetail(kind)).toBe(true);
-    for (const kind of ["arch-view", "structure-card", "fact", undefined]) expect(isDocumentDetail(kind)).toBe(false);
+  it("limits document pages to Truth and Work entities, preserving Structure details", () => {
+    for (const kind of ["decision", "doc", "card", "fact"]) expect(isDocumentDetail(kind)).toBe(true);
+    for (const kind of ["arch-view", "structure-card", undefined]) expect(isDocumentDetail(kind)).toBe(false);
   });
 });

@@ -2,7 +2,7 @@ import { Show } from "solid-js";
 import { DataTable, FileText, Scale, StatusChip } from "@polterware/frontend-design-system";
 import type { LibraryRow } from "./library-row";
 
-function categoryIcon(row: LibraryRow) {
+function levelIcon(row: LibraryRow) {
   return row.pinned ? <Scale size={16} /> : <FileText size={16} />;
 }
 
@@ -27,27 +27,27 @@ export function LibraryTable(props: {
       <DataTable.Table aria-label="Library">
         <DataTable.Header>
           <DataTable.ColumnHeader<LibraryRow> id="title">Title</DataTable.ColumnHeader>
-          <DataTable.ColumnHeader<LibraryRow> id="category">Category</DataTable.ColumnHeader>
+          <DataTable.ColumnHeader<LibraryRow> id="levelLabel">Level</DataTable.ColumnHeader>
           <DataTable.ColumnHeader<LibraryRow> id="statusLabel">Status</DataTable.ColumnHeader>
-          <DataTable.ColumnHeader<LibraryRow> id="meta">Meta</DataTable.ColumnHeader>
+          <DataTable.ColumnHeader<LibraryRow> id="owner">Owner</DataTable.ColumnHeader>
           <DataTable.ColumnHeader<LibraryRow> id="updatedAt">Updated</DataTable.ColumnHeader>
         </DataTable.Header>
         <DataTable.Body<LibraryRow>>
           {(item) => (
             <DataTable.Row row={item} rowId={item.id} onActivate={() => props.onActivate(item)}>
               <DataTable.PrimaryCell
-                icon={categoryIcon(item)}
+                icon={levelIcon(item)}
                 iconTone="knowledge"
                 iconSeed={item.id}
                 title={item.title}
               />
-              <DataTable.Cell>{item.categoryLabel}</DataTable.Cell>
+              <DataTable.Cell>{item.levelLabel}</DataTable.Cell>
               <DataTable.Cell>
                 <Show when={item.statusLabel}>
                   <StatusChip tone={item.statusTone} label={item.statusLabel} />
                 </Show>
               </DataTable.Cell>
-              <DataTable.Cell>{item.meta}</DataTable.Cell>
+              <DataTable.Cell>{item.owner}</DataTable.Cell>
               <DataTable.Cell class="text-[var(--color-text-muted)]">{item.updatedAt}</DataTable.Cell>
             </DataTable.Row>
           )}

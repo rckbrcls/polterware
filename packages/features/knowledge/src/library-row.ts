@@ -21,29 +21,29 @@ export type LibraryRow = {
   id: string;
   entityKind: LibraryEntityKind;
   title: string;
-  categoryLabel: string;
+  levelLabel: string;
   statusLabel: string;
   statusTone: StatusTone;
-  meta: string;
+  owner: string;
   updatedAt: string;
   hasLinks: boolean;
   /** Principles stay above the rest of the list. */
   pinned: boolean;
 };
 
-/** The Library lists Decisions; Evidence has its own list. */
+/** The Library lists Decisions; docs have their own list. */
 export function libraryRowsFromWorkspace(input: { decisions?: WorkspaceDecision[] }): LibraryRow[] {
   const rows = (input.decisions ?? []).map((decision): LibraryRow => ({
     id: decision.id,
     entityKind: "decision",
     title: decision.title,
-    categoryLabel: decision.scope === "principle" ? "Principle" : "Decision",
+    levelLabel: decision.level === "principle" ? "Principle" : "Decision",
     statusLabel: decision.state,
     statusTone: decisionStateTone(decision.state),
-    meta: decision.owner,
+    owner: decision.owner,
     updatedAt: decision.updatedAt,
     hasLinks: decision.entityLinks.length > 0,
-    pinned: decision.scope === "principle",
+    pinned: decision.level === "principle",
   }));
   return [...rows.filter((row) => row.pinned), ...rows.filter((row) => !row.pinned)];
 }
@@ -62,7 +62,7 @@ export function filterLibraryRows(
     if (filters.linked === "linked" && !row.hasLinks) return false;
     if (filters.linked === "unlinked" && row.hasLinks) return false;
     if (!needle) return true;
-    return [row.title, row.meta, row.categoryLabel, row.statusLabel].some(
+    return [row.title, row.owner, row.levelLabel, row.statusLabel].some(
       (value) => value.toLowerCase().includes(needle),
     );
   });

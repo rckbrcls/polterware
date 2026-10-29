@@ -3,7 +3,7 @@ import type {
   EnvironmentItem,
   ProjectSwitcherItem,
   WorkspaceCatalogProvider,
-  WorkspaceEvidence,
+  WorkspaceDoc,
   WorkspaceDecision,
   WorkspaceCanonEntity,
   WorkspaceIntegration,
@@ -20,7 +20,7 @@ import {
   mapDecisions,
   mapStructureHistory,
   mapConnections,
-  mapEvidence,
+  mapDocs,
   mapEnvironments,
   mapIntegrationResources,
   mapKnowledgeEntityLinks,
@@ -47,7 +47,7 @@ export type WorkspaceSnapshot = {
   settingsEnvironments: ProjectEnvironment[];
   settings: ProjectGeneralSettings;
   repositories: ProjectRepository[];
-  evidence: WorkspaceEvidence[];
+  docs: WorkspaceDoc[];
   decisions: WorkspaceDecision[];
   workCards: WorkspaceWorkCard[];
   workBoards: WorkspaceWorkBoard[];
@@ -65,7 +65,7 @@ export type WorkspaceSnapshot = {
 /** Extension-domain fields merged after the Architecture shell paints. */
 export type WorkspaceExtensions = Pick<
   WorkspaceSnapshot,
-  | "evidence"
+  | "docs"
   | "decisions"
   | "workCards"
   | "workBoards"
@@ -101,7 +101,7 @@ const emptySettings: ProjectGeneralSettings = {
 
 export function emptyWorkspaceExtensions(): WorkspaceExtensions {
   return {
-    evidence: [],
+    docs: [],
     decisions: [],
     workCards: [],
     workBoards: [],
@@ -345,7 +345,7 @@ export async function loadWorkspaceExtensions(
   const knowledgeItems = asObjectArray(asRecord(knowledgeRes).items);
   const canonEntities = mapCanonEntities(asObjectArray(asRecord(entitiesRes).entities));
   const linksByKnowledge = mapKnowledgeEntityLinks(asObjectArray(asRecord(linksRes).links), canonEntities);
-  const evidence = mapEvidence(knowledgeItems, linksByKnowledge);
+  const docs = mapDocs(knowledgeItems, linksByKnowledge);
   const decisions = mapDecisions(knowledgeItems, linksByKnowledge, structure.nodes);
   const workCards = mapWorkCards(asObjectArray(asRecord(workRes).cards));
 
@@ -366,7 +366,7 @@ export async function loadWorkspaceExtensions(
   const syncRuns = mapSyncRuns(asObjectArray(asRecord(syncRunsRes).runs));
 
   return {
-    evidence,
+    docs,
     decisions,
     workCards,
     workBoards,

@@ -5,9 +5,9 @@ import {
   Select,
   StatusChip,
 } from "@polterware/frontend-design-system";
-import type { ScopeNodeItem, WorkspaceDecision } from "@polterware/feature-shell";
+import type { DecisionLevel, ScopeNodeItem, WorkspaceDecision } from "@polterware/feature-shell";
 import { KnowledgeDocumentProperty } from "./knowledge-document-properties";
-import { KnowledgeDocumentShell, type EvidenceNoteProps } from "./knowledge-document-shell";
+import { KnowledgeDocumentShell, type DocNoteProps } from "./knowledge-document-shell";
 import { decisionStateTone } from "./library-row";
 import { ScopePicker, scopePathOf } from "./scope-picker";
 
@@ -18,12 +18,23 @@ const STATE_LABEL: Record<WorkspaceDecision["state"], string> = {
   superseded: "Superseded",
 };
 
+const LEVEL_LABEL: Record<DecisionLevel, string> = {
+  principle: "Principle (whole project)",
+  decision: "Decision",
+};
+
+const LEVEL_OPTIONS = [
+  { value: "decision", label: LEVEL_LABEL.decision },
+  { value: "principle", label: LEVEL_LABEL.principle },
+];
+
 /** A lifecycle move the detail panel asks the host to write. */
 export type DecisionAction =
   | { kind: "activate" }
   | { kind: "challenge" }
   | { kind: "reactivate" }
-  | { kind: "supersede"; byId: string };
+  | { kind: "supersede"; byId: string }
+  | { kind: "level"; level: DecisionLevel };
 
 export function DecisionDetail(props: {
   decision: WorkspaceDecision;
@@ -37,8 +48,8 @@ export function DecisionDetail(props: {
   /** Writes the Structure scope as a node path; empty clears it. */
   onScopeChange?: (path: string) => void;
   links?: JSX.Element;
-  /** Note-style editing: editable title and tags, like Evidence and Notes. */
-  note?: EvidenceNoteProps;
+  /** Note-style editing: editable title and tags, like docs and Notes. */
+  note?: DocNoteProps;
 }) {
   const successors = () =>
     props.allDecisions.filter((other) => other.id !== props.decision.id && other.state !== "superseded");
@@ -78,11 +89,24 @@ export function DecisionDetail(props: {
           <KnowledgeDocumentProperty label="Review when" show={Boolean(props.decision.reviewTrigger)}>
             {props.decision.reviewTrigger}
           </KnowledgeDocumentProperty>
-          <KnowledgeDocumentProperty label="Scope">
-            {props.decision.scope === "principle" ? "Principle (whole project)" : "Decision"}
+          <KnowledgeDocumentProperty label="Level">
+            <Show when={props.onAction} fallback={LEVEL_LABEL[props.decision.level]}>
+              <Select
+                aria-label="Decision level"
+                size="sm"
+                class="w-full min-w-0 max-w-[20rem]"
+                options={LEVEL_OPTIONS}
+                value={props.decision.level}
+                onChange={(next) => {
+                  if ((next === "principle" || next === "decision") && next !== props.decision.level) {
+                    props.onAction?.({ kind: "level", level: next });
+                  }
+                }}
+              />
+            </Show>
           </KnowledgeDocumentProperty>
-          <Show when={props.onScopeChange}>
-            <KnowledgeDocumentProperty label="Structure scope">
+          <Show when={props.onScopeChange && props.decision.level === "decision"}>
+            <KnowledgeDocumentProperty label="Scope">
               <ScopePicker
                 nodes={props.scopeNodes ?? []}
                 value={scopePathOf(props.scopeNodes ?? [], props.decision.scopeNodeId)}

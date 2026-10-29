@@ -358,6 +358,8 @@ const previewCanonEvidence = previewCanonEvidenceSeeds.map(([id, kind, summary, 
 
 const previewFacts = previewFactSeeds.map(([id, statement, truthClass, entityId, source, actor], index) => ({
   id, projectId: PREVIEW_PROJECT_ID, statement, truthClass, entityId, source, actor,
+  // Each fact is scoped to the Structure component its subject stands for.
+  scopeNodeId: previewEntities.find((item) => item.id === entityId)?.refId ?? "",
   observedAt: `2026-09-${String(12 + index).padStart(2, "0")}T09:00:00.000Z`,
   createdAt: `2026-09-${String(12 + index).padStart(2, "0")}T09:00:00.000Z`,
   updatedAt: `2026-09-${String(12 + index).padStart(2, "0")}T09:00:00.000Z`,
@@ -639,6 +641,18 @@ function createBrowserDevBridge(): PolterwareBridge {
   // Archived and deleted knowledge ids; the seed itself stays untouched.
   const archivedKnowledge = new Map<string, string>();
   const deletedKnowledge = new Set<string>();
+  // Saved items override the seed by id; new ids are appended.
+  const savedKnowledge = new Map<string, Record<string, unknown>>();
+  function knowledgeFor(projectId: string) {
+    const seed = [...(projectId === PREVIEW_PROJECT_ID ? previewKnowledge : []), ...(promotedDecisions.get(projectId) ?? [])]
+      .map((item) => savedKnowledge.get(String(item.id)) ?? item);
+    const added = [...savedKnowledge.values()]
+      .filter((item) => item.projectId === projectId && !seed.some((entry) => entry.id === item.id));
+    return [...seed, ...added];
+  }
+  function knowledgeById(id?: string) {
+    return savedKnowledge.get(id ?? "") ?? previewKnowledge.find((entry) => entry.id === id);
+  }
   // Seeded demo views; mutations live only in this bridge instance.
   let boards = ["Planning", "Delivery"].map((name, position) => ({
     id: `preview-board-${position}`, projectId: PREVIEW_PROJECT_ID, name, position,
@@ -730,27 +744,36 @@ function createBrowserDevBridge(): PolterwareBridge {
       canvas: createBrowserCanvas(),
       knowledge: browserDevApi({
         list: async (args?: ProjectArgs & { kind?: string; archived?: boolean }) => ({
-          items: [...(args?.projectId === PREVIEW_PROJECT_ID ? previewKnowledge : []), ...(promotedDecisions.get(args?.projectId ?? "") ?? [])]
+          items: knowledgeFor(args?.projectId ?? "")
             .filter((item) => !deletedKnowledge.has(String(item.id)) && (!args?.kind || item.kind === args.kind))
             .filter((item) => archivedKnowledge.has(String(item.id)) === (args?.archived === true))
             .map((item) => ({ ...item, archivedAt: archivedKnowledge.get(String(item.id)) ?? "" })),
         }),
+        save: async (args?: { item?: Record<string, unknown> }) => {
+          const id = String(args?.item?.id ?? "");
+          if (!id) throw new Error("knowledge item id is required");
+          const item = { ...knowledgeById(id), ...args?.item, updatedAt: new Date().toISOString() };
+          savedKnowledge.set(id, item);
+          return { item };
+        },
         // Archive and delete follow the core rules: decisions never move, and only archived items delete.
         setArchived: async (args?: { id?: string; archived?: boolean }) => {
-          const item = previewKnowledge.find((entry) => entry.id === args?.id);
-          if (!item || deletedKnowledge.has(item.id)) throw new Error("unknown knowledge item");
+          const item = knowledgeById(args?.id);
+          const id = String(item?.id ?? "");
+          if (!item || deletedKnowledge.has(id)) throw new Error("unknown knowledge item");
           if (item.kind === "decision") throw new Error("decisions are never archived or deleted: supersede them");
-          if (args?.archived) archivedKnowledge.set(item.id, new Date().toISOString());
-          else archivedKnowledge.delete(item.id);
-          return { item: { ...item, archivedAt: archivedKnowledge.get(item.id) ?? "" } };
+          if (args?.archived) archivedKnowledge.set(id, new Date().toISOString());
+          else archivedKnowledge.delete(id);
+          return { item: { ...item, archivedAt: archivedKnowledge.get(id) ?? "" } };
         },
         delete: async (args?: { id?: string }) => {
-          const item = previewKnowledge.find((entry) => entry.id === args?.id);
-          if (!item || deletedKnowledge.has(item.id)) throw new Error("unknown knowledge item");
+          const item = knowledgeById(args?.id);
+          const id = String(item?.id ?? "");
+          if (!item || deletedKnowledge.has(id)) throw new Error("unknown knowledge item");
           if (item.kind === "decision") throw new Error("decisions are never archived or deleted: supersede them");
-          if (!archivedKnowledge.has(item.id)) throw new Error("archive the item before deleting it permanently");
-          archivedKnowledge.delete(item.id);
-          deletedKnowledge.add(item.id);
+          if (!archivedKnowledge.has(id)) throw new Error("archive the item before deleting it permanently");
+          archivedKnowledge.delete(id);
+          deletedKnowledge.add(id);
           return {};
         },
         listLinks: scoped({ links: previewLinks }, { links: [] }),

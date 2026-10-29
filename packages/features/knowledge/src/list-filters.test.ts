@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-  EMPTY_EVIDENCE_LIST_FILTERS,
+  EMPTY_DOC_LIST_FILTERS,
   EMPTY_CARD_LIST_FILTERS,
-  distinctEvidenceTags,
-  filterEvidence,
+  distinctDocTags,
+  filterDocs,
   filterWorkCards,
 } from "./list-filters";
-import type { WorkspaceEvidence, WorkspaceWorkCard } from "@polterware/feature-shell";
+import type { WorkspaceDoc, WorkspaceWorkCard } from "@polterware/feature-shell";
 
 const card = {
   id: "01J",
@@ -35,11 +35,11 @@ const evidence = {
   updatedAt: "2026-01-01",
   owner: "Ada",
   entityLinks: [],
-} satisfies WorkspaceEvidence;
+} satisfies WorkspaceDoc;
 
 describe("list-filters", () => {
   it("lists the distinct tags in use", () => {
-    expect(distinctEvidenceTags([evidence, { ...evidence, id: "ev-2", tags: ["runbook", "source"] }])).toEqual([
+    expect(distinctDocTags([evidence, { ...evidence, id: "ev-2", tags: ["runbook", "source"] }])).toEqual([
       "contracts",
       "runbook",
       "source",
@@ -55,9 +55,9 @@ describe("list-filters", () => {
   });
 
   it("filters evidence by tag, linked, and query", () => {
-    expect(filterEvidence([evidence], { ...EMPTY_EVIDENCE_LIST_FILTERS, tags: ["contracts"] })).toHaveLength(1);
-    expect(filterEvidence([evidence], { ...EMPTY_EVIDENCE_LIST_FILTERS, tags: ["contracts", "runbook"] })).toHaveLength(0);
-    expect(filterEvidence([evidence], { ...EMPTY_EVIDENCE_LIST_FILTERS, linked: "linked" })).toHaveLength(0);
-    expect(filterEvidence([evidence], { ...EMPTY_EVIDENCE_LIST_FILTERS, query: "canon.proto" })).toHaveLength(1);
+    expect(filterDocs([evidence], { ...EMPTY_DOC_LIST_FILTERS, tags: ["contracts"] })).toHaveLength(1);
+    expect(filterDocs([evidence], { ...EMPTY_DOC_LIST_FILTERS, tags: ["contracts", "runbook"] })).toHaveLength(0);
+    expect(filterDocs([evidence], { ...EMPTY_DOC_LIST_FILTERS, linked: "linked" })).toHaveLength(0);
+    expect(filterDocs([evidence], { ...EMPTY_DOC_LIST_FILTERS, query: "canon.proto" })).toHaveLength(1);
   });
 });

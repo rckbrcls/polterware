@@ -69,7 +69,7 @@ const NewFeatureFlow = lazy(() =>
   import("@polterware/feature-knowledge").then((m) => ({ default: m.NewFeatureFlow })),
 );
 const TruthFactsPage = lazy(() =>
-  import("@polterware/feature-settings").then((m) => ({ default: m.TruthFactsPage })),
+  import("@polterware/feature-knowledge").then((m) => ({ default: m.TruthFactsPage })),
 );
 const DispatchPage = lazy(() =>
   import("@polterware/feature-dispatch").then((m) => ({ default: m.DispatchPage })),
@@ -111,7 +111,7 @@ import {
   persistKnowledgeTags,
   persistKnowledgeTitle,
   persistKnowledgeCreate,
-  docTypeFromTags,
+  persistKnowledgeDocType,
   persistKnowledgeScope,
   persistKnowledgeArchived,
   persistKnowledgeDeletePermanently,
@@ -482,9 +482,9 @@ export function App() {
     applyRoute(goHome(route()));
   }
 
-  /** Evidence opens in the Evidence list; Decisions open in the Decisions list. */
+  /** Docs open in the Docs list; Decisions open in the Decisions list. */
   const libraryScope = () =>
-    route().section === "truth" && route().tab === "evidence" ? "knowledge:evidence" : "knowledge:library";
+    route().section === "truth" && route().tab === "docs" ? "knowledge:docs" : "knowledge:library";
 
   function activateDetail(scopeId: string, entityId: string, entityKind: string) {
     openDetail({ scopeId, entityId, entityKind });
@@ -777,7 +777,7 @@ export function App() {
     return (
       <KnowledgeView
         decisions={workspace().decisions}
-        evidence={workspace().evidence}
+        docs={workspace().docs}
         workCards={workspace().workCards}
         workBoards={workspace().workBoards}
         boardProjectId={currentProjectId()}
@@ -789,7 +789,7 @@ export function App() {
         tabsLabel={surface.tabsLabel}
         loading={loading() || !workspace().extensionsReady}
         onTabChange={(tab) => applyRoute(setTab(route(), tab))}
-        onOpenEvidence={(id) => activateDetail("knowledge:evidence", id, "evidence")}
+        onOpenDoc={(id) => activateDetail("knowledge:docs", id, "doc")}
         onOpenDecision={(id) => activateDetail(libraryScope(), id, "decision")}
         onDecisionAction={(decisionId, action) => {
           const decision = workspace().decisions.find((item) => item.id === decisionId);
@@ -802,6 +802,9 @@ export function App() {
             reactivate: `Keep decision active after review: ${decision.title}`,
             challenge: `Open review of decision: ${decision.title}`,
             supersede: `Supersede ${decision.title} with ${successor?.title ?? "another decision"}`,
+            level: action.kind === "level" && action.level === "principle"
+              ? `Make ${decision.title} a principle`
+              : `Make ${decision.title} a decision`,
           } as const;
           void justifyChange({
             title: "Justify decision change",
@@ -825,7 +828,7 @@ export function App() {
         }}
         onLinkEntity={(knowledgeId, entityId, kind) => {
           const predicate = kind === "resource" || kind === "component"
-            ? (workspace().evidence.some((item) => item.id === knowledgeId && item.docType === "runbook") ? "OPERATES" : "DOCUMENTS")
+            ? (workspace().docs.some((item) => item.id === knowledgeId && item.docType === "runbook") ? "OPERATES" : "DOCUMENTS")
             : "RELATED_TO";
           void justifyChange({
             title: "Justify entity link",
@@ -890,24 +893,37 @@ export function App() {
         }}
         onSaveTitle={(id, title) => {
           void justifyChange({
-            title: "Justify evidence rename",
-            defaultSummary: "Rename evidence",
+            title: "Justify doc rename",
+            defaultSummary: "Rename doc",
           }).then((change) => {
             if (!change) return;
             return persistKnowledgeTitle(workspace(), currentProjectId(), id, title, change);
           }).catch((error: unknown) => {
-            pushToast(error instanceof Error ? error.message : "Could not rename evidence.", "danger");
+            pushToast(error instanceof Error ? error.message : "Could not rename the doc.", "danger");
           });
         }}
         onSaveTags={(id, tags) => {
           void justifyChange({
-            title: "Justify evidence tags",
-            defaultSummary: "Update evidence tags",
+            title: "Justify doc tags",
+            defaultSummary: "Update doc tags",
           }).then((change) => {
             if (!change) return;
             return persistKnowledgeTags(workspace(), currentProjectId(), id, tags, change);
           }).catch((error: unknown) => {
             pushToast(error instanceof Error ? error.message : "Could not save tags.", "danger");
+          });
+        }}
+        onSaveDocType={(id, docType) => {
+          const title = workspace().docs.find((item) => item.id === id)?.title ?? "doc";
+          void justifyChange({
+            title: "Justify doc type",
+            defaultSummary: `Mark ${title} as a ${docType}`,
+          }).then((change) => {
+            if (!change) return;
+            return persistKnowledgeDocType(workspace(), currentProjectId(), id, docType, change)
+              .then(() => refreshWorkspace(currentProjectId()));
+          }).catch((error: unknown) => {
+            pushToast(error instanceof Error ? error.message : "Could not change the doc type.", "danger");
           });
         }}
         scopeNodes={scopeNodes()}
@@ -933,7 +949,7 @@ export function App() {
             pushToast(error instanceof Error ? error.message : "Could not save source path.", "danger");
           });
         }}
-        onCreate={(kind, title, scope, scopePath) => {
+        onCreate={(kind, title, level, scopePath) => {
           void justifyChange({
             title: "Justify create",
             defaultSummary: `Create ${kind}: ${title}`,
@@ -943,7 +959,7 @@ export function App() {
               projectId: currentProjectId(),
               kind,
               title,
-              extraJson: scope === "principle" ? JSON.stringify({ level: "principle" }) : undefined,
+              extraJson: level === "principle" ? JSON.stringify({ level: "principle" }) : undefined,
               change,
             }).then(async (id) => {
               if (scopePath) await persistKnowledgeScope(currentProjectId(), id, scopePath);
@@ -955,27 +971,28 @@ export function App() {
             pushToast(error instanceof Error ? error.message : "Could not create knowledge.", "danger");
           });
         }}
-        onCreateEvidence={({ title, tags, path, scopePath }) => {
+        onCreateDoc={({ title, docType, tags, path, scopePath }) => {
           void justifyChange({
-            title: "Justify create evidence",
-            defaultSummary: `Create evidence: ${title}`,
+            title: "Justify new doc",
+            defaultSummary: `Add ${docType}: ${title}`,
           }).then((change) => {
             if (!change) return;
             return persistKnowledgeCreate({
               projectId: currentProjectId(),
               kind: "doc",
-              ...docTypeFromTags(tags),
+              docType,
+              tags,
               title,
               path,
               change,
             }).then(async (id) => {
               if (scopePath) await persistKnowledgeScope(currentProjectId(), id, scopePath);
               await refreshWorkspace(currentProjectId());
-              activateDetail("knowledge:evidence", id, "evidence");
-              pushToast("Evidence saved locally.", "success");
+              activateDetail("knowledge:docs", id, "doc");
+              pushToast("Doc saved locally.", "success");
             });
           }).catch((error: unknown) => {
-            pushToast(error instanceof Error ? error.message : "Could not create evidence.", "danger");
+            pushToast(error instanceof Error ? error.message : "Could not add the doc.", "danger");
           });
         }}
         onImportProjectSources={() => {
@@ -1000,7 +1017,7 @@ export function App() {
         onContinueFeature={continueFeatureFlow}
         onArchive={(id) => {
           // Archiving is reversible, so it runs at once and the toast offers Undo.
-          const title = workspace().evidence.find((item) => item.id === id)?.title ?? "item";
+          const title = workspace().docs.find((item) => item.id === id)?.title ?? "item";
           const restore = () => void persistKnowledgeArchived(id, false, { summary: `Restore: ${title}`, rationale: "Changed in Desktop" })
             .then(() => refreshWorkspace(currentProjectId()))
             .catch((error: unknown) => pushToast(error instanceof Error ? error.message : "Could not restore.", "danger"));
@@ -1013,14 +1030,14 @@ export function App() {
               pushToast(error instanceof Error ? error.message : "Could not archive.", "danger");
             });
         }}
-        loadArchivedEvidence={async () =>
-          (await loadArchivedKnowledge(currentProjectId(), "evidence")).map((item): ArchivedListItem => ({
+        loadArchivedDocs={async () =>
+          (await loadArchivedKnowledge(currentProjectId(), "doc")).map((item): ArchivedListItem => ({
             id: item.id,
             title: item.title,
             detail: item.tags.join(", "),
             archivedAt: formatArchiveDate(item.archivedAt),
           }))}
-        onRestoreEvidence={async (item) => {
+        onRestoreDoc={async (item) => {
           try {
             await persistKnowledgeArchived(item.id, false, { summary: `Restore: ${item.title}`, rationale: "Changed in Desktop" });
             await refreshWorkspace(currentProjectId());
@@ -1029,7 +1046,7 @@ export function App() {
             pushToast(error instanceof Error ? error.message : "Could not restore.", "danger");
           }
         }}
-        onDeleteEvidence={async (item) => {
+        onDeleteDoc={async (item) => {
           const confirmed = await requestConfirm({
             title: `Delete “${item.title}” permanently?`,
             description: "The item, its body, and its links to other records are removed from this project.",
@@ -1362,9 +1379,9 @@ export function App() {
           />
         </Match>
 
-        <Match when={route().section === "truth" && route().tab === "evidence"}>
+        <Match when={route().section === "truth" && route().tab === "docs"}>
           <KnowledgeSurface
-            tab="evidence"
+            tab="docs"
             tabs={[...SECTION_TABS.truth]}
             activeTab={route().tab}
             tabsLabel="Truth"
@@ -1379,6 +1396,7 @@ export function App() {
             scopeCatalogNodes={scopeNodes()}
             scopeEnvironments={scopeEnvironmentCatalog()}
             onScopeTokensChange={applyScopeTokens}
+            entities={workspace().canonEntities}
             loadFacts={loadFacts}
             loadEvidence={loadCanonEvidence}
             tab="facts"

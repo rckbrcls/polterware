@@ -17,7 +17,7 @@ const decision = {
   tags: ["decision"],
   status: "accepted",
   state: "active",
-  scope: "decision",
+  level: "decision",
   supersededBy: "",
   supersedes: [],
   reviewTrigger: "",
@@ -27,13 +27,13 @@ const decision = {
   entityLinks: [],
 } satisfies WorkspaceDecision;
 
-const principle = { ...decision, id: "decision-2", title: "Evidence over opinion", scope: "principle", state: "proposed" } satisfies WorkspaceDecision;
+const principle = { ...decision, id: "decision-2", title: "Evidence over opinion", level: "principle", state: "proposed" } satisfies WorkspaceDecision;
 
 describe("libraryRowsFromWorkspace", () => {
   it("pins principles above local decisions", () => {
     const rows = libraryRowsFromWorkspace({ decisions: [decision, principle] });
     expect(rows.map((row) => row.id)).toEqual(["decision-2", "decision-1"]);
-    expect(rows[0]?.categoryLabel).toBe("Principle");
+    expect(rows[0]?.levelLabel).toBe("Principle");
   });
 
   it("filters by status, linked, and query", () => {

@@ -5,8 +5,8 @@ import { EntityDocumentCanvas, requestDetailExpanded } from "@polterware/feature
 import { KnowledgeDocumentProperties } from "./knowledge-document-properties";
 import "./knowledge-document.css";
 
-/** Note-style editing for an Evidence item: editable title and tags. */
-export type EvidenceNoteProps = {
+/** Note-style editing for a doc: editable title and tags. */
+export type DocNoteProps = {
   title?: string;
   onTitleChange?: (title: string) => void;
   tags?: readonly string[];
@@ -45,9 +45,10 @@ export function KnowledgeDocumentShell(props: {
   title: string;
   /** Entity icon, shown at 16px before the title in the header trail. */
   icon: JSX.Element;
-  /** Surface path before the title in the header, e.g. ["Truth", "Evidence"]. */
+  /** Surface path before the title in the header, e.g. ["Truth", "Docs"]. */
   trail?: readonly string[];
-  bodyMarkdown: string;
+  /** Omit for documents without a body, such as a Fact. */
+  bodyMarkdown?: string;
   /** Omit for documents whose content is edited through another workflow. */
   onBodyChange?: (md: string) => void;
   tabs?: JSX.Element;
@@ -120,10 +121,12 @@ export function KnowledgeDocumentShell(props: {
               id={`document-title-${entityId}`} value={props.title} onInput={event => props.onTitleChange?.(event.currentTarget.value)}
               onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); editor?.querySelector<HTMLElement>(".ProseMirror")?.focus(); } }} />
           </Show>
-          <div ref={editor} class="pw-document__body">
-            <MarkdownEditor class="pw-md-editor--document" value={props.bodyMarkdown} onChange={props.onBodyChange} editable={Boolean(props.onBodyChange)}
-              placeholder="Add a description…" aria-label={`${props.title} body`} />
-          </div>
+          <Show when={props.bodyMarkdown !== undefined}>
+            <div ref={editor} class="pw-document__body">
+              <MarkdownEditor class="pw-md-editor--document" value={props.bodyMarkdown ?? ""} onChange={props.onBodyChange} editable={Boolean(props.onBodyChange)}
+                placeholder="Add a description…" aria-label={`${props.title} body`} />
+            </div>
+          </Show>
           {props.children}
         </div>
         <Show when={railVisible()}>

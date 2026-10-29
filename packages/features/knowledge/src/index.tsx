@@ -38,20 +38,23 @@ import {
   type ScopeNodeItem,
   type WorkspaceDecision,
   type WorkspaceCanonEntity,
-  type WorkspaceEvidence,
+  type WorkspaceDoc,
+  type DocType,
+  type DecisionLevel,
   type WorkspaceWorkCard,
   type WorkspaceWorkBoard,
   type WorkStage,
 } from "@polterware/feature-shell";
 import { createDetailPanelSelector, detailDisplayFor, detailPanelStore, readRemembered, writeRemembered } from "@polterware/frontend-state";
 import { CreateKnowledgeDialog, type CreateKnowledgeKind } from "./create-knowledge-dialog";
-import { AddEvidenceDialog, type NewEvidenceInput } from "./add-evidence-dialog";
-import type { EvidenceNoteProps } from "./knowledge-document-shell";
+import { AddDocDialog, type NewDocInput } from "./add-doc-dialog";
+import { KnowledgeDocumentNotFound, type DocNoteProps } from "./knowledge-document-shell";
 import { createDocumentAutosave } from "./document-autosave";
 import { DecisionDetail, type DecisionAction } from "./decision-detail";
-import { EvidenceDetail } from "./evidence-detail";
-import { EvidenceEmpty, evidenceFilterEmpty } from "./evidence-empty";
-import { EvidenceTable } from "./evidence-table";
+import { DocDetail } from "./doc-detail";
+import { DocsEmpty, docsFilterEmpty } from "./docs-empty";
+import { DocsTable } from "./docs-table";
+import { DOC_TYPES, docTypeIcon } from "./doc-type";
 import { EntityLinks } from "./entity-links";
 import { LibraryEmpty, libraryFilterEmpty } from "./library-empty";
 import {
@@ -63,12 +66,12 @@ import {
 } from "./library-row";
 import {
   EMPTY_CARD_LIST_FILTERS,
-  EMPTY_EVIDENCE_LIST_FILTERS,
-  distinctEvidenceTags,
-  filterEvidence,
+  EMPTY_DOC_LIST_FILTERS,
+  distinctDocTags,
+  filterDocs,
   filterWorkCards,
   type CardListFilters,
-  type EvidenceListFilters,
+  type DocListFilters,
 } from "./list-filters";
 import { LibraryTable } from "./library-table";
 import { libraryStatusTone } from "./knowledge-document-helpers";
@@ -85,9 +88,10 @@ export { KNOWLEDGE_AGENT_PROMPTS, knowledgePromptsForKind } from "./agent-prompt
 export type { KnowledgeAgentPrompt, KnowledgePromptKind } from "./agent-prompts";
 export type { WorkBoardAction } from "./work-boards";
 export type { DecisionAction } from "./decision-detail";
-export type { NewEvidenceInput } from "./add-evidence-dialog";
+export type { NewDocInput } from "./add-doc-dialog";
 export { WORK_STAGES, workStageLabel } from "./work-stage";
 export { NewFeatureFlow, type FeatureFlowLine } from "./new-feature-flow";
+export { TruthFactsPage } from "./truth-facts-page";
 export type { ChangeEnvelope } from "./change-envelope";
 
 const TABS: TabItem[] = [
@@ -112,18 +116,18 @@ const TABS: TabItem[] = [
     },
   },
   {
-    id: "evidence",
-    label: "Evidence",
+    id: "docs",
+    label: "Docs",
     tooltip: {
-      title: "Project evidence",
+      title: "Docs",
       description:
-        "Markdown notes and project files that back the facts, described only by tags and linked to the Structure.",
+        "Documents, runbooks, and project source files that back the facts, linked to the Structure.",
       icon: FileText,
     },
   },
 ];
 
-type KnowledgeTab = "board" | "specs" | "library" | "evidence";
+type KnowledgeTab = "board" | "specs" | "library" | "docs";
 
 type CollectionTarget = {
   scopeId: string;
@@ -132,15 +136,15 @@ type CollectionTarget = {
 };
 
 function normalizeTab(raw?: string): KnowledgeTab {
-  if (raw === "board" || raw === "library" || raw === "evidence") return raw;
-  if (raw === "sources" || raw === "docs" || raw === "runbooks") return "evidence";
+  if (raw === "board" || raw === "library" || raw === "docs") return raw;
+  if (raw === "evidence" || raw === "sources" || raw === "runbooks") return "docs";
   if (raw === "decisions") return "library";
   return "specs";
 }
 
-/** Library (Decisions) and Evidence share the same detail host. */
+/** Library (Decisions) and Docs share the same detail host. */
 function isLibraryScope(scopeId?: string): boolean {
-  return scopeId === "knowledge:library" || scopeId === "knowledge:evidence";
+  return scopeId === "knowledge:library" || scopeId === "knowledge:docs";
 }
 
 function isCardScope(scopeId?: string): boolean {
@@ -157,13 +161,13 @@ function collectionFingerprint(
 
 export function KnowledgeView(props: {
   decisions?: WorkspaceDecision[];
-  evidence?: WorkspaceEvidence[];
+  docs?: WorkspaceDoc[];
   workCards?: WorkspaceWorkCard[];
   workBoards?: WorkspaceWorkBoard[];
   boardProjectId?: string;
   onBoardAction?: (action: WorkBoardAction) => Promise<string | null>;
   entities?: WorkspaceCanonEntity[];
-  /** Content mode: board, specs, library, or evidence. */
+  /** Content mode: board, specs, library, or docs. */
   tab?: string;
   /** Tab rail supplied by the host section; defaults to the Knowledge tabs. */
   tabs?: TabItem[];
@@ -174,7 +178,7 @@ export function KnowledgeView(props: {
   loading?: boolean;
   error?: string;
   onTabChange?: (tab: string) => void;
-  onOpenEvidence?: (id: string) => void;
+  onOpenDoc?: (id: string) => void;
   onOpenDecision?: (id: string) => void;
   /** Writes one Decision lifecycle move. */
   onDecisionAction?: (decisionId: string, action: DecisionAction) => void;
@@ -185,18 +189,20 @@ export function KnowledgeView(props: {
   onUnlinkEntity?: (linkId: string) => void;
   onSaveBody?: (id: string, body: string) => void;
   onSaveSourcePath?: (id: string, path: string) => void;
-  /** Renames an Evidence item (debounced). */
+  /** Renames a doc (debounced). */
   onSaveTitle?: (id: string, title: string) => void;
-  /** Replaces the tags of an Evidence item. */
+  /** Replaces the tags of a doc. */
   onSaveTags?: (id: string, tags: string[]) => void;
-  onCreate?: (kind: "decision", title: string, scope?: "principle" | "decision", scopePath?: string) => void;
+  /** Changes what a doc is: a document, a runbook, or a source file. */
+  onSaveDocType?: (id: string, docType: DocType) => void;
+  onCreate?: (kind: "decision", title: string, level?: DecisionLevel, scopePath?: string) => void;
   /** Structure nodes offered by the scope pickers; the global scope preselects new items. */
   scopeNodes?: ScopeNodeItem[];
   /** Path of the active global scope, used as the default for new items. */
   activeScopePath?: string;
-  /** Writes the Structure scope of a Decision or Evidence item as a node path; empty clears it. */
+  /** Writes the scope of a Decision or doc as a Structure node path; empty clears it. */
   onSetScope?: (id: string, path: string) => void;
-  onCreateEvidence?: (input: NewEvidenceInput) => void;
+  onCreateDoc?: (input: NewDocInput) => void;
   onImportProjectSources?: () => void;
   importBusy?: boolean;
   onCreateCard?: (title: string, stage?: WorkStage) => void;
@@ -205,10 +211,10 @@ export function KnowledgeView(props: {
   /** Reopens the flow for a card in shape or plan. */
   onContinueFeature?: (slug: string) => void;
   onArchive?: (id: string) => void;
-  /** Lists archived Evidence; when set, the Evidence tab shows the archive toggle. */
-  loadArchivedEvidence?: () => Promise<ArchivedListItem[]>;
-  onRestoreEvidence?: (item: ArchivedListItem) => Promise<void>;
-  onDeleteEvidence?: (item: ArchivedListItem) => Promise<void>;
+  /** Lists archived docs; when set, the Docs tab shows the archive toggle. */
+  loadArchivedDocs?: () => Promise<ArchivedListItem[]>;
+  onRestoreDoc?: (item: ArchivedListItem) => Promise<void>;
+  onDeleteDoc?: (item: ArchivedListItem) => Promise<void>;
   onRemoveCard?: (slug: string) => void;
   onSetCardStage?: (slug: string, stage: WorkStage) => Promise<boolean> | void;
   scopeTokens?: readonly ScopeFilterToken[];
@@ -227,13 +233,13 @@ export function KnowledgeView(props: {
   /** List only exists inside a board, so both card tabs show the board picker until one is open. */
   const boardList = () => cardTab() && !boardNavigation().isOpen;
   const libraryTab = () => tab() === "library";
-  const evidenceTab = () => tab() === "evidence";
+  const docsTab = () => tab() === "docs";
   const [showArchived, setShowArchived] = createSignal(false);
   createEffect(on(tab, () => setShowArchived(false), { defer: true }));
-  const archivedEvidenceView = () => evidenceTab() && showArchived() && Boolean(props.loadArchivedEvidence);
-  const [archivedEvidence, { refetch: refetchArchivedEvidence }] = createResource(
-    () => (archivedEvidenceView() ? true : undefined),
-    async () => (await props.loadArchivedEvidence?.()) ?? [],
+  const archivedDocsView = () => docsTab() && showArchived() && Boolean(props.loadArchivedDocs);
+  const [archivedDocs, { refetch: refetchArchivedDocs }] = createResource(
+    () => (archivedDocsView() ? true : undefined),
+    async () => (await props.loadArchivedDocs?.()) ?? [],
   );
   const [archiveBusy, setArchiveBusy] = createSignal(false);
   async function runArchiveAction(action: (() => Promise<void>) | undefined) {
@@ -241,14 +247,14 @@ export function KnowledgeView(props: {
     setArchiveBusy(true);
     try {
       await action();
-      await refetchArchivedEvidence();
+      await refetchArchivedDocs();
     } finally {
       setArchiveBusy(false);
     }
   }
   const railItems = () => props.tabs ?? TABS;
-  const [evidenceFilters, setEvidenceFilters] = createSignal<EvidenceListFilters>({
-    ...EMPTY_EVIDENCE_LIST_FILTERS,
+  const [docFilters, setDocFilters] = createSignal<DocListFilters>({
+    ...EMPTY_DOC_LIST_FILTERS,
   });
   const [libraryFilters, setLibraryFilters] = createSignal<LibraryFilters>({
     ...EMPTY_LIBRARY_FILTERS,
@@ -261,9 +267,9 @@ export function KnowledgeView(props: {
   const [createOpen, setCreateOpen] = createSignal(false);
   // The column a card is being added to from the board; shape when added from the toolbar.
   const [createStage, setCreateStage] = createSignal<WorkStage | undefined>();
-  const [evidenceAddOpen, setEvidenceAddOpen] = createSignal(false);
-  const canAddEvidence = () =>
-    evidenceTab() && Boolean(props.onCreateEvidence || props.onImportProjectSources);
+  const [docAddOpen, setDocAddOpen] = createSignal(false);
+  const canAddDoc = () =>
+    docsTab() && Boolean(props.onCreateDoc || props.onImportProjectSources);
   const scopeId = createMemo(() => `knowledge:${tab()}`);
   const activeTarget = createDetailPanelSelector((state) => state.activeTarget);
 
@@ -287,13 +293,13 @@ export function KnowledgeView(props: {
     pathAutosave.dispose();
   });
 
-  /** Tags already used by Evidence items and Decisions, offered when adding a tag. */
+  /** Tags already used by docs and Decisions, offered when adding a tag. */
   const tagSuggestions = createMemo(() =>
-    [...new Set([...distinctEvidenceTags(props.evidence ?? []), ...(props.decisions ?? []).flatMap((item) => item.tags)])].sort(),
+    [...new Set([...distinctDocTags(props.docs ?? []), ...(props.decisions ?? []).flatMap((item) => item.tags)])].sort(),
   );
 
-  /** Note-style editing (title + tags) for one Evidence item, when the host can persist it. */
-  function evidenceNote(id: string, title: string, tags: readonly string[]): EvidenceNoteProps | undefined {
+  /** Note-style editing (title + tags) for one doc, when the host can persist it. */
+  function docNote(id: string, title: string, tags: readonly string[]): DocNoteProps | undefined {
     if (!props.onSaveTitle && !props.onSaveTags) return undefined;
     return {
       title: titleOverrides()[id] ?? title,
@@ -413,21 +419,28 @@ export function KnowledgeView(props: {
       linkedField("Decision"),
     ],
   });
-  const evidencePageFilters = createPageFilters({
-    surface: "truth.evidence",
+  const docPageFilters = createPageFilters({
+    surface: "truth.docs",
     scope: scopeFor(true),
     fields: () => [
+      {
+        id: "type",
+        label: "Type",
+        kind: "multi",
+        icon: () => <FileText size={14} aria-hidden />,
+        options: DOC_TYPES.map((type) => ({ id: type.id, label: type.label, icon: () => docTypeIcon(type.id, 14) })),
+      },
       {
         id: "tags",
         label: "Tag",
         kind: "multi",
         icon: () => <FileText size={14} aria-hidden />,
-        options: distinctEvidenceTags(props.evidence ?? []).map((name) => ({ id: name, label: name })),
+        options: distinctDocTags(props.docs ?? []).map((name) => ({ id: name, label: name })),
       },
-      linkedField("Evidence"),
+      linkedField("Doc"),
     ],
   });
-  const pageFilters = () => (cardTab() ? cardPageFilters : evidenceTab() ? evidencePageFilters : libraryPageFilters);
+  const pageFilters = () => (cardTab() ? cardPageFilters : docsTab() ? docPageFilters : libraryPageFilters);
 
   const libraryRows = createMemo(() =>
     filterLibraryRows(allLibraryRows(), libraryFilters()).filter((row) =>
@@ -435,9 +448,9 @@ export function KnowledgeView(props: {
     ),
   );
 
-  const evidenceRows = createMemo(() =>
-    filterEvidence(props.evidence ?? [], evidenceFilters()).filter((item) =>
-      matchClauses(item, evidencePageFilters.pageClauses(), { tags: (entry) => entry.tags, linked: (entry) => entry.entityLinks.length > 0 }),
+  const docRows = createMemo(() =>
+    filterDocs(props.docs ?? [], docFilters()).filter((item) =>
+      matchClauses(item, docPageFilters.pageClauses(), { type: (entry) => entry.docType, tags: (entry) => entry.tags, linked: (entry) => entry.entityLinks.length > 0 }),
     ),
   );
 
@@ -459,11 +472,11 @@ export function KnowledgeView(props: {
           entityId: row.id,
           entityKind: row.entityKind,
         }))
-      : evidenceTab()
-      ? evidenceRows().map((item) => ({
+      : docsTab()
+      ? docRows().map((item) => ({
           scopeId: scope,
           entityId: item.id,
-          entityKind: "evidence",
+          entityKind: "doc",
         }))
       : tab() === "board" && boardNavigation().isOpen
         ? cards().map((card) => ({
@@ -512,10 +525,10 @@ export function KnowledgeView(props: {
       : undefined;
   });
 
-  const evidenceItem = createMemo((): WorkspaceEvidence | undefined => {
+  const docItem = createMemo((): WorkspaceDoc | undefined => {
     const target = activeTarget();
-    return target?.scopeId === "knowledge:evidence" && target.entityKind === "evidence"
-      ? (props.evidence ?? []).find((item) => item.id === target.entityId)
+    return target?.scopeId === "knowledge:docs" && target.entityKind === "doc"
+      ? (props.docs ?? []).find((item) => item.id === target.entityId)
       : undefined;
   });
 
@@ -526,9 +539,9 @@ export function KnowledgeView(props: {
       : undefined;
   });
 
-  function activate(entityId: string, entityKind: "evidence" | "decision" | "card") {
+  function activate(entityId: string, entityKind: "doc" | "decision" | "card") {
     openDetail({ scopeId: scopeId(), entityId, entityKind });
-    if (entityKind === "evidence") props.onOpenEvidence?.(entityId);
+    if (entityKind === "doc") props.onOpenDoc?.(entityId);
     else if (entityKind === "decision") props.onOpenDecision?.(entityId);
     else props.onOpenCard?.(entityId);
   }
@@ -554,12 +567,12 @@ export function KnowledgeView(props: {
           setCardFilters((current) => ({ ...current, query: value })),
       };
     }
-    if (evidenceTab()) {
+    if (docsTab()) {
       return {
         placeholder: "Search",
-        value: evidenceFilters().query,
+        value: docFilters().query,
         onInput: (value: string) =>
-          setEvidenceFilters((current) => ({ ...current, query: value })),
+          setDocFilters((current) => ({ ...current, query: value })),
       };
     }
     return {
@@ -571,14 +584,14 @@ export function KnowledgeView(props: {
   });
 
   const createLabel = createMemo(() => {
-    if (evidenceTab()) return "Add evidence";
+    if (docsTab()) return "Add doc";
     if (cardTab()) return "New card";
     return "New Decision";
   });
 
   function linksFor(
     knowledgeId: string,
-    links: WorkspaceDecision["entityLinks"] | WorkspaceEvidence["entityLinks"],
+    links: WorkspaceDecision["entityLinks"] | WorkspaceDoc["entityLinks"],
   ) {
     return (
       <EntityLinks
@@ -602,13 +615,13 @@ export function KnowledgeView(props: {
 
   function changeTab(next: string) {
     setLibraryFilters({ ...EMPTY_LIBRARY_FILTERS });
-    setEvidenceFilters({ ...EMPTY_EVIDENCE_LIST_FILTERS });
+    setDocFilters({ ...EMPTY_DOC_LIST_FILTERS });
     setCardFilters({ ...EMPTY_CARD_LIST_FILTERS });
     cardPageFilters.clearPage();
     libraryPageFilters.clearPage();
-    evidencePageFilters.clearPage();
+    docPageFilters.clearPage();
     setCreateOpen(false);
-    setEvidenceAddOpen(false);
+    setDocAddOpen(false);
     props.onTabChange?.(next);
   }
 
@@ -616,6 +629,16 @@ export function KnowledgeView(props: {
   const pageRoute = () => {
     const target = expandedDetail();
     return target !== null && detailDisplayFor(target.entityKind) === "page";
+  };
+
+  // A page route whose entity is gone (archived, or a stale link) shows a not-found page instead of nothing.
+  const missingPage = (): string | undefined => {
+    const target = expandedDetail();
+    if (props.loading || !pageRoute() || !target || decision() || docItem() || card()) return undefined;
+    if (target.entityKind === "doc" && target.scopeId === "knowledge:docs") return "Doc";
+    if (target.entityKind === "decision" && isLibraryScope(target.scopeId)) return "Decision";
+    if (target.entityKind === "card" && isCardScope(target.scopeId)) return "Card";
+    return undefined;
   };
 
   return (
@@ -660,11 +683,11 @@ export function KnowledgeView(props: {
             </Show>
           </PageToolbar.Leading>
           <PageToolbar.Actions>
-            <Show when={evidenceTab() && props.loadArchivedEvidence}>
+            <Show when={docsTab() && props.loadArchivedDocs}>
               <Button
                 variant="texture"
                 size="icon"
-                aria-label={showArchived() ? "Back to evidence" : "Archived evidence"}
+                aria-label={showArchived() ? "Back to docs" : "Archived docs"}
                 aria-pressed={showArchived()}
                 selected={showArchived()}
                 onClick={() => setShowArchived((value) => !value)}
@@ -672,7 +695,7 @@ export function KnowledgeView(props: {
                 <Archive size={14} />
               </Button>
             </Show>
-            <Show when={!archivedEvidenceView()}>
+            <Show when={!archivedDocsView()}>
               <SearchBar
                 placeholder={listSearch().placeholder}
                 value={listSearch().value}
@@ -680,22 +703,22 @@ export function KnowledgeView(props: {
                 aria-label={listSearch().placeholder}
               />
               <FilterPopover
-                ariaLabel={cardTab() ? "Card filters" : evidenceTab() ? "Evidence filters" : "Library filters"}
-                title={cardTab() ? "Filter cards" : evidenceTab() ? "Filter evidence" : "Filter library"}
+                ariaLabel={cardTab() ? "Card filters" : docsTab() ? "Doc filters" : "Library filters"}
+                title={cardTab() ? "Filter cards" : docsTab() ? "Filter docs" : "Filter library"}
                 shortcut
                 fields={pageFilters().fields()}
                 clauses={pageFilters().clauses()}
                 onClausesChange={pageFilters().onClausesChange}
                 saved={pageFilters().saved()}
               />
-              <Show when={cardTab() ? props.onCreateCard : evidenceTab() ? canAddEvidence() : props.onCreate}>
+              <Show when={cardTab() ? props.onCreateCard : docsTab() ? canAddDoc() : props.onCreate}>
                 <ToolbarIconButton
                   label={createLabel()}
                   onClick={() =>
                     cardTab() && props.onNewFeature
                       ? props.onNewFeature()
-                      : tab() === "evidence"
-                        ? setEvidenceAddOpen(true)
+                      : docsTab()
+                        ? setDocAddOpen(true)
                         : setCreateOpen(true)}
                 >
                   <Plus size={14} />
@@ -737,40 +760,40 @@ export function KnowledgeView(props: {
           </PageContent>
         </Show>
 
-        <Show when={archivedEvidenceView()}>
+        <Show when={archivedDocsView()}>
           <PageContent class="p-0">
-            <Show when={!archivedEvidence.loading} fallback={<PageLoading layout="table" label="Loading archived evidence…" />}>
+            <Show when={!archivedDocs.loading} fallback={<PageLoading layout="table" label="Loading archived docs…" />}>
               <ArchivedList
-                items={archivedEvidence() ?? []}
-                label="Archived evidence"
+                items={archivedDocs() ?? []}
+                label="Archived docs"
                 icon={<FileText size={16} />}
                 busy={archiveBusy()}
-                onRestore={(item) => void runArchiveAction(props.onRestoreEvidence ? () => props.onRestoreEvidence!(item) : undefined)}
-                onDelete={(item) => void runArchiveAction(props.onDeleteEvidence ? () => props.onDeleteEvidence!(item) : undefined)}
+                onRestore={(item) => void runArchiveAction(props.onRestoreDoc ? () => props.onRestoreDoc!(item) : undefined)}
+                onDelete={(item) => void runArchiveAction(props.onDeleteDoc ? () => props.onDeleteDoc!(item) : undefined)}
               />
             </Show>
           </PageContent>
         </Show>
 
-        <Show when={evidenceTab() && !archivedEvidenceView()}>
+        <Show when={docsTab() && !archivedDocsView()}>
           <PageContent class="p-0">
             <Show
-              when={(props.evidence ?? []).length > 0}
+              when={(props.docs ?? []).length > 0}
               fallback={
-                <EvidenceEmpty
-                  onCreate={canAddEvidence() ? () => setEvidenceAddOpen(true) : undefined}
+                <DocsEmpty
+                  onCreate={canAddDoc() ? () => setDocAddOpen(true) : undefined}
                   onImport={props.onImportProjectSources ? () => props.onImportProjectSources?.() : undefined}
                   importBusy={props.importBusy}
                 />
               }
             >
-              <Show when={evidenceRows().length > 0} fallback={evidenceFilterEmpty()}>
-                <EvidenceTable
-                  rows={evidenceRows()}
+              <Show when={docRows().length > 0} fallback={docsFilterEmpty()}>
+                <DocsTable
+                  rows={docRows()}
                   activeRowId={
                     activeTarget()?.scopeId === scopeId() ? activeTarget()?.entityId : null
                   }
-                  onActivate={(id) => activate(id, "evidence")}
+                  onActivate={(id) => activate(id, "doc")}
                 />
               </Show>
             </Show>
@@ -888,17 +911,18 @@ export function KnowledgeView(props: {
             scopeNodes={props.scopeNodes}
             onScopeChange={props.onSetScope ? (path) => props.onSetScope?.(item().id, path) : undefined}
             links={linksFor(item().id, item().entityLinks)}
-            note={evidenceNote(item().id, item().title, item().tags)}
+            note={docNote(item().id, item().title, item().tags)}
           />
         )}
       </Show>
-      <Show when={evidenceItem()}>
+      <Show when={docItem()}>
         {(item) => (
-          <EvidenceDetail
-            evidence={item()}
+          <DocDetail
+            doc={item()}
             bodyMarkdown={bodyOverrides()[item().id] ?? item().bodyMarkdown}
             pathValue={pathOverrides()[item().id] ?? item().path}
-            note={evidenceNote(item().id, item().title, item().tags)}
+            onDocTypeChange={props.onSaveDocType ? (docType) => props.onSaveDocType?.(item().id, docType) : undefined}
+            note={docNote(item().id, item().title, item().tags)}
             onBodyChange={(markdown) => {
               noteBodyChange(item().id, markdown, item().bodyMarkdown);
             }}
@@ -943,31 +967,34 @@ export function KnowledgeView(props: {
           />
         )}
       </Show>
+      <Show when={missingPage()}>
+        {(kindLabel) => <KnowledgeDocumentNotFound kindLabel={kindLabel()} />}
+      </Show>
       <CreateKnowledgeDialog
         open={createOpen()}
         kind={createKind()}
         scopeNodes={props.scopeNodes}
         defaultScopePath={props.activeScopePath}
         onClose={() => { setCreateOpen(false); setCreateStage(undefined); }}
-        onSubmit={(title, kind, scope, scopePath) => {
+        onSubmit={(title, kind, level, scopePath) => {
           if (kind === "card") props.onCreateCard?.(title, createStage());
-          else props.onCreate?.("decision", title, scope, scopePath);
+          else props.onCreate?.("decision", title, level, scopePath);
           setCreateOpen(false);
           setCreateStage(undefined);
         }}
       />
-      <AddEvidenceDialog
-        open={evidenceAddOpen()}
+      <AddDocDialog
+        open={docAddOpen()}
         scopeNodes={props.scopeNodes}
         defaultScopePath={props.activeScopePath}
-        onClose={() => setEvidenceAddOpen(false)}
+        onClose={() => setDocAddOpen(false)}
         importBusy={props.importBusy}
         tagSuggestions={tagSuggestions()}
         onCreate={
-          props.onCreateEvidence
+          props.onCreateDoc
             ? (input) => {
-                props.onCreateEvidence?.(input);
-                setEvidenceAddOpen(false);
+                props.onCreateDoc?.(input);
+                setDocAddOpen(false);
               }
             : undefined
         }
@@ -975,7 +1002,7 @@ export function KnowledgeView(props: {
           props.onImportProjectSources
             ? () => {
                 props.onImportProjectSources?.();
-                setEvidenceAddOpen(false);
+                setDocAddOpen(false);
               }
             : undefined
         }

@@ -8,6 +8,8 @@ export type CanonFactRow = {
   source: string;
   actor: string;
   entityId: string;
+  /** Structure node the Fact is scoped to; empty is the whole project. */
+  scopeNodeId: string;
   observedAt: string;
   createdAt: string;
   updatedAt: string;

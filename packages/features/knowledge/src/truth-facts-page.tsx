@@ -1,5 +1,5 @@
-import { createSignal } from "solid-js";
-import { EntityDetailHost, createPageFilters, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
+import { Show, createSignal } from "solid-js";
+import { EntityDetailHost, createPageFilters, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem, type WorkspaceCanonEntity } from "@polterware/feature-shell";
 import {
   FilterPopover,
   ActiveFilterBar,
@@ -13,16 +13,10 @@ import {
   type FilterField,
   type TabItem,
 } from "@polterware/frontend-design-system";
-import { CanonFactsPanel, type CanonJustifyChange } from "./canon-facts-panel";
+import { CanonFactsPanel, factPageOpen, type CanonJustifyChange } from "./canon-facts-panel";
+import { FACT_KINDS } from "./fact-kind";
 
-const TRUTH_CLASSES = [
-  { id: "declared", label: "Declared", tone: "syncing" },
-  { id: "observed", label: "Observed", tone: "ok" },
-  { id: "inferred", label: "Inferred", tone: "warn" },
-  { id: "verified", label: "Verified", tone: "ok" },
-] as const;
-
-/** Truth → Facts: Canon facts and their evidence. */
+/** Truth → Facts: statements about the project with their subject, scope, and evidence. */
 export function TruthFactsPage(props: {
   projectId: string;
   scopeNodes?: readonly string[];
@@ -37,6 +31,8 @@ export function TruthFactsPage(props: {
   scopeCatalogNodes?: readonly ScopeNodeItem[];
   scopeEnvironments?: readonly EnvironmentItem[];
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
+  /** Canon entities, to name and pick a Fact's subject. */
+  entities?: readonly WorkspaceCanonEntity[];
 }) {
   const [query, setQuery] = createSignal("");
   const [busy, setBusy] = createSignal(false);
@@ -44,11 +40,11 @@ export function TruthFactsPage(props: {
 
   const fields = (): FilterField[] => [
     {
-      id: "truth",
-      label: "Truth",
+      id: "kind",
+      label: "Kind",
       kind: "multi",
       icon: () => <StatusDot tone="ok" showLabel={false} />,
-      options: TRUTH_CLASSES.map((option) => ({
+      options: FACT_KINDS.map((option) => ({
         id: option.id,
         label: option.label,
         icon: () => <StatusDot tone={option.tone} showLabel={false} />,
@@ -69,6 +65,7 @@ export function TruthFactsPage(props: {
 
   return (
     <EntityDetailHost>
+      <Show when={!factPageOpen()}>
       <PageToolbar.Root>
         <PageToolbar.Tabs>
           <Tabs
@@ -109,10 +106,14 @@ export function TruthFactsPage(props: {
         onClausesChange={filters.onClausesChange}
         saved={filters.saved()}
       />
-      <PageContent class="flex min-h-0 flex-1 flex-col p-0">
+      </Show>
+      {/* The panel stays mounted under a Fact page so its list and selection survive; its box must not cover the page. */}
+      <PageContent class={factPageOpen() ? "hidden" : "flex min-h-0 flex-1 flex-col p-0"}>
         <CanonFactsPanel
           projectId={props.projectId}
           scopeNodes={props.scopeNodes}
+          entities={props.entities}
+          scopeCatalogNodes={props.scopeCatalogNodes}
           loadFacts={props.loadFacts}
           loadEvidence={props.loadEvidence}
           query={query()}

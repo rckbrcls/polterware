@@ -10,7 +10,7 @@ describe("knowledge agent prompts", () => {
   it("offers three prompts per kind", () => {
     expect(knowledgePromptsForKind("card")).toHaveLength(3);
     expect(knowledgePromptsForKind("decision")).toHaveLength(3);
-    expect(knowledgePromptsForKind("evidence")).toHaveLength(3);
+    expect(knowledgePromptsForKind("doc")).toHaveLength(3);
   });
 
   it("starts every prompt from the project's own state", () => {

@@ -1,19 +1,21 @@
 import { Show, type JSX } from "solid-js";
-import { Button, FileText } from "@polterware/frontend-design-system";
-import type { ScopeNodeItem, WorkspaceEvidence } from "@polterware/feature-shell";
+import { Button, Select } from "@polterware/frontend-design-system";
+import type { DocType, ScopeNodeItem, WorkspaceDoc } from "@polterware/feature-shell";
+import { DOC_TYPES, docTypeIcon, docTypeLabel, docTypeOptions } from "./doc-type";
 import { EditablePath } from "./editable-path";
 import { KnowledgeDocumentProperty } from "./knowledge-document-properties";
 import { ScopePicker, scopePathOf } from "./scope-picker";
-import { KnowledgeDocumentNotFound, KnowledgeDocumentShell, type EvidenceNoteProps } from "./knowledge-document-shell";
+import { KnowledgeDocumentNotFound, KnowledgeDocumentShell, type DocNoteProps } from "./knowledge-document-shell";
 
-/** One page for every Evidence item: a markdown note with tags and an optional file path. */
-export function EvidenceDetail(props: {
-  evidence: WorkspaceEvidence | null | undefined;
+/** One page for every doc: a markdown note with its type, tags, and an optional file path. */
+export function DocDetail(props: {
+  doc: WorkspaceDoc | null | undefined;
   bodyMarkdown: string;
   pathValue: string;
-  note?: EvidenceNoteProps;
+  note?: DocNoteProps;
   onBodyChange: (markdown: string) => void;
   onPathChange?: (path: string) => void;
+  onDocTypeChange?: (docType: DocType) => void;
   onArchive?: () => void;
   scopeNodes?: ScopeNodeItem[];
   /** Writes the Structure scope as a node path; empty clears it. */
@@ -21,13 +23,13 @@ export function EvidenceDetail(props: {
   links?: JSX.Element;
 }) {
   return (
-    <Show when={props.evidence} fallback={<KnowledgeDocumentNotFound kindLabel="Evidence" />}>
-      {(evidence) => (
+    <Show when={props.doc} fallback={<KnowledgeDocumentNotFound kindLabel="Doc" />}>
+      {(doc) => (
         <KnowledgeDocumentShell
-          trail={["Truth", "Evidence"]}
-          entityId={evidence().id}
-          title={props.note?.title ?? evidence().title}
-          icon={<FileText size={32} />}
+          trail={["Truth", "Docs"]}
+          entityId={doc().id}
+          title={props.note?.title ?? doc().title}
+          icon={docTypeIcon(doc().docType, 32)}
           bodyMarkdown={props.bodyMarkdown}
           onBodyChange={props.onBodyChange}
           onTitleChange={props.note?.onTitleChange}
@@ -36,14 +38,27 @@ export function EvidenceDetail(props: {
           onTagsChange={props.note?.onTagsChange}
           properties={
             <>
+              <KnowledgeDocumentProperty label="Type">
+                <Show when={props.onDocTypeChange} fallback={docTypeLabel(doc().docType)}>
+                  <Select
+                    options={docTypeOptions()}
+                    value={doc().docType}
+                    onChange={(value) => {
+                      if (DOC_TYPES.some((type) => type.id === value) && value !== doc().docType) props.onDocTypeChange?.(value as DocType);
+                    }}
+                    aria-label="Doc type"
+                    class="w-full min-w-0 max-w-[20rem]"
+                  />
+                </Show>
+              </KnowledgeDocumentProperty>
               <KnowledgeDocumentProperty label="Path">
                 <EditablePath value={props.pathValue} onChange={props.onPathChange} />
               </KnowledgeDocumentProperty>
               <Show when={props.onScopeChange}>
-                <KnowledgeDocumentProperty label="Structure scope">
+                <KnowledgeDocumentProperty label="Scope">
                   <ScopePicker
                     nodes={props.scopeNodes ?? []}
-                    value={scopePathOf(props.scopeNodes ?? [], evidence().scopeNodeId)}
+                    value={scopePathOf(props.scopeNodes ?? [], doc().scopeNodeId)}
                     onChange={(path) => props.onScopeChange?.(path)}
                     class="w-full min-w-0 max-w-[20rem]"
                   />

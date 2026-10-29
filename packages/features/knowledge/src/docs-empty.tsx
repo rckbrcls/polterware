@@ -1,7 +1,7 @@
 import { Button, PageEmpty } from "@polterware/frontend-design-system";
 import { KnowledgePromptGrid } from "./knowledge-prompt-grid";
 
-export function EvidenceEmpty(props: {
+export function DocsEmpty(props: {
   onCreate?: () => void;
   onImport?: () => void;
   importBusy?: boolean;
@@ -16,7 +16,7 @@ export function EvidenceEmpty(props: {
         ) : null}
         {props.onCreate ? (
           <Button size="sm" variant="secondary" onClick={() => props.onCreate?.()}>
-            Add evidence
+            Add doc
           </Button>
         ) : null}
       </div>
@@ -24,13 +24,13 @@ export function EvidenceEmpty(props: {
 
   return (
     <div class="flex h-full min-h-[200px] w-full items-center justify-center p-8">
-      <PageEmpty title="No evidence yet" mood="sleeping" action={action()}>
-        <KnowledgePromptGrid kind="evidence" />
+      <PageEmpty title="No docs yet" mood="sleeping" action={action()}>
+        <KnowledgePromptGrid kind="doc" />
       </PageEmpty>
     </div>
   );
 }
 
-export function evidenceFilterEmpty() {
+export function docsFilterEmpty() {
   return <PageEmpty title="No matches" mood="lost" />;
 }

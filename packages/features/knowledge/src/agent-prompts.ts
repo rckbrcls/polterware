@@ -1,6 +1,6 @@
 import type { IconTileTone } from "@polterware/frontend-design-system";
 
-export type KnowledgePromptKind = "card" | "decision" | "evidence";
+export type KnowledgePromptKind = "card" | "decision" | "doc";
 
 export type KnowledgeAgentPrompt = {
   id: string;
@@ -97,22 +97,22 @@ ${CLOSING}`,
   },
 ];
 
-const EVIDENCE_PROMPTS: KnowledgeAgentPrompt[] = [
+const DOC_PROMPTS: KnowledgeAgentPrompt[] = [
   {
-    id: "prompt-evidence-facts",
-    kind: "evidence",
+    id: "prompt-doc-facts",
+    kind: "doc",
     title: "Record facts",
     description: "Declare what the code shows and link its evidence.",
     tone: "knowledge",
     prompt: `${PREAMBLE}
 
-Read the registered evidence (sources, docs, and runbooks) and the code. Record the important facts about this project as Facts: what it is built with, how it runs, and what it depends on. Set the kind to observed when you saw it in the code, and link each Fact to the existing evidence ids that back it. Scope each Fact to the Structure node it describes.
+Read the registered docs (documents, runbooks, and sources) and the code. Record the important facts about this project as Facts: what it is built with, how it runs, and what it depends on. Set the kind to observed when you saw it in the code, and link each Fact to the existing evidence ids that back it. Scope each Fact to the Structure node it describes.
 
 ${CLOSING}`,
   },
   {
-    id: "prompt-evidence-verify",
-    kind: "evidence",
+    id: "prompt-doc-verify",
+    kind: "doc",
     title: "Back unverified facts",
     description: "Find Facts without evidence and support them.",
     tone: "execution",
@@ -123,21 +123,21 @@ Run \`polterware inbox\` and take the Verify items: Facts that have no evidence.
 ${CLOSING}`,
   },
   {
-    id: "prompt-evidence-gaps",
-    kind: "evidence",
-    title: "Find evidence gaps",
-    description: "List the important files not registered as evidence.",
+    id: "prompt-doc-gaps",
+    kind: "doc",
+    title: "Find doc gaps",
+    description: "List the important files not registered as docs.",
     tone: "data",
     prompt: `${PREAMBLE}
 
-Compare the registered evidence with the project tree and list the files that should be evidence but are not: READMEs, API contracts, infrastructure definitions, runbooks, and architecture docs. Do not write anything. Give me the paths and why each one matters, so I can import them from the Evidence page.`,
+Compare the registered docs with the project tree and list the files that should be docs but are not: READMEs, API contracts, infrastructure definitions, runbooks, and architecture docs. Do not write anything. Give me the paths and why each one matters, so I can import them from the Docs page.`,
   },
 ];
 
 export const KNOWLEDGE_AGENT_PROMPTS: KnowledgeAgentPrompt[] = [
   ...CARD_PROMPTS,
   ...DECISION_PROMPTS,
-  ...EVIDENCE_PROMPTS,
+  ...DOC_PROMPTS,
 ];
 
 export function knowledgePromptsForKind(kind: KnowledgePromptKind): KnowledgeAgentPrompt[] {

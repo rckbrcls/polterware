@@ -94,8 +94,8 @@ export type WorkspaceDecision = {
   status: string;
   /** Lifecycle state: proposed, active, challenged, or superseded. */
   state: DecisionState;
-  /** A principle applies to the whole project and stays pinned above local decisions. */
-  scope: "principle" | "decision";
+  /** A principle applies to the whole project and stays pinned above the other decisions. */
+  level: DecisionLevel;
   /** Title of the decision that replaced this one; empty when none. */
   supersededBy: string;
   /** Titles of the decisions this one replaced. */
@@ -110,6 +110,9 @@ export type WorkspaceDecision = {
   entityLinks: WorkspaceEntityLink[];
 };
 
+/** A principle applies to the whole project; a decision is scoped like any other entity. */
+export type DecisionLevel = "principle" | "decision";
+
 /** What a doc is: a document, a runbook (a procedure), or a registered project source file. */
 export type DocType = "doc" | "runbook" | "source";
 
@@ -117,16 +120,16 @@ export type DocType = "doc" | "runbook" | "source";
  * One doc: a markdown note, optionally pointing at a project file. Its type is
  * `docType`; tags are free labels.
  */
-export type WorkspaceEvidence = {
+export type WorkspaceDoc = {
   id: string;
   title: string;
   summary: string;
   bodyMarkdown: string;
   docType: DocType;
   tags: string[];
-  /** Project-relative path of the file this evidence points at; empty for a plain note. */
+  /** Project-relative path of the file this doc points at; empty for a plain note. */
   path: string;
-  /** Structure node the evidence is scoped to; unset means the whole project. */
+  /** Structure node the doc is scoped to; unset means the whole project. */
   scopeNodeId?: string;
   owner: string;
   updatedAt: string;

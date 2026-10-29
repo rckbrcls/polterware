@@ -723,7 +723,6 @@ describe("lateral DetailPanel", () => {
   it("keeps retained entity surfaces on the shared DetailPanel", () => {
     const featureFiles = [
       "packages/features/settings/src/agent-run-history-card.tsx",
-      "packages/features/settings/src/canon-facts-panel.tsx",
       "packages/features/shell/src/inbox-item-detail.tsx",
       "packages/features/dispatch/src/index.tsx",
     ];

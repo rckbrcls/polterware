@@ -4,7 +4,7 @@ import type {
   EnvironmentKind,
   ProjectSwitcherItem,
   WorkspaceCatalogProvider,
-  WorkspaceEvidence,
+  WorkspaceDoc,
   DocType,
   DecisionState,
   WorkspaceDecision,
@@ -170,10 +170,10 @@ export function docType(value: string): DocType {
 }
 
 /** Docs are the `doc` knowledge items; their type is `docType` and tags are free labels. */
-export function mapEvidence(
+export function mapDocs(
   items: Record<string, unknown>[],
   linksByKnowledge: Map<string, WorkspaceEntityLink[]> = new Map(),
-): WorkspaceEvidence[] {
+): WorkspaceDoc[] {
   return items.filter((item) => asString(item.kind) === "doc").map((item) => {
     const extra = parseJsonObject(asString(item.extraJson));
     const id = asString(item.id);
@@ -240,7 +240,7 @@ export function mapDecisions(
       tags: asStringArray(item.tags),
       status: asString(item.status, "proposed"),
       state: decisionState(asString(item.status)),
-      scope: extra.level === "principle" ? "principle" : "decision",
+      level: extra.level === "principle" ? "principle" : "decision",
       supersededBy: titleById.get(asString(extra.supersededBy)) ?? "",
       supersedes: decisionItems.filter((other) => supersededBy(other) === id).map((other) => asString(other.title)),
       reviewTrigger: asString(extra.reviewTrigger),

@@ -1,15 +1,16 @@
 import { Show, createEffect, createMemo, createSignal } from "solid-js";
-import { A11yDialog, Button, Field, FormStack, Input, TagPicker } from "@polterware/frontend-design-system";
-import type { ScopeNodeItem } from "@polterware/feature-shell";
+import { A11yDialog, Button, Field, FormStack, Input, Select, TagPicker } from "@polterware/frontend-design-system";
+import type { DocType, ScopeNodeItem } from "@polterware/feature-shell";
+import { DOC_TYPES, docTypeOptions } from "./doc-type";
 import { ScopePicker } from "./scope-picker";
 
-export type NewEvidenceInput = { title: string; tags: string[]; path?: string; scopePath?: string };
+export type NewDocInput = { title: string; docType: DocType; tags: string[]; path?: string; scopePath?: string };
 
-/** One dialog to add Evidence: a markdown note, optionally backed by a file path, described only by tags. */
-export function AddEvidenceDialog(props: {
+/** One dialog to add a doc: a markdown note of a type, optionally backed by a file path. */
+export function AddDocDialog(props: {
   open: boolean;
   onClose: () => void;
-  onCreate?: (input: NewEvidenceInput) => void;
+  onCreate?: (input: NewDocInput) => void;
   tagSuggestions?: readonly string[];
   scopeNodes?: ScopeNodeItem[];
   /** Structure node path preselected for the new item; empty is the whole project. */
@@ -18,6 +19,7 @@ export function AddEvidenceDialog(props: {
   importBusy?: boolean;
 }) {
   const [title, setTitle] = createSignal("");
+  const [docType, setDocType] = createSignal<DocType>("doc");
   const [path, setPath] = createSignal("");
   const [tags, setTags] = createSignal<string[]>([]);
   const [scopePath, setScopePath] = createSignal("");
@@ -33,6 +35,7 @@ export function AddEvidenceDialog(props: {
 
   function reset() {
     setTitle("");
+    setDocType("doc");
     setPath("");
     setTags([]);
     setScopePath(props.defaultScopePath ?? "");
@@ -46,14 +49,14 @@ export function AddEvidenceDialog(props: {
   function submit() {
     if (!canSubmit()) return;
     const trimmedPath = path().trim();
-    props.onCreate?.({ title: title().trim(), tags: tags(), ...(trimmedPath ? { path: trimmedPath } : {}), ...(scopePath() ? { scopePath: scopePath() } : {}) });
+    props.onCreate?.({ title: title().trim(), docType: docType(), tags: tags(), ...(trimmedPath ? { path: trimmedPath } : {}), ...(scopePath() ? { scopePath: scopePath() } : {}) });
     reset();
   }
 
   return (
     <A11yDialog
       open={props.open}
-      title="Add evidence"
+      title="Add doc"
       size="lg"
       onClose={close}
       footer={
@@ -82,11 +85,19 @@ export function AddEvidenceDialog(props: {
           <Input
             size="sm"
             value={title()}
-            placeholder="Deploy runbook"
+            placeholder="Deploy the API"
             onInput={(event) => setTitle(event.currentTarget.value)}
           />
         </Field>
-        <Field label="Tags" hint="Describe it with tags, e.g. runbook, documentation, source">
+        <Field label="Type" hint={DOC_TYPES.find((type) => type.id === docType())?.description}>
+          <Select
+            options={docTypeOptions()}
+            value={docType()}
+            onChange={(value) => setDocType(DOC_TYPES.some((type) => type.id === value) ? (value as DocType) : "doc")}
+            aria-label="Doc type"
+          />
+        </Field>
+        <Field label="Tags" hint="Optional labels, e.g. api, recovery">
           <TagPicker
             tags={tagOptions()}
             selectedIds={tags()}
@@ -103,7 +114,7 @@ export function AddEvidenceDialog(props: {
           />
         </Field>
         <Show when={(props.scopeNodes?.length ?? 0) > 0}>
-          <Field label="Structure scope" hint="Optional. Leave on Whole project to show it under every filter">
+          <Field label="Scope" hint="Optional. Leave on Whole project to show it under every filter">
             <ScopePicker nodes={props.scopeNodes ?? []} value={scopePath()} onChange={setScopePath} class="w-full" />
           </Field>
         </Show>

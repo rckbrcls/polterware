@@ -147,7 +147,7 @@ describe("scope node and environment matching", () => {
 
   it("offers env only on Structure, Truth Evidence, and Activity", () => {
     expect(scopeFilterAllowsEnv("structure", "all")).toBe(true);
-    expect(scopeFilterAllowsEnv("truth", "evidence")).toBe(true);
+    expect(scopeFilterAllowsEnv("truth", "docs")).toBe(true);
     expect(scopeFilterAllowsEnv("activity", "all")).toBe(true);
     expect(scopeFilterAllowsEnv("truth", "facts")).toBe(false);
     expect(scopeFilterAllowsEnv("inbox", "all")).toBe(false);

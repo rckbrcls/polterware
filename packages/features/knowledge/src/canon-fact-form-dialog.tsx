@@ -1,5 +1,6 @@
 import { createEffect, createSignal } from "solid-js";
-import { A11yDialog, Button, Field, Input, Select, Textarea, FormStack } from "@polterware/frontend-design-system";
+import { A11yDialog, Button, Field, Select, Textarea, FormStack } from "@polterware/frontend-design-system";
+import type { WorkspaceCanonEntity } from "@polterware/feature-shell";
 import {
   CANON_TRUTH_CLASS_OPTIONS,
   type CanonFactDraft,
@@ -12,6 +13,8 @@ export function CanonFactFormDialog(props: {
   initial?: CanonFactDraft;
   onClose: () => void;
   onSubmit: (draft: CanonFactDraft) => void;
+  /** Canon entities a Fact can be about; none leaves it about the whole project. */
+  entities?: readonly WorkspaceCanonEntity[];
 }) {
   const [statement, setStatement] = createSignal("");
   const [truthClass, setTruthClass] = createSignal<CanonFactTruthClass>("declared");
@@ -42,7 +45,7 @@ export function CanonFactFormDialog(props: {
     <A11yDialog
       open={props.open}
       title={props.mode === "edit" ? "Edit fact" : "Add fact"}
-      description="Canon facts are declared, observed, inferred, or verified statements about the project."
+      description="A fact is a statement about the project: declared, observed in the code, inferred, or verified."
       size="md"
       onClose={() => props.onClose()}
       footer={
@@ -65,18 +68,26 @@ export function CanonFactFormDialog(props: {
             onInput={(event) => setStatement(event.currentTarget.value)}
           />
         </Field>
-        <Field label="Truth class">
+        <Field label="Kind">
           <Select
             options={[...CANON_TRUTH_CLASS_OPTIONS]}
             value={truthClass()}
             onChange={(value) => setTruthClass(value as CanonFactTruthClass)}
           />
         </Field>
-        <Field label="Entity id">
-          <Input
+        <Field label="Subject" hint="The component or environment the fact is about">
+          <Select
+            aria-label="Subject"
+            options={[
+              { value: "", label: "Whole project" },
+              ...(props.entities ?? []).map((entity) => ({ value: entity.id, label: entity.title })),
+              // A subject outside the list (an older id) stays selectable.
+              ...(entityId() && !(props.entities ?? []).some((entity) => entity.id === entityId())
+                ? [{ value: entityId(), label: entityId() }]
+                : []),
+            ]}
             value={entityId()}
-            placeholder="optional Canon entity id"
-            onInput={(event) => setEntityId(event.currentTarget.value)}
+            onChange={setEntityId}
           />
         </Field>
       </FormStack>

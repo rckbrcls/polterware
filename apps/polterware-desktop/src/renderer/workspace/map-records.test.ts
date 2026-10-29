@@ -3,7 +3,7 @@ import {
   decisionState,
   mapDecisions,
   mapConnections,
-  mapEvidence,
+  mapDocs,
   mapEnvironments,
   mapIntegrationResources,
   mapKnowledgeEntityLinks,
@@ -187,7 +187,7 @@ describe("mapDecisions", () => {
 
   it("reads a principle from its level", () => {
     const [principle] = mapDecisions([{ id: "p", kind: "decision", title: "Local first", extraJson: JSON.stringify({ level: "principle" }) }]);
-    expect(principle?.scope).toBe("principle");
+    expect(principle?.level).toBe("principle");
   });
 
   it("lists the live Structure nodes that cite a Decision by id or by number", () => {
@@ -202,7 +202,7 @@ describe("mapDecisions", () => {
   });
 });
 
-describe("mapEvidence", () => {
+describe("mapDocs", () => {
   const records = [
     { id: "d1", kind: "doc", title: "Guide", summary: "How to" },
     { id: "rb", kind: "doc", docType: "runbook", tags: ["ops"], title: "Restore" },
@@ -212,18 +212,18 @@ describe("mapEvidence", () => {
 
   // The core sends protobuf JSON, which omits empty strings, so defaults apply to absent fields.
   it("maps every doc with its type and skips other kinds", () => {
-    const items = mapEvidence(records);
+    const items = mapDocs(records);
     expect(items.map((item) => item.id)).toEqual(["d1", "rb", "s1"]);
     expect(items.map((item) => item.docType)).toEqual(["doc", "runbook", "source"]);
     expect(items[1]).toMatchObject({ tags: ["ops"], path: "", owner: "Platform" });
   });
 
   it("keeps the project-relative path of a file-backed item", () => {
-    expect(mapEvidence(records)[2]).toMatchObject({ title: "README", path: "README.md" });
+    expect(mapDocs(records)[2]).toMatchObject({ title: "README", path: "README.md" });
   });
 
   it("survives malformed extraJson", () => {
-    const [item] = mapEvidence([{ id: "bad", kind: "doc", title: "T", extraJson: "{not json" }]);
+    const [item] = mapDocs([{ id: "bad", kind: "doc", title: "T", extraJson: "{not json" }]);
     expect(item).toMatchObject({ id: "bad", path: "" });
   });
 });

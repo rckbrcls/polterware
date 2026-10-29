@@ -1,23 +1,20 @@
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup } from "solid-js";
 import {
-  Button,
   DataTable,
-  DetailPanel,
-  IconTile,
   PageEmpty,
   Skeleton,
   StatusChip,
   pushToast,
-  History,
-  Link,
   ScrollText,
   matchClauses,
   type FilterClause,
 } from "@polterware/frontend-design-system";
-import { openDetail } from "@polterware/feature-shell";
-import { detailPanelStore } from "@polterware/frontend-state";
+import { expandedDetail, openDetail, type ScopeNodeItem, type WorkspaceCanonEntity } from "@polterware/feature-shell";
+import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
 import { CanonFactFormDialog } from "./canon-fact-form-dialog";
 import { CanonLinkEvidenceDialog } from "./canon-link-evidence-dialog";
+import { FactDetail } from "./fact-detail";
+import { factKindLabel, factKindTone } from "./fact-kind";
 import type {
   CanonEvidenceRow,
   CanonFactDetail,
@@ -60,6 +57,7 @@ function mapFact(value: unknown): CanonFactRow | undefined {
     source: asString(raw.source),
     actor: asString(raw.actor),
     entityId: asString(raw.entityId),
+    scopeNodeId: asString(raw.scopeNodeId),
     observedAt: asString(raw.observedAt),
     createdAt: asString(raw.createdAt),
     updatedAt: asString(raw.updatedAt),
@@ -82,34 +80,6 @@ function mapEvidence(value: unknown): CanonEvidenceRow | undefined {
     createdAt: asString(raw.createdAt),
     updatedAt: asString(raw.updatedAt),
   };
-}
-
-function ProvenanceValue(props: { value: string }) {
-  return (
-    <span class="block w-full min-w-0 truncate text-left" title={props.value}>
-      {props.value}
-    </span>
-  );
-}
-
-function provenanceValue(value: string) {
-  const text = value.trim();
-  return text ? <ProvenanceValue value={text} /> : null;
-}
-
-function truthTone(truthClass: string): "ok" | "warn" | "muted" | "syncing" {
-  switch (truthClass) {
-    case "verified":
-      return "ok";
-    case "declared":
-      return "syncing";
-    case "observed":
-      return "ok";
-    case "inferred":
-      return "warn";
-    default:
-      return "muted";
-  }
 }
 
 type CanonBridge = {
@@ -165,17 +135,27 @@ function changePayload(change: { summary: string; rationale: string; agentRunId?
   };
 }
 
-const FACTS_SCOPE = "truth:facts";
+export const FACTS_SCOPE = "truth:facts";
 
-/** Agents → Facts: list/inspect Canon facts and evidence; mutate with change envelope. */
+/** True while a Fact page fills the Facts surface. */
+export function factPageOpen(): boolean {
+  const target = expandedDetail();
+  return target?.scopeId === FACTS_SCOPE && target.entityKind === "fact";
+}
+
+/** Truth → Facts: Canon facts with their subject, scope, and proof; writes carry a change envelope. */
 export function CanonFactsPanel(props: {
   projectId: string;
   /** Expanded Structure node ids. Empty leaves the lists unscoped. */
   scopeNodes?: readonly string[];
+  /** Canon entities, to name a Fact's subject. */
+  entities?: readonly WorkspaceCanonEntity[];
+  /** Structure nodes, to name a Fact's scope. */
+  scopeCatalogNodes?: readonly ScopeNodeItem[];
   loadFacts?: (projectId: string) => Promise<unknown>;
   loadEvidence?: (projectId: string) => Promise<unknown>;
   query: string;
-  /** Page filter clauses; field `truth` matches the fact truth class. */
+  /** Page filter clauses; field `kind` matches how the Fact is known. */
   clauses: readonly FilterClause[];
   /** Bumped by the page toolbar's add button. */
   createToken: number;
@@ -192,14 +172,27 @@ export function CanonFactsPanel(props: {
   const [factDraft, setFactDraft] = createSignal<CanonFactDraft | undefined>();
   const [linkDialogOpen, setLinkDialogOpen] = createSignal(false);
 
+  const subjectOf = (fact: CanonFactRow) =>
+    (props.entities ?? []).find((entity) => entity.id === fact.entityId)?.title ?? "";
+  const scopeNodeOf = (fact: CanonFactRow) =>
+    (props.scopeCatalogNodes ?? []).find((node) => node.id === fact.scopeNodeId);
+
   const visibleFacts = createMemo(() => {
     const needle = props.query.trim().toLowerCase();
     return facts().filter(
       (fact) =>
-        matchClauses(fact, props.clauses, { truth: (item) => item.truthClass }) &&
-        (!needle || [fact.statement, fact.id, fact.entityId, fact.source].some((value) => value.toLowerCase().includes(needle))),
+        matchClauses(fact, props.clauses, { kind: (item) => item.truthClass }) &&
+        (!needle || [fact.statement, fact.id, subjectOf(fact), scopeNodeOf(fact)?.title ?? "", fact.source].some((value) => value.toLowerCase().includes(needle))),
     );
   });
+
+  // A Fact opened from elsewhere (Inbox, a link) loads its page here.
+  const activeTarget = createDetailPanelSelector((state) => state.activeTarget);
+  createEffect(on(() => (factPageOpen() ? expandedDetail()?.entityId ?? "" : ""), (id) => {
+    if (!id || id === detail()?.fact.id) return;
+    setSelectedId(id);
+    void loadDetail(id);
+  }));
 
   const loadDetail = async (id: string) => {
     const bridge = canonBridge();
@@ -385,60 +378,77 @@ export function CanonFactsPanel(props: {
   });
   onCleanup(() => detailPanelStore.getState().unregisterCollection(FACTS_SCOPE));
 
+  const openFact = (row: CanonFactRow) => {
+    setSelectedId(row.id);
+    void loadDetail(row.id);
+    openDetail({ scopeId: FACTS_SCOPE, entityId: row.id, entityKind: "fact" });
+  };
+
+  const editFact = () => {
+    const fact = detail()?.fact;
+    if (!fact) return;
+    setFactDialogMode("edit");
+    setFactDraft({
+      id: fact.id,
+      statement: fact.statement,
+      truthClass: (["declared", "observed", "inferred", "verified"].includes(fact.truthClass)
+        ? fact.truthClass
+        : "declared") as CanonFactTruthClass,
+      entityId: fact.entityId,
+    });
+    setFactDialogOpen(true);
+  };
+
   return (
     <div class="flex h-full min-h-0 flex-col">
+      <Show when={!factPageOpen()}>
       <div class="min-h-0 flex-1 overflow-auto">
-          <DataTable.Root rows={visibleFacts()} getRowId={(row) => row.id}>
-            <DataTable.Table aria-label="Canon facts">
+          <DataTable.Root
+            rows={visibleFacts()}
+            getRowId={(row) => row.id}
+            columnWidthsKey="truth-facts"
+            activeRowId={activeTarget()?.scopeId === FACTS_SCOPE ? activeTarget()?.entityId ?? null : null}
+          >
+            <DataTable.Table aria-label="Facts">
               <DataTable.Header>
-                <DataTable.ColumnHeader id="statement" sortBy={(row) => row.statement}>
+                <DataTable.ColumnHeader<CanonFactRow> id="statement" sortBy={(row) => row.statement}>
                   Statement
                 </DataTable.ColumnHeader>
-                <DataTable.ColumnHeader id="truth" sortBy={(row) => row.truthClass}>
-                  Truth
+                <DataTable.ColumnHeader<CanonFactRow> id="kind" sortBy={(row) => row.truthClass}>
+                  Kind
                 </DataTable.ColumnHeader>
-                <DataTable.ColumnHeader id="source" sortBy={(row) => row.source}>
-                  Source
+                <DataTable.ColumnHeader<CanonFactRow> id="subject" sortBy={(row) => subjectOf(row)}>
+                  Subject
+                </DataTable.ColumnHeader>
+                <DataTable.ColumnHeader<CanonFactRow> id="scope" sortBy={(row) => scopeNodeOf(row)?.title ?? ""}>
+                  Scope
+                </DataTable.ColumnHeader>
+                <DataTable.ColumnHeader<CanonFactRow> id="origin" sortBy={(row) => row.source}>
+                  Origin
                 </DataTable.ColumnHeader>
               </DataTable.Header>
-              <DataTable.Body>
+              <DataTable.Body<CanonFactRow>>
                 {(row) => (
                   <DataTable.Row
                     row={row}
                     rowId={row.id}
-                    class={
-                      row.id === selectedId() ? "pw-data-table-row--active" : undefined
-                    }
-                    onActivate={() => {
-                      setSelectedId(row.id);
-                      void loadDetail(row.id);
-                      openDetail({ scopeId: FACTS_SCOPE, entityId: row.id, entityKind: "fact" });
-                    }}
+                    onActivate={() => openFact(row)}
                     aria-label={`Open fact ${row.statement || row.id}`}
                   >
-                    <DataTable.Cell
-                      leading={
-                        <IconTile size={24} tone="knowledge" seed={row.id}>
-                          <ScrollText size={14} />
-                        </IconTile>
-                      }
-                    >
-                      <div class="min-w-0">
-                        <div class="font-medium">{row.statement || "—"}</div>
-                        <div class="mt-0.5 truncate font-mono text-[11px] text-[var(--color-text-muted)]">
-                          {row.id}
-                          {row.entityId ? ` · ${row.entityId}` : ""}
-                        </div>
-                      </div>
-                    </DataTable.Cell>
+                    <DataTable.PrimaryCell
+                      icon={<ScrollText size={16} />}
+                      iconTone="knowledge"
+                      iconSeed={row.id}
+                      title={row.statement || row.id}
+                    />
                     <DataTable.Cell>
-                      <StatusChip tone={truthTone(row.truthClass)} label={row.truthClass || "—"} />
+                      <StatusChip tone={factKindTone(row.truthClass)} label={factKindLabel(row.truthClass)} />
                     </DataTable.Cell>
+                    <DataTable.Cell>{subjectOf(row) || "—"}</DataTable.Cell>
                     <DataTable.Cell>
-                      <span class="truncate text-[11px] text-[var(--color-text-muted)]">
-                        {row.source || "—"}
-                      </span>
+                      <span title={scopeNodeOf(row)?.path}>{scopeNodeOf(row)?.title ?? "Whole project"}</span>
                     </DataTable.Cell>
+                    <DataTable.Cell class="text-[var(--color-text-muted)]">{row.source || "—"}</DataTable.Cell>
                   </DataTable.Row>
                 )}
               </DataTable.Body>
@@ -468,89 +478,22 @@ export function CanonFactsPanel(props: {
             </DataTable.Table>
           </DataTable.Root>
       </div>
+      </Show>
 
-      <Show when={detail()}>
-        {(current) => (
-          <DetailPanel.Content>
-            <DetailPanel.Header />
-            <DetailPanel.Body>
-              <DetailPanel.Main>
-                <DetailPanel.Title title={current().fact.statement || current().fact.id} />
-                <div class="mb-3 flex min-w-0 flex-col gap-2 border-b border-[var(--color-border-subtle)] pb-3">
-                  <div class="flex min-w-0 flex-wrap items-center gap-1.5">
-                    <StatusChip tone={truthTone(current().fact.truthClass)} label={current().fact.truthClass || "—"} />
-                    <StatusChip tone="muted" label={current().fact.actor || "actor"} />
-                  </div>
-                  <div class="pw-detail-panel__actions">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={props.busy}
-                      onClick={() => {
-                        const fact = current().fact;
-                        setFactDialogMode("edit");
-                        setFactDraft({
-                          id: fact.id,
-                          statement: fact.statement,
-                          truthClass: (["declared", "observed", "inferred", "verified"].includes(fact.truthClass)
-                            ? fact.truthClass
-                            : "declared") as CanonFactTruthClass,
-                          entityId: fact.entityId,
-                        });
-                        setFactDialogOpen(true);
-                      }}
-                    >
-                      Edit
-                    </Button>
-                    <Button size="sm" variant="ghost" disabled={props.busy} onClick={() => setLinkDialogOpen(true)}>
-                      Link evidence
-                    </Button>
-                  </div>
-                </div>
-                <DetailPanel.Section title="Linked evidence" icon={<Link size={14} />}>
-                  <Show
-                    when={current().evidence.length > 0}
-                    fallback={<p class="m-0 text-[12.5px] text-[var(--color-text-muted)]">No evidence linked to this fact.</p>}
-                  >
-                    <ul class="m-0 flex list-none flex-col gap-2.5 p-0">
-                      <For each={current().evidence}>
-                        {(item) => (
-                          <li class="flex min-w-0 flex-col gap-1 border-t border-[var(--color-border-subtle)] pt-2.5 first:border-t-0 first:pt-0">
-                            <div class="flex min-w-0 items-center gap-1.5">
-                              <StatusChip tone="muted" label={item.kind || "other"} />
-                              <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-[var(--color-text-muted)]" title={item.id}>
-                                {item.id}
-                              </span>
-                            </div>
-                            <p class="m-0 text-[12.5px] leading-5 text-[var(--color-text-primary)] [overflow-wrap:anywhere]">
-                              {item.summary || "—"}
-                            </p>
-                            <Show when={item.path}>
-                              <p class="m-0 min-w-0 truncate font-mono text-[11px] leading-4 text-[var(--color-text-muted)]" title={item.path}>
-                                {item.path}
-                              </p>
-                            </Show>
-                          </li>
-                        )}
-                      </For>
-                    </ul>
-                  </Show>
-                </DetailPanel.Section>
-                <DetailPanel.Section title="Provenance" icon={<History size={14} />}>
-                  <DetailPanel.Properties class="!gap-1.5 [&_.pw-detail-panel__property]:!min-h-0 [&_.pw-detail-panel__property]:!grid-cols-[72px_minmax(0,1fr)] [&_.pw-detail-panel__property]:!gap-2">
-                    <DetailPanel.Property label="Id" mono value={provenanceValue(current().fact.id)} />
-                    <DetailPanel.Property label="Entity" mono value={provenanceValue(current().fact.entityId)} />
-                    <DetailPanel.Property label="Source" mono value={provenanceValue(current().fact.source)} />
-                    <DetailPanel.Property label="Updated" mono value={provenanceValue(current().fact.updatedAt)} />
-                  </DetailPanel.Properties>
-                </DetailPanel.Section>
-              </DetailPanel.Main>
-            </DetailPanel.Body>
-          </DetailPanel.Content>
-        )}
+      <Show when={factPageOpen()}>
+        <FactDetail
+          detail={detail()?.fact.id === expandedDetail()?.entityId ? detail() : undefined}
+          subject={detail() ? subjectOf(detail()!.fact) : ""}
+          scope={detail() ? scopeNodeOf(detail()!.fact)?.title ?? "" : ""}
+          scopePath={detail() ? scopeNodeOf(detail()!.fact)?.path : undefined}
+          busy={props.busy}
+          onEdit={canonBridge() ? editFact : undefined}
+          onLinkEvidence={canonBridge() ? () => setLinkDialogOpen(true) : undefined}
+        />
       </Show>
 
       <CanonFactFormDialog
+        entities={props.entities}
         open={factDialogOpen()}
         mode={factDialogMode()}
         initial={factDraft()}
