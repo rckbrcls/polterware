@@ -381,24 +381,36 @@ const previewFacts = previewFactSeeds.map(([id, statement, truthClass, entityId,
   updatedAt: `2026-09-${String(12 + index).padStart(2, "0")}T09:00:00.000Z`,
 }));
 
-const previewRunSeeds: [id: string, actorKind: string, label: string, task: string, status: string, steps: [kind: string, summary: string][]][] = [
+const previewRunSeeds: [id: string, actorKind: string, label: string, task: string, status: string, steps: [kind: string, summary: string, subjects?: string[]][]][] = [
   ["run-1", "agent", "claude-code", "Import project sources", "completed", [["import", "Registered 14 sources from the project root."], ["fact", "Added fact: The core is the only process that opens SQLite."]]],
-  ["run-2", "agent", "codex", "Split the API layer", "completed", [["work", "Moved card Split the API layer to Plan."], ["decision", "Proposed decision: Poll for changes."]]],
+  ["run-2", "agent", "codex", "Split the API layer", "completed", [["work", "Moved card Split the API layer to Plan.", ["card-split-api"]], ["decision", "Proposed decision: Poll for changes."]]],
   ["run-3", "human", "Ada", "Review drift findings", "completed", [["drift", "Marked API drift as update intent."]]],
   ["run-4", "agent", "claude-code", "Verify session cache", "failed", [["fact", "Could not attach evidence: no matching file."]]],
   ["run-5", "human", "Grace", "Link runbook to Core", "completed", [["link", "Linked Deploy runbook to the Core component."]]],
+  ["run-6", "human", "Ada", "Pin the local-first principle", "completed", [["decision", "Pinned Local-first truth as a principle.", ["decision-principle-local"]], ["work", "Added a task to Split the API layer.", ["card-split-api"]]]],
 ];
+
+/** When a preview run happened: one a day from 20 September, and the last one this morning, so Activity shows Today. */
+function previewRunTime(index: number, minute: number): string {
+  if (index === previewRunSeeds.length - 1) {
+    const today = new Date();
+    today.setHours(9, minute, 0, 0);
+    return today.toISOString();
+  }
+  return `2026-09-${String(20 + index).padStart(2, "0")}T10:${String(minute).padStart(2, "0")}:00.000Z`;
+}
 
 const previewRuns = previewRunSeeds.map(([id, actorKind, agentLabel, task, status], index) => ({
   id, projectId: PREVIEW_PROJECT_ID, task, agentLabel, actorKind, status,
-  createdAt: `2026-09-${String(20 + index).padStart(2, "0")}T10:00:00.000Z`,
-  completedAt: `2026-09-${String(20 + index).padStart(2, "0")}T10:05:00.000Z`,
+  createdAt: previewRunTime(index, 0),
+  completedAt: previewRunTime(index, 5),
 }));
 
 const previewRunSteps = previewRunSeeds.flatMap(([runId, , , , , steps], runIndex) =>
-  steps.map(([kind, summary], stepIndex) => ({
-    id: `${runId}-step-${stepIndex + 1}`, agentRunId: runId, kind, summary, payloadJson: JSON.stringify({ kind, summary }),
-    createdAt: `2026-09-${String(20 + runIndex).padStart(2, "0")}T10:0${stepIndex + 1}:00.000Z`,
+  steps.map(([kind, summary, subjects], stepIndex) => ({
+    id: `${runId}-step-${stepIndex + 1}`, agentRunId: runId, kind, summary,
+    payloadJson: JSON.stringify({ kind, summary, ...(subjects ? { subject_ids: subjects } : {}) }),
+    createdAt: previewRunTime(runIndex, stepIndex + 1),
   })),
 );
 
@@ -909,9 +921,12 @@ function createBrowserDevBridge(): PolterwareBridge {
         listEvidence: scoped({ evidence: previewCanonEvidence }, { evidence: [] }),
       }),
       context: browserDevApi({
-        listChanges: async (args?: ProjectArgs & { actorKind?: string; limit?: number }) => ({
+        listChanges: async (args?: ProjectArgs & { actorKind?: string; limit?: number; subjectId?: string }) => ({
           changes: args?.projectId === PREVIEW_PROJECT_ID
-            ? previewChanges.filter((change) => !args.actorKind || change.actorKind === args.actorKind).slice(0, args.limit ?? 50)
+            ? previewChanges
+              .filter((change) => !args.actorKind || change.actorKind === args.actorKind)
+              .filter((change) => !args.subjectId || (JSON.parse(change.payloadJson) as { subject_ids?: string[] }).subject_ids?.includes(args.subjectId))
+              .slice(0, args.limit ?? 50)
             : [],
         }),
         getAgentRun: async (args?: { id?: string }) => ({

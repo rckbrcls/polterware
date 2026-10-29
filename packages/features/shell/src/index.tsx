@@ -71,6 +71,7 @@ export {
   sectionMemory,
   withSectionMemory,
 } from "./route";
+export { ActorIcon } from "./actor-icon";
 export { MainSurface, PageHeader, PageContent } from "./main-surface";
 export { EntityDetailHost, type EntityDetailHostProps } from "./entity-detail-host";
 export { EntityDocumentCanvas } from "./entity-document";

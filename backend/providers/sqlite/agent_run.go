@@ -208,12 +208,18 @@ func ChangeLimit(limit int) int {
 
 // ListChanges returns change steps for a project, newest first, with optional actor filter.
 func (s *Store) ListChanges(projectID, actorKind string, limit int) ([]ChangeRow, error) {
-	return s.queryChanges(projectID, actorKind, ChangeLimit(limit))
+	return s.queryChanges(projectID, actorKind, "", ChangeLimit(limit))
 }
 
 // ListAllChanges returns every change step for a project, newest first.
 func (s *Store) ListAllChanges(projectID, actorKind string) ([]ChangeRow, error) {
-	return s.queryChanges(projectID, actorKind, 0)
+	return s.queryChanges(projectID, actorKind, "", 0)
+}
+
+// ListSubjectChanges returns the change steps that name subjectID among their
+// subjects, newest first: the history of one card, Decision, doc, fact, or node.
+func (s *Store) ListSubjectChanges(projectID, actorKind, subjectID string, limit int) ([]ChangeRow, error) {
+	return s.queryChanges(projectID, actorKind, subjectID, ChangeLimit(limit))
 }
 
 // historyHiddenTools are write tools whose change steps stay audited (change_ops
@@ -221,7 +227,7 @@ func (s *Store) ListAllChanges(projectID, actorKind string) ([]ChangeRow, error)
 // layout, not project truth, and every autosave would add a row.
 var historyHiddenTools = []string{"desktop.canvas.%"}
 
-func (s *Store) queryChanges(projectID, actorKind string, limit int) ([]ChangeRow, error) {
+func (s *Store) queryChanges(projectID, actorKind, subjectID string, limit int) ([]ChangeRow, error) {
 	query := `
 		SELECT s.id, s.agent_run_id, r.project_id, r.actor_kind, r.agent_label, r.status, r.task,
 		       s.summary, s.payload_json, s.created_at
@@ -236,6 +242,10 @@ func (s *Store) queryChanges(projectID, actorKind string, limit int) ([]ChangeRo
 	if actorKind != "" {
 		query += ` AND r.actor_kind = ?`
 		args = append(args, actorKind)
+	}
+	if subjectID != "" {
+		query += ` AND EXISTS (SELECT 1 FROM json_each(s.payload_json, '$.subject_ids') WHERE value = ?)`
+		args = append(args, subjectID)
 	}
 	query += ` ORDER BY s.created_at DESC, s.rowid DESC`
 	if limit > 0 {

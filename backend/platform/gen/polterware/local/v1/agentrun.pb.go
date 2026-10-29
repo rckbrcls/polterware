@@ -585,9 +585,12 @@ type ListChangesRequest struct {
 	// scope_node and scope_nodes narrow the history to changes whose subjects
 	// carry a scope_node_id inside that Structure scope (union). scope_node is merged
 	// with scope_nodes. A change with no scoped subject stays visible.
-	ScopeNode     string   `protobuf:"bytes,4,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
-	ScopeExact    bool     `protobuf:"varint,5,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
-	ScopeNodes    []string `protobuf:"bytes,6,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
+	ScopeNode  string   `protobuf:"bytes,4,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
+	ScopeExact bool     `protobuf:"varint,5,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	ScopeNodes []string `protobuf:"bytes,6,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
+	// subject_id narrows the history to changes that name this entity (a card,
+	// Decision, doc, fact, or node id) among their subjects. It ignores the scope.
+	SubjectId     string `protobuf:"bytes,7,opt,name=subject_id,json=subjectId,proto3" json:"subject_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -662,6 +665,13 @@ func (x *ListChangesRequest) GetScopeNodes() []string {
 		return x.ScopeNodes
 	}
 	return nil
+}
+
+func (x *ListChangesRequest) GetSubjectId() string {
+	if x != nil {
+		return x.SubjectId
+	}
+	return ""
 }
 
 type ListChangesResponse struct {
@@ -1394,7 +1404,7 @@ const file_polterware_local_v1_agentrun_proto_rawDesc = "" +
 	"\fpayload_json\x18\t \x01(\tR\vpayloadJson\x12\x1d\n" +
 	"\n" +
 	"created_at\x18\n" +
-	" \x01(\tR\tcreatedAt\"\xc9\x01\n" +
+	" \x01(\tR\tcreatedAt\"\xe8\x01\n" +
 	"\x12ListChangesRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x1d\n" +
@@ -1406,7 +1416,9 @@ const file_polterware_local_v1_agentrun_proto_rawDesc = "" +
 	"\vscope_exact\x18\x05 \x01(\bR\n" +
 	"scopeExact\x12\x1f\n" +
 	"\vscope_nodes\x18\x06 \x03(\tR\n" +
-	"scopeNodes\"S\n" +
+	"scopeNodes\x12\x1d\n" +
+	"\n" +
+	"subject_id\x18\a \x01(\tR\tsubjectId\"S\n" +
 	"\x13ListChangesResponse\x12<\n" +
 	"\achanges\x18\x01 \x03(\v2\".polterware.local.v1.ProjectChangeR\achanges\"\xa5\x01\n" +
 	"\n" +

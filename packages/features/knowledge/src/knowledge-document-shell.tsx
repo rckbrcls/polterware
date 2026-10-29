@@ -2,6 +2,7 @@ import type { JSX } from "solid-js";
 import { Show, createMemo } from "solid-js";
 import { Button, ChevronLeft, RailPage, Input, MarkdownEditor, TagPicker } from "@polterware/frontend-design-system";
 import { EntityDocumentCanvas, requestDetailExpanded, requestSectionNavigate } from "@polterware/feature-shell";
+import { DocumentActivity } from "./document-activity";
 import { KnowledgeDocumentProperties } from "./knowledge-document-properties";
 import "./knowledge-document.css";
 
@@ -24,6 +25,8 @@ export type DocumentCrumb = { label: string; section: string; tab?: string };
 export function KnowledgeDocumentShell(props: {
   /** Stable entity identity for the title field. */
   entityId: string;
+  /** The id changes record for this entity, when it differs from `entityId` (a card's id, not its slug). */
+  activitySubjectId?: string;
   title: string;
   /** Entity icon, shown at 16px before the title in the header trail. */
   icon: JSX.Element;
@@ -78,6 +81,7 @@ export function KnowledgeDocumentShell(props: {
         </div>
       </Show>
       {props.children}
+      <DocumentActivity subjectId={props.activitySubjectId || entityId} />
     </RailPage>
   </EntityDocumentCanvas>}</Show>;
 }

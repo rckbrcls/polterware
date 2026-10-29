@@ -76,6 +76,18 @@ func TestExecuteAuditedWriteHumanAutoRun(t *testing.T) {
 	if len(changes) != 1 || changes[0].Summary != "Create principle" {
 		t.Fatalf("changes: %+v", changes)
 	}
+
+	// One entity's history: the change that named it, and nothing for another id.
+	subject, err := store.ListSubjectChanges(project.ID, "", "kn-1", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(subject) != 1 || subject[0].Summary != "Create principle" {
+		t.Fatalf("subject changes: %+v", subject)
+	}
+	if other, err := store.ListSubjectChanges(project.ID, "", "kn-2", 10); err != nil || len(other) != 0 {
+		t.Fatalf("other subject: %+v %v", other, err)
+	}
 }
 
 func TestListChangesHidesWorkspaceLayoutWrites(t *testing.T) {

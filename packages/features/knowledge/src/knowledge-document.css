@@ -75,3 +75,74 @@
 .pw-fact-evidence > .pw-document__group-title {
   padding: 0;
 }
+
+/* Activity at the end of a document: the changes that named it, newest first, no card. */
+.pw-document-activity {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 48px;
+  padding-top: 24px;
+  box-shadow: inset 0 0.5px 0 0 var(--color-border-default);
+}
+
+.pw-document-activity__title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.pw-document-activity__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pw-document-activity__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pw-document-activity__actor {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.pw-document-activity__body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pw-document-activity__line {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.pw-document-activity__name {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.pw-document-activity__when {
+  margin-left: 6px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.pw-document-activity__why {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12.5px;
+  line-height: 18px;
+  white-space: pre-wrap;
+}

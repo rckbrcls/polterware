@@ -1022,6 +1022,9 @@ importers:
 
   packages/features/shell:
     dependencies:
+      '@polterware/bot-avatars':
+        specifier: workspace:*
+        version: link:../../frontend/bot-avatars
       '@polterware/frontend-design-system':
         specifier: workspace:*
         version: link:../../frontend/design-system

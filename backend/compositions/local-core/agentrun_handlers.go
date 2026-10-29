@@ -3,6 +3,7 @@ package localcore
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -66,7 +67,9 @@ func (core *Core) ListChanges(_ context.Context, request *connect.Request[localv
 		return nil, invalid(err.Error())
 	}
 	var rows []storepkg.ChangeRow
-	if resolved.Set == nil {
+	if subject := strings.TrimSpace(request.Msg.SubjectId); subject != "" {
+		rows, err = core.Store.ListSubjectChanges(request.Msg.ProjectId, actorKind, subject, int(request.Msg.Limit))
+	} else if resolved.Set == nil {
 		rows, err = core.Store.ListChanges(request.Msg.ProjectId, actorKind, int(request.Msg.Limit))
 	} else {
 		rows, err = core.Store.ListAllChanges(request.Msg.ProjectId, actorKind)
