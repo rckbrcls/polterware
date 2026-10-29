@@ -4,13 +4,14 @@ import {
   Archive,
   ArchivedList,
   Button,
-  ChevronLeft,
   DisplayOptions,
   FileText,
   FilterPopover,
   LibraryBig,
   Link,
+  FolderKanban,
   ListChecks,
+  PropertyPicker,
   PageContent,
   PageLoading,
   PageToolbar,
@@ -85,8 +86,7 @@ import { libraryStatusTone } from "./knowledge-document-helpers";
 import { WorkCardsEmpty, workCardsFilterEmpty } from "./knowledge-empty";
 import { WorkBoard } from "./work-board";
 import { MilestoneList } from "./milestone-list";
-import { backToWorkBoards, initialWorkBoardNavigation, openWorkBoard } from "./work-board-navigation";
-import { BACKLOG, cardsInView, selectedMilestoneView, type MilestoneAction } from "./milestones";
+import { ALL_WORK, BACKLOG, ROADMAP_VIEW, cardsInView, listedMilestones, selectedMilestoneView, viewIdOfRoute, workViewTabs, type MilestoneAction } from "./milestones";
 import { WorkCardDetail } from "./work-card-detail";
 import { WorkListTable } from "./work-list-table";
 import {
@@ -184,8 +184,12 @@ export function KnowledgeView(props: {
   workCards?: WorkspaceWorkCard[];
   /** Milestones own their cards; All work and the Backlog are implicit views. */
   milestones?: WorkspaceMilestone[];
-  boardProjectId?: string;
+  /** Work's open view from the route: `all`, `backlog`, or a milestone id; null is the Roadmap. */
+  milestoneView?: string | null;
+  onMilestoneViewChange?: (view: string | null) => void;
   onMilestoneAction?: (action: MilestoneAction) => Promise<string | null>;
+  /** Moves cards to a milestone by slug (empty is the Backlog) in one write; false when nothing was written. */
+  onSetCardsMilestone?: (slugs: string[], milestone: string) => Promise<boolean> | void;
   entities?: WorkspaceCanonEntity[];
   /** Content mode: board, specs, library, or docs. */
   tab?: string;
@@ -242,12 +246,12 @@ export function KnowledgeView(props: {
   scopeEnvironments?: readonly EnvironmentItem[];
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
 }) {
-  // The open board is remembered per project, so leaving Work and coming back returns to it.
-  const boardMemoryKey = () => `board.${props.boardProjectId ?? ""}`;
-  const [boardNavigation, setBoardNavigation] = createSignal(readRemembered(boardMemoryKey(), initialWorkBoardNavigation()));
-  createEffect(on(() => props.boardProjectId, () => setBoardNavigation(readRemembered(boardMemoryKey(), initialWorkBoardNavigation())), { defer: true }));
-  createEffect(() => { if (props.boardProjectId) writeRemembered(boardMemoryKey(), boardNavigation()); });
-  const selectedBoard = createMemo(() => selectedMilestoneView(props.milestones ?? [], boardNavigation().selectedId));
+  // The open Work view comes from the route, so Back returns to the Roadmap and the section
+  // remembers it: null is the Roadmap.
+  const viewId = () => viewIdOfRoute(props.milestoneView);
+  const viewOpen = () => viewId() !== null;
+  const openView = (routeValue: string | null) => props.onMilestoneViewChange?.(routeValue === ROADMAP_VIEW ? null : routeValue);
+  const selectedBoard = createMemo(() => selectedMilestoneView(props.milestones ?? [], viewId() ?? ALL_WORK.id));
   // The list's grouping, ordering, and properties, remembered on this computer.
   const WORK_LIST_DISPLAY_KEY = "work.list.display";
   const [workListDisplay, setWorkListDisplay] = createSignal<WorkListDisplay>(
@@ -261,7 +265,7 @@ export function KnowledgeView(props: {
   /** Board and Specs both list Work cards and share the card detail. */
   const cardTab = () => tab() === "board" || tab() === "specs";
   /** List only exists inside a board, so both card tabs show the board picker until one is open. */
-  const boardList = () => cardTab() && !boardNavigation().isOpen;
+  const boardList = () => cardTab() && !viewOpen();
   const libraryTab = () => tab() === "library";
   const docsTab = () => tab() === "docs";
   const [showArchived, setShowArchived] = createSignal(false);
@@ -505,7 +509,7 @@ export function KnowledgeView(props: {
           entityId: item.id,
           entityKind: "doc",
         }))
-      : tab() === "board" && boardNavigation().isOpen
+      : tab() === "board" && viewOpen()
         ? cards().map((card) => ({
             scopeId: scope,
             entityId: card.slug,
@@ -571,6 +575,11 @@ export function KnowledgeView(props: {
     if (entityKind === "doc") props.onOpenDoc?.(entityId);
     else if (entityKind === "decision") props.onOpenDecision?.(entityId);
     else props.onOpenCard?.(entityId);
+  }
+
+  /** Moves the active marker to a row without opening its page. */
+  function markActive(entityId: string, entityKind: "doc" | "card") {
+    detailPanelStore.getState().activateTarget({ scopeId: scopeId(), entityId, entityKind });
   }
 
   function activateLibraryRow(row: LibraryRow) {
@@ -655,6 +664,15 @@ export function KnowledgeView(props: {
         composeHere();
         return;
       }
+      if (cardTab() && viewOpen() && !pageRoute() && props.onSetCardsMilestone && matchesShortcut("work.set_milestone", event)) {
+        const active = activeCardSlug();
+        const slugs = tab() === "specs" && listSelection().length > 0 ? listSelection() : active ? [active] : [];
+        if (slugs.length === 0) return;
+        event.preventDefault();
+        const focused = document.activeElement;
+        setMilestonePick({ slugs, anchor: focused instanceof HTMLElement && focused !== document.body ? focused : layoutButton });
+        return;
+      }
       if (!cardTab() || pageRoute() || !matchesShortcut("work.toggle_layout", event)) return;
       event.preventDefault();
       changeTab(tab() === "board" ? "specs" : "board");
@@ -689,6 +707,37 @@ export function KnowledgeView(props: {
     return undefined;
   };
 
+  // M moves the focused card, or the List's selection, to a milestone.
+  const [listSelection, setListSelection] = createSignal<string[]>([]);
+  const [milestonePick, setMilestonePick] = createSignal<{ slugs: string[]; anchor?: HTMLElement } | null>(null);
+  let layoutButton: HTMLButtonElement | undefined;
+  const activeCardSlug = () => {
+    const target = activeTarget();
+    return target?.entityKind === "card" && (target.scopeId === "knowledge:board" || target.scopeId === "knowledge:specs") ? target.entityId : null;
+  };
+  const milestoneOptions = () => [
+    { value: "", label: BACKLOG.name },
+    ...listedMilestones(props.milestones ?? []).map((item) => ({ value: item.slug, label: item.name })),
+  ];
+  /** The milestone slug every picked card shares, so the picker can mark it. */
+  const pickedMilestone = () => {
+    const slugs = milestonePick()?.slugs ?? [];
+    const ids = new Set((props.workCards ?? []).filter((card) => slugs.includes(card.slug)).map((card) => card.milestoneId ?? ""));
+    if (ids.size !== 1) return undefined;
+    const [id] = [...ids];
+    return id ? (props.milestones ?? []).find((item) => item.id === id)?.slug : "";
+  };
+
+  /** Work's tabs are its views: the Roadmap, All work, the Backlog, and each milestone. */
+  const workViewRail = () => (
+    <Tabs
+      items={workViewTabs(props.milestones ?? [])}
+      value={props.milestoneView ?? ROADMAP_VIEW}
+      onChange={openView}
+      aria-label="Work views"
+    />
+  );
+
   return (
     <EntityDetailHost>
     <Show when={!props.loading} fallback={<PageLoading layout="table" label="Loading knowledge…" />}>
@@ -699,24 +748,11 @@ export function KnowledgeView(props: {
       <div class="flex h-full min-h-0 flex-col">
         <PageToolbar.Root>
           <PageToolbar.Leading class="gap-1">
-            <Show when={cardTab() && boardNavigation().isOpen}>
-              <Button
-                variant="texture"
-                size="icon"
-                aria-label="All milestones"
-                onClick={() => {
-                  setBoardNavigation((current) => backToWorkBoards(current));
-                  if (tab() !== "board") changeTab("board");
-                }}
-              >
-                <ChevronLeft size={14} />
-              </Button>
-              <span class="pw-page-toolbar-title">{selectedBoard().name}</span>
-            </Show>
+            <Show when={cardTab()}>{workViewRail()}</Show>
             <Show
-              when={railItems().length > 1}
+              when={!cardTab() && railItems().length > 1}
               fallback={
-                <Show when={!(cardTab() && boardNavigation().isOpen)}>
+                <Show when={!cardTab()}>
                 <span class="pw-page-toolbar-title">
                   {props.tabsLabel ?? railItems()[0]?.label ?? "Knowledge"}
                 </span>
@@ -742,6 +778,19 @@ export function KnowledgeView(props: {
                 onClick={() => setShowArchived((value) => !value)}
               >
                 <Archive size={14} />
+              </Button>
+            </Show>
+            <Show when={cardTab()}>
+              <Button
+                ref={layoutButton}
+                variant="texture"
+                size="icon"
+                aria-label={tab() === "board" ? "Show as list" : "Show as board"}
+                onClick={() => changeTab(tab() === "board" ? "specs" : "board")}
+              >
+                <Show when={tab() === "board"} fallback={<FolderKanban size={14} />}>
+                  <ListChecks size={14} />
+                </Show>
               </Button>
             </Show>
             <Show when={!archivedDocsView()}>
@@ -795,6 +844,19 @@ export function KnowledgeView(props: {
           clauses={pageFilters().clauses()}
           onClausesChange={pageFilters().onClausesChange}
           saved={pageFilters().saved()}
+        />
+        <PropertyPicker
+          label="Milestone"
+          options={milestoneOptions()}
+          value={pickedMilestone()}
+          open={milestonePick() !== null}
+          onClose={() => setMilestonePick(null)}
+          anchorRef={() => milestonePick()?.anchor ?? layoutButton}
+          onChange={(slug) => {
+            const slugs = milestonePick()?.slugs ?? [];
+            setMilestonePick(null);
+            void props.onSetCardsMilestone?.(slugs, slug);
+          }}
         />
 
         <Show when={libraryTab()}>
@@ -856,6 +918,7 @@ export function KnowledgeView(props: {
                     activeTarget()?.scopeId === scopeId() ? activeTarget()?.entityId : null
                   }
                   onActivate={(id) => activate(id, "doc")}
+                  onFocusRow={(id) => markActive(id, "doc")}
                 />
               </Show>
             </Show>
@@ -912,10 +975,13 @@ export function KnowledgeView(props: {
                       : null
                   }
                   onActivate={(slug) => activate(slug, "card")}
+                  onFocusRow={(slug) => markActive(slug, "card")}
                   onPeek={setPeekSlug}
                   onAddToStage={addCardTo}
                   onSetCardsStage={props.onSetCardsStage}
+                  onSetCardsMilestone={props.onSetCardsMilestone}
                   onRemoveCards={props.onRemoveCards}
+                  onSelectionChange={setListSelection}
                 />
                 <CardPeek
                   card={cards().find((card) => card.slug === peekSlug()) ?? null}
@@ -935,8 +1001,9 @@ export function KnowledgeView(props: {
         <MilestoneList
           milestones={props.milestones ?? []}
           cards={props.workCards ?? []}
-          onOpen={(id) => setBoardNavigation(openWorkBoard(id))}
-          onArchive={() => setBoardNavigation(initialWorkBoardNavigation())}
+          leading={workViewRail()}
+          onOpen={(id) => openView(id)}
+          onArchive={() => openView(null)}
           onAction={props.onMilestoneAction}
           disabled={props.loading || Boolean(props.error)}
         />

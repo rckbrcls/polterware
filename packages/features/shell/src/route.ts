@@ -68,6 +68,11 @@ export type ClientRoute = {
   wizardStep?: number;
   /** The entity whose detail fills the page; a history entry of its own, like opening a note. */
   expandedDetail?: { scopeId: string; entityId: string; entityKind: string } | null;
+  /**
+   * Work's open view, a history entry of its own: `all` (every card), `backlog` (cards with no
+   * milestone), or a milestone id. Absent is the Roadmap.
+   */
+  milestone?: string | null;
 };
 
 export type ShellStatus = {
@@ -355,6 +360,7 @@ export function goSection(
     search: undefined,
     filters: undefined,
     expandedDetail: null,
+    milestone: null,
   };
 }
 
@@ -414,6 +420,11 @@ export function setExpandedDetail(route: ClientRoute, expandedDetail: ClientRout
   return { ...route, expandedDetail };
 }
 
+/** Opens a Work view (`all`, `backlog`, or a milestone id), or the Roadmap with null. */
+export function setMilestoneView(route: ClientRoute, milestone: string | null): ClientRoute {
+  return { ...route, milestone, selectedNodeId: null, expandedDetail: null };
+}
+
 export function setWizardStep(route: ClientRoute, wizardStep: number): ClientRoute {
   return { ...route, wizardStep };
 }
@@ -427,7 +438,7 @@ export function routesEqual(a: ClientRoute, b: ClientRoute): boolean {
 }
 
 /** What a section remembers about where the user was, so returning to it restores that place. */
-export type SectionMemory = Pick<ClientRoute, "tab" | "search" | "filters" | "selectedNodeId" | "expandedDetail">;
+export type SectionMemory = Pick<ClientRoute, "tab" | "search" | "filters" | "selectedNodeId" | "expandedDetail" | "milestone">;
 
 export function sectionMemory(route: ClientRoute): SectionMemory {
   return {
@@ -436,6 +447,7 @@ export function sectionMemory(route: ClientRoute): SectionMemory {
     filters: route.filters,
     selectedNodeId: route.selectedNodeId ?? null,
     expandedDetail: route.expandedDetail ?? null,
+    milestone: route.milestone ?? null,
   };
 }
 
@@ -451,6 +463,7 @@ export function withSectionMemory(
     filters: memory.filters,
     selectedNodeId: memory.selectedNodeId ?? null,
     expandedDetail: memory.expandedDetail ?? null,
+    milestone: memory.milestone ?? null,
     ...resolveRoute(route.section, memory.tab, platform),
   };
 }

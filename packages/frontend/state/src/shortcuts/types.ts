@@ -19,6 +19,7 @@ export type ShortcutCommandId =
   | "shell.open_filter"
   | "shell.create"
   | "work.toggle_layout"
+  | "work.set_milestone"
   | "structure.add_node";
 
 export type ShortcutCommand = {

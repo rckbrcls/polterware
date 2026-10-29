@@ -25,6 +25,32 @@ export function selectedMilestoneView(milestones: readonly WorkspaceMilestone[],
   return listedMilestones(milestones).find((item) => item.id === id) ?? ALL_WORK;
 }
 
+/** Delivered and total cards of a milestone, for the Roadmap's progress. */
+export function milestoneProgress(cards: readonly Pick<WorkspaceWorkCard, "milestoneId" | "stage">[], id: string): { done: number; total: number } {
+  const owned = cards.filter((card) => card.milestoneId === id);
+  return { done: owned.filter((card) => card.stage === "delivered").length, total: owned.length };
+}
+
+/** Route values of the Roadmap and of All work, whose view id is empty. */
+export const ROADMAP_VIEW = "roadmap";
+export const ALL_WORK_VIEW = "all";
+
+/** The Work view tabs: the Roadmap, All work, the Backlog, then the listed milestones in order. */
+export function workViewTabs(milestones: readonly WorkspaceMilestone[]): { id: string; label: string }[] {
+  return [
+    { id: ROADMAP_VIEW, label: "Roadmap" },
+    { id: ALL_WORK_VIEW, label: ALL_WORK.name },
+    { id: BACKLOG.id, label: BACKLOG.name },
+    ...listedMilestones(milestones).map((item) => ({ id: item.id, label: item.name })),
+  ];
+}
+
+/** The milestone view a route opens: null is the Roadmap, `all` is All work. */
+export function viewIdOfRoute(milestone: string | null | undefined): string | null {
+  if (milestone === null || milestone === undefined || milestone === ROADMAP_VIEW) return null;
+  return milestone === ALL_WORK_VIEW ? ALL_WORK.id : milestone;
+}
+
 /** The cards a view shows: all of them, the Backlog, or one milestone's. */
 export function cardsInView<T extends Pick<WorkspaceWorkCard, "milestoneId">>(cards: readonly T[], viewId: string): T[] {
   if (viewId === ALL_WORK.id) return [...cards];

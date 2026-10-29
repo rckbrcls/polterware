@@ -558,6 +558,16 @@ function polterCardsMeta(slugs: readonly string[], meta: Record<string, string>)
   return `---\npolter: 1\n---\n\n${slugs.map((slug) => `## ${slug}\n${metaLine}`).join("\n\n")}\n`;
 }
 
+/** Move several cards to one milestone (empty slug: the Backlog) under one justification. */
+export async function persistWorkSetMilestones(
+  projectId: string,
+  slugs: readonly string[],
+  milestone: string,
+  change: ChangeEnvelope,
+): Promise<void> {
+  await applyPolter(projectId, polterCardsMeta(slugs, { milestone }), change);
+}
+
 /** Move several cards to one stage under one justification. */
 export async function persistWorkSetStages(
   projectId: string,

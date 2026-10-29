@@ -1,23 +1,22 @@
-import { For, Show, createMemo, createSignal, type JSX } from "solid-js";
+import { Show, createMemo, createSignal, type JSX } from "solid-js";
 import {
   A11yDialog,
   Archive,
   ArrowDown,
   ArrowUp,
   Button,
-  Card,
+  DataTable,
   EntityContextMenu,
   EntityMenuButton,
   Field,
   FolderKanban,
-  IconTile,
-  Inbox,
   Input,
-  Layers,
   PageContent,
+  PageEmpty,
   PageToolbar,
   Pencil,
   Plus,
+  ProgressBar,
   SearchBar,
   StatusChip,
   ToolbarIconButton,
@@ -28,14 +27,7 @@ import {
   type StatusTone,
 } from "@polterware/frontend-design-system";
 import type { MilestoneState, WorkspaceMilestone, WorkspaceWorkCard } from "@polterware/feature-shell";
-import { ALL_WORK, BACKLOG, cardsInView, listedMilestones, moveMilestone, type MilestoneAction } from "./milestones";
-
-type MilestoneListRow = {
-  id: string;
-  name: string;
-  milestone?: WorkspaceMilestone;
-  icon: () => JSX.Element;
-};
+import { cardsInView, listedMilestones, milestoneProgress, moveMilestone, type MilestoneAction } from "./milestones";
 
 const STATE_TONE: Record<MilestoneState, StatusTone> = { planned: "muted", active: "syncing", done: "healthy" };
 const STATE_LABEL: Record<MilestoneState, string> = { planned: "Planned", active: "Active", done: "Done" };
@@ -45,13 +37,15 @@ function cardCountLabel(count: number): string {
 }
 
 /**
- * Work opens on this list: All work, the Backlog (cards with no milestone),
- * then the milestones in order. Milestones are created and archived here.
+ * Work opens on the Roadmap: the milestones in order, each with its state, delivery
+ * progress, and target date. Milestones are created, renamed, reordered, and archived here.
  */
 export function MilestoneList(props: {
   milestones: readonly WorkspaceMilestone[];
   cards: readonly Pick<WorkspaceWorkCard, "milestoneId" | "stage">[];
   onOpen: (id: string) => void;
+  /** The Work view tabs, at the start of the toolbar. */
+  leading?: JSX.Element;
   /** Called after the open milestone is archived. */
   onArchive: () => void;
   onAction?: (action: MilestoneAction) => Promise<string | null>;
@@ -64,13 +58,9 @@ export function MilestoneList(props: {
   const [error, setError] = createSignal("");
   const [query, setQuery] = createSignal("");
   const listed = createMemo(() => listedMilestones(props.milestones));
-  const rows = createMemo<MilestoneListRow[]>(() => {
+  const rows = createMemo(() => {
     const needle = query().trim().toLowerCase();
-    return [
-      { ...ALL_WORK, icon: () => <Layers size={16} /> },
-      { ...BACKLOG, icon: () => <Inbox size={16} /> },
-      ...listed().map((milestone) => ({ id: milestone.id, name: milestone.name, milestone, icon: () => <FolderKanban size={16} /> })),
-    ].filter((row) => !needle || row.name.toLowerCase().includes(needle));
+    return listed().filter((milestone) => !needle || milestone.name.toLowerCase().includes(needle));
   });
   const disabled = () => Boolean(props.disabled || busy());
   const nameError = () => {
@@ -144,18 +134,12 @@ export function MilestoneList(props: {
     ];
   }
 
-  function summary(row: MilestoneListRow): string {
-    const cards = cardsInView(props.cards, row.id);
-    if (!row.milestone) return cardCountLabel(cards.length);
-    const delivered = cards.filter((card) => card.stage === "delivered").length;
-    const progress = cards.length ? `${delivered}/${cards.length} delivered` : "No cards yet";
-    return row.milestone.targetDate ? `${progress} · target ${row.milestone.targetDate}` : progress;
-  }
+  const progressOf = (milestone: WorkspaceMilestone) => milestoneProgress(props.cards, milestone.id);
 
   return (
     <div class="flex h-full min-h-0 flex-col">
       <PageToolbar.Root>
-        <PageToolbar.Leading>{null}</PageToolbar.Leading>
+        <PageToolbar.Leading>{props.leading ?? null}</PageToolbar.Leading>
         <PageToolbar.Actions>
           <SearchBar placeholder="Search milestones" value={query()} onInput={setQuery} aria-label="Search milestones" />
           <ToolbarIconButton label="New milestone" disabled={disabled() || !props.onAction} onClick={() => openDialog("create")}>
@@ -164,43 +148,67 @@ export function MilestoneList(props: {
         </PageToolbar.Actions>
       </PageToolbar.Root>
 
-      <PageContent class="pw-scroll-fade overflow-auto p-4">
-        <div class="grid auto-rows-fr gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,17.5rem),1fr))]" role="list" aria-label="Milestones">
-          <For each={rows()}>
-            {(row) => (
-              <div
-                role="listitem"
-                class="min-w-0 cursor-pointer rounded-[var(--radius-control)]"
-                tabIndex={0}
-                aria-label={`Open ${row.name}`}
-                onClick={() => props.onOpen(row.id)}
-                onContextMenu={(event) => { if (row.milestone) rowMenu.open(event, milestoneActions(row.milestone)); }}
-                onKeyDown={(event) => {
-                  if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
-                    event.preventDefault();
-                    props.onOpen(row.id);
-                  }
-                }}
-              >
-              <Card class="flex h-full min-w-0 items-center gap-3 p-3.5">
-                <IconTile size={28} tone="knowledge" seed={row.id || "all"}>{row.icon()}</IconTile>
-                <div class="min-w-0 flex-1">
-                  <p class="m-0 truncate text-[13.5px] font-medium text-[var(--color-text-primary)]">{row.name}</p>
-                  <p class="m-0 truncate text-[12px] tabular-nums text-[var(--color-text-muted)]">{summary(row)}</p>
-                </div>
-                <Show when={row.milestone}>
-                  {(milestone) => (
-                    <>
-                      <StatusChip tone={STATE_TONE[milestone().state]}>{STATE_LABEL[milestone().state]}</StatusChip>
-                      <EntityMenuButton label={`Actions for ${milestone().name}`} actions={milestoneActions(milestone())} />
-                    </>
-                  )}
-                </Show>
-              </Card>
-              </div>
-            )}
-          </For>
-        </div>
+      <PageContent class="p-0">
+        <Show
+          when={rows().length > 0}
+          fallback={
+            <PageEmpty title={query().trim() ? "No milestone matches" : "No milestones yet"}>
+              <p class="m-0 text-[13px] text-[var(--color-text-muted)]">
+                {query().trim() ? "Try another name." : "A milestone groups the cards that ship together. Cards with no milestone stay in the Backlog."}
+              </p>
+            </PageEmpty>
+          }
+        >
+          <DataTable.Root rows={rows()} getRowId={(milestone) => milestone.id} columnWidthsKey="roadmap" density="list" activateFirstRow>
+            <DataTable.Table aria-label="Roadmap">
+              <DataTable.Header>
+                <DataTable.ColumnHeader<WorkspaceMilestone> id="name" sortable={false}>Milestone</DataTable.ColumnHeader>
+                <DataTable.ColumnHeader<WorkspaceMilestone> id="state" sortable={false}>State</DataTable.ColumnHeader>
+                <DataTable.ColumnHeader<WorkspaceMilestone> id="progress" sortable={false}>Progress</DataTable.ColumnHeader>
+                <DataTable.ColumnHeader<WorkspaceMilestone> id="target" sortable={false}>Target</DataTable.ColumnHeader>
+                <DataTable.ColumnHeader<WorkspaceMilestone> id="actions" width="44px" align="right" sortable={false} resizable={false}>
+                  <span class="sr-only">Actions</span>
+                </DataTable.ColumnHeader>
+              </DataTable.Header>
+              <DataTable.Body<WorkspaceMilestone>>
+                {(milestone) => (
+                  <DataTable.Row
+                    row={milestone}
+                    rowId={milestone.id}
+                    aria-label={`Open ${milestone.name}`}
+                    onActivate={() => props.onOpen(milestone.id)}
+                    onContextMenu={(event) => rowMenu.open(event, milestoneActions(milestone))}
+                  >
+                    <DataTable.PrimaryCell icon={<FolderKanban size={16} />} iconTone="knowledge" iconSeed={milestone.id} title={milestone.name} />
+                    <DataTable.Cell>
+                      <StatusChip tone={STATE_TONE[milestone.state]}>{STATE_LABEL[milestone.state]}</StatusChip>
+                    </DataTable.Cell>
+                    <DataTable.Cell>
+                      <span class="flex min-w-0 items-center gap-2.5">
+                        <ProgressBar
+                          class="w-24 shrink-0"
+                          size="sm"
+                          tone={progressOf(milestone).done === progressOf(milestone).total && progressOf(milestone).total > 0 ? "success" : "accent"}
+                          value={progressOf(milestone).total ? (100 * progressOf(milestone).done) / progressOf(milestone).total : 0}
+                          label={`${milestone.name} progress`}
+                        />
+                        <span class="tabular-nums text-[var(--color-text-muted)]">
+                          {progressOf(milestone).total ? `${progressOf(milestone).done}/${progressOf(milestone).total}` : cardCountLabel(0)}
+                        </span>
+                      </span>
+                    </DataTable.Cell>
+                    <DataTable.Cell class="tabular-nums text-[var(--color-text-muted)]">{milestone.targetDate || "—"}</DataTable.Cell>
+                    <DataTable.Cell align="right">
+                      <Show when={props.onAction}>
+                        <EntityMenuButton label={`Actions for ${milestone.name}`} actions={milestoneActions(milestone)} />
+                      </Show>
+                    </DataTable.Cell>
+                  </DataTable.Row>
+                )}
+              </DataTable.Body>
+            </DataTable.Table>
+          </DataTable.Root>
+        </Show>
       </PageContent>
 
       <EntityContextMenu menu={rowMenu} />

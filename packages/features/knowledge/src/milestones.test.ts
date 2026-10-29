@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { WorkspaceMilestone } from "@polterware/feature-shell";
-import { ALL_WORK, BACKLOG, cardsInView, listedMilestones, moveMilestone, selectedMilestoneView } from "./milestones";
+import { ALL_WORK, BACKLOG, cardsInView, listedMilestones, milestoneProgress, moveMilestone, selectedMilestoneView, viewIdOfRoute, workViewTabs } from "./milestones";
 
 const milestone = (id: string, position: number, archivedAt = ""): WorkspaceMilestone => ({
   id, position, name: id, slug: id, projectId: "project", goal: "", exitCriteria: [], targetDate: "", state: "planned", archivedAt,
@@ -36,5 +36,20 @@ describe("milestone views", () => {
     expect(moveMilestone(items, "", 1)).toBeNull();
     expect(moveMilestone(items, BACKLOG.id, 1)).toBeNull();
     expect(moveMilestone(items, "a", -1)).toBeNull();
+  });
+
+  it("names the Work tabs and maps the route's view to a milestone view", () => {
+    expect(workViewTabs([milestone("beta", 2), milestone("alpha", 1), milestone("old", 0, "2026-10-01")]).map((tab) => tab.label))
+      .toEqual(["Roadmap", "All work", "Backlog", "alpha", "beta"]);
+    expect(viewIdOfRoute(null)).toBeNull();
+    expect(viewIdOfRoute("roadmap")).toBeNull();
+    expect(viewIdOfRoute("all")).toBe(ALL_WORK.id);
+    expect(viewIdOfRoute("backlog")).toBe(BACKLOG.id);
+    expect(viewIdOfRoute("ms-1")).toBe("ms-1");
+  });
+
+  it("counts a milestone's delivered cards", () => {
+    const cards = [{ milestoneId: "m", stage: "delivered" }, { milestoneId: "m", stage: "build" }, { milestoneId: "", stage: "delivered" }] as const;
+    expect(milestoneProgress(cards, "m")).toEqual({ done: 1, total: 2 });
   });
 });

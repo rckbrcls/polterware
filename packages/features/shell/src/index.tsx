@@ -53,6 +53,7 @@ export {
   setEnvironment,
   setSelectedNode,
   setExpandedDetail,
+  setMilestoneView,
   setWizardStep,
   routesEqual,
   historySnapshot,

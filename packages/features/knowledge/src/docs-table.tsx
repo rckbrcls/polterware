@@ -7,6 +7,8 @@ export function DocsTable(props: {
   rows: WorkspaceDoc[];
   activeRowId?: string | null;
   onActivate: (id: string) => void;
+  /** Marks a row active without opening it, when J/K or a removed row moves the marker. */
+  onFocusRow?: (id: string) => void;
 }) {
   return (
     <DataTable.Root
@@ -15,7 +17,7 @@ export function DocsTable(props: {
       columnWidthsKey="knowledge-docs"
       activeRowId={props.activeRowId ?? null}
       activateFirstRow
-      onActiveRowChange={(id) => id && props.onActivate(id)}
+      onActiveRowChange={(id) => id && (props.onFocusRow ?? props.onActivate)(id)}
     >
       <DataTable.Table aria-label="Docs">
         <DataTable.Header>

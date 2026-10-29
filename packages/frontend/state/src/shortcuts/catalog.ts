@@ -67,6 +67,12 @@ export const SHORTCUT_CATALOG: readonly ShortcutCommand[] = [
     defaultChord: chord({ key: "b", mod: true }),
   },
   {
+    id: "work.set_milestone",
+    label: "Move to a milestone",
+    group: "work",
+    defaultChord: chord({ key: "m" }),
+  },
+  {
     id: "structure.add_node",
     label: "Add structure node",
     group: "structure",

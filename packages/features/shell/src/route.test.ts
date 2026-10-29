@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_NAV } from "./navigation";
-import { DEFAULT_TABS, SECTION_TABS, closeDialog, createDefaultRoute, createHomeRoute, enterProject, goHome, goSection, historySnapshot, isHomeRoute, openDialog, routesEqual, setTab, ensureRouteAvailable, isNavSectionId, legacySettingsTab, resolveRoute, sectionMemory, withSectionMemory } from "./route";
+import { DEFAULT_TABS, SECTION_TABS, closeDialog, createDefaultRoute, createHomeRoute, enterProject, goHome, goSection, historySnapshot, isHomeRoute, openDialog, routesEqual, setMilestoneView, setTab, ensureRouteAvailable, isNavSectionId, legacySettingsTab, resolveRoute, sectionMemory, withSectionMemory } from "./route";
 
 describe("first version routes", () => {
   it("opens Inbox", () => {
@@ -175,6 +175,17 @@ describe("section memory", () => {
     const left = { ...setTab(goSection(entered, "truth"), "docs"), search: "auth", filters: { kind: ["doc"] }, expandedDetail: { scopeId: "knowledge:docs", entityId: "ev-1", entityKind: "doc" } };
     const restored = withSectionMemory(goSection(goSection(left, "work"), "truth"), sectionMemory(left));
     expect(restored).toMatchObject({ section: "truth", tab: "docs", search: "auth", filters: { kind: ["doc"] }, expandedDetail: { entityId: "ev-1" } });
+  });
+
+  it("keeps Work's open milestone across a layout switch, and remembers it for the section", () => {
+    const work = goSection(enterProject(createHomeRoute(), "proj-1"), "work");
+    expect(work.milestone).toBeNull();
+    const beta = setMilestoneView(work, "ms-beta");
+    expect(setTab(beta, "specs")).toMatchObject({ tab: "specs", milestone: "ms-beta" });
+    expect(routesEqual(beta, work)).toBe(false);
+    const away = goSection(beta, "truth");
+    expect(away.milestone).toBeNull();
+    expect(withSectionMemory(goSection(away, "work"), sectionMemory(beta)).milestone).toBe("ms-beta");
   });
 
   it("falls back to the default tab when the remembered one no longer exists", () => {

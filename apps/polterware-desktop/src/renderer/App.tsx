@@ -20,6 +20,7 @@ import {
   setSelectedNode,
   setEnvironment,
   setExpandedDetail,
+  setMilestoneView,
   setExpandedDetailTarget,
   setDetailExpandHandler,
   requestDetailExpanded,
@@ -159,6 +160,7 @@ import {
   persistStructureKindTech,
   persistWorkSetStage,
   persistWorkSetStages,
+  persistWorkSetMilestones,
   persistWorkSetCardsStatus,
   resetLocalStore,
 } from "./workspace/persist";
@@ -1029,7 +1031,24 @@ export function App() {
         docs={workspace().docs}
         workCards={workspace().workCards}
         milestones={workspace().milestones}
-        boardProjectId={currentProjectId()}
+        milestoneView={route().milestone ?? null}
+        onMilestoneViewChange={(view) => applyRoute(setMilestoneView(route(), view))}
+        onSetCardsMilestone={(slugs, milestone) => {
+          const name = milestone ? workspace().milestones.find((item) => item.slug === milestone)?.name ?? milestone : "the Backlog";
+          return justifyChange({
+            title: "Move cards to a milestone",
+            defaultSummary: `Move ${cardCount(slugs.length)} to ${name}`,
+          }).then(async (change) => {
+            if (!change) return false;
+            await persistWorkSetMilestones(currentProjectId(), slugs, milestone, change);
+            await refreshWorkspace(currentProjectId());
+            pushToast(`${cardCount(slugs.length)} moved to ${name}.`, "success");
+            return true;
+          }).catch((error: unknown) => {
+            pushToast(error instanceof Error ? error.message : "Could not move the cards.", "danger");
+            return false;
+          });
+        }}
         onMilestoneAction={changeMilestone}
         entities={workspace().canonEntities}
         tab={surface.tab}

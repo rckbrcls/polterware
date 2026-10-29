@@ -1,4 +1,4 @@
-import { Show, createMemo, createSignal, type JSX } from "solid-js";
+import { Show, createEffect, createMemo, createSignal, type JSX } from "solid-js";
 import {
   Archive,
   Button,
@@ -8,6 +8,7 @@ import {
   StatusChip,
   type DataTableGrouping,
   type DataTableSortState,
+  type PropertyOption,
 } from "@polterware/frontend-design-system";
 import type { WorkStage, WorkspaceMilestone, WorkspaceWorkCard } from "@polterware/feature-shell";
 import {
@@ -19,6 +20,7 @@ import {
   type WorkListOrdering,
   type WorkListProperty,
 } from "./work-list";
+import { listedMilestones } from "./milestones";
 import { WORK_STAGES, cardTaskProgress, workStageLabel, workStageTone } from "./work-stage";
 
 /** Ordering fields and the columns that sort by them. */
@@ -34,25 +36,25 @@ const updatedTime = (card: WorkspaceWorkCard) => {
   return Number.isNaN(time) ? 0 : time;
 };
 
-/** Moves the selected cards to one stage, through the shared property picker. */
-function MoveToStage(props: { onPick: (stage: WorkStage) => void; disabled?: boolean }) {
+/** Sets one property of the selected cards, such as their stage, through the shared picker. */
+function PickFor(props: { label: string; property: string; options: readonly PropertyOption[]; onPick: (value: string) => void; disabled?: boolean }) {
   const [open, setOpen] = createSignal(false);
   let trigger: HTMLButtonElement | undefined;
   return (
     <>
       <Button ref={trigger} size="sm" variant="ghost" disabled={props.disabled} aria-expanded={open()} onClick={() => setOpen((value) => !value)}>
-        Move to…
+        {props.label}
       </Button>
       <PropertyPicker
-        label="Stage"
-        options={WORK_STAGES.map((stage) => ({ value: stage.id, label: stage.label }))}
+        label={props.property}
+        options={props.options}
         open={open()}
         onClose={() => setOpen(false)}
         anchorRef={() => trigger}
         placement="top-start"
         onChange={(value) => {
           setOpen(false);
-          props.onPick(value as WorkStage);
+          props.onPick(value);
         }}
       />
     </>
@@ -70,17 +72,24 @@ export function WorkListTable(props: {
   onDisplayChange: (display: WorkListDisplay) => void;
   activeSlug: string | null;
   onActivate: (slug: string) => void;
+  /** Marks a row active without opening it, when J/K or a removed row moves the marker. */
+  onFocusRow?: (slug: string) => void;
   onPeek: (slug: string) => void;
   /** A stage group's "+": a new card in that stage. */
   onAddToStage?: (stage: WorkStage) => void;
   /** Resolves true once the batch was written, so the selection clears. */
   onSetCardsStage?: (slugs: string[], stage: WorkStage) => Promise<boolean> | void;
+  /** Moves the selection to a milestone slug (empty is the Backlog); true once written. */
+  onSetCardsMilestone?: (slugs: string[], milestone: string) => Promise<boolean> | void;
+  /** Reports the selected slugs, so M can move them. */
+  onSelectionChange?: (slugs: string[]) => void;
   /** Resolves false when the archive was cancelled, so the selection stays. */
   onRemoveCards?: (slugs: string[]) => Promise<boolean> | void;
 }) {
   const [selected, setSelected] = createSignal<ReadonlySet<string>>(new Set());
   const [busy, setBusy] = createSignal(false);
-  const bulk = () => Boolean(props.onSetCardsStage || props.onRemoveCards);
+  const bulk = () => Boolean(props.onSetCardsStage || props.onSetCardsMilestone || props.onRemoveCards);
+  createEffect(() => props.onSelectionChange?.([...selected()]));
   const rows = createMemo(() => orderWorkCards(props.cards, props.display.ordering, props.display.direction));
   const shows = (property: WorkListProperty) => props.display.properties.includes(property);
   const milestoneName = (id?: string) =>
@@ -108,15 +117,19 @@ export function WorkListTable(props: {
     );
   }
 
-  async function moveSelected(stage: WorkStage, clear: () => void) {
-    if (!props.onSetCardsStage || busy()) return;
+  async function writeSelected(write: ((slugs: string[]) => Promise<boolean> | void) | undefined, clear: () => void) {
+    if (!write || busy()) return;
     setBusy(true);
     try {
-      if ((await props.onSetCardsStage([...selected()], stage)) !== false) clear();
+      if ((await write([...selected()])) !== false) clear();
     } finally {
       setBusy(false);
     }
   }
+  const milestoneOptions = (): PropertyOption[] => [
+    { value: "", label: "Backlog" },
+    ...listedMilestones(props.milestones).map((milestone) => ({ value: milestone.slug, label: milestone.name })),
+  ];
 
   async function archiveSelected(clear: () => void) {
     if (!props.onRemoveCards || busy()) return;
@@ -142,7 +155,7 @@ export function WorkListTable(props: {
       onSelectionChange={setSelected}
       activeRowId={props.activeSlug}
       activateFirstRow
-      onActiveRowChange={(id) => id && props.onActivate(id)}
+      onActiveRowChange={(id) => id && (props.onFocusRow ?? props.onActivate)(id)}
     >
       <DataTable.Table aria-label="Cards">
         <DataTable.Header>
@@ -177,7 +190,22 @@ export function WorkListTable(props: {
           {(selection) => (
             <>
               <Show when={props.onSetCardsStage}>
-                <MoveToStage disabled={busy()} onPick={(stage) => void moveSelected(stage, selection.clearSelection)} />
+                <PickFor
+                  label="Move to…"
+                  property="Stage"
+                  options={WORK_STAGES.map((stage) => ({ value: stage.id, label: stage.label }))}
+                  disabled={busy()}
+                  onPick={(stage) => void writeSelected((slugs) => props.onSetCardsStage?.(slugs, stage as WorkStage), selection.clearSelection)}
+                />
+              </Show>
+              <Show when={props.onSetCardsMilestone}>
+                <PickFor
+                  label="Milestone…"
+                  property="Milestone"
+                  options={milestoneOptions()}
+                  disabled={busy()}
+                  onPick={(milestone) => void writeSelected((slugs) => props.onSetCardsMilestone?.(slugs, milestone), selection.clearSelection)}
+                />
               </Show>
               <Show when={props.onRemoveCards}>
                 <Button

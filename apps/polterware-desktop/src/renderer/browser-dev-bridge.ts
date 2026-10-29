@@ -1072,16 +1072,21 @@ function createBrowserDevBridge(): PolterwareBridge {
           if (blocks.length > 0 && !/^## [a-z0-9-]+: /m.test(text)) {
             if (![PREVIEW_PROJECT_ID, "browser-empty"].includes(args?.projectId ?? "")) throw new Error("Project not found.");
             if (!args?.change?.summary?.trim()) throw new Error("A change needs a summary.");
-            const cards = projectCards(args!.projectId!) as { slug: string; stage?: string; status?: string; updatedAt?: string }[];
+            const cards = projectCards(args!.projectId!) as { slug: string; stage?: string; status?: string; milestoneId?: string; updatedAt?: string }[];
             const changes = blocks.map(([, slug, meta]) => {
               const card = cards.find((item) => item.slug === slug);
               if (!card) throw new Error(`unknown card ${slug}`);
-              return { card, stage: /(?:^|· )stage: ([a-z]+)/.exec(meta)?.[1], status: /(?:^|· )status: ([a-z]+)/.exec(meta)?.[1] };
+              // milestone: takes a slug; an empty value returns the card to the Backlog.
+              const milestoneSlug = /(?:^|· )milestone: *([a-z0-9-]*)/.exec(meta)?.[1];
+              const milestone = milestoneSlug ? listedMilestones(args!.projectId!).find((item) => item.slug === milestoneSlug) : undefined;
+              if (milestoneSlug && !milestone) throw new Error(`unknown milestone "${milestoneSlug}"`);
+              return { card, stage: /(?:^|· )stage: ([a-z]+)/.exec(meta)?.[1], status: /(?:^|· )status: ([a-z]+)/.exec(meta)?.[1], milestoneId: milestoneSlug === undefined ? undefined : milestone?.id ?? "" };
             });
             if (!args?.dryRun) {
-              for (const { card, stage, status } of changes) {
+              for (const { card, stage, status, milestoneId } of changes) {
                 if (stage) card.stage = stage;
                 if (status) card.status = status;
+                if (milestoneId !== undefined) card.milestoneId = milestoneId;
                 card.updatedAt = new Date().toISOString();
               }
             }
