@@ -29,7 +29,6 @@ import {
   InformationCircle,
   Play,
   Plus,
-  ProgressBar,
   Route,
   RefreshCw,
   Select,
@@ -1144,16 +1143,11 @@ export function DispatchPage(props: {
                             trailing={<Show when={provider()}>{(label) => <span class="text-[12px] text-[var(--color-text-muted)]">{label()}</span>}</Show>}
                           />
                           <DataTable.Cell>
-                            <div class="flex min-w-0 items-center gap-3">
-                              <SegmentDisplay
-                                value={used() === undefined ? "--" : formatUsedPercent(used())}
-                                size={18}
-                                aria-label={`${entry.agent} quota usage: ${formatUsedPercent(used())}`}
-                              />
-                              <div class="w-28 shrink-0">
-                                <ProgressBar label={`${entry.agent} quota usage`} value={used() ?? null} aria-valuetext={formatUsedPercent(used())} tone="blue" />
-                              </div>
-                            </div>
+                            <SegmentDisplay
+                              value={used() === undefined ? "--" : formatUsedPercent(used())}
+                              size={18}
+                              aria-label={`${entry.agent} quota usage: ${formatUsedPercent(used())}`}
+                            />
                           </DataTable.Cell>
                           <DataTable.Cell>
                             <div class="flex items-center gap-1.5">
