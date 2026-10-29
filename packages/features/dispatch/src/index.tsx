@@ -1688,7 +1688,7 @@ function DispatchRunDetail(props: {
   );
   const rail = () => (
     <>
-      <RailGroup title="Run" icon={<InformationCircle size={14} />} tone="knowledge">
+      <RailGroup title="Run" icon={<InformationCircle size={14} />}>
         <DetailPanel.Properties variant="rail">
           <DetailPanel.Property label="Run" mono value={props.run.id} />
           <DetailPanel.Property label="Model" value={modelLabel(props.run)} />
@@ -1700,7 +1700,7 @@ function DispatchRunDetail(props: {
           <DetailPanel.Property label="Note" value={text(props.run.note)} />
         </DetailPanel.Properties>
       </RailGroup>
-      <RailGroup title="Changes" icon={<FileDiff size={14} />} tone="architecture">
+      <RailGroup title="Changes" icon={<FileDiff size={14} />}>
         <DetailPanel.Properties variant="rail">
           <DetailPanel.Property label="Files" value={formatFiles(props.run) ? <FileChangeLine run={props.run} /> : undefined} />
           <DetailPanel.Property label="Branch" mono value={text(branch())} />
@@ -1712,7 +1712,6 @@ function DispatchRunDetail(props: {
       <RailGroup
         title="Agents"
         icon={<Bot size={14} />}
-        tone="execution"
         aside={`${attempts().length} ${attempts().length === 1 ? "agent" : "agents"}`}
       >
         <div class="flex flex-col gap-1 px-1">
@@ -1736,7 +1735,7 @@ function DispatchRunDetail(props: {
         </div>
       </RailGroup>
       <Show when={linked()}>
-        <RailGroup title="Linked runs" icon={<Route size={14} />} tone="neutral">
+        <RailGroup title="Linked runs" icon={<Route size={14} />}>
           <div class="flex flex-col gap-0.5 px-1">
             <Show when={props.run.resumedOf.trim()}>
               <LinkedRunRow label={`Resumed from ${shortRunId(props.run.resumedOf)}`} seed={`${props.run.id}:resumed-of`} onOpen={() => props.onSelect(props.run.resumedOf)} />
@@ -1770,7 +1769,7 @@ function DispatchRunDetail(props: {
         <div class="flex min-w-0 flex-col gap-6 pt-6">
           <Show when={promptRest()}>
             {(rest) => (
-              <RailGroup title="Prompt" icon={<FileText size={14} />} tone="knowledge">
+              <RailGroup title="Prompt" icon={<FileText size={14} />}>
                 <p class="m-0 whitespace-pre-wrap px-1 text-[13px] leading-5 text-[var(--color-text-secondary)]">{rest()}</p>
               </RailGroup>
             )}
