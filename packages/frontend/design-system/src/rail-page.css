@@ -70,6 +70,8 @@
   max-width: 654px;
   flex: 1 1 654px;
   flex-direction: column;
+  /* Centered in the room the rail leaves, so it glides to the middle as the rail's width closes. */
+  margin-inline: auto;
 }
 
 /* A wide column (a run's log) takes the width the rail leaves. */
@@ -85,6 +87,8 @@
   width: 376px;
   flex: 0 0 376px;
   flex-direction: column;
+  /* Its content stays on the right edge while the width closes, so it leaves to the right. */
+  align-items: flex-end;
   padding-top: 48px;
 }
 

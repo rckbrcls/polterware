@@ -17,8 +17,9 @@ const RAIL_GAP = 48;
 
 /**
  * Keeps the rail mounted while it leaves and moves it like the detail panel: it slides 16px
- * and fades on `spring.slow` (a quicker tween out), and beside the text its width closes too,
- * so the column widens with it instead of jumping. Snaps on first paint; under reduced motion
+ * to the right and fades on `spring.slow` (a quicker tween out), and beside the text its width
+ * closes too, so the centered column glides to the middle with it instead of jumping. Snaps on
+ * first paint; under reduced motion
  * only the fade remains.
  */
 function createRailPresence(options: { rail: () => HTMLElement | undefined; visible: () => boolean; narrow: () => boolean }) {
