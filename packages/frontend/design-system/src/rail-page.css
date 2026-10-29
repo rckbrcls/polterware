@@ -49,6 +49,11 @@
   padding: 12px 24px 12px 62px;
 }
 
+/* With a lead, the rail starts level with the content below it instead of a document title. */
+.pw-document:has(> .pw-document__lead) .pw-document__rail {
+  padding-top: 8px;
+}
+
 .pw-document__scroll {
   display: flex;
   min-height: 0;

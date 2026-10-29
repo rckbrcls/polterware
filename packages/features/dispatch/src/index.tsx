@@ -1407,8 +1407,8 @@ function DispatchRunCard(props: {
   onCancel: () => void;
 }) {
   const failed = () => dispatchStatusTone(props.run.status) === "danger";
-  /** The run's last word: its error or note, else who ran it. */
-  const subtitle = () => (failed() && props.run.error.trim()) || props.run.note.trim() || dotted(props.run.agent, props.run.model);
+  /** The run's last word: its error or note, else its status. */
+  const subtitle = () => (failed() && props.run.error.trim()) || props.run.note.trim() || props.run.status || "—";
   const statusDot = () => {
     const tone = dispatchStatusTone(props.run.status);
     if (tone === "danger") return "bg-[var(--color-danger)]";
@@ -1468,7 +1468,11 @@ function DispatchRunCard(props: {
           Cancel
         </Button>
       </Show>
-      <span class="shrink-0 text-[11px] tabular-nums text-[var(--color-text-muted)]">{formatAgo(props.run.createdAt || props.run.startedAt, props.now)}</span>
+      <span class="max-w-[16rem] shrink truncate font-mono text-[11px] text-[var(--color-text-muted)]" title={dotted(props.run.agent, props.run.model, props.run.provider)}>
+        {dotted(props.run.agent, props.run.model)}
+      </span>
+      <FileChangeLine run={props.run} />
+      <span class="shrink-0 whitespace-nowrap text-[11px] tabular-nums text-[var(--color-text-muted)]">{formatAgo(props.run.createdAt || props.run.startedAt, props.now)}</span>
       <span aria-label={props.run.status || "unknown"} title={props.run.status || "unknown"} class={`size-2 shrink-0 rounded-full ${statusDot()}`} />
     </article>
   );
