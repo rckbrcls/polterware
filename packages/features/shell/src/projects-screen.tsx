@@ -1,20 +1,16 @@
 import { Show, createMemo, createSignal } from "solid-js";
 import {
   ActiveFilterBar,
-  ContextMenu,
   Copy,
   DataTable,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  EntityContextMenu,
+  EntityMenuButton,
   ExternalLink,
   FilterChip,
   Folder,
   FolderKanban,
   FilterPopover,
   IconTile,
-  MoreHorizontal,
   PageContent,
   PageEmpty,
   TemplateCardGrid,
@@ -26,8 +22,10 @@ import {
   StatusDot,
   ToolbarIconButton,
   Tooltip,
-  buttonClassName,
+  createEntityContextMenu,
   matchClauses,
+  type EntityAction,
+  type EntityContextMenuController,
   type FilterField,
   type StatusTone,
 } from "@polterware/frontend-design-system";
@@ -88,16 +86,31 @@ function updatedAt(project: ProjectSwitcherItem): number | undefined {
   return Number.isNaN(time) ? undefined : time;
 }
 
-type RowMenu = { project: ProjectSwitcherItem; x: number; y: number };
+/** One list for a project's "…" button and its right-click menu. */
+function projectActions(
+  project: ProjectSwitcherItem,
+  onOpen: (projectId: string) => void,
+  onOpenSettings?: (projectId: string) => void,
+): EntityAction[] {
+  const path = project.directory?.trim();
+  return [
+    { id: "open", label: "Open", icon: ExternalLink, hint: "↵", onSelect: () => onOpen(project.projectId) },
+    ...(onOpenSettings
+      ? [{ id: "settings", label: "Project settings", icon: Settings, onSelect: () => onOpenSettings(project.projectId) }]
+      : []),
+    ...(path ? [{ id: "copy-path", label: "Copy path", icon: Copy, onSelect: () => void navigator.clipboard?.writeText(path) }] : []),
+  ];
+}
 
 function ProjectRow(props: {
   project: ProjectSwitcherItem;
   onOpen: (projectId: string) => void;
   onOpenSettings?: (projectId: string) => void;
-  onMenu: (menu: RowMenu) => void;
+  menu: EntityContextMenuController;
 }) {
   const project = () => props.project;
   const activate = () => props.onOpen(project().projectId);
+  const actions = () => projectActions(project(), props.onOpen, props.onOpenSettings);
 
   return (
     <DataTable.Row
@@ -105,10 +118,7 @@ function ProjectRow(props: {
       rowId={project().projectId}
       aria-label={`Open ${project().name}`}
       onActivate={activate}
-      onContextMenu={(event) => {
-        event.preventDefault();
-        props.onMenu({ project: project(), x: event.clientX, y: event.clientY });
-      }}
+      onContextMenu={(event) => props.menu.open(event, actions())}
     >
       <DataTable.PrimaryCell
         class="pw-projects-name-cell"
@@ -141,37 +151,8 @@ function ProjectRow(props: {
         </Show>
       </DataTable.Cell>
       <DataTable.Cell>{project().lastActivity ?? "—"}</DataTable.Cell>
-      {/* Menu items render in a portal whose events still reach the row; keep them from opening the project. */}
-      <DataTable.Cell align="right" class="pw-projects-row-menu" onClick={(event: MouseEvent) => event.stopPropagation()}>
-        <DropdownMenu positioning={{ placement: "bottom-end" }}>
-          <DropdownMenuTrigger aria-label={`Actions for ${project().name}`} class={buttonClassName("ghost", "icon")}>
-            <MoreHorizontal size={14} aria-hidden="true" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent class="min-w-40">
-            <DropdownMenuItem value="open" onSelect={activate}>
-              <ExternalLink size={14} aria-hidden="true" />
-              Open
-            </DropdownMenuItem>
-            <Show when={props.onOpenSettings}>
-              <DropdownMenuItem value="settings" onSelect={() => props.onOpenSettings?.(project().projectId)}>
-                <Settings size={14} aria-hidden="true" />
-                Project settings
-              </DropdownMenuItem>
-            </Show>
-            <Show when={project().directory?.trim()}>
-              <DropdownMenuItem
-                value="copy-path"
-                onSelect={() => {
-                  const path = project().directory?.trim();
-                  if (path) void navigator.clipboard?.writeText(path);
-                }}
-              >
-                <Copy size={14} aria-hidden="true" />
-                Copy path
-              </DropdownMenuItem>
-            </Show>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <DataTable.Cell align="right" class="pw-projects-row-menu">
+        <EntityMenuButton label={`Actions for ${project().name}`} actions={actions()} />
       </DataTable.Cell>
     </DataTable.Row>
   );
@@ -179,7 +160,7 @@ function ProjectRow(props: {
 
 export function ProjectsScreen(props: ProjectsScreenProps) {
   const [query, setQuery] = createSignal("");
-  const [menu, setMenu] = createSignal<RowMenu | null>(null);
+  const menu = createEntityContextMenu();
   const countOf = (match: (project: ProjectSwitcherItem) => boolean) => props.projects.filter(match).length;
   const fields = (): FilterField[] => [
     {
@@ -337,7 +318,7 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
                         project={project}
                         onOpen={props.onOpenProject}
                         onOpenSettings={props.onOpenProjectSettings}
-                        onMenu={setMenu}
+                        menu={menu}
                       />
                     )}
                   </DataTable.Body>
@@ -347,50 +328,7 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
           </Show>
         </Show>
       </PageContent>
-      <ContextMenu.Root
-        open={menu() !== null}
-        onOpenChange={(open) => {
-          if (!open) setMenu(null);
-        }}
-        anchorPoint={menu()}
-      >
-        <ContextMenu.Content>
-          <ContextMenu.Item
-            value="open"
-            onSelect={() => {
-              const project = menu()?.project;
-              if (project) props.onOpenProject(project.projectId);
-            }}
-          >
-            <ExternalLink size={14} aria-hidden="true" />
-            Open
-          </ContextMenu.Item>
-          <Show when={props.onOpenProjectSettings}>
-            <ContextMenu.Item
-              value="settings"
-              onSelect={() => {
-                const project = menu()?.project;
-                if (project) props.onOpenProjectSettings?.(project.projectId);
-              }}
-            >
-              <Settings size={14} aria-hidden="true" />
-              Project settings
-            </ContextMenu.Item>
-          </Show>
-          <Show when={menu()?.project.directory?.trim()}>
-            <ContextMenu.Item
-              value="copy-path"
-              onSelect={() => {
-                const path = menu()?.project.directory?.trim();
-                if (path) void navigator.clipboard?.writeText(path);
-              }}
-            >
-              <Copy size={14} aria-hidden="true" />
-              Copy path
-            </ContextMenu.Item>
-          </Show>
-        </ContextMenu.Content>
-      </ContextMenu.Root>
+      <EntityContextMenu menu={menu} />
     </div>
   );
 }

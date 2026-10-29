@@ -3,9 +3,9 @@ import { createPageFilters, type EnvironmentItem, type ScopeFilterToken, type Sc
 import {
   A11yDialog, Badge, Boxes, Button, Card, PromptCardGrid, Checkbox, Field, Folder, FormStack, Input,
   ActiveFilterBar, FilterPopover, IconTile, Layers, ListChecks, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
-  Cloud, Cpu, Delete, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, GitBranch, Link2, MoreHorizontal, Package, Route,
-  ScrollText, SearchBar, Select, ShieldCheck, StatusChip, TreeView, buttonClassName, pushToast,
-  type TreeViewNode,
+  Cloud, Cpu, Delete, EntityContextMenu, EntityMenuButton, GitBranch, Link2, Package, Route,
+  ScrollText, SearchBar, Select, ShieldCheck, StatusChip, TreeView, createEntityContextMenu, pushToast,
+  type EntityAction, type TreeViewNode,
   ToolbarIconButton,
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore, readRemembered, writeRemembered } from "@polterware/frontend-state";
@@ -120,19 +120,10 @@ function NodeDetails(props: NodeDetailsProps) {
 const NO_KIND = "none";
 const KIND_OPTIONS = [{ value: NO_KIND, label: "None" }, ...COMPONENTS.map((item) => ({ value: item.kind, label: item.label }))];
 
-type NodeAction = { id: string; label: string; icon: () => JSX.Element; disabled?: boolean; run: () => void };
-
-/** Row actions. Keys and clicks stay inside the menu so the tree does not treat them as row navigation. */
-function NodeActions(props: { title: string; actions: readonly NodeAction[] }) {
-  return <span class="inline-flex" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
-    <DropdownMenu positioning={{ placement: "bottom-end" }}>
-      <DropdownMenuTrigger aria-label={`Actions for ${props.title}`} class={buttonClassName("ghost", "icon")}>
-        <MoreHorizontal size={14} aria-hidden="true" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent class="min-w-44">
-        <For each={props.actions}>{(action) => <DropdownMenuItem value={action.id} disabled={action.disabled} onSelect={action.run}>{action.icon()}{action.label}</DropdownMenuItem>}</For>
-      </DropdownMenuContent>
-    </DropdownMenu>
+/** Row actions. Keys stay inside the menu so the tree does not treat them as row navigation. */
+function NodeActions(props: { title: string; actions: readonly EntityAction[] }) {
+  return <span class="inline-flex" onKeyDown={(event) => event.stopPropagation()}>
+    <EntityMenuButton label={`Actions for ${props.title}`} actions={props.actions} />
   </span>;
 }
 
@@ -254,22 +245,26 @@ export function StructureView(props: {
 
   const usesTitles = (node: StructureNode) => (node.uses ?? []).map((path) => registry().find((item) => item.path === path)?.title ?? path);
   // Actions select their node first: the dialogs below act on the selection.
-  const nodeActions = (node: StructureNode): NodeAction[] => [
-    ...(node.level === "component" ? [] : [{ id: "add-child", label: node.level === "system" ? "Add domain" : "Add component", icon: () => <Plus size={14} aria-hidden="true" />, run: () => { open(node.id); props.onOpenCreate(); } }]),
-    { id: "move", label: "Move", icon: () => <Route size={14} aria-hidden="true" />, disabled: node.level === "system", run: () => { open(node.id); setParent(node.parentId); setFormError(""); setMoveOpen(true); } },
-    { id: "uses", label: "Dependencies", icon: () => <Link2 size={14} aria-hidden="true" />, run: () => { open(node.id); setUseTargets(registry().filter((item) => node.uses?.includes(item.path)).map((item) => item.id)); setFormError(""); setUsesOpen(true); } },
-    ...(node.level === "component" && props.onKindTechChange ? [{ id: "kind-tech", label: "Kind and technology", icon: () => <Package size={14} aria-hidden="true" />, run: () => { open(node.id); setDraftKind(node.kind ?? ""); setDraftTech(node.tech ?? ""); setFormError(""); setKindTechOpen(true); } }] : []),
-    ...(node.level === "component" && props.onDeploysChange ? [{ id: "deploys", label: "Edit deploys", icon: () => <Cloud size={14} aria-hidden="true" />, run: () => { open(node.id); openDeploysDialog(node); } }] : []),
+  const nodeActions = (node: StructureNode): EntityAction[] => [
+    ...(node.level === "component" ? [] : [{ id: "add-child", label: node.level === "system" ? "Add domain" : "Add component", icon: Plus, onSelect: () => { open(node.id); props.onOpenCreate(); } }]),
+    { id: "move", label: "Move", icon: Route, disabled: node.level === "system", onSelect: () => { open(node.id); setParent(node.parentId); setFormError(""); setMoveOpen(true); } },
+    { id: "uses", label: "Dependencies", icon: Link2, onSelect: () => { open(node.id); setUseTargets(registry().filter((item) => node.uses?.includes(item.path)).map((item) => item.id)); setFormError(""); setUsesOpen(true); } },
+    ...(node.level === "component" && props.onKindTechChange ? [{ id: "kind-tech", label: "Kind and technology", icon: Package, onSelect: () => { open(node.id); setDraftKind(node.kind ?? ""); setDraftTech(node.tech ?? ""); setFormError(""); setKindTechOpen(true); } }] : []),
+    ...(node.level === "component" && props.onDeploysChange ? [{ id: "deploys", label: "Edit deploys", icon: Cloud, onSelect: () => { open(node.id); openDeploysDialog(node); } }] : []),
   ];
+  const projectActions = (): EntityAction[] => [{ id: "add-system", label: "Add system", icon: Plus, disabled: !!props.loading || !!props.error, onSelect: () => { open(PROJECT_ID); props.onOpenCreate(); } }];
+  const rowMenu = createEntityContextMenu();
   const toTreeNode = (item: StructureTreeItem): TreeViewNode => ({
     id: item.node.id, label: item.node.title, icon: <IconTile size={20} tone="neutral" seed={item.node.id}><KindIcon kind={item.node.level} size={12} /></IconTile>,
     trailing: <NodeActions title={item.node.title} actions={nodeActions(item.node)} />,
+    onContextMenu: (event) => rowMenu.open(event, nodeActions(item.node)),
     details: <NodeDetails level={item.node.level} description={item.node.intent} kind={item.node.level === "component" ? item.node.kind : undefined} tech={item.node.tech} repo={item.node.repo} folder={item.node.folder} uses={usesTitles(item.node)} deploys={item.node.deploys} counts={props.counts[item.node.id] ?? { work: 0, decisions: 0, facts: 0 }} isProviderConnected={isProviderConnected} />,
     children: item.children.map(toTreeNode),
   });
   const treeNodes = createMemo<TreeViewNode[]>(() => props.loading || props.error ? [] : [{
     id: PROJECT_ID, label: props.projectName, icon: <IconTile size={20} tone="neutral" seed={PROJECT_ID}><KindIcon kind="project" size={12} /></IconTile>,
-    trailing: <NodeActions title={props.projectName} actions={[{ id: "add-system", label: "Add system", icon: () => <Plus size={14} aria-hidden="true" />, disabled: !!props.loading || !!props.error, run: () => { open(PROJECT_ID); props.onOpenCreate(); } }]} />,
+    trailing: <NodeActions title={props.projectName} actions={projectActions()} />,
+    onContextMenu: (event) => rowMenu.open(event, projectActions()),
     details: <NodeDetails level="project" description={props.projectDescription} repo={props.projectRepository} counts={props.projectCounts} isProviderConnected={isProviderConnected} />,
     children: tree().map(toTreeNode),
   }]);
@@ -345,6 +340,7 @@ export function StructureView(props: {
     <Show when={props.loading} fallback={<Show when={props.error} fallback={
       <PageContent class="pw-scroll-fade overflow-auto p-4">
                 <Show when={visible().length} fallback={<PageEmpty title={query().trim() ? "No matches" : "No structure yet"} mood={query().trim() ? "lost" : "sleeping"} >{!query().trim() ? <PromptCardGrid items={STRUCTURE_AGENT_PROMPTS.map((item) => ({ id: item.id, title: item.title, description: item.description, tone: item.tone, icon: <KindIcon kind={item.level} size={16} />, prompt: item.prompt }))} /> : undefined}</PageEmpty>}>
+          <EntityContextMenu menu={rowMenu} />
           <TreeView label="Project structure" branches expandOnClick={false} class="[&_h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)} selectedValue={selectedValue()} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} />
         </Show>
       </PageContent>

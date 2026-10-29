@@ -166,7 +166,7 @@ export type {
   SavedFilter,
   SavedFiltersController,
 } from "./filter-model";
-export { DataTable, DataTableSelectionToolbarHost } from "./table";
+export { DataTable, DataTableSelectionToolbarHost, focusDataTableRow } from "./table";
 export type {
   DataTableColumnHeaderProps,
   DataTablePrimaryCellProps,
@@ -243,6 +243,14 @@ export {
 export type { DropdownMenuProps } from "./dropdown-menu";
 export { ContextMenu } from "./context-menu";
 export type { ContextMenuRootProps } from "./context-menu";
+export { EntityMenuButton, EntityContextMenu, createEntityContextMenu } from "./entity-menu";
+export type { EntityAction, EntityContextMenuController, EntityContextMenuState } from "./entity-menu";
+export { PropertyPicker } from "./property-picker";
+export type { PropertyOption, PropertyPickerProps } from "./property-picker";
+export { Peek } from "./peek";
+export type { PeekProps } from "./peek";
+export { EntityNavigator } from "./entity-navigator";
+export type { EntityNavigatorProps } from "./entity-navigator";
 export { FilterChip, FilterChipGroup } from "./filter-chip";
 export type { FilterChipItem } from "./filter-chip";
 export { ToggleChip } from "./toggle-chip";

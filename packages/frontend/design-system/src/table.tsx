@@ -1066,6 +1066,31 @@ export function isDataTableActivationKey(key: string): boolean {
   return key === "Enter" || key === " ";
 }
 
+/** ↓/J and ↑/K move focus between the interactive rows of one table body. */
+export function dataTableRowStep(event: Pick<KeyboardEvent, "key" | "metaKey" | "ctrlKey" | "altKey">): -1 | 0 | 1 {
+  if (event.metaKey || event.ctrlKey || event.altKey) return 0;
+  if (event.key === "ArrowDown" || event.key === "j") return 1;
+  if (event.key === "ArrowUp" || event.key === "k") return -1;
+  return 0;
+}
+
+function focusSiblingRow(row: HTMLElement, step: -1 | 1): boolean {
+  let next = step === 1 ? row.nextElementSibling : row.previousElementSibling;
+  while (next && !(next instanceof HTMLElement && next.classList.contains("pw-data-table-row--interactive"))) {
+    next = step === 1 ? next.nextElementSibling : next.previousElementSibling;
+  }
+  if (!(next instanceof HTMLElement)) return false;
+  next.focus();
+  return true;
+}
+
+/** Focuses the row with rowId, for a list that gets focus back after its entity page closes. */
+export function focusDataTableRow(rowId: string, root: ParentNode = document): boolean {
+  const row = root.querySelector<HTMLElement>(`tr.pw-data-table-row--interactive[data-row-id="${CSS.escape(rowId)}"]`);
+  row?.focus();
+  return Boolean(row);
+}
+
 export function hasDataTablePrimaryLeading(leading: JSX.Element): boolean {
   return Boolean(leading);
 }
@@ -1080,6 +1105,8 @@ function DataTableRow<T = any>(props: {
   rowId?: string;
   children: JSX.Element;
   onActivate?: (row: T) => void;
+  /** Space opens a quick look (`Peek`) instead of activating the row. */
+  onPeek?: (row: T) => void;
   onContextMenu?: (event: MouseEvent, row: T) => void;
   "aria-label"?: string;
   class?: string;
@@ -1136,6 +1163,16 @@ function DataTableRow<T = any>(props: {
       }}
       onKeyDown={(event) => {
         if (!interactive() || event.target !== event.currentTarget) return;
+        const step = dataTableRowStep(event);
+        if (step !== 0) {
+          if (focusSiblingRow(event.currentTarget, step)) event.preventDefault();
+          return;
+        }
+        if (event.key === " " && props.onPeek) {
+          event.preventDefault();
+          props.onPeek(props.row);
+          return;
+        }
         if (isDataTableActivationKey(event.key)) {
           event.preventDefault();
           activate();

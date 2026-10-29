@@ -79,7 +79,7 @@ Keep history controls, the Home button, Commander, App settings, and Project set
 
 ## UI law
 
-`DESIGN.md` and `@polterware/frontend-design-system` are the visual source of truth. Product features must use shared `Input`, `Textarea`, `Select`, `Field`, `Button`, `Card`, `Surface`, Ark-backed overlays, `PageToolbar`, `FilterChip`, `DataTable`, `IconTile`, `StatusChip`, and the global `DetailPanel` where applicable.
+`DESIGN.md` and `@polterware/frontend-design-system` are the visual source of truth. Product features must use shared `Input`, `Textarea`, `Select`, `Field`, `Button`, `Card`, `Surface`, Ark-backed overlays, `PageToolbar`, `FilterChip`, `DataTable`, `IconTile`, `StatusChip`, `EntityMenuButton` with `EntityContextMenu` (one action list for "…" and right-click), `PropertyPicker`, `Peek`, `EntityNavigator`, and the global `DetailPanel` where applicable.
 
 Prefer minimalist icon-only buttons with the shared tooltip (the `aria-label`) over text buttons in toolbars and page chrome; see `DESIGN.md`.
 

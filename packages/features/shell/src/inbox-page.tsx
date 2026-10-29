@@ -4,14 +4,11 @@ import {
   ActiveFilterBar,
   Dialog,
   DataTable,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  EntityContextMenu,
+  EntityMenuButton,
   Field,
   FilterPopover,
   Input,
-  MoreHorizontal,
   PageContent,
   PageEmpty,
   PageLoading,
@@ -33,6 +30,8 @@ import {
   ThumbsDownIcon,
   matchClauses,
   type FilterField,
+  createEntityContextMenu,
+  type EntityAction,
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
 import { EntityDetailHost } from "./entity-detail-host";
@@ -214,10 +213,23 @@ export function InboxPage(props: {
     }
   }
 
+  const rowMenu = createEntityContextMenu();
+  const itemActions = (item: WorkspaceInboxItem): EntityAction[] =>
+    props.onResolve
+      ? item.actions.map((action) => ({
+          id: action,
+          label: ACTION_LABEL[action],
+          icon: ACTION_ICON[action],
+          disabled: pending() !== "",
+          onSelect: () => void run(item, action),
+        }))
+      : [];
+
   function Row(rowProps: { item: WorkspaceInboxItem }) {
     const item = () => rowProps.item;
     return (
       <DataTable.Row
+        onContextMenu={(event) => rowMenu.open(event, itemActions(item()))}
         row={item()}
         rowId={item().id}
         aria-label={statusLabel(item())}
@@ -241,29 +253,8 @@ export function InboxPage(props: {
         </DataTable.Cell>
         <DataTable.Cell class="pw-inbox-context">{item().where || "—"}</DataTable.Cell>
         <DataTable.Cell class="pw-inbox-source">{item().source || "—"}</DataTable.Cell>
-        <DataTable.Cell align="right" class="pw-inbox-actions" onClick={(event: MouseEvent) => event.stopPropagation()}>
-          <DropdownMenu positioning={{ placement: "bottom-end" }}>
-            <DropdownMenuTrigger
-              aria-label={`Actions for ${item().title}`}
-              disabled={pending() !== "" || !props.onResolve}
-              class="pw-inbox-row__menu h-7 w-7 shrink-0 justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
-            >
-              <MoreHorizontal size={14} />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent class="min-w-40">
-              <For each={item().actions}>
-                {(action) => (
-                  <DropdownMenuItem value={action} onSelect={() => void run(item(), action)}>
-                    {(() => {
-                      const Icon = ACTION_ICON[action];
-                      return <Icon size={14} aria-hidden />;
-                    })()}
-                    {ACTION_LABEL[action]}
-                  </DropdownMenuItem>
-                )}
-              </For>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <DataTable.Cell align="right" class="pw-inbox-actions">
+          <EntityMenuButton label={`Actions for ${item().title}`} actions={itemActions(item())} />
         </DataTable.Cell>
       </DataTable.Row>
     );
@@ -329,6 +320,7 @@ export function InboxPage(props: {
               </DataTable.Body>
             </DataTable.Table>
           </DataTable.Root>
+          <EntityContextMenu menu={rowMenu} />
         </Show>
       </PageContent>
 

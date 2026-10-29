@@ -6,17 +6,14 @@ import {
   ArrowUp,
   Button,
   Card,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  EntityContextMenu,
+  EntityMenuButton,
   Field,
   FolderKanban,
   IconTile,
   Inbox,
   Input,
   Layers,
-  MoreHorizontal,
   PageContent,
   PageToolbar,
   Pencil,
@@ -24,9 +21,10 @@ import {
   SearchBar,
   StatusChip,
   ToolbarIconButton,
-  buttonClassName,
+  createEntityContextMenu,
   pushToast,
   requestConfirm,
+  type EntityAction,
   type StatusTone,
 } from "@polterware/frontend-design-system";
 import type { MilestoneState, WorkspaceMilestone, WorkspaceWorkCard } from "@polterware/feature-shell";
@@ -134,6 +132,18 @@ export function MilestoneList(props: {
     if (confirmed) void run({ kind: "archive", id: milestone.id });
   }
 
+  const rowMenu = createEntityContextMenu();
+  /** One list for a milestone's "…" button and its right-click menu. */
+  function milestoneActions(milestone: WorkspaceMilestone): EntityAction[] {
+    if (!props.onAction) return [];
+    return [
+      { id: "rename", label: "Rename", icon: Pencil, disabled: disabled(), onSelect: () => openDialog("rename", milestone) },
+      ...(moveMilestone(props.milestones, milestone.id, -1) ? [{ id: "up", label: "Move up", icon: ArrowUp, disabled: disabled(), onSelect: () => move(milestone, -1) }] : []),
+      ...(moveMilestone(props.milestones, milestone.id, 1) ? [{ id: "down", label: "Move down", icon: ArrowDown, disabled: disabled(), onSelect: () => move(milestone, 1) }] : []),
+      { id: "archive", label: "Archive", icon: Archive, danger: true, group: "archive", disabled: disabled(), onSelect: () => void archive(milestone) },
+    ];
+  }
+
   function summary(row: MilestoneListRow): string {
     const cards = cardsInView(props.cards, row.id);
     if (!row.milestone) return cardCountLabel(cards.length);
@@ -164,6 +174,7 @@ export function MilestoneList(props: {
                 tabIndex={0}
                 aria-label={`Open ${row.name}`}
                 onClick={() => props.onOpen(row.id)}
+                onContextMenu={(event) => { if (row.milestone) rowMenu.open(event, milestoneActions(row.milestone)); }}
                 onKeyDown={(event) => {
                   if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
                     event.preventDefault();
@@ -181,23 +192,7 @@ export function MilestoneList(props: {
                   {(milestone) => (
                     <>
                       <StatusChip tone={STATE_TONE[milestone().state]}>{STATE_LABEL[milestone().state]}</StatusChip>
-                      <div onClick={(event) => event.stopPropagation()}>
-                        <DropdownMenu positioning={{ placement: "bottom-end" }}>
-                          <DropdownMenuTrigger aria-label={`Actions for ${milestone().name}`} disabled={disabled() || !props.onAction} class={buttonClassName("ghost", "icon")}>
-                            <MoreHorizontal size={14} />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent class="min-w-40">
-                            <DropdownMenuItem value="rename" onSelect={() => openDialog("rename", milestone())}><Pencil size={14} />Rename</DropdownMenuItem>
-                            <Show when={moveMilestone(props.milestones, milestone().id, -1)}>
-                              <DropdownMenuItem value="up" onSelect={() => move(milestone(), -1)}><ArrowUp size={14} />Move up</DropdownMenuItem>
-                            </Show>
-                            <Show when={moveMilestone(props.milestones, milestone().id, 1)}>
-                              <DropdownMenuItem value="down" onSelect={() => move(milestone(), 1)}><ArrowDown size={14} />Move down</DropdownMenuItem>
-                            </Show>
-                            <DropdownMenuItem value="archive" danger onSelect={() => void archive(milestone())}><Archive size={14} />Archive</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <EntityMenuButton label={`Actions for ${milestone().name}`} actions={milestoneActions(milestone())} />
                     </>
                   )}
                 </Show>
@@ -208,6 +203,7 @@ export function MilestoneList(props: {
         </div>
       </PageContent>
 
+      <EntityContextMenu menu={rowMenu} />
       <A11yDialog
         open={dialog() !== null}
         size="sm"

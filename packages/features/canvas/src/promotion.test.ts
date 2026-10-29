@@ -18,7 +18,7 @@ describe("canvas promotion Polter", () => {
     expect(promotionText(input)).toBe("---\npolter: 1\nsummary: Promote canvas item: Local core\nrationale: Promoted from canvas Sketch.\n---\n\n## local-core: Local core\nstage: shape\n");
     expect(promotionText({ ...input, kind: "decision" })).toContain("### new: Local core\nstatus: proposed\n");
     expect(codec).toContain('DecisionNewRef = "new"');
-    expect(codec).toContain('"stage", "owner", "under", "decisions", "status", "kind"');
+    expect(codec).toContain('"stage", "owner", "under", "milestone", "decisions", "status", "kind"');
   });
   it("prevents heading/frontmatter injection and rejects invalid slugs for cards and Facts", () => {
     const text = promotionText({ ...input, title: "A\n### new: B", canvasName: "Sketch\n---\n## injected" });

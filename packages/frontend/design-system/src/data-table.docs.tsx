@@ -75,7 +75,7 @@ export default {
   group: "Data",
   summary:
     "Compound operational table with sortable, resizable columns and optional row selection. Primary cells provide entity identity, and the selection toolbar can render in a shared host outside the table.",
-  exports: ["DataTable", "DataTableSelectionToolbarHost"],
+  exports: ["DataTable", "DataTableSelectionToolbarHost", "focusDataTableRow"],
   examples: [
     {
       id: "default",

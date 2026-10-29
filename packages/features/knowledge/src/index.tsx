@@ -74,6 +74,7 @@ import {
   type DocListFilters,
 } from "./list-filters";
 import { LibraryTable } from "./library-table";
+import { CardPeek } from "./card-peek";
 import { libraryStatusTone } from "./knowledge-document-helpers";
 import { WorkCardsEmpty, workCardsFilterEmpty } from "./knowledge-empty";
 import { WorkBoard } from "./work-board";
@@ -267,6 +268,7 @@ export function KnowledgeView(props: {
   const [bodyOverrides, setBodyOverrides] = createSignal<Record<string, string>>({});
   const [pathOverrides, setPathOverrides] = createSignal<Record<string, string>>({});
   const [createOpen, setCreateOpen] = createSignal(false);
+  const [peekSlug, setPeekSlug] = createSignal<string | null>(null);
   // The column a card is being added to from the board; shape when added from the toolbar.
   const [createStage, setCreateStage] = createSignal<WorkStage | undefined>();
   const [docAddOpen, setDocAddOpen] = createSignal(false);
@@ -870,6 +872,7 @@ export function KnowledgeView(props: {
                           row={item}
                           rowId={item.slug}
                           onActivate={() => activate(item.slug, "card")}
+                          onPeek={() => setPeekSlug(item.slug)}
                         >
                           <DataTable.PrimaryCell icon={<ListChecks size={16} />} iconTone="knowledge" iconSeed={item.slug} title={item.title} />
                           <DataTable.Cell class="font-mono pw-selectable text-[12px]">{item.slug}</DataTable.Cell>
@@ -885,6 +888,14 @@ export function KnowledgeView(props: {
                     </DataTable.Body>
                   </DataTable.Table>
                 </DataTable.Root>
+                <CardPeek
+                  card={cards().find((card) => card.slug === peekSlug()) ?? null}
+                  onClose={() => setPeekSlug(null)}
+                  onOpen={(slug) => {
+                    setPeekSlug(null);
+                    activate(slug, "card");
+                  }}
+                />
               </Show>
             </Show>
           </PageContent>

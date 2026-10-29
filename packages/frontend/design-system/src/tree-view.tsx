@@ -12,6 +12,8 @@ export type TreeViewNode = {
   trailing?: JSX.Element;
   /** Content under the label line, for card rows that carry the entity's own details. */
   details?: JSX.Element;
+  /** Right-click on the row, such as `EntityContextMenu`'s open with the row's actions. */
+  onContextMenu?: (event: MouseEvent) => void;
 };
 export type TreeViewProps = Omit<TreeViewRootProps<TreeViewNode>, "children" | "collection"> & {
   nodes: TreeViewNode[];
@@ -64,7 +66,7 @@ function TreeNode(props: TreeNodeProps) {
       <Show
         when={props.node.children?.length}
         fallback={
-          <ArkTreeView.Item class={rowClass(props.node)} ref={registerRow}>
+          <ArkTreeView.Item class={rowClass(props.node)} ref={registerRow} onContextMenu={(event) => props.node.onContextMenu?.(event)}>
             {props.node.icon}
             <ArkTreeView.ItemText class="pw-tree__text">{props.node.label}</ArkTreeView.ItemText>
             {props.node.trailing ? <span class="pw-tree__trailing">{props.node.trailing}</span> : null}
@@ -73,7 +75,7 @@ function TreeNode(props: TreeNodeProps) {
         }
       >
         <ArkTreeView.Branch>
-          <ArkTreeView.BranchControl class={rowClass(props.node)} ref={registerRow}>
+          <ArkTreeView.BranchControl class={rowClass(props.node)} ref={registerRow} onContextMenu={(event) => props.node.onContextMenu?.(event)}>
             {props.node.icon}
             <ArkTreeView.BranchText class="pw-tree__text">{props.node.label}</ArkTreeView.BranchText>
             <Show when={props.indicator}>
@@ -111,7 +113,7 @@ function BranchCardNode(props: TreeNodeProps & { registerRow: (element: HTMLElem
       fallback={
         <div class="pw-tree__line">
           <span class="pw-tree__key pw-tree__key--leaf" aria-hidden="true"><span class="pw-tree__dot pw-texture-button rounded-full" /></span>
-          <ArkTreeView.Item class={`${rowClass(props.node)} card-panel`} ref={props.registerRow}>{content(ArkTreeView.ItemText)}</ArkTreeView.Item>
+          <ArkTreeView.Item class={`${rowClass(props.node)} card-panel`} ref={props.registerRow} onContextMenu={(event) => props.node.onContextMenu?.(event)}>{content(ArkTreeView.ItemText)}</ArkTreeView.Item>
         </div>
       }
     >
@@ -121,7 +123,7 @@ function BranchCardNode(props: TreeNodeProps & { registerRow: (element: HTMLElem
             <span class="pw-tree__key-expand"><Plus size={12} /></span>
             <span class="pw-tree__key-collapse"><MinusSignIcon size={12} /></span>
           </ArkTreeView.BranchTrigger>
-          <ArkTreeView.BranchControl class={`${rowClass(props.node)} card-panel`} ref={props.registerRow}>{content(ArkTreeView.BranchText)}</ArkTreeView.BranchControl>
+          <ArkTreeView.BranchControl class={`${rowClass(props.node)} card-panel`} ref={props.registerRow} onContextMenu={(event) => props.node.onContextMenu?.(event)}>{content(ArkTreeView.BranchText)}</ArkTreeView.BranchControl>
         </div>
         <TreeChildren {...props} />
       </ArkTreeView.Branch>
