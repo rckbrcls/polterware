@@ -16,8 +16,8 @@ export type BreadcrumbProps = {
 };
 
 /**
- * The trail to the open place. It sits centered in the toolbar or page header
- * (`PageToolbar.Center`); tabs stay at the start.
+ * The trail to the open place. It sits in the middle of the toolbar or page header
+ * (`PageToolbar.Center`), spaced between the tabs at the start and the actions at the end.
  */
 export function Breadcrumb(props: BreadcrumbProps) {
   return (

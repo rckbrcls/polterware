@@ -52,23 +52,17 @@
   pointer-events: auto;
 }
 
-/* With a center slot the toolbar is three columns: the start and the end share the leftover
-   width equally, so the breadcrumb stays centered on the page whatever the tabs and actions hold. */
-.pw-page-toolbar:has(> .pw-page-toolbar-center) {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+/* With a middle slot the toolbar spaces its three groups apart (justify-between): the
+   breadcrumb sits between the tabs and the actions, exactly centered only when they match. */
+.pw-page-toolbar:has(> .pw-page-toolbar-center) > .pw-page-toolbar-leading {
+  flex: 0 1 auto;
 }
 
 .pw-page-toolbar-center {
   display: flex;
   min-width: 0;
-  max-width: 40vw;
+  flex: 0 1 auto;
   align-items: center;
-  justify-content: center;
-}
-
-.pw-page-toolbar:has(> .pw-page-toolbar-center) > .pw-page-toolbar-actions {
-  justify-self: end;
 }
 
 .pw-page-content > :first-child {

@@ -108,7 +108,7 @@ function PageToolbarLeading(props: PageToolbarSlotProps) {
   );
 }
 
-/** The middle of the toolbar, such as a `Breadcrumb`; it stays centered while tabs sit at the start. */
+/** The middle group of the toolbar, such as a `Breadcrumb`: spaced between the tabs and the actions. */
 function PageToolbarCenter(props: PageToolbarSlotProps) {
   return (
     <div class={`pw-page-toolbar-center ${props.class ?? ""}`}>

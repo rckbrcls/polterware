@@ -45,19 +45,15 @@
   flex-direction: column;
 }
 
-/* Three columns: Back at the start, the breadcrumb centered, the actions at the end. */
+/* Back, the breadcrumb, and the actions, spaced apart (justify-between). */
 .pw-document__header {
-  display: grid;
+  display: flex;
   height: var(--page-header-height);
   flex-shrink: 0;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   padding: 0 8px;
-}
-
-.pw-document__actions {
-  justify-self: end;
 }
 
 .pw-document__trail,
@@ -68,10 +64,9 @@
   gap: 8px;
 }
 
-/* The trail sits centered between the Back button and the actions. */
+/* The trail sits between the Back button and the actions, and truncates first. */
 .pw-document__crumbs {
-  max-width: 40vw;
-  justify-content: center;
+  flex: 0 1 auto;
 }
 
 .pw-document__status {
