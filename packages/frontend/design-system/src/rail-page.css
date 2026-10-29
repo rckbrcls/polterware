@@ -88,6 +88,18 @@
   padding-top: 48px;
 }
 
+/* Keeps the rail's text at full width while its width closes, so nothing rewraps mid-motion. */
+.pw-document__rail-inner {
+  display: flex;
+  width: 100%;
+  min-width: 376px;
+  flex-direction: column;
+}
+
+.pw-document[data-narrow="true"] .pw-document__rail-inner {
+  min-width: 0;
+}
+
 .pw-document__group {
   display: flex;
   flex-direction: column;

@@ -1,13 +1,106 @@
-import { Show, createSignal, onCleanup, onMount, type JSX } from "solid-js";
+import { Show, createEffect, createSignal, onCleanup, onMount, untrack, type JSX } from "solid-js";
+import { animate, motionValue, type AnimationPlaybackControls } from "motion";
 import { Breadcrumb, type BreadcrumbItem } from "./breadcrumb";
 import { Button } from "./button";
 import { useDesignSystem } from "./provider";
 import { ChevronLeft, SidebarRightIcon } from "./hugeicons";
 import { IconTile, type IconTileTone } from "./icon-tile";
+import { prefersReducedMotion } from "./reduced-motion";
+import { spring } from "./springs";
 import "./rail-page.css";
 
 /** Below this page width the properties rail leaves the row and opens as a drawer. */
 const NARROW_WIDTH = 900;
+/** The rail's width and the scroll row's gap before it, from rail-page.css. */
+const RAIL_WIDTH = 376;
+const RAIL_GAP = 48;
+
+/**
+ * Keeps the rail mounted while it leaves and moves it like the detail panel: it slides 16px
+ * and fades on `spring.slow` (a quicker tween out), and beside the text its width closes too,
+ * so the column widens with it instead of jumping. Snaps on first paint; under reduced motion
+ * only the fade remains.
+ */
+function createRailPresence(options: { rail: () => HTMLElement | undefined; visible: () => boolean; narrow: () => boolean }) {
+  const [present, setPresent] = createSignal(untrack(options.visible));
+  const offset = motionValue(0), opacity = motionValue(1), width = motionValue(RAIL_WIDTH);
+  let animations: AnimationPlaybackControls[] = [];
+  let ready = false, run = 0;
+  let timer: number | undefined;
+  // The last visibility the effect saw: reading `visible` outside it would build the rail's JSX with no owner.
+  let shown = untrack(options.visible);
+
+  function paint() {
+    const rail = options.rail();
+    if (!rail) return;
+    rail.style.transform = offset.get() ? `translate3d(${offset.get()}px, 0, 0)` : "";
+    const alpha = Math.min(1, Math.max(0, opacity.get()));
+    rail.style.opacity = alpha === 1 ? "" : String(alpha);
+    if (options.narrow() || width.get() >= RAIL_WIDTH) {
+      rail.style.width = rail.style.flexBasis = rail.style.marginLeft = rail.style.overflow = "";
+      return;
+    }
+    rail.style.width = rail.style.flexBasis = `${width.get()}px`;
+    rail.style.marginLeft = `${-RAIL_GAP * (1 - width.get() / RAIL_WIDTH)}px`;
+    rail.style.overflow = "hidden";
+  }
+  function stop() {
+    run++;
+    if (timer !== undefined) window.clearTimeout(timer);
+    timer = undefined;
+    animations.forEach((control) => control.stop());
+    animations = [];
+  }
+
+  createEffect(() => {
+    const open = options.visible();
+    shown = open;
+    if (!ready) { setPresent(open); return; }
+    stop();
+    const reduced = prefersReducedMotion();
+    const travel = !reduced && !untrack(options.narrow);
+    if (open) {
+      if (!untrack(present)) { offset.set(reduced ? 0 : 16); opacity.set(0); width.set(travel ? 0 : RAIL_WIDTH); }
+      setPresent(true);
+      animations = [
+        animate(opacity, 1, reduced ? spring.fast : spring.slow),
+        ...(reduced ? [] : [animate(offset, 0, spring.slow)]),
+        ...(travel ? [animate(width, RAIL_WIDTH, spring.slow)] : []),
+      ];
+      return;
+    }
+    const current = run;
+    const transition = { type: "tween" as const, ...(reduced ? spring.fast.exit : spring.slow.exit) };
+    animations = [
+      animate(opacity, 0, transition),
+      ...(reduced ? [] : [animate(offset, 16, transition)]),
+      ...(travel ? [animate(width, 0, transition)] : []),
+    ];
+    const finish = () => {
+      if (current !== run || shown) return;
+      setPresent(false);
+      offset.set(0); opacity.set(1); width.set(RAIL_WIDTH);
+    };
+    void Promise.all(animations.map((control) => control.finished)).then(finish, finish);
+    // `finished` can stay pending on a motion value, so the exit's own length also ends it.
+    timer = window.setTimeout(finish, transition.duration * 1000);
+  });
+
+  // A rail that mounts to enter starts from the values set above, not a frame at full size.
+  createEffect(() => { if (options.rail()) paint(); });
+
+  onMount(() => {
+    const stops = [offset, opacity, width].map((value) => value.on("change", paint));
+    const frame = requestAnimationFrame(() => { ready = true; });
+    onCleanup(() => {
+      stop();
+      cancelAnimationFrame(frame);
+      stops.forEach((unsubscribe) => unsubscribe());
+    });
+  });
+
+  return present;
+}
 
 function readRailPreference(key: string | undefined): boolean {
   if (!key) return true;
@@ -62,6 +155,8 @@ export function RailPage(props: RailPageProps) {
   const [drawerOpen, setDrawerOpen] = createSignal(false);
   const railVisible = () => Boolean(props.rail) && (narrow() ? drawerOpen() : railOpen());
   let root: HTMLDivElement | undefined;
+  const [railElement, setRailElement] = createSignal<HTMLElement>();
+  const railPresent = createRailPresence({ rail: railElement, visible: railVisible, narrow });
 
   onMount(() => {
     if (!root || typeof ResizeObserver === "undefined") return;
@@ -91,7 +186,7 @@ export function RailPage(props: RailPageProps) {
           <Show when={props.status}><span role="status" aria-live="polite" class="pw-document__status">{props.status}</span></Show>
           {props.actions}
           <Show when={props.rail}>
-            <Button size="icon" variant="icon" aria-label={railVisible() ? "Hide properties" : "Show properties"}
+            <Button size="icon" variant="texture" aria-label={railVisible() ? "Hide properties" : "Show properties"}
               aria-expanded={railVisible()} selected={railVisible()} onClick={toggleRail}><SidebarRightIcon size={14} /></Button>
           </Show>
         </div>
@@ -99,8 +194,10 @@ export function RailPage(props: RailPageProps) {
       <Show when={props.lead}><div class="pw-document__lead">{props.lead}</div></Show>
       <div class="pw-document__scroll">
         <div class="pw-document__column">{props.children}</div>
-        <Show when={railVisible()}>
-          <aside class="pw-document__rail" aria-label="Properties">{props.rail}</aside>
+        <Show when={railPresent()}>
+          <aside ref={setRailElement} class="pw-document__rail" aria-label="Properties" aria-hidden={railVisible() ? undefined : "true"} inert={railVisible() ? undefined : true}>
+            <div class="pw-document__rail-inner">{props.rail}</div>
+          </aside>
         </Show>
       </div>
     </div>
