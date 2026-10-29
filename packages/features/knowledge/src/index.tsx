@@ -1,6 +1,8 @@
-import { Show, createEffect, createMemo, createSignal, on, onCleanup } from "solid-js";
+import { Show, createEffect, createMemo, createResource, createSignal, on, onCleanup } from "solid-js";
 import {
   ActiveFilterBar,
+  Archive,
+  ArchivedList,
   Button,
   ChevronLeft,
   FileText,
@@ -21,6 +23,7 @@ import {
   FILTER_IS_NOT,
   matchClauses,
   type FilterField,
+  type ArchivedListItem,
   type TabItem,
   DataTable,
 } from "@polterware/frontend-design-system";
@@ -28,6 +31,7 @@ import {
   EntityDetailHost,
   expandedDetail,
   openDetail,
+  requestDetailExpanded,
   createPageFilters,
   type EnvironmentItem,
   type ScopeFilterToken,
@@ -201,6 +205,10 @@ export function KnowledgeView(props: {
   /** Reopens the flow for a card in shape or plan. */
   onContinueFeature?: (slug: string) => void;
   onArchive?: (id: string) => void;
+  /** Lists archived Evidence; when set, the Evidence tab shows the archive toggle. */
+  loadArchivedEvidence?: () => Promise<ArchivedListItem[]>;
+  onRestoreEvidence?: (item: ArchivedListItem) => Promise<void>;
+  onDeleteEvidence?: (item: ArchivedListItem) => Promise<void>;
   onRemoveCard?: (slug: string) => void;
   onSetCardStage?: (slug: string, stage: WorkStage) => Promise<boolean> | void;
   scopeTokens?: readonly ScopeFilterToken[];
@@ -220,6 +228,24 @@ export function KnowledgeView(props: {
   const boardList = () => cardTab() && !boardNavigation().isOpen;
   const libraryTab = () => tab() === "library";
   const evidenceTab = () => tab() === "evidence";
+  const [showArchived, setShowArchived] = createSignal(false);
+  createEffect(on(tab, () => setShowArchived(false), { defer: true }));
+  const archivedEvidenceView = () => evidenceTab() && showArchived() && Boolean(props.loadArchivedEvidence);
+  const [archivedEvidence, { refetch: refetchArchivedEvidence }] = createResource(
+    () => (archivedEvidenceView() ? true : undefined),
+    async () => (await props.loadArchivedEvidence?.()) ?? [],
+  );
+  const [archiveBusy, setArchiveBusy] = createSignal(false);
+  async function runArchiveAction(action: (() => Promise<void>) | undefined) {
+    if (!action) return;
+    setArchiveBusy(true);
+    try {
+      await action();
+      await refetchArchivedEvidence();
+    } finally {
+      setArchiveBusy(false);
+    }
+  }
   const railItems = () => props.tabs ?? TABS;
   const [evidenceFilters, setEvidenceFilters] = createSignal<EvidenceListFilters>({
     ...EMPTY_EVIDENCE_LIST_FILTERS,
@@ -634,33 +660,47 @@ export function KnowledgeView(props: {
             </Show>
           </PageToolbar.Leading>
           <PageToolbar.Actions>
-            <SearchBar
-              placeholder={listSearch().placeholder}
-              value={listSearch().value}
-              onInput={listSearch().onInput}
-              aria-label={listSearch().placeholder}
-            />
-            <FilterPopover
-              ariaLabel={cardTab() ? "Card filters" : evidenceTab() ? "Evidence filters" : "Library filters"}
-              title={cardTab() ? "Filter cards" : evidenceTab() ? "Filter evidence" : "Filter library"}
-              shortcut
-              fields={pageFilters().fields()}
-              clauses={pageFilters().clauses()}
-              onClausesChange={pageFilters().onClausesChange}
-              saved={pageFilters().saved()}
-            />
-            <Show when={cardTab() ? props.onCreateCard : evidenceTab() ? canAddEvidence() : props.onCreate}>
-              <ToolbarIconButton
-                label={createLabel()}
-                onClick={() =>
-                  cardTab() && props.onNewFeature
-                    ? props.onNewFeature()
-                    : tab() === "evidence"
-                      ? setEvidenceAddOpen(true)
-                      : setCreateOpen(true)}
+            <Show when={evidenceTab() && props.loadArchivedEvidence}>
+              <Button
+                variant="texture"
+                size="icon"
+                aria-label={showArchived() ? "Back to evidence" : "Archived evidence"}
+                aria-pressed={showArchived()}
+                selected={showArchived()}
+                onClick={() => setShowArchived((value) => !value)}
               >
-                <Plus size={14} />
-              </ToolbarIconButton>
+                <Archive size={14} />
+              </Button>
+            </Show>
+            <Show when={!archivedEvidenceView()}>
+              <SearchBar
+                placeholder={listSearch().placeholder}
+                value={listSearch().value}
+                onInput={listSearch().onInput}
+                aria-label={listSearch().placeholder}
+              />
+              <FilterPopover
+                ariaLabel={cardTab() ? "Card filters" : evidenceTab() ? "Evidence filters" : "Library filters"}
+                title={cardTab() ? "Filter cards" : evidenceTab() ? "Filter evidence" : "Filter library"}
+                shortcut
+                fields={pageFilters().fields()}
+                clauses={pageFilters().clauses()}
+                onClausesChange={pageFilters().onClausesChange}
+                saved={pageFilters().saved()}
+              />
+              <Show when={cardTab() ? props.onCreateCard : evidenceTab() ? canAddEvidence() : props.onCreate}>
+                <ToolbarIconButton
+                  label={createLabel()}
+                  onClick={() =>
+                    cardTab() && props.onNewFeature
+                      ? props.onNewFeature()
+                      : tab() === "evidence"
+                        ? setEvidenceAddOpen(true)
+                        : setCreateOpen(true)}
+                >
+                  <Plus size={14} />
+                </ToolbarIconButton>
+              </Show>
             </Show>
           </PageToolbar.Actions>
         </PageToolbar.Root>
@@ -697,7 +737,22 @@ export function KnowledgeView(props: {
           </PageContent>
         </Show>
 
-        <Show when={evidenceTab()}>
+        <Show when={archivedEvidenceView()}>
+          <PageContent class="p-0">
+            <Show when={!archivedEvidence.loading} fallback={<PageLoading layout="table" label="Loading archived evidence…" />}>
+              <ArchivedList
+                items={archivedEvidence() ?? []}
+                label="Archived evidence"
+                icon={<FileText size={16} />}
+                busy={archiveBusy()}
+                onRestore={(item) => void runArchiveAction(props.onRestoreEvidence ? () => props.onRestoreEvidence!(item) : undefined)}
+                onDelete={(item) => void runArchiveAction(props.onDeleteEvidence ? () => props.onDeleteEvidence!(item) : undefined)}
+              />
+            </Show>
+          </PageContent>
+        </Show>
+
+        <Show when={evidenceTab() && !archivedEvidenceView()}>
           <PageContent class="p-0">
             <Show
               when={(props.evidence ?? []).length > 0}
@@ -854,7 +909,12 @@ export function KnowledgeView(props: {
                   }
                 : undefined
             }
-            onArchive={props.onArchive ? () => props.onArchive?.(item().id) : undefined}
+            onArchive={props.onArchive ? () => {
+              // The archived document leaves the list, so the page goes back to it.
+              const id = item().id;
+              requestDetailExpanded(false);
+              props.onArchive?.(id);
+            } : undefined}
             scopeNodes={props.scopeNodes}
             onScopeChange={props.onSetScope ? (path) => props.onSetScope?.(item().id, path) : undefined}
             links={linksFor(item().id, item().entityLinks)}

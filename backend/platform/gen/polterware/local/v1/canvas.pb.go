@@ -291,13 +291,15 @@ type Canvas struct {
 	ProjectId string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	Name      string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	// type is always "canvas": one generalist type of drawing shapes and semantic components.
-	Type          string       `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
-	AgentVisible  bool         `protobuf:"varint,5,opt,name=agent_visible,json=agentVisible,proto3" json:"agent_visible,omitempty"`
-	Graph         *CanvasGraph `protobuf:"bytes,6,opt,name=graph,proto3" json:"graph,omitempty"`
-	LayoutJson    string       `protobuf:"bytes,7,opt,name=layout_json,json=layoutJson,proto3" json:"layout_json,omitempty"`
-	ScopeNodeId   string       `protobuf:"bytes,8,opt,name=scope_node_id,json=scopeNodeId,proto3" json:"scope_node_id,omitempty"`
-	CreatedAt     string       `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     string       `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Type         string       `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
+	AgentVisible bool         `protobuf:"varint,5,opt,name=agent_visible,json=agentVisible,proto3" json:"agent_visible,omitempty"`
+	Graph        *CanvasGraph `protobuf:"bytes,6,opt,name=graph,proto3" json:"graph,omitempty"`
+	LayoutJson   string       `protobuf:"bytes,7,opt,name=layout_json,json=layoutJson,proto3" json:"layout_json,omitempty"`
+	ScopeNodeId  string       `protobuf:"bytes,8,opt,name=scope_node_id,json=scopeNodeId,proto3" json:"scope_node_id,omitempty"`
+	CreatedAt    string       `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt    string       `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// archived_at is empty while the canvas is active (RFC3339 otherwise).
+	ArchivedAt    string `protobuf:"bytes,11,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -402,6 +404,13 @@ func (x *Canvas) GetUpdatedAt() string {
 	return ""
 }
 
+func (x *Canvas) GetArchivedAt() string {
+	if x != nil {
+		return x.ArchivedAt
+	}
+	return ""
+}
+
 // CanvasTypeDefinition is the palette and the rules of the canvas type.
 // node_kinds lists components, structure kinds, drawing shapes, note, and text.
 // unrestricted means kinds outside node_kinds and edge_kinds are still valid.
@@ -495,8 +504,10 @@ type ListCanvasesRequest struct {
 	// scope_node narrows the list to canvases scoped to that Atlas node
 	// (id or path), its descendants, and, unless scope_exact, its ancestors.
 	// Empty is the whole project. A canvas with no scope stays visible.
-	ScopeNode     string `protobuf:"bytes,2,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
-	ScopeExact    bool   `protobuf:"varint,3,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	ScopeNode  string `protobuf:"bytes,2,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
+	ScopeExact bool   `protobuf:"varint,3,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	// archived lists only archived canvases; the default lists only active ones.
+	Archived      bool `protobuf:"varint,4,opt,name=archived,proto3" json:"archived,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -548,6 +559,13 @@ func (x *ListCanvasesRequest) GetScopeNode() string {
 func (x *ListCanvasesRequest) GetScopeExact() bool {
 	if x != nil {
 		return x.ScopeExact
+	}
+	return false
+}
+
+func (x *ListCanvasesRequest) GetArchived() bool {
+	if x != nil {
+		return x.Archived
 	}
 	return false
 }
@@ -991,6 +1009,122 @@ func (x *UpdateCanvasResponse) GetCanvas() *Canvas {
 	return nil
 }
 
+// SetCanvasArchived moves a canvas into the archive (archived = true) or
+// restores it. An archived canvas is read-only and hidden from agents.
+type SetCanvasArchivedRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Archived      bool                   `protobuf:"varint,3,opt,name=archived,proto3" json:"archived,omitempty"`
+	Change        *ChangeEnvelope        `protobuf:"bytes,4,opt,name=change,proto3" json:"change,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetCanvasArchivedRequest) Reset() {
+	*x = SetCanvasArchivedRequest{}
+	mi := &file_polterware_local_v1_canvas_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetCanvasArchivedRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetCanvasArchivedRequest) ProtoMessage() {}
+
+func (x *SetCanvasArchivedRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_canvas_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetCanvasArchivedRequest.ProtoReflect.Descriptor instead.
+func (*SetCanvasArchivedRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_canvas_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SetCanvasArchivedRequest) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *SetCanvasArchivedRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *SetCanvasArchivedRequest) GetArchived() bool {
+	if x != nil {
+		return x.Archived
+	}
+	return false
+}
+
+func (x *SetCanvasArchivedRequest) GetChange() *ChangeEnvelope {
+	if x != nil {
+		return x.Change
+	}
+	return nil
+}
+
+type SetCanvasArchivedResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Canvas        *Canvas                `protobuf:"bytes,1,opt,name=canvas,proto3" json:"canvas,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetCanvasArchivedResponse) Reset() {
+	*x = SetCanvasArchivedResponse{}
+	mi := &file_polterware_local_v1_canvas_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetCanvasArchivedResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetCanvasArchivedResponse) ProtoMessage() {}
+
+func (x *SetCanvasArchivedResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_canvas_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetCanvasArchivedResponse.ProtoReflect.Descriptor instead.
+func (*SetCanvasArchivedResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_canvas_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *SetCanvasArchivedResponse) GetCanvas() *Canvas {
+	if x != nil {
+		return x.Canvas
+	}
+	return nil
+}
+
+// DeleteCanvas removes an archived canvas for good. An active canvas is
+// refused with FAILED_PRECONDITION.
 type DeleteCanvasRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
@@ -1002,7 +1136,7 @@ type DeleteCanvasRequest struct {
 
 func (x *DeleteCanvasRequest) Reset() {
 	*x = DeleteCanvasRequest{}
-	mi := &file_polterware_local_v1_canvas_proto_msgTypes[14]
+	mi := &file_polterware_local_v1_canvas_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1014,7 +1148,7 @@ func (x *DeleteCanvasRequest) String() string {
 func (*DeleteCanvasRequest) ProtoMessage() {}
 
 func (x *DeleteCanvasRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canvas_proto_msgTypes[14]
+	mi := &file_polterware_local_v1_canvas_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1027,7 +1161,7 @@ func (x *DeleteCanvasRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCanvasRequest.ProtoReflect.Descriptor instead.
 func (*DeleteCanvasRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canvas_proto_rawDescGZIP(), []int{14}
+	return file_polterware_local_v1_canvas_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *DeleteCanvasRequest) GetProjectId() string {
@@ -1059,7 +1193,7 @@ type DeleteCanvasResponse struct {
 
 func (x *DeleteCanvasResponse) Reset() {
 	*x = DeleteCanvasResponse{}
-	mi := &file_polterware_local_v1_canvas_proto_msgTypes[15]
+	mi := &file_polterware_local_v1_canvas_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1071,7 +1205,7 @@ func (x *DeleteCanvasResponse) String() string {
 func (*DeleteCanvasResponse) ProtoMessage() {}
 
 func (x *DeleteCanvasResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canvas_proto_msgTypes[15]
+	mi := &file_polterware_local_v1_canvas_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1084,7 +1218,7 @@ func (x *DeleteCanvasResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCanvasResponse.ProtoReflect.Descriptor instead.
 func (*DeleteCanvasResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canvas_proto_rawDescGZIP(), []int{15}
+	return file_polterware_local_v1_canvas_proto_rawDescGZIP(), []int{17}
 }
 
 type ListCanvasTypesRequest struct {
@@ -1095,7 +1229,7 @@ type ListCanvasTypesRequest struct {
 
 func (x *ListCanvasTypesRequest) Reset() {
 	*x = ListCanvasTypesRequest{}
-	mi := &file_polterware_local_v1_canvas_proto_msgTypes[16]
+	mi := &file_polterware_local_v1_canvas_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1107,7 +1241,7 @@ func (x *ListCanvasTypesRequest) String() string {
 func (*ListCanvasTypesRequest) ProtoMessage() {}
 
 func (x *ListCanvasTypesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canvas_proto_msgTypes[16]
+	mi := &file_polterware_local_v1_canvas_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1120,7 +1254,7 @@ func (x *ListCanvasTypesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCanvasTypesRequest.ProtoReflect.Descriptor instead.
 func (*ListCanvasTypesRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canvas_proto_rawDescGZIP(), []int{16}
+	return file_polterware_local_v1_canvas_proto_rawDescGZIP(), []int{18}
 }
 
 type ListCanvasTypesResponse struct {
@@ -1132,7 +1266,7 @@ type ListCanvasTypesResponse struct {
 
 func (x *ListCanvasTypesResponse) Reset() {
 	*x = ListCanvasTypesResponse{}
-	mi := &file_polterware_local_v1_canvas_proto_msgTypes[17]
+	mi := &file_polterware_local_v1_canvas_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1144,7 +1278,7 @@ func (x *ListCanvasTypesResponse) String() string {
 func (*ListCanvasTypesResponse) ProtoMessage() {}
 
 func (x *ListCanvasTypesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canvas_proto_msgTypes[17]
+	mi := &file_polterware_local_v1_canvas_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1157,7 +1291,7 @@ func (x *ListCanvasTypesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCanvasTypesResponse.ProtoReflect.Descriptor instead.
 func (*ListCanvasTypesResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canvas_proto_rawDescGZIP(), []int{17}
+	return file_polterware_local_v1_canvas_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListCanvasTypesResponse) GetTypes() []*CanvasTypeDefinition {
@@ -1193,7 +1327,7 @@ const file_polterware_local_v1_canvas_proto_rawDesc = "" +
 	"props_json\x18\x05 \x01(\tR\tpropsJson\"{\n" +
 	"\vCanvasGraph\x125\n" +
 	"\x05nodes\x18\x01 \x03(\v2\x1f.polterware.local.v1.CanvasNodeR\x05nodes\x125\n" +
-	"\x05edges\x18\x02 \x03(\v2\x1f.polterware.local.v1.CanvasEdgeR\x05edges\"\xbf\x02\n" +
+	"\x05edges\x18\x02 \x03(\v2\x1f.polterware.local.v1.CanvasEdgeR\x05edges\"\xe0\x02\n" +
 	"\x06Canvas\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -1209,7 +1343,9 @@ const file_polterware_local_v1_canvas_proto_rawDesc = "" +
 	"created_at\x18\t \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
 	"updated_at\x18\n" +
-	" \x01(\tR\tupdatedAt\"\xb8\x01\n" +
+	" \x01(\tR\tupdatedAt\x12\x1f\n" +
+	"\varchived_at\x18\v \x01(\tR\n" +
+	"archivedAt\"\xb8\x01\n" +
 	"\x14CanvasTypeDefinition\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\x12\x1d\n" +
@@ -1218,14 +1354,15 @@ const file_polterware_local_v1_canvas_proto_rawDesc = "" +
 	"\n" +
 	"edge_kinds\x18\x04 \x03(\tR\tedgeKinds\x12\x14\n" +
 	"\x05rules\x18\x05 \x03(\tR\x05rules\x12\"\n" +
-	"\funrestricted\x18\x06 \x01(\bR\funrestricted\"t\n" +
+	"\funrestricted\x18\x06 \x01(\bR\funrestricted\"\x90\x01\n" +
 	"\x13ListCanvasesRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x1d\n" +
 	"\n" +
 	"scope_node\x18\x02 \x01(\tR\tscopeNode\x12\x1f\n" +
 	"\vscope_exact\x18\x03 \x01(\bR\n" +
-	"scopeExact\"O\n" +
+	"scopeExact\x12\x1a\n" +
+	"\barchived\x18\x04 \x01(\bR\barchived\"O\n" +
 	"\x14ListCanvasesResponse\x127\n" +
 	"\bcanvases\x18\x01 \x03(\v2\x1b.polterware.local.v1.CanvasR\bcanvases\"A\n" +
 	"\x10GetCanvasRequest\x12\x1d\n" +
@@ -1265,6 +1402,14 @@ const file_polterware_local_v1_canvas_proto_rawDesc = "" +
 	"\f_layout_jsonB\x10\n" +
 	"\x0e_scope_node_id\"K\n" +
 	"\x14UpdateCanvasResponse\x123\n" +
+	"\x06canvas\x18\x01 \x01(\v2\x1b.polterware.local.v1.CanvasR\x06canvas\"\xa2\x01\n" +
+	"\x18SetCanvasArchivedRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x12\x1a\n" +
+	"\barchived\x18\x03 \x01(\bR\barchived\x12;\n" +
+	"\x06change\x18\x04 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"P\n" +
+	"\x19SetCanvasArchivedResponse\x123\n" +
 	"\x06canvas\x18\x01 \x01(\v2\x1b.polterware.local.v1.CanvasR\x06canvas\"\x81\x01\n" +
 	"\x13DeleteCanvasRequest\x12\x1d\n" +
 	"\n" +
@@ -1274,12 +1419,13 @@ const file_polterware_local_v1_canvas_proto_rawDesc = "" +
 	"\x14DeleteCanvasResponse\"\x18\n" +
 	"\x16ListCanvasTypesRequest\"Z\n" +
 	"\x17ListCanvasTypesResponse\x12?\n" +
-	"\x05types\x18\x01 \x03(\v2).polterware.local.v1.CanvasTypeDefinitionR\x05types2\xed\x04\n" +
+	"\x05types\x18\x01 \x03(\v2).polterware.local.v1.CanvasTypeDefinitionR\x05types2\xe1\x05\n" +
 	"\rCanvasService\x12c\n" +
 	"\fListCanvases\x12(.polterware.local.v1.ListCanvasesRequest\x1a).polterware.local.v1.ListCanvasesResponse\x12Z\n" +
 	"\tGetCanvas\x12%.polterware.local.v1.GetCanvasRequest\x1a&.polterware.local.v1.GetCanvasResponse\x12c\n" +
 	"\fCreateCanvas\x12(.polterware.local.v1.CreateCanvasRequest\x1a).polterware.local.v1.CreateCanvasResponse\x12c\n" +
-	"\fUpdateCanvas\x12(.polterware.local.v1.UpdateCanvasRequest\x1a).polterware.local.v1.UpdateCanvasResponse\x12c\n" +
+	"\fUpdateCanvas\x12(.polterware.local.v1.UpdateCanvasRequest\x1a).polterware.local.v1.UpdateCanvasResponse\x12r\n" +
+	"\x11SetCanvasArchived\x12-.polterware.local.v1.SetCanvasArchivedRequest\x1a..polterware.local.v1.SetCanvasArchivedResponse\x12c\n" +
 	"\fDeleteCanvas\x12(.polterware.local.v1.DeleteCanvasRequest\x1a).polterware.local.v1.DeleteCanvasResponse\x12l\n" +
 	"\x0fListCanvasTypes\x12+.polterware.local.v1.ListCanvasTypesRequest\x1a,.polterware.local.v1.ListCanvasTypesResponseB\xe7\x01\n" +
 	"\x17com.polterware.local.v1B\vCanvasProtoP\x01ZQgithub.com/polterware/polterware/backend/platform/gen/polterware/local/v1;localv1\xa2\x02\x03PLX\xaa\x02\x13Polterware.Local.V1\xca\x02\x13Polterware\\Local\\V1\xe2\x02\x1fPolterware\\Local\\V1\\GPBMetadata\xea\x02\x15Polterware::Local::V1b\x06proto3"
@@ -1296,27 +1442,29 @@ func file_polterware_local_v1_canvas_proto_rawDescGZIP() []byte {
 	return file_polterware_local_v1_canvas_proto_rawDescData
 }
 
-var file_polterware_local_v1_canvas_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_polterware_local_v1_canvas_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_polterware_local_v1_canvas_proto_goTypes = []any{
-	(*CanvasRef)(nil),               // 0: polterware.local.v1.CanvasRef
-	(*CanvasNode)(nil),              // 1: polterware.local.v1.CanvasNode
-	(*CanvasEdge)(nil),              // 2: polterware.local.v1.CanvasEdge
-	(*CanvasGraph)(nil),             // 3: polterware.local.v1.CanvasGraph
-	(*Canvas)(nil),                  // 4: polterware.local.v1.Canvas
-	(*CanvasTypeDefinition)(nil),    // 5: polterware.local.v1.CanvasTypeDefinition
-	(*ListCanvasesRequest)(nil),     // 6: polterware.local.v1.ListCanvasesRequest
-	(*ListCanvasesResponse)(nil),    // 7: polterware.local.v1.ListCanvasesResponse
-	(*GetCanvasRequest)(nil),        // 8: polterware.local.v1.GetCanvasRequest
-	(*GetCanvasResponse)(nil),       // 9: polterware.local.v1.GetCanvasResponse
-	(*CreateCanvasRequest)(nil),     // 10: polterware.local.v1.CreateCanvasRequest
-	(*CreateCanvasResponse)(nil),    // 11: polterware.local.v1.CreateCanvasResponse
-	(*UpdateCanvasRequest)(nil),     // 12: polterware.local.v1.UpdateCanvasRequest
-	(*UpdateCanvasResponse)(nil),    // 13: polterware.local.v1.UpdateCanvasResponse
-	(*DeleteCanvasRequest)(nil),     // 14: polterware.local.v1.DeleteCanvasRequest
-	(*DeleteCanvasResponse)(nil),    // 15: polterware.local.v1.DeleteCanvasResponse
-	(*ListCanvasTypesRequest)(nil),  // 16: polterware.local.v1.ListCanvasTypesRequest
-	(*ListCanvasTypesResponse)(nil), // 17: polterware.local.v1.ListCanvasTypesResponse
-	(*ChangeEnvelope)(nil),          // 18: polterware.local.v1.ChangeEnvelope
+	(*CanvasRef)(nil),                 // 0: polterware.local.v1.CanvasRef
+	(*CanvasNode)(nil),                // 1: polterware.local.v1.CanvasNode
+	(*CanvasEdge)(nil),                // 2: polterware.local.v1.CanvasEdge
+	(*CanvasGraph)(nil),               // 3: polterware.local.v1.CanvasGraph
+	(*Canvas)(nil),                    // 4: polterware.local.v1.Canvas
+	(*CanvasTypeDefinition)(nil),      // 5: polterware.local.v1.CanvasTypeDefinition
+	(*ListCanvasesRequest)(nil),       // 6: polterware.local.v1.ListCanvasesRequest
+	(*ListCanvasesResponse)(nil),      // 7: polterware.local.v1.ListCanvasesResponse
+	(*GetCanvasRequest)(nil),          // 8: polterware.local.v1.GetCanvasRequest
+	(*GetCanvasResponse)(nil),         // 9: polterware.local.v1.GetCanvasResponse
+	(*CreateCanvasRequest)(nil),       // 10: polterware.local.v1.CreateCanvasRequest
+	(*CreateCanvasResponse)(nil),      // 11: polterware.local.v1.CreateCanvasResponse
+	(*UpdateCanvasRequest)(nil),       // 12: polterware.local.v1.UpdateCanvasRequest
+	(*UpdateCanvasResponse)(nil),      // 13: polterware.local.v1.UpdateCanvasResponse
+	(*SetCanvasArchivedRequest)(nil),  // 14: polterware.local.v1.SetCanvasArchivedRequest
+	(*SetCanvasArchivedResponse)(nil), // 15: polterware.local.v1.SetCanvasArchivedResponse
+	(*DeleteCanvasRequest)(nil),       // 16: polterware.local.v1.DeleteCanvasRequest
+	(*DeleteCanvasResponse)(nil),      // 17: polterware.local.v1.DeleteCanvasResponse
+	(*ListCanvasTypesRequest)(nil),    // 18: polterware.local.v1.ListCanvasTypesRequest
+	(*ListCanvasTypesResponse)(nil),   // 19: polterware.local.v1.ListCanvasTypesResponse
+	(*ChangeEnvelope)(nil),            // 20: polterware.local.v1.ChangeEnvelope
 }
 var file_polterware_local_v1_canvas_proto_depIdxs = []int32{
 	0,  // 0: polterware.local.v1.CanvasNode.ref:type_name -> polterware.local.v1.CanvasRef
@@ -1326,30 +1474,34 @@ var file_polterware_local_v1_canvas_proto_depIdxs = []int32{
 	4,  // 4: polterware.local.v1.ListCanvasesResponse.canvases:type_name -> polterware.local.v1.Canvas
 	4,  // 5: polterware.local.v1.GetCanvasResponse.canvas:type_name -> polterware.local.v1.Canvas
 	3,  // 6: polterware.local.v1.CreateCanvasRequest.graph:type_name -> polterware.local.v1.CanvasGraph
-	18, // 7: polterware.local.v1.CreateCanvasRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	20, // 7: polterware.local.v1.CreateCanvasRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	4,  // 8: polterware.local.v1.CreateCanvasResponse.canvas:type_name -> polterware.local.v1.Canvas
-	18, // 9: polterware.local.v1.UpdateCanvasRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	20, // 9: polterware.local.v1.UpdateCanvasRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	3,  // 10: polterware.local.v1.UpdateCanvasRequest.graph:type_name -> polterware.local.v1.CanvasGraph
 	4,  // 11: polterware.local.v1.UpdateCanvasResponse.canvas:type_name -> polterware.local.v1.Canvas
-	18, // 12: polterware.local.v1.DeleteCanvasRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	5,  // 13: polterware.local.v1.ListCanvasTypesResponse.types:type_name -> polterware.local.v1.CanvasTypeDefinition
-	6,  // 14: polterware.local.v1.CanvasService.ListCanvases:input_type -> polterware.local.v1.ListCanvasesRequest
-	8,  // 15: polterware.local.v1.CanvasService.GetCanvas:input_type -> polterware.local.v1.GetCanvasRequest
-	10, // 16: polterware.local.v1.CanvasService.CreateCanvas:input_type -> polterware.local.v1.CreateCanvasRequest
-	12, // 17: polterware.local.v1.CanvasService.UpdateCanvas:input_type -> polterware.local.v1.UpdateCanvasRequest
-	14, // 18: polterware.local.v1.CanvasService.DeleteCanvas:input_type -> polterware.local.v1.DeleteCanvasRequest
-	16, // 19: polterware.local.v1.CanvasService.ListCanvasTypes:input_type -> polterware.local.v1.ListCanvasTypesRequest
-	7,  // 20: polterware.local.v1.CanvasService.ListCanvases:output_type -> polterware.local.v1.ListCanvasesResponse
-	9,  // 21: polterware.local.v1.CanvasService.GetCanvas:output_type -> polterware.local.v1.GetCanvasResponse
-	11, // 22: polterware.local.v1.CanvasService.CreateCanvas:output_type -> polterware.local.v1.CreateCanvasResponse
-	13, // 23: polterware.local.v1.CanvasService.UpdateCanvas:output_type -> polterware.local.v1.UpdateCanvasResponse
-	15, // 24: polterware.local.v1.CanvasService.DeleteCanvas:output_type -> polterware.local.v1.DeleteCanvasResponse
-	17, // 25: polterware.local.v1.CanvasService.ListCanvasTypes:output_type -> polterware.local.v1.ListCanvasTypesResponse
-	20, // [20:26] is the sub-list for method output_type
-	14, // [14:20] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	20, // 12: polterware.local.v1.SetCanvasArchivedRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	4,  // 13: polterware.local.v1.SetCanvasArchivedResponse.canvas:type_name -> polterware.local.v1.Canvas
+	20, // 14: polterware.local.v1.DeleteCanvasRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	5,  // 15: polterware.local.v1.ListCanvasTypesResponse.types:type_name -> polterware.local.v1.CanvasTypeDefinition
+	6,  // 16: polterware.local.v1.CanvasService.ListCanvases:input_type -> polterware.local.v1.ListCanvasesRequest
+	8,  // 17: polterware.local.v1.CanvasService.GetCanvas:input_type -> polterware.local.v1.GetCanvasRequest
+	10, // 18: polterware.local.v1.CanvasService.CreateCanvas:input_type -> polterware.local.v1.CreateCanvasRequest
+	12, // 19: polterware.local.v1.CanvasService.UpdateCanvas:input_type -> polterware.local.v1.UpdateCanvasRequest
+	14, // 20: polterware.local.v1.CanvasService.SetCanvasArchived:input_type -> polterware.local.v1.SetCanvasArchivedRequest
+	16, // 21: polterware.local.v1.CanvasService.DeleteCanvas:input_type -> polterware.local.v1.DeleteCanvasRequest
+	18, // 22: polterware.local.v1.CanvasService.ListCanvasTypes:input_type -> polterware.local.v1.ListCanvasTypesRequest
+	7,  // 23: polterware.local.v1.CanvasService.ListCanvases:output_type -> polterware.local.v1.ListCanvasesResponse
+	9,  // 24: polterware.local.v1.CanvasService.GetCanvas:output_type -> polterware.local.v1.GetCanvasResponse
+	11, // 25: polterware.local.v1.CanvasService.CreateCanvas:output_type -> polterware.local.v1.CreateCanvasResponse
+	13, // 26: polterware.local.v1.CanvasService.UpdateCanvas:output_type -> polterware.local.v1.UpdateCanvasResponse
+	15, // 27: polterware.local.v1.CanvasService.SetCanvasArchived:output_type -> polterware.local.v1.SetCanvasArchivedResponse
+	17, // 28: polterware.local.v1.CanvasService.DeleteCanvas:output_type -> polterware.local.v1.DeleteCanvasResponse
+	19, // 29: polterware.local.v1.CanvasService.ListCanvasTypes:output_type -> polterware.local.v1.ListCanvasTypesResponse
+	23, // [23:30] is the sub-list for method output_type
+	16, // [16:23] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_polterware_local_v1_canvas_proto_init() }
@@ -1365,7 +1517,7 @@ func file_polterware_local_v1_canvas_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_polterware_local_v1_canvas_proto_rawDesc), len(file_polterware_local_v1_canvas_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -44,6 +44,9 @@ const (
 	// CanvasServiceUpdateCanvasProcedure is the fully-qualified name of the CanvasService's
 	// UpdateCanvas RPC.
 	CanvasServiceUpdateCanvasProcedure = "/polterware.local.v1.CanvasService/UpdateCanvas"
+	// CanvasServiceSetCanvasArchivedProcedure is the fully-qualified name of the CanvasService's
+	// SetCanvasArchived RPC.
+	CanvasServiceSetCanvasArchivedProcedure = "/polterware.local.v1.CanvasService/SetCanvasArchived"
 	// CanvasServiceDeleteCanvasProcedure is the fully-qualified name of the CanvasService's
 	// DeleteCanvas RPC.
 	CanvasServiceDeleteCanvasProcedure = "/polterware.local.v1.CanvasService/DeleteCanvas"
@@ -58,6 +61,7 @@ type CanvasServiceClient interface {
 	GetCanvas(context.Context, *connect.Request[v1.GetCanvasRequest]) (*connect.Response[v1.GetCanvasResponse], error)
 	CreateCanvas(context.Context, *connect.Request[v1.CreateCanvasRequest]) (*connect.Response[v1.CreateCanvasResponse], error)
 	UpdateCanvas(context.Context, *connect.Request[v1.UpdateCanvasRequest]) (*connect.Response[v1.UpdateCanvasResponse], error)
+	SetCanvasArchived(context.Context, *connect.Request[v1.SetCanvasArchivedRequest]) (*connect.Response[v1.SetCanvasArchivedResponse], error)
 	DeleteCanvas(context.Context, *connect.Request[v1.DeleteCanvasRequest]) (*connect.Response[v1.DeleteCanvasResponse], error)
 	ListCanvasTypes(context.Context, *connect.Request[v1.ListCanvasTypesRequest]) (*connect.Response[v1.ListCanvasTypesResponse], error)
 }
@@ -97,6 +101,12 @@ func NewCanvasServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(canvasServiceMethods.ByName("UpdateCanvas")),
 			connect.WithClientOptions(opts...),
 		),
+		setCanvasArchived: connect.NewClient[v1.SetCanvasArchivedRequest, v1.SetCanvasArchivedResponse](
+			httpClient,
+			baseURL+CanvasServiceSetCanvasArchivedProcedure,
+			connect.WithSchema(canvasServiceMethods.ByName("SetCanvasArchived")),
+			connect.WithClientOptions(opts...),
+		),
 		deleteCanvas: connect.NewClient[v1.DeleteCanvasRequest, v1.DeleteCanvasResponse](
 			httpClient,
 			baseURL+CanvasServiceDeleteCanvasProcedure,
@@ -114,12 +124,13 @@ func NewCanvasServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // canvasServiceClient implements CanvasServiceClient.
 type canvasServiceClient struct {
-	listCanvases    *connect.Client[v1.ListCanvasesRequest, v1.ListCanvasesResponse]
-	getCanvas       *connect.Client[v1.GetCanvasRequest, v1.GetCanvasResponse]
-	createCanvas    *connect.Client[v1.CreateCanvasRequest, v1.CreateCanvasResponse]
-	updateCanvas    *connect.Client[v1.UpdateCanvasRequest, v1.UpdateCanvasResponse]
-	deleteCanvas    *connect.Client[v1.DeleteCanvasRequest, v1.DeleteCanvasResponse]
-	listCanvasTypes *connect.Client[v1.ListCanvasTypesRequest, v1.ListCanvasTypesResponse]
+	listCanvases      *connect.Client[v1.ListCanvasesRequest, v1.ListCanvasesResponse]
+	getCanvas         *connect.Client[v1.GetCanvasRequest, v1.GetCanvasResponse]
+	createCanvas      *connect.Client[v1.CreateCanvasRequest, v1.CreateCanvasResponse]
+	updateCanvas      *connect.Client[v1.UpdateCanvasRequest, v1.UpdateCanvasResponse]
+	setCanvasArchived *connect.Client[v1.SetCanvasArchivedRequest, v1.SetCanvasArchivedResponse]
+	deleteCanvas      *connect.Client[v1.DeleteCanvasRequest, v1.DeleteCanvasResponse]
+	listCanvasTypes   *connect.Client[v1.ListCanvasTypesRequest, v1.ListCanvasTypesResponse]
 }
 
 // ListCanvases calls polterware.local.v1.CanvasService.ListCanvases.
@@ -142,6 +153,11 @@ func (c *canvasServiceClient) UpdateCanvas(ctx context.Context, req *connect.Req
 	return c.updateCanvas.CallUnary(ctx, req)
 }
 
+// SetCanvasArchived calls polterware.local.v1.CanvasService.SetCanvasArchived.
+func (c *canvasServiceClient) SetCanvasArchived(ctx context.Context, req *connect.Request[v1.SetCanvasArchivedRequest]) (*connect.Response[v1.SetCanvasArchivedResponse], error) {
+	return c.setCanvasArchived.CallUnary(ctx, req)
+}
+
 // DeleteCanvas calls polterware.local.v1.CanvasService.DeleteCanvas.
 func (c *canvasServiceClient) DeleteCanvas(ctx context.Context, req *connect.Request[v1.DeleteCanvasRequest]) (*connect.Response[v1.DeleteCanvasResponse], error) {
 	return c.deleteCanvas.CallUnary(ctx, req)
@@ -158,6 +174,7 @@ type CanvasServiceHandler interface {
 	GetCanvas(context.Context, *connect.Request[v1.GetCanvasRequest]) (*connect.Response[v1.GetCanvasResponse], error)
 	CreateCanvas(context.Context, *connect.Request[v1.CreateCanvasRequest]) (*connect.Response[v1.CreateCanvasResponse], error)
 	UpdateCanvas(context.Context, *connect.Request[v1.UpdateCanvasRequest]) (*connect.Response[v1.UpdateCanvasResponse], error)
+	SetCanvasArchived(context.Context, *connect.Request[v1.SetCanvasArchivedRequest]) (*connect.Response[v1.SetCanvasArchivedResponse], error)
 	DeleteCanvas(context.Context, *connect.Request[v1.DeleteCanvasRequest]) (*connect.Response[v1.DeleteCanvasResponse], error)
 	ListCanvasTypes(context.Context, *connect.Request[v1.ListCanvasTypesRequest]) (*connect.Response[v1.ListCanvasTypesResponse], error)
 }
@@ -193,6 +210,12 @@ func NewCanvasServiceHandler(svc CanvasServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(canvasServiceMethods.ByName("UpdateCanvas")),
 		connect.WithHandlerOptions(opts...),
 	)
+	canvasServiceSetCanvasArchivedHandler := connect.NewUnaryHandler(
+		CanvasServiceSetCanvasArchivedProcedure,
+		svc.SetCanvasArchived,
+		connect.WithSchema(canvasServiceMethods.ByName("SetCanvasArchived")),
+		connect.WithHandlerOptions(opts...),
+	)
 	canvasServiceDeleteCanvasHandler := connect.NewUnaryHandler(
 		CanvasServiceDeleteCanvasProcedure,
 		svc.DeleteCanvas,
@@ -215,6 +238,8 @@ func NewCanvasServiceHandler(svc CanvasServiceHandler, opts ...connect.HandlerOp
 			canvasServiceCreateCanvasHandler.ServeHTTP(w, r)
 		case CanvasServiceUpdateCanvasProcedure:
 			canvasServiceUpdateCanvasHandler.ServeHTTP(w, r)
+		case CanvasServiceSetCanvasArchivedProcedure:
+			canvasServiceSetCanvasArchivedHandler.ServeHTTP(w, r)
 		case CanvasServiceDeleteCanvasProcedure:
 			canvasServiceDeleteCanvasHandler.ServeHTTP(w, r)
 		case CanvasServiceListCanvasTypesProcedure:
@@ -242,6 +267,10 @@ func (UnimplementedCanvasServiceHandler) CreateCanvas(context.Context, *connect.
 
 func (UnimplementedCanvasServiceHandler) UpdateCanvas(context.Context, *connect.Request[v1.UpdateCanvasRequest]) (*connect.Response[v1.UpdateCanvasResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.CanvasService.UpdateCanvas is not implemented"))
+}
+
+func (UnimplementedCanvasServiceHandler) SetCanvasArchived(context.Context, *connect.Request[v1.SetCanvasArchivedRequest]) (*connect.Response[v1.SetCanvasArchivedResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.CanvasService.SetCanvasArchived is not implemented"))
 }
 
 func (UnimplementedCanvasServiceHandler) DeleteCanvas(context.Context, *connect.Request[v1.DeleteCanvasRequest]) (*connect.Response[v1.DeleteCanvasResponse], error) {

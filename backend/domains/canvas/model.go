@@ -89,6 +89,8 @@ var (
 	ErrNameRequired = errors.New("canvas name is required")
 	ErrLayout       = errors.New("layout must be JSON")
 	ErrUnknownScope = errors.New("unknown scope node")
+	ErrNotArchived  = errors.New("archive the canvas before deleting it permanently")
+	ErrArchived     = errors.New("restore the canvas before editing it")
 )
 
 // Ref points at another project entity. It is optional on a node.
@@ -133,7 +135,12 @@ type Canvas struct {
 	ScopeNodeID  string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	// ArchivedAt is zero while the canvas is active.
+	ArchivedAt time.Time
 }
+
+// Archived reports whether the canvas is in the archive.
+func (c Canvas) Archived() bool { return !c.ArchivedAt.IsZero() }
 
 // ValidRefKind reports whether kind is an entity a node may cite.
 func ValidRefKind(kind string) bool {

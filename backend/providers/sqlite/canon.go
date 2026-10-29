@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"database/sql"
 	"encoding/json"
 	"strings"
 	"time"
@@ -328,7 +329,7 @@ func (s *Store) SearchKnowledge(projectID, query, kind string, limit int) ([]kno
 
 	// Exact id match first.
 	var hits []knowledge.SearchHit
-	if item, err := s.getKnowledgeByID(query); err == nil && item.ProjectID == projectID {
+	if item, err := s.getActiveKnowledge(query); err == nil && item.ProjectID == projectID {
 		if kind == "" || item.Kind == kind {
 			hits = append(hits, knowledge.SearchHit{
 				Item: item, Score: 100, Snippet: item.Summary, TruthClass: "declared", Source: "knowledge",
@@ -368,7 +369,7 @@ func (s *Store) SearchKnowledge(projectID, query, kind string, limit int) ([]kno
 		if _, ok := seen[id]; ok {
 			continue
 		}
-		item, err := s.getKnowledgeByID(id)
+		item, err := s.getActiveKnowledge(id)
 		if err != nil {
 			continue
 		}
@@ -384,19 +385,16 @@ func (s *Store) SearchKnowledge(projectID, query, kind string, limit int) ([]kno
 	return hits, rows.Err()
 }
 
-func (s *Store) getKnowledgeByID(id string) (knowledge.Item, error) {
-	var item knowledge.Item
-	var tags, created, updated string
-	err := s.DB.QueryRow(
-		`SELECT id,project_id,title,body,kind,tags_json,summary,owner,status,extra_json,created_at,updated_at
-		 FROM knowledge_items WHERE id=?`, id,
-	).Scan(&item.ID, &item.ProjectID, &item.Title, &item.Body, &item.Kind, &tags, &item.Summary, &item.Owner, &item.Status, &item.ExtraJSON, &created, &updated)
+// getActiveKnowledge returns an item that is not archived; an archived one
+// reads as missing, so search and context never surface it.
+func (s *Store) getActiveKnowledge(id string) (knowledge.Item, error) {
+	item, err := s.GetKnowledge(id)
 	if err != nil {
 		return knowledge.Item{}, err
 	}
-	_ = json.Unmarshal([]byte(tags), &item.Tags)
-	item.CreatedAt, _ = time.Parse(time.RFC3339, created)
-	item.UpdatedAt, _ = time.Parse(time.RFC3339, updated)
+	if item.Archived() {
+		return knowledge.Item{}, sql.ErrNoRows
+	}
 	return item, nil
 }
 

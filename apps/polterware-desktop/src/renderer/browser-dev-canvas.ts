@@ -80,7 +80,7 @@ export function createBrowserCanvas(): PolterwareBridge["core"]["canvas"] {
   }
   return {
     listCanvasTypes: async () => ({ types: clone(types) }),
-    listCanvases: async (args = {}) => ({ canvases: clone(canvases.filter((item) => item.projectId === args.projectId)) }),
+    listCanvases: async (args = {}) => ({ canvases: clone(canvases.filter((item) => item.projectId === args.projectId && Boolean(item.archivedAt) === (args.archived === true))) }),
     getCanvas: async (args = {}) => ({ canvas: clone(find(args)) }),
     createCanvas: async (args = {}) => {
       const now = new Date().toISOString();
@@ -90,10 +90,20 @@ export function createBrowserCanvas(): PolterwareBridge["core"]["canvas"] {
     },
     updateCanvas: async (args = {}) => {
       const canvas = clone(find(args));
+      if (canvas.archivedAt) throw new Error("restore the canvas before editing it");
       for (const key of ["name", "agentVisible", "graph", "layoutJson"] as const) if (args[key] !== undefined) canvas[key] = clone(args[key]);
       canvas.updatedAt = new Date().toISOString(); validate(canvas);
       canvases = canvases.map((item) => item.id === canvas.id ? canvas : item); return { canvas: clone(canvas) };
     },
-    deleteCanvas: async (args = {}) => { const canvas = find(args); canvases = canvases.filter((item) => item.id !== canvas.id); return {}; },
+    setCanvasArchived: async (args = {}) => {
+      const canvas = clone(find(args));
+      canvas.archivedAt = args.archived === true ? new Date().toISOString() : "";
+      canvases = canvases.map((item) => item.id === canvas.id ? canvas : item); return { canvas: clone(canvas) };
+    },
+    deleteCanvas: async (args = {}) => {
+      const canvas = find(args);
+      if (!canvas.archivedAt) throw new Error("archive the canvas before deleting it permanently");
+      canvases = canvases.filter((item) => item.id !== canvas.id); return {};
+    },
   };
 }

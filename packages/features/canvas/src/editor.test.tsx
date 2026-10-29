@@ -19,7 +19,8 @@ let cleanup: (() => void) | undefined;
 let container: HTMLDivElement;
 function port(): CanvasPort {
   return { list: vi.fn().mockResolvedValue([canvas]), get: vi.fn().mockResolvedValue(canvas), types: vi.fn().mockResolvedValue([definition]),
-    create: vi.fn().mockResolvedValue(canvas), update: vi.fn().mockResolvedValue(canvas), remove: vi.fn().mockResolvedValue(undefined) };
+    create: vi.fn().mockResolvedValue(canvas), update: vi.fn().mockResolvedValue(canvas), remove: vi.fn().mockResolvedValue(undefined),
+    listArchived: vi.fn().mockResolvedValue([]), setArchived: vi.fn().mockResolvedValue({ ...canvas, archivedAt: "2026-10-29T12:00:00Z" }) };
 }
 function mount(api: CanvasPort, onBack = vi.fn(), entities: readonly StoreEntity[] = []) {
   cleanup = render(() => <CanvasEditor canvas={canvas} definition={definition} document={toDocument(canvas)} port={api} entities={entities} onBack={onBack} />, container);

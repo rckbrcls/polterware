@@ -123,9 +123,33 @@ describe("installBrowserDevBridge", () => {
     await expect(api.getCanvas({ projectId: "browser-empty", id })).rejects.toThrow("not found");
     await expect(api.updateCanvas({ projectId, id, name: "" })).rejects.toThrow("name");
     await expect(api.updateCanvas({ projectId, id, graph: { nodes: [{ id: "a", kind: "note" }], edges: [{ id: "ab", from: "a", to: "missing", kind: "relates" }] } })).rejects.toThrow("endpoints");
+    await expect(api.deleteCanvas({ projectId, id })).rejects.toThrow("archive the canvas");
+    await api.setCanvasArchived({ projectId, id, archived: true });
+    expect((await api.listCanvases({ projectId })).canvases).toHaveLength(2);
+    expect((await api.listCanvases({ projectId, archived: true })).canvases).toHaveLength(1);
+    await expect(api.updateCanvas({ projectId, id, name: "Edited" })).rejects.toThrow("restore the canvas");
     await api.deleteCanvas({ projectId, id });
     await expect(api.getCanvas({ projectId, id })).rejects.toThrow("not found");
     expect((await api.listCanvases({ projectId })).canvases).toHaveLength(2);
+  });
+
+  it("archives knowledge like the core: decisions never move and only archived items delete", async () => {
+    installBrowserDevBridge();
+    const api = window.polterware.core.knowledge;
+    const projectId = "browser-preview";
+    const active = async () => ((await api.list({ projectId })).items as { id: string }[]).map((item) => item.id);
+    await expect(api.setArchived({ id: "verdict-001", archived: true })).rejects.toThrow("decisions are never archived");
+    await expect(api.delete({ id: "doc-api" })).rejects.toThrow("archive the item");
+    await api.setArchived({ id: "doc-api", archived: true });
+    expect(await active()).not.toContain("doc-api");
+    const archived = (await api.list({ projectId, archived: true })).items as { id: string; archivedAt: string }[];
+    expect(archived).toEqual([expect.objectContaining({ id: "doc-api", archivedAt: expect.any(String) })]);
+    await api.setArchived({ id: "doc-api", archived: false });
+    expect(await active()).toContain("doc-api");
+    await api.setArchived({ id: "doc-api", archived: true });
+    await api.delete({ id: "doc-api" });
+    expect((await api.list({ projectId, archived: true })).items).toEqual([]);
+    expect(await active()).not.toContain("doc-api");
   });
 
   it("seeds valid demonstrations mixing components and drawing shapes, and enforces Structure refs", async () => {

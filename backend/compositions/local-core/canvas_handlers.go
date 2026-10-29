@@ -22,7 +22,11 @@ func (core *Core) ListCanvases(_ context.Context, request *connect.Request[local
 	if request.Msg.GetProjectId() == "" {
 		return nil, invalid("project id is required")
 	}
-	items, err := core.Store.ListCanvases(request.Msg.GetProjectId())
+	list := core.Store.ListCanvases
+	if request.Msg.GetArchived() {
+		list = core.Store.ListArchivedCanvases
+	}
+	items, err := list(request.Msg.GetProjectId())
 	if err != nil {
 		return nil, internal(err)
 	}
@@ -115,6 +119,9 @@ func (core *Core) UpdateCanvas(_ context.Context, request *connect.Request[local
 	if err != nil {
 		return nil, internal(err)
 	}
+	if current.Archived() {
+		return nil, mapArchiveErr(canvas.ErrArchived)
+	}
 	changed := false
 	if msg.Name != nil {
 		current.Name = *msg.Name
@@ -182,6 +189,9 @@ func (core *Core) DeleteCanvas(_ context.Context, request *connect.Request[local
 	if err != nil {
 		return nil, internal(err)
 	}
+	if !existing.Archived() {
+		return nil, mapArchiveErr(canvas.ErrNotArchived)
+	}
 	env.ProjectID = existing.ProjectID
 	env.BatchID = ids.NewULID()
 	_, err = wedge.ExecuteAuditedWrite(core.Store, env, agentrun.ActorKindHuman, "desktop.canvas.delete", func(run agentrun.Run) ([]string, any, error) {
@@ -219,6 +229,8 @@ func mapCanvasWriteErr(err error) error {
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return connect.NewError(connect.CodeNotFound, errors.New("canvas not found"))
+	case errors.Is(err, canvas.ErrNotArchived), errors.Is(err, canvas.ErrArchived):
+		return mapArchiveErr(err)
 	case errors.Is(err, canvas.ErrInvalidGraph),
 		errors.Is(err, canvas.ErrUnknownType),
 		errors.Is(err, canvas.ErrNameRequired),
@@ -294,6 +306,7 @@ func canvasProto(item canvas.Canvas) *localv1.Canvas {
 		ScopeNodeId:  item.ScopeNodeID,
 		CreatedAt:    item.CreatedAt.UTC().Format(time.RFC3339),
 		UpdatedAt:    item.UpdatedAt.UTC().Format(time.RFC3339),
+		ArchivedAt:   archivedStamp(item.ArchivedAt),
 	}
 }
 

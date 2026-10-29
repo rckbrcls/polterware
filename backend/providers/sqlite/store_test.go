@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/polterware/polterware/backend/domains/agentrun"
+	"github.com/polterware/polterware/backend/domains/knowledge"
 	"github.com/polterware/polterware/backend/domains/projects"
 	"github.com/polterware/polterware/backend/domains/work"
 	"github.com/polterware/polterware/backend/providers/demoseed"
@@ -333,11 +334,72 @@ func TestSaveAndListKnowledge(t *testing.T) {
 	if got, err := store.GetKnowledge(first.ID); err != nil || got.Title != first.Title {
 		t.Fatalf("GetKnowledge = %+v, %v", got, err)
 	}
-	if err := store.DeleteKnowledge(first.ID); err != nil {
+	if err := store.DeleteKnowledge(first.ID); !errors.Is(err, knowledge.ErrDecisionArchive) {
+		t.Fatalf("delete of a decision = %v, want ErrDecisionArchive", err)
+	}
+	if _, err := store.SetKnowledgeArchived(first.ID, true, time.Now()); !errors.Is(err, knowledge.ErrDecisionArchive) {
+		t.Fatalf("archive of a decision = %v, want ErrDecisionArchive", err)
+	}
+}
+
+func TestKnowledgeArchiveRestoreAndDelete(t *testing.T) {
+	store := seededStore(t)
+	items, err := store.ListKnowledge(demoseed.ProjectID, knowledge.KindEvidence)
+	if err != nil || len(items) == 0 {
+		t.Fatalf("seed evidence = %d err=%v", len(items), err)
+	}
+	item := items[0]
+	if err := store.DeleteKnowledge(item.ID); !errors.Is(err, knowledge.ErrNotArchived) {
+		t.Fatalf("delete of an active item = %v, want ErrNotArchived", err)
+	}
+	archived, err := store.SetKnowledgeArchived(item.ID, true, time.Now())
+	if err != nil || !archived.Archived() {
+		t.Fatalf("archive = %+v err=%v", archived, err)
+	}
+	active, err := store.ListKnowledge(demoseed.ProjectID, knowledge.KindEvidence)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.GetKnowledge(first.ID); err == nil {
-		t.Fatal("deleted item must be gone")
+	for _, other := range active {
+		if other.ID == item.ID {
+			t.Fatal("archived item must leave the active list")
+		}
+	}
+	if listed, err := store.ListArchivedKnowledge(demoseed.ProjectID, ""); err != nil || len(listed) != 1 || listed[0].ID != item.ID {
+		t.Fatalf("archived list = %+v err=%v", listed, err)
+	}
+	if hits, err := store.SearchKnowledge(demoseed.ProjectID, item.Title, "", 20); err != nil {
+		t.Fatal(err)
+	} else {
+		for _, hit := range hits {
+			if hit.Item.ID == item.ID {
+				t.Fatal("archived item must leave search")
+			}
+		}
+	}
+	// An import that rewrites an archived row keeps it out of search.
+	if err := store.SaveKnowledge(archived); err != nil {
+		t.Fatal(err)
+	}
+	var indexed int
+	if err := store.DB.QueryRow(`SELECT COUNT(1) FROM knowledge_fts WHERE knowledge_id=?`, item.ID).Scan(&indexed); err != nil || indexed != 0 {
+		t.Fatalf("archived item indexed=%d err=%v", indexed, err)
+	}
+	restored, err := store.SetKnowledgeArchived(item.ID, false, time.Now())
+	if err != nil || restored.Archived() {
+		t.Fatalf("restore = %+v err=%v", restored, err)
+	}
+	if err := store.DB.QueryRow(`SELECT COUNT(1) FROM knowledge_fts WHERE knowledge_id=?`, item.ID).Scan(&indexed); err != nil || indexed != 1 {
+		t.Fatalf("restored item indexed=%d err=%v", indexed, err)
+	}
+	if _, err := store.SetKnowledgeArchived(item.ID, true, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.DeleteKnowledge(item.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.GetKnowledge(item.ID); !errors.Is(err, sql.ErrNoRows) {
+		t.Fatalf("deleted item get = %v", err)
 	}
 }
 

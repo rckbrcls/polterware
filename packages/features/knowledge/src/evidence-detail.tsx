@@ -53,7 +53,7 @@ export function EvidenceDetail(props: {
           }
           footerActions={
             <Show when={props.onArchive}>
-              <Button variant="danger" size="sm" onClick={() => props.onArchive?.()}>Archive</Button>
+              <Button variant="texture" size="sm" onClick={() => props.onArchive?.()}>Archive</Button>
             </Show>
           }
           links={props.links}

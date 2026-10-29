@@ -26,11 +26,26 @@ type Item struct {
 	ExtraJSON string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	// ArchivedAt is zero while the item is active.
+	ArchivedAt time.Time
 }
+
+// Archived reports whether the item is in the archive.
+func (item Item) Archived() bool { return !item.ArchivedAt.IsZero() }
 
 const MaxBody = 64 * 1024
 
 var ErrInvalid = errors.New("invalid knowledge item")
+
+// ErrDecisionArchive rejects archiving or deleting a decision: decisions are
+// superseded, never removed.
+var ErrDecisionArchive = errors.New("decisions are never archived or deleted: supersede them")
+
+// ErrNotArchived rejects a permanent delete of an item that is still active.
+var ErrNotArchived = errors.New("archive the item before deleting it permanently")
+
+// ErrArchived rejects an edit of an archived item, which is read-only.
+var ErrArchived = errors.New("restore the item before editing it")
 
 // Kinds. Evidence items are notes distinguished by tags (for example `doc`,
 // `runbook`, `source`); verdicts are Decisions.

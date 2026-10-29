@@ -1,6 +1,6 @@
 import type { JSX } from "solid-js";
 import { Show, createEffect, createMemo, createSignal } from "solid-js";
-import { ResizableSidebar, ToastRegion } from "@polterware/frontend-design-system";
+import { ConfirmRegion, ResizableSidebar, ToastRegion } from "@polterware/frontend-design-system";
 import type { PlatformContext } from "@polterware/frontend-platform";
 import { MainFrame, ShellRoot } from "@polterware/frontend-shell";
 import type { ClientRoute, NavItem, ShellStatus } from "./route";
@@ -274,6 +274,7 @@ export function Shell(props: {
       </div>
 
       <ToastRegion />
+      <ConfirmRegion />
     </ShellRoot>
   );
 }

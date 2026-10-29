@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file polterware/local/v1/canvas.proto.
  */
 export const file_polterware_local_v1_canvas: GenFile = /*@__PURE__*/
-  fileDesc("CiBwb2x0ZXJ3YXJlL2xvY2FsL3YxL2NhbnZhcy5wcm90bxITcG9sdGVyd2FyZS5sb2NhbC52MSIlCglDYW52YXNSZWYSDAoEa2luZBgBIAEoCRIKCgJpZBgCIAEoCSJ2CgpDYW52YXNOb2RlEgoKAmlkGAEgASgJEgwKBGtpbmQYAiABKAkSDQoFbGFiZWwYAyABKAkSEgoKcHJvcHNfanNvbhgEIAEoCRIrCgNyZWYYBSABKAsyHi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbnZhc1JlZiJUCgpDYW52YXNFZGdlEgoKAmlkGAEgASgJEgwKBGZyb20YAiABKAkSCgoCdG8YAyABKAkSDAoEa2luZBgEIAEoCRISCgpwcm9wc19qc29uGAUgASgJIm0KC0NhbnZhc0dyYXBoEi4KBW5vZGVzGAEgAygLMh8ucG9sdGVyd2FyZS5sb2NhbC52MS5DYW52YXNOb2RlEi4KBWVkZ2VzGAIgAygLMh8ucG9sdGVyd2FyZS5sb2NhbC52MS5DYW52YXNFZGdlIuABCgZDYW52YXMSCgoCaWQYASABKAkSEgoKcHJvamVjdF9pZBgCIAEoCRIMCgRuYW1lGAMgASgJEgwKBHR5cGUYBCABKAkSFQoNYWdlbnRfdmlzaWJsZRgFIAEoCBIvCgVncmFwaBgGIAEoCzIgLnBvbHRlcndhcmUubG9jYWwudjEuQ2FudmFzR3JhcGgSEwoLbGF5b3V0X2pzb24YByABKAkSFQoNc2NvcGVfbm9kZV9pZBgIIAEoCRISCgpjcmVhdGVkX2F0GAkgASgJEhIKCnVwZGF0ZWRfYXQYCiABKAkigAEKFENhbnZhc1R5cGVEZWZpbml0aW9uEgwKBHR5cGUYASABKAkSDQoFbGFiZWwYAiABKAkSEgoKbm9kZV9raW5kcxgDIAMoCRISCgplZGdlX2tpbmRzGAQgAygJEg0KBXJ1bGVzGAUgAygJEhQKDHVucmVzdHJpY3RlZBgGIAEoCCJSChNMaXN0Q2FudmFzZXNSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSEgoKc2NvcGVfbm9kZRgCIAEoCRITCgtzY29wZV9leGFjdBgDIAEoCCJFChRMaXN0Q2FudmFzZXNSZXNwb25zZRItCghjYW52YXNlcxgBIAMoCzIbLnBvbHRlcndhcmUubG9jYWwudjEuQ2FudmFzIjIKEEdldENhbnZhc1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRIKCgJpZBgCIAEoCSJAChFHZXRDYW52YXNSZXNwb25zZRIrCgZjYW52YXMYASABKAsyGy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbnZhcyL6AQoTQ3JlYXRlQ2FudmFzUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDAoEdHlwZRgDIAEoCRIVCg1hZ2VudF92aXNpYmxlGAQgASgIEi8KBWdyYXBoGAUgASgLMiAucG9sdGVyd2FyZS5sb2NhbC52MS5DYW52YXNHcmFwaBITCgtsYXlvdXRfanNvbhgGIAEoCRIVCg1zY29wZV9ub2RlX2lkGAcgASgJEjMKBmNoYW5nZRgIIAEoCzIjLnBvbHRlcndhcmUubG9jYWwudjEuQ2hhbmdlRW52ZWxvcGUSCgoCaWQYCSABKAkiQwoUQ3JlYXRlQ2FudmFzUmVzcG9uc2USKwoGY2FudmFzGAEgASgLMhsucG9sdGVyd2FyZS5sb2NhbC52MS5DYW52YXMizAIKE1VwZGF0ZUNhbnZhc1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRIKCgJpZBgCIAEoCRIzCgZjaGFuZ2UYAyABKAsyIy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoYW5nZUVudmVsb3BlEhEKBG5hbWUYBCABKAlIAIgBARIaCg1hZ2VudF92aXNpYmxlGAUgASgISAGIAQESNAoFZ3JhcGgYBiABKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbnZhc0dyYXBoSAKIAQESGAoLbGF5b3V0X2pzb24YByABKAlIA4gBARIaCg1zY29wZV9ub2RlX2lkGAggASgJSASIAQFCBwoFX25hbWVCEAoOX2FnZW50X3Zpc2libGVCCAoGX2dyYXBoQg4KDF9sYXlvdXRfanNvbkIQCg5fc2NvcGVfbm9kZV9pZCJDChRVcGRhdGVDYW52YXNSZXNwb25zZRIrCgZjYW52YXMYASABKAsyGy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbnZhcyJqChNEZWxldGVDYW52YXNSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSCgoCaWQYAiABKAkSMwoGY2hhbmdlGAMgASgLMiMucG9sdGVyd2FyZS5sb2NhbC52MS5DaGFuZ2VFbnZlbG9wZSIWChREZWxldGVDYW52YXNSZXNwb25zZSIYChZMaXN0Q2FudmFzVHlwZXNSZXF1ZXN0IlMKF0xpc3RDYW52YXNUeXBlc1Jlc3BvbnNlEjgKBXR5cGVzGAEgAygLMikucG9sdGVyd2FyZS5sb2NhbC52MS5DYW52YXNUeXBlRGVmaW5pdGlvbjLtBAoNQ2FudmFzU2VydmljZRJjCgxMaXN0Q2FudmFzZXMSKC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RDYW52YXNlc1JlcXVlc3QaKS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RDYW52YXNlc1Jlc3BvbnNlEloKCUdldENhbnZhcxIlLnBvbHRlcndhcmUubG9jYWwudjEuR2V0Q2FudmFzUmVxdWVzdBomLnBvbHRlcndhcmUubG9jYWwudjEuR2V0Q2FudmFzUmVzcG9uc2USYwoMQ3JlYXRlQ2FudmFzEigucG9sdGVyd2FyZS5sb2NhbC52MS5DcmVhdGVDYW52YXNSZXF1ZXN0GikucG9sdGVyd2FyZS5sb2NhbC52MS5DcmVhdGVDYW52YXNSZXNwb25zZRJjCgxVcGRhdGVDYW52YXMSKC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlVwZGF0ZUNhbnZhc1JlcXVlc3QaKS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlVwZGF0ZUNhbnZhc1Jlc3BvbnNlEmMKDERlbGV0ZUNhbnZhcxIoLnBvbHRlcndhcmUubG9jYWwudjEuRGVsZXRlQ2FudmFzUmVxdWVzdBopLnBvbHRlcndhcmUubG9jYWwudjEuRGVsZXRlQ2FudmFzUmVzcG9uc2USbAoPTGlzdENhbnZhc1R5cGVzEisucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0Q2FudmFzVHlwZXNSZXF1ZXN0GiwucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0Q2FudmFzVHlwZXNSZXNwb25zZULnAQoXY29tLnBvbHRlcndhcmUubG9jYWwudjFCC0NhbnZhc1Byb3RvUAFaUWdpdGh1Yi5jb20vcG9sdGVyd2FyZS9wb2x0ZXJ3YXJlL2JhY2tlbmQvcGxhdGZvcm0vZ2VuL3BvbHRlcndhcmUvbG9jYWwvdjE7bG9jYWx2MaICA1BMWKoCE1BvbHRlcndhcmUuTG9jYWwuVjHKAhNQb2x0ZXJ3YXJlXExvY2FsXFYx4gIfUG9sdGVyd2FyZVxMb2NhbFxWMVxHUEJNZXRhZGF0YeoCFVBvbHRlcndhcmU6OkxvY2FsOjpWMWIGcHJvdG8z", [file_polterware_local_v1_agentrun]);
+  fileDesc("CiBwb2x0ZXJ3YXJlL2xvY2FsL3YxL2NhbnZhcy5wcm90bxITcG9sdGVyd2FyZS5sb2NhbC52MSIlCglDYW52YXNSZWYSDAoEa2luZBgBIAEoCRIKCgJpZBgCIAEoCSJ2CgpDYW52YXNOb2RlEgoKAmlkGAEgASgJEgwKBGtpbmQYAiABKAkSDQoFbGFiZWwYAyABKAkSEgoKcHJvcHNfanNvbhgEIAEoCRIrCgNyZWYYBSABKAsyHi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbnZhc1JlZiJUCgpDYW52YXNFZGdlEgoKAmlkGAEgASgJEgwKBGZyb20YAiABKAkSCgoCdG8YAyABKAkSDAoEa2luZBgEIAEoCRISCgpwcm9wc19qc29uGAUgASgJIm0KC0NhbnZhc0dyYXBoEi4KBW5vZGVzGAEgAygLMh8ucG9sdGVyd2FyZS5sb2NhbC52MS5DYW52YXNOb2RlEi4KBWVkZ2VzGAIgAygLMh8ucG9sdGVyd2FyZS5sb2NhbC52MS5DYW52YXNFZGdlIvUBCgZDYW52YXMSCgoCaWQYASABKAkSEgoKcHJvamVjdF9pZBgCIAEoCRIMCgRuYW1lGAMgASgJEgwKBHR5cGUYBCABKAkSFQoNYWdlbnRfdmlzaWJsZRgFIAEoCBIvCgVncmFwaBgGIAEoCzIgLnBvbHRlcndhcmUubG9jYWwudjEuQ2FudmFzR3JhcGgSEwoLbGF5b3V0X2pzb24YByABKAkSFQoNc2NvcGVfbm9kZV9pZBgIIAEoCRISCgpjcmVhdGVkX2F0GAkgASgJEhIKCnVwZGF0ZWRfYXQYCiABKAkSEwoLYXJjaGl2ZWRfYXQYCyABKAkigAEKFENhbnZhc1R5cGVEZWZpbml0aW9uEgwKBHR5cGUYASABKAkSDQoFbGFiZWwYAiABKAkSEgoKbm9kZV9raW5kcxgDIAMoCRISCgplZGdlX2tpbmRzGAQgAygJEg0KBXJ1bGVzGAUgAygJEhQKDHVucmVzdHJpY3RlZBgGIAEoCCJkChNMaXN0Q2FudmFzZXNSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSEgoKc2NvcGVfbm9kZRgCIAEoCRITCgtzY29wZV9leGFjdBgDIAEoCBIQCghhcmNoaXZlZBgEIAEoCCJFChRMaXN0Q2FudmFzZXNSZXNwb25zZRItCghjYW52YXNlcxgBIAMoCzIbLnBvbHRlcndhcmUubG9jYWwudjEuQ2FudmFzIjIKEEdldENhbnZhc1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRIKCgJpZBgCIAEoCSJAChFHZXRDYW52YXNSZXNwb25zZRIrCgZjYW52YXMYASABKAsyGy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbnZhcyL6AQoTQ3JlYXRlQ2FudmFzUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDAoEdHlwZRgDIAEoCRIVCg1hZ2VudF92aXNpYmxlGAQgASgIEi8KBWdyYXBoGAUgASgLMiAucG9sdGVyd2FyZS5sb2NhbC52MS5DYW52YXNHcmFwaBITCgtsYXlvdXRfanNvbhgGIAEoCRIVCg1zY29wZV9ub2RlX2lkGAcgASgJEjMKBmNoYW5nZRgIIAEoCzIjLnBvbHRlcndhcmUubG9jYWwudjEuQ2hhbmdlRW52ZWxvcGUSCgoCaWQYCSABKAkiQwoUQ3JlYXRlQ2FudmFzUmVzcG9uc2USKwoGY2FudmFzGAEgASgLMhsucG9sdGVyd2FyZS5sb2NhbC52MS5DYW52YXMizAIKE1VwZGF0ZUNhbnZhc1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRIKCgJpZBgCIAEoCRIzCgZjaGFuZ2UYAyABKAsyIy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoYW5nZUVudmVsb3BlEhEKBG5hbWUYBCABKAlIAIgBARIaCg1hZ2VudF92aXNpYmxlGAUgASgISAGIAQESNAoFZ3JhcGgYBiABKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbnZhc0dyYXBoSAKIAQESGAoLbGF5b3V0X2pzb24YByABKAlIA4gBARIaCg1zY29wZV9ub2RlX2lkGAggASgJSASIAQFCBwoFX25hbWVCEAoOX2FnZW50X3Zpc2libGVCCAoGX2dyYXBoQg4KDF9sYXlvdXRfanNvbkIQCg5fc2NvcGVfbm9kZV9pZCJDChRVcGRhdGVDYW52YXNSZXNwb25zZRIrCgZjYW52YXMYASABKAsyGy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbnZhcyKBAQoYU2V0Q2FudmFzQXJjaGl2ZWRSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSCgoCaWQYAiABKAkSEAoIYXJjaGl2ZWQYAyABKAgSMwoGY2hhbmdlGAQgASgLMiMucG9sdGVyd2FyZS5sb2NhbC52MS5DaGFuZ2VFbnZlbG9wZSJIChlTZXRDYW52YXNBcmNoaXZlZFJlc3BvbnNlEisKBmNhbnZhcxgBIAEoCzIbLnBvbHRlcndhcmUubG9jYWwudjEuQ2FudmFzImoKE0RlbGV0ZUNhbnZhc1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRIKCgJpZBgCIAEoCRIzCgZjaGFuZ2UYAyABKAsyIy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoYW5nZUVudmVsb3BlIhYKFERlbGV0ZUNhbnZhc1Jlc3BvbnNlIhgKFkxpc3RDYW52YXNUeXBlc1JlcXVlc3QiUwoXTGlzdENhbnZhc1R5cGVzUmVzcG9uc2USOAoFdHlwZXMYASADKAsyKS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbnZhc1R5cGVEZWZpbml0aW9uMuEFCg1DYW52YXNTZXJ2aWNlEmMKDExpc3RDYW52YXNlcxIoLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdENhbnZhc2VzUmVxdWVzdBopLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdENhbnZhc2VzUmVzcG9uc2USWgoJR2V0Q2FudmFzEiUucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRDYW52YXNSZXF1ZXN0GiYucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRDYW52YXNSZXNwb25zZRJjCgxDcmVhdGVDYW52YXMSKC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNyZWF0ZUNhbnZhc1JlcXVlc3QaKS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNyZWF0ZUNhbnZhc1Jlc3BvbnNlEmMKDFVwZGF0ZUNhbnZhcxIoLnBvbHRlcndhcmUubG9jYWwudjEuVXBkYXRlQ2FudmFzUmVxdWVzdBopLnBvbHRlcndhcmUubG9jYWwudjEuVXBkYXRlQ2FudmFzUmVzcG9uc2UScgoRU2V0Q2FudmFzQXJjaGl2ZWQSLS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlNldENhbnZhc0FyY2hpdmVkUmVxdWVzdBouLnBvbHRlcndhcmUubG9jYWwudjEuU2V0Q2FudmFzQXJjaGl2ZWRSZXNwb25zZRJjCgxEZWxldGVDYW52YXMSKC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRlbGV0ZUNhbnZhc1JlcXVlc3QaKS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRlbGV0ZUNhbnZhc1Jlc3BvbnNlEmwKD0xpc3RDYW52YXNUeXBlcxIrLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdENhbnZhc1R5cGVzUmVxdWVzdBosLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdENhbnZhc1R5cGVzUmVzcG9uc2VC5wEKF2NvbS5wb2x0ZXJ3YXJlLmxvY2FsLnYxQgtDYW52YXNQcm90b1ABWlFnaXRodWIuY29tL3BvbHRlcndhcmUvcG9sdGVyd2FyZS9iYWNrZW5kL3BsYXRmb3JtL2dlbi9wb2x0ZXJ3YXJlL2xvY2FsL3YxO2xvY2FsdjGiAgNQTFiqAhNQb2x0ZXJ3YXJlLkxvY2FsLlYxygITUG9sdGVyd2FyZVxMb2NhbFxWMeICH1BvbHRlcndhcmVcTG9jYWxcVjFcR1BCTWV0YWRhdGHqAhVQb2x0ZXJ3YXJlOjpMb2NhbDo6VjFiBnByb3RvMw", [file_polterware_local_v1_agentrun]);
 
 /**
  * CanvasRef cites another project entity.
@@ -200,6 +200,13 @@ export type Canvas = Message<"polterware.local.v1.Canvas"> & {
    * @generated from field: string updated_at = 10;
    */
   updatedAt: string;
+
+  /**
+   * archived_at is empty while the canvas is active (RFC3339 otherwise).
+   *
+   * @generated from field: string archived_at = 11;
+   */
+  archivedAt: string;
 };
 
 /**
@@ -277,6 +284,13 @@ export type ListCanvasesRequest = Message<"polterware.local.v1.ListCanvasesReque
    * @generated from field: bool scope_exact = 3;
    */
   scopeExact: boolean;
+
+  /**
+   * archived lists only archived canvases; the default lists only active ones.
+   *
+   * @generated from field: bool archived = 4;
+   */
+  archived: boolean;
 };
 
 /**
@@ -491,6 +505,61 @@ export const UpdateCanvasResponseSchema: GenMessage<UpdateCanvasResponse> = /*@_
   messageDesc(file_polterware_local_v1_canvas, 13);
 
 /**
+ * SetCanvasArchived moves a canvas into the archive (archived = true) or
+ * restores it. An archived canvas is read-only and hidden from agents.
+ *
+ * @generated from message polterware.local.v1.SetCanvasArchivedRequest
+ */
+export type SetCanvasArchivedRequest = Message<"polterware.local.v1.SetCanvasArchivedRequest"> & {
+  /**
+   * @generated from field: string project_id = 1;
+   */
+  projectId: string;
+
+  /**
+   * @generated from field: string id = 2;
+   */
+  id: string;
+
+  /**
+   * @generated from field: bool archived = 3;
+   */
+  archived: boolean;
+
+  /**
+   * @generated from field: polterware.local.v1.ChangeEnvelope change = 4;
+   */
+  change?: ChangeEnvelope | undefined;
+};
+
+/**
+ * Describes the message polterware.local.v1.SetCanvasArchivedRequest.
+ * Use `create(SetCanvasArchivedRequestSchema)` to create a new message.
+ */
+export const SetCanvasArchivedRequestSchema: GenMessage<SetCanvasArchivedRequest> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_canvas, 14);
+
+/**
+ * @generated from message polterware.local.v1.SetCanvasArchivedResponse
+ */
+export type SetCanvasArchivedResponse = Message<"polterware.local.v1.SetCanvasArchivedResponse"> & {
+  /**
+   * @generated from field: polterware.local.v1.Canvas canvas = 1;
+   */
+  canvas?: Canvas | undefined;
+};
+
+/**
+ * Describes the message polterware.local.v1.SetCanvasArchivedResponse.
+ * Use `create(SetCanvasArchivedResponseSchema)` to create a new message.
+ */
+export const SetCanvasArchivedResponseSchema: GenMessage<SetCanvasArchivedResponse> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_canvas, 15);
+
+/**
+ * DeleteCanvas removes an archived canvas for good. An active canvas is
+ * refused with FAILED_PRECONDITION.
+ *
  * @generated from message polterware.local.v1.DeleteCanvasRequest
  */
 export type DeleteCanvasRequest = Message<"polterware.local.v1.DeleteCanvasRequest"> & {
@@ -515,7 +584,7 @@ export type DeleteCanvasRequest = Message<"polterware.local.v1.DeleteCanvasReque
  * Use `create(DeleteCanvasRequestSchema)` to create a new message.
  */
 export const DeleteCanvasRequestSchema: GenMessage<DeleteCanvasRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canvas, 14);
+  messageDesc(file_polterware_local_v1_canvas, 16);
 
 /**
  * @generated from message polterware.local.v1.DeleteCanvasResponse
@@ -528,7 +597,7 @@ export type DeleteCanvasResponse = Message<"polterware.local.v1.DeleteCanvasResp
  * Use `create(DeleteCanvasResponseSchema)` to create a new message.
  */
 export const DeleteCanvasResponseSchema: GenMessage<DeleteCanvasResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canvas, 15);
+  messageDesc(file_polterware_local_v1_canvas, 17);
 
 /**
  * @generated from message polterware.local.v1.ListCanvasTypesRequest
@@ -541,7 +610,7 @@ export type ListCanvasTypesRequest = Message<"polterware.local.v1.ListCanvasType
  * Use `create(ListCanvasTypesRequestSchema)` to create a new message.
  */
 export const ListCanvasTypesRequestSchema: GenMessage<ListCanvasTypesRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canvas, 16);
+  messageDesc(file_polterware_local_v1_canvas, 18);
 
 /**
  * @generated from message polterware.local.v1.ListCanvasTypesResponse
@@ -558,7 +627,7 @@ export type ListCanvasTypesResponse = Message<"polterware.local.v1.ListCanvasTyp
  * Use `create(ListCanvasTypesResponseSchema)` to create a new message.
  */
 export const ListCanvasTypesResponseSchema: GenMessage<ListCanvasTypesResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canvas, 17);
+  messageDesc(file_polterware_local_v1_canvas, 19);
 
 /**
  * CanvasService stores canvases. Writes validate the graph and reject
@@ -598,6 +667,14 @@ export const CanvasService: GenService<{
     methodKind: "unary";
     input: typeof UpdateCanvasRequestSchema;
     output: typeof UpdateCanvasResponseSchema;
+  },
+  /**
+   * @generated from rpc polterware.local.v1.CanvasService.SetCanvasArchived
+   */
+  setCanvasArchived: {
+    methodKind: "unary";
+    input: typeof SetCanvasArchivedRequestSchema;
+    output: typeof SetCanvasArchivedResponseSchema;
   },
   /**
    * @generated from rpc polterware.local.v1.CanvasService.DeleteCanvas

@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file polterware/local/v1/knowledge.proto.
  */
 export const file_polterware_local_v1_knowledge: GenFile = /*@__PURE__*/
-  fileDesc("CiNwb2x0ZXJ3YXJlL2xvY2FsL3YxL2tub3dsZWRnZS5wcm90bxITcG9sdGVyd2FyZS5sb2NhbC52MSLrAQoNS25vd2xlZGdlSXRlbRIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEg0KBXRpdGxlGAMgASgJEgwKBGJvZHkYBCABKAkSDAoEa2luZBgFIAEoCRIMCgR0YWdzGAYgAygJEg8KB3N1bW1hcnkYByABKAkSDQoFb3duZXIYCCABKAkSDgoGc3RhdHVzGAkgASgJEhIKCmV4dHJhX2pzb24YCiABKAkSEgoKY3JlYXRlZF9hdBgLIAEoCRISCgp1cGRhdGVkX2F0GAwgASgJEhUKDXNjb3BlX25vZGVfaWQYDSABKAkizgEKE0tub3dsZWRnZUVudGl0eUxpbmsSCgoCaWQYASABKAkSEgoKcHJvamVjdF9pZBgCIAEoCRIUCgxrbm93bGVkZ2VfaWQYAyABKAkSEQoJZW50aXR5X2lkGAQgASgJEhEKCXByZWRpY2F0ZRgFIAEoCRITCgt0cnV0aF9jbGFzcxgGIAEoCRIOCgZzb3VyY2UYByABKAkSDQoFYWN0b3IYCCABKAkSEwoLb2JzZXJ2ZWRfYXQYCSABKAkSEgoKY3JlYXRlZF9hdBgKIAEoCSKLAQoSS25vd2xlZGdlU2VhcmNoSGl0EjAKBGl0ZW0YASABKAsyIi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLktub3dsZWRnZUl0ZW0SDQoFc2NvcmUYAiABKAESDwoHc25pcHBldBgDIAEoCRITCgt0cnV0aF9jbGFzcxgEIAEoCRIOCgZzb3VyY2UYBSABKAkifQoUU2F2ZUtub3dsZWRnZVJlcXVlc3QSMAoEaXRlbRgBIAEoCzIiLnBvbHRlcndhcmUubG9jYWwudjEuS25vd2xlZGdlSXRlbRIzCgZjaGFuZ2UYAiABKAsyIy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoYW5nZUVudmVsb3BlIkkKFVNhdmVLbm93bGVkZ2VSZXNwb25zZRIwCgRpdGVtGAEgASgLMiIucG9sdGVyd2FyZS5sb2NhbC52MS5Lbm93bGVkZ2VJdGVtInYKFExpc3RLbm93bGVkZ2VSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSDAoEa2luZBgCIAEoCRISCgpzY29wZV9ub2RlGAMgASgJEhMKC3Njb3BlX2V4YWN0GAQgASgIEhMKC3Njb3BlX25vZGVzGAUgAygJIkoKFUxpc3RLbm93bGVkZ2VSZXNwb25zZRIxCgVpdGVtcxgBIAMoCzIiLnBvbHRlcndhcmUubG9jYWwudjEuS25vd2xlZGdlSXRlbSJZChZEZWxldGVLbm93bGVkZ2VSZXF1ZXN0EgoKAmlkGAEgASgJEjMKBmNoYW5nZRgCIAEoCzIjLnBvbHRlcndhcmUubG9jYWwudjEuQ2hhbmdlRW52ZWxvcGUiGQoXRGVsZXRlS25vd2xlZGdlUmVzcG9uc2UiWAoWU2VhcmNoS25vd2xlZGdlUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEg0KBXF1ZXJ5GAIgASgJEgwKBGtpbmQYAyABKAkSDQoFbGltaXQYBCABKAUiUAoXU2VhcmNoS25vd2xlZGdlUmVzcG9uc2USNQoEaGl0cxgBIAMoCzInLnBvbHRlcndhcmUubG9jYWwudjEuS25vd2xlZGdlU2VhcmNoSGl0IlgKGUxpc3RLbm93bGVkZ2VMaW5rc1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRIUCgxrbm93bGVkZ2VfaWQYAiABKAkSEQoJZW50aXR5X2lkGAMgASgJIlUKGkxpc3RLbm93bGVkZ2VMaW5rc1Jlc3BvbnNlEjcKBWxpbmtzGAEgAygLMigucG9sdGVyd2FyZS5sb2NhbC52MS5Lbm93bGVkZ2VFbnRpdHlMaW5rIocBChhTYXZlS25vd2xlZGdlTGlua1JlcXVlc3QSNgoEbGluaxgBIAEoCzIoLnBvbHRlcndhcmUubG9jYWwudjEuS25vd2xlZGdlRW50aXR5TGluaxIzCgZjaGFuZ2UYAiABKAsyIy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoYW5nZUVudmVsb3BlIlMKGVNhdmVLbm93bGVkZ2VMaW5rUmVzcG9uc2USNgoEbGluaxgBIAEoCzIoLnBvbHRlcndhcmUubG9jYWwudjEuS25vd2xlZGdlRW50aXR5TGluayJdChpEZWxldGVLbm93bGVkZ2VMaW5rUmVxdWVzdBIKCgJpZBgBIAEoCRIzCgZjaGFuZ2UYAiABKAsyIy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoYW5nZUVudmVsb3BlIh0KG0RlbGV0ZUtub3dsZWRnZUxpbmtSZXNwb25zZTKjBgoQS25vd2xlZGdlU2VydmljZRJmCg1TYXZlS25vd2xlZGdlEikucG9sdGVyd2FyZS5sb2NhbC52MS5TYXZlS25vd2xlZGdlUmVxdWVzdBoqLnBvbHRlcndhcmUubG9jYWwudjEuU2F2ZUtub3dsZWRnZVJlc3BvbnNlEmYKDUxpc3RLbm93bGVkZ2USKS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RLbm93bGVkZ2VSZXF1ZXN0GioucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0S25vd2xlZGdlUmVzcG9uc2USbAoPRGVsZXRlS25vd2xlZGdlEisucG9sdGVyd2FyZS5sb2NhbC52MS5EZWxldGVLbm93bGVkZ2VSZXF1ZXN0GiwucG9sdGVyd2FyZS5sb2NhbC52MS5EZWxldGVLbm93bGVkZ2VSZXNwb25zZRJsCg9TZWFyY2hLbm93bGVkZ2USKy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlNlYXJjaEtub3dsZWRnZVJlcXVlc3QaLC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlNlYXJjaEtub3dsZWRnZVJlc3BvbnNlEnUKEkxpc3RLbm93bGVkZ2VMaW5rcxIuLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEtub3dsZWRnZUxpbmtzUmVxdWVzdBovLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEtub3dsZWRnZUxpbmtzUmVzcG9uc2UScgoRU2F2ZUtub3dsZWRnZUxpbmsSLS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlNhdmVLbm93bGVkZ2VMaW5rUmVxdWVzdBouLnBvbHRlcndhcmUubG9jYWwudjEuU2F2ZUtub3dsZWRnZUxpbmtSZXNwb25zZRJ4ChNEZWxldGVLbm93bGVkZ2VMaW5rEi8ucG9sdGVyd2FyZS5sb2NhbC52MS5EZWxldGVLbm93bGVkZ2VMaW5rUmVxdWVzdBowLnBvbHRlcndhcmUubG9jYWwudjEuRGVsZXRlS25vd2xlZGdlTGlua1Jlc3BvbnNlQuoBChdjb20ucG9sdGVyd2FyZS5sb2NhbC52MUIOS25vd2xlZGdlUHJvdG9QAVpRZ2l0aHViLmNvbS9wb2x0ZXJ3YXJlL3BvbHRlcndhcmUvYmFja2VuZC9wbGF0Zm9ybS9nZW4vcG9sdGVyd2FyZS9sb2NhbC92MTtsb2NhbHYxogIDUExYqgITUG9sdGVyd2FyZS5Mb2NhbC5WMcoCE1BvbHRlcndhcmVcTG9jYWxcVjHiAh9Qb2x0ZXJ3YXJlXExvY2FsXFYxXEdQQk1ldGFkYXRh6gIVUG9sdGVyd2FyZTo6TG9jYWw6OlYxYgZwcm90bzM", [file_polterware_local_v1_agentrun]);
+  fileDesc("CiNwb2x0ZXJ3YXJlL2xvY2FsL3YxL2tub3dsZWRnZS5wcm90bxITcG9sdGVyd2FyZS5sb2NhbC52MSKAAgoNS25vd2xlZGdlSXRlbRIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEg0KBXRpdGxlGAMgASgJEgwKBGJvZHkYBCABKAkSDAoEa2luZBgFIAEoCRIMCgR0YWdzGAYgAygJEg8KB3N1bW1hcnkYByABKAkSDQoFb3duZXIYCCABKAkSDgoGc3RhdHVzGAkgASgJEhIKCmV4dHJhX2pzb24YCiABKAkSEgoKY3JlYXRlZF9hdBgLIAEoCRISCgp1cGRhdGVkX2F0GAwgASgJEhUKDXNjb3BlX25vZGVfaWQYDSABKAkSEwoLYXJjaGl2ZWRfYXQYDiABKAkizgEKE0tub3dsZWRnZUVudGl0eUxpbmsSCgoCaWQYASABKAkSEgoKcHJvamVjdF9pZBgCIAEoCRIUCgxrbm93bGVkZ2VfaWQYAyABKAkSEQoJZW50aXR5X2lkGAQgASgJEhEKCXByZWRpY2F0ZRgFIAEoCRITCgt0cnV0aF9jbGFzcxgGIAEoCRIOCgZzb3VyY2UYByABKAkSDQoFYWN0b3IYCCABKAkSEwoLb2JzZXJ2ZWRfYXQYCSABKAkSEgoKY3JlYXRlZF9hdBgKIAEoCSKLAQoSS25vd2xlZGdlU2VhcmNoSGl0EjAKBGl0ZW0YASABKAsyIi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLktub3dsZWRnZUl0ZW0SDQoFc2NvcmUYAiABKAESDwoHc25pcHBldBgDIAEoCRITCgt0cnV0aF9jbGFzcxgEIAEoCRIOCgZzb3VyY2UYBSABKAkifQoUU2F2ZUtub3dsZWRnZVJlcXVlc3QSMAoEaXRlbRgBIAEoCzIiLnBvbHRlcndhcmUubG9jYWwudjEuS25vd2xlZGdlSXRlbRIzCgZjaGFuZ2UYAiABKAsyIy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoYW5nZUVudmVsb3BlIkkKFVNhdmVLbm93bGVkZ2VSZXNwb25zZRIwCgRpdGVtGAEgASgLMiIucG9sdGVyd2FyZS5sb2NhbC52MS5Lbm93bGVkZ2VJdGVtIogBChRMaXN0S25vd2xlZGdlUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEgwKBGtpbmQYAiABKAkSEgoKc2NvcGVfbm9kZRgDIAEoCRITCgtzY29wZV9leGFjdBgEIAEoCBITCgtzY29wZV9ub2RlcxgFIAMoCRIQCghhcmNoaXZlZBgGIAEoCCJKChVMaXN0S25vd2xlZGdlUmVzcG9uc2USMQoFaXRlbXMYASADKAsyIi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLktub3dsZWRnZUl0ZW0icAobU2V0S25vd2xlZGdlQXJjaGl2ZWRSZXF1ZXN0EgoKAmlkGAEgASgJEhAKCGFyY2hpdmVkGAIgASgIEjMKBmNoYW5nZRgDIAEoCzIjLnBvbHRlcndhcmUubG9jYWwudjEuQ2hhbmdlRW52ZWxvcGUiUAocU2V0S25vd2xlZGdlQXJjaGl2ZWRSZXNwb25zZRIwCgRpdGVtGAEgASgLMiIucG9sdGVyd2FyZS5sb2NhbC52MS5Lbm93bGVkZ2VJdGVtIlkKFkRlbGV0ZUtub3dsZWRnZVJlcXVlc3QSCgoCaWQYASABKAkSMwoGY2hhbmdlGAIgASgLMiMucG9sdGVyd2FyZS5sb2NhbC52MS5DaGFuZ2VFbnZlbG9wZSIZChdEZWxldGVLbm93bGVkZ2VSZXNwb25zZSJYChZTZWFyY2hLbm93bGVkZ2VSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSDQoFcXVlcnkYAiABKAkSDAoEa2luZBgDIAEoCRINCgVsaW1pdBgEIAEoBSJQChdTZWFyY2hLbm93bGVkZ2VSZXNwb25zZRI1CgRoaXRzGAEgAygLMicucG9sdGVyd2FyZS5sb2NhbC52MS5Lbm93bGVkZ2VTZWFyY2hIaXQiWAoZTGlzdEtub3dsZWRnZUxpbmtzUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEhQKDGtub3dsZWRnZV9pZBgCIAEoCRIRCgllbnRpdHlfaWQYAyABKAkiVQoaTGlzdEtub3dsZWRnZUxpbmtzUmVzcG9uc2USNwoFbGlua3MYASADKAsyKC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLktub3dsZWRnZUVudGl0eUxpbmsihwEKGFNhdmVLbm93bGVkZ2VMaW5rUmVxdWVzdBI2CgRsaW5rGAEgASgLMigucG9sdGVyd2FyZS5sb2NhbC52MS5Lbm93bGVkZ2VFbnRpdHlMaW5rEjMKBmNoYW5nZRgCIAEoCzIjLnBvbHRlcndhcmUubG9jYWwudjEuQ2hhbmdlRW52ZWxvcGUiUwoZU2F2ZUtub3dsZWRnZUxpbmtSZXNwb25zZRI2CgRsaW5rGAEgASgLMigucG9sdGVyd2FyZS5sb2NhbC52MS5Lbm93bGVkZ2VFbnRpdHlMaW5rIl0KGkRlbGV0ZUtub3dsZWRnZUxpbmtSZXF1ZXN0EgoKAmlkGAEgASgJEjMKBmNoYW5nZRgCIAEoCzIjLnBvbHRlcndhcmUubG9jYWwudjEuQ2hhbmdlRW52ZWxvcGUiHQobRGVsZXRlS25vd2xlZGdlTGlua1Jlc3BvbnNlMqAHChBLbm93bGVkZ2VTZXJ2aWNlEmYKDVNhdmVLbm93bGVkZ2USKS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlNhdmVLbm93bGVkZ2VSZXF1ZXN0GioucG9sdGVyd2FyZS5sb2NhbC52MS5TYXZlS25vd2xlZGdlUmVzcG9uc2USZgoNTGlzdEtub3dsZWRnZRIpLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEtub3dsZWRnZVJlcXVlc3QaKi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RLbm93bGVkZ2VSZXNwb25zZRJ7ChRTZXRLbm93bGVkZ2VBcmNoaXZlZBIwLnBvbHRlcndhcmUubG9jYWwudjEuU2V0S25vd2xlZGdlQXJjaGl2ZWRSZXF1ZXN0GjEucG9sdGVyd2FyZS5sb2NhbC52MS5TZXRLbm93bGVkZ2VBcmNoaXZlZFJlc3BvbnNlEmwKD0RlbGV0ZUtub3dsZWRnZRIrLnBvbHRlcndhcmUubG9jYWwudjEuRGVsZXRlS25vd2xlZGdlUmVxdWVzdBosLnBvbHRlcndhcmUubG9jYWwudjEuRGVsZXRlS25vd2xlZGdlUmVzcG9uc2USbAoPU2VhcmNoS25vd2xlZGdlEisucG9sdGVyd2FyZS5sb2NhbC52MS5TZWFyY2hLbm93bGVkZ2VSZXF1ZXN0GiwucG9sdGVyd2FyZS5sb2NhbC52MS5TZWFyY2hLbm93bGVkZ2VSZXNwb25zZRJ1ChJMaXN0S25vd2xlZGdlTGlua3MSLi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RLbm93bGVkZ2VMaW5rc1JlcXVlc3QaLy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RLbm93bGVkZ2VMaW5rc1Jlc3BvbnNlEnIKEVNhdmVLbm93bGVkZ2VMaW5rEi0ucG9sdGVyd2FyZS5sb2NhbC52MS5TYXZlS25vd2xlZGdlTGlua1JlcXVlc3QaLi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlNhdmVLbm93bGVkZ2VMaW5rUmVzcG9uc2USeAoTRGVsZXRlS25vd2xlZGdlTGluaxIvLnBvbHRlcndhcmUubG9jYWwudjEuRGVsZXRlS25vd2xlZGdlTGlua1JlcXVlc3QaMC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRlbGV0ZUtub3dsZWRnZUxpbmtSZXNwb25zZULqAQoXY29tLnBvbHRlcndhcmUubG9jYWwudjFCDktub3dsZWRnZVByb3RvUAFaUWdpdGh1Yi5jb20vcG9sdGVyd2FyZS9wb2x0ZXJ3YXJlL2JhY2tlbmQvcGxhdGZvcm0vZ2VuL3BvbHRlcndhcmUvbG9jYWwvdjE7bG9jYWx2MaICA1BMWKoCE1BvbHRlcndhcmUuTG9jYWwuVjHKAhNQb2x0ZXJ3YXJlXExvY2FsXFYx4gIfUG9sdGVyd2FyZVxMb2NhbFxWMVxHUEJNZXRhZGF0YeoCFVBvbHRlcndhcmU6OkxvY2FsOjpWMWIGcHJvdG8z", [file_polterware_local_v1_agentrun]);
 
 /**
  * @generated from message polterware.local.v1.KnowledgeItem
@@ -82,6 +82,13 @@ export type KnowledgeItem = Message<"polterware.local.v1.KnowledgeItem"> & {
    * @generated from field: string scope_node_id = 13;
    */
   scopeNodeId: string;
+
+  /**
+   * archived_at is empty while the item is active (RFC3339 otherwise).
+   *
+   * @generated from field: string archived_at = 14;
+   */
+  archivedAt: string;
 };
 
 /**
@@ -261,6 +268,13 @@ export type ListKnowledgeRequest = Message<"polterware.local.v1.ListKnowledgeReq
    * @generated from field: repeated string scope_nodes = 5;
    */
   scopeNodes: string[];
+
+  /**
+   * archived lists only archived items; the default lists only active ones.
+   *
+   * @generated from field: bool archived = 6;
+   */
+  archived: boolean;
 };
 
 /**
@@ -288,6 +302,56 @@ export const ListKnowledgeResponseSchema: GenMessage<ListKnowledgeResponse> = /*
   messageDesc(file_polterware_local_v1_knowledge, 6);
 
 /**
+ * SetKnowledgeArchived moves an item into the archive (archived = true) or
+ * restores it. Decisions are never archived: supersede them instead.
+ *
+ * @generated from message polterware.local.v1.SetKnowledgeArchivedRequest
+ */
+export type SetKnowledgeArchivedRequest = Message<"polterware.local.v1.SetKnowledgeArchivedRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: bool archived = 2;
+   */
+  archived: boolean;
+
+  /**
+   * @generated from field: polterware.local.v1.ChangeEnvelope change = 3;
+   */
+  change?: ChangeEnvelope | undefined;
+};
+
+/**
+ * Describes the message polterware.local.v1.SetKnowledgeArchivedRequest.
+ * Use `create(SetKnowledgeArchivedRequestSchema)` to create a new message.
+ */
+export const SetKnowledgeArchivedRequestSchema: GenMessage<SetKnowledgeArchivedRequest> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_knowledge, 7);
+
+/**
+ * @generated from message polterware.local.v1.SetKnowledgeArchivedResponse
+ */
+export type SetKnowledgeArchivedResponse = Message<"polterware.local.v1.SetKnowledgeArchivedResponse"> & {
+  /**
+   * @generated from field: polterware.local.v1.KnowledgeItem item = 1;
+   */
+  item?: KnowledgeItem | undefined;
+};
+
+/**
+ * Describes the message polterware.local.v1.SetKnowledgeArchivedResponse.
+ * Use `create(SetKnowledgeArchivedResponseSchema)` to create a new message.
+ */
+export const SetKnowledgeArchivedResponseSchema: GenMessage<SetKnowledgeArchivedResponse> = /*@__PURE__*/
+  messageDesc(file_polterware_local_v1_knowledge, 8);
+
+/**
+ * DeleteKnowledge removes an archived item for good. Active items and
+ * decisions are refused with FAILED_PRECONDITION.
+ *
  * @generated from message polterware.local.v1.DeleteKnowledgeRequest
  */
 export type DeleteKnowledgeRequest = Message<"polterware.local.v1.DeleteKnowledgeRequest"> & {
@@ -307,7 +371,7 @@ export type DeleteKnowledgeRequest = Message<"polterware.local.v1.DeleteKnowledg
  * Use `create(DeleteKnowledgeRequestSchema)` to create a new message.
  */
 export const DeleteKnowledgeRequestSchema: GenMessage<DeleteKnowledgeRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_knowledge, 7);
+  messageDesc(file_polterware_local_v1_knowledge, 9);
 
 /**
  * @generated from message polterware.local.v1.DeleteKnowledgeResponse
@@ -320,7 +384,7 @@ export type DeleteKnowledgeResponse = Message<"polterware.local.v1.DeleteKnowled
  * Use `create(DeleteKnowledgeResponseSchema)` to create a new message.
  */
 export const DeleteKnowledgeResponseSchema: GenMessage<DeleteKnowledgeResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_knowledge, 8);
+  messageDesc(file_polterware_local_v1_knowledge, 10);
 
 /**
  * @generated from message polterware.local.v1.SearchKnowledgeRequest
@@ -352,7 +416,7 @@ export type SearchKnowledgeRequest = Message<"polterware.local.v1.SearchKnowledg
  * Use `create(SearchKnowledgeRequestSchema)` to create a new message.
  */
 export const SearchKnowledgeRequestSchema: GenMessage<SearchKnowledgeRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_knowledge, 9);
+  messageDesc(file_polterware_local_v1_knowledge, 11);
 
 /**
  * @generated from message polterware.local.v1.SearchKnowledgeResponse
@@ -369,7 +433,7 @@ export type SearchKnowledgeResponse = Message<"polterware.local.v1.SearchKnowled
  * Use `create(SearchKnowledgeResponseSchema)` to create a new message.
  */
 export const SearchKnowledgeResponseSchema: GenMessage<SearchKnowledgeResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_knowledge, 10);
+  messageDesc(file_polterware_local_v1_knowledge, 12);
 
 /**
  * @generated from message polterware.local.v1.ListKnowledgeLinksRequest
@@ -396,7 +460,7 @@ export type ListKnowledgeLinksRequest = Message<"polterware.local.v1.ListKnowled
  * Use `create(ListKnowledgeLinksRequestSchema)` to create a new message.
  */
 export const ListKnowledgeLinksRequestSchema: GenMessage<ListKnowledgeLinksRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_knowledge, 11);
+  messageDesc(file_polterware_local_v1_knowledge, 13);
 
 /**
  * @generated from message polterware.local.v1.ListKnowledgeLinksResponse
@@ -413,7 +477,7 @@ export type ListKnowledgeLinksResponse = Message<"polterware.local.v1.ListKnowle
  * Use `create(ListKnowledgeLinksResponseSchema)` to create a new message.
  */
 export const ListKnowledgeLinksResponseSchema: GenMessage<ListKnowledgeLinksResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_knowledge, 12);
+  messageDesc(file_polterware_local_v1_knowledge, 14);
 
 /**
  * @generated from message polterware.local.v1.SaveKnowledgeLinkRequest
@@ -435,7 +499,7 @@ export type SaveKnowledgeLinkRequest = Message<"polterware.local.v1.SaveKnowledg
  * Use `create(SaveKnowledgeLinkRequestSchema)` to create a new message.
  */
 export const SaveKnowledgeLinkRequestSchema: GenMessage<SaveKnowledgeLinkRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_knowledge, 13);
+  messageDesc(file_polterware_local_v1_knowledge, 15);
 
 /**
  * @generated from message polterware.local.v1.SaveKnowledgeLinkResponse
@@ -452,7 +516,7 @@ export type SaveKnowledgeLinkResponse = Message<"polterware.local.v1.SaveKnowled
  * Use `create(SaveKnowledgeLinkResponseSchema)` to create a new message.
  */
 export const SaveKnowledgeLinkResponseSchema: GenMessage<SaveKnowledgeLinkResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_knowledge, 14);
+  messageDesc(file_polterware_local_v1_knowledge, 16);
 
 /**
  * @generated from message polterware.local.v1.DeleteKnowledgeLinkRequest
@@ -474,7 +538,7 @@ export type DeleteKnowledgeLinkRequest = Message<"polterware.local.v1.DeleteKnow
  * Use `create(DeleteKnowledgeLinkRequestSchema)` to create a new message.
  */
 export const DeleteKnowledgeLinkRequestSchema: GenMessage<DeleteKnowledgeLinkRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_knowledge, 15);
+  messageDesc(file_polterware_local_v1_knowledge, 17);
 
 /**
  * @generated from message polterware.local.v1.DeleteKnowledgeLinkResponse
@@ -487,7 +551,7 @@ export type DeleteKnowledgeLinkResponse = Message<"polterware.local.v1.DeleteKno
  * Use `create(DeleteKnowledgeLinkResponseSchema)` to create a new message.
  */
 export const DeleteKnowledgeLinkResponseSchema: GenMessage<DeleteKnowledgeLinkResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_knowledge, 16);
+  messageDesc(file_polterware_local_v1_knowledge, 18);
 
 /**
  * @generated from service polterware.local.v1.KnowledgeService
@@ -508,6 +572,14 @@ export const KnowledgeService: GenService<{
     methodKind: "unary";
     input: typeof ListKnowledgeRequestSchema;
     output: typeof ListKnowledgeResponseSchema;
+  },
+  /**
+   * @generated from rpc polterware.local.v1.KnowledgeService.SetKnowledgeArchived
+   */
+  setKnowledgeArchived: {
+    methodKind: "unary";
+    input: typeof SetKnowledgeArchivedRequestSchema;
+    output: typeof SetKnowledgeArchivedResponseSchema;
   },
   /**
    * @generated from rpc polterware.local.v1.KnowledgeService.DeleteKnowledge
@@ -551,4 +623,3 @@ export const KnowledgeService: GenService<{
   },
 }> = /*@__PURE__*/
   serviceDesc(file_polterware_local_v1_knowledge, 0);
-

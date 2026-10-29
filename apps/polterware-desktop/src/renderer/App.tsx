@@ -48,7 +48,7 @@ import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelo
 import { hydrateAppearancePreferences, hydrateShortcutPreferences, settingsTabScope } from "@polterware/feature-settings/boot";
 import type { ProjectSettingsPageId } from "@polterware/feature-settings";
 import { CommandPalette } from "@polterware/feature-commander";
-import { PageLoading, pushToast, type TabItem } from "@polterware/frontend-design-system";
+import { PageLoading, pushToast, requestConfirm, type ArchivedListItem, type TabItem } from "@polterware/frontend-design-system";
 import { detailDisplayFor, detailPanelStore, matchesShortcut, readRemembered, setActiveProjectId, writeRemembered } from "@polterware/frontend-state";
 import { hideBootSplash } from "./boot-splash";
 import { bootstrapPlatform } from "./platform-bootstrap";
@@ -112,13 +112,16 @@ import {
   persistKnowledgeTitle,
   persistKnowledgeCreate,
   persistKnowledgeScope,
-  persistKnowledgeDelete,
+  persistKnowledgeArchived,
+  persistKnowledgeDeletePermanently,
+  loadArchivedKnowledge,
   persistKnowledgeSourcePath,
   persistAddProjectRepo,
   persistProjectSettings,
   persistRemoveProjectRepo,
   persistDecisionAction,
   persistWorkCreateCard,
+  persistWorkRestoreCard,
   persistWorkBoardCreate,
   persistWorkBoardRename,
   persistWorkBoardDelete,
@@ -149,6 +152,13 @@ async function justifyChange(input: {
   defaultSummary?: string;
 }): Promise<ChangeEnvelope | null> {
   return { summary: input.defaultSummary ?? input.title, rationale: "Changed in Desktop" };
+}
+
+/** Archive dates read as a short local date; an unreadable stamp shows as is. */
+function formatArchiveDate(stamp: string): string {
+  if (!stamp) return "—";
+  const date = new Date(stamp);
+  return Number.isNaN(date.getTime()) ? stamp : date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
 /** Local label so the lazily loaded Knowledge package stays out of the main bundle. */
@@ -988,32 +998,64 @@ export function App() {
         onNewFeature={openFeatureFlow}
         onContinueFeature={continueFeatureFlow}
         onArchive={(id) => {
-          void justifyChange({
-            title: "Justify archive",
-            defaultSummary: "Archive knowledge item",
-          }).then((change) => {
-            if (!change) return;
-            return persistKnowledgeDelete(id, change).then(async () => {
-              pushToast("Knowledge archived.", "success");
+          // Archiving is reversible, so it runs at once and the toast offers Undo.
+          const title = workspace().evidence.find((item) => item.id === id)?.title ?? "item";
+          const restore = () => void persistKnowledgeArchived(id, false, { summary: `Restore: ${title}`, rationale: "Changed in Desktop" })
+            .then(() => refreshWorkspace(currentProjectId()))
+            .catch((error: unknown) => pushToast(error instanceof Error ? error.message : "Could not restore.", "danger"));
+          void persistKnowledgeArchived(id, true, { summary: `Archive: ${title}`, rationale: "Changed in Desktop" })
+            .then(async () => {
               await refreshWorkspace(currentProjectId());
+              pushToast(`Archived “${title}”`, "default", { action: { label: "Undo", onClick: restore } });
+            })
+            .catch((error: unknown) => {
+              pushToast(error instanceof Error ? error.message : "Could not archive.", "danger");
             });
-          }).catch((error: unknown) => {
-            pushToast(error instanceof Error ? error.message : "Could not archive knowledge.", "danger");
+        }}
+        loadArchivedEvidence={async () =>
+          (await loadArchivedKnowledge(currentProjectId(), "evidence")).map((item): ArchivedListItem => ({
+            id: item.id,
+            title: item.title,
+            detail: item.tags.join(", "),
+            archivedAt: formatArchiveDate(item.archivedAt),
+          }))}
+        onRestoreEvidence={async (item) => {
+          try {
+            await persistKnowledgeArchived(item.id, false, { summary: `Restore: ${item.title}`, rationale: "Changed in Desktop" });
+            await refreshWorkspace(currentProjectId());
+            pushToast(`Restored “${item.title}”`);
+          } catch (error) {
+            pushToast(error instanceof Error ? error.message : "Could not restore.", "danger");
+          }
+        }}
+        onDeleteEvidence={async (item) => {
+          const confirmed = await requestConfirm({
+            title: `Delete “${item.title}” permanently?`,
+            description: "The item, its body, and its links to other records are removed from this project.",
+            recovery: "This cannot be undone.",
+            confirmLabel: "Delete permanently",
           });
+          if (!confirmed) return;
+          try {
+            await persistKnowledgeDeletePermanently(item.id, { summary: `Delete permanently: ${item.title}`, rationale: "Changed in Desktop" });
+            pushToast(`Deleted “${item.title}”`);
+          } catch (error) {
+            pushToast(error instanceof Error ? error.message : "Could not delete.", "danger");
+          }
         }}
         onRemoveCard={(slug) => {
-          void justifyChange({
-            title: "Justify remove card",
-            defaultSummary: `Remove card: ${slug}`,
-          }).then((change) => {
-            if (!change) return;
-            return persistWorkRemoveCard(currentProjectId(), slug, change).then(async () => {
-              pushToast("Card removed from the board.", "success");
+          const title = workspace().workCards.find((card) => card.slug === slug)?.title ?? slug;
+          const restore = () => void persistWorkRestoreCard(currentProjectId(), slug, { summary: `Restore card: ${slug}`, rationale: "Changed in Desktop" })
+            .then(() => refreshWorkspace(currentProjectId()))
+            .catch((error: unknown) => pushToast(error instanceof Error ? error.message : "Could not restore card.", "danger"));
+          void persistWorkRemoveCard(currentProjectId(), slug, { summary: `Remove card: ${slug}`, rationale: "Changed in Desktop" })
+            .then(async () => {
               await refreshWorkspace(currentProjectId());
+              pushToast(`Removed “${title}” from the board`, "default", { action: { label: "Undo", onClick: restore } });
+            })
+            .catch((error: unknown) => {
+              pushToast(error instanceof Error ? error.message : "Could not remove card.", "danger");
             });
-          }).catch((error: unknown) => {
-            pushToast(error instanceof Error ? error.message : "Could not remove card.", "danger");
-          });
         }}
         onSetCardStage={(slug, stage) =>
           // Resolves false when the change was cancelled or failed, so the board can roll back.

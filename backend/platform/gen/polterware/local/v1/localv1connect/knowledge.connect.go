@@ -39,6 +39,9 @@ const (
 	// KnowledgeServiceListKnowledgeProcedure is the fully-qualified name of the KnowledgeService's
 	// ListKnowledge RPC.
 	KnowledgeServiceListKnowledgeProcedure = "/polterware.local.v1.KnowledgeService/ListKnowledge"
+	// KnowledgeServiceSetKnowledgeArchivedProcedure is the fully-qualified name of the
+	// KnowledgeService's SetKnowledgeArchived RPC.
+	KnowledgeServiceSetKnowledgeArchivedProcedure = "/polterware.local.v1.KnowledgeService/SetKnowledgeArchived"
 	// KnowledgeServiceDeleteKnowledgeProcedure is the fully-qualified name of the KnowledgeService's
 	// DeleteKnowledge RPC.
 	KnowledgeServiceDeleteKnowledgeProcedure = "/polterware.local.v1.KnowledgeService/DeleteKnowledge"
@@ -60,6 +63,7 @@ const (
 type KnowledgeServiceClient interface {
 	SaveKnowledge(context.Context, *connect.Request[v1.SaveKnowledgeRequest]) (*connect.Response[v1.SaveKnowledgeResponse], error)
 	ListKnowledge(context.Context, *connect.Request[v1.ListKnowledgeRequest]) (*connect.Response[v1.ListKnowledgeResponse], error)
+	SetKnowledgeArchived(context.Context, *connect.Request[v1.SetKnowledgeArchivedRequest]) (*connect.Response[v1.SetKnowledgeArchivedResponse], error)
 	DeleteKnowledge(context.Context, *connect.Request[v1.DeleteKnowledgeRequest]) (*connect.Response[v1.DeleteKnowledgeResponse], error)
 	SearchKnowledge(context.Context, *connect.Request[v1.SearchKnowledgeRequest]) (*connect.Response[v1.SearchKnowledgeResponse], error)
 	ListKnowledgeLinks(context.Context, *connect.Request[v1.ListKnowledgeLinksRequest]) (*connect.Response[v1.ListKnowledgeLinksResponse], error)
@@ -88,6 +92,12 @@ func NewKnowledgeServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			httpClient,
 			baseURL+KnowledgeServiceListKnowledgeProcedure,
 			connect.WithSchema(knowledgeServiceMethods.ByName("ListKnowledge")),
+			connect.WithClientOptions(opts...),
+		),
+		setKnowledgeArchived: connect.NewClient[v1.SetKnowledgeArchivedRequest, v1.SetKnowledgeArchivedResponse](
+			httpClient,
+			baseURL+KnowledgeServiceSetKnowledgeArchivedProcedure,
+			connect.WithSchema(knowledgeServiceMethods.ByName("SetKnowledgeArchived")),
 			connect.WithClientOptions(opts...),
 		),
 		deleteKnowledge: connect.NewClient[v1.DeleteKnowledgeRequest, v1.DeleteKnowledgeResponse](
@@ -125,13 +135,14 @@ func NewKnowledgeServiceClient(httpClient connect.HTTPClient, baseURL string, op
 
 // knowledgeServiceClient implements KnowledgeServiceClient.
 type knowledgeServiceClient struct {
-	saveKnowledge       *connect.Client[v1.SaveKnowledgeRequest, v1.SaveKnowledgeResponse]
-	listKnowledge       *connect.Client[v1.ListKnowledgeRequest, v1.ListKnowledgeResponse]
-	deleteKnowledge     *connect.Client[v1.DeleteKnowledgeRequest, v1.DeleteKnowledgeResponse]
-	searchKnowledge     *connect.Client[v1.SearchKnowledgeRequest, v1.SearchKnowledgeResponse]
-	listKnowledgeLinks  *connect.Client[v1.ListKnowledgeLinksRequest, v1.ListKnowledgeLinksResponse]
-	saveKnowledgeLink   *connect.Client[v1.SaveKnowledgeLinkRequest, v1.SaveKnowledgeLinkResponse]
-	deleteKnowledgeLink *connect.Client[v1.DeleteKnowledgeLinkRequest, v1.DeleteKnowledgeLinkResponse]
+	saveKnowledge        *connect.Client[v1.SaveKnowledgeRequest, v1.SaveKnowledgeResponse]
+	listKnowledge        *connect.Client[v1.ListKnowledgeRequest, v1.ListKnowledgeResponse]
+	setKnowledgeArchived *connect.Client[v1.SetKnowledgeArchivedRequest, v1.SetKnowledgeArchivedResponse]
+	deleteKnowledge      *connect.Client[v1.DeleteKnowledgeRequest, v1.DeleteKnowledgeResponse]
+	searchKnowledge      *connect.Client[v1.SearchKnowledgeRequest, v1.SearchKnowledgeResponse]
+	listKnowledgeLinks   *connect.Client[v1.ListKnowledgeLinksRequest, v1.ListKnowledgeLinksResponse]
+	saveKnowledgeLink    *connect.Client[v1.SaveKnowledgeLinkRequest, v1.SaveKnowledgeLinkResponse]
+	deleteKnowledgeLink  *connect.Client[v1.DeleteKnowledgeLinkRequest, v1.DeleteKnowledgeLinkResponse]
 }
 
 // SaveKnowledge calls polterware.local.v1.KnowledgeService.SaveKnowledge.
@@ -142,6 +153,11 @@ func (c *knowledgeServiceClient) SaveKnowledge(ctx context.Context, req *connect
 // ListKnowledge calls polterware.local.v1.KnowledgeService.ListKnowledge.
 func (c *knowledgeServiceClient) ListKnowledge(ctx context.Context, req *connect.Request[v1.ListKnowledgeRequest]) (*connect.Response[v1.ListKnowledgeResponse], error) {
 	return c.listKnowledge.CallUnary(ctx, req)
+}
+
+// SetKnowledgeArchived calls polterware.local.v1.KnowledgeService.SetKnowledgeArchived.
+func (c *knowledgeServiceClient) SetKnowledgeArchived(ctx context.Context, req *connect.Request[v1.SetKnowledgeArchivedRequest]) (*connect.Response[v1.SetKnowledgeArchivedResponse], error) {
+	return c.setKnowledgeArchived.CallUnary(ctx, req)
 }
 
 // DeleteKnowledge calls polterware.local.v1.KnowledgeService.DeleteKnowledge.
@@ -173,6 +189,7 @@ func (c *knowledgeServiceClient) DeleteKnowledgeLink(ctx context.Context, req *c
 type KnowledgeServiceHandler interface {
 	SaveKnowledge(context.Context, *connect.Request[v1.SaveKnowledgeRequest]) (*connect.Response[v1.SaveKnowledgeResponse], error)
 	ListKnowledge(context.Context, *connect.Request[v1.ListKnowledgeRequest]) (*connect.Response[v1.ListKnowledgeResponse], error)
+	SetKnowledgeArchived(context.Context, *connect.Request[v1.SetKnowledgeArchivedRequest]) (*connect.Response[v1.SetKnowledgeArchivedResponse], error)
 	DeleteKnowledge(context.Context, *connect.Request[v1.DeleteKnowledgeRequest]) (*connect.Response[v1.DeleteKnowledgeResponse], error)
 	SearchKnowledge(context.Context, *connect.Request[v1.SearchKnowledgeRequest]) (*connect.Response[v1.SearchKnowledgeResponse], error)
 	ListKnowledgeLinks(context.Context, *connect.Request[v1.ListKnowledgeLinksRequest]) (*connect.Response[v1.ListKnowledgeLinksResponse], error)
@@ -197,6 +214,12 @@ func NewKnowledgeServiceHandler(svc KnowledgeServiceHandler, opts ...connect.Han
 		KnowledgeServiceListKnowledgeProcedure,
 		svc.ListKnowledge,
 		connect.WithSchema(knowledgeServiceMethods.ByName("ListKnowledge")),
+		connect.WithHandlerOptions(opts...),
+	)
+	knowledgeServiceSetKnowledgeArchivedHandler := connect.NewUnaryHandler(
+		KnowledgeServiceSetKnowledgeArchivedProcedure,
+		svc.SetKnowledgeArchived,
+		connect.WithSchema(knowledgeServiceMethods.ByName("SetKnowledgeArchived")),
 		connect.WithHandlerOptions(opts...),
 	)
 	knowledgeServiceDeleteKnowledgeHandler := connect.NewUnaryHandler(
@@ -235,6 +258,8 @@ func NewKnowledgeServiceHandler(svc KnowledgeServiceHandler, opts ...connect.Han
 			knowledgeServiceSaveKnowledgeHandler.ServeHTTP(w, r)
 		case KnowledgeServiceListKnowledgeProcedure:
 			knowledgeServiceListKnowledgeHandler.ServeHTTP(w, r)
+		case KnowledgeServiceSetKnowledgeArchivedProcedure:
+			knowledgeServiceSetKnowledgeArchivedHandler.ServeHTTP(w, r)
 		case KnowledgeServiceDeleteKnowledgeProcedure:
 			knowledgeServiceDeleteKnowledgeHandler.ServeHTTP(w, r)
 		case KnowledgeServiceSearchKnowledgeProcedure:
@@ -260,6 +285,10 @@ func (UnimplementedKnowledgeServiceHandler) SaveKnowledge(context.Context, *conn
 
 func (UnimplementedKnowledgeServiceHandler) ListKnowledge(context.Context, *connect.Request[v1.ListKnowledgeRequest]) (*connect.Response[v1.ListKnowledgeResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.KnowledgeService.ListKnowledge is not implemented"))
+}
+
+func (UnimplementedKnowledgeServiceHandler) SetKnowledgeArchived(context.Context, *connect.Request[v1.SetKnowledgeArchivedRequest]) (*connect.Response[v1.SetKnowledgeArchivedResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.KnowledgeService.SetKnowledgeArchived is not implemented"))
 }
 
 func (UnimplementedKnowledgeServiceHandler) DeleteKnowledge(context.Context, *connect.Request[v1.DeleteKnowledgeRequest]) (*connect.Response[v1.DeleteKnowledgeResponse], error) {

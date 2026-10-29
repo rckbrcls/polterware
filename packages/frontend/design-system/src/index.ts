@@ -53,7 +53,11 @@ export { PageLoading, PageEmpty, PageError, FixtureBanner, PageOffline, PageForb
 export { Skeleton, PageSkeleton } from "./skeleton";
 export type { SkeletonProps, PageSkeletonProps, PageSkeletonLayout } from "./skeleton";
 export { ToastRegion, pushToast } from "./toast";
-export type { ToastItem } from "./toast";
+export type { ToastAction, ToastItem, ToastOptions } from "./toast";
+export { ConfirmRegion, requestConfirm } from "./confirm";
+export type { ConfirmOptions } from "./confirm";
+export { ArchivedList } from "./archived-list";
+export type { ArchivedListItem } from "./archived-list";
 export { PageHeader, PageContent, PageToolbar } from "./page";
 export type { PageToolbarRootProps, PageToolbarSlotProps } from "./page";
 export { TextureButtonGroup } from "./texture-button-group";

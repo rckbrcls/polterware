@@ -636,6 +636,9 @@ function browserDevApi(overrides?: Record<string, unknown>): (...args: unknown[]
 function createBrowserDevBridge(): PolterwareBridge {
   const structure = createBrowserStructure(PREVIEW_PROJECT_ID, previewAtlas.nodes);
   const structureCards = structuredClone(previewCards);
+  // Archived and deleted knowledge ids; the seed itself stays untouched.
+  const archivedKnowledge = new Map<string, string>();
+  const deletedKnowledge = new Set<string>();
   // Seeded demo views; mutations live only in this bridge instance.
   let boards = ["Planning", "Delivery"].map((name, position) => ({
     id: `preview-board-${position}`, projectId: PREVIEW_PROJECT_ID, name, position,
@@ -726,7 +729,30 @@ function createBrowserDevBridge(): PolterwareBridge {
       }),
       canvas: createBrowserCanvas(),
       knowledge: browserDevApi({
-        list: async (args?: ProjectArgs) => ({ items: [...(args?.projectId === PREVIEW_PROJECT_ID ? previewKnowledge : []), ...(promotedDecisions.get(args?.projectId ?? "") ?? [])] }),
+        list: async (args?: ProjectArgs & { kind?: string; archived?: boolean }) => ({
+          items: [...(args?.projectId === PREVIEW_PROJECT_ID ? previewKnowledge : []), ...(promotedDecisions.get(args?.projectId ?? "") ?? [])]
+            .filter((item) => !deletedKnowledge.has(String(item.id)) && (!args?.kind || item.kind === args.kind))
+            .filter((item) => archivedKnowledge.has(String(item.id)) === (args?.archived === true))
+            .map((item) => ({ ...item, archivedAt: archivedKnowledge.get(String(item.id)) ?? "" })),
+        }),
+        // Archive and delete follow the core rules: decisions never move, and only archived items delete.
+        setArchived: async (args?: { id?: string; archived?: boolean }) => {
+          const item = previewKnowledge.find((entry) => entry.id === args?.id);
+          if (!item || deletedKnowledge.has(item.id)) throw new Error("unknown knowledge item");
+          if (item.kind === "verdict") throw new Error("decisions are never archived or deleted: supersede them");
+          if (args?.archived) archivedKnowledge.set(item.id, new Date().toISOString());
+          else archivedKnowledge.delete(item.id);
+          return { item: { ...item, archivedAt: archivedKnowledge.get(item.id) ?? "" } };
+        },
+        delete: async (args?: { id?: string }) => {
+          const item = previewKnowledge.find((entry) => entry.id === args?.id);
+          if (!item || deletedKnowledge.has(item.id)) throw new Error("unknown knowledge item");
+          if (item.kind === "verdict") throw new Error("decisions are never archived or deleted: supersede them");
+          if (!archivedKnowledge.has(item.id)) throw new Error("archive the item before deleting it permanently");
+          archivedKnowledge.delete(item.id);
+          deletedKnowledge.add(item.id);
+          return {};
+        },
         listLinks: scoped({ links: previewLinks }, { links: [] }),
       }),
       canon: browserDevApi({

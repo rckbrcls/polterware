@@ -30,7 +30,7 @@ func (s *Store) CompileContext(req contextpkg.Request) (contextpkg.Package, erro
 				return contextpkg.Package{}, err
 			}
 			for _, link := range links {
-				item, err := s.getKnowledgeByID(link.KnowledgeID)
+				item, err := s.getActiveKnowledge(link.KnowledgeID)
 				if err != nil {
 					continue
 				}

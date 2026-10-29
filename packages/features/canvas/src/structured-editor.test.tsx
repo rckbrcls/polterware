@@ -14,7 +14,7 @@ const record = (type: string, nodes: CanvasRecord["graph"]["nodes"], edges: Canv
 });
 function mount(canvas: CanvasRecord, nodeKinds: string[], edgeKinds: string[], entities: StoreEntity[] = []) {
   const definition: CanvasType = { type: canvas.type, label: canvas.type, nodeKinds: [...nodeKinds, "note", "text"], edgeKinds, rules: [], unrestricted: false };
-  const api: CanvasPort = { list: vi.fn(), get: vi.fn(), types: vi.fn(), create: vi.fn(), update: vi.fn().mockResolvedValue(canvas), remove: vi.fn() };
+  const api: CanvasPort = { list: vi.fn(), get: vi.fn(), types: vi.fn(), create: vi.fn(), update: vi.fn().mockResolvedValue(canvas), remove: vi.fn(), listArchived: vi.fn(), setArchived: vi.fn() };
   dispose = render(() => <CanvasEditor canvas={canvas} document={toDocument(canvas)} definition={definition} port={api} entities={entities} onBack={vi.fn()} />, container);
   const host = container.querySelector<HTMLElement>('[aria-label="Canvas editor"]')!;
   host.setPointerCapture = vi.fn(); host.hasPointerCapture = () => true; host.releasePointerCapture = vi.fn();

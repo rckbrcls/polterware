@@ -18,6 +18,8 @@ message KnowledgeItem {
   string created_at = 11;
   string updated_at = 12;
   string scope_node_id = 13;
+  // archived_at is empty while the item is active (RFC3339 otherwise).
+  string archived_at = 14;
 }
 
 message KnowledgeEntityLink {
@@ -54,8 +56,22 @@ message ListKnowledgeRequest {
   bool scope_exact = 4;
   // scope_nodes is merged with scope_node. The list is the union.
   repeated string scope_nodes = 5;
+  // archived lists only archived items; the default lists only active ones.
+  bool archived = 6;
 }
 message ListKnowledgeResponse { repeated KnowledgeItem items = 1; }
+
+// SetKnowledgeArchived moves an item into the archive (archived = true) or
+// restores it. Decisions are never archived: supersede them instead.
+message SetKnowledgeArchivedRequest {
+  string id = 1;
+  bool archived = 2;
+  ChangeEnvelope change = 3;
+}
+message SetKnowledgeArchivedResponse { KnowledgeItem item = 1; }
+
+// DeleteKnowledge removes an archived item for good. Active items and
+// decisions are refused with FAILED_PRECONDITION.
 message DeleteKnowledgeRequest {
   string id = 1;
   ChangeEnvelope change = 2;
@@ -98,6 +114,7 @@ message DeleteKnowledgeLinkResponse {}
 service KnowledgeService {
   rpc SaveKnowledge(SaveKnowledgeRequest) returns (SaveKnowledgeResponse);
   rpc ListKnowledge(ListKnowledgeRequest) returns (ListKnowledgeResponse);
+  rpc SetKnowledgeArchived(SetKnowledgeArchivedRequest) returns (SetKnowledgeArchivedResponse);
   rpc DeleteKnowledge(DeleteKnowledgeRequest) returns (DeleteKnowledgeResponse);
   rpc SearchKnowledge(SearchKnowledgeRequest) returns (SearchKnowledgeResponse);
   rpc ListKnowledgeLinks(ListKnowledgeLinksRequest) returns (ListKnowledgeLinksResponse);

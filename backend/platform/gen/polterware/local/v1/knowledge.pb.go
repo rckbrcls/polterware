@@ -22,20 +22,22 @@ const (
 )
 
 type KnowledgeItem struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ProjectId     string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
-	Body          string                 `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
-	Kind          string                 `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
-	Tags          []string               `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
-	Summary       string                 `protobuf:"bytes,7,opt,name=summary,proto3" json:"summary,omitempty"`
-	Owner         string                 `protobuf:"bytes,8,opt,name=owner,proto3" json:"owner,omitempty"`
-	Status        string                 `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"`
-	ExtraJson     string                 `protobuf:"bytes,10,opt,name=extra_json,json=extraJson,proto3" json:"extra_json,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     string                 `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	ScopeNodeId   string                 `protobuf:"bytes,13,opt,name=scope_node_id,json=scopeNodeId,proto3" json:"scope_node_id,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ProjectId   string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Title       string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Body        string                 `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
+	Kind        string                 `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
+	Tags        []string               `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
+	Summary     string                 `protobuf:"bytes,7,opt,name=summary,proto3" json:"summary,omitempty"`
+	Owner       string                 `protobuf:"bytes,8,opt,name=owner,proto3" json:"owner,omitempty"`
+	Status      string                 `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"`
+	ExtraJson   string                 `protobuf:"bytes,10,opt,name=extra_json,json=extraJson,proto3" json:"extra_json,omitempty"`
+	CreatedAt   string                 `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt   string                 `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	ScopeNodeId string                 `protobuf:"bytes,13,opt,name=scope_node_id,json=scopeNodeId,proto3" json:"scope_node_id,omitempty"`
+	// archived_at is empty while the item is active (RFC3339 otherwise).
+	ArchivedAt    string `protobuf:"bytes,14,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -157,6 +159,13 @@ func (x *KnowledgeItem) GetUpdatedAt() string {
 func (x *KnowledgeItem) GetScopeNodeId() string {
 	if x != nil {
 		return x.ScopeNodeId
+	}
+	return ""
+}
+
+func (x *KnowledgeItem) GetArchivedAt() string {
+	if x != nil {
+		return x.ArchivedAt
 	}
 	return ""
 }
@@ -457,7 +466,9 @@ type ListKnowledgeRequest struct {
 	ScopeNode  string                 `protobuf:"bytes,3,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
 	ScopeExact bool                   `protobuf:"varint,4,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
 	// scope_nodes is merged with scope_node. The list is the union.
-	ScopeNodes    []string `protobuf:"bytes,5,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
+	ScopeNodes []string `protobuf:"bytes,5,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
+	// archived lists only archived items; the default lists only active ones.
+	Archived      bool `protobuf:"varint,6,opt,name=archived,proto3" json:"archived,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -527,6 +538,13 @@ func (x *ListKnowledgeRequest) GetScopeNodes() []string {
 	return nil
 }
 
+func (x *ListKnowledgeRequest) GetArchived() bool {
+	if x != nil {
+		return x.Archived
+	}
+	return false
+}
+
 type ListKnowledgeResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Items         []*KnowledgeItem       `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
@@ -571,6 +589,114 @@ func (x *ListKnowledgeResponse) GetItems() []*KnowledgeItem {
 	return nil
 }
 
+// SetKnowledgeArchived moves an item into the archive (archived = true) or
+// restores it. Decisions are never archived: supersede them instead.
+type SetKnowledgeArchivedRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Archived      bool                   `protobuf:"varint,2,opt,name=archived,proto3" json:"archived,omitempty"`
+	Change        *ChangeEnvelope        `protobuf:"bytes,3,opt,name=change,proto3" json:"change,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetKnowledgeArchivedRequest) Reset() {
+	*x = SetKnowledgeArchivedRequest{}
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetKnowledgeArchivedRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetKnowledgeArchivedRequest) ProtoMessage() {}
+
+func (x *SetKnowledgeArchivedRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetKnowledgeArchivedRequest.ProtoReflect.Descriptor instead.
+func (*SetKnowledgeArchivedRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *SetKnowledgeArchivedRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *SetKnowledgeArchivedRequest) GetArchived() bool {
+	if x != nil {
+		return x.Archived
+	}
+	return false
+}
+
+func (x *SetKnowledgeArchivedRequest) GetChange() *ChangeEnvelope {
+	if x != nil {
+		return x.Change
+	}
+	return nil
+}
+
+type SetKnowledgeArchivedResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Item          *KnowledgeItem         `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetKnowledgeArchivedResponse) Reset() {
+	*x = SetKnowledgeArchivedResponse{}
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetKnowledgeArchivedResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetKnowledgeArchivedResponse) ProtoMessage() {}
+
+func (x *SetKnowledgeArchivedResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetKnowledgeArchivedResponse.ProtoReflect.Descriptor instead.
+func (*SetKnowledgeArchivedResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SetKnowledgeArchivedResponse) GetItem() *KnowledgeItem {
+	if x != nil {
+		return x.Item
+	}
+	return nil
+}
+
+// DeleteKnowledge removes an archived item for good. Active items and
+// decisions are refused with FAILED_PRECONDITION.
 type DeleteKnowledgeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -581,7 +707,7 @@ type DeleteKnowledgeRequest struct {
 
 func (x *DeleteKnowledgeRequest) Reset() {
 	*x = DeleteKnowledgeRequest{}
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[7]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -593,7 +719,7 @@ func (x *DeleteKnowledgeRequest) String() string {
 func (*DeleteKnowledgeRequest) ProtoMessage() {}
 
 func (x *DeleteKnowledgeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[7]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -606,7 +732,7 @@ func (x *DeleteKnowledgeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteKnowledgeRequest.ProtoReflect.Descriptor instead.
 func (*DeleteKnowledgeRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{7}
+	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DeleteKnowledgeRequest) GetId() string {
@@ -631,7 +757,7 @@ type DeleteKnowledgeResponse struct {
 
 func (x *DeleteKnowledgeResponse) Reset() {
 	*x = DeleteKnowledgeResponse{}
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[8]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -643,7 +769,7 @@ func (x *DeleteKnowledgeResponse) String() string {
 func (*DeleteKnowledgeResponse) ProtoMessage() {}
 
 func (x *DeleteKnowledgeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[8]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -656,7 +782,7 @@ func (x *DeleteKnowledgeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteKnowledgeResponse.ProtoReflect.Descriptor instead.
 func (*DeleteKnowledgeResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{8}
+	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{10}
 }
 
 type SearchKnowledgeRequest struct {
@@ -671,7 +797,7 @@ type SearchKnowledgeRequest struct {
 
 func (x *SearchKnowledgeRequest) Reset() {
 	*x = SearchKnowledgeRequest{}
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[9]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -683,7 +809,7 @@ func (x *SearchKnowledgeRequest) String() string {
 func (*SearchKnowledgeRequest) ProtoMessage() {}
 
 func (x *SearchKnowledgeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[9]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -696,7 +822,7 @@ func (x *SearchKnowledgeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchKnowledgeRequest.ProtoReflect.Descriptor instead.
 func (*SearchKnowledgeRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{9}
+	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *SearchKnowledgeRequest) GetProjectId() string {
@@ -736,7 +862,7 @@ type SearchKnowledgeResponse struct {
 
 func (x *SearchKnowledgeResponse) Reset() {
 	*x = SearchKnowledgeResponse{}
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[10]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -748,7 +874,7 @@ func (x *SearchKnowledgeResponse) String() string {
 func (*SearchKnowledgeResponse) ProtoMessage() {}
 
 func (x *SearchKnowledgeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[10]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -761,7 +887,7 @@ func (x *SearchKnowledgeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchKnowledgeResponse.ProtoReflect.Descriptor instead.
 func (*SearchKnowledgeResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{10}
+	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *SearchKnowledgeResponse) GetHits() []*KnowledgeSearchHit {
@@ -782,7 +908,7 @@ type ListKnowledgeLinksRequest struct {
 
 func (x *ListKnowledgeLinksRequest) Reset() {
 	*x = ListKnowledgeLinksRequest{}
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[11]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -794,7 +920,7 @@ func (x *ListKnowledgeLinksRequest) String() string {
 func (*ListKnowledgeLinksRequest) ProtoMessage() {}
 
 func (x *ListKnowledgeLinksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[11]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -807,7 +933,7 @@ func (x *ListKnowledgeLinksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListKnowledgeLinksRequest.ProtoReflect.Descriptor instead.
 func (*ListKnowledgeLinksRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{11}
+	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ListKnowledgeLinksRequest) GetProjectId() string {
@@ -840,7 +966,7 @@ type ListKnowledgeLinksResponse struct {
 
 func (x *ListKnowledgeLinksResponse) Reset() {
 	*x = ListKnowledgeLinksResponse{}
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[12]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -852,7 +978,7 @@ func (x *ListKnowledgeLinksResponse) String() string {
 func (*ListKnowledgeLinksResponse) ProtoMessage() {}
 
 func (x *ListKnowledgeLinksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[12]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -865,7 +991,7 @@ func (x *ListKnowledgeLinksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListKnowledgeLinksResponse.ProtoReflect.Descriptor instead.
 func (*ListKnowledgeLinksResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{12}
+	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListKnowledgeLinksResponse) GetLinks() []*KnowledgeEntityLink {
@@ -885,7 +1011,7 @@ type SaveKnowledgeLinkRequest struct {
 
 func (x *SaveKnowledgeLinkRequest) Reset() {
 	*x = SaveKnowledgeLinkRequest{}
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[13]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -897,7 +1023,7 @@ func (x *SaveKnowledgeLinkRequest) String() string {
 func (*SaveKnowledgeLinkRequest) ProtoMessage() {}
 
 func (x *SaveKnowledgeLinkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[13]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -910,7 +1036,7 @@ func (x *SaveKnowledgeLinkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveKnowledgeLinkRequest.ProtoReflect.Descriptor instead.
 func (*SaveKnowledgeLinkRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{13}
+	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *SaveKnowledgeLinkRequest) GetLink() *KnowledgeEntityLink {
@@ -936,7 +1062,7 @@ type SaveKnowledgeLinkResponse struct {
 
 func (x *SaveKnowledgeLinkResponse) Reset() {
 	*x = SaveKnowledgeLinkResponse{}
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[14]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -948,7 +1074,7 @@ func (x *SaveKnowledgeLinkResponse) String() string {
 func (*SaveKnowledgeLinkResponse) ProtoMessage() {}
 
 func (x *SaveKnowledgeLinkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[14]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -961,7 +1087,7 @@ func (x *SaveKnowledgeLinkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveKnowledgeLinkResponse.ProtoReflect.Descriptor instead.
 func (*SaveKnowledgeLinkResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{14}
+	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SaveKnowledgeLinkResponse) GetLink() *KnowledgeEntityLink {
@@ -981,7 +1107,7 @@ type DeleteKnowledgeLinkRequest struct {
 
 func (x *DeleteKnowledgeLinkRequest) Reset() {
 	*x = DeleteKnowledgeLinkRequest{}
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[15]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -993,7 +1119,7 @@ func (x *DeleteKnowledgeLinkRequest) String() string {
 func (*DeleteKnowledgeLinkRequest) ProtoMessage() {}
 
 func (x *DeleteKnowledgeLinkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[15]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1006,7 +1132,7 @@ func (x *DeleteKnowledgeLinkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteKnowledgeLinkRequest.ProtoReflect.Descriptor instead.
 func (*DeleteKnowledgeLinkRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{15}
+	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *DeleteKnowledgeLinkRequest) GetId() string {
@@ -1031,7 +1157,7 @@ type DeleteKnowledgeLinkResponse struct {
 
 func (x *DeleteKnowledgeLinkResponse) Reset() {
 	*x = DeleteKnowledgeLinkResponse{}
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[16]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1043,7 +1169,7 @@ func (x *DeleteKnowledgeLinkResponse) String() string {
 func (*DeleteKnowledgeLinkResponse) ProtoMessage() {}
 
 func (x *DeleteKnowledgeLinkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[16]
+	mi := &file_polterware_local_v1_knowledge_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1056,14 +1182,14 @@ func (x *DeleteKnowledgeLinkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteKnowledgeLinkResponse.ProtoReflect.Descriptor instead.
 func (*DeleteKnowledgeLinkResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{16}
+	return file_polterware_local_v1_knowledge_proto_rawDescGZIP(), []int{18}
 }
 
 var File_polterware_local_v1_knowledge_proto protoreflect.FileDescriptor
 
 const file_polterware_local_v1_knowledge_proto_rawDesc = "" +
 	"\n" +
-	"#polterware/local/v1/knowledge.proto\x12\x13polterware.local.v1\x1a\"polterware/local/v1/agentrun.proto\"\xd9\x02\n" +
+	"#polterware/local/v1/knowledge.proto\x12\x13polterware.local.v1\x1a\"polterware/local/v1/agentrun.proto\"\xfa\x02\n" +
 	"\rKnowledgeItem\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -1082,7 +1208,9 @@ const file_polterware_local_v1_knowledge_proto_rawDesc = "" +
 	"created_at\x18\v \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
 	"updated_at\x18\f \x01(\tR\tupdatedAt\x12\"\n" +
-	"\rscope_node_id\x18\r \x01(\tR\vscopeNodeId\"\xb1\x02\n" +
+	"\rscope_node_id\x18\r \x01(\tR\vscopeNodeId\x12\x1f\n" +
+	"\varchived_at\x18\x0e \x01(\tR\n" +
+	"archivedAt\"\xb1\x02\n" +
 	"\x13KnowledgeEntityLink\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -1110,7 +1238,7 @@ const file_polterware_local_v1_knowledge_proto_rawDesc = "" +
 	"\x04item\x18\x01 \x01(\v2\".polterware.local.v1.KnowledgeItemR\x04item\x12;\n" +
 	"\x06change\x18\x02 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"O\n" +
 	"\x15SaveKnowledgeResponse\x126\n" +
-	"\x04item\x18\x01 \x01(\v2\".polterware.local.v1.KnowledgeItemR\x04item\"\xaa\x01\n" +
+	"\x04item\x18\x01 \x01(\v2\".polterware.local.v1.KnowledgeItemR\x04item\"\xc6\x01\n" +
 	"\x14ListKnowledgeRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x12\n" +
@@ -1120,9 +1248,16 @@ const file_polterware_local_v1_knowledge_proto_rawDesc = "" +
 	"\vscope_exact\x18\x04 \x01(\bR\n" +
 	"scopeExact\x12\x1f\n" +
 	"\vscope_nodes\x18\x05 \x03(\tR\n" +
-	"scopeNodes\"Q\n" +
+	"scopeNodes\x12\x1a\n" +
+	"\barchived\x18\x06 \x01(\bR\barchived\"Q\n" +
 	"\x15ListKnowledgeResponse\x128\n" +
-	"\x05items\x18\x01 \x03(\v2\".polterware.local.v1.KnowledgeItemR\x05items\"e\n" +
+	"\x05items\x18\x01 \x03(\v2\".polterware.local.v1.KnowledgeItemR\x05items\"\x86\x01\n" +
+	"\x1bSetKnowledgeArchivedRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
+	"\barchived\x18\x02 \x01(\bR\barchived\x12;\n" +
+	"\x06change\x18\x03 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"V\n" +
+	"\x1cSetKnowledgeArchivedResponse\x126\n" +
+	"\x04item\x18\x01 \x01(\v2\".polterware.local.v1.KnowledgeItemR\x04item\"e\n" +
 	"\x16DeleteKnowledgeRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12;\n" +
 	"\x06change\x18\x02 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"\x19\n" +
@@ -1150,10 +1285,11 @@ const file_polterware_local_v1_knowledge_proto_rawDesc = "" +
 	"\x1aDeleteKnowledgeLinkRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12;\n" +
 	"\x06change\x18\x02 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"\x1d\n" +
-	"\x1bDeleteKnowledgeLinkResponse2\xa3\x06\n" +
+	"\x1bDeleteKnowledgeLinkResponse2\xa0\a\n" +
 	"\x10KnowledgeService\x12f\n" +
 	"\rSaveKnowledge\x12).polterware.local.v1.SaveKnowledgeRequest\x1a*.polterware.local.v1.SaveKnowledgeResponse\x12f\n" +
-	"\rListKnowledge\x12).polterware.local.v1.ListKnowledgeRequest\x1a*.polterware.local.v1.ListKnowledgeResponse\x12l\n" +
+	"\rListKnowledge\x12).polterware.local.v1.ListKnowledgeRequest\x1a*.polterware.local.v1.ListKnowledgeResponse\x12{\n" +
+	"\x14SetKnowledgeArchived\x120.polterware.local.v1.SetKnowledgeArchivedRequest\x1a1.polterware.local.v1.SetKnowledgeArchivedResponse\x12l\n" +
 	"\x0fDeleteKnowledge\x12+.polterware.local.v1.DeleteKnowledgeRequest\x1a,.polterware.local.v1.DeleteKnowledgeResponse\x12l\n" +
 	"\x0fSearchKnowledge\x12+.polterware.local.v1.SearchKnowledgeRequest\x1a,.polterware.local.v1.SearchKnowledgeResponse\x12u\n" +
 	"\x12ListKnowledgeLinks\x12..polterware.local.v1.ListKnowledgeLinksRequest\x1a/.polterware.local.v1.ListKnowledgeLinksResponse\x12r\n" +
@@ -1173,59 +1309,65 @@ func file_polterware_local_v1_knowledge_proto_rawDescGZIP() []byte {
 	return file_polterware_local_v1_knowledge_proto_rawDescData
 }
 
-var file_polterware_local_v1_knowledge_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_polterware_local_v1_knowledge_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_polterware_local_v1_knowledge_proto_goTypes = []any{
-	(*KnowledgeItem)(nil),               // 0: polterware.local.v1.KnowledgeItem
-	(*KnowledgeEntityLink)(nil),         // 1: polterware.local.v1.KnowledgeEntityLink
-	(*KnowledgeSearchHit)(nil),          // 2: polterware.local.v1.KnowledgeSearchHit
-	(*SaveKnowledgeRequest)(nil),        // 3: polterware.local.v1.SaveKnowledgeRequest
-	(*SaveKnowledgeResponse)(nil),       // 4: polterware.local.v1.SaveKnowledgeResponse
-	(*ListKnowledgeRequest)(nil),        // 5: polterware.local.v1.ListKnowledgeRequest
-	(*ListKnowledgeResponse)(nil),       // 6: polterware.local.v1.ListKnowledgeResponse
-	(*DeleteKnowledgeRequest)(nil),      // 7: polterware.local.v1.DeleteKnowledgeRequest
-	(*DeleteKnowledgeResponse)(nil),     // 8: polterware.local.v1.DeleteKnowledgeResponse
-	(*SearchKnowledgeRequest)(nil),      // 9: polterware.local.v1.SearchKnowledgeRequest
-	(*SearchKnowledgeResponse)(nil),     // 10: polterware.local.v1.SearchKnowledgeResponse
-	(*ListKnowledgeLinksRequest)(nil),   // 11: polterware.local.v1.ListKnowledgeLinksRequest
-	(*ListKnowledgeLinksResponse)(nil),  // 12: polterware.local.v1.ListKnowledgeLinksResponse
-	(*SaveKnowledgeLinkRequest)(nil),    // 13: polterware.local.v1.SaveKnowledgeLinkRequest
-	(*SaveKnowledgeLinkResponse)(nil),   // 14: polterware.local.v1.SaveKnowledgeLinkResponse
-	(*DeleteKnowledgeLinkRequest)(nil),  // 15: polterware.local.v1.DeleteKnowledgeLinkRequest
-	(*DeleteKnowledgeLinkResponse)(nil), // 16: polterware.local.v1.DeleteKnowledgeLinkResponse
-	(*ChangeEnvelope)(nil),              // 17: polterware.local.v1.ChangeEnvelope
+	(*KnowledgeItem)(nil),                // 0: polterware.local.v1.KnowledgeItem
+	(*KnowledgeEntityLink)(nil),          // 1: polterware.local.v1.KnowledgeEntityLink
+	(*KnowledgeSearchHit)(nil),           // 2: polterware.local.v1.KnowledgeSearchHit
+	(*SaveKnowledgeRequest)(nil),         // 3: polterware.local.v1.SaveKnowledgeRequest
+	(*SaveKnowledgeResponse)(nil),        // 4: polterware.local.v1.SaveKnowledgeResponse
+	(*ListKnowledgeRequest)(nil),         // 5: polterware.local.v1.ListKnowledgeRequest
+	(*ListKnowledgeResponse)(nil),        // 6: polterware.local.v1.ListKnowledgeResponse
+	(*SetKnowledgeArchivedRequest)(nil),  // 7: polterware.local.v1.SetKnowledgeArchivedRequest
+	(*SetKnowledgeArchivedResponse)(nil), // 8: polterware.local.v1.SetKnowledgeArchivedResponse
+	(*DeleteKnowledgeRequest)(nil),       // 9: polterware.local.v1.DeleteKnowledgeRequest
+	(*DeleteKnowledgeResponse)(nil),      // 10: polterware.local.v1.DeleteKnowledgeResponse
+	(*SearchKnowledgeRequest)(nil),       // 11: polterware.local.v1.SearchKnowledgeRequest
+	(*SearchKnowledgeResponse)(nil),      // 12: polterware.local.v1.SearchKnowledgeResponse
+	(*ListKnowledgeLinksRequest)(nil),    // 13: polterware.local.v1.ListKnowledgeLinksRequest
+	(*ListKnowledgeLinksResponse)(nil),   // 14: polterware.local.v1.ListKnowledgeLinksResponse
+	(*SaveKnowledgeLinkRequest)(nil),     // 15: polterware.local.v1.SaveKnowledgeLinkRequest
+	(*SaveKnowledgeLinkResponse)(nil),    // 16: polterware.local.v1.SaveKnowledgeLinkResponse
+	(*DeleteKnowledgeLinkRequest)(nil),   // 17: polterware.local.v1.DeleteKnowledgeLinkRequest
+	(*DeleteKnowledgeLinkResponse)(nil),  // 18: polterware.local.v1.DeleteKnowledgeLinkResponse
+	(*ChangeEnvelope)(nil),               // 19: polterware.local.v1.ChangeEnvelope
 }
 var file_polterware_local_v1_knowledge_proto_depIdxs = []int32{
 	0,  // 0: polterware.local.v1.KnowledgeSearchHit.item:type_name -> polterware.local.v1.KnowledgeItem
 	0,  // 1: polterware.local.v1.SaveKnowledgeRequest.item:type_name -> polterware.local.v1.KnowledgeItem
-	17, // 2: polterware.local.v1.SaveKnowledgeRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	19, // 2: polterware.local.v1.SaveKnowledgeRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	0,  // 3: polterware.local.v1.SaveKnowledgeResponse.item:type_name -> polterware.local.v1.KnowledgeItem
 	0,  // 4: polterware.local.v1.ListKnowledgeResponse.items:type_name -> polterware.local.v1.KnowledgeItem
-	17, // 5: polterware.local.v1.DeleteKnowledgeRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	2,  // 6: polterware.local.v1.SearchKnowledgeResponse.hits:type_name -> polterware.local.v1.KnowledgeSearchHit
-	1,  // 7: polterware.local.v1.ListKnowledgeLinksResponse.links:type_name -> polterware.local.v1.KnowledgeEntityLink
-	1,  // 8: polterware.local.v1.SaveKnowledgeLinkRequest.link:type_name -> polterware.local.v1.KnowledgeEntityLink
-	17, // 9: polterware.local.v1.SaveKnowledgeLinkRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	1,  // 10: polterware.local.v1.SaveKnowledgeLinkResponse.link:type_name -> polterware.local.v1.KnowledgeEntityLink
-	17, // 11: polterware.local.v1.DeleteKnowledgeLinkRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	3,  // 12: polterware.local.v1.KnowledgeService.SaveKnowledge:input_type -> polterware.local.v1.SaveKnowledgeRequest
-	5,  // 13: polterware.local.v1.KnowledgeService.ListKnowledge:input_type -> polterware.local.v1.ListKnowledgeRequest
-	7,  // 14: polterware.local.v1.KnowledgeService.DeleteKnowledge:input_type -> polterware.local.v1.DeleteKnowledgeRequest
-	9,  // 15: polterware.local.v1.KnowledgeService.SearchKnowledge:input_type -> polterware.local.v1.SearchKnowledgeRequest
-	11, // 16: polterware.local.v1.KnowledgeService.ListKnowledgeLinks:input_type -> polterware.local.v1.ListKnowledgeLinksRequest
-	13, // 17: polterware.local.v1.KnowledgeService.SaveKnowledgeLink:input_type -> polterware.local.v1.SaveKnowledgeLinkRequest
-	15, // 18: polterware.local.v1.KnowledgeService.DeleteKnowledgeLink:input_type -> polterware.local.v1.DeleteKnowledgeLinkRequest
-	4,  // 19: polterware.local.v1.KnowledgeService.SaveKnowledge:output_type -> polterware.local.v1.SaveKnowledgeResponse
-	6,  // 20: polterware.local.v1.KnowledgeService.ListKnowledge:output_type -> polterware.local.v1.ListKnowledgeResponse
-	8,  // 21: polterware.local.v1.KnowledgeService.DeleteKnowledge:output_type -> polterware.local.v1.DeleteKnowledgeResponse
-	10, // 22: polterware.local.v1.KnowledgeService.SearchKnowledge:output_type -> polterware.local.v1.SearchKnowledgeResponse
-	12, // 23: polterware.local.v1.KnowledgeService.ListKnowledgeLinks:output_type -> polterware.local.v1.ListKnowledgeLinksResponse
-	14, // 24: polterware.local.v1.KnowledgeService.SaveKnowledgeLink:output_type -> polterware.local.v1.SaveKnowledgeLinkResponse
-	16, // 25: polterware.local.v1.KnowledgeService.DeleteKnowledgeLink:output_type -> polterware.local.v1.DeleteKnowledgeLinkResponse
-	19, // [19:26] is the sub-list for method output_type
-	12, // [12:19] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	19, // 5: polterware.local.v1.SetKnowledgeArchivedRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	0,  // 6: polterware.local.v1.SetKnowledgeArchivedResponse.item:type_name -> polterware.local.v1.KnowledgeItem
+	19, // 7: polterware.local.v1.DeleteKnowledgeRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	2,  // 8: polterware.local.v1.SearchKnowledgeResponse.hits:type_name -> polterware.local.v1.KnowledgeSearchHit
+	1,  // 9: polterware.local.v1.ListKnowledgeLinksResponse.links:type_name -> polterware.local.v1.KnowledgeEntityLink
+	1,  // 10: polterware.local.v1.SaveKnowledgeLinkRequest.link:type_name -> polterware.local.v1.KnowledgeEntityLink
+	19, // 11: polterware.local.v1.SaveKnowledgeLinkRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	1,  // 12: polterware.local.v1.SaveKnowledgeLinkResponse.link:type_name -> polterware.local.v1.KnowledgeEntityLink
+	19, // 13: polterware.local.v1.DeleteKnowledgeLinkRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	3,  // 14: polterware.local.v1.KnowledgeService.SaveKnowledge:input_type -> polterware.local.v1.SaveKnowledgeRequest
+	5,  // 15: polterware.local.v1.KnowledgeService.ListKnowledge:input_type -> polterware.local.v1.ListKnowledgeRequest
+	7,  // 16: polterware.local.v1.KnowledgeService.SetKnowledgeArchived:input_type -> polterware.local.v1.SetKnowledgeArchivedRequest
+	9,  // 17: polterware.local.v1.KnowledgeService.DeleteKnowledge:input_type -> polterware.local.v1.DeleteKnowledgeRequest
+	11, // 18: polterware.local.v1.KnowledgeService.SearchKnowledge:input_type -> polterware.local.v1.SearchKnowledgeRequest
+	13, // 19: polterware.local.v1.KnowledgeService.ListKnowledgeLinks:input_type -> polterware.local.v1.ListKnowledgeLinksRequest
+	15, // 20: polterware.local.v1.KnowledgeService.SaveKnowledgeLink:input_type -> polterware.local.v1.SaveKnowledgeLinkRequest
+	17, // 21: polterware.local.v1.KnowledgeService.DeleteKnowledgeLink:input_type -> polterware.local.v1.DeleteKnowledgeLinkRequest
+	4,  // 22: polterware.local.v1.KnowledgeService.SaveKnowledge:output_type -> polterware.local.v1.SaveKnowledgeResponse
+	6,  // 23: polterware.local.v1.KnowledgeService.ListKnowledge:output_type -> polterware.local.v1.ListKnowledgeResponse
+	8,  // 24: polterware.local.v1.KnowledgeService.SetKnowledgeArchived:output_type -> polterware.local.v1.SetKnowledgeArchivedResponse
+	10, // 25: polterware.local.v1.KnowledgeService.DeleteKnowledge:output_type -> polterware.local.v1.DeleteKnowledgeResponse
+	12, // 26: polterware.local.v1.KnowledgeService.SearchKnowledge:output_type -> polterware.local.v1.SearchKnowledgeResponse
+	14, // 27: polterware.local.v1.KnowledgeService.ListKnowledgeLinks:output_type -> polterware.local.v1.ListKnowledgeLinksResponse
+	16, // 28: polterware.local.v1.KnowledgeService.SaveKnowledgeLink:output_type -> polterware.local.v1.SaveKnowledgeLinkResponse
+	18, // 29: polterware.local.v1.KnowledgeService.DeleteKnowledgeLink:output_type -> polterware.local.v1.DeleteKnowledgeLinkResponse
+	22, // [22:30] is the sub-list for method output_type
+	14, // [14:22] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_polterware_local_v1_knowledge_proto_init() }
@@ -1240,7 +1382,7 @@ func file_polterware_local_v1_knowledge_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_polterware_local_v1_knowledge_proto_rawDesc), len(file_polterware_local_v1_knowledge_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

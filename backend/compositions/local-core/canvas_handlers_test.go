@@ -152,6 +152,22 @@ func TestCanvasServiceRejectsAndUpdatesParts(t *testing.T) {
 		t.Fatalf("rejected write changed the canvas: err=%v canvas=%+v", err, got.Msg.GetCanvas())
 	}
 
+	_, err = core.DeleteCanvas(ctx, connect.NewRequest(&localv1.DeleteCanvasRequest{ProjectId: project.ID, Id: canvasID, Change: change}))
+	if !errors.As(err, &connectErr) || connectErr.Code() != connect.CodeFailedPrecondition {
+		t.Fatalf("delete of an active canvas: %v", err)
+	}
+	archived, err := core.SetCanvasArchived(ctx, connect.NewRequest(&localv1.SetCanvasArchivedRequest{ProjectId: project.ID, Id: canvasID, Archived: true, Change: change}))
+	if err != nil || archived.Msg.GetCanvas().GetArchivedAt() == "" {
+		t.Fatalf("archive: err=%v canvas=%+v", err, archived)
+	}
+	_, err = core.UpdateCanvas(ctx, connect.NewRequest(&localv1.UpdateCanvasRequest{ProjectId: project.ID, Id: canvasID, Change: change, Name: ptr("Renamed")}))
+	if !errors.As(err, &connectErr) || connectErr.Code() != connect.CodeFailedPrecondition {
+		t.Fatalf("update of an archived canvas: %v", err)
+	}
+	listed, err := core.ListCanvases(ctx, connect.NewRequest(&localv1.ListCanvasesRequest{ProjectId: project.ID, Archived: true}))
+	if err != nil || len(listed.Msg.GetCanvases()) != 1 {
+		t.Fatalf("archived list: err=%v", err)
+	}
 	if _, err := core.DeleteCanvas(ctx, connect.NewRequest(&localv1.DeleteCanvasRequest{ProjectId: project.ID, Id: canvasID, Change: change})); err != nil {
 		t.Fatal(err)
 	}
@@ -160,3 +176,5 @@ func TestCanvasServiceRejectsAndUpdatesParts(t *testing.T) {
 		t.Fatalf("deleted get: %v", err)
 	}
 }
+
+func ptr[T any](value T) *T { return &value }

@@ -86,9 +86,18 @@ export const canvasPersistence: CanvasPort = {
       throw new PromotionAppliedError(`The entity was created, but could not be linked. Reload project data and link it using the picker. ${error instanceof Error ? error.message : String(error)}`);
     }
   },
+  async listArchived(projectId) {
+    const response = asRecord(await core().canvas.listCanvases({ projectId, archived: true }));
+    return asObjectArray(response.canvases).map(readCanvas);
+  },
+  async setArchived(projectId, id, archived) {
+    const response = asRecord(await core().canvas.setCanvasArchived({ projectId, id, archived,
+      change: { summary: archived ? "Archive canvas" : "Restore canvas", rationale: "Changed in Desktop" } }));
+    return readCanvas(response.canvas);
+  },
   async remove(projectId, id) {
     await core().canvas.deleteCanvas({ projectId, id,
-      change: { summary: "Delete canvas", rationale: "Remove a canvas after operator confirmation." } });
+      change: { summary: "Delete canvas permanently", rationale: "Changed in Desktop" } });
   },
 };
 
@@ -251,12 +260,35 @@ export async function persistKnowledgeScope(projectId: string, id: string, path:
   await core().work.setScope({ projectId, kind: "knowledge", id, node: path });
 }
 
-export async function persistKnowledgeDelete(
+/** Archives a knowledge item, or restores it when `archived` is false. Decisions are refused by the core. */
+export async function persistKnowledgeArchived(
+  id: string,
+  archived: boolean,
+  change: ChangeEnvelope,
+): Promise<void> {
+  await core().knowledge.setArchived({ id, archived, change: changePayload(change) });
+}
+
+/** Removes an archived knowledge item for good; the core refuses an active one. */
+export async function persistKnowledgeDeletePermanently(
   id: string,
   change: ChangeEnvelope,
 ): Promise<void> {
   await core().knowledge.delete({ id, change: changePayload(change) });
 }
+
+/** The project's archived knowledge items of one kind, newest first. */
+export async function loadArchivedKnowledge(projectId: string, kind: string): Promise<ArchivedKnowledgeItem[]> {
+  const response = asRecord(await core().knowledge.list({ projectId, kind, archived: true }));
+  return asObjectArray(response.items).map((item) => ({
+    id: asString(item.id),
+    title: asString(item.title),
+    tags: Array.isArray(item.tags) ? item.tags.map(String) : [],
+    archivedAt: asString(item.archivedAt),
+  }));
+}
+
+export type ArchivedKnowledgeItem = { id: string; title: string; tags: string[]; archivedAt: string };
 
 /** Polter text for one card: the Desktop writes Work through the same codec as agents. */
 function polterCard(slug: string, title: string | null, meta: Record<string, string>): string {
@@ -479,6 +511,15 @@ export async function persistWorkRemoveCard(
   change: ChangeEnvelope,
 ): Promise<void> {
   await applyPolter(projectId, polterCard(slug, null, { status: "removed" }), change);
+}
+
+/** Bring a removed card back to the board. */
+export async function persistWorkRestoreCard(
+  projectId: string,
+  slug: string,
+  change: ChangeEnvelope,
+): Promise<void> {
+  await applyPolter(projectId, polterCard(slug, null, { status: "active" }), change);
 }
 
 export async function persistKnowledgeDuplicate(

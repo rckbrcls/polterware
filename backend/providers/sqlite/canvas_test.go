@@ -118,6 +118,29 @@ func TestCanvasRoundTrip(t *testing.T) {
 	if err != nil || got.ScopeNodeID != "" {
 		t.Fatalf("scope after node delete = %q err=%v", got.ScopeNodeID, err)
 	}
+	if err := reopened.DeleteCanvas("proj-canvas", created.ID, "run-1", "batch-3"); !errors.Is(err, canvas.ErrNotArchived) {
+		t.Fatalf("delete of an active canvas = %v, want ErrNotArchived", err)
+	}
+	archived, err := reopened.SetCanvasArchived("proj-canvas", created.ID, true, now, "run-1", "batch-4")
+	if err != nil || !archived.Archived() {
+		t.Fatalf("archive = %+v err=%v", archived, err)
+	}
+	if active, err := reopened.ListCanvases("proj-canvas"); err != nil || len(active) != 0 {
+		t.Fatalf("active list after archive = %d err=%v", len(active), err)
+	}
+	if listed, err := reopened.ListArchivedCanvases("proj-canvas"); err != nil || len(listed) != 1 {
+		t.Fatalf("archived list = %d err=%v", len(listed), err)
+	}
+	restored, err := reopened.SetCanvasArchived("proj-canvas", created.ID, false, now, "run-1", "batch-5")
+	if err != nil || restored.Archived() {
+		t.Fatalf("restore = %+v err=%v", restored, err)
+	}
+	if active, err := reopened.ListCanvases("proj-canvas"); err != nil || len(active) != 1 {
+		t.Fatalf("active list after restore = %d err=%v", len(active), err)
+	}
+	if _, err := reopened.SetCanvasArchived("proj-canvas", created.ID, true, now, "run-1", "batch-6"); err != nil {
+		t.Fatal(err)
+	}
 	if err := reopened.DeleteCanvas("proj-canvas", created.ID, "run-1", "batch-3"); err != nil {
 		t.Fatal(err)
 	}

@@ -1,8 +1,17 @@
-import { For, createSignal, type Accessor, type Setter } from "solid-js";
+import { For, Show, createSignal, type Accessor, type Setter } from "solid-js";
 import { Check, InformationCircle } from "./hugeicons";
 import "./toast.css";
 
-export type ToastItem = { id: string; message: string; tone?: "default" | "danger" | "success" };
+/** One follow-up for the entity a toast names, such as Undo or View. */
+export type ToastAction = { label: string; onClick: () => void };
+
+export type ToastItem = { id: string; message: string; tone?: "default" | "danger" | "success"; action?: ToastAction };
+
+export type ToastOptions = { action?: ToastAction };
+
+/** A toast with an action stays long enough to reach it. */
+const TOAST_MS = 3200;
+const TOAST_ACTION_MS = 6000;
 
 type ToastPhase = "visible" | "exiting";
 type ToastEntry = ToastItem & {
@@ -39,11 +48,11 @@ function beginToastExit(id: string) {
   removalTimers.set(id, window.setTimeout(() => removeToast(id), fallbackDelay));
 }
 
-export function pushToast(message: string, tone: ToastItem["tone"] = "default") {
+export function pushToast(message: string, tone: ToastItem["tone"] = "default", options: ToastOptions = {}) {
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const [phase, setPhase] = createSignal<ToastPhase>("visible");
-  setToasts((items) => [...items, { id, message, tone, phase, setPhase }]);
-  dismissTimers.set(id, window.setTimeout(() => beginToastExit(id), 3200));
+  setToasts((items) => [...items, { id, message, tone, action: options.action, phase, setPhase }]);
+  dismissTimers.set(id, window.setTimeout(() => beginToastExit(id), options.action ? TOAST_ACTION_MS : TOAST_MS));
 }
 
 export function ToastRegion() {
@@ -76,7 +85,22 @@ export function ToastRegion() {
             <span class="mt-0.5 flex-none" aria-hidden="true">
               {t.tone === "success" ? <Check size={14} /> : <InformationCircle size={14} />}
             </span>
-            <span class="min-w-0">{t.message}</span>
+            <span class="min-w-0 flex-1">{t.message}</span>
+            <Show when={t.action}>
+              {(action) => (
+                <button
+                  type="button"
+                  class="pw-toast-action flex-none rounded-[var(--radius-item)] px-1.5 text-[12.5px] font-medium text-[var(--color-accent)] hover:bg-[var(--color-surface-hover)]"
+                  onClick={() => {
+                    clearTimer(dismissTimers, t.id);
+                    beginToastExit(t.id);
+                    action().onClick();
+                  }}
+                >
+                  {action().label}
+                </button>
+              )}
+            </Show>
           </div>
         )}
       </For>

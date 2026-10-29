@@ -61,6 +61,8 @@ export type A11yDialogProps = {
    * search box does not grab the caret. Tab still moves into the content. Defaults to true.
    */
   autoFocusField?: boolean;
+  /** Element that takes focus when the dialog opens, such as a confirm's primary action. */
+  initialFocus?: () => HTMLElement | null | undefined;
 };
 
 /**
@@ -89,7 +91,11 @@ export function A11yDialog(props: A11yDialogProps) {
       unmountOnExit
       closeOnEscape={dismissible()}
       closeOnInteractOutside={dismissible()}
-      initialFocusEl={props.autoFocusField === false ? () => contentEl ?? null : undefined}
+      initialFocusEl={
+        props.initialFocus
+          ? () => props.initialFocus?.() ?? contentEl ?? null
+          : props.autoFocusField === false ? () => contentEl ?? null : undefined
+      }
     >
       <Portal>
         <ArkDialog.Backdrop ref={ownPortal}

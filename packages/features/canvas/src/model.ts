@@ -11,6 +11,8 @@ export type CanvasGraph = { nodes: GraphNode[]; edges: GraphEdge[] };
 export type CanvasRecord = {
   id: string; projectId: string; name: string; type: string; agentVisible: boolean;
   graph: CanvasGraph; layoutJson: string; scopeNodeId: string; updatedAt: string;
+  /** Empty or absent while the canvas is active. */
+  archivedAt?: string;
 };
 export type CanvasType = {
   type: string; label: string; nodeKinds: string[]; edgeKinds: string[];
@@ -23,6 +25,11 @@ export type CanvasPort = {
   types(): Promise<CanvasType[]>;
   create(projectId: string, name: string, type: string): Promise<CanvasRecord>;
   update(projectId: string, id: string, patch: CanvasPatch): Promise<CanvasRecord>;
+  /** Archived canvases, ordered by name. */
+  listArchived(projectId: string): Promise<CanvasRecord[]>;
+  /** Archives a canvas, or restores it when `archived` is false. */
+  setArchived(projectId: string, id: string, archived: boolean): Promise<CanvasRecord>;
+  /** Deletes an archived canvas for good; the core refuses an active one. */
   remove(projectId: string, id: string): Promise<void>;
   promote?(projectId: string, input: import("./promotion").PromotionInput): Promise<import("./references").StoreEntity>;
 };
@@ -56,6 +63,7 @@ export function readCanvas(value: unknown): CanvasRecord {
       }) : [],
     },
     layoutJson: String(item.layoutJson || "{}"), scopeNodeId: String(item.scopeNodeId ?? ""), updatedAt: String(item.updatedAt ?? ""),
+    archivedAt: String(item.archivedAt ?? ""),
   };
 }
 export function readTypes(value: unknown): CanvasType[] {

@@ -22,6 +22,20 @@ export default {
       ),
     },
     {
+      id: "action",
+      title: "With an action",
+      render: () => (
+        // #region action
+        <>
+          <Button size="sm" onClick={() => pushToast("Archived “Release notes”", "default", { action: { label: "Undo", onClick: () => pushToast("Restored “Release notes”") } })}>
+            Show with Undo
+          </Button>
+          <ToastRegion />
+        </>
+        // #endregion
+      ),
+    },
+    {
       id: "default",
       title: "Default",
       render: () => (

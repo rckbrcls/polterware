@@ -254,6 +254,9 @@ func (core *Core) SaveKnowledge(_ context.Context, request *connect.Request[loca
 	}
 	created.Status = item.Status
 	created.ExtraJSON = item.ExtraJson
+	if existing, getErr := core.Store.GetKnowledge(created.ID); getErr == nil && existing.Archived() {
+		return nil, mapArchiveErr(knowledge.ErrArchived)
+	}
 	result, err := wedge.ExecuteAuditedWrite(
 		core.Store,
 		env,
@@ -275,7 +278,11 @@ func (core *Core) SaveKnowledge(_ context.Context, request *connect.Request[loca
 }
 
 func (core *Core) ListKnowledge(_ context.Context, request *connect.Request[localv1.ListKnowledgeRequest]) (*connect.Response[localv1.ListKnowledgeResponse], error) {
-	items, err := core.Store.ListKnowledge(request.Msg.ProjectId, request.Msg.Kind)
+	list := core.Store.ListKnowledge
+	if request.Msg.Archived {
+		list = core.Store.ListArchivedKnowledge
+	}
+	items, err := list(request.Msg.ProjectId, request.Msg.Kind)
 	if err != nil {
 		return nil, internal(err)
 	}
@@ -313,6 +320,12 @@ func (core *Core) DeleteKnowledge(_ context.Context, request *connect.Request[lo
 	}
 	if err != nil {
 		return nil, internal(err)
+	}
+	if existing.Kind == knowledge.KindVerdict {
+		return nil, mapArchiveErr(knowledge.ErrDecisionArchive)
+	}
+	if !existing.Archived() {
+		return nil, mapArchiveErr(knowledge.ErrNotArchived)
 	}
 	env.ProjectID = existing.ProjectID
 	_, err = wedge.ExecuteAuditedWrite(
@@ -410,7 +423,7 @@ func environmentProto(item projects.Environment) *localv1.Environment {
 	return &localv1.Environment{Id: item.ID, ProjectId: item.ProjectID, Name: item.Name, Kind: item.Kind, Protection: item.Protection, IsDefault: item.IsDefault, Description: item.Description}
 }
 func knowledgeProto(item knowledge.Item) *localv1.KnowledgeItem {
-	return &localv1.KnowledgeItem{Id: item.ID, ProjectId: item.ProjectID, Title: item.Title, Body: item.Body, Kind: item.Kind, Tags: item.Tags, Summary: item.Summary, Owner: item.Owner, Status: item.Status, ExtraJson: item.ExtraJSON, CreatedAt: item.CreatedAt.Format(time.RFC3339), UpdatedAt: item.UpdatedAt.Format(time.RFC3339)}
+	return &localv1.KnowledgeItem{Id: item.ID, ProjectId: item.ProjectID, Title: item.Title, Body: item.Body, Kind: item.Kind, Tags: item.Tags, Summary: item.Summary, Owner: item.Owner, Status: item.Status, ExtraJson: item.ExtraJSON, CreatedAt: item.CreatedAt.Format(time.RFC3339), UpdatedAt: item.UpdatedAt.Format(time.RFC3339), ArchivedAt: archivedStamp(item.ArchivedAt)}
 }
 func connectionProto(item integrations.Connection) *localv1.IntegrationConnection {
 	return &localv1.IntegrationConnection{Id: item.ID, ProjectId: item.ProjectID, ProviderId: item.ProviderID, Status: item.Status, Label: item.Label, EnvironmentId: item.EnvironmentID, LastSyncAt: item.LastSyncAt, Summary: item.Summary, CliCommand: item.CLICommand, SyncInterval: item.SyncInterval, Freshness: item.Freshness, ErrorMessage: item.ErrorMessage}

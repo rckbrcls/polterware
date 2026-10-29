@@ -216,30 +216,57 @@ func (s *Store) SaveKnowledge(item knowledge.Item) error {
 	if err != nil {
 		return err
 	}
+	// An archived row stays out of search even when an import rewrites it.
+	var archivedAt string
+	if err := s.DB.QueryRow(`SELECT archived_at FROM knowledge_items WHERE id=?`, item.ID).Scan(&archivedAt); err != nil {
+		return err
+	}
+	if archivedAt != "" {
+		return nil
+	}
 	return s.indexKnowledgeFTS(item)
 }
 
-func (s *Store) GetKnowledge(id string) (knowledge.Item, error) {
+const knowledgeColumns = `id,project_id,title,body,kind,tags_json,summary,owner,status,extra_json,created_at,updated_at,archived_at`
+
+func scanKnowledge(scan func(dest ...any) error) (knowledge.Item, error) {
 	var item knowledge.Item
-	var tags, created, updated string
-	err := s.DB.QueryRow(
-		`SELECT id,project_id,title,body,kind,tags_json,summary,owner,status,extra_json,created_at,updated_at
-		 FROM knowledge_items WHERE id=?`, id,
-	).Scan(
-		&item.ID, &item.ProjectID, &item.Title, &item.Body, &item.Kind, &tags,
-		&item.Summary, &item.Owner, &item.Status, &item.ExtraJSON, &created, &updated,
-	)
-	if err != nil {
+	var tags, created, updated, archived string
+	if err := scan(&item.ID, &item.ProjectID, &item.Title, &item.Body, &item.Kind, &tags,
+		&item.Summary, &item.Owner, &item.Status, &item.ExtraJSON, &created, &updated, &archived); err != nil {
 		return knowledge.Item{}, err
 	}
 	_ = json.Unmarshal([]byte(tags), &item.Tags)
 	item.CreatedAt, _ = time.Parse(time.RFC3339, created)
 	item.UpdatedAt, _ = time.Parse(time.RFC3339, updated)
+	if archived != "" {
+		item.ArchivedAt, _ = time.Parse(time.RFC3339, archived)
+	}
 	return item, nil
 }
 
+// GetKnowledge returns one item, archived or not.
+func (s *Store) GetKnowledge(id string) (knowledge.Item, error) {
+	return scanKnowledge(s.DB.QueryRow(`SELECT `+knowledgeColumns+` FROM knowledge_items WHERE id=?`, id).Scan)
+}
+
+// ListKnowledge returns the project's active items, newest first.
 func (s *Store) ListKnowledge(projectID, kind string) ([]knowledge.Item, error) {
-	query := `SELECT id,project_id,title,body,kind,tags_json,summary,owner,status,extra_json,created_at,updated_at FROM knowledge_items WHERE project_id=?`
+	return s.listKnowledge(projectID, kind, false)
+}
+
+// ListArchivedKnowledge returns the project's archived items, newest first.
+func (s *Store) ListArchivedKnowledge(projectID, kind string) ([]knowledge.Item, error) {
+	return s.listKnowledge(projectID, kind, true)
+}
+
+func (s *Store) listKnowledge(projectID, kind string, archived bool) ([]knowledge.Item, error) {
+	query := `SELECT ` + knowledgeColumns + ` FROM knowledge_items WHERE project_id=?`
+	if archived {
+		query += ` AND archived_at<>''`
+	} else {
+		query += ` AND archived_at=''`
+	}
 	args := []any{projectID}
 	if kind != "" {
 		query += ` AND kind=?`
@@ -253,24 +280,60 @@ func (s *Store) ListKnowledge(projectID, kind string) ([]knowledge.Item, error) 
 	defer rows.Close()
 	var result []knowledge.Item
 	for rows.Next() {
-		var item knowledge.Item
-		var tags, created, updated string
-		if err := rows.Scan(&item.ID, &item.ProjectID, &item.Title, &item.Body, &item.Kind, &tags, &item.Summary, &item.Owner, &item.Status, &item.ExtraJSON, &created, &updated); err != nil {
+		item, err := scanKnowledge(rows.Scan)
+		if err != nil {
 			return nil, err
 		}
-		_ = json.Unmarshal([]byte(tags), &item.Tags)
-		item.CreatedAt, _ = time.Parse(time.RFC3339, created)
-		item.UpdatedAt, _ = time.Parse(time.RFC3339, updated)
 		result = append(result, item)
 	}
 	return result, rows.Err()
 }
 
+// SetKnowledgeArchived moves an item into the archive or back out of it. An
+// archived item leaves the search index; a restored one is indexed again.
+// Decisions are never archived.
+func (s *Store) SetKnowledgeArchived(id string, archived bool, at time.Time) (knowledge.Item, error) {
+	item, err := s.GetKnowledge(id)
+	if err != nil {
+		return knowledge.Item{}, err
+	}
+	if item.Kind == knowledge.KindVerdict {
+		return knowledge.Item{}, knowledge.ErrDecisionArchive
+	}
+	stamp := ""
+	if archived {
+		stamp = at.UTC().Format(time.RFC3339)
+	}
+	if _, err := s.DB.Exec(`UPDATE knowledge_items SET archived_at=? WHERE id=?`, stamp, id); err != nil {
+		return knowledge.Item{}, err
+	}
+	if archived {
+		if _, err := s.DB.Exec(`DELETE FROM knowledge_fts WHERE knowledge_id=?`, id); err != nil {
+			return knowledge.Item{}, err
+		}
+	} else if err := s.indexKnowledgeFTS(item); err != nil {
+		return knowledge.Item{}, err
+	}
+	return s.GetKnowledge(id)
+}
+
+// DeleteKnowledge removes an archived item for good. Active items and
+// decisions are refused.
 func (s *Store) DeleteKnowledge(id string) error {
+	item, err := s.GetKnowledge(id)
+	if err != nil {
+		return err
+	}
+	if item.Kind == knowledge.KindVerdict {
+		return knowledge.ErrDecisionArchive
+	}
+	if !item.Archived() {
+		return knowledge.ErrNotArchived
+	}
 	if _, err := s.DB.Exec(`DELETE FROM knowledge_fts WHERE knowledge_id=?`, id); err != nil {
 		return err
 	}
-	_, err := s.DB.Exec(`DELETE FROM knowledge_items WHERE id=?`, id)
+	_, err = s.DB.Exec(`DELETE FROM knowledge_items WHERE id=?`, id)
 	return err
 }
 
