@@ -43,10 +43,6 @@
   padding: 0 12px 8px 18px;
 }
 
-.pw-projects-view-chip {
-  min-height: 28px;
-  border-radius: 9999px;
-}
 
 .pw-projects-view-bar .pw-active-filter-bar {
   margin: 0;

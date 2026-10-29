@@ -38,7 +38,6 @@ export function TitleBar(props: TitleBarProps) {
           <Button
             variant="texture"
             size="icon"
-            class="!h-[var(--control-height-md)] !w-[var(--control-height-md)]"
             aria-label="Home"
             title="Projects"
             onClick={() => props.onGoHome?.()}
@@ -53,7 +52,6 @@ export function TitleBar(props: TitleBarProps) {
           <Button
             variant="texture"
             size="icon"
-            class="!h-[var(--control-height-md)] !w-[var(--control-height-md)]"
             aria-label="Search or run a command"
             title={`Commander (${commanderShortcut()})`}
             onClick={() => props.onOpenCommander?.()}
@@ -63,7 +61,6 @@ export function TitleBar(props: TitleBarProps) {
           <Button
             variant="texture"
             size="icon"
-            class="!h-[var(--control-height-md)] !w-[var(--control-height-md)]"
             aria-label="App settings"
             aria-pressed={Boolean(props.appSettingsOpen)}
             title="App settings"

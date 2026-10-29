@@ -10,7 +10,7 @@
   flex-shrink: 0;
   align-items: stretch;
   gap: 1px;
-  height: var(--control-height-md);
+  height: var(--control-height-sm);
   padding: 0;
   border-width: 0;
   position: relative;
@@ -21,7 +21,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
+  width: var(--control-height-sm);
   padding: 0;
   border: 0;
   background: linear-gradient(to bottom, var(--tx-face-top), var(--tx-face-bottom));

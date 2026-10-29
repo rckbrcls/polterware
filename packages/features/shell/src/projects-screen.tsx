@@ -6,7 +6,6 @@ import {
   EntityContextMenu,
   EntityMenuButton,
   ExternalLink,
-  FilterChip,
   Folder,
   FolderKanban,
   FilterPopover,
@@ -123,8 +122,8 @@ function ProjectRow(props: {
       <DataTable.PrimaryCell
         class="pw-projects-name-cell"
         leading={
-          <IconTile size={16} seed={project().projectId}>
-            <FolderKanban size={11} />
+          <IconTile size={24} seed={project().projectId}>
+            <FolderKanban size={14} />
           </IconTile>
         }
         title={
@@ -198,7 +197,6 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
         matchClauses(project, filters.pageClauses(), { status: statusOf, folder: folderOf }),
     );
   });
-  const showingAll = () => !query().trim() && filters.clauses().length === 0;
 
   return (
     <div class="pw-projects">
@@ -225,17 +223,8 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
           </ToolbarIconButton>
         </div>
       </header>
+      <Show when={filters.clauses().length > 0}>
       <div class="pw-projects-view-bar">
-        <FilterChip
-          class="pw-projects-view-chip"
-          selected={showingAll()}
-          onClick={() => {
-            setQuery("");
-            filters.clear();
-          }}
-        >
-          All projects
-        </FilterChip>
         <ActiveFilterBar
           fields={filters.fields()}
           clauses={filters.clauses()}
@@ -243,6 +232,7 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
           saved={filters.saved()}
         />
       </div>
+      </Show>
       <PageContent class="pw-projects-content pw-scroll-fade">
         <Show
           when={!props.loading}
