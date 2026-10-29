@@ -57,7 +57,7 @@ export function DecisionDetail(props: {
     Boolean(props.onAction) && (props.decision.state === "active" || props.decision.state === "challenged") && successors().length > 0;
   return (
     <KnowledgeDocumentShell
-      trail={["Truth", "Decisions"]}
+      trail={[{ label: "Truth", section: "truth" }, { label: "Decisions", section: "truth", tab: "decisions" }]}
       entityId={props.decision.id}
       title={props.note?.title ?? props.decision.title}
       onTitleChange={props.note?.onTitleChange}

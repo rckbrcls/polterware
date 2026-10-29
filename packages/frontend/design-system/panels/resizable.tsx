@@ -2,6 +2,7 @@ import Resizable, { type Size } from "@corvu/resizable";
 import type { JSX } from "solid-js";
 import { createEffect, createSignal, on, onCleanup, onMount } from "solid-js";
 import { isServer } from "solid-js/web";
+import { isTypingTarget } from "@polterware/frontend-state";
 import { useDesignSystem } from "../src/provider";
 import "./resizable.css";
 
@@ -291,6 +292,8 @@ export function ResizableSidebar(props: ResizableSidebarProps) {
       if (event.repeat || !designSystem.matchesShortcut("shell.toggle_sidebar", event)) {
         return;
       }
+      // The default is a bare key ([), which a field takes as text.
+      if (!event.metaKey && !event.ctrlKey && isTypingTarget(event.target)) return;
       event.preventDefault();
       event.stopPropagation();
       toggle();

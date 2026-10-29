@@ -28,6 +28,41 @@
   color: var(--color-text-muted);
 }
 
+/* A collapsible label: the chevron shows on hover or focus, and stays while collapsed. */
+.pw-sidebar-group-toggle {
+  appearance: none;
+  gap: 4px;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: color var(--duration-fast, 120ms) var(--ease-standard, ease);
+}
+
+.pw-sidebar-group-toggle:hover,
+.pw-sidebar-group-toggle:focus-visible {
+  color: var(--color-text-primary);
+}
+
+.pw-sidebar-group-chevron {
+  flex-shrink: 0;
+  visibility: hidden;
+  transition: transform var(--duration-fast, 120ms) var(--ease-standard, ease);
+}
+
+.pw-sidebar-group-toggle:hover .pw-sidebar-group-chevron,
+.pw-sidebar-group-toggle:focus-visible .pw-sidebar-group-chevron,
+.pw-sidebar-group[data-collapsed="true"] .pw-sidebar-group-chevron {
+  visibility: visible;
+}
+
+.pw-sidebar-group[data-collapsed="true"] .pw-sidebar-group-chevron {
+  transform: rotate(-90deg);
+}
+
 .pw-sidebar-item {
   appearance: none;
   display: flex;

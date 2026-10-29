@@ -20,14 +20,14 @@ export function PageHeader(props: {
   const divider = () => props.divider !== false;
   return (
     <header
-      class={`pw-page-header flex min-h-[var(--page-header-height)] shrink-0 items-center gap-3 px-4 py-2 ${divider() ? "border-b border-[var(--color-border-subtle)]" : ""}`}
+      class={`pw-page-header flex min-h-[var(--page-header-height)] shrink-0 items-center gap-3 px-4 py-1.5 ${divider() ? "border-b border-[var(--color-border-subtle)]" : ""}`}
       style={{
         display: "flex",
         "align-items": "center",
         gap: "12px",
-        "min-height": "52px",
+        "min-height": "var(--page-header-height)",
         "flex-shrink": "0",
-        padding: "8px 16px",
+        padding: "6px 16px",
         "border-bottom": divider() ? "1px solid var(--color-border-subtle)" : "0",
       }}
     >

@@ -5,27 +5,40 @@ export type {
   ShortcutGroup,
   ShortcutOverrides,
   ShortcutPreferences,
+  ShortcutReferenceGroup,
+  ShortcutReferenceRow,
+  ShortcutSequence,
+  ShortcutSequenceId,
 } from "./types";
 export {
+  LIST_KEYS,
   SHORTCUT_CATALOG,
   SHORTCUT_GROUP_LABELS,
+  SHORTCUT_SEQUENCES,
   getShortcutCommand,
   shortcutsInGroup,
 } from "./catalog";
 export {
+  SEQUENCE_TIMEOUT_MS,
   chordFromEvent,
+  chordKeys,
   chordToAccelerator,
   chordsEqual,
+  createSequenceMatcher,
   effectiveChords,
   findConflict,
   formatChord,
+  formatSequence,
   isApplePlatform,
+  isTypingTarget,
   matchesChord,
   normalizeEventKey,
   parseChord,
   resolveChord,
   serializeChord,
+  type SequenceMatch,
 } from "./chord";
+export { filterShortcutReference, shortcutReference } from "./reference";
 export {
   createShortcutLabel,
   createShortcutSelector,

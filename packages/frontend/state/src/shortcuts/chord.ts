@@ -168,15 +168,29 @@ const DISPLAY_SPECIAL: Record<string, string> = {
   "-": "−",
 };
 
-/** Human-readable chord for tooltips and Settings rows. */
-export function formatChord(chord: ShortcutChord, apple = isApplePlatform()): string {
+function keyLabel(key: string): string {
+  return DISPLAY_SPECIAL[key] ?? (key.length === 1 ? key.toUpperCase() : key);
+}
+
+/** A chord's display keys, modifiers first, one per key chip. */
+export function chordKeys(chord: ShortcutChord, apple = isApplePlatform()): string[] {
   const parts: string[] = [];
   if (chord.mod) parts.push(apple ? "⌘" : "Ctrl");
   if (chord.alt) parts.push(apple ? "⌥" : "Alt");
-  if (chord.shift) parts.push(apple ? "⇧" : "Shift");
-  const keyLabel = DISPLAY_SPECIAL[chord.key] ?? (chord.key.length === 1 ? chord.key.toUpperCase() : chord.key);
-  parts.push(keyLabel);
-  return parts.join(apple ? "" : "+");
+  // "?" already names the shifted key.
+  if (chord.shift && chord.key !== "?") parts.push(apple ? "⇧" : "Shift");
+  parts.push(keyLabel(chord.key));
+  return parts;
+}
+
+/** Human-readable chord for tooltips and Settings rows. */
+export function formatChord(chord: ShortcutChord, apple = isApplePlatform()): string {
+  return chordKeys(chord, apple).join(apple ? "" : "+");
+}
+
+/** "G then I" for tooltips and Commander hints. */
+export function formatSequence(keys: readonly string[]): string {
+  return keys.map(keyLabel).join(" then ");
 }
 
 /** Electron `globalShortcut` accelerator for a chord. */
@@ -248,4 +262,74 @@ export function matchesChord(
   const chord = chordFromEvent(event);
   if (!chord) return false;
   return effectiveChords(command, overrides).some((candidate) => chordsEqual(candidate, chord));
+}
+
+/** How long the next key of a sequence may wait after the previous one. */
+export const SEQUENCE_TIMEOUT_MS = 1200;
+
+export type SequenceMatch<Id extends string> = { kind: "matched"; id: Id } | { kind: "pending" } | null;
+
+function startsWith(keys: readonly string[], prefix: readonly string[]): boolean {
+  return prefix.length <= keys.length && prefix.every((key, index) => keys[index] === key);
+}
+
+/**
+ * Matches key sequences such as G then I. Each key is pressed bare; a modifier, a key
+ * no sequence continues with, or a pause past the timeout starts over.
+ */
+export function createSequenceMatcher<Id extends string>(
+  sequences: readonly { id: Id; keys: readonly string[] }[],
+  timeoutMs = SEQUENCE_TIMEOUT_MS,
+  now: () => number = Date.now,
+) {
+  let pressed: string[] = [];
+  let last = 0;
+
+  const step = (prefix: string[]): SequenceMatch<Id> => {
+    const exact = sequences.find((sequence) => sequence.keys.length === prefix.length && startsWith(sequence.keys, prefix));
+    if (exact) {
+      pressed = [];
+      return { kind: "matched", id: exact.id };
+    }
+    if (sequences.some((sequence) => startsWith(sequence.keys, prefix))) {
+      pressed = prefix;
+      return { kind: "pending" };
+    }
+    pressed = [];
+    return null;
+  };
+
+  return {
+    press(event: Pick<KeyboardEvent, "key" | "code" | "metaKey" | "ctrlKey" | "shiftKey" | "altKey">): SequenceMatch<Id> {
+      // A lone modifier press neither continues nor breaks a sequence.
+      if (MODIFIER_KEYS.has(event.key.toLowerCase())) return null;
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
+        pressed = [];
+        return null;
+      }
+      const key = normalizeEventKey(event.key, event.code);
+      const at = now();
+      if (at - last > timeoutMs) pressed = [];
+      last = at;
+      if (!key) {
+        pressed = [];
+        return null;
+      }
+      const prefix = [...pressed, key];
+      // A key that breaks one sequence may start another.
+      return step(prefix) ?? (prefix.length > 1 ? step([key]) : null);
+    },
+    reset() {
+      pressed = [];
+    },
+  };
+}
+
+/** True when a key press lands in a field, menu, or dialog, where bare-key shortcuts stay quiet. */
+export function isTypingTarget(target: EventTarget | null): boolean {
+  return (
+    typeof Element !== "undefined"
+    && target instanceof Element
+    && Boolean(target.closest("input, textarea, select, [contenteditable=true], [contenteditable=''], [role=dialog], [role=menu], [role=listbox]"))
+  );
 }

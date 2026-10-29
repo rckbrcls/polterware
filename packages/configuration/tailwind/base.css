@@ -135,7 +135,8 @@
   --titlebar-height: 44px;
   /* macOS traffic lights clearance when titleBarStyle is hidden */
   --titlebar-traffic-inset: 78px;
-  --page-header-height: 52px;
+  /* Linear's header: page headers, toolbars, and document trails share it. */
+  --page-header-height: 44px;
   --control-height-sm: 28px;
   --control-height-md: 32px;
   /* Text inputs and selects sit taller than buttons. */

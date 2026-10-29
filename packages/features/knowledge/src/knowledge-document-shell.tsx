@@ -1,7 +1,7 @@
 import type { JSX } from "solid-js";
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 import { Button, ChevronLeft, ChevronRight, Input, MarkdownEditor, SidebarRightIcon, TagPicker, useDesignSystem } from "@polterware/frontend-design-system";
-import { EntityDocumentCanvas, requestDetailExpanded } from "@polterware/feature-shell";
+import { EntityDocumentCanvas, requestDetailExpanded, requestSectionNavigate } from "@polterware/feature-shell";
 import { KnowledgeDocumentProperties } from "./knowledge-document-properties";
 import "./knowledge-document.css";
 
@@ -13,6 +13,9 @@ export type DocNoteProps = {
   tagSuggestions?: readonly string[];
   onTagsChange?: (tags: string[]) => void;
 };
+
+/** A step of the header trail: a link to the section (and tab) the document sits in. */
+export type DocumentCrumb = { label: string; section: string; tab?: string };
 
 /** Below this page width the properties rail leaves the row and opens as a drawer. */
 const NARROW_WIDTH = 900;
@@ -45,8 +48,8 @@ export function KnowledgeDocumentShell(props: {
   title: string;
   /** Entity icon, shown at 16px before the title in the header trail. */
   icon: JSX.Element;
-  /** Surface path before the title in the header, e.g. ["Truth", "Docs"]. */
-  trail?: readonly string[];
+  /** Surface path before the title in the header, e.g. Truth › Docs; each step is a link. */
+  trail?: readonly DocumentCrumb[];
   /** Omit for documents without a body, such as a Fact. */
   bodyMarkdown?: string;
   /** Omit for documents whose content is edited through another workflow. */
@@ -99,8 +102,9 @@ export function KnowledgeDocumentShell(props: {
         <div class="pw-document__trail">
           <Button size="icon" variant="texture" aria-label="Back" onClick={() => requestDetailExpanded(false)}><ChevronLeft size={14} /></Button>
           <nav class="pw-document__crumbs" aria-label="Breadcrumb">
-            <For each={props.trail ?? []}>{part => <>
-              <span class="pw-document__crumb">{part}</span>
+            <For each={props.trail ?? []}>{crumb => <>
+              <button type="button" class="pw-document__crumb pw-document__crumb--link"
+                onClick={() => requestSectionNavigate(crumb.section, crumb.tab)}>{crumb.label}</button>
               <ChevronRight size={12} aria-hidden="true" class="pw-document__crumb-separator" />
             </>}</For>
             <span class="pw-document__crumb-icon" aria-hidden="true">{props.icon}</span>

@@ -25,7 +25,7 @@ export function FactDetail(props: {
     <Show when={props.detail} fallback={<KnowledgeDocumentNotFound kindLabel="Fact" />}>
       {(detail) => (
         <KnowledgeDocumentShell
-          trail={["Truth", "Facts"]}
+          trail={[{ label: "Truth", section: "truth" }, { label: "Facts", section: "truth", tab: "facts" }]}
           entityId={detail().fact.id}
           title={detail().fact.statement || detail().fact.id}
           icon={<ScrollText size={32} />}

@@ -1,0 +1,68 @@
+.pw-shortcuts-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pw-shortcuts-panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pw-shortcuts-panel__heading {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.pw-shortcuts-panel__rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 32px rows: the label on the left, its keys on the right. */
+.pw-shortcuts-panel__row {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pw-shortcuts-panel__label {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pw-shortcuts-panel__keys {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.pw-shortcuts-panel__keys .pw-kbd {
+  min-width: 20px;
+  min-height: 20px;
+  font-size: 11px;
+}
+
+.pw-shortcuts-panel__join {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.pw-shortcuts-panel__empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}

@@ -17,7 +17,7 @@ export function ShortcutsPage() {
     <div class="flex flex-col gap-6">
       <SettingsSection
         title="Shortcuts"
-        description="Shortcuts apply on this computer. Structure chords work on Structure when you are not typing in a field. Escape cancels recording and stays reserved for dialogs."
+        description="Shortcuts apply on this computer. Single-key shortcuts such as [ and N never fire while you type in a field. ⌘/ lists every shortcut, including the fixed G sequences. Escape cancels recording and stays reserved for dialogs."
       >
         <For each={GROUPS}>
           {(group) => (

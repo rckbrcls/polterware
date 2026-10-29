@@ -1,4 +1,4 @@
-import type { ShortcutChord, ShortcutCommand, ShortcutCommandId } from "./types";
+import type { ShortcutChord, ShortcutCommand, ShortcutCommandId, ShortcutReferenceRow, ShortcutSequence } from "./types";
 
 function chord(partial: Partial<ShortcutChord> & Pick<ShortcutChord, "key">): ShortcutChord {
   return {
@@ -27,13 +27,20 @@ export const SHORTCUT_CATALOG: readonly ShortcutCommand[] = [
     id: "shell.toggle_sidebar",
     label: "Toggle sidebar",
     group: "shell",
-    defaultChord: chord({ key: "b", mod: true }),
+    defaultChord: chord({ key: "[" }),
   },
   {
     id: "shell.toggle_detail",
     label: "Close details",
     group: "shell",
     defaultChord: chord({ key: "j", mod: true }),
+  },
+  {
+    id: "shell.show_shortcuts",
+    label: "Keyboard shortcuts",
+    group: "shell",
+    defaultChord: chord({ key: "/", mod: true }),
+    defaultAliases: [chord({ key: "?", shift: true })],
   },
   {
     id: "shell.open_canvas",
@@ -54,6 +61,26 @@ export const SHORTCUT_CATALOG: readonly ShortcutCommand[] = [
     defaultChord: chord({ key: "n" }),
   },
 ] as const;
+
+/** G then a letter jumps to a surface, as in Linear. */
+export const SHORTCUT_SEQUENCES: readonly ShortcutSequence[] = [
+  { id: "go.inbox", label: "Go to Inbox", keys: ["g", "i"] },
+  { id: "go.activity", label: "Go to Activity", keys: ["g", "a"] },
+  { id: "go.work", label: "Go to Work", keys: ["g", "w"] },
+  { id: "go.canvas", label: "Go to Canvas", keys: ["g", "c"] },
+  { id: "go.structure", label: "Go to Structure", keys: ["g", "s"] },
+  { id: "go.truth", label: "Go to Truth", keys: ["g", "t"] },
+  { id: "go.runs", label: "Go to Runs", keys: ["g", "r"] },
+  { id: "go.projects", label: "Go to Projects", keys: ["g", "h"] },
+];
+
+/** Keys every list and entity page answers; listed in the shortcuts panel, not rebindable. */
+export const LIST_KEYS: readonly ShortcutReferenceRow[] = [
+  { id: "list.move", label: "Next or previous row", keys: ["J", "K"], join: "or" },
+  { id: "list.peek", label: "Peek the row", keys: ["Space"], join: "or" },
+  { id: "list.open", label: "Open the row", keys: ["Enter"], join: "or" },
+  { id: "list.back", label: "Back to the row", keys: ["Esc"], join: "or" },
+];
 
 const BY_ID = new Map<ShortcutCommandId, ShortcutCommand>(
   SHORTCUT_CATALOG.map((command) => [command.id, command]),

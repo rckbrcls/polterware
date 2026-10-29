@@ -73,7 +73,16 @@ export {
 export { MainSurface, PageHeader, PageContent } from "./main-surface";
 export { EntityDetailHost, type EntityDetailHostProps } from "./entity-detail-host";
 export { EntityDocumentCanvas } from "./entity-document";
-export { expandedDetail, openDetail, requestDetailExpanded, setDetailExpandHandler, setExpandedDetailTarget } from "./detail-expansion";
+export {
+  expandedDetail,
+  openDetail,
+  requestDetailExpanded,
+  requestSectionNavigate,
+  setDetailExpandHandler,
+  setExpandedDetailTarget,
+  setSectionNavigateHandler,
+} from "./detail-expansion";
+export { ShortcutsPanel } from "./shortcuts-panel";
 export { SidebarNav, SidebarSettingsItem } from "./sidebar";
 export type { SidebarCount } from "./sidebar";
 export { TitleBar } from "./title-bar";

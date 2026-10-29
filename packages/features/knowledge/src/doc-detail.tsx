@@ -26,7 +26,7 @@ export function DocDetail(props: {
     <Show when={props.doc} fallback={<KnowledgeDocumentNotFound kindLabel="Doc" />}>
       {(doc) => (
         <KnowledgeDocumentShell
-          trail={["Truth", "Docs"]}
+          trail={[{ label: "Truth", section: "truth" }, { label: "Docs", section: "truth", tab: "docs" }]}
           entityId={doc().id}
           title={props.note?.title ?? doc().title}
           icon={docTypeIcon(doc().docType, 32)}

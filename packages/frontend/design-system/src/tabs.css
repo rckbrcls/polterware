@@ -12,7 +12,7 @@
   gap: 8px 12px;
   flex-shrink: 0;
   box-sizing: border-box;
-  min-height: 44px;
+  min-height: var(--page-header-height);
   /* Spacing only under tabs — no hairline divider to content */
   padding: 8px 8px 4px;
   border-bottom: none;

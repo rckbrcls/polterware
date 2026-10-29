@@ -22,6 +22,11 @@ import {
   setExpandedDetail,
   setExpandedDetailTarget,
   setDetailExpandHandler,
+  requestDetailExpanded,
+  setSectionNavigateHandler,
+  ShortcutsPanel,
+  DEFAULT_TABS,
+  isSectionId,
   openDetail,
   historySnapshot,
   ensureRouteAvailable,
@@ -49,7 +54,18 @@ import { hydrateAppearancePreferences, hydrateShortcutPreferences, settingsTabSc
 import type { ProjectSettingsPageId } from "@polterware/feature-settings";
 import { CommandPalette } from "@polterware/feature-commander";
 import { PageLoading, pushToast, requestConfirm, type ArchivedListItem, type TabItem } from "@polterware/frontend-design-system";
-import { detailDisplayFor, detailPanelStore, matchesShortcut, readRemembered, setActiveProjectId, writeRemembered } from "@polterware/frontend-state";
+import {
+  SHORTCUT_SEQUENCES,
+  createSequenceMatcher,
+  detailDisplayFor,
+  detailPanelStore,
+  isTypingTarget,
+  matchesShortcut,
+  readRemembered,
+  setActiveProjectId,
+  writeRemembered,
+  type ShortcutSequenceId,
+} from "@polterware/frontend-state";
 import { hideBootSplash } from "./boot-splash";
 import { bootstrapPlatform } from "./platform-bootstrap";
 
@@ -203,6 +219,7 @@ export function App() {
   const [history, setHistory] = createSignal<ClientRoute[]>([historySnapshot(initialRoute)]);
   const [historyIndex, setHistoryIndex] = createSignal(0);
   const [paletteOpen, setPaletteOpen] = createSignal(false);
+  const [shortcutsOpen, setShortcutsOpen] = createSignal(false);
   const [createProjectOpen, setCreateProjectOpen] = createSignal(false);
   const [importSourcesBusy, setImportSourcesBusy] = createSignal(false);
   const [workspace, setWorkspace] = createSignal<WorkspaceSnapshot>(emptyWorkspace());
@@ -337,7 +354,27 @@ export function App() {
     void bootstrapProjects();
     void hydrateShortcutPreferences();
     void hydrateAppearancePreferences();
+    // G then a letter jumps to a surface. It listens first so the second key reaches no
+    // single-key shortcut of its own (C, S).
+    const sequences = createSequenceMatcher(SHORTCUT_SEQUENCES);
+    const onSequenceKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.repeat || route().dialog || paletteOpen() || isTypingTarget(event.target)) {
+        sequences.reset();
+        return;
+      }
+      const match = sequences.press(event);
+      if (match?.kind !== "matched") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      runSequence(match.id);
+    };
+    window.addEventListener("keydown", onSequenceKey, true);
     const onKeyDown = (event: KeyboardEvent) => {
+      if (matchesShortcut("shell.show_shortcuts", event) && (event.metaKey || event.ctrlKey || !isTypingTarget(event.target))) {
+        event.preventDefault();
+        setShortcutsOpen((open) => !open);
+        return;
+      }
       if (matchesShortcut("shell.open_canvas", event) && !route().home) {
         event.preventDefault();
         handlePaletteCommand("nav.canvas");
@@ -388,6 +425,7 @@ export function App() {
     });
     const unsubscribeChanges = window.polterware.core.onChange(refresher.push);
     onCleanup(() => {
+      window.removeEventListener("keydown", onSequenceKey, true);
       window.removeEventListener("keydown", onKeyDown);
       unsubscribeExecute();
       unsubscribeChanges();
@@ -447,6 +485,17 @@ export function App() {
     else applyRoute(collapsed, "replace");
   });
   onCleanup(() => setDetailExpandHandler(undefined));
+  // A crumb on an open page: its own section (or the tab it was opened from) closes the page
+  // back to that list; any other crumb opens its place.
+  setSectionNavigateHandler((section, tab) => {
+    const current = route();
+    if (current.expandedDetail && current.section === section && (!tab || current.tab === tab)) {
+      requestDetailExpanded(false);
+      return;
+    }
+    if (isSectionId(section)) navigateSection(section, tab ?? DEFAULT_TABS[section]);
+  });
+  onCleanup(() => setSectionNavigateHandler(undefined));
 
   /** Commander and other section jumps enter a project when the Projects screen is open. */
   function routeWithProject(current: ClientRoute): ClientRoute | undefined {
@@ -522,7 +571,26 @@ export function App() {
     setRoute({ ...targetRoute, dialog: null });
   }
 
+  const SEQUENCE_SECTIONS: Record<Exclude<ShortcutSequenceId, "go.projects">, string> = {
+    "go.inbox": "inbox",
+    "go.activity": "activity",
+    "go.work": "work",
+    "go.canvas": "canvas",
+    "go.structure": "structure",
+    "go.truth": "truth",
+    "go.runs": "dispatch",
+  };
+
+  function runSequence(id: ShortcutSequenceId) {
+    if (id === "go.projects") goProjectsHome();
+    else navigateSection(SEQUENCE_SECTIONS[id]);
+  }
+
   function handlePaletteCommand(id: string) {
+    if (id === "action.show-shortcuts") {
+      setShortcutsOpen(true);
+      return;
+    }
     if (id === "nav.settings") {
       applyRoute(openDialog(route(), { type: "settings", tab: "general" }), "silent");
       return;
@@ -1643,6 +1711,7 @@ export function App() {
         </Suspense>
       </Show>
 
+      <ShortcutsPanel open={shortcutsOpen()} onClose={() => setShortcutsOpen(false)} />
       <CommandPalette
         open={paletteOpen()}
         platform={PLATFORM_CONTEXT}

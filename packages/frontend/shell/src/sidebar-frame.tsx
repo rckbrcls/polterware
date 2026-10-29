@@ -1,5 +1,6 @@
 import type { JSX } from "solid-js";
-import { createEffect, onCleanup, onMount, splitProps } from "solid-js";
+import { Show, createEffect, onCleanup, onMount, splitProps } from "solid-js";
+import { ChevronDown } from "@polterware/frontend-design-system";
 import { cx } from "./classes";
 import "./sidebar.css";
 
@@ -20,10 +21,33 @@ export function SidebarNavFrame(props: { children: JSX.Element } & JSX.HTMLAttri
   );
 }
 
-export function SidebarSection(props: { label?: string; children: JSX.Element }) {
+/**
+ * A labeled group of sidebar items. With `onToggle` the label is a button that collapses
+ * the group; the caller decides which items stay (the active one, in Linear's way).
+ */
+export function SidebarSection(props: {
+  label?: string;
+  collapsed?: boolean;
+  onToggle?: () => void;
+  children: JSX.Element;
+}) {
   return (
-    <div class="pw-sidebar-group">
-      {props.label ? <p class="pw-sidebar-group-label">{props.label}</p> : null}
+    <div class="pw-sidebar-group" data-collapsed={props.collapsed ? "true" : undefined}>
+      <Show when={props.label}>
+        {(label) => (
+          <Show when={props.onToggle} fallback={<p class="pw-sidebar-group-label">{label()}</p>}>
+            <button
+              type="button"
+              class="pw-sidebar-group-label pw-sidebar-group-toggle"
+              aria-expanded={!props.collapsed}
+              onClick={() => props.onToggle?.()}
+            >
+              {label()}
+              <ChevronDown size={12} aria-hidden="true" class="pw-sidebar-group-chevron" />
+            </button>
+          </Show>
+        )}
+      </Show>
       {props.children}
     </div>
   );

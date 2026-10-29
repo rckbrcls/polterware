@@ -14,6 +14,18 @@ export function setDetailExpandHandler(next: ((expanded: boolean) => void) | und
   handler = next;
 }
 
+let sectionHandler: ((section: string, tab?: string) => void) | undefined;
+
+/** The app routes what a page asks for through its trail, such as a crumb back to Truth › Docs. */
+export function setSectionNavigateHandler(next: ((section: string, tab?: string) => void) | undefined) {
+  sectionHandler = next;
+}
+
+/** Leave the open page for a section (its default tab when `tab` is omitted). */
+export function requestSectionNavigate(section: string, tab?: string) {
+  sectionHandler?.(section, tab);
+}
+
 /** The entity an expand request would act on: the active selection, else the scope's last one. */
 function expandCandidate(): DetailTarget | null {
   const state = detailPanelStore.getState();

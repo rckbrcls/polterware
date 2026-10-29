@@ -24,6 +24,7 @@ import {
   History,
   IconTile,
   Inbox,
+  Keyboard,
   Layers,
   ListOrdered,
   Plug,
@@ -40,7 +41,7 @@ import {
   capabilityEnabled,
   type PlatformContext,
 } from "@polterware/frontend-platform";
-import { formatShortcut } from "@polterware/frontend-state";
+import { SHORTCUT_SEQUENCES, formatSequence, formatShortcut } from "@polterware/frontend-state";
 import { DEFAULT_PALETTE_ITEMS, type PaletteItem } from "./palette-items";
 import "./commander.css";
 
@@ -61,6 +62,7 @@ const PALETTE_TILES: Record<string, { tone: IconTileTone; icon: () => JSX.Elemen
   "action.open-sync": { tone: "execution", icon: () => <Activity size={12} /> },
   "action.create-node": { tone: "architecture", icon: () => <Plus size={12} /> },
   "action.connect-integration": { tone: "integration", icon: () => <Plug size={12} /> },
+  "action.show-shortcuts": { tone: "neutral", icon: () => <Keyboard size={12} /> },
 };
 
 function paletteTile(id: string): { tone: IconTileTone; seed: string; icon: JSX.Element } {
@@ -319,8 +321,11 @@ function PaletteResults(props: {
                 <Index each={group()[1]}>
                   {(command, index) => {
                     const rowIndex = () => (groupOffsets()[groupIndex] ?? 0) + index;
-                    const hint = () =>
-                      command().shortcutId ? formatShortcut(command().shortcutId!) : "";
+                    const hint = () => {
+                      if (command().shortcutId) return formatShortcut(command().shortcutId!);
+                      const sequence = SHORTCUT_SEQUENCES.find((item) => item.id === command().sequenceId);
+                      return sequence ? formatSequence(sequence.keys) : "";
+                    };
                     return (
                       <PaletteRow
                         hover={hover}

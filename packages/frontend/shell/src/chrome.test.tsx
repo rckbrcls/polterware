@@ -1,3 +1,4 @@
+import { createSignal } from "solid-js";
 import { render } from "solid-js/web";
 import { afterEach, describe, expect, it } from "vitest";
 import {
@@ -57,6 +58,23 @@ describe("shared shell chrome", () => {
     const item = host.querySelector("button.pw-sidebar-item");
     expect(item?.getAttribute("aria-current")).toBe("page");
     expect(item?.className).toContain("pw-sidebar-item--nav");
+  });
+
+  it("collapses a section from its label when it can toggle", () => {
+    const [collapsed, setCollapsed] = createSignal(false);
+    const host = mount(() => (
+      <SidebarNavFrame aria-label="Primary">
+        <SidebarSection label="Project" collapsed={collapsed()} onToggle={() => setCollapsed((value) => !value)}>
+          <SidebarItem nav onClick={() => undefined}>Work</SidebarItem>
+        </SidebarSection>
+      </SidebarNavFrame>
+    ));
+    const toggle = host.querySelector<HTMLButtonElement>("button.pw-sidebar-group-toggle");
+    expect(toggle?.textContent).toBe("Project");
+    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+    toggle?.click();
+    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+    expect(host.querySelector(".pw-sidebar-group")?.getAttribute("data-collapsed")).toBe("true");
   });
 
   it("renders main surface and gutter frames", () => {

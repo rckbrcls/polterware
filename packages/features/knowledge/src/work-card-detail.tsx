@@ -44,7 +44,7 @@ export function WorkCardDetail(props: {
           Boolean(props.onContinueFlow) && (card().stage === "shape" || card().stage === "plan");
         return (
           <KnowledgeDocumentShell
-            trail={["Work"]}
+            trail={[{ label: "Work", section: "work" }]}
             entityId={card().slug}
             title={card().title}
             icon={<ListChecks size={32} />}

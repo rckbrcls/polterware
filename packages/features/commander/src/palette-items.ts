@@ -1,24 +1,26 @@
 import type { PlatformCapability } from "@polterware/frontend-platform";
-import type { ShortcutCommandId } from "@polterware/frontend-state";
+import type { ShortcutCommandId, ShortcutSequenceId } from "@polterware/frontend-state";
 
 export type PaletteItem = {
   id: string;
   label: string;
   group: "Navigation" | "Actions" | "Recent";
   shortcutId?: ShortcutCommandId;
+  /** A G sequence that runs the same command, shown as its hint. */
+  sequenceId?: ShortcutSequenceId;
   requiredCapability?: PlatformCapability;
 };
 
 export const DEFAULT_PALETTE_ITEMS: PaletteItem[] = [
-  { id: "nav.inbox", label: "Inbox", group: "Navigation" },
-  { id: "nav.work", label: "Work", group: "Navigation" },
+  { id: "nav.inbox", label: "Inbox", group: "Navigation", sequenceId: "go.inbox" },
+  { id: "nav.work", label: "Work", group: "Navigation", sequenceId: "go.work" },
   { id: "nav.canvas", label: "Canvas", group: "Navigation", shortcutId: "shell.open_canvas" },
-  { id: "nav.structure", label: "Structure", group: "Navigation" },
-  { id: "nav.truth", label: "Truth", group: "Navigation" },
-  { id: "nav.dispatch", label: "Dispatch Runs", group: "Navigation" },
+  { id: "nav.structure", label: "Structure", group: "Navigation", sequenceId: "go.structure" },
+  { id: "nav.truth", label: "Truth", group: "Navigation", sequenceId: "go.truth" },
+  { id: "nav.dispatch", label: "Dispatch Runs", group: "Navigation", sequenceId: "go.runs" },
   { id: "nav.dispatch-routing", label: "Dispatch Routing", group: "Navigation" },
   { id: "nav.dispatch-usage", label: "Dispatch Usage", group: "Navigation" },
-  { id: "nav.activity", label: "Activity", group: "Navigation" },
+  { id: "nav.activity", label: "Activity", group: "Navigation", sequenceId: "go.activity" },
   { id: "nav.settings", label: "Open Project settings", group: "Navigation" },
   { id: "nav.app-settings", label: "Open App settings", group: "Navigation" },
   { id: "nav.platforms", label: "Open Project settings > Platforms", group: "Navigation" },
@@ -31,6 +33,7 @@ export const DEFAULT_PALETTE_ITEMS: PaletteItem[] = [
     shortcutId: "structure.add_node",
   },
   { id: "action.connect-integration", label: "Connect integration", group: "Actions" },
+  { id: "action.show-shortcuts", label: "Keyboard shortcuts", group: "Actions", shortcutId: "shell.show_shortcuts" },
   { id: "recent.payment", label: "Payment Service", group: "Recent" },
   { id: "recent.postgres", label: "prod-postgres", group: "Recent" },
 ];

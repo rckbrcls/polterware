@@ -26,6 +26,7 @@ import {
   capabilityEnabled,
   type PlatformContext,
 } from "@polterware/frontend-platform";
+import { readRemembered, writeRemembered } from "@polterware/frontend-state";
 import { SidebarItem, SidebarNavFrame, SidebarSection } from "@polterware/frontend-shell";
 import type { NavItem, NavSectionId } from "./route";
 import { HelpMenu } from "./help-menu";
@@ -50,6 +51,9 @@ const icons: Record<string, (p: { size?: number; class?: string }) => JSX.Elemen
   settings: (p) => <Settings size={p.size ?? 14} class={p.class} />,
 };
 
+/** Remembered on this computer: the sidebar groups someone collapsed, by label. */
+const COLLAPSED_GROUPS_KEY = "shell.sidebar.collapsed";
+
 /** A count shown after a sidebar label; hidden at zero. */
 export type SidebarCount = { count: number; tone?: "danger" | "muted"; label?: string };
 
@@ -63,6 +67,17 @@ export function SidebarNav(props: {
   let nav: HTMLElement | undefined;
   // Group labels sit between rows; a click there only lands on a row it nearly touches.
   const hover = createFluidHover(() => nav, { gapClick: { maxDistance: 8 } });
+  const [collapsedGroups, setCollapsedGroups] = createSignal<readonly string[]>(
+    readRemembered<string[]>(COLLAPSED_GROUPS_KEY, []),
+  );
+  const collapsed = (group: string) => collapsedGroups().includes(group);
+  function toggleGroup(group: string) {
+    const next = collapsed(group)
+      ? collapsedGroups().filter((label) => label !== group)
+      : [...collapsedGroups(), group];
+    setCollapsedGroups(next);
+    writeRemembered(COLLAPSED_GROUPS_KEY, next.length ? next : undefined);
+  }
 
   const groups = createMemo(() => {
     const map = new Map<string, NavItem[]>();
@@ -105,17 +120,24 @@ export function SidebarNav(props: {
       <FluidHoverHighlight hover={hover} class="pw-sidebar-hover" from={activeRect()} />
       <Index each={groups()}>
         {(group, groupIndex) => (
-          <SidebarSection label={group()[0]}>
+          <SidebarSection
+            label={group()[0]}
+            collapsed={collapsed(group()[0])}
+            onToggle={() => toggleGroup(group()[0])}
+          >
             <Index each={group()[1]}>
               {(item, index) => (
-                <SidebarNavItem
-                  item={item()}
-                  hover={hover}
-                  index={(groupOffsets()[groupIndex] ?? 0) + index}
-                  active={props.activeId === item().id}
-                  count={props.counts?.[item().id]}
-                  onSelect={() => props.onSelect(item().section, item().tab)}
-                />
+                // A collapsed group keeps its active row, so the current place stays in view.
+                <Show when={!collapsed(group()[0]) || props.activeId === item().id}>
+                  <SidebarNavItem
+                    item={item()}
+                    hover={hover}
+                    index={(groupOffsets()[groupIndex] ?? 0) + index}
+                    active={props.activeId === item().id}
+                    count={props.counts?.[item().id]}
+                    onSelect={() => props.onSelect(item().section, item().tab)}
+                  />
+                </Show>
               )}
             </Index>
           </SidebarSection>
