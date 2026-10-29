@@ -157,10 +157,10 @@ func ApplyPolter(store *storepkg.Store, in ApplyInput) (ApplyResult, error) {
 	}
 
 	summary, rationale := result.Summary, result.Rationale
-	if err := agentrun.ValidateChange(summary, rationale); err != nil {
+	actorKind := firstNonEmpty(in.ActorKind, agentrun.ActorKindAgent)
+	if err := agentrun.ValidateChangeAs(actorKind, summary, rationale); err != nil {
 		return result, fmt.Errorf("%w: add them to the frontmatter or pass --summary and --rationale", agentrun.ErrChangeIncomplete)
 	}
-	actorKind := firstNonEmpty(in.ActorKind, agentrun.ActorKindAgent)
 	tool := firstNonEmpty(in.Tool, "polter.apply")
 	result.BatchID = ids.NewULID()
 	written, err := ExecuteAuditedWrite(

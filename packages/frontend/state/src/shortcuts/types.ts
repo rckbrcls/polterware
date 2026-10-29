@@ -17,6 +17,7 @@ export type ShortcutCommandId =
   | "shell.show_shortcuts"
   | "shell.open_canvas"
   | "shell.open_filter"
+  | "shell.create"
   | "work.toggle_layout"
   | "structure.add_node";
 

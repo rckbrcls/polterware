@@ -135,6 +135,19 @@ func ValidateChange(summary, rationale string) error {
 	return nil
 }
 
+// ValidateChangeAs checks the envelope for one actor: every write needs a
+// summary, and an agent's also needs a rationale. A person may leave the
+// reason out; Activity shows that no reason was given.
+func ValidateChangeAs(actorKind, summary, rationale string) error {
+	if actorKind == ActorKindHuman {
+		if strings.TrimSpace(summary) == "" {
+			return ErrChangeIncomplete
+		}
+		return nil
+	}
+	return ValidateChange(summary, rationale)
+}
+
 // ValidateAuditedWrite requires the B7 mutation envelope before any Canon/Knowledge write.
 func ValidateAuditedWrite(summary, rationale, agentRunID string) error {
 	if strings.TrimSpace(agentRunID) == "" {

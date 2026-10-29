@@ -65,13 +65,14 @@ describe("shortcut sequences", () => {
 describe("shortcut reference", () => {
   it("lists about twenty shortcuts with the person's bindings", () => {
     const groups = shortcutReference({ "shell.toggle_sidebar": { key: "b", mod: true, shift: false, alt: false } }, true);
-    expect(groups.map((group) => group.label)).toEqual(["General", "Navigation", "Lists", "Work", "Structure"]);
+    expect(groups.map((group) => group.label)).toEqual(["General", "Navigation", "Lists", "Composer", "Work", "Structure"]);
     const rows = groups.flatMap((group) => group.rows);
     expect(rows.length).toBeGreaterThanOrEqual(20);
     expect(rows.find((row) => row.id === "shell.toggle_sidebar")?.keys).toEqual(["⌘", "B"]);
     expect(rows.find((row) => row.id === "shell.show_shortcuts")?.keys).toEqual(["⌘", "/"]);
     expect(rows.find((row) => row.id === "go.inbox")).toMatchObject({ keys: ["G", "I"], join: "then" });
-    expect(rows.filter((row) => row.join === "with").length).toBe(SHORTCUT_CATALOG.length);
+    expect(rows.filter((row) => row.join === "with" && !row.id.startsWith("composer.")).length).toBe(SHORTCUT_CATALOG.length);
+    expect(rows.find((row) => row.id === "shell.create")?.keys).toEqual(["C"]);
   });
 
   it("filters rows by label, group, or keys", () => {
@@ -79,6 +80,6 @@ describe("shortcut reference", () => {
     expect(filterShortcutReference(groups, "inbox").flatMap((group) => group.rows.map((row) => row.id))).toEqual(["go.inbox"]);
     expect(filterShortcutReference(groups, "lists")[0]?.rows.length).toBe(5);
     expect(filterShortcutReference(groups, "g i").flatMap((group) => group.rows.map((row) => row.id))).toEqual(["go.inbox"]);
-    expect(filterShortcutReference(groups, "")).toHaveLength(5);
+    expect(filterShortcutReference(groups, "")).toHaveLength(6);
   });
 });

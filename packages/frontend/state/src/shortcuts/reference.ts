@@ -26,6 +26,13 @@ export function shortcutReference(overrides: ShortcutOverrides, apple = isAppleP
       })),
     },
     { label: "Lists", rows: LIST_KEYS },
+    {
+      label: "Composer",
+      rows: [
+        { id: "composer.create", label: "Create from the composer", keys: [apple ? "⌘" : "Ctrl", "Enter"], join: "with" },
+        { id: "composer.next", label: "Title to description", keys: ["Enter"], join: "or" },
+      ],
+    },
     { label: SHORTCUT_GROUP_LABELS.work, rows: chords("work") },
     { label: SHORTCUT_GROUP_LABELS.structure, rows: chords("structure") },
   ];

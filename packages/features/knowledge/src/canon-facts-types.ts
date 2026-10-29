@@ -38,6 +38,8 @@ export type CanonFactDraft = {
   statement: string;
   truthClass: CanonFactTruthClass;
   entityId: string;
+  /** Optional reason, recorded as the change rationale. */
+  why?: string;
 };
 
 export type CanonEvidenceDraft = {

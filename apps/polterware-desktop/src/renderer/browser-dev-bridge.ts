@@ -213,10 +213,13 @@ async function applyPreviewPolter(args?: { projectId?: string; text?: string; dr
     if (card) {
       const cards = [...(projectId === PREVIEW_PROJECT_ID ? previewCards : []), ...(promotedCards.get(projectId) ?? [])];
       if (cards.some((item) => item.slug === card[1])) throw new Error("That Work card slug already exists.");
-      if (!/(?:^|· )stage: shape(?: ·|$)/m.test(text)) throw new Error("Canvas Work cards start in Shape.");
-      if (args?.dryRun) return { applied: false, diagnostics: [], ops: [`+ card ${card[1]} ${JSON.stringify(title)} [shape]`] };
-      promotedCards.set(projectId, [...(promotedCards.get(projectId) ?? []), { id, projectId, slug: card[1], title, stage: "shape", status: "active", kind: "feature", intent: "", owner: "", under: "", decisions: [], tasks: [], questions: [], invariants: [], updatedAt: new Date().toISOString() }]);
-      return { applied: true, diagnostics: [], ops: [`+ card ${card[1]} ${JSON.stringify(title)} [shape]`] };
+      // The meta line follows the heading; the lines after it are the intent.
+      const [, meta = "", ...rest] = text.slice(card.index).split("\n");
+      const value = (key: string) => new RegExp(`(?:^|· )${key}: ([^·]+?)(?: ·|$)`).exec(meta)?.[1]?.trim() ?? "";
+      const stage = value("stage") || "shape";
+      if (args?.dryRun) return { applied: false, diagnostics: [], ops: [`+ card ${card[1]} ${JSON.stringify(title)} [${stage}]`] };
+      promotedCards.set(projectId, [...(promotedCards.get(projectId) ?? []), { id, projectId, slug: card[1], title, stage, status: "active", kind: value("kind") || "feature", intent: rest.join("\n").trim(), owner: "", under: value("under"), decisions: [], tasks: [], questions: [], invariants: [], updatedAt: new Date().toISOString() }]);
+      return { applied: true, diagnostics: [], ops: [`+ card ${card[1]} ${JSON.stringify(title)} [${stage}]`] };
     }
     if (fact) {
       const facts = promotedFacts.get(projectId) ?? [];
@@ -1087,6 +1090,21 @@ function createBrowserDevBridge(): PolterwareBridge {
               diagnostics: [],
               ops: changes.map(({ card, stage, status }) => `~ card ${card.slug}${stage ? ` stage ${stage}` : ""}${status ? ` status ${status}` : ""}`),
             };
+          }
+          // A `### <decision id>` block moves a stored decision: its status (with the reason a
+          // challenge records) or its level. Supersedes and new decisions fall through.
+          const decisionBlock = /^### (?!new:)(\S+)\n(.*)$/m.exec(text);
+          if (decisionBlock && !/supersedes:/.test(decisionBlock[2]) && knowledgeById(decisionBlock[1])?.kind === "decision") {
+            if (!args?.change?.summary?.trim()) throw new Error("A change needs a summary.");
+            const item = knowledgeById(decisionBlock[1])!;
+            const meta = decisionBlock[2];
+            const status = /(?:^|· )status: ([a-z]+)/.exec(meta)?.[1];
+            const reason = /(?:^|· )reason: (.+?)(?: ·|$)/.exec(meta)?.[1];
+            const level = /(?:^|· )level: ([a-z]+)/.exec(meta)?.[1];
+            if (status === "challenged" && !reason) throw new Error("a challenge needs a reason:");
+            const extra = { ...JSON.parse(String(item.extraJson || "{}")), ...(reason ? { statusReason: reason } : {}), ...(level ? { level } : {}) };
+            if (!args?.dryRun) savedKnowledge.set(String(item.id), { ...item, ...(status ? { status } : {}), extraJson: JSON.stringify(extra), updatedAt: new Date().toISOString() });
+            return { applied: !args?.dryRun, diagnostics: [], ops: [`~ decision ${item.id}${status ? ` status ${status}` : ""}${level ? ` level ${level}` : ""}`] };
           }
           // milestone: is resolved here because milestones live in this bridge instance.
           const slug = /(?:^|· )milestone: *([a-z0-9-]*)/m.exec(args?.text ?? "")?.[1] ?? "";

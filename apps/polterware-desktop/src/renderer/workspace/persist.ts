@@ -92,12 +92,12 @@ export const canvasPersistence: CanvasPort = {
   },
   async setArchived(projectId, id, archived) {
     const response = asRecord(await core().canvas.setCanvasArchived({ projectId, id, archived,
-      change: { summary: archived ? "Archive canvas" : "Restore canvas", rationale: "Changed in Desktop" } }));
+      change: { summary: archived ? "Archive canvas" : "Restore canvas", rationale: "" } }));
     return readCanvas(response.canvas);
   },
   async remove(projectId, id) {
     await core().canvas.deleteCanvas({ projectId, id,
-      change: { summary: "Delete canvas permanently", rationale: "Changed in Desktop" } });
+      change: { summary: "Delete canvas permanently", rationale: "" } });
   },
 };
 
@@ -444,17 +444,26 @@ export async function persistWorkCreateCard(input: {
   workspace: WorkspaceSnapshot;
   projectId: string;
   title: string;
+  /** Defaults to Shape. */
+  stage?: string;
+  /** The description; it becomes the card's intent. */
+  intent?: string;
   /** Slug of the milestone the card ships in; omitted keeps it in the Backlog. */
   milestone?: string;
+  /** Path of the component the card lives under. */
+  under?: string;
+  kind?: "feature" | "architecture";
   change: ChangeEnvelope;
 }): Promise<string> {
   const slug = uniqueCardSlug(input.workspace.workCards.map((card) => card.slug), input.title);
+  const meta: Record<string, string> = { stage: input.stage || "shape", status: "active" };
+  if (input.milestone) meta.milestone = input.milestone;
+  if (input.under) meta.under = polterValue(input.under);
+  if (input.kind === "architecture") meta.kind = "architecture";
+  // A heading line in the intent would start a new block, so its marks are dropped.
+  const intent = (input.intent ?? "").split("\n").map((line) => line.replace(/^\s*#+\s+/, "")).join("\n").trim();
   // status: active restores a removed card that already owns this slug.
-  await applyPolter(
-    input.projectId,
-    polterCard(slug, input.title, { stage: "shape", status: "active", ...(input.milestone ? { milestone: input.milestone } : {}) }),
-    input.change,
-  );
+  await applyPolter(input.projectId, polterCard(slug, input.title, meta) + (intent ? `\n${intent}\n` : ""), input.change);
   return slug;
 }
 

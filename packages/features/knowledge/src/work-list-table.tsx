@@ -75,7 +75,8 @@ export function WorkListTable(props: {
   onAddToStage?: (stage: WorkStage) => void;
   /** Resolves true once the batch was written, so the selection clears. */
   onSetCardsStage?: (slugs: string[], stage: WorkStage) => Promise<boolean> | void;
-  onRemoveCards?: (slugs: string[]) => void;
+  /** Resolves false when the archive was cancelled, so the selection stays. */
+  onRemoveCards?: (slugs: string[]) => Promise<boolean> | void;
 }) {
   const [selected, setSelected] = createSignal<ReadonlySet<string>>(new Set());
   const [busy, setBusy] = createSignal(false);
@@ -112,6 +113,16 @@ export function WorkListTable(props: {
     setBusy(true);
     try {
       if ((await props.onSetCardsStage([...selected()], stage)) !== false) clear();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function archiveSelected(clear: () => void) {
+    if (!props.onRemoveCards || busy()) return;
+    setBusy(true);
+    try {
+      if ((await props.onRemoveCards([...selected()])) !== false) clear();
     } finally {
       setBusy(false);
     }
@@ -173,10 +184,7 @@ export function WorkListTable(props: {
                   size="sm"
                   variant="ghost"
                   disabled={busy()}
-                  onClick={() => {
-                    props.onRemoveCards?.([...selection.selectedRowIds()]);
-                    selection.clearSelection();
-                  }}
+                  onClick={() => void archiveSelected(selection.clearSelection)}
                 >
                   <Archive size={14} />
                   Archive

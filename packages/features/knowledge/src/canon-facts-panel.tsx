@@ -33,6 +33,8 @@ export type CanonJustifyChange = (input: {
   title: string;
   description?: string;
   defaultSummary?: string;
+  /** What the person typed as the reason; empty is allowed. */
+  why?: string;
 }) => Promise<CanonChangeEnvelope | null>;
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -283,19 +285,20 @@ export function CanonFactsPanel(props: {
     }
   };
 
-  const saveFact = async (draft: CanonFactDraft) => {
+  /** Resolves false when nothing was written, so the composer keeps the draft. */
+  const saveFact = async (draft: CanonFactDraft): Promise<boolean> => {
     const bridge = canonBridge();
     const projectId = props.projectId.trim();
     if (!bridge || !projectId) {
       pushToast("Canon facts are unavailable in this session.", "danger");
-      return;
+      return false;
     }
     const envelope = await props.justifyChange({
       title: draft.id ? "Justify fact update" : "Justify new fact",
-      description: "Facts become durable project truth only with summary and rationale.",
       defaultSummary: draft.statement.slice(0, 120),
+      why: draft.why,
     });
-    if (!envelope) return;
+    if (!envelope) return false;
     props.onBusyChange(true);
     try {
       await bridge.upsertFact({
@@ -313,12 +316,13 @@ export function CanonFactsPanel(props: {
         },
         change: changePayload(envelope),
       });
-      setFactDialogOpen(false);
       pushToast(draft.id ? "Fact updated." : "Fact created.", "success");
       await refresh();
+      return true;
     } catch (error: unknown) {
       pushToast(error instanceof Error ? error.message : "Could not save fact.", "danger");
       props.onBusyChange(false);
+      return false;
     }
   };
 
@@ -498,7 +502,7 @@ export function CanonFactsPanel(props: {
         mode={factDialogMode()}
         initial={factDraft()}
         onClose={() => setFactDialogOpen(false)}
-        onSubmit={(draft) => void saveFact(draft)}
+        onSubmit={saveFact}
       />
       <CanonLinkEvidenceDialog
         open={linkDialogOpen()}

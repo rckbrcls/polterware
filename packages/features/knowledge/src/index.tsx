@@ -40,7 +40,6 @@ import {
   type WorkspaceCanonEntity,
   type WorkspaceDoc,
   type DocType,
-  type DecisionLevel,
   type WorkspaceWorkCard,
   type WorkspaceMilestone,
   type WorkStage,
@@ -54,8 +53,7 @@ import {
   readRemembered,
   writeRemembered,
 } from "@polterware/frontend-state";
-import { CreateKnowledgeDialog, type CreateKnowledgeKind } from "./create-knowledge-dialog";
-import { AddDocDialog, type NewDocInput } from "./add-doc-dialog";
+import type { ComposeRequest } from "./composers";
 import { KnowledgeDocumentNotFound, type DocNoteProps } from "./knowledge-document-shell";
 import { createDocumentAutosave } from "./document-autosave";
 import { DecisionDetail, type DecisionAction } from "./decision-detail";
@@ -108,7 +106,8 @@ export { KNOWLEDGE_AGENT_PROMPTS, knowledgePromptsForKind } from "./agent-prompt
 export type { KnowledgeAgentPrompt, KnowledgePromptKind } from "./agent-prompts";
 export type { MilestoneAction } from "./milestones";
 export type { DecisionAction } from "./decision-detail";
-export type { NewDocInput } from "./add-doc-dialog";
+export { KnowledgeComposer } from "./composers";
+export type { CardDraft, CardKind, ComposeRequest, DecisionDraft, DocDraft } from "./composers";
 export { WORK_STAGES, workStageLabel } from "./work-stage";
 export { NewFeatureFlow, type FeatureFlowLine } from "./new-feature-flow";
 export { TruthFactsPage } from "./truth-facts-page";
@@ -216,20 +215,16 @@ export function KnowledgeView(props: {
   onSaveTags?: (id: string, tags: string[]) => void;
   /** Changes what a doc is: a document, a runbook, or a source file. */
   onSaveDocType?: (id: string, docType: DocType) => void;
-  onCreate?: (kind: "decision", title: string, level?: DecisionLevel, scopePath?: string) => void;
   /** Structure nodes offered by the scope pickers; the global scope preselects new items. */
   scopeNodes?: ScopeNodeItem[];
   /** Path of the active global scope, used as the default for new items. */
   activeScopePath?: string;
   /** Writes the scope of a Decision or doc as a Structure node path; empty clears it. */
   onSetScope?: (id: string, path: string) => void;
-  onCreateDoc?: (input: NewDocInput) => void;
   onImportProjectSources?: () => void;
   importBusy?: boolean;
-  /** Creates a card; milestone is the slug of the open milestone, if any. */
-  onCreateCard?: (title: string, stage?: WorkStage, milestone?: string) => void;
-  /** Opens the new-feature flow; when set it replaces the plain card dialog. */
-  onNewFeature?: () => void;
+  /** Opens the composer for a card, a decision, or a doc, with what this view already knows. */
+  onCompose?: (request: ComposeRequest) => void;
   /** Reopens the flow for a card in shape or plan. */
   onContinueFeature?: (slug: string) => void;
   onArchive?: (id: string) => void;
@@ -241,8 +236,8 @@ export function KnowledgeView(props: {
   onSetCardStage?: (slug: string, stage: WorkStage) => Promise<boolean> | void;
   /** Moves the selected cards in one justified write; resolves true once written. */
   onSetCardsStage?: (slugs: string[], stage: WorkStage) => Promise<boolean> | void;
-  /** Archives the selected cards in one justified write. */
-  onRemoveCards?: (slugs: string[]) => void;
+  /** Archives the selected cards in one write under one reason; false when it was cancelled. */
+  onRemoveCards?: (slugs: string[]) => Promise<boolean> | void;
   scopeTokens?: readonly ScopeFilterToken[];
   scopeEnvironments?: readonly EnvironmentItem[];
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
@@ -299,13 +294,7 @@ export function KnowledgeView(props: {
   });
   const [bodyOverrides, setBodyOverrides] = createSignal<Record<string, string>>({});
   const [pathOverrides, setPathOverrides] = createSignal<Record<string, string>>({});
-  const [createOpen, setCreateOpen] = createSignal(false);
   const [peekSlug, setPeekSlug] = createSignal<string | null>(null);
-  // The column a card is being added to from the board; shape when added from the toolbar.
-  const [createStage, setCreateStage] = createSignal<WorkStage | undefined>();
-  const [docAddOpen, setDocAddOpen] = createSignal(false);
-  const canAddDoc = () =>
-    docsTab() && Boolean(props.onCreateDoc || props.onImportProjectSources);
   const scopeId = createMemo(() => `knowledge:${tab()}`);
   const activeTarget = createDetailPanelSelector((state) => state.activeTarget);
 
@@ -588,13 +577,18 @@ export function KnowledgeView(props: {
     activate(row.id, row.entityKind);
   }
 
-  const addCardTo = props.onCreateCard
-    ? (stage: WorkStage) => {
-        setCreateStage(stage);
-        setCreateOpen(true);
-      }
-    : undefined;
-  const createKind = createMemo((): CreateKnowledgeKind => (cardTab() ? "card" : "decision"));
+  /** The open milestone a new card ships in; All work and the Backlog leave it out. */
+  const composeMilestoneId = () => {
+    const id = selectedBoard().id;
+    return id && id !== BACKLOG.id ? id : undefined;
+  };
+  const composeCard = (stage?: WorkStage) => props.onCompose?.({ kind: "card", stage, milestoneId: composeMilestoneId() });
+  const addCardTo = props.onCompose ? (stage: WorkStage) => composeCard(stage) : undefined;
+  /** What C and the toolbar "+" create on the open tab. */
+  const composeHere = () => {
+    if (cardTab()) composeCard();
+    else props.onCompose?.(docsTab() ? { kind: "doc" } : { kind: "decision" });
+  };
 
   const listSearch = createMemo(() => {
     if (cardTab()) {
@@ -651,11 +645,17 @@ export function KnowledgeView(props: {
 
   const hasLibraryItems = createMemo(() => allLibraryRows().length > 0);
 
-  // Cmd+B switches Work between the board and the list, outside fields and pages.
+  // Cmd+B switches Work between the board and the list, outside fields and pages. C opens
+  // the composer for the open tab; the shell leaves C to this view on Work and Truth.
   onMount(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (!cardTab() || pageRoute() || event.defaultPrevented || isTypingTarget(event.target)) return;
-      if (!matchesShortcut("work.toggle_layout", event)) return;
+      if (event.defaultPrevented || event.repeat || isTypingTarget(event.target)) return;
+      if (props.onCompose && matchesShortcut("shell.create", event)) {
+        event.preventDefault();
+        composeHere();
+        return;
+      }
+      if (!cardTab() || pageRoute() || !matchesShortcut("work.toggle_layout", event)) return;
       event.preventDefault();
       changeTab(tab() === "board" ? "specs" : "board");
     };
@@ -670,8 +670,6 @@ export function KnowledgeView(props: {
     cardPageFilters.clearPage();
     libraryPageFilters.clearPage();
     docPageFilters.clearPage();
-    setCreateOpen(false);
-    setDocAddOpen(false);
     props.onTabChange?.(next);
   }
 
@@ -783,16 +781,8 @@ export function KnowledgeView(props: {
                   }}
                 />
               </Show>
-              <Show when={cardTab() ? props.onCreateCard : docsTab() ? canAddDoc() : props.onCreate}>
-                <ToolbarIconButton
-                  label={createLabel()}
-                  onClick={() =>
-                    cardTab() && props.onNewFeature
-                      ? props.onNewFeature()
-                      : docsTab()
-                        ? setDocAddOpen(true)
-                        : setCreateOpen(true)}
-                >
+              <Show when={props.onCompose}>
+                <ToolbarIconButton label={createLabel()} onClick={composeHere}>
                   <Plus size={14} />
                 </ToolbarIconButton>
               </Show>
@@ -813,7 +803,7 @@ export function KnowledgeView(props: {
               when={hasLibraryItems()}
               fallback={
                 <LibraryEmpty
-                  onCreate={props.onCreate ? () => setCreateOpen(true) : undefined}
+                  onCreate={props.onCompose ? composeHere : undefined}
                 />
               }
             >
@@ -853,7 +843,7 @@ export function KnowledgeView(props: {
               when={(props.docs ?? []).length > 0}
               fallback={
                 <DocsEmpty
-                  onCreate={canAddDoc() ? () => setDocAddOpen(true) : undefined}
+                  onCreate={props.onCompose ? composeHere : undefined}
                   onImport={props.onImportProjectSources ? () => props.onImportProjectSources?.() : undefined}
                   importBusy={props.importBusy}
                 />
@@ -905,7 +895,7 @@ export function KnowledgeView(props: {
               when={viewCards().length > 0}
               fallback={
                 <WorkCardsEmpty
-                  onCreate={props.onNewFeature ?? (props.onCreateCard ? () => setCreateOpen(true) : undefined)}
+                  onCreate={props.onCompose ? composeHere : undefined}
                 />
               }
             >
@@ -1025,43 +1015,6 @@ export function KnowledgeView(props: {
       <Show when={missingPage()}>
         {(kindLabel) => <KnowledgeDocumentNotFound kindLabel={kindLabel()} />}
       </Show>
-      <CreateKnowledgeDialog
-        open={createOpen()}
-        kind={createKind()}
-        scopeNodes={props.scopeNodes}
-        defaultScopePath={props.activeScopePath}
-        onClose={() => { setCreateOpen(false); setCreateStage(undefined); }}
-        onSubmit={(title, kind, level, scopePath) => {
-          if (kind === "card") props.onCreateCard?.(title, createStage(), selectedBoard().id && selectedBoard().id !== BACKLOG.id ? selectedBoard().slug : undefined);
-          else props.onCreate?.("decision", title, level, scopePath);
-          setCreateOpen(false);
-          setCreateStage(undefined);
-        }}
-      />
-      <AddDocDialog
-        open={docAddOpen()}
-        scopeNodes={props.scopeNodes}
-        defaultScopePath={props.activeScopePath}
-        onClose={() => setDocAddOpen(false)}
-        importBusy={props.importBusy}
-        tagSuggestions={tagSuggestions()}
-        onCreate={
-          props.onCreateDoc
-            ? (input) => {
-                props.onCreateDoc?.(input);
-                setDocAddOpen(false);
-              }
-            : undefined
-        }
-        onImportProjectSources={
-          props.onImportProjectSources
-            ? () => {
-                props.onImportProjectSources?.();
-                setDocAddOpen(false);
-              }
-            : undefined
-        }
-      />
     </Show>
     </EntityDetailHost>
   );

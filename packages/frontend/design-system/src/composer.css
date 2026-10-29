@@ -1,0 +1,111 @@
+/* Composer: Linear's create dialog. Borderless fields on the dialog surface; space, not
+   dividers, separates the title, the description, the pills, and the reason. */
+.pw-composer__body {
+  padding: 18px 24px 8px;
+}
+
+.pw-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pw-composer__crumbs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding-inline-end: 32px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.pw-composer__crumb--current {
+  color: var(--color-text-secondary);
+}
+
+.pw-composer__title,
+.pw-composer__description,
+.pw-composer__field-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  outline: none;
+}
+
+.pw-composer__title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.pw-composer__description {
+  min-height: 60px;
+  max-height: 280px;
+  resize: none;
+  color: var(--color-text-secondary);
+  font-size: 13.5px;
+  line-height: 1.5;
+  field-sizing: content;
+}
+
+.pw-composer__title::placeholder,
+.pw-composer__description::placeholder,
+.pw-composer__field-input::placeholder {
+  color: var(--color-text-disabled);
+}
+
+.pw-composer__title:focus-visible,
+.pw-composer__description:focus-visible,
+.pw-composer__field-input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.pw-composer__properties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.pw-composer__field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-subtle);
+  font-size: 12.5px;
+}
+
+.pw-composer__field-label {
+  flex: none;
+  color: var(--color-text-muted);
+  font-weight: 550;
+}
+
+.pw-composer__field-input {
+  color: var(--color-text-secondary);
+}
+
+.pw-composer__footer-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pw-composer__create-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  cursor: pointer;
+}

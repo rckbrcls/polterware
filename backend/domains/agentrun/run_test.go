@@ -128,3 +128,15 @@ func TestContextAndDriftPayloads(t *testing.T) {
 		t.Fatalf("unexpected drift step: %+v", driftStep)
 	}
 }
+
+func TestValidateChangeAsLetsAPersonSkipTheReason(t *testing.T) {
+	if err := ValidateChangeAs(ActorKindHuman, "Create card: login", ""); err != nil {
+		t.Fatalf("person without a reason: %v", err)
+	}
+	if err := ValidateChangeAs(ActorKindHuman, " ", "why"); !errors.Is(err, ErrChangeIncomplete) {
+		t.Fatalf("person without a summary: %v", err)
+	}
+	if err := ValidateChangeAs(ActorKindAgent, "Create card: login", ""); !errors.Is(err, ErrChangeIncomplete) {
+		t.Fatalf("agent without a reason: %v", err)
+	}
+}

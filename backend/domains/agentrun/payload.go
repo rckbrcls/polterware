@@ -119,8 +119,10 @@ func NewMutationChangeStep(runID, summary, rationale, tool string, subjectIDs, p
 
 // NewBatchChangeStep is NewMutationChangeStep plus the change_ops batch id.
 func NewBatchChangeStep(runID, summary, rationale, tool, batchID string, subjectIDs, paths []string, now time.Time) (Step, error) {
-	if err := ValidateChange(summary, rationale); err != nil {
-		return Step{}, err
+	// The audited write already checked the rationale for its actor (a person
+	// may leave it out); every step still names its change.
+	if strings.TrimSpace(summary) == "" {
+		return Step{}, ErrChangeIncomplete
 	}
 	payload, err := MarshalPayload(ChangePayload{
 		Summary:    strings.TrimSpace(summary),

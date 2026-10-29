@@ -381,7 +381,7 @@ function ChangeDetail(props: {
               when={envelope().rationale.trim()}
               fallback={
                 <p class="pw-detail-panel__text" data-empty>
-                  No rationale recorded.
+                  No reason given.
                 </p>
               }
             >

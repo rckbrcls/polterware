@@ -19,7 +19,9 @@ func changeEnvelopeFromProto(msg *localv1.ChangeEnvelope) (wedge.ChangeEnvelope,
 		Rationale:  msg.GetRationale(),
 		AgentRunID: msg.GetAgentRunId(),
 	}
-	if err := agentrun.ValidateChange(env.Summary, env.Rationale); err != nil {
+	// Only the summary is checked here: the audited write checks the rationale
+	// for its actor, since a person may leave the reason out.
+	if err := agentrun.ValidateChangeAs(agentrun.ActorKindHuman, env.Summary, env.Rationale); err != nil {
 		return wedge.ChangeEnvelope{}, err
 	}
 	return env, nil

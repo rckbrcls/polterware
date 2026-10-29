@@ -55,6 +55,12 @@ export const SHORTCUT_CATALOG: readonly ShortcutCommand[] = [
     defaultChord: chord({ key: "f" }),
   },
   {
+    id: "shell.create",
+    label: "Create",
+    group: "shell",
+    defaultChord: chord({ key: "c" }),
+  },
+  {
     id: "work.toggle_layout",
     label: "Switch between list and board",
     group: "work",

@@ -45,7 +45,7 @@ func ExecuteAuditedWrite(
 	if err != nil {
 		return AuditedWriteResult{}, err
 	}
-	if err := agentrun.ValidateChange(env.Summary, env.Rationale); err != nil {
+	if err := agentrun.ValidateChangeAs(kind, env.Summary, env.Rationale); err != nil {
 		return AuditedWriteResult{}, err
 	}
 	if env.ProjectID == "" {

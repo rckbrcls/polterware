@@ -48,12 +48,12 @@ import {
 } from "@polterware/feature-shell";
 import { StructureView, STRUCTURE_SCOPE, filterStructureNodes } from "@polterware/feature-architecture";
 import { CanvasWorkspace } from "./canvas-workspace";
-import type { MilestoneAction } from "@polterware/feature-knowledge";
+import type { CardDraft, ComposeRequest, DecisionDraft, DocDraft, MilestoneAction } from "@polterware/feature-knowledge";
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
 import { hydrateAppearancePreferences, hydrateShortcutPreferences, settingsTabScope } from "@polterware/feature-settings/boot";
 import type { ProjectSettingsPageId } from "@polterware/feature-settings";
 import { CommandPalette } from "@polterware/feature-commander";
-import { PageLoading, pushToast, requestConfirm, type ArchivedListItem, type TabItem } from "@polterware/frontend-design-system";
+import { PageLoading, pushToast, requestConfirm, requestReason, type ArchivedListItem, type ReasonOptions, type TabItem } from "@polterware/frontend-design-system";
 import {
   SHORTCUT_SEQUENCES,
   createSequenceMatcher,
@@ -83,6 +83,9 @@ const ProjectSettingsDialog = lazy(() =>
 );
 const NewFeatureFlow = lazy(() =>
   import("@polterware/feature-knowledge").then((m) => ({ default: m.NewFeatureFlow })),
+);
+const KnowledgeComposer = lazy(() =>
+  import("@polterware/feature-knowledge").then((m) => ({ default: m.KnowledgeComposer })),
 );
 const TruthFactsPage = lazy(() =>
   import("@polterware/feature-knowledge").then((m) => ({ default: m.TruthFactsPage })),
@@ -163,16 +166,32 @@ import {
 const PLATFORM_CONTEXT = bootstrapPlatform();
 
 /**
- * Desktop changes are made by a person, so nobody is asked to justify them: the envelope is
- * written from the action. The core still records every change; agents keep passing their own
- * summary and rationale.
+ * Desktop changes are made by a person, so the reason is optional: the summary is written from
+ * the action and `why` is whatever the person typed (Activity shows "No reason given" when it is
+ * empty). A change of intent passes `askWhy` and waits for a reason; null means cancelled.
+ * Agents keep passing their own summary and rationale.
  */
 async function justifyChange(input: {
   title: string;
   description?: string;
   defaultSummary?: string;
+  why?: string;
+  askWhy?: ReasonOptions;
 }): Promise<ChangeEnvelope | null> {
-  return { summary: input.defaultSummary ?? input.title, rationale: "Changed in Desktop" };
+  const summary = input.defaultSummary ?? input.title;
+  if (!input.askWhy) return { summary, rationale: input.why?.trim() ?? "" };
+  const reason = await requestReason(input.askWhy);
+  return reason === null ? null : { summary, rationale: reason };
+}
+
+/** Asks why before archiving, since dropping work or a doc changes what the project intends. */
+function archiveReason(what: string): ReasonOptions {
+  return {
+    title: `Archive ${what}?`,
+    description: "Say why, so Activity and agents know it was dropped on purpose. Restore brings it back.",
+    confirmLabel: "Archive",
+    placeholder: "Why archive it?",
+  };
 }
 
 function cardCount(count: number): string {
@@ -198,6 +217,20 @@ function uniqueStructureSlug(nodes: readonly { path: string; slug: string }[], t
 
 function stageLabel(stage: string): string {
   return stage.charAt(0).toUpperCase() + stage.slice(1);
+}
+
+const STAGE_ORDER = ["shape", "plan", "build", "verify", "delivered"];
+
+/** Moving a card back reopens work someone thought was further along, so it asks why. */
+function stageBackReason(cards: readonly { stage: string }[], stage: string, what: string): ReasonOptions | undefined {
+  const target = STAGE_ORDER.indexOf(stage);
+  if (!cards.some((card) => STAGE_ORDER.indexOf(card.stage) > target)) return undefined;
+  return {
+    title: `Move ${what} back to ${stageLabel(stage)}?`,
+    description: "Moving back reopens work. Say why, so Activity and agents know what changed.",
+    confirmLabel: "Move back",
+    placeholder: "Why move it back?",
+  };
 }
 
 function isEnvironmentKind(kind: string): kind is EnvironmentItem["kind"] {
@@ -384,6 +417,21 @@ export function App() {
       if (matchesShortcut("shell.open_canvas", event) && !route().home) {
         event.preventDefault();
         handlePaletteCommand("nav.canvas");
+        return;
+      }
+      // C creates a card from anywhere; Work and Truth open the composer for their own tab.
+      if (
+        matchesShortcut("shell.create", event)
+        && !event.repeat
+        && !route().home
+        && !route().dialog
+        && !paletteOpen()
+        && route().section !== "work"
+        && route().section !== "truth"
+        && !isTypingTarget(event.target)
+      ) {
+        event.preventDefault();
+        setComposeRequest({ kind: "card" });
         return;
       }
       if (route().section === "structure" && !route().dialog && !(event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable=true], [role=dialog]")) && matchesShortcut("structure.add_node", event)) {
@@ -621,6 +669,13 @@ export function App() {
       applyRoute(openDialog(route(), { type: "settings", tab: "local-core" }), "silent");
       return;
     }
+    if (id === "action.create-card" || id === "action.create-decision" || id === "action.create-doc") {
+      const base = routeWithProject(route());
+      if (!base) return;
+      if (base !== route()) applyRoute(base);
+      setComposeRequest({ kind: id === "action.create-card" ? "card" : id === "action.create-decision" ? "decision" : "doc" });
+      return;
+    }
     if (id === "action.create-node") {
       const base = routeWithProject(route());
       if (!base) return;
@@ -771,26 +826,113 @@ export function App() {
   const cardScopeId = () =>
     route().section === "work" && route().tab === "board" ? "knowledge:board" : "knowledge:specs";
 
-  function createWorkCard(title: string, stage?: "shape" | "plan" | "build" | "verify" | "delivered", milestone?: string) {
-    void justifyChange({
-      title: "Justify create card",
-      defaultSummary: `Create card: ${title}`,
-    }).then((change) => {
-      if (!change) return;
-      return persistWorkCreateCard({
-        workspace: workspace(),
-        projectId: currentProjectId(),
-        title,
-        milestone,
-        change,
-      }).then(async (slug) => {
-        if (stage && stage !== "shape") await persistWorkSetStage(currentProjectId(), slug, stage, change);
+  function importProjectSources() {
+    if (importSourcesBusy()) return;
+    setImportSourcesBusy(true);
+    void persistImportProjectSources({ projectId: currentProjectId() })
+      .then(async (result) => {
         await refreshWorkspace(currentProjectId());
-        activateDetail(cardScopeId(), slug, "card");
-        pushToast("Card saved locally.", "success");
-      });
-    }).catch((error: unknown) => {
-      pushToast(error instanceof Error ? error.message : "Could not create card.", "danger");
+        pushToast(result.message, "success");
+      })
+      .catch((error: unknown) => {
+        pushToast(error instanceof Error ? error.message : "Could not import project sources.", "danger");
+      })
+      .finally(() => setImportSourcesBusy(false));
+  }
+
+  /** The current route when it is already on the section, so its tab stays. */
+  const sectionRoute = (section: string): ClientRoute => (route().section === section ? route() : goSection(route(), section));
+
+  /** What the composer is creating; null while it is closed. */
+  const [composeRequest, setComposeRequest] = createSignal<ComposeRequest | null>(null);
+
+  /** One justified write per composer submit; false keeps the draft in the composer. */
+  async function composeWrite(input: {
+    summary: string;
+    why: string;
+    failure: string;
+    write: (change: ChangeEnvelope) => Promise<() => void>;
+    created: string;
+  }): Promise<boolean> {
+    try {
+      const change = await justifyChange({ title: input.summary, defaultSummary: input.summary, why: input.why });
+      if (!change) return false;
+      const open = await input.write(change);
+      await refreshWorkspace(currentProjectId());
+      pushToast(input.created, "success", { action: { label: "Open", onClick: open } });
+      return true;
+    } catch (error: unknown) {
+      pushToast(error instanceof Error ? error.message : input.failure, "danger");
+      return false;
+    }
+  }
+
+  function createCard(draft: CardDraft): Promise<boolean> {
+    return composeWrite({
+      summary: `Create card: ${draft.title}`,
+      why: draft.why,
+      failure: "Could not create card.",
+      created: `Created “${draft.title}”`,
+      write: async (change) => {
+        const slug = await persistWorkCreateCard({
+          workspace: workspace(),
+          projectId: currentProjectId(),
+          title: draft.title,
+          stage: draft.stage,
+          intent: draft.intent,
+          milestone: draft.milestone || undefined,
+          under: draft.under || undefined,
+          kind: draft.kind,
+          change,
+        });
+        return () => {
+          const next = sectionRoute("work");
+          navigateToDetail(next, next.tab === "board" ? "knowledge:board" : "knowledge:specs", slug, "card");
+        };
+      },
+    });
+  }
+
+  function createDecision(draft: DecisionDraft): Promise<boolean> {
+    return composeWrite({
+      summary: `Create decision: ${draft.title}`,
+      why: draft.why,
+      failure: "Could not create the decision.",
+      created: `Created “${draft.title}”`,
+      write: async (change) => {
+        const id = await persistKnowledgeCreate({
+          projectId: currentProjectId(),
+          kind: "decision",
+          title: draft.title,
+          body: `## Status\n\nProposed\n\n## Context\n\n${draft.context}\n\n## Decision\n\n\n\n## Consequences\n\n`,
+          extraJson: draft.level === "principle" ? JSON.stringify({ level: "principle" }) : undefined,
+          change,
+        });
+        if (draft.scopePath) await persistKnowledgeScope(currentProjectId(), id, draft.scopePath);
+        return () => navigateToDetail(setTab(sectionRoute("truth"), "decisions"), "knowledge:library", id, "decision");
+      },
+    });
+  }
+
+  function createDoc(draft: DocDraft): Promise<boolean> {
+    return composeWrite({
+      summary: `Add ${draft.docType}: ${draft.title}`,
+      why: draft.why,
+      failure: "Could not add the doc.",
+      created: `Created “${draft.title}”`,
+      write: async (change) => {
+        const id = await persistKnowledgeCreate({
+          projectId: currentProjectId(),
+          kind: "doc",
+          docType: draft.docType,
+          title: draft.title,
+          body: draft.body,
+          path: draft.path || undefined,
+          change,
+        });
+        if (draft.scopePath) await persistKnowledgeScope(currentProjectId(), id, draft.scopePath);
+        return () => navigateToDetail(setTab(sectionRoute("truth"), "docs"), "knowledge:docs", id, "doc");
+      },
     });
   }
 
@@ -803,13 +945,6 @@ export function App() {
     workspace().structure.nodes
       .filter((node) => node.level === "component")
       .map((node) => ({ path: node.path, title: node.title }));
-
-  function openFeatureFlow() {
-    setFlowReview(null);
-    setFlowErrors([]);
-    setFlowStep("intent");
-    setFlowOpen(true);
-  }
 
   function continueFeatureFlow(slug: string) {
     void loadFeatureReview(currentProjectId(), slug)
@@ -920,9 +1055,17 @@ export function App() {
               ? `Make ${decision.title} a principle`
               : `Make ${decision.title} a decision`,
           } as const;
+          // Reopening or replacing a decision changes intent, so it asks why; the reason is what
+          // the Polter block records as `reason:`.
+          const askWhy: ReasonOptions | undefined = action.kind === "challenge"
+            ? { title: `Open a review of “${decision.title}”?`, description: "It goes back to review until someone keeps or supersedes it. Say what is wrong with it.", confirmLabel: "Open review", placeholder: "What should the review look at?" }
+            : action.kind === "supersede"
+              ? { title: `Supersede “${decision.title}”?`, description: `${successor?.title ?? "The other decision"} replaces it. Say why.`, confirmLabel: "Supersede", placeholder: "Why replace it?" }
+              : undefined;
           void justifyChange({
             title: "Justify decision change",
             defaultSummary: summaries[action.kind],
+            askWhy,
           }).then((change) => {
             if (!change) return;
             return persistDecisionAction({ projectId: currentProjectId(), decision, action, change }).then(async () => {
@@ -1063,80 +1206,20 @@ export function App() {
             pushToast(error instanceof Error ? error.message : "Could not save source path.", "danger");
           });
         }}
-        onCreate={(kind, title, level, scopePath) => {
-          void justifyChange({
-            title: "Justify create",
-            defaultSummary: `Create ${kind}: ${title}`,
-          }).then((change) => {
-            if (!change) return;
-            return persistKnowledgeCreate({
-              projectId: currentProjectId(),
-              kind,
-              title,
-              extraJson: level === "principle" ? JSON.stringify({ level: "principle" }) : undefined,
-              change,
-            }).then(async (id) => {
-              if (scopePath) await persistKnowledgeScope(currentProjectId(), id, scopePath);
-              await refreshWorkspace(currentProjectId());
-              activateDetail("knowledge:library", id, "decision");
-              pushToast("Decision saved locally.", "success");
-            });
-          }).catch((error: unknown) => {
-            pushToast(error instanceof Error ? error.message : "Could not create knowledge.", "danger");
-          });
-        }}
-        onCreateDoc={({ title, docType, tags, path, scopePath }) => {
-          void justifyChange({
-            title: "Justify new doc",
-            defaultSummary: `Add ${docType}: ${title}`,
-          }).then((change) => {
-            if (!change) return;
-            return persistKnowledgeCreate({
-              projectId: currentProjectId(),
-              kind: "doc",
-              docType,
-              tags,
-              title,
-              path,
-              change,
-            }).then(async (id) => {
-              if (scopePath) await persistKnowledgeScope(currentProjectId(), id, scopePath);
-              await refreshWorkspace(currentProjectId());
-              activateDetail("knowledge:docs", id, "doc");
-              pushToast("Doc saved locally.", "success");
-            });
-          }).catch((error: unknown) => {
-            pushToast(error instanceof Error ? error.message : "Could not add the doc.", "danger");
-          });
-        }}
-        onImportProjectSources={() => {
-          if (importSourcesBusy()) return;
-          setImportSourcesBusy(true);
-          void persistImportProjectSources({ projectId: currentProjectId() })
-            .then(async (result) => {
-              await refreshWorkspace(currentProjectId());
-              pushToast(result.message, "success");
-            })
-            .catch((error: unknown) => {
-              pushToast(
-                error instanceof Error ? error.message : "Could not import project sources.",
-                "danger",
-              );
-            })
-            .finally(() => setImportSourcesBusy(false));
-        }}
+        onCompose={setComposeRequest}
+        onImportProjectSources={importProjectSources}
         importBusy={importSourcesBusy()}
-        onCreateCard={(title, stage, milestone) => createWorkCard(title, stage, milestone)}
-        onNewFeature={openFeatureFlow}
         onContinueFeature={continueFeatureFlow}
         onArchive={(id) => {
-          // Archiving is reversible, so it runs at once and the toast offers Undo.
+          // Archiving asks why, then runs at once; the toast offers Undo.
           const title = workspace().docs.find((item) => item.id === id)?.title ?? "item";
-          const restore = () => void persistKnowledgeArchived(id, false, { summary: `Restore: ${title}`, rationale: "Changed in Desktop" })
+          const restore = () => void persistKnowledgeArchived(id, false, { summary: `Restore: ${title}`, rationale: "" })
             .then(() => refreshWorkspace(currentProjectId()))
             .catch((error: unknown) => pushToast(error instanceof Error ? error.message : "Could not restore.", "danger"));
-          void persistKnowledgeArchived(id, true, { summary: `Archive: ${title}`, rationale: "Changed in Desktop" })
-            .then(async () => {
+          void justifyChange({ title: "Archive doc", defaultSummary: `Archive: ${title}`, askWhy: archiveReason(`“${title}”`) })
+            .then(async (change) => {
+              if (!change) return;
+              await persistKnowledgeArchived(id, true, change);
               await refreshWorkspace(currentProjectId());
               pushToast(`Archived “${title}”`, "default", { action: { label: "Undo", onClick: restore } });
             })
@@ -1153,7 +1236,7 @@ export function App() {
           }))}
         onRestoreDoc={async (item) => {
           try {
-            await persistKnowledgeArchived(item.id, false, { summary: `Restore: ${item.title}`, rationale: "Changed in Desktop" });
+            await persistKnowledgeArchived(item.id, false, { summary: `Restore: ${item.title}`, rationale: "" });
             await refreshWorkspace(currentProjectId());
             pushToast(`Restored “${item.title}”`);
           } catch (error) {
@@ -1169,7 +1252,7 @@ export function App() {
           });
           if (!confirmed) return;
           try {
-            await persistKnowledgeDeletePermanently(item.id, { summary: `Delete permanently: ${item.title}`, rationale: "Changed in Desktop" });
+            await persistKnowledgeDeletePermanently(item.id, { summary: `Delete permanently: ${item.title}`, rationale: "" });
             pushToast(`Deleted “${item.title}”`);
           } catch (error) {
             pushToast(error instanceof Error ? error.message : "Could not delete.", "danger");
@@ -1177,11 +1260,13 @@ export function App() {
         }}
         onRemoveCard={(slug) => {
           const title = workspace().workCards.find((card) => card.slug === slug)?.title ?? slug;
-          const restore = () => void persistWorkRestoreCard(currentProjectId(), slug, { summary: `Restore card: ${slug}`, rationale: "Changed in Desktop" })
+          const restore = () => void persistWorkRestoreCard(currentProjectId(), slug, { summary: `Restore card: ${slug}`, rationale: "" })
             .then(() => refreshWorkspace(currentProjectId()))
             .catch((error: unknown) => pushToast(error instanceof Error ? error.message : "Could not restore card.", "danger"));
-          void persistWorkRemoveCard(currentProjectId(), slug, { summary: `Remove card: ${slug}`, rationale: "Changed in Desktop" })
-            .then(async () => {
+          void justifyChange({ title: "Archive card", defaultSummary: `Remove card: ${slug}`, askWhy: archiveReason(`“${title}”`) })
+            .then(async (change) => {
+              if (!change) return;
+              await persistWorkRemoveCard(currentProjectId(), slug, change);
               await refreshWorkspace(currentProjectId());
               pushToast(`Removed “${title}” from the board`, "default", { action: { label: "Undo", onClick: restore } });
             })
@@ -1194,6 +1279,7 @@ export function App() {
           justifyChange({
             title: "Justify card stage",
             defaultSummary: `Move ${cardCount(slugs.length)} to ${stageLabel(stage)}`,
+            askWhy: stageBackReason(workspace().workCards.filter((card) => slugs.includes(card.slug)), stage, cardCount(slugs.length)),
           }).then(async (change) => {
             if (!change) return false;
             await persistWorkSetStages(currentProjectId(), slugs, stage, change);
@@ -1206,19 +1292,22 @@ export function App() {
           })}
         onRemoveCards={(slugs) => {
           const projectId = currentProjectId();
-          void justifyChange({
+          return justifyChange({
             title: "Justify archiving cards",
             defaultSummary: `Archive ${cardCount(slugs.length)}`,
+            askWhy: archiveReason(cardCount(slugs.length)),
           }).then(async (change) => {
-            if (!change) return;
+            if (!change) return false;
             await persistWorkSetCardsStatus(projectId, slugs, "removed", change);
             await refreshWorkspace(projectId);
-            const restore = () => void persistWorkSetCardsStatus(projectId, slugs, "active", { summary: `Restore ${cardCount(slugs.length)}`, rationale: "Undid the archive in Desktop" })
+            const restore = () => void persistWorkSetCardsStatus(projectId, slugs, "active", { summary: `Restore ${cardCount(slugs.length)}`, rationale: "" })
               .then(() => refreshWorkspace(projectId))
               .catch((error: unknown) => pushToast(error instanceof Error ? error.message : "Could not restore the cards.", "danger"));
             pushToast(`Archived ${cardCount(slugs.length)}`, "default", { action: { label: "Undo", onClick: restore } });
+            return true;
           }).catch((error: unknown) => {
             pushToast(error instanceof Error ? error.message : "Could not archive the cards.", "danger");
+            return false;
           });
         }}
         onSetCardStage={(slug, stage) =>
@@ -1226,6 +1315,7 @@ export function App() {
           justifyChange({
             title: "Justify card stage",
             defaultSummary: `Move card to ${stageLabel(stage)}: ${slug}`,
+            askWhy: stageBackReason(workspace().workCards.filter((card) => card.slug === slug), stage, "the card"),
           }).then(async (change) => {
             if (!change) return false;
             await persistWorkSetStage(currentProjectId(), slug, stage, change);
@@ -1769,6 +1859,27 @@ export function App() {
         </Suspense>
       </Show>
 
+      <Show when={!route().home && currentProjectId()}>
+        <Suspense>
+          <KnowledgeComposer
+            request={composeRequest()}
+            onClose={() => setComposeRequest(null)}
+            crumb={workspace().settings.name || "Project"}
+            milestones={workspace().milestones}
+            components={flowComponents()}
+            scopeNodes={scopeNodes()}
+            defaultScopePath={activeScopePath()}
+            onCreateCard={createCard}
+            onCreateDecision={createDecision}
+            onCreateDoc={createDoc}
+            onImportProjectSources={() => {
+              setComposeRequest(null);
+              importProjectSources();
+            }}
+            importBusy={importSourcesBusy()}
+          />
+        </Suspense>
+      </Show>
       <ShortcutsPanel open={shortcutsOpen()} onClose={() => setShortcutsOpen(false)} />
       <CommandPalette
         open={paletteOpen()}

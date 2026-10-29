@@ -63,6 +63,11 @@ export type A11yDialogProps = {
   autoFocusField?: boolean;
   /** Element that takes focus when the dialog opens, such as a confirm's primary action. */
   initialFocus?: () => HTMLElement | null | undefined;
+  /**
+   * When false, focus may leave the dialog for a popover it opens (they are portalled outside
+   * it), such as the Composer's property pickers with a search field. Defaults to true.
+   */
+  trapFocus?: boolean;
 };
 
 /**
@@ -91,6 +96,7 @@ export function A11yDialog(props: A11yDialogProps) {
       unmountOnExit
       closeOnEscape={dismissible()}
       closeOnInteractOutside={dismissible()}
+      trapFocus={props.trapFocus !== false}
       initialFocusEl={
         props.initialFocus
           ? () => props.initialFocus?.() ?? contentEl ?? null

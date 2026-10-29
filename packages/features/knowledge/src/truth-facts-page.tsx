@@ -1,4 +1,4 @@
-import { Show, createSignal } from "solid-js";
+import { Show, createSignal, onCleanup, onMount } from "solid-js";
 import { EntityDetailHost, createPageFilters, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem, type WorkspaceCanonEntity } from "@polterware/feature-shell";
 import {
   FilterPopover,
@@ -13,6 +13,7 @@ import {
   type FilterField,
   type TabItem,
 } from "@polterware/frontend-design-system";
+import { isTypingTarget, matchesShortcut } from "@polterware/frontend-state";
 import { CanonFactsPanel, factPageOpen, type CanonJustifyChange } from "./canon-facts-panel";
 import { FACT_KINDS } from "./fact-kind";
 
@@ -37,6 +38,18 @@ export function TruthFactsPage(props: {
   const [query, setQuery] = createSignal("");
   const [busy, setBusy] = createSignal(false);
   const [createToken, setCreateToken] = createSignal(0);
+
+  // C opens the composer for a new fact, like the toolbar "+".
+  onMount(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.repeat || isTypingTarget(event.target) || !matchesShortcut("shell.create", event)) return;
+      if (busy() || !props.projectId.trim()) return;
+      event.preventDefault();
+      setCreateToken((value) => value + 1);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    onCleanup(() => window.removeEventListener("keydown", onKeyDown));
+  });
 
   const fields = (): FilterField[] => [
     {
