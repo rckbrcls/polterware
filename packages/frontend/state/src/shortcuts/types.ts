@@ -7,7 +7,7 @@ export type ShortcutChord = {
   alt: boolean;
 };
 
-export type ShortcutGroup = "shell" | "work" | "structure";
+export type ShortcutGroup = "shell" | "inbox" | "work" | "structure";
 
 export type ShortcutCommandId =
   | "shell.toggle_commander"
@@ -18,6 +18,8 @@ export type ShortcutCommandId =
   | "shell.open_canvas"
   | "shell.open_filter"
   | "shell.create"
+  | "inbox.defer"
+  | "inbox.dismiss"
   | "work.toggle_layout"
   | "work.set_milestone"
   | "structure.add_node";

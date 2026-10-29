@@ -73,6 +73,8 @@ export type DataTableRootProps<T = any> = {
   activeRowId?: string | null;
   onActiveRowChange?: (rowId: string | null) => void;
   activateFirstRow?: boolean;
+  /** J/K also moves the active row, so a master/detail list shows the focused row's detail. */
+  followFocus?: boolean;
   virtualized?: boolean;
   estimateRowHeight?: number;
   /** Fixed outer row pitch, including the table row gap. */
@@ -185,6 +187,7 @@ type DataTableContextValue<T> = {
   selectedRows: Accessor<readonly IndexedRow<T>[]>;
   activeRowId: Accessor<string | null>;
   activeEnabled: Accessor<boolean>;
+  followFocus: Accessor<boolean>;
   activateRow: (rowId: string) => void;
   toggleRow: (rowId: string) => void;
   toggleAll: () => void;
@@ -664,6 +667,7 @@ function DataTableRoot<T = any>(props: DataTableRootProps<T>) {
     selectedRows,
     activeRowId,
     activeEnabled,
+    followFocus: () => Boolean(props.followFocus),
     activateRow: updateActiveRow,
     toggleRow: (rowId) => {
       updateSelection(
@@ -1206,14 +1210,14 @@ export function dataTableRowStep(event: Pick<KeyboardEvent, "key" | "metaKey" | 
   return 0;
 }
 
-function focusSiblingRow(row: HTMLElement, step: -1 | 1): boolean {
+function focusSiblingRow(row: HTMLElement, step: -1 | 1): HTMLElement | null {
   let next = step === 1 ? row.nextElementSibling : row.previousElementSibling;
   while (next && !(next instanceof HTMLElement && next.classList.contains("pw-data-table-row--interactive"))) {
     next = step === 1 ? next.nextElementSibling : next.previousElementSibling;
   }
-  if (!(next instanceof HTMLElement)) return false;
+  if (!(next instanceof HTMLElement)) return null;
   next.focus();
-  return true;
+  return next;
 }
 
 /** Focuses the row with rowId, for a list that gets focus back after its entity page closes. */
@@ -1297,7 +1301,10 @@ function DataTableRow<T = any>(props: {
         if (!interactive() || event.target !== event.currentTarget) return;
         const step = dataTableRowStep(event);
         if (step !== 0) {
-          if (focusSiblingRow(event.currentTarget, step)) event.preventDefault();
+          const next = focusSiblingRow(event.currentTarget, step);
+          if (!next) return;
+          event.preventDefault();
+          if (context.followFocus() && context.activeEnabled() && next.dataset.rowId) context.activateRow(next.dataset.rowId);
           return;
         }
         if (event.key === " " && props.onPeek) {

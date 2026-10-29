@@ -38,7 +38,8 @@ export function EntityDetailHost(props: EntityDetailHostProps) {
   const documentPage = () => documentKind() && pageRoute();
   const expanded = () => !documentKind() && pageRoute();
   // A document page shows its properties in its own rail, so the floating frame stays closed.
-  const panelOpen = () => open() && !documentPage() && (!pageOnly() || pageRoute());
+  // A pinned panel is a master/detail page's second pane: it stays open.
+  const panelOpen = () => (open() || Boolean(props.pinned)) && !documentPage() && (!pageOnly() || pageRoute());
   createEffect(() => {
     if (open() && pageOnly() && !pageRoute()) detailPanelStore.getState().hide();
   });

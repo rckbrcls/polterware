@@ -33,14 +33,13 @@ import {
   createEntityContextMenu,
   type EntityAction,
 } from "@polterware/frontend-design-system";
-import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
+import { createDetailPanelSelector, detailPanelStore, isTypingTarget, matchesShortcut } from "@polterware/frontend-state";
 import { EntityDetailHost } from "./entity-detail-host";
 import { createPageFilters } from "./page-filters";
 import type { EnvironmentItem, ScopeNodeItem } from "./types";
 import type { ScopeFilterToken } from "./scope-filter";
-import { openDetail } from "./detail-expansion";
 import { InboxItemDetail } from "./inbox-item-detail";
-import { sharedInboxActions } from "./inbox-actions";
+import { keyActionTargets, sharedInboxActions } from "./inbox-actions";
 import type {
   WorkspaceInbox,
   WorkspaceInboxAction,
@@ -93,7 +92,17 @@ function statusLabel(item: WorkspaceInboxItem): string {
   return item.blocking ? `Blocking ${kind.toLowerCase()}` : kind;
 }
 
-/** Inbox — a table of Decision, Drift, and Verify items derived from project data. */
+/** The Inbox's sections, in triage order. */
+const KIND_GROUPS = TYPE_FILTERS.map((option) => {
+  const Icon = KIND_ICON[option.id];
+  return { id: option.id, label: option.label, icon: <Icon size={14} aria-hidden /> };
+});
+
+/**
+ * Inbox — master/detail, as in Linear: Decision, Drift, and Verify items grouped by kind on
+ * the left, the active item's detail pinned on the right. H defers and D dismisses the active
+ * item (or the selection), and the next item takes its place.
+ */
 export function InboxPage(props: {
   inbox?: WorkspaceInbox;
   loading?: boolean;
@@ -202,15 +211,60 @@ export function InboxPage(props: {
     return target?.scopeId === INBOX_SCOPE ? rows().find((item) => item.id === target.entityId) : undefined;
   });
 
+  /** Rows in display order: grouped by kind, open before deferred within each group. */
+  const ordered = createMemo(() => KIND_GROUPS.flatMap((group) => rows().filter((item) => item.kind === group.id)));
+  const markActive = (id: string) =>
+    detailPanelStore.getState().activateTarget({ scopeId: INBOX_SCOPE, entityId: id, entityKind: "inbox-item" });
+
   createEffect(() => {
     detailPanelStore.getState().registerCollection({
       scopeId: INBOX_SCOPE,
       status: props.loading ? "loading" : "ready",
-      targets: rows().map((item) => ({ scopeId: INBOX_SCOPE, entityId: item.id, entityKind: "inbox-item" })),
-      selectFirst: false,
+      targets: ordered().map((item) => ({ scopeId: INBOX_SCOPE, entityId: item.id, entityKind: "inbox-item" })),
+      selectFirst: true,
     });
   });
   onCleanup(() => detailPanelStore.getState().unregisterCollection(INBOX_SCOPE));
+
+  // When the active item leaves (resolved, deferred out of a filter), the one now at its place takes over.
+  let activeIndex = 0;
+  createEffect(() => {
+    const list = ordered();
+    const target = activeTarget();
+    const index = target?.scopeId === INBOX_SCOPE ? list.findIndex((item) => item.id === target.entityId) : -1;
+    if (index >= 0) {
+      activeIndex = index;
+      return;
+    }
+    if (props.loading || list.length === 0) return;
+    markActive(list[Math.min(activeIndex, list.length - 1)]!.id);
+  });
+
+  // H defers and D dismisses (Ignore) the selection, or the active item, when they offer it.
+  function onKeyDown(event: KeyboardEvent) {
+    if (event.defaultPrevented || event.repeat || isTypingTarget(event.target) || pending()) return;
+    const action: WorkspaceInboxAction | null = matchesShortcut("inbox.defer", event)
+      ? "defer"
+      : matchesShortcut("inbox.dismiss", event) ? "ignore" : null;
+    if (!action || !props.onResolve) return;
+    const selection = ordered().filter((item) => selected().has(item.id));
+    const targets = keyActionTargets(selection, selectedItem(), action);
+    if (targets.length === 0) return;
+    event.preventDefault();
+    // The item after the last one acted on takes over, even when a deferred item stays listed.
+    const list = ordered();
+    const done = new Set(targets.map((item) => item.id));
+    const last = Math.max(...targets.map((item) => list.indexOf(item)));
+    const next = list.slice(last + 1).find((item) => !done.has(item.id)) ?? list.find((item) => !done.has(item.id));
+    const write = selection.length > 0
+      ? runMany(targets, action, () => setSelected(new Set<string>()))
+      : run(targets[0]!, action);
+    void write.then(() => {
+      if (next && ordered().some((item) => item.id === next.id)) markActive(next.id);
+    });
+  }
+  window.addEventListener("keydown", onKeyDown);
+  onCleanup(() => window.removeEventListener("keydown", onKeyDown));
 
   async function run(item: WorkspaceInboxItem, action: WorkspaceInboxAction, value?: string) {
     if (action === "decide" && value === undefined) {
@@ -249,8 +303,7 @@ export function InboxPage(props: {
         row={item()}
         rowId={item().id}
         aria-label={statusLabel(item())}
-        class={[item().state === "deferred" ? "pw-inbox-row--deferred" : "", selectedItem()?.id === item().id ? "pw-data-table-row--active" : ""].filter(Boolean).join(" ") || undefined}
-        onActivate={() => openDetail({ scopeId: INBOX_SCOPE, entityId: item().id, entityKind: "inbox-item" })}
+        class={item().state === "deferred" ? "pw-inbox-row--deferred" : undefined}
       >
         <Show when={props.onResolveMany}>
           <DataTable.SelectionCell rowId={item().id} label={`Select ${item().title}`} />
@@ -264,14 +317,12 @@ export function InboxPage(props: {
           iconSeed={item().id}
           title={item().title}
         />
-        <DataTable.Cell>{KIND_LABEL[item().kind]}</DataTable.Cell>
         <DataTable.Cell>
           <StatusChip tone={item().state === "deferred" ? "muted" : item().blocking ? "danger" : "muted"}>
             {item().state === "deferred" ? "Deferred" : item().blocking ? "Blocking" : "Open"}
           </StatusChip>
         </DataTable.Cell>
         <DataTable.Cell class="pw-inbox-context">{item().where || "—"}</DataTable.Cell>
-        <DataTable.Cell class="pw-inbox-source">{item().source || "—"}</DataTable.Cell>
         <DataTable.Cell align="right" class="pw-inbox-actions">
           <EntityMenuButton label={`Actions for ${item().title}`} actions={itemActions(item())} />
         </DataTable.Cell>
@@ -280,7 +331,7 @@ export function InboxPage(props: {
   }
 
   return (
-    <EntityDetailHost>
+    <EntityDetailHost pinned={rows().length > 0}>
       <PageToolbar.Root>
         <PageToolbar.Leading>{null}</PageToolbar.Leading>
         <PageToolbar.Actions>
@@ -325,11 +376,15 @@ export function InboxPage(props: {
           }
         >
           <DataTable.Root
-            rows={rows()}
+            rows={ordered()}
             getRowId={(item) => item.id}
             columnWidthsKey="inbox"
             class="pw-inbox-table"
             density="list"
+            grouping={{ by: (item) => item.kind, groups: KIND_GROUPS, showEmpty: false }}
+            activeRowId={selectedItem()?.id ?? null}
+            onActiveRowChange={(id) => { if (id) markActive(id); }}
+            followFocus
             selectionMode={props.onResolveMany ? "multiple" : "none"}
             selectedRowIds={selected()}
             onSelectionChange={setSelected}
@@ -337,11 +392,9 @@ export function InboxPage(props: {
             <DataTable.Table aria-label="Inbox items">
               <DataTable.Header>
                 <Show when={props.onResolveMany}><DataTable.SelectionCell /></Show>
-                <DataTable.ColumnHeader<WorkspaceInboxItem> id="title" width="38%">Item</DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<WorkspaceInboxItem> id="kind" sortBy={(item) => KIND_LABEL[item.kind]}>Type</DataTable.ColumnHeader>
+                <DataTable.ColumnHeader<WorkspaceInboxItem> id="title" width="52%">Item</DataTable.ColumnHeader>
                 <DataTable.ColumnHeader<WorkspaceInboxItem> id="status" sortBy={statusLabel}>Status</DataTable.ColumnHeader>
                 <DataTable.ColumnHeader<WorkspaceInboxItem> id="where">Context</DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<WorkspaceInboxItem> id="source">Source</DataTable.ColumnHeader>
                 <DataTable.ColumnHeader<WorkspaceInboxItem> id="actions" width="44px" align="right" sortable={false} resizable={false}><span class="sr-only">Actions</span></DataTable.ColumnHeader>
               </DataTable.Header>
               <DataTable.Body<WorkspaceInboxItem>>

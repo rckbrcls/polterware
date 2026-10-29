@@ -33,6 +33,7 @@ export function shortcutReference(overrides: ShortcutOverrides, apple = isAppleP
         { id: "composer.next", label: "Title to description", keys: ["Enter"], join: "or" },
       ],
     },
+    { label: SHORTCUT_GROUP_LABELS.inbox, rows: chords("inbox") },
     { label: SHORTCUT_GROUP_LABELS.work, rows: chords("work") },
     { label: SHORTCUT_GROUP_LABELS.structure, rows: chords("structure") },
   ];

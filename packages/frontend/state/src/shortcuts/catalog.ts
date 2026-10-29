@@ -61,6 +61,18 @@ export const SHORTCUT_CATALOG: readonly ShortcutCommand[] = [
     defaultChord: chord({ key: "c" }),
   },
   {
+    id: "inbox.defer",
+    label: "Defer the item",
+    group: "inbox",
+    defaultChord: chord({ key: "h" }),
+  },
+  {
+    id: "inbox.dismiss",
+    label: "Dismiss the item",
+    group: "inbox",
+    defaultChord: chord({ key: "d" }),
+  },
+  {
     id: "work.toggle_layout",
     label: "Switch between list and board",
     group: "work",
@@ -115,9 +127,10 @@ export function shortcutsInGroup(group: ShortcutCommand["group"]): ShortcutComma
 
 export const SHORTCUT_GROUP_LABELS: Record<ShortcutCommand["group"], string> = {
   shell: "Shell",
+  inbox: "Inbox",
   work: "Milestones",
   structure: "Structure",
 };
 
 /** Rebindable groups in the order Settings and the shortcuts panel list them. */
-export const SHORTCUT_GROUPS: readonly ShortcutCommand["group"][] = ["shell", "work", "structure"];
+export const SHORTCUT_GROUPS: readonly ShortcutCommand["group"][] = ["shell", "inbox", "work", "structure"];

@@ -3,13 +3,8 @@
   color: var(--color-text-muted);
 }
 
-.pw-inbox-context,
-.pw-inbox-source {
+.pw-inbox-context {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.pw-inbox-source {
-  color: var(--color-text-muted);
 }
