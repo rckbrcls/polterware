@@ -85,26 +85,35 @@ describe("installBrowserDevBridge", () => {
     const listed = (await savedFilters.list({ projectId, surface: "work" })).filters as { name: string }[];
     expect(listed.map((item) => item.name)).toEqual(["Blocked"]);
   });
-  it("provides seeded boards and keeps saved-view mutations project-local", async () => {
+  it("provides seeded milestones and keeps milestone mutations project-local", async () => {
     installBrowserDevBridge();
     const work = window.polterware.core.work;
     const projectId = "browser-preview";
-    const listed = await work.listBoards({ projectId });
-    expect(listed.boards).toHaveLength(2);
-    expect((await work.listBoards({ projectId: "browser-empty" })).boards).toEqual([]);
-    const created = await work.createBoard({ projectId, name: "Review", configJson: '{"version":1}' });
-    expect(created.board).toMatchObject({ name: "Review", position: 2, configJson: '{"version":1}' });
-    const id = (created.board as { id: string }).id;
-    const renamed = await work.updateBoard({ projectId, id, name: "Release" });
-    expect(renamed.board).toMatchObject({ id, name: "Release" });
-    const ids = (listed.boards as { id: string }[]).map((board) => board.id);
-    const reordered = await work.reorderBoards({ projectId, boardIds: [id, ...ids] });
-    expect((reordered.boards as { id: string }[]).map((board) => board.id)).toEqual([id, ...ids]);
-    await expect(work.reorderBoards({ projectId, boardIds: [id, id] })).rejects.toThrow();
-    await expect(work.deleteBoard({ projectId: "browser-empty", id })).rejects.toThrow();
-    await work.deleteBoard({ projectId, id });
-    expect((await work.listBoards({ projectId })).boards).toHaveLength(2);
-    expect((await work.listBoards({ projectId: "browser-empty" })).boards).toEqual([]);
+    const listed = (await work.listMilestones({ projectId })).milestones as { id: string; slug: string; state: string }[];
+    expect(listed.map((item) => [item.slug, item.state])).toEqual([["beta", "active"], ["launch", "planned"]]);
+    expect((await work.listMilestones({ projectId: "browser-empty" })).milestones).toEqual([]);
+    const created = (await work.createMilestone({ projectId, name: "Public Beta" })).milestone as { id: string; slug: string; position: number };
+    expect(created).toMatchObject({ slug: "public-beta", position: 2 });
+    await expect(work.createMilestone({ projectId, name: " public BETA " })).rejects.toThrow();
+    const renamed = (await work.updateMilestone({ projectId, id: created.id, name: "Release" })).milestone;
+    expect(renamed).toMatchObject({ id: created.id, name: "Release", slug: "public-beta" });
+    const ids = listed.map((item) => item.id);
+    const reordered = (await work.reorderMilestones({ projectId, milestoneIds: [created.id, ...ids] })).milestones as { id: string }[];
+    expect(reordered.map((item) => item.id)).toEqual([created.id, ...ids]);
+    await expect(work.reorderMilestones({ projectId, milestoneIds: [created.id, created.id] })).rejects.toThrow();
+    await expect(work.archiveMilestone({ projectId: "browser-empty", id: created.id, archived: true })).rejects.toThrow();
+
+    const beta = ids[0]!;
+    const change = { summary: "Create card", rationale: "Changed in Desktop" };
+    await work.apply({ projectId, text: "---\npolter: 1\n---\n\n## beta-docs: Beta docs\nstage: shape · status: active · milestone: beta\n", change });
+    expect(((await work.listCards({ projectId })).cards as { slug: string; milestoneId?: string }[]).find((card) => card.slug === "beta-docs")?.milestoneId).toBe(beta);
+    await expect(work.apply({ projectId, text: "---\npolter: 1\n---\n\n## gone: Gone\nstage: shape · milestone: nope\n", change })).rejects.toThrow("unknown milestone");
+    const inBeta = async () => ((await work.listCards({ projectId })).cards as { milestoneId?: string }[]).filter((card) => card.milestoneId === beta).length;
+    expect(await inBeta()).toBeGreaterThan(0);
+    await work.archiveMilestone({ projectId, id: beta, archived: true });
+    expect(await inBeta()).toBe(0);
+    const after = (await work.listMilestones({ projectId })).milestones as { id: string; archivedAt: string }[];
+    expect(after.find((item) => item.id === beta)?.archivedAt).not.toBe("");
   });
 
   it("provides isolated demo canvases and persists independent graph, layout, name and sharing updates", async () => {

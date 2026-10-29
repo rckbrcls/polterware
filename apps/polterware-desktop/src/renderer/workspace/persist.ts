@@ -4,7 +4,7 @@ import type {
   ProjectGeneralSettings,
   ProtectionLevel,
 } from "@polterware/feature-settings";
-import type { DocType, WorkspaceDecision, WorkspaceCatalogProvider, WorkspaceFeatureReview, WorkCardKind, WorkStage } from "@polterware/feature-shell";
+import type { DocType, WorkspaceDecision, WorkspaceCatalogProvider, WorkspaceFeatureReview, WorkspaceMilestone, WorkCardKind, WorkStage } from "@polterware/feature-shell";
 import type { ChangeEnvelope, DecisionAction, FeatureFlowLine } from "@polterware/feature-knowledge";
 import { asNumber, asObjectArray, asRecord, asString } from "./format";
 import type { WorkspaceSnapshot } from "./load";
@@ -444,13 +444,15 @@ export async function persistWorkCreateCard(input: {
   workspace: WorkspaceSnapshot;
   projectId: string;
   title: string;
+  /** Slug of the milestone the card ships in; omitted keeps it in the Backlog. */
+  milestone?: string;
   change: ChangeEnvelope;
 }): Promise<string> {
   const slug = uniqueCardSlug(input.workspace.workCards.map((card) => card.slug), input.title);
   // status: active restores a removed card that already owns this slug.
   await applyPolter(
     input.projectId,
-    polterCard(slug, input.title, { stage: "shape", status: "active" }),
+    polterCard(slug, input.title, { stage: "shape", status: "active", ...(input.milestone ? { milestone: input.milestone } : {}) }),
     input.change,
   );
   return slug;
@@ -858,24 +860,27 @@ export async function resetLocalStore(): Promise<void> {
   await core().health.resetLocalStore({});
 }
 
-/** Board config currently declares only its format version; stages stay canonical. */
-export async function persistWorkBoardCreate(projectId: string, name: string, change: ChangeEnvelope): Promise<string> {
-  const response = asRecord(await core().work.createBoard({
-    projectId, name, configJson: '{"version":1}', change: changePayload(change),
-  }));
-  const id = asString(asRecord(response.board).id);
-  if (!id) throw new Error("The core returned no board.");
+/** Create a milestone; it starts planned and owns no cards. Returns its id. */
+export async function persistMilestoneCreate(projectId: string, name: string, change: ChangeEnvelope): Promise<string> {
+  const response = asRecord(await core().work.createMilestone({ projectId, name, change: changePayload(change) }));
+  const id = asString(asRecord(response.milestone).id);
+  if (!id) throw new Error("The core returned no milestone.");
   return id;
 }
 
-export async function persistWorkBoardRename(projectId: string, id: string, name: string, change: ChangeEnvelope): Promise<void> {
-  await core().work.updateBoard({ projectId, id, name, change: changePayload(change) });
+/** Rename a milestone; the update rewrites every editable field, so the others are sent as they are. */
+export async function persistMilestoneRename(projectId: string, milestone: WorkspaceMilestone, name: string, change: ChangeEnvelope): Promise<void> {
+  await core().work.updateMilestone({
+    projectId, id: milestone.id, name, goal: milestone.goal, exitCriteria: milestone.exitCriteria,
+    targetDate: milestone.targetDate, state: milestone.state, change: changePayload(change),
+  });
 }
 
-export async function persistWorkBoardDelete(projectId: string, id: string, change: ChangeEnvelope): Promise<void> {
-  await core().work.deleteBoard({ projectId, id, change: changePayload(change) });
+/** Archive a milestone; its cards keep it, so a restore brings them back. */
+export async function persistMilestoneArchive(projectId: string, id: string, archived: boolean, change: ChangeEnvelope): Promise<void> {
+  await core().work.archiveMilestone({ projectId, id, archived, change: changePayload(change) });
 }
 
-export async function persistWorkBoardsReorder(projectId: string, boardIds: string[], change: ChangeEnvelope): Promise<void> {
-  await core().work.reorderBoards({ projectId, boardIds, change: changePayload(change) });
+export async function persistMilestonesReorder(projectId: string, milestoneIds: string[], change: ChangeEnvelope): Promise<void> {
+  await core().work.reorderMilestones({ projectId, milestoneIds, change: changePayload(change) });
 }

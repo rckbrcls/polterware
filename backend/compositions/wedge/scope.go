@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/polterware/polterware/backend/domains/agentrun"
-	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/decision"
 	"github.com/polterware/polterware/backend/domains/inbox"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )

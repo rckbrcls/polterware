@@ -179,6 +179,8 @@ export type WorkspaceWorkCard = {
   owner: string;
   under: string;
   decisions: string[];
+  /** The milestone the card ships in; empty is the Backlog. */
+  milestoneId?: string;
   updatedAt: string;
   tasks: WorkspaceWorkTask[];
   questions: WorkspaceWorkQuestion[];
@@ -296,11 +298,21 @@ export type WorkspaceInbox = {
   blockingCount: number;
 };
 
-/** A saved Work view; the implicit default board has no stored row. */
-export type WorkspaceWorkBoard = {
+export type MilestoneState = "planned" | "active" | "done";
+
+/** A milestone from WorkService.ListMilestones; it owns the cards that ship together. */
+export type WorkspaceMilestone = {
   id: string;
   projectId: string;
+  /** What a card's milestone: line names; it never changes. */
+  slug: string;
   name: string;
+  goal: string;
+  exitCriteria: string[];
+  /** YYYY-MM-DD or empty. */
+  targetDate: string;
+  state: MilestoneState;
   position: number;
-  configJson: string;
+  /** Empty while the milestone is listed. */
+  archivedAt: string;
 };

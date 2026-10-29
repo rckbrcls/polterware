@@ -8,8 +8,8 @@ import (
 
 	"github.com/polterware/polterware/backend/compositions/wedge"
 	"github.com/polterware/polterware/backend/domains/agentrun"
-	"github.com/polterware/polterware/backend/domains/inbox"
 	"github.com/polterware/polterware/backend/domains/canon"
+	"github.com/polterware/polterware/backend/domains/inbox"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 

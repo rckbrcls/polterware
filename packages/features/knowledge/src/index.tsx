@@ -42,7 +42,7 @@ import {
   type DocType,
   type DecisionLevel,
   type WorkspaceWorkCard,
-  type WorkspaceWorkBoard,
+  type WorkspaceMilestone,
   type WorkStage,
 } from "@polterware/feature-shell";
 import { createDetailPanelSelector, detailDisplayFor, detailPanelStore, readRemembered, writeRemembered } from "@polterware/frontend-state";
@@ -77,16 +77,16 @@ import { LibraryTable } from "./library-table";
 import { libraryStatusTone } from "./knowledge-document-helpers";
 import { WorkCardsEmpty, workCardsFilterEmpty } from "./knowledge-empty";
 import { WorkBoard } from "./work-board";
-import { WorkBoardList } from "./work-board-picker";
+import { MilestoneList } from "./milestone-list";
 import { backToWorkBoards, initialWorkBoardNavigation, openWorkBoard } from "./work-board-navigation";
-import { selectedWorkBoard, type WorkBoardAction } from "./work-boards";
+import { BACKLOG, cardsInView, selectedMilestoneView, type MilestoneAction } from "./milestones";
 import { WorkCardDetail } from "./work-card-detail";
 import { WORK_STAGES, cardOpenQuestions, cardTaskProgress, workStageLabel, workStageTone } from "./work-stage";
 
 export { cardSlugFromTitle, uniqueCardSlug } from "./card-slug";
 export { KNOWLEDGE_AGENT_PROMPTS, knowledgePromptsForKind } from "./agent-prompts";
 export type { KnowledgeAgentPrompt, KnowledgePromptKind } from "./agent-prompts";
-export type { WorkBoardAction } from "./work-boards";
+export type { MilestoneAction } from "./milestones";
 export type { DecisionAction } from "./decision-detail";
 export type { NewDocInput } from "./add-doc-dialog";
 export { WORK_STAGES, workStageLabel } from "./work-stage";
@@ -163,9 +163,10 @@ export function KnowledgeView(props: {
   decisions?: WorkspaceDecision[];
   docs?: WorkspaceDoc[];
   workCards?: WorkspaceWorkCard[];
-  workBoards?: WorkspaceWorkBoard[];
+  /** Milestones own their cards; All work and the Backlog are implicit views. */
+  milestones?: WorkspaceMilestone[];
   boardProjectId?: string;
-  onBoardAction?: (action: WorkBoardAction) => Promise<string | null>;
+  onMilestoneAction?: (action: MilestoneAction) => Promise<string | null>;
   entities?: WorkspaceCanonEntity[];
   /** Content mode: board, specs, library, or docs. */
   tab?: string;
@@ -205,7 +206,8 @@ export function KnowledgeView(props: {
   onCreateDoc?: (input: NewDocInput) => void;
   onImportProjectSources?: () => void;
   importBusy?: boolean;
-  onCreateCard?: (title: string, stage?: WorkStage) => void;
+  /** Creates a card; milestone is the slug of the open milestone, if any. */
+  onCreateCard?: (title: string, stage?: WorkStage, milestone?: string) => void;
   /** Opens the new-feature flow; when set it replaces the plain card dialog. */
   onNewFeature?: () => void;
   /** Reopens the flow for a card in shape or plan. */
@@ -226,7 +228,7 @@ export function KnowledgeView(props: {
   const [boardNavigation, setBoardNavigation] = createSignal(readRemembered(boardMemoryKey(), initialWorkBoardNavigation()));
   createEffect(on(() => props.boardProjectId, () => setBoardNavigation(readRemembered(boardMemoryKey(), initialWorkBoardNavigation())), { defer: true }));
   createEffect(() => { if (props.boardProjectId) writeRemembered(boardMemoryKey(), boardNavigation()); });
-  const selectedBoard = createMemo(() => selectedWorkBoard(props.workBoards ?? [], boardNavigation().selectedId));
+  const selectedBoard = createMemo(() => selectedMilestoneView(props.milestones ?? [], boardNavigation().selectedId));
   const tab = () => normalizeTab(props.tab);
   /** Board and Specs both list Work cards and share the card detail. */
   const cardTab = () => tab() === "board" || tab() === "specs";
@@ -454,8 +456,10 @@ export function KnowledgeView(props: {
     ),
   );
 
+  /** Cards of the open milestone view; the list counts come from the unfiltered cards. */
+  const viewCards = createMemo(() => cardsInView(props.workCards ?? [], selectedBoard().id));
   const cards = createMemo(() =>
-    filterWorkCards(props.workCards ?? [], cardFilters()).filter((card) =>
+    filterWorkCards(viewCards(), cardFilters()).filter((card) =>
       matchClauses(card, cardPageFilters.pageClauses(), { stage: (item) => item.stage, questions: (item) => cardOpenQuestions(item) > 0 }),
     ),
   );
@@ -655,7 +659,7 @@ export function KnowledgeView(props: {
               <Button
                 variant="texture"
                 size="icon"
-                aria-label="All boards"
+                aria-label="All milestones"
                 onClick={() => {
                   setBoardNavigation((current) => backToWorkBoards(current));
                   if (tab() !== "board") changeTab("board");
@@ -663,6 +667,7 @@ export function KnowledgeView(props: {
               >
                 <ChevronLeft size={14} />
               </Button>
+              <span class="pw-page-toolbar-title">{selectedBoard().name}</span>
             </Show>
             <Show
               when={railItems().length > 1}
@@ -803,7 +808,7 @@ export function KnowledgeView(props: {
         <Show when={tab() === "board"}>
           <PageContent class="p-0">
             <Show
-              when={(props.workCards ?? []).length > 0}
+              when={viewCards().length > 0}
               fallback={
                 <WorkBoard selectedBoard={selectedBoard()} cards={[]} activeSlug={null} onActivate={(slug) => activate(slug, "card")} onMoveCard={props.onSetCardStage} onAddCard={addCardTo} />
               }
@@ -830,7 +835,7 @@ export function KnowledgeView(props: {
         <Show when={tab() === "specs"}>
           <PageContent class="p-0">
             <Show
-              when={(props.workCards ?? []).length > 0}
+              when={viewCards().length > 0}
               fallback={
                 <WorkCardsEmpty
                   onCreate={props.onNewFeature ?? (props.onCreateCard ? () => setCreateOpen(true) : undefined)}
@@ -887,12 +892,12 @@ export function KnowledgeView(props: {
       </div>
         }
       >
-        <WorkBoardList
-          boards={props.workBoards ?? []}
-          cardCount={(props.workCards ?? []).length}
+        <MilestoneList
+          milestones={props.milestones ?? []}
+          cards={props.workCards ?? []}
           onOpen={(id) => setBoardNavigation(openWorkBoard(id))}
-          onDelete={() => setBoardNavigation(initialWorkBoardNavigation())}
-          onAction={props.onBoardAction}
+          onArchive={() => setBoardNavigation(initialWorkBoardNavigation())}
+          onAction={props.onMilestoneAction}
           disabled={props.loading || Boolean(props.error)}
         />
       </Show>
@@ -977,7 +982,7 @@ export function KnowledgeView(props: {
         defaultScopePath={props.activeScopePath}
         onClose={() => { setCreateOpen(false); setCreateStage(undefined); }}
         onSubmit={(title, kind, level, scopePath) => {
-          if (kind === "card") props.onCreateCard?.(title, createStage());
+          if (kind === "card") props.onCreateCard?.(title, createStage(), selectedBoard().id && selectedBoard().id !== BACKLOG.id ? selectedBoard().slug : undefined);
           else props.onCreate?.("decision", title, level, scopePath);
           setCreateOpen(false);
           setCreateStage(undefined);

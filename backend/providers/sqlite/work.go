@@ -23,7 +23,9 @@ func (s *Store) LoadWorkSnapshot(projectID string) (work.Snapshot, error) {
 	for _, env := range envs {
 		snapshot.Environments = append(snapshot.Environments, work.NamedEnvironment{ID: env.ID, Name: env.Name})
 	}
-	rows, err := s.DB.Query(`SELECT id,slug,title,intent,stage,status,owner,kind,under,decisions_json,position,created_at,updated_at
+	rows, err := s.DB.Query(`SELECT id,slug,title,intent,stage,status,owner,kind,under,decisions_json,
+		COALESCE(milestone_id,''),COALESCE((SELECT slug FROM milestones WHERE milestones.id=work_cards.milestone_id),''),
+		position,created_at,updated_at
 		FROM work_cards WHERE project_id=? ORDER BY position, created_at`, projectID)
 	if err != nil {
 		return snapshot, err
@@ -33,7 +35,7 @@ func (s *Store) LoadWorkSnapshot(projectID string) (work.Snapshot, error) {
 		card := work.Card{ProjectID: projectID}
 		var decisions, created, updated string
 		if err := rows.Scan(&card.ID, &card.Slug, &card.Title, &card.Intent, &card.Stage, &card.Status,
-			&card.Owner, &card.Kind, &card.Under, &decisions, &card.Position, &created, &updated); err != nil {
+			&card.Owner, &card.Kind, &card.Under, &decisions, &card.MilestoneID, &card.Milestone, &card.Position, &created, &updated); err != nil {
 			_ = rows.Close()
 			return snapshot, err
 		}
@@ -47,6 +49,9 @@ func (s *Store) LoadWorkSnapshot(projectID string) (work.Snapshot, error) {
 		return snapshot, err
 	}
 	if snapshot.Repos, err = s.loadRepoNames(projectID); err != nil {
+		return snapshot, err
+	}
+	if snapshot.Milestones, err = s.ListMilestones(projectID); err != nil {
 		return snapshot, err
 	}
 	if snapshot.Decisions, err = s.loadDecisions(projectID); err != nil {
@@ -189,6 +194,7 @@ var workColumns = map[string]map[string]string{
 	work.EntityCard: {
 		"slug": "slug", "title": "title", "intent": "intent", "stage": "stage", "status": "status",
 		"owner": "owner", "kind": "kind", "under": "under", "decisions": "decisions_json", "position": "position",
+		"milestone": "milestone_id",
 	},
 	work.EntityTask: {
 		"number": "number", "title": "title", "state": "state", "repo": "repo", "scope": "scope", "position": "position",
@@ -293,6 +299,10 @@ func applyWorkOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 		v, err := columnValue(value)
 		if err != nil {
 			return err
+		}
+		// An empty milestone is the Backlog: NULL keeps the foreign key valid.
+		if column == "milestone_id" && v == "" {
+			v = nil
 		}
 		names = append(names, column)
 		values = append(values, v)

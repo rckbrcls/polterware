@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/polterware/polterware/backend/compositions/wedge"
-	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/inbox"
 	"github.com/polterware/polterware/backend/domains/integrations"
 	"github.com/polterware/polterware/backend/domains/projects"
+	"github.com/polterware/polterware/backend/domains/structure"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 

@@ -246,6 +246,10 @@ func QueryPolterScoped(store *storepkg.Store, projectID, text string, scope stru
 		return queryFeature(store, snapshot, query)
 	case polter.QueryCanvas:
 		return queryCanvas(store, projectID, query.Slug, scope)
+	case polter.QueryMilestones:
+		return polter.EncodeMilestones(snapshot), nil
+	case polter.QueryRoadmap:
+		return polter.EncodeRoadmap(snapshot), nil
 	case polter.QueryStructure:
 		project, err := store.GetProject(projectID)
 		if err != nil {

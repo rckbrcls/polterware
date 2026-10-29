@@ -90,7 +90,7 @@ func TestListChangesHidesWorkspaceLayoutWrites(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, tool := range []string{"desktop.canvas.update", "desktop.work.board.create", "polter.board.update", "desktop.knowledge.save"} {
+	for _, tool := range []string{"desktop.canvas.update", "desktop.work.milestone.archive", "desktop.knowledge.save"} {
 		if _, err := wedge.ExecuteAuditedWrite(
 			store,
 			wedge.ChangeEnvelope{Summary: tool, Rationale: "test", ProjectID: project.ID},
@@ -106,7 +106,8 @@ func TestListChangesHidesWorkspaceLayoutWrites(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(changes) != 1 || changes[0].Summary != "desktop.knowledge.save" {
+	// Milestone changes move cards, so they stay in the history.
+	if len(changes) != 2 || changes[0].Summary == "desktop.canvas.update" || changes[1].Summary == "desktop.canvas.update" {
 		t.Fatalf("changes: %+v", changes)
 	}
 }

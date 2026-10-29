@@ -104,15 +104,19 @@ type Card struct {
 	Status    string
 	Owner     string
 	// Kind is feature or architecture (a structural Structure change).
-	Kind       string
-	Under      string
-	Decisions  []string
-	Position   int
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	Tasks      []Task
-	Questions  []Question
-	Invariants []Invariant
+	Kind      string
+	Under     string
+	Decisions []string
+	// MilestoneID is the milestone the card ships in; empty is the Backlog.
+	// Milestone is that milestone's slug, as a milestone: line writes it.
+	MilestoneID string
+	Milestone   string
+	Position    int
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Tasks       []Task
+	Questions   []Question
+	Invariants  []Invariant
 	// Handoffs is ordered oldest first. The last row for a branch is current.
 	Handoffs []Handoff
 }
@@ -212,6 +216,9 @@ type Snapshot struct {
 	Decisions []decision.Decision
 	Facts     []Fact
 	Evidence  []canon.Evidence
+	// Milestones lists every milestone, archived ones included, so a card's
+	// stored milestone still resolves.
+	Milestones []Milestone
 }
 
 // Fact is a canon fact with its Polter identity, scope path and evidence links.
@@ -271,7 +278,7 @@ const (
 	EntityNode      = "node"
 	EntityDecision  = "decision"
 	EntityFact      = "fact"
-	EntityBoard     = "board"
+	EntityMilestone = "milestone"
 
 	OpCreate = "create"
 	OpUpdate = "update"

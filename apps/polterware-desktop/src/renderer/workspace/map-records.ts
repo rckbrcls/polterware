@@ -22,7 +22,7 @@ import type {
   StructureLevel,
   StructureStatus,
   WorkspaceWorkCard,
-  WorkspaceWorkBoard,
+  WorkspaceMilestone,
   WorkStage,
 } from "@polterware/feature-shell";
 import {
@@ -276,6 +276,7 @@ export function mapWorkCards(items: Record<string, unknown>[]): WorkspaceWorkCar
     owner: asString(item.owner),
     under: asString(item.under),
     decisions: asStringArray(item.decisions),
+    milestoneId: asString(item.milestoneId),
     updatedAt: formatInstant(asString(item.updatedAt)),
     tasks: asObjectArray(item.tasks).map((task) => {
       const state = asString(task.state);
@@ -516,12 +517,20 @@ function asSyncResult(value: string): WorkspaceIntegrationSyncRun["result"] {
   return "success";
 }
 
-export function mapWorkBoards(rows: Record<string, unknown>[]): WorkspaceWorkBoard[] {
-  return rows.map((row) => ({
-    id: asString(row.id),
-    projectId: asString(row.projectId),
-    name: asString(row.name),
-    position: asNumber(row.position),
-    configJson: asString(row.configJson),
-  }));
+export function mapMilestones(rows: Record<string, unknown>[]): WorkspaceMilestone[] {
+  return rows.map((row) => {
+    const state = asString(row.state);
+    return {
+      id: asString(row.id),
+      projectId: asString(row.projectId),
+      slug: asString(row.slug),
+      name: asString(row.name),
+      goal: asString(row.goal),
+      exitCriteria: asStringArray(row.exitCriteria),
+      targetDate: asString(row.targetDate),
+      state: state === "active" || state === "done" ? state : "planned",
+      position: asNumber(row.position),
+      archivedAt: asString(row.archivedAt),
+    };
+  });
 }

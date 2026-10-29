@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/polterware/polterware/backend/domains/agentrun"
-	"github.com/polterware/polterware/backend/domains/knowledge"
 	"github.com/polterware/polterware/backend/domains/canon"
+	"github.com/polterware/polterware/backend/domains/knowledge"
 )
 
 func (s *Server) factUpsert(args map[string]any) (string, error) {

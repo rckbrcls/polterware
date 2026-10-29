@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/canvas"
+	"github.com/polterware/polterware/backend/domains/structure"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 

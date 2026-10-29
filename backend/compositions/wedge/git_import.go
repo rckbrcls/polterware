@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/polter"
 	"github.com/polterware/polterware/backend/domains/canon"
+	"github.com/polterware/polterware/backend/domains/polter"
 	"github.com/polterware/polterware/backend/domains/work"
 	gitpkg "github.com/polterware/polterware/backend/providers/git"
 	"github.com/polterware/polterware/backend/providers/importer"

@@ -2,9 +2,11 @@ package sqlite
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -309,6 +311,65 @@ func TestStructureKindTechMigration(t *testing.T) {
 		if rows.Next() {
 			t.Fatal("foreign key violations after 0039")
 		}
+	}
+}
+
+func TestMilestonesMigration(t *testing.T) {
+	db, err := Open(filepath.Join(t.TempDir(), "milestones.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	migrateBefore(t, db, "0040")
+	for _, stmt := range []string{
+		`INSERT INTO projects(id,name,root_path,created_at,updated_at) VALUES('p','Project','/tmp','now','now')`,
+		`INSERT INTO work_boards(id,project_id,name,position,config_json,created_at,updated_at) VALUES('b1','p','Public Beta',0,'{"version":1}','now','now')`,
+		`INSERT INTO work_boards(id,project_id,name,position,config_json,created_at,updated_at) VALUES('b2','p','public beta',1,'{"version":1}','now','now')`,
+		`INSERT INTO work_cards(id,project_id,slug,title,created_at,updated_at) VALUES('c1','p','signup','Signup','now','now')`,
+		`INSERT INTO change_ops(id,project_id,batch_id,entity,entity_id,op,created_at) VALUES('o1','p','batch','board','b1','create','now')`,
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatal(err)
+		}
+	}
+	applyMigration(t, db, "0040_milestones.sql")
+	rows, err := db.Query(`SELECT id, slug, state, position FROM milestones ORDER BY position`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for rows.Next() {
+		var id, slug, state string
+		var position int
+		if err := rows.Scan(&id, &slug, &state, &position); err != nil {
+			t.Fatal(err)
+		}
+		got = append(got, fmt.Sprintf("%s=%s/%s/%d", id, slug, state, position))
+	}
+	rows.Close()
+	if strings.Join(got, " ") != "b1=public-beta/active/0 b2=public-beta-b2/active/1" {
+		t.Fatalf("milestones = %v", got)
+	}
+	var entity string
+	if err := db.QueryRow(`SELECT entity FROM change_ops WHERE id='o1'`).Scan(&entity); err != nil || entity != "milestone" {
+		t.Fatalf("board history = %q, err=%v", entity, err)
+	}
+	if _, err := db.Exec(`UPDATE work_cards SET milestone_id='b1' WHERE id='c1'`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`UPDATE work_cards SET milestone_id='missing' WHERE id='c1'`); err == nil {
+		t.Fatal("milestone_id must reference a milestone")
+	}
+	if _, err := db.Exec(`DELETE FROM milestones WHERE id='b1'`); err != nil {
+		t.Fatal(err)
+	}
+	var milestone sql.NullString
+	if err := db.QueryRow(`SELECT milestone_id FROM work_cards WHERE id='c1'`).Scan(&milestone); err != nil || milestone.Valid {
+		t.Fatalf("a deleted milestone leaves the card in the Backlog: %v, err=%v", milestone, err)
+	}
+	var tables int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE name='work_boards'`).Scan(&tables); err != nil || tables != 0 {
+		t.Fatalf("work_boards should be gone: %d, err=%v", tables, err)
 	}
 }
 

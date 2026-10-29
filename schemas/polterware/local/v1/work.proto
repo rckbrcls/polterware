@@ -49,6 +49,8 @@ message WorkCard {
   repeated WorkInvariant invariants = 14;
   // kind is "feature" or "architecture" (a structural Structure change).
   string kind = 15;
+  // milestone_id is the milestone the card ships in; empty is the Backlog.
+  string milestone_id = 16;
 }
 
 message PolterDiagnostic {
@@ -465,58 +467,76 @@ message VerifyFeatureResponse {
   repeated VerifyCheck checks = 3;
 }
 
-// WorkBoard is a saved view over the project's work cards. Cards keep the
-// stage lifecycle (shape, plan, build, verify, delivered). config_json is
-// opaque JSON the UI owns and must be an object with an integer version.
-// A project with no boards uses the implicit default view grouped by stage.
-message WorkBoard {
+// Milestone groups the cards that ship together. A card belongs to at most
+// one milestone (WorkCard.milestone_id); a card with none is in the Backlog.
+// More than one milestone may be active. The slug is what a card's
+// milestone: line names, and it never changes.
+message Milestone {
   string id = 1;
   string project_id = 2;
-  string name = 3;
-  int32 position = 4;
-  string config_json = 5;
-  string created_at = 6;
-  string updated_at = 7;
+  string slug = 3;
+  string name = 4;
+  string goal = 5;
+  repeated string exit_criteria = 6;
+  // target_date is YYYY-MM-DD or empty.
+  string target_date = 7;
+  // state is planned, active, or done.
+  string state = 8;
+  int32 position = 9;
+  // archived_at is empty while the milestone is listed.
+  string archived_at = 10;
+  string created_at = 11;
+  string updated_at = 12;
 }
 
-message ListWorkBoardsRequest { string project_id = 1; }
-message ListWorkBoardsResponse { repeated WorkBoard boards = 1; }
+// ListMilestones returns every milestone in position order, archived ones
+// included (archived_at set).
+message ListMilestonesRequest { string project_id = 1; }
+message ListMilestonesResponse { repeated Milestone milestones = 1; }
 
-// CreateWorkBoard appends a view. An empty config_json becomes {"version":1}.
-message CreateWorkBoardRequest {
+// CreateMilestone appends a milestone. An empty state is planned; the slug is
+// derived from the name.
+message CreateMilestoneRequest {
   string project_id = 1;
   string name = 2;
-  string config_json = 3;
-  ChangeEnvelope change = 4;
+  string goal = 3;
+  repeated string exit_criteria = 4;
+  string target_date = 5;
+  string state = 6;
+  ChangeEnvelope change = 7;
 }
-message CreateWorkBoardResponse { WorkBoard board = 1; }
+message CreateMilestoneResponse { Milestone milestone = 1; }
 
-// UpdateWorkBoard renames a board and/or replaces its config. An empty name
-// or config_json keeps the stored value. Position changes use ReorderWorkBoards.
-message UpdateWorkBoardRequest {
+// UpdateMilestone replaces name, goal, exit criteria, target date, and state.
+message UpdateMilestoneRequest {
   string project_id = 1;
   string id = 2;
   string name = 3;
-  string config_json = 4;
-  ChangeEnvelope change = 5;
+  string goal = 4;
+  repeated string exit_criteria = 5;
+  string target_date = 6;
+  string state = 7;
+  ChangeEnvelope change = 8;
 }
-message UpdateWorkBoardResponse { WorkBoard board = 1; }
+message UpdateMilestoneResponse { Milestone milestone = 1; }
 
-message DeleteWorkBoardRequest {
+// ArchiveMilestone archives or restores a milestone; its cards keep it.
+message ArchiveMilestoneRequest {
   string project_id = 1;
   string id = 2;
-  ChangeEnvelope change = 3;
+  bool archived = 3;
+  ChangeEnvelope change = 4;
 }
-message DeleteWorkBoardResponse {}
+message ArchiveMilestoneResponse { Milestone milestone = 1; }
 
-// ReorderWorkBoards sets positions from board_ids. The list must contain
-// each board of the project once.
-message ReorderWorkBoardsRequest {
+// ReorderMilestones sets positions from milestone_ids, which must list each
+// unarchived milestone once.
+message ReorderMilestonesRequest {
   string project_id = 1;
-  repeated string board_ids = 2;
+  repeated string milestone_ids = 2;
   ChangeEnvelope change = 3;
 }
-message ReorderWorkBoardsResponse { repeated WorkBoard boards = 1; }
+message ReorderMilestonesResponse { repeated Milestone milestones = 1; }
 
 service WorkService {
   rpc ListWorkCards(ListWorkCardsRequest) returns (ListWorkCardsResponse);
@@ -536,9 +556,9 @@ service WorkService {
   rpc CreateFeature(CreateFeatureRequest) returns (CreateFeatureResponse);
   rpc AdvanceFeature(AdvanceFeatureRequest) returns (AdvanceFeatureResponse);
   rpc VerifyFeature(VerifyFeatureRequest) returns (VerifyFeatureResponse);
-  rpc ListWorkBoards(ListWorkBoardsRequest) returns (ListWorkBoardsResponse);
-  rpc CreateWorkBoard(CreateWorkBoardRequest) returns (CreateWorkBoardResponse);
-  rpc UpdateWorkBoard(UpdateWorkBoardRequest) returns (UpdateWorkBoardResponse);
-  rpc DeleteWorkBoard(DeleteWorkBoardRequest) returns (DeleteWorkBoardResponse);
-  rpc ReorderWorkBoards(ReorderWorkBoardsRequest) returns (ReorderWorkBoardsResponse);
+  rpc ListMilestones(ListMilestonesRequest) returns (ListMilestonesResponse);
+  rpc CreateMilestone(CreateMilestoneRequest) returns (CreateMilestoneResponse);
+  rpc UpdateMilestone(UpdateMilestoneRequest) returns (UpdateMilestoneResponse);
+  rpc ArchiveMilestone(ArchiveMilestoneRequest) returns (ArchiveMilestoneResponse);
+  rpc ReorderMilestones(ReorderMilestonesRequest) returns (ReorderMilestonesResponse);
 }

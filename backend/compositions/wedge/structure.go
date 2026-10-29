@@ -1,8 +1,8 @@
 package wedge
 
 import (
-	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/drift"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )

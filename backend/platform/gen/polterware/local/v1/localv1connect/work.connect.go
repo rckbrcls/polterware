@@ -78,21 +78,21 @@ const (
 	// WorkServiceVerifyFeatureProcedure is the fully-qualified name of the WorkService's VerifyFeature
 	// RPC.
 	WorkServiceVerifyFeatureProcedure = "/polterware.local.v1.WorkService/VerifyFeature"
-	// WorkServiceListWorkBoardsProcedure is the fully-qualified name of the WorkService's
-	// ListWorkBoards RPC.
-	WorkServiceListWorkBoardsProcedure = "/polterware.local.v1.WorkService/ListWorkBoards"
-	// WorkServiceCreateWorkBoardProcedure is the fully-qualified name of the WorkService's
-	// CreateWorkBoard RPC.
-	WorkServiceCreateWorkBoardProcedure = "/polterware.local.v1.WorkService/CreateWorkBoard"
-	// WorkServiceUpdateWorkBoardProcedure is the fully-qualified name of the WorkService's
-	// UpdateWorkBoard RPC.
-	WorkServiceUpdateWorkBoardProcedure = "/polterware.local.v1.WorkService/UpdateWorkBoard"
-	// WorkServiceDeleteWorkBoardProcedure is the fully-qualified name of the WorkService's
-	// DeleteWorkBoard RPC.
-	WorkServiceDeleteWorkBoardProcedure = "/polterware.local.v1.WorkService/DeleteWorkBoard"
-	// WorkServiceReorderWorkBoardsProcedure is the fully-qualified name of the WorkService's
-	// ReorderWorkBoards RPC.
-	WorkServiceReorderWorkBoardsProcedure = "/polterware.local.v1.WorkService/ReorderWorkBoards"
+	// WorkServiceListMilestonesProcedure is the fully-qualified name of the WorkService's
+	// ListMilestones RPC.
+	WorkServiceListMilestonesProcedure = "/polterware.local.v1.WorkService/ListMilestones"
+	// WorkServiceCreateMilestoneProcedure is the fully-qualified name of the WorkService's
+	// CreateMilestone RPC.
+	WorkServiceCreateMilestoneProcedure = "/polterware.local.v1.WorkService/CreateMilestone"
+	// WorkServiceUpdateMilestoneProcedure is the fully-qualified name of the WorkService's
+	// UpdateMilestone RPC.
+	WorkServiceUpdateMilestoneProcedure = "/polterware.local.v1.WorkService/UpdateMilestone"
+	// WorkServiceArchiveMilestoneProcedure is the fully-qualified name of the WorkService's
+	// ArchiveMilestone RPC.
+	WorkServiceArchiveMilestoneProcedure = "/polterware.local.v1.WorkService/ArchiveMilestone"
+	// WorkServiceReorderMilestonesProcedure is the fully-qualified name of the WorkService's
+	// ReorderMilestones RPC.
+	WorkServiceReorderMilestonesProcedure = "/polterware.local.v1.WorkService/ReorderMilestones"
 )
 
 // WorkServiceClient is a client for the polterware.local.v1.WorkService service.
@@ -114,11 +114,11 @@ type WorkServiceClient interface {
 	CreateFeature(context.Context, *connect.Request[v1.CreateFeatureRequest]) (*connect.Response[v1.CreateFeatureResponse], error)
 	AdvanceFeature(context.Context, *connect.Request[v1.AdvanceFeatureRequest]) (*connect.Response[v1.AdvanceFeatureResponse], error)
 	VerifyFeature(context.Context, *connect.Request[v1.VerifyFeatureRequest]) (*connect.Response[v1.VerifyFeatureResponse], error)
-	ListWorkBoards(context.Context, *connect.Request[v1.ListWorkBoardsRequest]) (*connect.Response[v1.ListWorkBoardsResponse], error)
-	CreateWorkBoard(context.Context, *connect.Request[v1.CreateWorkBoardRequest]) (*connect.Response[v1.CreateWorkBoardResponse], error)
-	UpdateWorkBoard(context.Context, *connect.Request[v1.UpdateWorkBoardRequest]) (*connect.Response[v1.UpdateWorkBoardResponse], error)
-	DeleteWorkBoard(context.Context, *connect.Request[v1.DeleteWorkBoardRequest]) (*connect.Response[v1.DeleteWorkBoardResponse], error)
-	ReorderWorkBoards(context.Context, *connect.Request[v1.ReorderWorkBoardsRequest]) (*connect.Response[v1.ReorderWorkBoardsResponse], error)
+	ListMilestones(context.Context, *connect.Request[v1.ListMilestonesRequest]) (*connect.Response[v1.ListMilestonesResponse], error)
+	CreateMilestone(context.Context, *connect.Request[v1.CreateMilestoneRequest]) (*connect.Response[v1.CreateMilestoneResponse], error)
+	UpdateMilestone(context.Context, *connect.Request[v1.UpdateMilestoneRequest]) (*connect.Response[v1.UpdateMilestoneResponse], error)
+	ArchiveMilestone(context.Context, *connect.Request[v1.ArchiveMilestoneRequest]) (*connect.Response[v1.ArchiveMilestoneResponse], error)
+	ReorderMilestones(context.Context, *connect.Request[v1.ReorderMilestonesRequest]) (*connect.Response[v1.ReorderMilestonesResponse], error)
 }
 
 // NewWorkServiceClient constructs a client for the polterware.local.v1.WorkService service. By
@@ -234,34 +234,34 @@ func NewWorkServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(workServiceMethods.ByName("VerifyFeature")),
 			connect.WithClientOptions(opts...),
 		),
-		listWorkBoards: connect.NewClient[v1.ListWorkBoardsRequest, v1.ListWorkBoardsResponse](
+		listMilestones: connect.NewClient[v1.ListMilestonesRequest, v1.ListMilestonesResponse](
 			httpClient,
-			baseURL+WorkServiceListWorkBoardsProcedure,
-			connect.WithSchema(workServiceMethods.ByName("ListWorkBoards")),
+			baseURL+WorkServiceListMilestonesProcedure,
+			connect.WithSchema(workServiceMethods.ByName("ListMilestones")),
 			connect.WithClientOptions(opts...),
 		),
-		createWorkBoard: connect.NewClient[v1.CreateWorkBoardRequest, v1.CreateWorkBoardResponse](
+		createMilestone: connect.NewClient[v1.CreateMilestoneRequest, v1.CreateMilestoneResponse](
 			httpClient,
-			baseURL+WorkServiceCreateWorkBoardProcedure,
-			connect.WithSchema(workServiceMethods.ByName("CreateWorkBoard")),
+			baseURL+WorkServiceCreateMilestoneProcedure,
+			connect.WithSchema(workServiceMethods.ByName("CreateMilestone")),
 			connect.WithClientOptions(opts...),
 		),
-		updateWorkBoard: connect.NewClient[v1.UpdateWorkBoardRequest, v1.UpdateWorkBoardResponse](
+		updateMilestone: connect.NewClient[v1.UpdateMilestoneRequest, v1.UpdateMilestoneResponse](
 			httpClient,
-			baseURL+WorkServiceUpdateWorkBoardProcedure,
-			connect.WithSchema(workServiceMethods.ByName("UpdateWorkBoard")),
+			baseURL+WorkServiceUpdateMilestoneProcedure,
+			connect.WithSchema(workServiceMethods.ByName("UpdateMilestone")),
 			connect.WithClientOptions(opts...),
 		),
-		deleteWorkBoard: connect.NewClient[v1.DeleteWorkBoardRequest, v1.DeleteWorkBoardResponse](
+		archiveMilestone: connect.NewClient[v1.ArchiveMilestoneRequest, v1.ArchiveMilestoneResponse](
 			httpClient,
-			baseURL+WorkServiceDeleteWorkBoardProcedure,
-			connect.WithSchema(workServiceMethods.ByName("DeleteWorkBoard")),
+			baseURL+WorkServiceArchiveMilestoneProcedure,
+			connect.WithSchema(workServiceMethods.ByName("ArchiveMilestone")),
 			connect.WithClientOptions(opts...),
 		),
-		reorderWorkBoards: connect.NewClient[v1.ReorderWorkBoardsRequest, v1.ReorderWorkBoardsResponse](
+		reorderMilestones: connect.NewClient[v1.ReorderMilestonesRequest, v1.ReorderMilestonesResponse](
 			httpClient,
-			baseURL+WorkServiceReorderWorkBoardsProcedure,
-			connect.WithSchema(workServiceMethods.ByName("ReorderWorkBoards")),
+			baseURL+WorkServiceReorderMilestonesProcedure,
+			connect.WithSchema(workServiceMethods.ByName("ReorderMilestones")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -286,11 +286,11 @@ type workServiceClient struct {
 	createFeature        *connect.Client[v1.CreateFeatureRequest, v1.CreateFeatureResponse]
 	advanceFeature       *connect.Client[v1.AdvanceFeatureRequest, v1.AdvanceFeatureResponse]
 	verifyFeature        *connect.Client[v1.VerifyFeatureRequest, v1.VerifyFeatureResponse]
-	listWorkBoards       *connect.Client[v1.ListWorkBoardsRequest, v1.ListWorkBoardsResponse]
-	createWorkBoard      *connect.Client[v1.CreateWorkBoardRequest, v1.CreateWorkBoardResponse]
-	updateWorkBoard      *connect.Client[v1.UpdateWorkBoardRequest, v1.UpdateWorkBoardResponse]
-	deleteWorkBoard      *connect.Client[v1.DeleteWorkBoardRequest, v1.DeleteWorkBoardResponse]
-	reorderWorkBoards    *connect.Client[v1.ReorderWorkBoardsRequest, v1.ReorderWorkBoardsResponse]
+	listMilestones       *connect.Client[v1.ListMilestonesRequest, v1.ListMilestonesResponse]
+	createMilestone      *connect.Client[v1.CreateMilestoneRequest, v1.CreateMilestoneResponse]
+	updateMilestone      *connect.Client[v1.UpdateMilestoneRequest, v1.UpdateMilestoneResponse]
+	archiveMilestone     *connect.Client[v1.ArchiveMilestoneRequest, v1.ArchiveMilestoneResponse]
+	reorderMilestones    *connect.Client[v1.ReorderMilestonesRequest, v1.ReorderMilestonesResponse]
 }
 
 // ListWorkCards calls polterware.local.v1.WorkService.ListWorkCards.
@@ -378,29 +378,29 @@ func (c *workServiceClient) VerifyFeature(ctx context.Context, req *connect.Requ
 	return c.verifyFeature.CallUnary(ctx, req)
 }
 
-// ListWorkBoards calls polterware.local.v1.WorkService.ListWorkBoards.
-func (c *workServiceClient) ListWorkBoards(ctx context.Context, req *connect.Request[v1.ListWorkBoardsRequest]) (*connect.Response[v1.ListWorkBoardsResponse], error) {
-	return c.listWorkBoards.CallUnary(ctx, req)
+// ListMilestones calls polterware.local.v1.WorkService.ListMilestones.
+func (c *workServiceClient) ListMilestones(ctx context.Context, req *connect.Request[v1.ListMilestonesRequest]) (*connect.Response[v1.ListMilestonesResponse], error) {
+	return c.listMilestones.CallUnary(ctx, req)
 }
 
-// CreateWorkBoard calls polterware.local.v1.WorkService.CreateWorkBoard.
-func (c *workServiceClient) CreateWorkBoard(ctx context.Context, req *connect.Request[v1.CreateWorkBoardRequest]) (*connect.Response[v1.CreateWorkBoardResponse], error) {
-	return c.createWorkBoard.CallUnary(ctx, req)
+// CreateMilestone calls polterware.local.v1.WorkService.CreateMilestone.
+func (c *workServiceClient) CreateMilestone(ctx context.Context, req *connect.Request[v1.CreateMilestoneRequest]) (*connect.Response[v1.CreateMilestoneResponse], error) {
+	return c.createMilestone.CallUnary(ctx, req)
 }
 
-// UpdateWorkBoard calls polterware.local.v1.WorkService.UpdateWorkBoard.
-func (c *workServiceClient) UpdateWorkBoard(ctx context.Context, req *connect.Request[v1.UpdateWorkBoardRequest]) (*connect.Response[v1.UpdateWorkBoardResponse], error) {
-	return c.updateWorkBoard.CallUnary(ctx, req)
+// UpdateMilestone calls polterware.local.v1.WorkService.UpdateMilestone.
+func (c *workServiceClient) UpdateMilestone(ctx context.Context, req *connect.Request[v1.UpdateMilestoneRequest]) (*connect.Response[v1.UpdateMilestoneResponse], error) {
+	return c.updateMilestone.CallUnary(ctx, req)
 }
 
-// DeleteWorkBoard calls polterware.local.v1.WorkService.DeleteWorkBoard.
-func (c *workServiceClient) DeleteWorkBoard(ctx context.Context, req *connect.Request[v1.DeleteWorkBoardRequest]) (*connect.Response[v1.DeleteWorkBoardResponse], error) {
-	return c.deleteWorkBoard.CallUnary(ctx, req)
+// ArchiveMilestone calls polterware.local.v1.WorkService.ArchiveMilestone.
+func (c *workServiceClient) ArchiveMilestone(ctx context.Context, req *connect.Request[v1.ArchiveMilestoneRequest]) (*connect.Response[v1.ArchiveMilestoneResponse], error) {
+	return c.archiveMilestone.CallUnary(ctx, req)
 }
 
-// ReorderWorkBoards calls polterware.local.v1.WorkService.ReorderWorkBoards.
-func (c *workServiceClient) ReorderWorkBoards(ctx context.Context, req *connect.Request[v1.ReorderWorkBoardsRequest]) (*connect.Response[v1.ReorderWorkBoardsResponse], error) {
-	return c.reorderWorkBoards.CallUnary(ctx, req)
+// ReorderMilestones calls polterware.local.v1.WorkService.ReorderMilestones.
+func (c *workServiceClient) ReorderMilestones(ctx context.Context, req *connect.Request[v1.ReorderMilestonesRequest]) (*connect.Response[v1.ReorderMilestonesResponse], error) {
+	return c.reorderMilestones.CallUnary(ctx, req)
 }
 
 // WorkServiceHandler is an implementation of the polterware.local.v1.WorkService service.
@@ -422,11 +422,11 @@ type WorkServiceHandler interface {
 	CreateFeature(context.Context, *connect.Request[v1.CreateFeatureRequest]) (*connect.Response[v1.CreateFeatureResponse], error)
 	AdvanceFeature(context.Context, *connect.Request[v1.AdvanceFeatureRequest]) (*connect.Response[v1.AdvanceFeatureResponse], error)
 	VerifyFeature(context.Context, *connect.Request[v1.VerifyFeatureRequest]) (*connect.Response[v1.VerifyFeatureResponse], error)
-	ListWorkBoards(context.Context, *connect.Request[v1.ListWorkBoardsRequest]) (*connect.Response[v1.ListWorkBoardsResponse], error)
-	CreateWorkBoard(context.Context, *connect.Request[v1.CreateWorkBoardRequest]) (*connect.Response[v1.CreateWorkBoardResponse], error)
-	UpdateWorkBoard(context.Context, *connect.Request[v1.UpdateWorkBoardRequest]) (*connect.Response[v1.UpdateWorkBoardResponse], error)
-	DeleteWorkBoard(context.Context, *connect.Request[v1.DeleteWorkBoardRequest]) (*connect.Response[v1.DeleteWorkBoardResponse], error)
-	ReorderWorkBoards(context.Context, *connect.Request[v1.ReorderWorkBoardsRequest]) (*connect.Response[v1.ReorderWorkBoardsResponse], error)
+	ListMilestones(context.Context, *connect.Request[v1.ListMilestonesRequest]) (*connect.Response[v1.ListMilestonesResponse], error)
+	CreateMilestone(context.Context, *connect.Request[v1.CreateMilestoneRequest]) (*connect.Response[v1.CreateMilestoneResponse], error)
+	UpdateMilestone(context.Context, *connect.Request[v1.UpdateMilestoneRequest]) (*connect.Response[v1.UpdateMilestoneResponse], error)
+	ArchiveMilestone(context.Context, *connect.Request[v1.ArchiveMilestoneRequest]) (*connect.Response[v1.ArchiveMilestoneResponse], error)
+	ReorderMilestones(context.Context, *connect.Request[v1.ReorderMilestonesRequest]) (*connect.Response[v1.ReorderMilestonesResponse], error)
 }
 
 // NewWorkServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -538,34 +538,34 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(workServiceMethods.ByName("VerifyFeature")),
 		connect.WithHandlerOptions(opts...),
 	)
-	workServiceListWorkBoardsHandler := connect.NewUnaryHandler(
-		WorkServiceListWorkBoardsProcedure,
-		svc.ListWorkBoards,
-		connect.WithSchema(workServiceMethods.ByName("ListWorkBoards")),
+	workServiceListMilestonesHandler := connect.NewUnaryHandler(
+		WorkServiceListMilestonesProcedure,
+		svc.ListMilestones,
+		connect.WithSchema(workServiceMethods.ByName("ListMilestones")),
 		connect.WithHandlerOptions(opts...),
 	)
-	workServiceCreateWorkBoardHandler := connect.NewUnaryHandler(
-		WorkServiceCreateWorkBoardProcedure,
-		svc.CreateWorkBoard,
-		connect.WithSchema(workServiceMethods.ByName("CreateWorkBoard")),
+	workServiceCreateMilestoneHandler := connect.NewUnaryHandler(
+		WorkServiceCreateMilestoneProcedure,
+		svc.CreateMilestone,
+		connect.WithSchema(workServiceMethods.ByName("CreateMilestone")),
 		connect.WithHandlerOptions(opts...),
 	)
-	workServiceUpdateWorkBoardHandler := connect.NewUnaryHandler(
-		WorkServiceUpdateWorkBoardProcedure,
-		svc.UpdateWorkBoard,
-		connect.WithSchema(workServiceMethods.ByName("UpdateWorkBoard")),
+	workServiceUpdateMilestoneHandler := connect.NewUnaryHandler(
+		WorkServiceUpdateMilestoneProcedure,
+		svc.UpdateMilestone,
+		connect.WithSchema(workServiceMethods.ByName("UpdateMilestone")),
 		connect.WithHandlerOptions(opts...),
 	)
-	workServiceDeleteWorkBoardHandler := connect.NewUnaryHandler(
-		WorkServiceDeleteWorkBoardProcedure,
-		svc.DeleteWorkBoard,
-		connect.WithSchema(workServiceMethods.ByName("DeleteWorkBoard")),
+	workServiceArchiveMilestoneHandler := connect.NewUnaryHandler(
+		WorkServiceArchiveMilestoneProcedure,
+		svc.ArchiveMilestone,
+		connect.WithSchema(workServiceMethods.ByName("ArchiveMilestone")),
 		connect.WithHandlerOptions(opts...),
 	)
-	workServiceReorderWorkBoardsHandler := connect.NewUnaryHandler(
-		WorkServiceReorderWorkBoardsProcedure,
-		svc.ReorderWorkBoards,
-		connect.WithSchema(workServiceMethods.ByName("ReorderWorkBoards")),
+	workServiceReorderMilestonesHandler := connect.NewUnaryHandler(
+		WorkServiceReorderMilestonesProcedure,
+		svc.ReorderMilestones,
+		connect.WithSchema(workServiceMethods.ByName("ReorderMilestones")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/polterware.local.v1.WorkService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -604,16 +604,16 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 			workServiceAdvanceFeatureHandler.ServeHTTP(w, r)
 		case WorkServiceVerifyFeatureProcedure:
 			workServiceVerifyFeatureHandler.ServeHTTP(w, r)
-		case WorkServiceListWorkBoardsProcedure:
-			workServiceListWorkBoardsHandler.ServeHTTP(w, r)
-		case WorkServiceCreateWorkBoardProcedure:
-			workServiceCreateWorkBoardHandler.ServeHTTP(w, r)
-		case WorkServiceUpdateWorkBoardProcedure:
-			workServiceUpdateWorkBoardHandler.ServeHTTP(w, r)
-		case WorkServiceDeleteWorkBoardProcedure:
-			workServiceDeleteWorkBoardHandler.ServeHTTP(w, r)
-		case WorkServiceReorderWorkBoardsProcedure:
-			workServiceReorderWorkBoardsHandler.ServeHTTP(w, r)
+		case WorkServiceListMilestonesProcedure:
+			workServiceListMilestonesHandler.ServeHTTP(w, r)
+		case WorkServiceCreateMilestoneProcedure:
+			workServiceCreateMilestoneHandler.ServeHTTP(w, r)
+		case WorkServiceUpdateMilestoneProcedure:
+			workServiceUpdateMilestoneHandler.ServeHTTP(w, r)
+		case WorkServiceArchiveMilestoneProcedure:
+			workServiceArchiveMilestoneHandler.ServeHTTP(w, r)
+		case WorkServiceReorderMilestonesProcedure:
+			workServiceReorderMilestonesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -691,22 +691,22 @@ func (UnimplementedWorkServiceHandler) VerifyFeature(context.Context, *connect.R
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.VerifyFeature is not implemented"))
 }
 
-func (UnimplementedWorkServiceHandler) ListWorkBoards(context.Context, *connect.Request[v1.ListWorkBoardsRequest]) (*connect.Response[v1.ListWorkBoardsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ListWorkBoards is not implemented"))
+func (UnimplementedWorkServiceHandler) ListMilestones(context.Context, *connect.Request[v1.ListMilestonesRequest]) (*connect.Response[v1.ListMilestonesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ListMilestones is not implemented"))
 }
 
-func (UnimplementedWorkServiceHandler) CreateWorkBoard(context.Context, *connect.Request[v1.CreateWorkBoardRequest]) (*connect.Response[v1.CreateWorkBoardResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.CreateWorkBoard is not implemented"))
+func (UnimplementedWorkServiceHandler) CreateMilestone(context.Context, *connect.Request[v1.CreateMilestoneRequest]) (*connect.Response[v1.CreateMilestoneResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.CreateMilestone is not implemented"))
 }
 
-func (UnimplementedWorkServiceHandler) UpdateWorkBoard(context.Context, *connect.Request[v1.UpdateWorkBoardRequest]) (*connect.Response[v1.UpdateWorkBoardResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.UpdateWorkBoard is not implemented"))
+func (UnimplementedWorkServiceHandler) UpdateMilestone(context.Context, *connect.Request[v1.UpdateMilestoneRequest]) (*connect.Response[v1.UpdateMilestoneResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.UpdateMilestone is not implemented"))
 }
 
-func (UnimplementedWorkServiceHandler) DeleteWorkBoard(context.Context, *connect.Request[v1.DeleteWorkBoardRequest]) (*connect.Response[v1.DeleteWorkBoardResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.DeleteWorkBoard is not implemented"))
+func (UnimplementedWorkServiceHandler) ArchiveMilestone(context.Context, *connect.Request[v1.ArchiveMilestoneRequest]) (*connect.Response[v1.ArchiveMilestoneResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ArchiveMilestone is not implemented"))
 }
 
-func (UnimplementedWorkServiceHandler) ReorderWorkBoards(context.Context, *connect.Request[v1.ReorderWorkBoardsRequest]) (*connect.Response[v1.ReorderWorkBoardsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ReorderWorkBoards is not implemented"))
+func (UnimplementedWorkServiceHandler) ReorderMilestones(context.Context, *connect.Request[v1.ReorderMilestonesRequest]) (*connect.Response[v1.ReorderMilestonesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ReorderMilestones is not implemented"))
 }

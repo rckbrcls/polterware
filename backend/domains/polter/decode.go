@@ -193,7 +193,7 @@ type InvariantNode struct {
 }
 
 // MetaKeys are the card metadata keys grammar v1 accepts.
-var MetaKeys = []string{"stage", "owner", "under", "decisions", "status", "kind"}
+var MetaKeys = []string{"stage", "owner", "under", "milestone", "decisions", "status", "kind"}
 
 // NodeMetaKeys are the Structure node metadata keys. repo: names a registered
 // checkout (empty is the project root); path: is a folder inside it. kind: is
@@ -479,6 +479,11 @@ func (d *decoder) meta(n int, line string) {
 			value = strings.ToLower(value)
 			if !work.ValidKind(value) {
 				d.errorf(n, "unknown kind %q: use %s|%s", value, work.KindFeature, work.KindArchitecture)
+			}
+		case "milestone":
+			value = strings.ToLower(value)
+			if value != "" && !work.ValidSlug(value) {
+				d.errorf(n, "invalid milestone %q: use a milestone slug from polterware query milestones", value)
 			}
 		case "owner", "under", "decisions":
 		default:

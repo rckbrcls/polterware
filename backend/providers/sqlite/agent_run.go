@@ -217,9 +217,9 @@ func (s *Store) ListAllChanges(projectID, actorKind string) ([]ChangeRow, error)
 }
 
 // historyHiddenTools are write tools whose change steps stay audited (change_ops
-// keep the run) but are left out of the history: canvas edits and board views
-// are workspace layout, not project truth, and every autosave would add a row.
-var historyHiddenTools = []string{"desktop.canvas.%", "desktop.work.board.%", "polter.board.%"}
+// keep the run) but are left out of the history: canvas edits are workspace
+// layout, not project truth, and every autosave would add a row.
+var historyHiddenTools = []string{"desktop.canvas.%"}
 
 func (s *Store) queryChanges(projectID, actorKind string, limit int) ([]ChangeRow, error) {
 	query := `

@@ -43,7 +43,7 @@ import {
 } from "@polterware/feature-shell";
 import { StructureView, STRUCTURE_SCOPE, filterStructureNodes } from "@polterware/feature-architecture";
 import { CanvasWorkspace } from "./canvas-workspace";
-import type { WorkBoardAction } from "@polterware/feature-knowledge";
+import type { MilestoneAction } from "@polterware/feature-knowledge";
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
 import { hydrateAppearancePreferences, hydrateShortcutPreferences, settingsTabScope } from "@polterware/feature-settings/boot";
 import type { ProjectSettingsPageId } from "@polterware/feature-settings";
@@ -82,7 +82,7 @@ import {
   emptyWorkspace,
   loadProjects,
   loadWorkCards,
-  loadWorkBoards,
+  loadMilestones,
   loadStructure,
   loadCanonEvidence,
   loadChanges,
@@ -123,10 +123,10 @@ import {
   persistDecisionAction,
   persistWorkCreateCard,
   persistWorkRestoreCard,
-  persistWorkBoardCreate,
-  persistWorkBoardRename,
-  persistWorkBoardDelete,
-  persistWorkBoardsReorder,
+  persistMilestoneCreate,
+  persistMilestoneRename,
+  persistMilestoneArchive,
+  persistMilestonesReorder,
   persistFeatureAdvance,
   persistFeatureCreate,
   persistFeatureLine,
@@ -372,14 +372,14 @@ export function App() {
         setWorkspace((current) => ({ ...current, ...extensions, extensionsReady: true }));
       },
       refreshWork: async (projectId) => {
-        const [workCards, structure, inbox, workBoards] = await Promise.all([
+        const [workCards, structure, inbox, milestones] = await Promise.all([
           loadWorkCards(projectId),
           loadStructure(projectId),
           loadInbox(projectId),
-          loadWorkBoards(projectId),
+          loadMilestones(projectId),
         ]);
         if (currentProjectId() !== projectId) return;
-        setWorkspace((current) => ({ ...current, workCards, structure, inbox, workBoards }));
+        setWorkspace((current) => ({ ...current, workCards, structure, inbox, milestones }));
       },
       onError: (error) => {
         console.warn("Live refresh failed.", error);
@@ -663,7 +663,7 @@ export function App() {
   const cardScopeId = () =>
     route().section === "work" && route().tab === "board" ? "knowledge:board" : "knowledge:specs";
 
-  function createWorkCard(title: string, stage?: "shape" | "plan" | "build" | "verify" | "delivered") {
+  function createWorkCard(title: string, stage?: "shape" | "plan" | "build" | "verify" | "delivered", milestone?: string) {
     void justifyChange({
       title: "Justify create card",
       defaultSummary: `Create card: ${title}`,
@@ -673,6 +673,7 @@ export function App() {
         workspace: workspace(),
         projectId: currentProjectId(),
         title,
+        milestone,
         change,
       }).then(async (slug) => {
         if (stage && stage !== "shape") await persistWorkSetStage(currentProjectId(), slug, stage, change);
@@ -745,26 +746,30 @@ export function App() {
     }
   }
 
-  async function changeWorkBoard(action: WorkBoardAction): Promise<string | null> {
+  async function changeMilestone(action: MilestoneAction): Promise<string | null> {
     const projectId = currentProjectId();
-    const board = action.kind === "create" ? undefined : workspace().workBoards.find((item) => item.id === action.id);
-    if (action.kind !== "create" && !board) throw new Error("This board is no longer available.");
-    const summary = action.kind === "create" ? `Create board: ${action.name}`
-      : action.kind === "rename" ? `Rename board: ${board?.name} to ${action.name}`
-      : action.kind === "delete" ? `Delete board: ${board?.name}` : "Reorder Work boards";
-    const change = await justifyChange({ title: "Change Work board", defaultSummary: summary });
+    const milestone = action.kind === "create" ? undefined : workspace().milestones.find((item) => item.id === action.id);
+    if (action.kind !== "create" && !milestone) throw new Error("This milestone is no longer available.");
+    const summary = action.kind === "create" ? `Create milestone: ${action.name}`
+      : action.kind === "rename" ? `Rename milestone: ${milestone?.name} to ${action.name}`
+      : action.kind === "archive" ? `Archive milestone: ${milestone?.name}` : "Reorder milestones";
+    const change = await justifyChange({ title: "Change milestone", defaultSummary: summary });
     if (!change) return null;
     let selectedId = action.kind === "create" ? "" : action.id;
     switch (action.kind) {
-      case "create": selectedId = await persistWorkBoardCreate(projectId, action.name, change); break;
-      case "rename": await persistWorkBoardRename(projectId, action.id, action.name, change); break;
-      case "delete": await persistWorkBoardDelete(projectId, action.id, change); selectedId = ""; break;
-      case "reorder": await persistWorkBoardsReorder(projectId, action.boardIds, change); break;
+      case "create": selectedId = await persistMilestoneCreate(projectId, action.name, change); break;
+      case "rename": await persistMilestoneRename(projectId, milestone!, action.name, change); break;
+      case "archive": await persistMilestoneArchive(projectId, action.id, true, change); selectedId = ""; break;
+      case "reorder": await persistMilestonesReorder(projectId, action.milestoneIds, change); break;
     }
-    const workBoards = await loadWorkBoards(projectId);
+    // Archiving moves the milestone's cards to the Backlog, so the cards reload too.
+    const [milestones, workCards] = await Promise.all([
+      loadMilestones(projectId),
+      action.kind === "archive" ? loadWorkCards(projectId) : undefined,
+    ]);
     if (currentProjectId() !== projectId) return null;
-    setWorkspace((current) => ({ ...current, workBoards }));
-    pushToast("Board changes saved locally.", "success");
+    setWorkspace((current) => ({ ...current, milestones, ...(workCards ? { workCards } : {}) }));
+    pushToast(action.kind === "archive" ? `Archived ${milestone?.name}; its cards are in the Backlog.` : "Milestone saved locally.", "success");
     return selectedId;
   }
 
@@ -780,9 +785,9 @@ export function App() {
         decisions={workspace().decisions}
         docs={workspace().docs}
         workCards={workspace().workCards}
-        workBoards={workspace().workBoards}
+        milestones={workspace().milestones}
         boardProjectId={currentProjectId()}
-        onBoardAction={changeWorkBoard}
+        onMilestoneAction={changeMilestone}
         entities={workspace().canonEntities}
         tab={surface.tab}
         tabs={surface.tabs}
@@ -1013,7 +1018,7 @@ export function App() {
             .finally(() => setImportSourcesBusy(false));
         }}
         importBusy={importSourcesBusy()}
-        onCreateCard={(title, stage) => createWorkCard(title, stage)}
+        onCreateCard={(title, stage, milestone) => createWorkCard(title, stage, milestone)}
         onNewFeature={openFeatureFlow}
         onContinueFeature={continueFeatureFlow}
         onArchive={(id) => {

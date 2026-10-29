@@ -3,8 +3,8 @@ package wedge
 import (
 	"context"
 
-	"github.com/polterware/polterware/backend/domains/drift"
 	"github.com/polterware/polterware/backend/domains/canon"
+	"github.com/polterware/polterware/backend/domains/drift"
 	"github.com/polterware/polterware/backend/domains/work"
 	gitpkg "github.com/polterware/polterware/backend/providers/git"
 	"github.com/polterware/polterware/backend/providers/importer"

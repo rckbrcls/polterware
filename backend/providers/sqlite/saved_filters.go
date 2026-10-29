@@ -82,7 +82,7 @@ func (s *Store) DeleteSavedFilter(id string) error {
 	return nil
 }
 
-func querySavedFilters(q boardQuery, projectID, surface string) ([]filters.SavedFilter, error) {
+func querySavedFilters(q milestoneQuery, projectID, surface string) ([]filters.SavedFilter, error) {
 	rows, err := q.Query(`SELECT id,COALESCE(project_id,''),surface,name,payload_json,position,created_at,updated_at
 		FROM saved_filters WHERE COALESCE(project_id,'')=? AND surface=? ORDER BY position, name`, projectID, surface)
 	if err != nil {

@@ -263,7 +263,9 @@ type WorkCard struct {
 	Questions  []*WorkQuestion  `protobuf:"bytes,13,rep,name=questions,proto3" json:"questions,omitempty"`
 	Invariants []*WorkInvariant `protobuf:"bytes,14,rep,name=invariants,proto3" json:"invariants,omitempty"`
 	// kind is "feature" or "architecture" (a structural Structure change).
-	Kind          string `protobuf:"bytes,15,opt,name=kind,proto3" json:"kind,omitempty"`
+	Kind string `protobuf:"bytes,15,opt,name=kind,proto3" json:"kind,omitempty"`
+	// milestone_id is the milestone the card ships in; empty is the Backlog.
+	MilestoneId   string `protobuf:"bytes,16,opt,name=milestone_id,json=milestoneId,proto3" json:"milestone_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -399,6 +401,13 @@ func (x *WorkCard) GetInvariants() []*WorkInvariant {
 func (x *WorkCard) GetKind() string {
 	if x != nil {
 		return x.Kind
+	}
+	return ""
+}
+
+func (x *WorkCard) GetMilestoneId() string {
+	if x != nil {
+		return x.MilestoneId
 	}
 	return ""
 }
@@ -4000,37 +4009,45 @@ func (x *VerifyFeatureResponse) GetChecks() []*VerifyCheck {
 	return nil
 }
 
-// WorkBoard is a saved view over the project's work cards. Cards keep the
-// stage lifecycle (shape, plan, build, verify, delivered). config_json is
-// opaque JSON the UI owns and must be an object with an integer version.
-// A project with no boards uses the implicit default view grouped by stage.
-type WorkBoard struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ProjectId     string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Position      int32                  `protobuf:"varint,4,opt,name=position,proto3" json:"position,omitempty"`
-	ConfigJson    string                 `protobuf:"bytes,5,opt,name=config_json,json=configJson,proto3" json:"config_json,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     string                 `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+// Milestone groups the cards that ship together. A card belongs to at most
+// one milestone (WorkCard.milestone_id); a card with none is in the Backlog.
+// More than one milestone may be active. The slug is what a card's
+// milestone: line names, and it never changes.
+type Milestone struct {
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Id           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ProjectId    string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Slug         string                 `protobuf:"bytes,3,opt,name=slug,proto3" json:"slug,omitempty"`
+	Name         string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	Goal         string                 `protobuf:"bytes,5,opt,name=goal,proto3" json:"goal,omitempty"`
+	ExitCriteria []string               `protobuf:"bytes,6,rep,name=exit_criteria,json=exitCriteria,proto3" json:"exit_criteria,omitempty"`
+	// target_date is YYYY-MM-DD or empty.
+	TargetDate string `protobuf:"bytes,7,opt,name=target_date,json=targetDate,proto3" json:"target_date,omitempty"`
+	// state is planned, active, or done.
+	State    string `protobuf:"bytes,8,opt,name=state,proto3" json:"state,omitempty"`
+	Position int32  `protobuf:"varint,9,opt,name=position,proto3" json:"position,omitempty"`
+	// archived_at is empty while the milestone is listed.
+	ArchivedAt    string `protobuf:"bytes,10,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
+	CreatedAt     string `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     string `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *WorkBoard) Reset() {
-	*x = WorkBoard{}
+func (x *Milestone) Reset() {
+	*x = Milestone{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *WorkBoard) String() string {
+func (x *Milestone) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*WorkBoard) ProtoMessage() {}
+func (*Milestone) ProtoMessage() {}
 
-func (x *WorkBoard) ProtoReflect() protoreflect.Message {
+func (x *Milestone) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -4042,81 +4059,118 @@ func (x *WorkBoard) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use WorkBoard.ProtoReflect.Descriptor instead.
-func (*WorkBoard) Descriptor() ([]byte, []int) {
+// Deprecated: Use Milestone.ProtoReflect.Descriptor instead.
+func (*Milestone) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{56}
 }
 
-func (x *WorkBoard) GetId() string {
+func (x *Milestone) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *WorkBoard) GetProjectId() string {
+func (x *Milestone) GetProjectId() string {
 	if x != nil {
 		return x.ProjectId
 	}
 	return ""
 }
 
-func (x *WorkBoard) GetName() string {
+func (x *Milestone) GetSlug() string {
+	if x != nil {
+		return x.Slug
+	}
+	return ""
+}
+
+func (x *Milestone) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *WorkBoard) GetPosition() int32 {
+func (x *Milestone) GetGoal() string {
+	if x != nil {
+		return x.Goal
+	}
+	return ""
+}
+
+func (x *Milestone) GetExitCriteria() []string {
+	if x != nil {
+		return x.ExitCriteria
+	}
+	return nil
+}
+
+func (x *Milestone) GetTargetDate() string {
+	if x != nil {
+		return x.TargetDate
+	}
+	return ""
+}
+
+func (x *Milestone) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+func (x *Milestone) GetPosition() int32 {
 	if x != nil {
 		return x.Position
 	}
 	return 0
 }
 
-func (x *WorkBoard) GetConfigJson() string {
+func (x *Milestone) GetArchivedAt() string {
 	if x != nil {
-		return x.ConfigJson
+		return x.ArchivedAt
 	}
 	return ""
 }
 
-func (x *WorkBoard) GetCreatedAt() string {
+func (x *Milestone) GetCreatedAt() string {
 	if x != nil {
 		return x.CreatedAt
 	}
 	return ""
 }
 
-func (x *WorkBoard) GetUpdatedAt() string {
+func (x *Milestone) GetUpdatedAt() string {
 	if x != nil {
 		return x.UpdatedAt
 	}
 	return ""
 }
 
-type ListWorkBoardsRequest struct {
+// ListMilestones returns every milestone in position order, archived ones
+// included (archived_at set).
+type ListMilestonesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListWorkBoardsRequest) Reset() {
-	*x = ListWorkBoardsRequest{}
+func (x *ListMilestonesRequest) Reset() {
+	*x = ListMilestonesRequest{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListWorkBoardsRequest) String() string {
+func (x *ListMilestonesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListWorkBoardsRequest) ProtoMessage() {}
+func (*ListMilestonesRequest) ProtoMessage() {}
 
-func (x *ListWorkBoardsRequest) ProtoReflect() protoreflect.Message {
+func (x *ListMilestonesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -4128,39 +4182,39 @@ func (x *ListWorkBoardsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListWorkBoardsRequest.ProtoReflect.Descriptor instead.
-func (*ListWorkBoardsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListMilestonesRequest.ProtoReflect.Descriptor instead.
+func (*ListMilestonesRequest) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{57}
 }
 
-func (x *ListWorkBoardsRequest) GetProjectId() string {
+func (x *ListMilestonesRequest) GetProjectId() string {
 	if x != nil {
 		return x.ProjectId
 	}
 	return ""
 }
 
-type ListWorkBoardsResponse struct {
+type ListMilestonesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Boards        []*WorkBoard           `protobuf:"bytes,1,rep,name=boards,proto3" json:"boards,omitempty"`
+	Milestones    []*Milestone           `protobuf:"bytes,1,rep,name=milestones,proto3" json:"milestones,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListWorkBoardsResponse) Reset() {
-	*x = ListWorkBoardsResponse{}
+func (x *ListMilestonesResponse) Reset() {
+	*x = ListMilestonesResponse{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListWorkBoardsResponse) String() string {
+func (x *ListMilestonesResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListWorkBoardsResponse) ProtoMessage() {}
+func (*ListMilestonesResponse) ProtoMessage() {}
 
-func (x *ListWorkBoardsResponse) ProtoReflect() protoreflect.Message {
+func (x *ListMilestonesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -4172,276 +4226,326 @@ func (x *ListWorkBoardsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListWorkBoardsResponse.ProtoReflect.Descriptor instead.
-func (*ListWorkBoardsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListMilestonesResponse.ProtoReflect.Descriptor instead.
+func (*ListMilestonesResponse) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{58}
 }
 
-func (x *ListWorkBoardsResponse) GetBoards() []*WorkBoard {
+func (x *ListMilestonesResponse) GetMilestones() []*Milestone {
 	if x != nil {
-		return x.Boards
+		return x.Milestones
 	}
 	return nil
 }
 
-// CreateWorkBoard appends a view. An empty config_json becomes {"version":1}.
-type CreateWorkBoardRequest struct {
+// CreateMilestone appends a milestone. An empty state is planned; the slug is
+// derived from the name.
+type CreateMilestoneRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ConfigJson    string                 `protobuf:"bytes,3,opt,name=config_json,json=configJson,proto3" json:"config_json,omitempty"`
+	Goal          string                 `protobuf:"bytes,3,opt,name=goal,proto3" json:"goal,omitempty"`
+	ExitCriteria  []string               `protobuf:"bytes,4,rep,name=exit_criteria,json=exitCriteria,proto3" json:"exit_criteria,omitempty"`
+	TargetDate    string                 `protobuf:"bytes,5,opt,name=target_date,json=targetDate,proto3" json:"target_date,omitempty"`
+	State         string                 `protobuf:"bytes,6,opt,name=state,proto3" json:"state,omitempty"`
+	Change        *ChangeEnvelope        `protobuf:"bytes,7,opt,name=change,proto3" json:"change,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateMilestoneRequest) Reset() {
+	*x = CreateMilestoneRequest{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[59]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateMilestoneRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateMilestoneRequest) ProtoMessage() {}
+
+func (x *CreateMilestoneRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[59]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateMilestoneRequest.ProtoReflect.Descriptor instead.
+func (*CreateMilestoneRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{59}
+}
+
+func (x *CreateMilestoneRequest) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *CreateMilestoneRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateMilestoneRequest) GetGoal() string {
+	if x != nil {
+		return x.Goal
+	}
+	return ""
+}
+
+func (x *CreateMilestoneRequest) GetExitCriteria() []string {
+	if x != nil {
+		return x.ExitCriteria
+	}
+	return nil
+}
+
+func (x *CreateMilestoneRequest) GetTargetDate() string {
+	if x != nil {
+		return x.TargetDate
+	}
+	return ""
+}
+
+func (x *CreateMilestoneRequest) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+func (x *CreateMilestoneRequest) GetChange() *ChangeEnvelope {
+	if x != nil {
+		return x.Change
+	}
+	return nil
+}
+
+type CreateMilestoneResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Milestone     *Milestone             `protobuf:"bytes,1,opt,name=milestone,proto3" json:"milestone,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateMilestoneResponse) Reset() {
+	*x = CreateMilestoneResponse{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[60]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateMilestoneResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateMilestoneResponse) ProtoMessage() {}
+
+func (x *CreateMilestoneResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[60]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateMilestoneResponse.ProtoReflect.Descriptor instead.
+func (*CreateMilestoneResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{60}
+}
+
+func (x *CreateMilestoneResponse) GetMilestone() *Milestone {
+	if x != nil {
+		return x.Milestone
+	}
+	return nil
+}
+
+// UpdateMilestone replaces name, goal, exit criteria, target date, and state.
+type UpdateMilestoneRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Goal          string                 `protobuf:"bytes,4,opt,name=goal,proto3" json:"goal,omitempty"`
+	ExitCriteria  []string               `protobuf:"bytes,5,rep,name=exit_criteria,json=exitCriteria,proto3" json:"exit_criteria,omitempty"`
+	TargetDate    string                 `protobuf:"bytes,6,opt,name=target_date,json=targetDate,proto3" json:"target_date,omitempty"`
+	State         string                 `protobuf:"bytes,7,opt,name=state,proto3" json:"state,omitempty"`
+	Change        *ChangeEnvelope        `protobuf:"bytes,8,opt,name=change,proto3" json:"change,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateMilestoneRequest) Reset() {
+	*x = UpdateMilestoneRequest{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[61]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateMilestoneRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateMilestoneRequest) ProtoMessage() {}
+
+func (x *UpdateMilestoneRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[61]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateMilestoneRequest.ProtoReflect.Descriptor instead.
+func (*UpdateMilestoneRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{61}
+}
+
+func (x *UpdateMilestoneRequest) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *UpdateMilestoneRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *UpdateMilestoneRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *UpdateMilestoneRequest) GetGoal() string {
+	if x != nil {
+		return x.Goal
+	}
+	return ""
+}
+
+func (x *UpdateMilestoneRequest) GetExitCriteria() []string {
+	if x != nil {
+		return x.ExitCriteria
+	}
+	return nil
+}
+
+func (x *UpdateMilestoneRequest) GetTargetDate() string {
+	if x != nil {
+		return x.TargetDate
+	}
+	return ""
+}
+
+func (x *UpdateMilestoneRequest) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+func (x *UpdateMilestoneRequest) GetChange() *ChangeEnvelope {
+	if x != nil {
+		return x.Change
+	}
+	return nil
+}
+
+type UpdateMilestoneResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Milestone     *Milestone             `protobuf:"bytes,1,opt,name=milestone,proto3" json:"milestone,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateMilestoneResponse) Reset() {
+	*x = UpdateMilestoneResponse{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[62]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateMilestoneResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateMilestoneResponse) ProtoMessage() {}
+
+func (x *UpdateMilestoneResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[62]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateMilestoneResponse.ProtoReflect.Descriptor instead.
+func (*UpdateMilestoneResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{62}
+}
+
+func (x *UpdateMilestoneResponse) GetMilestone() *Milestone {
+	if x != nil {
+		return x.Milestone
+	}
+	return nil
+}
+
+// ArchiveMilestone archives or restores a milestone; its cards keep it.
+type ArchiveMilestoneRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Archived      bool                   `protobuf:"varint,3,opt,name=archived,proto3" json:"archived,omitempty"`
 	Change        *ChangeEnvelope        `protobuf:"bytes,4,opt,name=change,proto3" json:"change,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateWorkBoardRequest) Reset() {
-	*x = CreateWorkBoardRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[59]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateWorkBoardRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateWorkBoardRequest) ProtoMessage() {}
-
-func (x *CreateWorkBoardRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[59]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateWorkBoardRequest.ProtoReflect.Descriptor instead.
-func (*CreateWorkBoardRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{59}
-}
-
-func (x *CreateWorkBoardRequest) GetProjectId() string {
-	if x != nil {
-		return x.ProjectId
-	}
-	return ""
-}
-
-func (x *CreateWorkBoardRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *CreateWorkBoardRequest) GetConfigJson() string {
-	if x != nil {
-		return x.ConfigJson
-	}
-	return ""
-}
-
-func (x *CreateWorkBoardRequest) GetChange() *ChangeEnvelope {
-	if x != nil {
-		return x.Change
-	}
-	return nil
-}
-
-type CreateWorkBoardResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Board         *WorkBoard             `protobuf:"bytes,1,opt,name=board,proto3" json:"board,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateWorkBoardResponse) Reset() {
-	*x = CreateWorkBoardResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[60]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateWorkBoardResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateWorkBoardResponse) ProtoMessage() {}
-
-func (x *CreateWorkBoardResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[60]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateWorkBoardResponse.ProtoReflect.Descriptor instead.
-func (*CreateWorkBoardResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{60}
-}
-
-func (x *CreateWorkBoardResponse) GetBoard() *WorkBoard {
-	if x != nil {
-		return x.Board
-	}
-	return nil
-}
-
-// UpdateWorkBoard renames a board and/or replaces its config. An empty name
-// or config_json keeps the stored value. Position changes use ReorderWorkBoards.
-type UpdateWorkBoardRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	ConfigJson    string                 `protobuf:"bytes,4,opt,name=config_json,json=configJson,proto3" json:"config_json,omitempty"`
-	Change        *ChangeEnvelope        `protobuf:"bytes,5,opt,name=change,proto3" json:"change,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UpdateWorkBoardRequest) Reset() {
-	*x = UpdateWorkBoardRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[61]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateWorkBoardRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateWorkBoardRequest) ProtoMessage() {}
-
-func (x *UpdateWorkBoardRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[61]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateWorkBoardRequest.ProtoReflect.Descriptor instead.
-func (*UpdateWorkBoardRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{61}
-}
-
-func (x *UpdateWorkBoardRequest) GetProjectId() string {
-	if x != nil {
-		return x.ProjectId
-	}
-	return ""
-}
-
-func (x *UpdateWorkBoardRequest) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *UpdateWorkBoardRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *UpdateWorkBoardRequest) GetConfigJson() string {
-	if x != nil {
-		return x.ConfigJson
-	}
-	return ""
-}
-
-func (x *UpdateWorkBoardRequest) GetChange() *ChangeEnvelope {
-	if x != nil {
-		return x.Change
-	}
-	return nil
-}
-
-type UpdateWorkBoardResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Board         *WorkBoard             `protobuf:"bytes,1,opt,name=board,proto3" json:"board,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UpdateWorkBoardResponse) Reset() {
-	*x = UpdateWorkBoardResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[62]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateWorkBoardResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateWorkBoardResponse) ProtoMessage() {}
-
-func (x *UpdateWorkBoardResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[62]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateWorkBoardResponse.ProtoReflect.Descriptor instead.
-func (*UpdateWorkBoardResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{62}
-}
-
-func (x *UpdateWorkBoardResponse) GetBoard() *WorkBoard {
-	if x != nil {
-		return x.Board
-	}
-	return nil
-}
-
-type DeleteWorkBoardRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Change        *ChangeEnvelope        `protobuf:"bytes,3,opt,name=change,proto3" json:"change,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DeleteWorkBoardRequest) Reset() {
-	*x = DeleteWorkBoardRequest{}
+func (x *ArchiveMilestoneRequest) Reset() {
+	*x = ArchiveMilestoneRequest{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteWorkBoardRequest) String() string {
+func (x *ArchiveMilestoneRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteWorkBoardRequest) ProtoMessage() {}
+func (*ArchiveMilestoneRequest) ProtoMessage() {}
 
-func (x *DeleteWorkBoardRequest) ProtoReflect() protoreflect.Message {
+func (x *ArchiveMilestoneRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -4453,52 +4557,60 @@ func (x *DeleteWorkBoardRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteWorkBoardRequest.ProtoReflect.Descriptor instead.
-func (*DeleteWorkBoardRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ArchiveMilestoneRequest.ProtoReflect.Descriptor instead.
+func (*ArchiveMilestoneRequest) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{63}
 }
 
-func (x *DeleteWorkBoardRequest) GetProjectId() string {
+func (x *ArchiveMilestoneRequest) GetProjectId() string {
 	if x != nil {
 		return x.ProjectId
 	}
 	return ""
 }
 
-func (x *DeleteWorkBoardRequest) GetId() string {
+func (x *ArchiveMilestoneRequest) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *DeleteWorkBoardRequest) GetChange() *ChangeEnvelope {
+func (x *ArchiveMilestoneRequest) GetArchived() bool {
+	if x != nil {
+		return x.Archived
+	}
+	return false
+}
+
+func (x *ArchiveMilestoneRequest) GetChange() *ChangeEnvelope {
 	if x != nil {
 		return x.Change
 	}
 	return nil
 }
 
-type DeleteWorkBoardResponse struct {
+type ArchiveMilestoneResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Milestone     *Milestone             `protobuf:"bytes,1,opt,name=milestone,proto3" json:"milestone,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteWorkBoardResponse) Reset() {
-	*x = DeleteWorkBoardResponse{}
+func (x *ArchiveMilestoneResponse) Reset() {
+	*x = ArchiveMilestoneResponse{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteWorkBoardResponse) String() string {
+func (x *ArchiveMilestoneResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteWorkBoardResponse) ProtoMessage() {}
+func (*ArchiveMilestoneResponse) ProtoMessage() {}
 
-func (x *DeleteWorkBoardResponse) ProtoReflect() protoreflect.Message {
+func (x *ArchiveMilestoneResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -4510,36 +4622,43 @@ func (x *DeleteWorkBoardResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteWorkBoardResponse.ProtoReflect.Descriptor instead.
-func (*DeleteWorkBoardResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ArchiveMilestoneResponse.ProtoReflect.Descriptor instead.
+func (*ArchiveMilestoneResponse) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{64}
 }
 
-// ReorderWorkBoards sets positions from board_ids. The list must contain
-// each board of the project once.
-type ReorderWorkBoardsRequest struct {
+func (x *ArchiveMilestoneResponse) GetMilestone() *Milestone {
+	if x != nil {
+		return x.Milestone
+	}
+	return nil
+}
+
+// ReorderMilestones sets positions from milestone_ids, which must list each
+// unarchived milestone once.
+type ReorderMilestonesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	BoardIds      []string               `protobuf:"bytes,2,rep,name=board_ids,json=boardIds,proto3" json:"board_ids,omitempty"`
+	MilestoneIds  []string               `protobuf:"bytes,2,rep,name=milestone_ids,json=milestoneIds,proto3" json:"milestone_ids,omitempty"`
 	Change        *ChangeEnvelope        `protobuf:"bytes,3,opt,name=change,proto3" json:"change,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ReorderWorkBoardsRequest) Reset() {
-	*x = ReorderWorkBoardsRequest{}
+func (x *ReorderMilestonesRequest) Reset() {
+	*x = ReorderMilestonesRequest{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ReorderWorkBoardsRequest) String() string {
+func (x *ReorderMilestonesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ReorderWorkBoardsRequest) ProtoMessage() {}
+func (*ReorderMilestonesRequest) ProtoMessage() {}
 
-func (x *ReorderWorkBoardsRequest) ProtoReflect() protoreflect.Message {
+func (x *ReorderMilestonesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -4551,53 +4670,53 @@ func (x *ReorderWorkBoardsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ReorderWorkBoardsRequest.ProtoReflect.Descriptor instead.
-func (*ReorderWorkBoardsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ReorderMilestonesRequest.ProtoReflect.Descriptor instead.
+func (*ReorderMilestonesRequest) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{65}
 }
 
-func (x *ReorderWorkBoardsRequest) GetProjectId() string {
+func (x *ReorderMilestonesRequest) GetProjectId() string {
 	if x != nil {
 		return x.ProjectId
 	}
 	return ""
 }
 
-func (x *ReorderWorkBoardsRequest) GetBoardIds() []string {
+func (x *ReorderMilestonesRequest) GetMilestoneIds() []string {
 	if x != nil {
-		return x.BoardIds
+		return x.MilestoneIds
 	}
 	return nil
 }
 
-func (x *ReorderWorkBoardsRequest) GetChange() *ChangeEnvelope {
+func (x *ReorderMilestonesRequest) GetChange() *ChangeEnvelope {
 	if x != nil {
 		return x.Change
 	}
 	return nil
 }
 
-type ReorderWorkBoardsResponse struct {
+type ReorderMilestonesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Boards        []*WorkBoard           `protobuf:"bytes,1,rep,name=boards,proto3" json:"boards,omitempty"`
+	Milestones    []*Milestone           `protobuf:"bytes,1,rep,name=milestones,proto3" json:"milestones,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ReorderWorkBoardsResponse) Reset() {
-	*x = ReorderWorkBoardsResponse{}
+func (x *ReorderMilestonesResponse) Reset() {
+	*x = ReorderMilestonesResponse{}
 	mi := &file_polterware_local_v1_work_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ReorderWorkBoardsResponse) String() string {
+func (x *ReorderMilestonesResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ReorderWorkBoardsResponse) ProtoMessage() {}
+func (*ReorderMilestonesResponse) ProtoMessage() {}
 
-func (x *ReorderWorkBoardsResponse) ProtoReflect() protoreflect.Message {
+func (x *ReorderMilestonesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_polterware_local_v1_work_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -4609,14 +4728,14 @@ func (x *ReorderWorkBoardsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ReorderWorkBoardsResponse.ProtoReflect.Descriptor instead.
-func (*ReorderWorkBoardsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ReorderMilestonesResponse.ProtoReflect.Descriptor instead.
+func (*ReorderMilestonesResponse) Descriptor() ([]byte, []int) {
 	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{66}
 }
 
-func (x *ReorderWorkBoardsResponse) GetBoards() []*WorkBoard {
+func (x *ReorderMilestonesResponse) GetMilestones() []*Milestone {
 	if x != nil {
-		return x.Boards
+		return x.Milestones
 	}
 	return nil
 }
@@ -4642,7 +4761,7 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x06answer\x18\x06 \x01(\tR\x06answer\"3\n" +
 	"\rWorkInvariant\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04text\x18\x02 \x01(\tR\x04text\"\xe7\x03\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text\"\x8a\x04\n" +
 	"\bWorkCard\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -4664,7 +4783,8 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\n" +
 	"invariants\x18\x0e \x03(\v2\".polterware.local.v1.WorkInvariantR\n" +
 	"invariants\x12\x12\n" +
-	"\x04kind\x18\x0f \x01(\tR\x04kind\"\\\n" +
+	"\x04kind\x18\x0f \x01(\tR\x04kind\x12!\n" +
+	"\fmilestone_id\x18\x10 \x01(\tR\vmilestoneId\"\\\n" +
 	"\x10PolterDiagnostic\x12\x12\n" +
 	"\x04line\x18\x01 \x01(\x05R\x04line\x12\x1a\n" +
 	"\bseverity\x18\x02 \x01(\tR\bseverity\x12\x18\n" +
@@ -4966,56 +5086,75 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x15VerifyFeatureResponse\x12\x16\n" +
 	"\x06target\x18\x01 \x01(\tR\x06target\x12\x16\n" +
 	"\x06passed\x18\x02 \x01(\bR\x06passed\x128\n" +
-	"\x06checks\x18\x03 \x03(\v2 .polterware.local.v1.VerifyCheckR\x06checks\"\xc9\x01\n" +
-	"\tWorkBoard\x12\x0e\n" +
+	"\x06checks\x18\x03 \x03(\v2 .polterware.local.v1.VerifyCheckR\x06checks\"\xcd\x02\n" +
+	"\tMilestone\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x02 \x01(\tR\tprojectId\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1a\n" +
-	"\bposition\x18\x04 \x01(\x05R\bposition\x12\x1f\n" +
-	"\vconfig_json\x18\x05 \x01(\tR\n" +
-	"configJson\x12\x1d\n" +
+	"\x04slug\x18\x03 \x01(\tR\x04slug\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12\x12\n" +
+	"\x04goal\x18\x05 \x01(\tR\x04goal\x12#\n" +
+	"\rexit_criteria\x18\x06 \x03(\tR\fexitCriteria\x12\x1f\n" +
+	"\vtarget_date\x18\a \x01(\tR\n" +
+	"targetDate\x12\x14\n" +
+	"\x05state\x18\b \x01(\tR\x05state\x12\x1a\n" +
+	"\bposition\x18\t \x01(\x05R\bposition\x12\x1f\n" +
+	"\varchived_at\x18\n" +
+	" \x01(\tR\n" +
+	"archivedAt\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x06 \x01(\tR\tcreatedAt\x12\x1d\n" +
+	"created_at\x18\v \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\tR\tupdatedAt\"6\n" +
-	"\x15ListWorkBoardsRequest\x12\x1d\n" +
+	"updated_at\x18\f \x01(\tR\tupdatedAt\"6\n" +
+	"\x15ListMilestonesRequest\x12\x1d\n" +
 	"\n" +
-	"project_id\x18\x01 \x01(\tR\tprojectId\"P\n" +
-	"\x16ListWorkBoardsResponse\x126\n" +
-	"\x06boards\x18\x01 \x03(\v2\x1e.polterware.local.v1.WorkBoardR\x06boards\"\xa9\x01\n" +
-	"\x16CreateWorkBoardRequest\x12\x1d\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\"X\n" +
+	"\x16ListMilestonesResponse\x12>\n" +
+	"\n" +
+	"milestones\x18\x01 \x03(\v2\x1e.polterware.local.v1.MilestoneR\n" +
+	"milestones\"\xf8\x01\n" +
+	"\x16CreateMilestoneRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
-	"\vconfig_json\x18\x03 \x01(\tR\n" +
-	"configJson\x12;\n" +
-	"\x06change\x18\x04 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"O\n" +
-	"\x17CreateWorkBoardResponse\x124\n" +
-	"\x05board\x18\x01 \x01(\v2\x1e.polterware.local.v1.WorkBoardR\x05board\"\xb9\x01\n" +
-	"\x16UpdateWorkBoardRequest\x12\x1d\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
+	"\x04goal\x18\x03 \x01(\tR\x04goal\x12#\n" +
+	"\rexit_criteria\x18\x04 \x03(\tR\fexitCriteria\x12\x1f\n" +
+	"\vtarget_date\x18\x05 \x01(\tR\n" +
+	"targetDate\x12\x14\n" +
+	"\x05state\x18\x06 \x01(\tR\x05state\x12;\n" +
+	"\x06change\x18\a \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"W\n" +
+	"\x17CreateMilestoneResponse\x12<\n" +
+	"\tmilestone\x18\x01 \x01(\v2\x1e.polterware.local.v1.MilestoneR\tmilestone\"\x88\x02\n" +
+	"\x16UpdateMilestoneRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1f\n" +
-	"\vconfig_json\x18\x04 \x01(\tR\n" +
-	"configJson\x12;\n" +
-	"\x06change\x18\x05 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"O\n" +
-	"\x17UpdateWorkBoardResponse\x124\n" +
-	"\x05board\x18\x01 \x01(\v2\x1e.polterware.local.v1.WorkBoardR\x05board\"\x84\x01\n" +
-	"\x16DeleteWorkBoardRequest\x12\x1d\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x12\n" +
+	"\x04goal\x18\x04 \x01(\tR\x04goal\x12#\n" +
+	"\rexit_criteria\x18\x05 \x03(\tR\fexitCriteria\x12\x1f\n" +
+	"\vtarget_date\x18\x06 \x01(\tR\n" +
+	"targetDate\x12\x14\n" +
+	"\x05state\x18\a \x01(\tR\x05state\x12;\n" +
+	"\x06change\x18\b \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"W\n" +
+	"\x17UpdateMilestoneResponse\x12<\n" +
+	"\tmilestone\x18\x01 \x01(\v2\x1e.polterware.local.v1.MilestoneR\tmilestone\"\xa1\x01\n" +
+	"\x17ArchiveMilestoneRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x0e\n" +
-	"\x02id\x18\x02 \x01(\tR\x02id\x12;\n" +
-	"\x06change\x18\x03 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"\x19\n" +
-	"\x17DeleteWorkBoardResponse\"\x93\x01\n" +
-	"\x18ReorderWorkBoardsRequest\x12\x1d\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x12\x1a\n" +
+	"\barchived\x18\x03 \x01(\bR\barchived\x12;\n" +
+	"\x06change\x18\x04 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"X\n" +
+	"\x18ArchiveMilestoneResponse\x12<\n" +
+	"\tmilestone\x18\x01 \x01(\v2\x1e.polterware.local.v1.MilestoneR\tmilestone\"\x9b\x01\n" +
+	"\x18ReorderMilestonesRequest\x12\x1d\n" +
 	"\n" +
-	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x1b\n" +
-	"\tboard_ids\x18\x02 \x03(\tR\bboardIds\x12;\n" +
-	"\x06change\x18\x03 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"S\n" +
-	"\x19ReorderWorkBoardsResponse\x126\n" +
-	"\x06boards\x18\x01 \x03(\v2\x1e.polterware.local.v1.WorkBoardR\x06boards2\x9b\x12\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\x12#\n" +
+	"\rmilestone_ids\x18\x02 \x03(\tR\fmilestoneIds\x12;\n" +
+	"\x06change\x18\x03 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"[\n" +
+	"\x19ReorderMilestonesResponse\x12>\n" +
+	"\n" +
+	"milestones\x18\x01 \x03(\v2\x1e.polterware.local.v1.MilestoneR\n" +
+	"milestones2\x9e\x12\n" +
 	"\vWorkService\x12f\n" +
 	"\rListWorkCards\x12).polterware.local.v1.ListWorkCardsRequest\x1a*.polterware.local.v1.ListWorkCardsResponse\x12f\n" +
 	"\rListStructure\x12).polterware.local.v1.ListStructureRequest\x1a*.polterware.local.v1.ListStructureResponse\x12{\n" +
@@ -5036,11 +5175,11 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\rCreateFeature\x12).polterware.local.v1.CreateFeatureRequest\x1a*.polterware.local.v1.CreateFeatureResponse\x12i\n" +
 	"\x0eAdvanceFeature\x12*.polterware.local.v1.AdvanceFeatureRequest\x1a+.polterware.local.v1.AdvanceFeatureResponse\x12f\n" +
 	"\rVerifyFeature\x12).polterware.local.v1.VerifyFeatureRequest\x1a*.polterware.local.v1.VerifyFeatureResponse\x12i\n" +
-	"\x0eListWorkBoards\x12*.polterware.local.v1.ListWorkBoardsRequest\x1a+.polterware.local.v1.ListWorkBoardsResponse\x12l\n" +
-	"\x0fCreateWorkBoard\x12+.polterware.local.v1.CreateWorkBoardRequest\x1a,.polterware.local.v1.CreateWorkBoardResponse\x12l\n" +
-	"\x0fUpdateWorkBoard\x12+.polterware.local.v1.UpdateWorkBoardRequest\x1a,.polterware.local.v1.UpdateWorkBoardResponse\x12l\n" +
-	"\x0fDeleteWorkBoard\x12+.polterware.local.v1.DeleteWorkBoardRequest\x1a,.polterware.local.v1.DeleteWorkBoardResponse\x12r\n" +
-	"\x11ReorderWorkBoards\x12-.polterware.local.v1.ReorderWorkBoardsRequest\x1a..polterware.local.v1.ReorderWorkBoardsResponseB\xe5\x01\n" +
+	"\x0eListMilestones\x12*.polterware.local.v1.ListMilestonesRequest\x1a+.polterware.local.v1.ListMilestonesResponse\x12l\n" +
+	"\x0fCreateMilestone\x12+.polterware.local.v1.CreateMilestoneRequest\x1a,.polterware.local.v1.CreateMilestoneResponse\x12l\n" +
+	"\x0fUpdateMilestone\x12+.polterware.local.v1.UpdateMilestoneRequest\x1a,.polterware.local.v1.UpdateMilestoneResponse\x12o\n" +
+	"\x10ArchiveMilestone\x12,.polterware.local.v1.ArchiveMilestoneRequest\x1a-.polterware.local.v1.ArchiveMilestoneResponse\x12r\n" +
+	"\x11ReorderMilestones\x12-.polterware.local.v1.ReorderMilestonesRequest\x1a..polterware.local.v1.ReorderMilestonesResponseB\xe5\x01\n" +
 	"\x17com.polterware.local.v1B\tWorkProtoP\x01ZQgithub.com/polterware/polterware/backend/platform/gen/polterware/local/v1;localv1\xa2\x02\x03PLX\xaa\x02\x13Polterware.Local.V1\xca\x02\x13Polterware\\Local\\V1\xe2\x02\x1fPolterware\\Local\\V1\\GPBMetadata\xea\x02\x15Polterware::Local::V1b\x06proto3"
 
 var (
@@ -5113,17 +5252,17 @@ var file_polterware_local_v1_work_proto_goTypes = []any{
 	(*VerifyFeatureRequest)(nil),         // 53: polterware.local.v1.VerifyFeatureRequest
 	(*VerifyCheck)(nil),                  // 54: polterware.local.v1.VerifyCheck
 	(*VerifyFeatureResponse)(nil),        // 55: polterware.local.v1.VerifyFeatureResponse
-	(*WorkBoard)(nil),                    // 56: polterware.local.v1.WorkBoard
-	(*ListWorkBoardsRequest)(nil),        // 57: polterware.local.v1.ListWorkBoardsRequest
-	(*ListWorkBoardsResponse)(nil),       // 58: polterware.local.v1.ListWorkBoardsResponse
-	(*CreateWorkBoardRequest)(nil),       // 59: polterware.local.v1.CreateWorkBoardRequest
-	(*CreateWorkBoardResponse)(nil),      // 60: polterware.local.v1.CreateWorkBoardResponse
-	(*UpdateWorkBoardRequest)(nil),       // 61: polterware.local.v1.UpdateWorkBoardRequest
-	(*UpdateWorkBoardResponse)(nil),      // 62: polterware.local.v1.UpdateWorkBoardResponse
-	(*DeleteWorkBoardRequest)(nil),       // 63: polterware.local.v1.DeleteWorkBoardRequest
-	(*DeleteWorkBoardResponse)(nil),      // 64: polterware.local.v1.DeleteWorkBoardResponse
-	(*ReorderWorkBoardsRequest)(nil),     // 65: polterware.local.v1.ReorderWorkBoardsRequest
-	(*ReorderWorkBoardsResponse)(nil),    // 66: polterware.local.v1.ReorderWorkBoardsResponse
+	(*Milestone)(nil),                    // 56: polterware.local.v1.Milestone
+	(*ListMilestonesRequest)(nil),        // 57: polterware.local.v1.ListMilestonesRequest
+	(*ListMilestonesResponse)(nil),       // 58: polterware.local.v1.ListMilestonesResponse
+	(*CreateMilestoneRequest)(nil),       // 59: polterware.local.v1.CreateMilestoneRequest
+	(*CreateMilestoneResponse)(nil),      // 60: polterware.local.v1.CreateMilestoneResponse
+	(*UpdateMilestoneRequest)(nil),       // 61: polterware.local.v1.UpdateMilestoneRequest
+	(*UpdateMilestoneResponse)(nil),      // 62: polterware.local.v1.UpdateMilestoneResponse
+	(*ArchiveMilestoneRequest)(nil),      // 63: polterware.local.v1.ArchiveMilestoneRequest
+	(*ArchiveMilestoneResponse)(nil),     // 64: polterware.local.v1.ArchiveMilestoneResponse
+	(*ReorderMilestonesRequest)(nil),     // 65: polterware.local.v1.ReorderMilestonesRequest
+	(*ReorderMilestonesResponse)(nil),    // 66: polterware.local.v1.ReorderMilestonesResponse
 	(*ChangeEnvelope)(nil),               // 67: polterware.local.v1.ChangeEnvelope
 }
 var file_polterware_local_v1_work_proto_depIdxs = []int32{
@@ -5163,63 +5302,64 @@ var file_polterware_local_v1_work_proto_depIdxs = []int32{
 	8,  // 33: polterware.local.v1.AdvanceFeatureResponse.apply:type_name -> polterware.local.v1.ApplyPolterResponse
 	46, // 34: polterware.local.v1.AdvanceFeatureResponse.review:type_name -> polterware.local.v1.FeatureReview
 	54, // 35: polterware.local.v1.VerifyFeatureResponse.checks:type_name -> polterware.local.v1.VerifyCheck
-	56, // 36: polterware.local.v1.ListWorkBoardsResponse.boards:type_name -> polterware.local.v1.WorkBoard
-	67, // 37: polterware.local.v1.CreateWorkBoardRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	56, // 38: polterware.local.v1.CreateWorkBoardResponse.board:type_name -> polterware.local.v1.WorkBoard
-	67, // 39: polterware.local.v1.UpdateWorkBoardRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	56, // 40: polterware.local.v1.UpdateWorkBoardResponse.board:type_name -> polterware.local.v1.WorkBoard
-	67, // 41: polterware.local.v1.DeleteWorkBoardRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	67, // 42: polterware.local.v1.ReorderWorkBoardsRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	56, // 43: polterware.local.v1.ReorderWorkBoardsResponse.boards:type_name -> polterware.local.v1.WorkBoard
-	5,  // 44: polterware.local.v1.WorkService.ListWorkCards:input_type -> polterware.local.v1.ListWorkCardsRequest
-	28, // 45: polterware.local.v1.WorkService.ListStructure:input_type -> polterware.local.v1.ListStructureRequest
-	36, // 46: polterware.local.v1.WorkService.ListStructureHistory:input_type -> polterware.local.v1.ListStructureHistoryRequest
-	34, // 47: polterware.local.v1.WorkService.ListAgentSessions:input_type -> polterware.local.v1.ListAgentSessionsRequest
-	7,  // 48: polterware.local.v1.WorkService.ApplyPolter:input_type -> polterware.local.v1.ApplyPolterRequest
-	9,  // 49: polterware.local.v1.WorkService.LintPolter:input_type -> polterware.local.v1.LintPolterRequest
-	11, // 50: polterware.local.v1.WorkService.QueryPolter:input_type -> polterware.local.v1.QueryPolterRequest
-	13, // 51: polterware.local.v1.WorkService.WriteHandoff:input_type -> polterware.local.v1.WriteHandoffRequest
-	15, // 52: polterware.local.v1.WorkService.EndSession:input_type -> polterware.local.v1.EndSessionRequest
-	19, // 53: polterware.local.v1.WorkService.ListInbox:input_type -> polterware.local.v1.ListInboxRequest
-	23, // 54: polterware.local.v1.WorkService.ResolveInboxItem:input_type -> polterware.local.v1.ResolveInboxItemRequest
-	20, // 55: polterware.local.v1.WorkService.SetScope:input_type -> polterware.local.v1.SetScopeRequest
-	38, // 56: polterware.local.v1.WorkService.ExportProjections:input_type -> polterware.local.v1.ExportProjectionsRequest
-	47, // 57: polterware.local.v1.WorkService.ReviewFeature:input_type -> polterware.local.v1.ReviewFeatureRequest
-	49, // 58: polterware.local.v1.WorkService.CreateFeature:input_type -> polterware.local.v1.CreateFeatureRequest
-	51, // 59: polterware.local.v1.WorkService.AdvanceFeature:input_type -> polterware.local.v1.AdvanceFeatureRequest
-	53, // 60: polterware.local.v1.WorkService.VerifyFeature:input_type -> polterware.local.v1.VerifyFeatureRequest
-	57, // 61: polterware.local.v1.WorkService.ListWorkBoards:input_type -> polterware.local.v1.ListWorkBoardsRequest
-	59, // 62: polterware.local.v1.WorkService.CreateWorkBoard:input_type -> polterware.local.v1.CreateWorkBoardRequest
-	61, // 63: polterware.local.v1.WorkService.UpdateWorkBoard:input_type -> polterware.local.v1.UpdateWorkBoardRequest
-	63, // 64: polterware.local.v1.WorkService.DeleteWorkBoard:input_type -> polterware.local.v1.DeleteWorkBoardRequest
-	65, // 65: polterware.local.v1.WorkService.ReorderWorkBoards:input_type -> polterware.local.v1.ReorderWorkBoardsRequest
-	6,  // 66: polterware.local.v1.WorkService.ListWorkCards:output_type -> polterware.local.v1.ListWorkCardsResponse
-	29, // 67: polterware.local.v1.WorkService.ListStructure:output_type -> polterware.local.v1.ListStructureResponse
-	37, // 68: polterware.local.v1.WorkService.ListStructureHistory:output_type -> polterware.local.v1.ListStructureHistoryResponse
-	35, // 69: polterware.local.v1.WorkService.ListAgentSessions:output_type -> polterware.local.v1.ListAgentSessionsResponse
-	8,  // 70: polterware.local.v1.WorkService.ApplyPolter:output_type -> polterware.local.v1.ApplyPolterResponse
-	10, // 71: polterware.local.v1.WorkService.LintPolter:output_type -> polterware.local.v1.LintPolterResponse
-	12, // 72: polterware.local.v1.WorkService.QueryPolter:output_type -> polterware.local.v1.QueryPolterResponse
-	14, // 73: polterware.local.v1.WorkService.WriteHandoff:output_type -> polterware.local.v1.WriteHandoffResponse
-	16, // 74: polterware.local.v1.WorkService.EndSession:output_type -> polterware.local.v1.EndSessionResponse
-	22, // 75: polterware.local.v1.WorkService.ListInbox:output_type -> polterware.local.v1.ListInboxResponse
-	24, // 76: polterware.local.v1.WorkService.ResolveInboxItem:output_type -> polterware.local.v1.ResolveInboxItemResponse
-	21, // 77: polterware.local.v1.WorkService.SetScope:output_type -> polterware.local.v1.SetScopeResponse
-	40, // 78: polterware.local.v1.WorkService.ExportProjections:output_type -> polterware.local.v1.ExportProjectionsResponse
-	48, // 79: polterware.local.v1.WorkService.ReviewFeature:output_type -> polterware.local.v1.ReviewFeatureResponse
-	50, // 80: polterware.local.v1.WorkService.CreateFeature:output_type -> polterware.local.v1.CreateFeatureResponse
-	52, // 81: polterware.local.v1.WorkService.AdvanceFeature:output_type -> polterware.local.v1.AdvanceFeatureResponse
-	55, // 82: polterware.local.v1.WorkService.VerifyFeature:output_type -> polterware.local.v1.VerifyFeatureResponse
-	58, // 83: polterware.local.v1.WorkService.ListWorkBoards:output_type -> polterware.local.v1.ListWorkBoardsResponse
-	60, // 84: polterware.local.v1.WorkService.CreateWorkBoard:output_type -> polterware.local.v1.CreateWorkBoardResponse
-	62, // 85: polterware.local.v1.WorkService.UpdateWorkBoard:output_type -> polterware.local.v1.UpdateWorkBoardResponse
-	64, // 86: polterware.local.v1.WorkService.DeleteWorkBoard:output_type -> polterware.local.v1.DeleteWorkBoardResponse
-	66, // 87: polterware.local.v1.WorkService.ReorderWorkBoards:output_type -> polterware.local.v1.ReorderWorkBoardsResponse
-	66, // [66:88] is the sub-list for method output_type
-	44, // [44:66] is the sub-list for method input_type
-	44, // [44:44] is the sub-list for extension type_name
-	44, // [44:44] is the sub-list for extension extendee
-	0,  // [0:44] is the sub-list for field type_name
+	56, // 36: polterware.local.v1.ListMilestonesResponse.milestones:type_name -> polterware.local.v1.Milestone
+	67, // 37: polterware.local.v1.CreateMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	56, // 38: polterware.local.v1.CreateMilestoneResponse.milestone:type_name -> polterware.local.v1.Milestone
+	67, // 39: polterware.local.v1.UpdateMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	56, // 40: polterware.local.v1.UpdateMilestoneResponse.milestone:type_name -> polterware.local.v1.Milestone
+	67, // 41: polterware.local.v1.ArchiveMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	56, // 42: polterware.local.v1.ArchiveMilestoneResponse.milestone:type_name -> polterware.local.v1.Milestone
+	67, // 43: polterware.local.v1.ReorderMilestonesRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	56, // 44: polterware.local.v1.ReorderMilestonesResponse.milestones:type_name -> polterware.local.v1.Milestone
+	5,  // 45: polterware.local.v1.WorkService.ListWorkCards:input_type -> polterware.local.v1.ListWorkCardsRequest
+	28, // 46: polterware.local.v1.WorkService.ListStructure:input_type -> polterware.local.v1.ListStructureRequest
+	36, // 47: polterware.local.v1.WorkService.ListStructureHistory:input_type -> polterware.local.v1.ListStructureHistoryRequest
+	34, // 48: polterware.local.v1.WorkService.ListAgentSessions:input_type -> polterware.local.v1.ListAgentSessionsRequest
+	7,  // 49: polterware.local.v1.WorkService.ApplyPolter:input_type -> polterware.local.v1.ApplyPolterRequest
+	9,  // 50: polterware.local.v1.WorkService.LintPolter:input_type -> polterware.local.v1.LintPolterRequest
+	11, // 51: polterware.local.v1.WorkService.QueryPolter:input_type -> polterware.local.v1.QueryPolterRequest
+	13, // 52: polterware.local.v1.WorkService.WriteHandoff:input_type -> polterware.local.v1.WriteHandoffRequest
+	15, // 53: polterware.local.v1.WorkService.EndSession:input_type -> polterware.local.v1.EndSessionRequest
+	19, // 54: polterware.local.v1.WorkService.ListInbox:input_type -> polterware.local.v1.ListInboxRequest
+	23, // 55: polterware.local.v1.WorkService.ResolveInboxItem:input_type -> polterware.local.v1.ResolveInboxItemRequest
+	20, // 56: polterware.local.v1.WorkService.SetScope:input_type -> polterware.local.v1.SetScopeRequest
+	38, // 57: polterware.local.v1.WorkService.ExportProjections:input_type -> polterware.local.v1.ExportProjectionsRequest
+	47, // 58: polterware.local.v1.WorkService.ReviewFeature:input_type -> polterware.local.v1.ReviewFeatureRequest
+	49, // 59: polterware.local.v1.WorkService.CreateFeature:input_type -> polterware.local.v1.CreateFeatureRequest
+	51, // 60: polterware.local.v1.WorkService.AdvanceFeature:input_type -> polterware.local.v1.AdvanceFeatureRequest
+	53, // 61: polterware.local.v1.WorkService.VerifyFeature:input_type -> polterware.local.v1.VerifyFeatureRequest
+	57, // 62: polterware.local.v1.WorkService.ListMilestones:input_type -> polterware.local.v1.ListMilestonesRequest
+	59, // 63: polterware.local.v1.WorkService.CreateMilestone:input_type -> polterware.local.v1.CreateMilestoneRequest
+	61, // 64: polterware.local.v1.WorkService.UpdateMilestone:input_type -> polterware.local.v1.UpdateMilestoneRequest
+	63, // 65: polterware.local.v1.WorkService.ArchiveMilestone:input_type -> polterware.local.v1.ArchiveMilestoneRequest
+	65, // 66: polterware.local.v1.WorkService.ReorderMilestones:input_type -> polterware.local.v1.ReorderMilestonesRequest
+	6,  // 67: polterware.local.v1.WorkService.ListWorkCards:output_type -> polterware.local.v1.ListWorkCardsResponse
+	29, // 68: polterware.local.v1.WorkService.ListStructure:output_type -> polterware.local.v1.ListStructureResponse
+	37, // 69: polterware.local.v1.WorkService.ListStructureHistory:output_type -> polterware.local.v1.ListStructureHistoryResponse
+	35, // 70: polterware.local.v1.WorkService.ListAgentSessions:output_type -> polterware.local.v1.ListAgentSessionsResponse
+	8,  // 71: polterware.local.v1.WorkService.ApplyPolter:output_type -> polterware.local.v1.ApplyPolterResponse
+	10, // 72: polterware.local.v1.WorkService.LintPolter:output_type -> polterware.local.v1.LintPolterResponse
+	12, // 73: polterware.local.v1.WorkService.QueryPolter:output_type -> polterware.local.v1.QueryPolterResponse
+	14, // 74: polterware.local.v1.WorkService.WriteHandoff:output_type -> polterware.local.v1.WriteHandoffResponse
+	16, // 75: polterware.local.v1.WorkService.EndSession:output_type -> polterware.local.v1.EndSessionResponse
+	22, // 76: polterware.local.v1.WorkService.ListInbox:output_type -> polterware.local.v1.ListInboxResponse
+	24, // 77: polterware.local.v1.WorkService.ResolveInboxItem:output_type -> polterware.local.v1.ResolveInboxItemResponse
+	21, // 78: polterware.local.v1.WorkService.SetScope:output_type -> polterware.local.v1.SetScopeResponse
+	40, // 79: polterware.local.v1.WorkService.ExportProjections:output_type -> polterware.local.v1.ExportProjectionsResponse
+	48, // 80: polterware.local.v1.WorkService.ReviewFeature:output_type -> polterware.local.v1.ReviewFeatureResponse
+	50, // 81: polterware.local.v1.WorkService.CreateFeature:output_type -> polterware.local.v1.CreateFeatureResponse
+	52, // 82: polterware.local.v1.WorkService.AdvanceFeature:output_type -> polterware.local.v1.AdvanceFeatureResponse
+	55, // 83: polterware.local.v1.WorkService.VerifyFeature:output_type -> polterware.local.v1.VerifyFeatureResponse
+	58, // 84: polterware.local.v1.WorkService.ListMilestones:output_type -> polterware.local.v1.ListMilestonesResponse
+	60, // 85: polterware.local.v1.WorkService.CreateMilestone:output_type -> polterware.local.v1.CreateMilestoneResponse
+	62, // 86: polterware.local.v1.WorkService.UpdateMilestone:output_type -> polterware.local.v1.UpdateMilestoneResponse
+	64, // 87: polterware.local.v1.WorkService.ArchiveMilestone:output_type -> polterware.local.v1.ArchiveMilestoneResponse
+	66, // 88: polterware.local.v1.WorkService.ReorderMilestones:output_type -> polterware.local.v1.ReorderMilestonesResponse
+	67, // [67:89] is the sub-list for method output_type
+	45, // [45:67] is the sub-list for method input_type
+	45, // [45:45] is the sub-list for extension type_name
+	45, // [45:45] is the sub-list for extension extendee
+	0,  // [0:45] is the sub-list for field type_name
 }
 
 func init() { file_polterware_local_v1_work_proto_init() }

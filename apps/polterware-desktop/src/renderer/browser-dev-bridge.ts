@@ -197,7 +197,7 @@ const promotedDecisions = new Map<string, Record<string, unknown>[]>();
  * Enough of `work.apply` for canvas promotions and the Structure map: a node block that moves it (under:)
  * or replaces its uses:. Everything else is ignored, like the rest of this bridge.
  */
-async function applyPreviewPolter(args?: { projectId?: string; text?: string; dryRun?: boolean }): Promise<Record<string, unknown>> {
+async function applyPreviewPolter(args?: { projectId?: string; text?: string; dryRun?: boolean; change?: { summary?: string } }): Promise<Record<string, unknown>> {
   const projectId = args?.projectId ?? "";
   if (![PREVIEW_PROJECT_ID, "browser-empty"].includes(projectId)) throw new Error("Project not found.");
   const text = args?.text ?? "";
@@ -205,13 +205,15 @@ async function applyPreviewPolter(args?: { projectId?: string; text?: string; dr
   const decision = /^### new: (.+)$/m.exec(text);
   const fact = /^#### ([a-z0-9]+(?:-[a-z0-9]+)*): (.+)$/m.exec(text);
   if (card || decision || fact) {
-    if (!/^polter: 1$/m.test(text) || !/^summary: .+$/m.test(text) || !/^rationale: .+$/m.test(text)) throw new Error("Promotion needs Polter v1, summary and rationale.");
+    // Canvas promotions carry the reason in the text; Desktop writes send it as the change envelope.
+    const justified = Boolean(args?.change?.summary?.trim()) || /^summary: .+$/m.test(text) && /^rationale: .+$/m.test(text);
+    if (!/^polter: 1$/m.test(text) || !justified) throw new Error("Promotion needs Polter v1, summary and rationale.");
     const id = `promoted-${crypto.randomUUID()}`;
     const title = (card?.[2] ?? fact?.[2] ?? decision?.[1] ?? "").trim();
     if (card) {
       const cards = [...(projectId === PREVIEW_PROJECT_ID ? previewCards : []), ...(promotedCards.get(projectId) ?? [])];
       if (cards.some((item) => item.slug === card[1])) throw new Error("That Work card slug already exists.");
-      if (!/^stage: shape$/m.test(text)) throw new Error("Canvas Work cards start in Shape.");
+      if (!/(?:^|· )stage: shape(?: ·|$)/m.test(text)) throw new Error("Canvas Work cards start in Shape.");
       if (args?.dryRun) return { applied: false, diagnostics: [], ops: [`+ card ${card[1]} ${JSON.stringify(title)} [shape]`] };
       promotedCards.set(projectId, [...(promotedCards.get(projectId) ?? []), { id, projectId, slug: card[1], title, stage: "shape", status: "active", kind: "feature", intent: "", owner: "", under: "", decisions: [], tasks: [], questions: [], invariants: [], updatedAt: new Date().toISOString() }]);
       return { applied: true, diagnostics: [], ops: [`+ card ${card[1]} ${JSON.stringify(title)} [shape]`] };
@@ -669,20 +671,49 @@ function createBrowserDevBridge(): PolterwareBridge {
   function knowledgeById(id?: string) {
     return savedKnowledge.get(id ?? "") ?? previewKnowledge.find((entry) => entry.id === id);
   }
-  // Seeded demo views; mutations live only in this bridge instance.
-  let boards = ["Planning", "Delivery"].map((name, position) => ({
-    id: `preview-board-${position}`, projectId: PREVIEW_PROJECT_ID, name, position,
-    configJson: '{"version":1}', createdAt: "2026-09-20T12:00:00.000Z", updatedAt: "2026-09-20T12:00:00.000Z",
+  // Seeded milestones; mutations live only in this bridge instance, like the core:
+  // archiving moves the milestone's cards back to the Backlog.
+  type PreviewMilestone = {
+    id: string; projectId: string; slug: string; name: string; goal: string; exitCriteria: string[]; targetDate: string;
+    state: "planned" | "active" | "done"; position: number; archivedAt: string; createdAt: string; updatedAt: string;
+  };
+  const milestones: PreviewMilestone[] = [
+    { slug: "beta", name: "Beta", goal: "People outside the team run Polterware on their own projects.", exitCriteria: ["Five external projects imported", "No open blocking questions"], targetDate: "2026-11-30", state: "active" as const },
+    { slug: "launch", name: "Launch", goal: "", exitCriteria: [], targetDate: "", state: "planned" as const },
+  ].map((item, position) => ({
+    ...item, id: `preview-milestone-${item.slug}`, projectId: PREVIEW_PROJECT_ID, position, archivedAt: "",
+    createdAt: "2026-09-20T12:00:00.000Z", updatedAt: "2026-09-20T12:00:00.000Z",
   }));
-  let nextBoard = boards.length;
-  function projectBoards(projectId: string) {
-    return boards.filter((board) => board.projectId === projectId).sort((a, b) => a.position - b.position);
+  const seedMilestone: Record<string, string> = {
+    "board-view": "beta", "inbox-actions": "beta", "drift-checks": "beta", "store-baseline": "beta", "core-daemon": "beta",
+    "structure-canvas": "launch", "agent-handoff": "launch",
+  };
+  for (const card of structureCards) (card as { milestoneId?: string }).milestoneId = seedMilestone[card.slug] ? `preview-milestone-${seedMilestone[card.slug]}` : "";
+  let nextMilestone = milestones.length;
+  function listedMilestones(projectId: string) {
+    return milestones.filter((item) => item.projectId === projectId && !item.archivedAt).sort((a, b) => a.position - b.position);
   }
-  function boardName(name: string, projectId: string, exceptId = "") {
+  function findMilestone(projectId: string, id: string) {
+    const milestone = milestones.find((item) => item.id === id && item.projectId === projectId);
+    if (!milestone) throw new Error("milestone not found");
+    return milestone;
+  }
+  function milestoneName(name: string, projectId: string, exceptId = "") {
     const value = name.trim();
-    if (!value || [...value].length > 80) throw new Error("Use a board name with 1 to 80 characters.");
-    if (projectBoards(projectId).some((board) => board.id !== exceptId && board.name === value)) throw new Error("A board already uses this name.");
+    if (!value) throw new Error("milestone name is required");
+    if ([...value].length > 80) throw new Error("milestone name is too long (max 80 characters)");
+    if (listedMilestones(projectId).some((item) => item.id !== exceptId && item.name.toLowerCase() === value.toLowerCase())) throw new Error("a milestone already uses this name");
     return value;
+  }
+  function milestoneSlug(name: string, projectId: string) {
+    const base = name.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "milestone";
+    const taken = new Set(milestones.filter((item) => item.projectId === projectId).map((item) => item.slug));
+    let slug = base;
+    for (let n = 2; taken.has(slug); n++) slug = `${base}-${n}`;
+    return slug;
+  }
+  function projectCards(projectId: string) {
+    return [...(projectId === PREVIEW_PROJECT_ID ? structureCards : []), ...(promotedCards.get(projectId) ?? [])] as { slug: string; milestoneId?: string }[];
   }
   // Saved filters start empty and live only in this bridge instance, like the core:
   // upsert by (project, surface, name), and an empty projectId is app-level.
@@ -964,39 +995,39 @@ function createBrowserDevBridge(): PolterwareBridge {
         watchRun: () => unsubscribe,
       }),
       work: browserDevApi({
-        listBoards: async ({ projectId }: { projectId: string }) => ({ boards: projectBoards(projectId) }),
-        createBoard: async ({ projectId, name }: { projectId: string; name: string }) => {
-          const board = {
-            id: `preview-board-${nextBoard++}`, projectId, name: boardName(name, projectId),
-            position: projectBoards(projectId).length, configJson: '{"version":1}',
-            createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        listMilestones: async ({ projectId }: { projectId: string }) => ({ milestones: milestones.filter((item) => item.projectId === projectId).sort((a, b) => a.position - b.position) }),
+        createMilestone: async ({ projectId, name }: { projectId: string; name: string }) => {
+          const now = new Date().toISOString();
+          const value = milestoneName(name, projectId);
+          const milestone: PreviewMilestone = {
+            id: `preview-milestone-${nextMilestone++}`, projectId, slug: milestoneSlug(value, projectId), name: value, goal: "", exitCriteria: [], targetDate: "",
+            state: "planned", position: Math.max(-1, ...listedMilestones(projectId).map((item) => item.position)) + 1, archivedAt: "", createdAt: now, updatedAt: now,
           };
-          boards.push(board);
-          return { board };
+          milestones.push(milestone);
+          return { milestone };
         },
-        updateBoard: async ({ projectId, id, name }: { projectId: string; id: string; name: string }) => {
-          const board = boards.find((item) => item.id === id && item.projectId === projectId);
-          if (!board) throw new Error("Board not found.");
-          board.name = boardName(name, projectId, id);
-          board.updatedAt = new Date().toISOString();
-          return { board };
+        updateMilestone: async ({ projectId, id, name }: { projectId: string; id: string; name: string }) => {
+          const milestone = findMilestone(projectId, id);
+          milestone.name = milestoneName(name, projectId, id);
+          milestone.updatedAt = new Date().toISOString();
+          return { milestone };
         },
-        deleteBoard: async ({ projectId, id }: { projectId: string; id: string }) => {
-          if (!boards.some((board) => board.id === id && board.projectId === projectId)) throw new Error("Board not found.");
-          boards = boards.filter((board) => board.id !== id || board.projectId !== projectId);
-          projectBoards(projectId).forEach((board, position) => { board.position = position; });
-          return {};
+        archiveMilestone: async ({ projectId, id, archived }: { projectId: string; id: string; archived: boolean }) => {
+          const milestone = findMilestone(projectId, id);
+          milestone.archivedAt = archived ? milestone.archivedAt || new Date().toISOString() : "";
+          if (archived) for (const card of projectCards(projectId)) if (card.milestoneId === id) card.milestoneId = "";
+          return { milestone };
         },
-        reorderBoards: async ({ projectId, boardIds }: { projectId: string; boardIds: string[] }) => {
-          const current = projectBoards(projectId);
-          if (boardIds.length !== current.length || new Set(boardIds).size !== current.length || current.some((board) => !boardIds.includes(board.id))) throw new Error("Board order must list each board once.");
-          current.forEach((board) => { board.position = boardIds.indexOf(board.id); });
-          return { boards: projectBoards(projectId) };
+        reorderMilestones: async ({ projectId, milestoneIds }: { projectId: string; milestoneIds: string[] }) => {
+          const current = listedMilestones(projectId);
+          if (milestoneIds.length !== current.length || new Set(milestoneIds).size !== current.length || current.some((item) => !milestoneIds.includes(item.id))) throw new Error("milestone order must list each milestone once");
+          current.forEach((item) => { item.position = milestoneIds.indexOf(item.id); });
+          return { milestones: listedMilestones(projectId) };
         },
         listCards: async (args?: ProjectArgs) => ({ cards: [...(args?.projectId === PREVIEW_PROJECT_ID ? structureCards : []), ...(promotedCards.get(args?.projectId ?? "") ?? [])] }),
         listInbox: scoped(previewInbox, { items: [], openCount: 0, blockingCount: 0 }),
         listStructure: async (args?: ProjectArgs) => structure.list(args?.projectId ?? ""),
-        apply: async (args?: { projectId?: string; text?: string; dryRun?: boolean }) => {
+        apply: async (args?: { projectId?: string; text?: string; dryRun?: boolean; change?: { summary?: string } }) => {
           if (/^# [^#]/m.test(args?.text ?? "")) {
             if (![PREVIEW_PROJECT_ID, "browser-empty"].includes(args?.projectId ?? "")) throw new Error("Project not found.");
             const projectId = args!.projectId!;
@@ -1010,7 +1041,17 @@ function createBrowserDevBridge(): PolterwareBridge {
             }
             return result;
           }
-          return applyPreviewPolter(args);
+          // milestone: is resolved here because milestones live in this bridge instance.
+          const slug = /(?:^|· )milestone: *([a-z0-9-]*)/m.exec(args?.text ?? "")?.[1] ?? "";
+          const milestone = slug ? listedMilestones(args?.projectId ?? "").find((item) => item.slug === slug) : undefined;
+          if (slug && !milestone) throw new Error(`unknown milestone "${slug}": list them with polterware query milestones, or create one in the Desktop`);
+          const result = await applyPreviewPolter(args);
+          const card = /^## ([a-z0-9-]+):/m.exec(args?.text ?? "")?.[1];
+          if (milestone && result.applied && card) {
+            const created = projectCards(args!.projectId!).find((item) => item.slug === card);
+            if (created) created.milestoneId = milestone.id;
+          }
+          return result;
         },
         setScope: async () => ({}),
         listStructureHistory: scoped({ entries: previewStructureHistory }, { entries: [] }),

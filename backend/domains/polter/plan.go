@@ -437,7 +437,26 @@ func (p *planner) createCard(node CardNode) {
 	if !ok {
 		kind = work.KindFeature
 	}
+	milestoneID, ok := p.milestoneID(node)
+	if !ok {
+		return
+	}
 	card := work.Card{ID: ids.NewULID(), Slug: node.Slug}
+	fields := map[string]any{
+		"slug":      node.Slug,
+		"title":     node.Title,
+		"intent":    node.Intent,
+		"stage":     stage,
+		"status":    work.CardActive,
+		"owner":     owner,
+		"kind":      kind,
+		"under":     under,
+		"decisions": splitList(decisions),
+		"position":  p.nextPosition,
+	}
+	if milestoneID != "" {
+		fields["milestone"] = milestoneID
+	}
 	p.ops = append(p.ops, work.Op{
 		Entity:   work.EntityCard,
 		Kind:     work.OpCreate,
@@ -445,21 +464,31 @@ func (p *planner) createCard(node CardNode) {
 		CardID:   card.ID,
 		CardSlug: node.Slug,
 		Label:    node.Title,
-		Fields: map[string]any{
-			"slug":      node.Slug,
-			"title":     node.Title,
-			"intent":    node.Intent,
-			"stage":     stage,
-			"status":    work.CardActive,
-			"owner":     owner,
-			"kind":      kind,
-			"under":     under,
-			"decisions": splitList(decisions),
-			"position":  p.nextPosition,
-		},
+		Fields:   fields,
 	})
 	p.nextPosition++
 	p.children(node, card)
+}
+
+// milestoneID resolves the card's milestone: slug to a listed milestone id.
+// An absent or empty line is "" (the Backlog); an unknown slug is an error.
+func (p *planner) milestoneID(node CardNode) (string, bool) {
+	slug, _ := node.MetaValue("milestone")
+	if slug == "" {
+		return "", true
+	}
+	milestone, ok := work.FindMilestone(p.snapshot.Milestones, slug)
+	if !ok {
+		line := node.Line
+		for _, entry := range node.Meta {
+			if entry.Key == "milestone" {
+				line = entry.Line
+			}
+		}
+		p.errorf(line, "unknown milestone %q: list them with polterware query milestones, or create one in the Desktop", slug)
+		return "", false
+	}
+	return milestone.ID, true
 }
 
 func (p *planner) updateCard(node CardNode, card work.Card) {
@@ -498,6 +527,14 @@ func (p *planner) updateCard(node CardNode, card work.Card) {
 		case "under":
 			if value != card.Under {
 				set(key, card.Under, value)
+			}
+		case "milestone":
+			id, ok := p.milestoneID(node)
+			if !ok {
+				return
+			}
+			if id != card.MilestoneID {
+				set(key, card.MilestoneID, id)
 			}
 		case "decisions":
 			if list := splitList(value); !slices.Equal(list, card.Decisions) {

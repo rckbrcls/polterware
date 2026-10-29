@@ -79,9 +79,9 @@ describe("createPolterwareBridge", () => {
     const invoke = vi.fn().mockResolvedValue({});
     const bridge = createPolterwareBridge({ invoke });
     const calls = [
-      ["listBoards", "listWorkBoards"], ["createBoard", "createWorkBoard"],
-      ["updateBoard", "updateWorkBoard"], ["deleteBoard", "deleteWorkBoard"],
-      ["reorderBoards", "reorderWorkBoards"],
+      ["listMilestones", "listMilestones"], ["createMilestone", "createMilestone"],
+      ["updateMilestone", "updateMilestone"], ["archiveMilestone", "archiveMilestone"],
+      ["reorderMilestones", "reorderMilestones"],
     ] as const;
     for (const [method, channel] of calls) {
       const payload = { projectId: "project", id: "board", boardIds: ["board"] };

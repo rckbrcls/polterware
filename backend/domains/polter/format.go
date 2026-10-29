@@ -51,6 +51,7 @@ const Spec = "Polter format v1: markdown that writes Work cards, Structure nodes
 	"- `### ref: Title` is a Decision lifecycle block. `new` proposes one (a number is assigned); a ref such as `Decision-0003` or an id changes an existing one. States: proposed → active → challenged → active or superseded. `status: challenged` needs a reason:; `level: principle` pins it for the whole project; `trigger:` is the review condition; `scope:` is the Structure node path the decision applies to (omit for the whole project); `supersedes: Decision-0003` on the newer decision marks the older one superseded. Decisions are never removed. The body is plain text: no # lines.\n" +
 	"- `#### slug: Statement` creates a canon Fact or updates it by its lowercase-kebab slug; an existing Fact id can replace the slug. Omit the heading statement on updates to keep it. `kind:` is declared (default on create), observed, inferred, or verified. `scope:` names a Structure node path (empty clears; omit for the whole project on create). `evidence:` lists existing canon evidence ids, comma separated (a present line replaces links, empty clears). Omitted fields stay unchanged. Plan output uses the Fact id. Facts have no body text.\n" +
 	"- Stages: shape, plan, build, verify, delivered.\n" +
+	"- `milestone:` puts a card in a milestone by its slug (`polterware query milestones`; empty moves it back to the Backlog). Milestones are created in the Desktop; `query roadmap` lists the active ones with their goal and cards.\n" +
 	"- `kind: architecture` marks a card as an Architecture Change (default feature). Its under: names the node it changes; set `migrating:` on that node while the change is in flight, and clear it when the card is delivered.\n" +
 	"- Tasks: [ ] open, [x] done, [-] dropped; T<n>, `[repo: api]`, and a trailing `scope` glob are optional. A scope may carry its checkout: `api:src/auth/*`.\n" +
 	"- `?` is an open question, `!` a contract invariant. `? Question -> answer` records the decision and closes its Inbox item.\n" +
@@ -86,12 +87,14 @@ const (
 	QueryFeature   = "feature"
 	QueryVerify    = "verify"
 
-	QueryDecisions = "decisions"
-	QueryDecision  = "decision"
-	QueryCanvas    = "canvas"
+	QueryDecisions  = "decisions"
+	QueryDecision   = "decision"
+	QueryCanvas     = "canvas"
+	QueryMilestones = "milestones"
+	QueryRoadmap    = "roadmap"
 )
 
-const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "oracle <path>", "structure [<path>] [at <point>]", "structure history", "decisions [proposed|active|challenged|superseded]", "decision <decision>", "feature <slug> [shape|contract|plan]", "verify <slug|slug#T2>", "canvas", or "canvas <name|id>"`
+const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "oracle <path>", "structure [<path>] [at <point>]", "structure history", "decisions [proposed|active|challenged|superseded]", "decision <decision>", "feature <slug> [shape|contract|plan]", "verify <slug|slug#T2>", "canvas", "canvas <name|id>", "milestones", or "roadmap"`
 
 // ParseQuery parses the v1 query language.
 func ParseQuery(text string) (Query, error) {
@@ -162,6 +165,10 @@ func ParseQuery(text string) (Query, error) {
 		return Query{Kind: QueryStatus}, nil
 	case len(fields) == 1 && fields[0] == QueryInbox:
 		return Query{Kind: QueryInbox}, nil
+	case len(fields) == 1 && fields[0] == QueryMilestones:
+		return Query{Kind: QueryMilestones}, nil
+	case len(fields) == 1 && fields[0] == QueryRoadmap:
+		return Query{Kind: QueryRoadmap}, nil
 	case len(fields) == 2 && fields[0] == QueryCard:
 		return Query{Kind: QueryCard, Slug: fields[1]}, nil
 	case len(fields) == 2 && fields[0] == QueryHandoff:

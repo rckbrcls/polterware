@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	contextpkg "github.com/polterware/polterware/backend/domains/context"
 	"github.com/polterware/polterware/backend/domains/canon"
+	contextpkg "github.com/polterware/polterware/backend/domains/context"
 	"github.com/polterware/polterware/backend/providers/demoseed"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )

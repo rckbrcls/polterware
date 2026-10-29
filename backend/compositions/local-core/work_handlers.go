@@ -13,8 +13,8 @@ import (
 
 	"github.com/polterware/polterware/backend/compositions/wedge"
 	"github.com/polterware/polterware/backend/domains/agentrun"
-	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/polter"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
 	"github.com/polterware/polterware/backend/platform/ids"
@@ -364,18 +364,19 @@ func structureNodeProto(row structure.Row) *localv1.StructureNode {
 
 func workCardProto(card work.Card) *localv1.WorkCard {
 	out := &localv1.WorkCard{
-		Id:        card.ID,
-		ProjectId: card.ProjectID,
-		Slug:      card.Slug,
-		Title:     card.Title,
-		Intent:    card.Intent,
-		Stage:     card.Stage,
-		Owner:     card.Owner,
-		Under:     card.Under,
-		Kind:      card.Kind,
-		Decisions: card.Decisions,
-		CreatedAt: card.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: card.UpdatedAt.Format(time.RFC3339),
+		Id:          card.ID,
+		ProjectId:   card.ProjectID,
+		Slug:        card.Slug,
+		Title:       card.Title,
+		Intent:      card.Intent,
+		Stage:       card.Stage,
+		Owner:       card.Owner,
+		Under:       card.Under,
+		Kind:        card.Kind,
+		Decisions:   card.Decisions,
+		MilestoneId: card.MilestoneID,
+		CreatedAt:   card.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   card.UpdatedAt.Format(time.RFC3339),
 	}
 	for _, task := range card.Tasks {
 		// The Board shows the scope with its checkout, as a claim stores it.
@@ -413,35 +414,36 @@ func (core *Core) ExportProjections(_ context.Context, request *connect.Request[
 	return connect.NewResponse(&localv1.ExportProjectionsResponse{Files: out}), nil
 }
 
-func (core *Core) ListWorkBoards(_ context.Context, request *connect.Request[localv1.ListWorkBoardsRequest]) (*connect.Response[localv1.ListWorkBoardsResponse], error) {
+func (core *Core) ListMilestones(_ context.Context, request *connect.Request[localv1.ListMilestonesRequest]) (*connect.Response[localv1.ListMilestonesResponse], error) {
 	if request.Msg.ProjectId == "" {
 		return nil, invalid("project id is required")
 	}
-	boards, err := core.Store.ListWorkBoards(request.Msg.ProjectId)
+	milestones, err := core.Store.ListMilestones(request.Msg.ProjectId)
 	if err != nil {
 		return nil, internal(err)
 	}
-	return connect.NewResponse(&localv1.ListWorkBoardsResponse{Boards: workBoardsProto(boards)}), nil
+	return connect.NewResponse(&localv1.ListMilestonesResponse{Milestones: milestonesProto(milestones)}), nil
 }
 
-func (core *Core) CreateWorkBoard(_ context.Context, request *connect.Request[localv1.CreateWorkBoardRequest]) (*connect.Response[localv1.CreateWorkBoardResponse], error) {
+func (core *Core) CreateMilestone(_ context.Context, request *connect.Request[localv1.CreateMilestoneRequest]) (*connect.Response[localv1.CreateMilestoneResponse], error) {
 	msg := request.Msg
 	if msg.ProjectId == "" {
 		return nil, invalid("project id is required")
 	}
-	existing, err := core.Store.ListWorkBoards(msg.ProjectId)
+	draft := work.Milestone{Name: msg.Name, Goal: msg.Goal, ExitCriteria: msg.ExitCriteria, TargetDate: msg.TargetDate, State: msg.State}
+	existing, err := core.Store.ListMilestones(msg.ProjectId)
 	if err != nil {
 		return nil, internal(err)
 	}
-	if _, err := work.PrepareBoardCreate(work.Board{ProjectID: msg.ProjectId, Name: msg.Name, ConfigJSON: msg.ConfigJson}, existing); err != nil {
-		return nil, mapBoardErr(err)
+	if _, err := work.PrepareMilestoneCreate(draft, existing); err != nil {
+		return nil, mapMilestoneErr(err)
 	}
 	env, err := changeEnvelopeFromProto(msg.GetChange())
 	if err != nil {
 		return nil, mapAuditedErr(err)
 	}
-	saved, err := core.writeBoard(request.Header(), msg.ProjectId, "create", env, func(run agentrun.Run, batchID string) ([]string, any, error) {
-		created, err := core.Store.CreateWorkBoard(msg.ProjectId, run.ID, batchID, work.Board{Name: msg.Name, ConfigJSON: msg.ConfigJson})
+	saved, err := core.writeMilestone(request.Header(), msg.ProjectId, "create", env, func(run agentrun.Run, batchID string) ([]string, any, error) {
+		created, err := core.Store.CreateMilestone(msg.ProjectId, run.ID, batchID, draft)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -450,31 +452,28 @@ func (core *Core) CreateWorkBoard(_ context.Context, request *connect.Request[lo
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&localv1.CreateWorkBoardResponse{Board: workBoardProto(saved)}), nil
+	return connect.NewResponse(&localv1.CreateMilestoneResponse{Milestone: milestoneProto(saved)}), nil
 }
 
-func (core *Core) UpdateWorkBoard(_ context.Context, request *connect.Request[localv1.UpdateWorkBoardRequest]) (*connect.Response[localv1.UpdateWorkBoardResponse], error) {
+func (core *Core) UpdateMilestone(_ context.Context, request *connect.Request[localv1.UpdateMilestoneRequest]) (*connect.Response[localv1.UpdateMilestoneResponse], error) {
 	msg := request.Msg
 	if msg.ProjectId == "" || msg.Id == "" {
-		return nil, invalid("project id and board id are required")
+		return nil, invalid("project id and milestone id are required")
 	}
-	existing, err := core.Store.ListWorkBoards(msg.ProjectId)
+	draft := work.Milestone{ID: msg.Id, Name: msg.Name, Goal: msg.Goal, ExitCriteria: msg.ExitCriteria, TargetDate: msg.TargetDate, State: msg.State}
+	existing, err := core.Store.ListMilestones(msg.ProjectId)
 	if err != nil {
 		return nil, internal(err)
 	}
-	next, changed, err := work.PrepareBoardUpdate(work.Board{ID: msg.Id, Name: msg.Name, ConfigJSON: msg.ConfigJson}, existing)
-	if err != nil {
-		return nil, mapBoardErr(err)
-	}
-	if !changed {
-		return connect.NewResponse(&localv1.UpdateWorkBoardResponse{Board: workBoardProto(next)}), nil
+	if _, _, err := work.PrepareMilestoneUpdate(draft, existing); err != nil {
+		return nil, mapMilestoneErr(err)
 	}
 	env, err := changeEnvelopeFromProto(msg.GetChange())
 	if err != nil {
 		return nil, mapAuditedErr(err)
 	}
-	saved, err := core.writeBoard(request.Header(), msg.ProjectId, "update", env, func(run agentrun.Run, batchID string) ([]string, any, error) {
-		updated, err := core.Store.UpdateWorkBoard(msg.ProjectId, run.ID, batchID, work.Board{ID: msg.Id, Name: msg.Name, ConfigJSON: msg.ConfigJson})
+	saved, err := core.writeMilestone(request.Header(), msg.ProjectId, "update", env, func(run agentrun.Run, batchID string) ([]string, any, error) {
+		updated, err := core.Store.UpdateMilestone(msg.ProjectId, run.ID, batchID, draft)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -483,110 +482,81 @@ func (core *Core) UpdateWorkBoard(_ context.Context, request *connect.Request[lo
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&localv1.UpdateWorkBoardResponse{Board: workBoardProto(saved)}), nil
+	return connect.NewResponse(&localv1.UpdateMilestoneResponse{Milestone: milestoneProto(saved)}), nil
 }
 
-func (core *Core) DeleteWorkBoard(_ context.Context, request *connect.Request[localv1.DeleteWorkBoardRequest]) (*connect.Response[localv1.DeleteWorkBoardResponse], error) {
+func (core *Core) ArchiveMilestone(_ context.Context, request *connect.Request[localv1.ArchiveMilestoneRequest]) (*connect.Response[localv1.ArchiveMilestoneResponse], error) {
 	msg := request.Msg
 	if msg.ProjectId == "" || msg.Id == "" {
-		return nil, invalid("project id and board id are required")
-	}
-	existing, err := core.Store.ListWorkBoards(msg.ProjectId)
-	if err != nil {
-		return nil, internal(err)
-	}
-	found := false
-	for _, board := range existing {
-		if board.ID == msg.Id {
-			found = true
-			break
-		}
-	}
-	if !found {
-		return nil, mapBoardErr(work.ErrBoardNotFound)
+		return nil, invalid("project id and milestone id are required")
 	}
 	env, err := changeEnvelopeFromProto(msg.GetChange())
 	if err != nil {
 		return nil, mapAuditedErr(err)
 	}
-	if _, err := core.auditBoard(request.Header(), msg.ProjectId, "delete", env, func(run agentrun.Run, batchID string) ([]string, any, error) {
-		if err := core.Store.DeleteWorkBoard(msg.ProjectId, run.ID, batchID, msg.Id); err != nil {
-			return nil, nil, err
-		}
-		return []string{msg.Id}, nil, nil
-	}); err != nil {
-		return nil, err
+	action := "archive"
+	if !msg.Archived {
+		action = "restore"
 	}
-	return connect.NewResponse(&localv1.DeleteWorkBoardResponse{}), nil
-}
-
-func (core *Core) ReorderWorkBoards(_ context.Context, request *connect.Request[localv1.ReorderWorkBoardsRequest]) (*connect.Response[localv1.ReorderWorkBoardsResponse], error) {
-	msg := request.Msg
-	if msg.ProjectId == "" {
-		return nil, invalid("project id is required")
-	}
-	existing, err := core.Store.ListWorkBoards(msg.ProjectId)
-	if err != nil {
-		return nil, internal(err)
-	}
-	next, err := work.ReorderBoards(existing, msg.BoardIds)
-	if err != nil {
-		return nil, mapBoardErr(err)
-	}
-	if !work.PositionsChanged(existing, next) {
-		return connect.NewResponse(&localv1.ReorderWorkBoardsResponse{Boards: workBoardsProto(next)}), nil
-	}
-	env, err := changeEnvelopeFromProto(msg.GetChange())
-	if err != nil {
-		return nil, mapAuditedErr(err)
-	}
-	saved, err := core.writeBoards(request.Header(), msg.ProjectId, "reorder", env, func(run agentrun.Run, batchID string) ([]string, any, error) {
-		boards, err := core.Store.ReorderWorkBoards(msg.ProjectId, run.ID, batchID, msg.BoardIds)
+	saved, err := core.writeMilestone(request.Header(), msg.ProjectId, action, env, func(run agentrun.Run, batchID string) ([]string, any, error) {
+		item, err := core.Store.SetMilestoneArchived(msg.ProjectId, run.ID, batchID, msg.Id, msg.Archived)
 		if err != nil {
 			return nil, nil, err
 		}
-		ids := make([]string, len(boards))
-		for i, board := range boards {
-			ids[i] = board.ID
-		}
-		return ids, boards, nil
+		return []string{item.ID}, item, nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&localv1.ReorderWorkBoardsResponse{Boards: workBoardsProto(saved)}), nil
+	return connect.NewResponse(&localv1.ArchiveMilestoneResponse{Milestone: milestoneProto(saved)}), nil
 }
 
-func (core *Core) writeBoard(header http.Header, projectID, action string, env wedge.ChangeEnvelope, mutate func(agentrun.Run, string) ([]string, any, error)) (work.Board, error) {
-	result, err := core.auditBoard(header, projectID, action, env, mutate)
+func (core *Core) ReorderMilestones(_ context.Context, request *connect.Request[localv1.ReorderMilestonesRequest]) (*connect.Response[localv1.ReorderMilestonesResponse], error) {
+	msg := request.Msg
+	if msg.ProjectId == "" {
+		return nil, invalid("project id is required")
+	}
+	env, err := changeEnvelopeFromProto(msg.GetChange())
 	if err != nil {
-		return work.Board{}, err
+		return nil, mapAuditedErr(err)
 	}
-	board, ok := result.(work.Board)
-	if !ok || board.ID == "" {
-		return work.Board{}, internal(fmt.Errorf("board write returned %T", result))
-	}
-	return board, nil
-}
-
-func (core *Core) writeBoards(header http.Header, projectID, action string, env wedge.ChangeEnvelope, mutate func(agentrun.Run, string) ([]string, any, error)) ([]work.Board, error) {
-	result, err := core.auditBoard(header, projectID, action, env, mutate)
+	result, err := core.auditMilestone(request.Header(), msg.ProjectId, "reorder", env, func(run agentrun.Run, batchID string) ([]string, any, error) {
+		milestones, err := core.Store.ReorderMilestones(msg.ProjectId, run.ID, batchID, msg.MilestoneIds)
+		if err != nil {
+			return nil, nil, err
+		}
+		return msg.MilestoneIds, milestones, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	boards, ok := result.([]work.Board)
+	milestones, ok := result.([]work.Milestone)
 	if !ok {
-		return nil, internal(fmt.Errorf("board write returned %T", result))
+		return nil, internal(fmt.Errorf("milestone reorder returned %T", result))
 	}
-	return boards, nil
+	return connect.NewResponse(&localv1.ReorderMilestonesResponse{Milestones: milestonesProto(milestones)}), nil
 }
 
-func (core *Core) auditBoard(header http.Header, projectID, action string, env wedge.ChangeEnvelope, mutate func(agentrun.Run, string) ([]string, any, error)) (any, error) {
+func (core *Core) writeMilestone(header http.Header, projectID, action string, env wedge.ChangeEnvelope, mutate func(agentrun.Run, string) ([]string, any, error)) (work.Milestone, error) {
+	result, err := core.auditMilestone(header, projectID, action, env, mutate)
+	if err != nil {
+		return work.Milestone{}, err
+	}
+	milestone, ok := result.(work.Milestone)
+	if !ok || milestone.ID == "" {
+		return work.Milestone{}, internal(fmt.Errorf("milestone write returned %T", result))
+	}
+	return milestone, nil
+}
+
+// auditMilestone runs one milestone write as an audited change. Milestones are
+// created in the Desktop; another client writes as an agent.
+func (core *Core) auditMilestone(header http.Header, projectID, action string, env wedge.ChangeEnvelope, mutate func(agentrun.Run, string) ([]string, any, error)) (any, error) {
 	kind := agentrun.ActorKindHuman
-	tool := "desktop.work.board." + action
+	tool := "desktop.work.milestone." + action
 	if client := clientOf(header); client != "desktop" {
 		kind = agentrun.ActorKindAgent
-		tool = "polter.board." + action
+		tool = "polter.milestone." + action
 		if strings.TrimSpace(env.AgentRunID) == "" {
 			env.AutoStartLabel = client
 		}
@@ -597,45 +567,52 @@ func (core *Core) auditBoard(header http.Header, projectID, action string, env w
 		return mutate(run, env.BatchID)
 	})
 	if err != nil {
-		return nil, mapBoardErr(err)
+		return nil, mapMilestoneErr(err)
 	}
 	return written.Result, nil
 }
 
-func mapBoardErr(err error) error {
+func mapMilestoneErr(err error) error {
 	if err == nil {
 		return nil
 	}
 	switch {
-	case errors.Is(err, work.ErrBoardNameRequired),
-		errors.Is(err, work.ErrBoardNameLength),
-		errors.Is(err, work.ErrBoardNameTaken),
-		errors.Is(err, work.ErrBoardConfig),
-		errors.Is(err, work.ErrBoardOrder):
+	case errors.Is(err, work.ErrMilestoneNameRequired),
+		errors.Is(err, work.ErrMilestoneNameLength),
+		errors.Is(err, work.ErrMilestoneNameTaken),
+		errors.Is(err, work.ErrMilestoneGoalLength),
+		errors.Is(err, work.ErrMilestoneState),
+		errors.Is(err, work.ErrMilestoneTargetDate),
+		errors.Is(err, work.ErrMilestoneOrder):
 		return invalid(err.Error())
-	case errors.Is(err, work.ErrBoardNotFound), errors.Is(err, sql.ErrNoRows):
+	case errors.Is(err, work.ErrMilestoneNotFound), errors.Is(err, sql.ErrNoRows):
 		return connect.NewError(connect.CodeNotFound, err)
 	default:
 		return mapAuditedErr(err)
 	}
 }
 
-func workBoardsProto(boards []work.Board) []*localv1.WorkBoard {
-	out := make([]*localv1.WorkBoard, 0, len(boards))
-	for _, board := range boards {
-		out = append(out, workBoardProto(board))
+func milestonesProto(milestones []work.Milestone) []*localv1.Milestone {
+	out := make([]*localv1.Milestone, 0, len(milestones))
+	for _, item := range milestones {
+		out = append(out, milestoneProto(item))
 	}
 	return out
 }
 
-func workBoardProto(board work.Board) *localv1.WorkBoard {
-	return &localv1.WorkBoard{
-		Id:         board.ID,
-		ProjectId:  board.ProjectID,
-		Name:       board.Name,
-		Position:   int32(board.Position),
-		ConfigJson: board.ConfigJSON,
-		CreatedAt:  board.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt:  board.UpdatedAt.UTC().Format(time.RFC3339),
+func milestoneProto(item work.Milestone) *localv1.Milestone {
+	return &localv1.Milestone{
+		Id:           item.ID,
+		ProjectId:    item.ProjectID,
+		Slug:         item.Slug,
+		Name:         item.Name,
+		Goal:         item.Goal,
+		ExitCriteria: item.ExitCriteria,
+		TargetDate:   item.TargetDate,
+		State:        item.State,
+		Position:     int32(item.Position),
+		ArchivedAt:   item.ArchivedAt,
+		CreatedAt:    item.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:    item.UpdatedAt.UTC().Format(time.RFC3339),
 	}
 }

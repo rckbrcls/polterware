@@ -13,7 +13,7 @@ import type {
   WorkspaceStructure,
   WorkspaceStructureHistoryEntry,
   WorkspaceWorkCard,
-  WorkspaceWorkBoard,
+  WorkspaceMilestone,
 } from "@polterware/feature-shell";
 import { asNumber, asObjectArray, asRecord, asString } from "./format";
 import {
@@ -34,7 +34,7 @@ import {
   mapInbox,
   mapStructure,
   mapWorkCards,
-  mapWorkBoards,
+  mapMilestones,
 } from "./map-records";
 
 export type WorkspaceSnapshot = {
@@ -50,7 +50,7 @@ export type WorkspaceSnapshot = {
   docs: WorkspaceDoc[];
   decisions: WorkspaceDecision[];
   workCards: WorkspaceWorkCard[];
-  workBoards: WorkspaceWorkBoard[];
+  milestones: WorkspaceMilestone[];
   structure: WorkspaceStructure;
   inbox: WorkspaceInbox;
   canonEntities: WorkspaceCanonEntity[];
@@ -68,7 +68,7 @@ export type WorkspaceExtensions = Pick<
   | "docs"
   | "decisions"
   | "workCards"
-  | "workBoards"
+  | "milestones"
   | "structure"
   | "inbox"
   | "canonEntities"
@@ -104,7 +104,7 @@ export function emptyWorkspaceExtensions(): WorkspaceExtensions {
     docs: [],
     decisions: [],
     workCards: [],
-    workBoards: [],
+    milestones: [],
     structure: emptyStructure(),
     inbox: emptyInbox(),
     canonEntities: [],
@@ -185,9 +185,9 @@ export async function loadWorkCards(projectId: string): Promise<WorkspaceWorkCar
   return mapWorkCards(asObjectArray(asRecord(await core().work.listCards({ projectId, ...scopeArgs() })).cards));
 }
 
-/** Saved views are project-wide; card scope remains applied by loadWorkCards. */
-export async function loadWorkBoards(projectId: string): Promise<WorkspaceWorkBoard[]> {
-  return mapWorkBoards(asObjectArray(asRecord(await core().work.listBoards({ projectId })).boards));
+/** Milestones are project-wide; card scope remains applied by loadWorkCards. */
+export async function loadMilestones(projectId: string): Promise<WorkspaceMilestone[]> {
+  return mapMilestones(asObjectArray(asRecord(await core().work.listMilestones({ projectId })).milestones));
 }
 
 /** Structure nodes for the canvas. A failed read keeps the page usable with no nodes. */
@@ -320,7 +320,7 @@ export async function loadWorkspaceExtensions(
     api.integrations.listResources({ projectId }),
     api.integrations.listSyncRuns({ projectId }),
     environmentsPromise,
-    loadWorkBoards(projectId),
+    loadMilestones(projectId),
     api.canon.listFacts({ projectId, ...scopeArgs() }),
   ]);
   const [
@@ -336,7 +336,7 @@ export async function loadWorkspaceExtensions(
     syncRunsRes,
   ] = settled;
   const environments: EnvironmentItem[] = settled[10];
-  const workBoards: WorkspaceWorkBoard[] = settled[11];
+  const milestones: WorkspaceMilestone[] = settled[11];
 
   const projectEnvironments = environments.filter((item) => item.projectId === projectId);
 
@@ -369,7 +369,7 @@ export async function loadWorkspaceExtensions(
     docs,
     decisions,
     workCards,
-    workBoards,
+    milestones,
     structure,
     inbox,
     canonEntities,

@@ -69,6 +69,9 @@ func NodeFromCard(card work.Card) CardNode {
 	if card.Under != "" {
 		node.Meta = append(node.Meta, MetaEntry{Key: "under", Value: card.Under})
 	}
+	if card.Milestone != "" {
+		node.Meta = append(node.Meta, MetaEntry{Key: "milestone", Value: card.Milestone})
+	}
 	if card.Kind == work.KindArchitecture {
 		node.Meta = append(node.Meta, MetaEntry{Key: "kind", Value: card.Kind})
 	}
