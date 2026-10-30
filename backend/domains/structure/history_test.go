@@ -44,9 +44,6 @@ func TestReplayAtBatch(t *testing.T) {
 	if nodes[0].Migrating() {
 		t.Fatalf("core migrates before b3")
 	}
-	if len(nodes[0].Invariants) != 1 || nodes[0].Invariants[0].State != "active" {
-		t.Fatalf("invariants = %+v", nodes[0].Invariants)
-	}
 	if got := nodes[0].Decisions; len(got) != 1 || got[0] != "Decision-0001" {
 		t.Fatalf("decisions = %v", got)
 	}
@@ -62,7 +59,7 @@ func TestReplayLatestMatchesFinalState(t *testing.T) {
 	if rows[0].MigrationFrom != "REST" || rows[0].MigrationTo != "Connect" {
 		t.Fatalf("migration = %q -> %q", rows[0].MigrationFrom, rows[0].MigrationTo)
 	}
-	if rows[0].Invariants[0].State != "removed" || rows[0].Derived != "" {
+	if rows[0].Derived != "" {
 		t.Fatalf("row = %+v", rows[0])
 	}
 }

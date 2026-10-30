@@ -111,24 +111,12 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     example: 'polterware init --name "My App"',
   },
   {
-    id: "scan",
-    name: "polterware scan",
-    synopsis: "polterware scan --project <id> [--json]",
-    summary:
-      "Import evidence and observed facts from the project's files, so drift can compare them with the rules. Prints fact, evidence, and skipped counts.",
-    flags: [
-      { name: "--project", value: "id", required: true, description: "Project id." },
-      JSON_FLAG,
-    ],
-    example: "polterware scan --project <project-id>",
-  },
-  {
     id: "repo",
     name: "polterware repo",
     synopsis:
       "polterware repo list --project <id> [--json] | add --project <id> --name <name> --path <dir> [--json] | remove --project <id> --name <name>",
     summary:
-      "Manage extra local checkouts of one project. The project directory stays the primary checkout; scan records a Git checkpoint for each.",
+      "Manage extra local checkouts of one project. The project directory stays the primary checkout; drift reads the Git history of each.",
     flags: [
       { name: "--project", value: "id", required: true, description: "Project id." },
       { name: "--name", value: "name", description: "add, remove: short lowercase checkout name." },
@@ -261,9 +249,9 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
   {
     id: "format",
     name: "polterware format",
-    synopsis: "polterware format [structure|decisions|facts|feature]",
+    synopsis: "polterware format [structure|rules|decisions|facts|feature]",
     summary:
-      "Print the Polter format core (Work cards, tasks, handoffs, claims; about 360 tokens), or one topic: Structure nodes, Decisions, Facts, or the feature flow.",
+      "Print the Polter format core (Work cards, tasks, handoffs, claims, the binding Rules; about 360 tokens), or one topic: Structure nodes, Rules, Decisions, Facts, or the feature flow.",
     flags: [],
     example: "polterware format decisions",
   },
@@ -368,17 +356,17 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "inbox",
     name: "polterware inbox",
     synopsis:
-      'polterware inbox [<id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore] [--agent <name>] [--scope <node>] [--exact] [--project <id>]',
-    summary: "List the Inbox, or apply one action to one item.",
+      'polterware inbox [<id> decide "<answer>" | delegate | link <slug#T2|sha> | reopen | defer | ignore] [--agent <name>] [--scope <node>] [--exact] [--project <id>]',
+    summary: "List the Inbox, or apply one action to one item: link a commit to a task (a task ref for a commit, a sha for a task), or open a done task again.",
     flags: [...SCOPE_FLAGS, AGENT_FLAG, PROJECT_FLAG],
     example: "polterware inbox",
   },
   {
     id: "scope",
     name: "polterware scope",
-    synopsis: "polterware scope <decision|fact|evidence|item> <id> [<node path>...] [--project <id>]",
+    synopsis: "polterware scope <decision|fact|rule|item> <id> [<node path>...] [--project <id>]",
     summary:
-      "Set the contexts of a Decision, Fact, Evidence item, or derived Inbox item: the Structure nodes it is about. Name several to give it several; leave them out to clear its contexts (the whole project; a Decision with none is a principle).",
+      "Set the contexts of a Decision, Fact, Rule, or derived Inbox item: the Structure nodes it is about. Name several to give it several; leave them out to clear its contexts (the whole project; a Decision with none is a principle).",
     flags: [PROJECT_FLAG],
     example: "polterware scope fact f-12 backend/domains/work",
   },
@@ -679,7 +667,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
 
 /** Sidebar and page sections: every command id appears in exactly one group. */
 export const CLI_COMMAND_GROUPS: readonly { id: string; label: string; commands: readonly string[] }[] = [
-  { id: "setup", label: "Setup", commands: ["tui", "init", "scan", "repo", "setup", "hooks", "hook", "serve", "mcp", "help"] },
+  { id: "setup", label: "Setup", commands: ["tui", "init", "repo", "setup", "hooks", "hook", "serve", "mcp", "help"] },
   { id: "read", label: "Read", commands: ["brief", "search", "structure", "canvas", "query", "status", "inbox", "export", "drift"] },
   { id: "write", label: "Write", commands: ["apply", "lint", "format", "handoff", "task", "decision", "feature", "verify", "scope"] },
   {

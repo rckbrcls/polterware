@@ -1,15 +1,15 @@
 import { For, Show, createEffect, createSignal, on } from "solid-js";
-import { Button, DetailPanel, Input, Morph, RadioGroup, StatusChip, FileText, ListFilter, Network, Check, Bot, Clock, Hammer, Pencil, Eye } from "@polterware/frontend-design-system";
+import { Button, DetailPanel, Input, Morph, RadioGroup, StatusChip, FileText, ListFilter, Network, Check, Bot, Clock, Link, Undo2, Eye } from "@polterware/frontend-design-system";
 import type { WorkspaceInboxAction, WorkspaceInboxItem } from "./workspace-mocks";
 
-const KIND_LABEL = { decision: "Question", drift: "Conflict", setup: "Setup" } as const;
+const KIND_LABEL = { decision: "Question", drift: "Commit", setup: "Setup" } as const;
 
 const ACTION_LABEL: Record<WorkspaceInboxAction, string> = {
   decide: "Decide",
   delegate: "Delegate",
   defer: "Later",
-  fix_code: "Fix code",
-  update_intent: "Update rule",
+  link: "Link",
+  reopen: "Reopen",
   ignore: "Dismiss",
 };
 
@@ -17,8 +17,8 @@ const ACTION_ICON = {
   decide: Check,
   delegate: Bot,
   defer: Clock,
-  fix_code: Hammer,
-  update_intent: Pencil,
+  link: Link,
+  reopen: Undo2,
   ignore: Eye,
 } as const;
 
@@ -27,13 +27,13 @@ const ACTION_HINT: Record<WorkspaceInboxAction, string> = {
   decide: "Answer this question. The answer is written on the card and the item leaves the Inbox.",
   delegate: "Hand this question to an agent. It leaves your Inbox and shows up in polterware status for the next agent session.",
   defer: "Set this aside. It stays in the Inbox, dimmed under Later, until you come back to it.",
-  fix_code: "The rule is right and the code is wrong. Agents are asked to change the code to match the rule.",
-  update_intent: "The code is right and the rule is out of date. Agents are asked to update the rule to match the code.",
+  link: "Name what this delivered: the task for a commit, or the commit for a done task. The link is stored and the item leaves the Inbox.",
+  reopen: "The task is not done after all. It goes back to open on its card and the item leaves the Inbox.",
   ignore: "This needs no action. The item leaves the Inbox.",
 };
 
 /** The confirm each action opens: its question, what happens, and the button that does it. */
-const ACTION_CONFIRM: Record<Exclude<WorkspaceInboxAction, "decide">, { title: string; body: string; confirm: string }> = {
+const ACTION_CONFIRM: Record<Exclude<WorkspaceInboxAction, "decide" | "link">, { title: string; body: string; confirm: string }> = {
   delegate: {
     title: "Delegate to an agent?",
     body: "The question leaves your Inbox. The next agent session sees it in polterware status and answers it.",
@@ -44,15 +44,10 @@ const ACTION_CONFIRM: Record<Exclude<WorkspaceInboxAction, "decide">, { title: s
     body: "The item stays in the Inbox, dimmed under Later, until you come back to it.",
     confirm: "Move to Later",
   },
-  fix_code: {
-    title: "Fix the code?",
-    body: "You keep the rule. The item leaves your Inbox and agents get it as work: change the code to match the rule.",
-    confirm: "Fix code",
-  },
-  update_intent: {
-    title: "Update the rule?",
-    body: "The code wins. The item leaves your Inbox and agents get it as work: update the rule to match the code.",
-    confirm: "Update rule",
+  reopen: {
+    title: "Reopen the task?",
+    body: "The task goes back to open on its card, so it is no longer claimed as done. The item leaves the Inbox.",
+    confirm: "Reopen task",
   },
   ignore: {
     title: "Dismiss this item?",
@@ -84,13 +79,16 @@ export function InboxItemDetail(props: {
   }));
   createEffect(on(opened, (action) => {
     if (action === "decide") setAnswer(props.item.options.length === 1 ? props.item.options[0]! : "");
+    if (action === "link") setAnswer("");
   }));
+  /** A commit item links to a task; a done-task item links to a commit. */
+  const linksCommit = () => Boolean(props.item.details.sha);
 
   async function confirm(action: WorkspaceInboxAction) {
     if (!props.onAction || saving()) return;
     setSaving(true);
     try {
-      await props.onAction(action, action === "decide" ? answer().trim() : undefined);
+      await props.onAction(action, action === "decide" || action === "link" ? answer().trim() : undefined);
       setOpened(null);
     } catch {
       // The host reports the failure; the confirm stays open to retry.
@@ -144,16 +142,43 @@ export function InboxItemDetail(props: {
                   <Morph.Trigger
                     size="sm"
                     class="flex-1"
-                    variant={action === "decide" ? "primary" : "ghost"}
+                    variant={action === "decide" || action === "link" ? "primary" : "ghost"}
                     disabled={props.disabled}
                     hint={ACTION_HINT[action]}
                   >
                     <Icon size={14} />
                     {ACTION_LABEL[action]}
                   </Morph.Trigger>
+                  <Show when={action === "link"}>
+                    <Morph.Panel title={linksCommit() ? "Link to a task" : "Link a commit"}>
+                      <Morph.Body>
+                        <p class="m-0 mb-2">
+                          {linksCommit()
+                            ? "The task this commit delivers, as card-slug#T2."
+                            : "The commit that delivered this task: its sha, or a ref such as HEAD."}
+                        </p>
+                        <Input
+                          aria-label={linksCommit() ? "Task" : "Commit"}
+                          placeholder={linksCommit() ? "card-slug#T2" : "a1b2c3d"}
+                          class="font-mono"
+                          data-autofocus
+                          value={answer()}
+                          onInput={(event) => setAnswer(event.currentTarget.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" && answer().trim()) void confirm("link");
+                          }}
+                        />
+                      </Morph.Body>
+                      <Morph.Footer>
+                        <Button size="sm" variant="primary" disabled={!answer().trim() || saving()} onClick={() => void confirm("link")}>
+                          {saving() ? "Saving…" : "Link"}
+                        </Button>
+                      </Morph.Footer>
+                    </Morph.Panel>
+                  </Show>
                   <Show
-                    when={action !== "decide"}
-                    fallback={
+                    when={action !== "decide" && action !== "link"}
+                    fallback={action === "link" ? undefined :
                       <Morph.Panel title={props.item.title}>
                         <Morph.Body>
                           <Show
@@ -188,7 +213,7 @@ export function InboxItemDetail(props: {
                     }
                   >
                     {(() => {
-                      const copy = ACTION_CONFIRM[action as Exclude<WorkspaceInboxAction, "decide">];
+                      const copy = ACTION_CONFIRM[action as Exclude<WorkspaceInboxAction, "decide" | "link">];
                       return (
                         <Morph.Panel title={copy.title}>
                           <Morph.Body>{copy.body}</Morph.Body>

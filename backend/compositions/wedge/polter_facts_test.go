@@ -9,7 +9,6 @@ import (
 
 	"github.com/polterware/polterware/backend/compositions/wedge"
 	"github.com/polterware/polterware/backend/domains/agentrun"
-	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/polter"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
@@ -24,15 +23,8 @@ func TestPolterFactApplyRoundTripAndAudit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	evidence, err := canon.NewEvidence(project.ID, "test", "Tests pass", "test", "", "codex")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := store.UpsertCanonEvidence(evidence); err != nil {
-		t.Fatal(err)
-	}
 	header := "---\npolter: 1\nsummary: Promote canvas item\nrationale: promoted from canvas Sketch\n---\n"
-	text := header + "# core: Core\nlevel: system\n#### local-core: One local core owns SQLite.\nkind: declared\nscope: core\nevidence: " + evidence.ID + "\n"
+	text := header + "# core: Core\nlevel: system\n#### local-core: One local core owns SQLite.\nkind: declared\nscope: core\n"
 	apply := func(text string, dry bool) (wedge.ApplyResult, error) {
 		return wedge.ApplyPolter(store, wedge.ApplyInput{ProjectID: project.ID, Text: text, DryRun: dry, AutoStartLabel: "codex", Agent: "codex"})
 	}
@@ -52,10 +44,6 @@ func TestPolterFactApplyRoundTripAndAudit(t *testing.T) {
 	fact, err := store.GetCanonFact(id)
 	if err != nil || fact.Statement != "One local core owns SQLite." || fact.TruthClass != "declared" || fact.Actor != "codex" {
 		t.Fatalf("fact: %+v %v", fact, err)
-	}
-	links, err := store.ListCanonEvidenceForFact(id)
-	if err != nil || len(links) != 1 || links[0].ID != evidence.ID {
-		t.Fatalf("evidence: %+v %v", links, err)
 	}
 	snapshot, err := store.LoadWorkSnapshot(project.ID)
 	if err != nil || snapshot.Facts[0].Slug != "local-core" || !slices.Equal(snapshot.Facts[0].Scopes, []string{"core"}) {
@@ -80,11 +68,7 @@ func TestPolterFactApplyRoundTripAndAudit(t *testing.T) {
 			t.Fatalf("update: %+v %v", updated, err)
 		}
 	}
-	links, err = store.ListCanonEvidenceForFact(id)
-	if err != nil || len(links) != 1 {
-		t.Fatalf("omitted evidence cleared: %+v %v", links, err)
-	}
-	cleared, err := apply(header+"#### "+id+"\nkind: verified\nscope:\nevidence:\n", false)
+	cleared, err := apply(header+"#### "+id+"\nkind: verified\nscope:\n", false)
 	if err != nil || !cleared.Applied {
 		t.Fatalf("clear: %+v %v", cleared, err)
 	}
@@ -92,24 +76,12 @@ func TestPolterFactApplyRoundTripAndAudit(t *testing.T) {
 	if err != nil || fact.TruthClass != "verified" {
 		t.Fatalf("verified: %+v %v", fact, err)
 	}
-	links, err = store.ListCanonEvidenceForFact(id)
-	if err != nil || len(links) != 0 {
-		t.Fatalf("clear evidence: %+v %v", links, err)
-	}
 	scope, err := store.ScopeMap(project.ID, storepkg.ScopeFact)
 	if err != nil || len(scope[id]) != 0 {
 		t.Fatalf("clear scope: %+v %v", scope, err)
 	}
-	// Foreign-project evidence is not a valid reference, and the whole document is rejected.
-	other, err := wedge.InitProject(store, wedge.InitInput{Name: "Other", RootPath: t.TempDir()})
-	if err != nil {
-		t.Fatal(err)
-	}
-	foreign, _ := canon.NewEvidence(other.ID, "test", "Foreign", "test", "", "codex")
-	if err := store.UpsertCanonEvidence(foreign); err != nil {
-		t.Fatal(err)
-	}
-	bad := header + "#### another: Another fact\n#### bad: Rejected\nkind: invalid\nevidence: " + foreign.ID + "\n"
+	// One invalid block rejects the whole document.
+	bad := header + "#### another: Another fact\n#### bad: Rejected\nkind: invalid\n"
 	rejected, err := apply(bad, false)
 	if !errors.Is(err, wedge.ErrPolterInvalid) || !polter.HasErrors(rejected.Diagnostics) {
 		t.Fatalf("reject: %+v %v", rejected, err)

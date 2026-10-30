@@ -8,6 +8,7 @@ export type DetailDisplay = "peek" | "page" | "both";
 
 export const DETAIL_DISPLAY: Readonly<Record<string, DetailDisplay>> = {
   fact: "page",
+  rule: "page",
   "inbox-item": "peek",
   change: "peek",
   "dispatch-quota": "peek",
@@ -27,7 +28,7 @@ export function detailDisplayFor(entityKind: string | null | undefined): DetailD
 
 /** Full writing canvases use the global panel only for their properties. */
 export function isDocumentDetail(entityKind: string | null | undefined): boolean {
-  return entityKind === "decision" || entityKind === "doc" || entityKind === "card" || entityKind === "fact";
+  return entityKind === "decision" || entityKind === "doc" || entityKind === "card" || entityKind === "fact" || entityKind === "rule";
 }
 
 export function canExpandDetail(entityKind: string | null | undefined): boolean {

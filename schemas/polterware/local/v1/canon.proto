@@ -83,23 +83,6 @@ message CanonFact {
   repeated string scope_node_ids = 12;
 }
 
-message CanonEvidence {
-  string id = 1;
-  string project_id = 2;
-  string kind = 3;
-  string summary = 4;
-  string source = 5;
-  string path = 6;
-  string actor = 7;
-  string observed_at = 8;
-  string created_at = 9;
-  string updated_at = 10;
-  reserved 11;
-  reserved "scope_node_id";
-  // scope_node_ids are the Structure nodes the evidence is about; none is the whole project.
-  repeated string scope_node_ids = 12;
-}
-
 message ListFactsRequest {
   string project_id = 1;
   string entity_id = 2;
@@ -119,7 +102,8 @@ message GetFactRequest {
 
 message GetFactResponse {
   CanonFact fact = 1;
-  repeated CanonEvidence evidence = 2;
+  reserved 2;
+  reserved "evidence";
 }
 
 message UpsertFactRequest {
@@ -131,58 +115,6 @@ message UpsertFactResponse {
   CanonFact fact = 1;
 }
 
-message ListEvidenceRequest {
-  string project_id = 1;
-  string scope_node = 2;
-  bool scope_exact = 3;
-  // scope_nodes is merged with scope_node. The list is the union.
-  repeated string scope_nodes = 4;
-}
-
-message ListEvidenceResponse {
-  repeated CanonEvidence evidence = 1;
-}
-
-message GetEvidenceRequest {
-  string id = 1;
-}
-
-message GetEvidenceResponse {
-  CanonEvidence evidence = 1;
-}
-
-message UpsertEvidenceRequest {
-  CanonEvidence evidence = 1;
-  ChangeEnvelope change = 2;
-}
-
-message UpsertEvidenceResponse {
-  CanonEvidence evidence = 1;
-}
-
-message LinkEvidenceToFactRequest {
-  string project_id = 1;
-  string fact_id = 2;
-  string evidence_id = 3;
-  ChangeEnvelope change = 4;
-}
-
-message LinkEvidenceToFactResponse {}
-
-// ScanProjectRequest imports evidence and facts from the project's files.
-message ScanProjectRequest {
-  string project_id = 1;
-}
-
-message ScanProjectResponse {
-  int32 fact_count = 1;
-  int32 evidence_count = 2;
-  reserved 3;
-  reserved "source_count";
-  int32 skipped_count = 4;
-  string message = 5;
-}
-
 service ProjectModelService {
   rpc ListEntities(ListEntitiesRequest) returns (ListEntitiesResponse);
   rpc ListRelationships(ListRelationshipsRequest) returns (ListRelationshipsResponse);
@@ -191,9 +123,4 @@ service ProjectModelService {
   rpc ListFacts(ListFactsRequest) returns (ListFactsResponse);
   rpc GetFact(GetFactRequest) returns (GetFactResponse);
   rpc UpsertFact(UpsertFactRequest) returns (UpsertFactResponse);
-  rpc ListEvidence(ListEvidenceRequest) returns (ListEvidenceResponse);
-  rpc GetEvidence(GetEvidenceRequest) returns (GetEvidenceResponse);
-  rpc UpsertEvidence(UpsertEvidenceRequest) returns (UpsertEvidenceResponse);
-  rpc LinkEvidenceToFact(LinkEvidenceToFactRequest) returns (LinkEvidenceToFactResponse);
-  rpc ScanProject(ScanProjectRequest) returns (ScanProjectResponse);
 }

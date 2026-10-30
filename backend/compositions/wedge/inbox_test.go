@@ -39,7 +39,7 @@ func TestInboxEndToEnd(t *testing.T) {
 	if _, err := wedge.ApplyPolter(store, wedge.ApplyInput{ProjectID: project.ID, Text: inboxRoadmap, AutoStartLabel: "cli"}); err != nil {
 		t.Fatal(err)
 	}
-	// A rule with no evidence raises nothing: rules need no proof.
+	// A fact raises nothing: only questions, commits, and setup reach the Inbox.
 	declared, err := canon.NewFact(project.ID, "Local auth is bearer token", canon.TruthDeclared, "mcp", "codex", "")
 	if err != nil {
 		t.Fatal(err)

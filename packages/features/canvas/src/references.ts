@@ -1,13 +1,13 @@
 import type { ArchitectureDocument } from "@polterware/frontend-canvas";
 import type { GraphNode } from "./model";
 
-export type RefKind = "card" | "decision" | "fact" | "node" | "evidence";
+export type RefKind = "card" | "decision" | "fact" | "node";
 /** A store record the canvas can reference. Structure nodes carry their component kind and technology. */
 export type StoreEntity = { kind: RefKind; id: string; title: string; slug?: string; level?: string; componentKind?: string; tech?: string };
 /** What a canvas node shows from the Structure node it references. */
 export type LinkedFacts = { kind?: string; tech?: string };
 export type CanvasRef = NonNullable<GraphNode["ref"]>;
-export const kindLabel = (kind: string) => ({ card: "Work card", decision: "Decision", fact: "Rule", node: "Structure", evidence: "Evidence" })[kind] ?? kind;
+export const kindLabel = (kind: string) => ({ card: "Work card", decision: "Decision", fact: "Fact", node: "Structure" })[kind] ?? kind;
 export function buildRef(entity: StoreEntity): CanvasRef {
   if (!entity.id.trim()) throw new Error("A store entity ID is required.");
   return { kind: entity.kind, id: entity.id };

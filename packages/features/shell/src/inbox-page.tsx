@@ -17,8 +17,8 @@ import {
   Clock,
   Eye,
   GitCompare,
-  Hammer,
-  Pencil,
+  Link,
+  Undo2,
   ShieldCheck,
   StatusChip,
   Scale,
@@ -46,13 +46,13 @@ const INBOX_SCOPE = "inbox:items";
 
 const TYPE_FILTERS: { id: WorkspaceInboxKind; label: string }[] = [
   { id: "decision", label: "Questions" },
-  { id: "drift", label: "Conflicts" },
+  { id: "drift", label: "Commits" },
   { id: "setup", label: "Setup" },
 ];
 
 const KIND_LABEL: Record<WorkspaceInboxKind, string> = {
   decision: "Question",
-  drift: "Conflict",
+  drift: "Commit",
   setup: "Setup",
 };
 
@@ -60,8 +60,8 @@ const ACTION_LABEL: Record<WorkspaceInboxAction, string> = {
   decide: "Decide",
   delegate: "Delegate",
   defer: "Later",
-  fix_code: "Fix code",
-  update_intent: "Update rule",
+  link: "Link",
+  reopen: "Reopen",
   ignore: "Dismiss",
 };
 
@@ -69,8 +69,8 @@ const ACTION_ICON = {
   decide: Check,
   delegate: Bot,
   defer: Clock,
-  fix_code: Hammer,
-  update_intent: Pencil,
+  link: Link,
+  reopen: Undo2,
   ignore: Eye,
 } as const;
 
@@ -89,8 +89,8 @@ const KIND_GROUPS = TYPE_FILTERS.map((option) => {
 });
 
 /**
- * Inbox — master/detail, as in Linear: Question, Conflict, and Setup items grouped by kind on
- * the left, the active item's detail pinned on the right. H defers and D dismisses the active
+ * Inbox — master/detail, as in Linear: Question, Commit, and Setup items grouped by kind on
+ * the left, the active item's detail on the right (it closes, and a row opens it again). H defers and D dismisses the active
  * item (or the selection), and the next item takes its place.
  */
 export function InboxPage(props: {
@@ -217,6 +217,14 @@ export function InboxPage(props: {
   });
   onCleanup(() => detailPanelStore.getState().unregisterCollection(INBOX_SCOPE));
 
+  // The detail opens beside the list on arrival, like a second pane; it closes like Activity's and a row opens it again.
+  let shownOnce = false;
+  createEffect(() => {
+    if (shownOnce || props.loading || rows().length === 0) return;
+    shownOnce = true;
+    detailPanelStore.getState().show();
+  });
+
   // When the active item leaves (resolved, deferred out of a filter), the one now at its place takes over.
   let activeIndex = 0;
   createEffect(() => {
@@ -314,7 +322,7 @@ export function InboxPage(props: {
   }
 
   return (
-    <EntityDetailHost pinned={rows().length > 0}>
+    <EntityDetailHost>
       <PageToolbar.Root>
         <PageToolbar.Leading>{null}</PageToolbar.Leading>
         <PageToolbar.Actions>
@@ -329,7 +337,7 @@ export function InboxPage(props: {
             saved={filters.saved()}
           />
           <Show when={props.onCheckDrift}>
-            <Button variant="texture" size="icon" aria-label={checking() ? "Checking for conflicts…" : "Check for conflicts"} disabled={checking()} onClick={() => void checkDrift()}>
+            <Button variant="texture" size="icon" aria-label={checking() ? "Checking commits…" : "Check commits"} disabled={checking()} onClick={() => void checkDrift()}>
               <RefreshCw size={14} />
             </Button>
           </Show>

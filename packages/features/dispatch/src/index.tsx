@@ -8,14 +8,11 @@ import {
   Cpu,
   DataTable,
   DetailPanel,
-  Dialog,
-  Field,
   FilterPopover,
   FileDiff,
   FileText,
   Gauge,
   GitBranch,
-  Input,
   PageContent,
   PageEmpty,
   PageToolbar,
@@ -35,9 +32,18 @@ import {
   SparkChart,
   StatusChip,
   Stop,
-  Textarea,
   ToolbarIconButton,
+  Composer,
+  FolderKanban,
+  EntityMenuButton,
+  type ComposerProperty,
+  type PropertyOption,
+  Delete,
+  Undo2,
+  GitMerge,
   pushToast,
+  requestConfirm,
+  type EntityAction,
   ActiveFilterBar,
   matchClauses,
   type FilterField,
@@ -71,10 +77,11 @@ import type {
   DispatchWatchEventView,
   DispatchWorktreeView,
 } from "./dispatch-types";
-import { runReviewAction } from "./dispatch-bridge";
+import { dispatchOpBody, runMoreActions, runReviewAction } from "./dispatch-bridge";
 import { buildTranscript } from "./run-log";
 import { RunTerminal } from "./run-terminal";
 import { DispatchLearningPage } from "./learning-page";
+import { DispatchPolicyPage } from "./policy-page";
 import { TierBoard } from "./tier-board";
 import { DISPATCH_STATS_BY_OPTIONS, DISPATCH_STATS_SINCE_OPTIONS, DispatchStatsPage } from "./stats-page";
 
@@ -96,6 +103,7 @@ function normalizeDispatchTab(tab?: string): DispatchTab {
     tab === "agents"
     || tab === "tiers"
     || tab === "learning"
+    || tab === "policy"
     || tab === "stats"
   ) {
     return tab;
@@ -442,6 +450,10 @@ export function DispatchPage(props: {
   onStartDraftUsed?: () => void;
   /** A new value closes the open run and shows the list (the sidebar item chosen again). */
   homeKey?: number;
+  /** The project's checkout, for Policy's project policy, subagents, and verify.json. */
+  projectDir?: string;
+  /** Cards Start run can work on, searchable by title and slug; `group` is the heading they list under. */
+  cards?: readonly { slug: string; title: string; group?: string }[];
 }) {
   const [localTab, setLocalTab] = createSignal<DispatchTab>(normalizeDispatchTab(props.tab));
   const activeTab = () => (props.tab ? normalizeDispatchTab(props.tab) : localTab());
@@ -466,7 +478,6 @@ export function DispatchPage(props: {
   const [draftCard, setDraftCard] = createSignal("");
   const [draftPrompt, setDraftPrompt] = createSignal("");
   const [startOpen, setStartOpen] = createSignal(false);
-  const [starting, setStarting] = createSignal(false);
   const [cancellingId, setCancellingId] = createSignal("");
   const [statsBy, setStatsBy] = createSignal("day");
   const [statsSince, setStatsSince] = createSignal("7d");
@@ -623,25 +634,35 @@ export function DispatchPage(props: {
     setStartOpen(true);
     props.onStartDraftUsed?.();
   }));
+  // Start run lists the models the installed agents report, like a tier's Add model.
+  createEffect(on(startOpen, (open) => { if (open) void loadPaletteModels(); }));
 
-  const handleStartRun = async () => {
+  /** The draft prompt's first line is the title; the rest is the description. */
+  const startInitial = () => {
+    const [title = "", ...rest] = draftPrompt().split("\n");
+    return { title, description: rest.join("\n").trim() };
+  };
+
+  /** Resolves false when nothing started, so the composer keeps the draft. */
+  const handleStartRun = async (prompt: string): Promise<boolean> => {
     const bridge = dispatchBridge();
     const projectId = props.projectId.trim();
-    const prompt = draftPrompt().trim();
-    if (!bridge || !projectId || !prompt) return;
-    setStarting(true);
+    if (!bridge || !projectId || !prompt.trim()) return false;
+    // The agent pick is "agent" or "agent<NUL>model"; empty lets the tier choose.
+    const [agent = "", model = ""] = draftAgent().split("\u0000");
     try {
       const started = mapDispatchRun(
         await bridge.startRun({
           projectId,
           tier: draftTier(),
-          prompt,
+          prompt: prompt.trim(),
           ...(draftCard().trim() ? { cardSlug: draftCard().trim() } : {}),
-          ...(draftAgent().trim() ? { agent: draftAgent().trim() } : {}),
+          ...(agent ? { agent } : {}),
+          ...(model ? { model } : {}),
         }),
       );
       setDraftPrompt("");
-      setStartOpen(false);
+      setDraftCard("");
       if (activeTab() !== "runs") {
         setLocalTab("runs");
         props.onTabChange?.("runs");
@@ -649,10 +670,10 @@ export function DispatchPage(props: {
       await refresh();
       if (started) openRun(started.id);
       pushToast("Agent run started.", "success");
+      return true;
     } catch (error: unknown) {
       pushToast(error instanceof Error ? error.message : "Could not start dispatch run.", "danger");
-    } finally {
-      setStarting(false);
+      return false;
     }
   };
 
@@ -685,6 +706,45 @@ export function DispatchPage(props: {
       else pushToast(action === "verify" ? "Run verified." : "Run merged.", "success");
     } catch (error: unknown) {
       pushToast(error instanceof Error ? error.message : `Could not ${action} the run.`, "danger");
+    } finally {
+      setReviewing("");
+    }
+  };
+
+  // The header menu's other ops: merge without the checks, recover an interrupted run, remove its worktree.
+  const handleMoreRun = async (id: string, action: "merge-anyway" | "recover" | "clean") => {
+    const bridge = dispatchBridge();
+    if (!bridge || !id || reviewing()) return;
+    const asked = action === "merge-anyway"
+      ? await requestConfirm({
+        title: "Merge without verifying?",
+        description: "The run's branch lands on its base without running the project checks.",
+        recovery: "Revert the merge commit to undo it.",
+        confirmLabel: "Merge anyway",
+      })
+      : action === "clean"
+        ? await requestConfirm({
+          title: "Remove the worktree?",
+          description: "The run's worktree and branch are deleted, with any change not merged.",
+          recovery: "This cannot be undone.",
+          confirmLabel: "Remove worktree",
+          tone: "danger",
+        })
+        : true;
+    if (!asked) return;
+    setReviewing(action === "merge-anyway" ? "merge" : "verify");
+    try {
+      const raw = action === "merge-anyway"
+        ? await bridge.mergeRun?.({ id, noVerify: true })
+        : action === "recover"
+          ? await bridge.recoverRun?.({ id })
+          : await bridge.cleanRun?.({ id, force: true });
+      const { ok } = dispatchOpBody(raw);
+      await refresh();
+      const done = { "merge-anyway": "Run merged.", recover: "Run recovered.", clean: "Worktree removed." }[action];
+      pushToast(ok ? done : "The operation reported a failure.", ok ? "success" : "danger");
+    } catch (error: unknown) {
+      pushToast(error instanceof Error ? error.message : "Could not update the run.", "danger");
     } finally {
       setReviewing("");
     }
@@ -771,10 +831,48 @@ export function DispatchPage(props: {
     return dynamic.length > 0 ? dynamic : DEFAULT_TIER_OPTIONS;
   });
 
-  const agentSelectOptions = createMemo(() => [
-    { value: "", label: "Auto (from tier)" },
-    ...agents().map((agent) => ({ value: agent.name, label: agent.name })),
-  ]);
+  /**
+   * Start run's pills: the tier, the agent and model (grouped by agent with their bots, from the
+   * models the installed agents report, plus agents with no listed model), and the card it works on.
+   */
+  const startProperties = createMemo((): ComposerProperty[] => {
+    const avatar = (agent: string) => <DispatchAgentAvatar agent={agent} seed={agent} size={18} />;
+    const listed = new Set(paletteModels().map((model) => model.agent));
+    const agentOptions: PropertyOption[] = [
+      { value: "", label: "Any agent", hint: "The tier picks the agent and model", icon: <Route size={14} /> },
+      ...paletteModels().map((model) => ({
+        value: `${model.agent}\u0000${model.model}`,
+        label: model.model,
+        hint: [model.provider, model.tier].filter(Boolean).join(" / ") || undefined,
+        group: model.agent,
+        icon: avatar(model.agent),
+        bareIcon: true,
+      })),
+      ...agents().filter((agent) => !listed.has(agent.name)).map((agent) => ({
+        value: agent.name,
+        label: agent.name,
+        hint: "Its default model",
+        group: agent.name,
+        icon: avatar(agent.name),
+        bareIcon: true,
+      })),
+    ];
+    const cardOptions: PropertyOption[] = [
+      { value: "", label: "No card", icon: <FolderKanban size={14} /> },
+      ...(props.cards ?? []).map((card) => ({
+        value: card.slug,
+        label: card.title || card.slug,
+        hint: card.slug,
+        group: card.group,
+        icon: <FolderKanban size={14} />,
+      })),
+    ];
+    return [
+      { id: "tier", label: "Tier", icon: <Gauge size={14} />, options: tierSelectOptions().map((option) => ({ ...option, icon: <Gauge size={14} /> })), value: draftTier(), onChange: setDraftTier },
+      { id: "agent", label: "Agent", icon: <Bot size={14} />, options: agentOptions, value: draftAgent(), onChange: setDraftAgent, pickerWidth: 320 },
+      { id: "card", label: "Card", icon: <FolderKanban size={14} />, options: cardOptions, value: draftCard(), onChange: setDraftCard, pickerWidth: 320 },
+    ];
+  });
 
   /** Per-agent usedPercent series ordered by sampledAt, skipping snapshots without usedPercent. */
   const agentQuotaSeries = createMemo((): AgentQuotaSeries[] => {
@@ -999,6 +1097,7 @@ export function DispatchPage(props: {
               reviewing={reviewing()}
               onVerify={dispatchBridge()?.verifyRun ? () => void handleReviewRun(run().id, "verify") : undefined}
               onMerge={dispatchBridge()?.mergeRun ? () => void handleReviewRun(run().id, "merge") : undefined}
+              onMore={dispatchBridge()?.cleanRun ? (action) => void handleMoreRun(run().id, action) : undefined}
             />
           )}
         </Match>
@@ -1210,68 +1309,24 @@ export function DispatchPage(props: {
         <Match when={activeTab() === "learning"}>
           <DispatchLearningPage query={learningQuery()} clauses={learningFilters.pageClauses()} />
         </Match>
+
+        <Match when={activeTab() === "policy"}>
+          <DispatchPolicyPage agents={agents().map((agent) => agent.name)} projectDir={props.projectDir ?? ""} />
+        </Match>
       </Switch>
 
-      <Dialog
+      <Composer
         open={startOpen()}
-        title="Start run"
-        description="Delegate a task to a worker agent."
-        size="md"
-        onClose={() => {
-          if (!starting()) setStartOpen(false);
-        }}
-        footer={
-          <>
-            <Button variant="texture" disabled={starting()} onClick={() => setStartOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              disabled={starting() || !draftPrompt().trim() || !props.projectId.trim()}
-              onClick={() => void handleStartRun()}
-            >
-              <Play size={14} />
-              {starting() ? "Starting…" : "Start run"}
-            </Button>
-          </>
-        }
-      >
-        <div class="flex flex-col gap-3">
-          <Field label="Tier">
-            <Select
-              aria-label="Tier"
-              options={tierSelectOptions()}
-              value={draftTier()}
-              onChange={setDraftTier}
-            />
-          </Field>
-          <Field label="Agent">
-            <Select
-              aria-label="Agent"
-              options={agentSelectOptions()}
-              value={draftAgent()}
-              onChange={setDraftAgent}
-            />
-          </Field>
-          <Field label="Card">
-            <Input
-              aria-label="Card"
-              placeholder="Optional card slug"
-              value={draftCard()}
-              onInput={(event) => setDraftCard(event.currentTarget.value)}
-            />
-          </Field>
-          <Field label="Prompt">
-            <Textarea
-              aria-label="Prompt"
-              rows={4}
-              placeholder="Describe the task to dispatch…"
-              value={draftPrompt()}
-              onInput={(event) => setDraftPrompt(event.currentTarget.value)}
-            />
-          </Field>
-        </div>
-      </Dialog>
+        onClose={() => setStartOpen(false)}
+        crumbs={["Agents", "Start run"]}
+        titlePlaceholder="What should the agent do?"
+        descriptionPlaceholder="Details, files to touch, how to check it…"
+        initial={startInitial()}
+        properties={startProperties()}
+        createMore={false}
+        submitLabel="Start run"
+        onSubmit={(draft) => handleStartRun(draft.description ? `${draft.title}\n\n${draft.description}` : draft.title)}
+      />
     </EntityDetailHost>
   );
 }
@@ -1392,6 +1447,8 @@ function DispatchRunDetail(props: {
   reviewing: "" | "verify" | "merge";
   onVerify?: () => void;
   onMerge?: () => void;
+  /** The header menu's other ops; absent on cores that predate them. */
+  onMore?: (action: "merge-anyway" | "recover" | "clean") => void;
 }) {
   let logEnd: HTMLDivElement | undefined;
   createEffect(() => {
@@ -1413,6 +1470,21 @@ function DispatchRunDetail(props: {
   const attempts = () => agentAttemptCards(props.run);
   const promptRest = () => props.run.prompt.trim();
   const review = () => runReviewAction(props.run, Boolean(branch() || path()));
+  const more = (): EntityAction[] => {
+    const onMore = props.onMore;
+    if (!onMore) return [];
+    const labels = {
+      "merge-anyway": { label: "Merge without verifying", icon: GitMerge },
+      recover: { label: "Recover run", icon: Undo2 },
+      clean: { label: "Remove worktree", icon: Delete, danger: true },
+    } as const;
+    return runMoreActions(props.run, Boolean(branch() || path())).map((id) => ({
+      id,
+      ...labels[id],
+      disabled: props.reviewing !== "",
+      onSelect: () => onMore(id),
+    }));
+  };
   const text = (value: string | undefined) => (value?.trim() ? value.trim() : undefined);
   const linked = () => props.run.resumedOf.trim() || props.resumedBy.length > 0 || props.childRuns.length > 0;
   const actions = () => (
@@ -1435,6 +1507,7 @@ function DispatchRunDetail(props: {
           {props.reviewing === "merge" ? "Merging…" : "Merge"}
         </Button>
       </Show>
+      <EntityMenuButton label="More run actions" actions={more()} />
     </>
   );
   const rail = () => (

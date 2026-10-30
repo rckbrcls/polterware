@@ -24,7 +24,7 @@ export function NodeInspector(props: {
   const [error, setError] = createSignal("");
   const ref = () => readRef(props.node);
   const state = () => referenceState(ref(), props.entities);
-  const matches = createMemo(() => props.entities.filter((entity) => (props.structureRequired ? entity.kind === "node" : entity.kind !== "evidence") && `${kindLabel(entity.kind)} ${entity.title} ${entity.slug ?? ""}`.toLowerCase().includes(search().toLowerCase())));
+  const matches = createMemo(() => props.entities.filter((entity) => (!props.structureRequired || entity.kind === "node") && `${kindLabel(entity.kind)} ${entity.title} ${entity.slug ?? ""}`.toLowerCase().includes(search().toLowerCase())));
   function open(kind: PromotionKind) {
     setTitle(props.node.name); setSlug(deriveSlug(props.node.name, props.entities.filter((e) => e.kind === kind).map((e) => e.slug ?? "")));
     setError(""); setApplied(false); setPromotion(kind);

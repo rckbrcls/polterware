@@ -2,6 +2,7 @@ package polter
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"unicode"
@@ -144,9 +145,9 @@ func ReviewFeature(snapshot work.Snapshot, slug string, decisions []DecisionRef,
 
 	review.Decisions = reviewDecisions(card, chain, decisions)
 	for _, node := range chain {
-		for _, inv := range node.Invariants {
-			if inv.State == work.InvariantActive {
-				review.Inherited = append(review.Inherited, ReviewInvariant{Text: inv.Text, From: node.Path})
+		for _, rule := range snapshot.Rules {
+			if slices.Contains(rule.Scopes, node.Path) {
+				review.Inherited = append(review.Inherited, ReviewInvariant{Text: rule.Statement, From: node.Path})
 			}
 		}
 	}

@@ -10,7 +10,8 @@ import { Folder, Inbox, StatusDot,
   type DataTableSortState,
   type PropertyOption,
 } from "@polterware/frontend-design-system";
-import type { WorkStage, WorkspaceMilestone, WorkspaceWorkCard } from "@polterware/feature-shell";
+import type { ScopeNodeItem, WorkStage, WorkspaceMilestone, WorkspaceWorkCard } from "@polterware/feature-shell";
+import { ContextChips } from "./context-chips";
 import {
   DEFAULT_WORK_LIST_DISPLAY,
   orderWorkCards,
@@ -68,6 +69,8 @@ function PickFor(props: { label: string; property: string; options: readonly Pro
 export function WorkListTable(props: {
   cards: readonly WorkspaceWorkCard[];
   milestones: readonly WorkspaceMilestone[];
+  /** Structure nodes, to name a card's Context (the component it is under). */
+  nodes?: readonly ScopeNodeItem[];
   display: WorkListDisplay;
   onDisplayChange: (display: WorkListDisplay) => void;
   activeSlug: string | null;
@@ -92,6 +95,7 @@ export function WorkListTable(props: {
   createEffect(() => props.onSelectionChange?.([...selected()]));
   const rows = createMemo(() => orderWorkCards(props.cards, props.display.ordering, props.display.direction));
   const shows = (property: WorkListProperty) => props.display.properties.includes(property);
+  const contextOf = (card: WorkspaceWorkCard) => (props.nodes ?? []).filter((node) => card.under && node.path === card.under).map((node) => node.id);
   const milestoneName = (id?: string) =>
     (id ? props.milestones.find((milestone) => milestone.id === id)?.name : undefined) ?? "Backlog";
 
@@ -162,6 +166,7 @@ export function WorkListTable(props: {
           <Show when={bulk()}><DataTable.SelectionCell /></Show>
           <DataTable.ColumnHeader<WorkspaceWorkCard> id="title" sortBy={(card) => card.title.toLowerCase()}>Card</DataTable.ColumnHeader>
           <Show when={shows("slug")}><DataTable.ColumnHeader<WorkspaceWorkCard> id="slug" sortable={false}>Slug</DataTable.ColumnHeader></Show>
+          <Show when={shows("context")}><DataTable.ColumnHeader<WorkspaceWorkCard> id="context" sortBy={(card) => card.under}>Context</DataTable.ColumnHeader></Show>
           <Show when={shows("stage")}><DataTable.ColumnHeader<WorkspaceWorkCard> id="stage" sortBy={stageIndex}>Stage</DataTable.ColumnHeader></Show>
           <Show when={shows("tasks")}><DataTable.ColumnHeader<WorkspaceWorkCard> id="tasks" sortable={false}>Tasks</DataTable.ColumnHeader></Show>
           <Show when={shows("milestone")}><DataTable.ColumnHeader<WorkspaceWorkCard> id="milestone" sortable={false}>Milestone</DataTable.ColumnHeader></Show>
@@ -173,6 +178,7 @@ export function WorkListTable(props: {
               <Show when={bulk()}><DataTable.SelectionCell rowId={item.slug} label={`Select ${item.title}`} /></Show>
               <DataTable.PrimaryCell icon={<ListChecks size={16} />} iconTone="knowledge" iconSeed={item.slug} title={item.title} />
               <Show when={shows("slug")}><DataTable.Cell class="font-mono pw-selectable text-[12px]">{item.slug}</DataTable.Cell></Show>
+              <Show when={shows("context")}><DataTable.Cell><ContextChips ids={contextOf(item)} nodes={props.nodes ?? []} /></DataTable.Cell></Show>
               <Show when={shows("stage")}><DataTable.Cell><StatusChip tone={workStageTone(item.stage)} label={workStageLabel(item.stage)} /></DataTable.Cell></Show>
               <Show when={shows("tasks")}>
                 <DataTable.Cell class="tabular-nums text-[var(--color-text-muted)]">

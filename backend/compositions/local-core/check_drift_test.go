@@ -32,9 +32,6 @@ func TestCheckDriftNarrowHappyPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := wedge.ScanProject(store, project.ID); err != nil {
-		t.Fatal(err)
-	}
 
 	core := NewCore(store, "test-token")
 	response, err := core.CheckDrift(context.Background(), connect.NewRequest(&localv1.CheckDriftRequest{

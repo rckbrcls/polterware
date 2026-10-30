@@ -59,7 +59,8 @@ export type WorkspaceSnapshot = {
   integrationResources: WorkspaceIntegrationResource[];
   syncRuns: WorkspaceIntegrationSyncRun[];
   rawKnowledge: Record<string, unknown>[];
-  structureFacts: { id: string; entityId: string; scopeNodeIds: string[]; statement: string; truthClass: string }[];
+  /** Every active Rule of the project, unscoped, so a node's document can show the ones it inherits. */
+  rules: { id: string; slug: string; statement: string; scopeNodeIds: string[]; scopePaths: string[] }[];
 };
 
 /** Extension-domain fields merged after the Architecture shell paints. */
@@ -77,7 +78,7 @@ export type WorkspaceExtensions = Pick<
   | "integrationResources"
   | "syncRuns"
   | "rawKnowledge"
-  | "structureFacts"
+  | "rules"
 >;
 
 type ProjectMetadata = {
@@ -114,7 +115,7 @@ export function emptyWorkspaceExtensions(): WorkspaceExtensions {
     integrationResources: [],
     syncRuns: [],
     rawKnowledge: [],
-    structureFacts: [],
+    rules: [],
   };
 }
 
@@ -161,8 +162,19 @@ export function scopeArgs(): { scopeNodes?: string[] } {
   return activeScopeNodeIds.length > 0 ? { scopeNodes: [...activeScopeNodeIds] } : {};
 }
 
-export async function loadFacts(projectId: string) {
-  return core().canon.listFacts({ projectId, ...scopeArgs() });
+/** Rules under the active scope: a node's Rules and those of its ancestors and the whole project. */
+export async function loadRules(projectId: string) {
+  return core().work.listRules({ projectId, ...scopeArgs() });
+}
+
+export function mapRules(response: unknown): WorkspaceSnapshot["rules"] {
+  return asObjectArray(asRecord(response).rules).map((rule) => ({
+    id: asString(rule.id),
+    slug: asString(rule.slug),
+    statement: asString(rule.statement),
+    scopeNodeIds: asStringArray(rule.scopeNodeIds),
+    scopePaths: asStringArray(rule.scopePaths),
+  }));
 }
 
 export async function loadChanges(
@@ -318,7 +330,7 @@ export async function loadWorkspaceExtensions(
     api.integrations.listSyncRuns({ projectId }),
     environmentsPromise,
     loadMilestones(projectId),
-    api.canon.listFacts({ projectId, ...scopeArgs() }),
+    api.work.listRules({ projectId }),
   ]);
   const [
     knowledgeRes,
@@ -375,7 +387,7 @@ export async function loadWorkspaceExtensions(
     integrationResources,
     syncRuns,
     rawKnowledge: knowledgeItems,
-    structureFacts: asObjectArray(asRecord(settled[12]).facts).map((fact) => ({ id: asString(fact.id), entityId: asString(fact.entityId), scopeNodeIds: asStringArray(fact.scopeNodeIds), statement: asString(fact.statement), truthClass: asString(fact.truthClass) })),
+    rules: mapRules(settled[12]),
   };
 }
 

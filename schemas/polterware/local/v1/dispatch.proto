@@ -388,6 +388,32 @@ message SubagentsRequest {
   string dir = 2;
 }
 
+message InitVerifyRequest {
+  // A directory inside the repository; the example goes to its root's .dispatch/verify.json.
+  string dir = 1;
+}
+
+message SkillRequest {
+  // install or refresh.
+  string action = 1;
+  // install only: one agent (claude, cursor, codex, grok, antigravity); empty installs for all.
+  string agent = 2;
+  // install only: overwrite an existing skill.
+  bool force = 3;
+}
+
+// ok is false when the operation ran but reports a failure; json is its body.
+message InitVerifyResponse {
+  bool ok = 1;
+  string json = 2;
+}
+
+// ok is false when the operation ran but reports a failure; json is its body.
+message SkillResponse {
+  bool ok = 1;
+  string json = 2;
+}
+
 // ok is false when the operation ran but reports a failure; json is its body.
 message RouteResponse {
   bool ok = 1;
@@ -462,4 +488,6 @@ service DispatchService {
   rpc RecoverRun(RecoverRunRequest) returns (RecoverRunResponse);
   rpc Config(ConfigRequest) returns (ConfigResponse);
   rpc Subagents(SubagentsRequest) returns (SubagentsResponse);
+  rpc InitVerify(InitVerifyRequest) returns (InitVerifyResponse);
+  rpc Skill(SkillRequest) returns (SkillResponse);
 }

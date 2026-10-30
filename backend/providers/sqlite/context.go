@@ -125,7 +125,7 @@ func (s *Store) CompileContext(req contextpkg.Request) (contextpkg.Package, erro
 				Reasons: []string{contextpkg.ReasonProjectSample},
 			})
 		}
-		factItems, err := s.factContextItems(req.ProjectID, "", "", contextpkg.ReasonImportedFact, contextSampleFactLimit)
+		factItems, err := s.factContextItems(req.ProjectID, "", "", contextpkg.ReasonProjectSample, contextSampleFactLimit)
 		if err != nil {
 			return contextpkg.Package{}, err
 		}
@@ -186,37 +186,20 @@ func (s *Store) factContextItems(projectID, entityID, query, reason string, limi
 			continue
 		}
 		itemReason := reason
-		if itemReason == contextpkg.ReasonImportedFact || itemReason == "" {
-			itemReason = factSampleReason(fact)
-		}
-		evidence, err := s.ListCanonEvidenceForFact(fact.ID)
-		if err != nil {
-			return nil, err
-		}
-		refs := make([]contextpkg.EvidenceRef, 0, len(evidence))
-		for _, ev := range evidence {
-			refs = append(refs, contextpkg.EvidenceRef{
-				ID: ev.ID, Kind: ev.Kind, Summary: ev.Summary, Path: ev.Path, Source: ev.Source,
-			})
+		if itemReason == "" {
+			itemReason = contextpkg.ReasonProjectSample
 		}
 		out = append(out, contextpkg.Item{
 			Kind: "fact", ID: fact.ID, Title: contextpkg.Excerpt(fact.Statement, 120),
 			Excerpt:    contextpkg.Excerpt(fact.Statement, 280),
 			TruthClass: fact.TruthClass, Source: fact.Source,
-			Path: "canon/fact/" + fact.ID, Reasons: []string{itemReason}, Evidence: refs,
+			Path: "canon/fact/" + fact.ID, Reasons: []string{itemReason},
 		})
 		if limit > 0 && len(out) >= limit {
 			break
 		}
 	}
 	return out, nil
-}
-
-func factSampleReason(fact canon.Fact) string {
-	if fact.TruthClass == canon.TruthObserved || strings.HasPrefix(fact.Source, "import:") {
-		return contextpkg.ReasonImportedFact
-	}
-	return contextpkg.ReasonProjectSample
 }
 
 func firstNonEmpty(values ...string) string {
@@ -235,9 +218,6 @@ func dedupeContextItems(items []contextpkg.Item) []contextpkg.Item {
 		key := item.Kind + ":" + item.ID
 		if idx, ok := seen[key]; ok {
 			out[idx].Reasons = contextpkg.MergeReasons(out[idx].Reasons, item.Reasons...)
-			if len(out[idx].Evidence) == 0 && len(item.Evidence) > 0 {
-				out[idx].Evidence = item.Evidence
-			}
 			continue
 		}
 		seen[key] = len(out)

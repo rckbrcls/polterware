@@ -4,11 +4,11 @@ import { ConfirmRegion, ResizableSidebar, ToastRegion } from "@polterware/fronte
 import type { PlatformContext } from "@polterware/frontend-platform";
 import { MainFrame, ShellRoot } from "@polterware/frontend-shell";
 import type { ClientRoute, NavItem, ShellStatus } from "./route";
-import { DEFAULT_TABS, isHomeRoute, isNavSectionId } from "./route";
+import { DEFAULT_TABS, SECTION_TABS, isHomeRoute, isNavSectionId } from "./route";
 import { DEFAULT_NAV } from "./navigation";
 import { SidebarNav, SidebarSettingsItem, type SidebarCount } from "./sidebar";
 import { MainSurface } from "./main-surface";
-import { TitleBar } from "./title-bar";
+import { TitleBar, type TitleBarCrumb } from "./title-bar";
 import { type WorkspaceContext } from "./context-switchers";
 import type { EnvironmentItem, ProjectSwitcherItem } from "./types";
 import { ENVIRONMENT_FIXTURES } from "./fixtures";
@@ -222,6 +222,22 @@ export function Shell(props: {
     return matched?.id ?? "";
   });
 
+  /** Project › section group › section › tab, for the title bar; at home, just Projects. */
+  const crumbs = createMemo((): TitleBarCrumb[] => {
+    if (atHome()) return [{ label: "Projects" }];
+    const section = currentSection();
+    const project = (props.projects ?? []).find((item) => item.projectId === workspace().projectId);
+    const item = items().find((entry) => entry.section === section);
+    const tabs = (SECTION_TABS as Partial<Record<string, readonly { id: string; label: string }[]>>)[section] ?? [];
+    const tab = tabs.length > 1 ? tabs.find((entry) => entry.id === (props.route?.().tab ?? DEFAULT_TABS[section as keyof typeof DEFAULT_TABS])) : undefined;
+    const out: TitleBarCrumb[] = [];
+    if (project) out.push({ label: project.name, onClick: () => props.onGoHome?.() });
+    if (item?.group === "Agents") out.push({ label: "Agents", onClick: () => select("dispatch") });
+    if (item) out.push({ label: item.label, onClick: () => select(section) });
+    if (tab) out.push({ label: tab.label });
+    return out;
+  });
+
   function select(section: string, tab?: string) {
     props.onNavigate?.(section, tab);
     props.setPanel?.(section);
@@ -255,6 +271,7 @@ export function Shell(props: {
         onOpenAppSettings={() => props.onOpenAppSettings?.()}
         appSettingsOpen={props.appSettingsOpen}
         sidebarWidth={sidebarWidth()}
+        crumbs={crumbs()}
       />
 
       <div class="flex min-h-0 flex-1">

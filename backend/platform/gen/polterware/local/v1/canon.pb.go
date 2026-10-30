@@ -762,131 +762,6 @@ func (x *CanonFact) GetScopeNodeIds() []string {
 	return nil
 }
 
-type CanonEvidence struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	Id         string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ProjectId  string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Kind       string                 `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
-	Summary    string                 `protobuf:"bytes,4,opt,name=summary,proto3" json:"summary,omitempty"`
-	Source     string                 `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
-	Path       string                 `protobuf:"bytes,6,opt,name=path,proto3" json:"path,omitempty"`
-	Actor      string                 `protobuf:"bytes,7,opt,name=actor,proto3" json:"actor,omitempty"`
-	ObservedAt string                 `protobuf:"bytes,8,opt,name=observed_at,json=observedAt,proto3" json:"observed_at,omitempty"`
-	CreatedAt  string                 `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt  string                 `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	// scope_node_ids are the Structure nodes the evidence is about; none is the whole project.
-	ScopeNodeIds  []string `protobuf:"bytes,12,rep,name=scope_node_ids,json=scopeNodeIds,proto3" json:"scope_node_ids,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CanonEvidence) Reset() {
-	*x = CanonEvidence{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CanonEvidence) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CanonEvidence) ProtoMessage() {}
-
-func (x *CanonEvidence) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CanonEvidence.ProtoReflect.Descriptor instead.
-func (*CanonEvidence) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *CanonEvidence) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *CanonEvidence) GetProjectId() string {
-	if x != nil {
-		return x.ProjectId
-	}
-	return ""
-}
-
-func (x *CanonEvidence) GetKind() string {
-	if x != nil {
-		return x.Kind
-	}
-	return ""
-}
-
-func (x *CanonEvidence) GetSummary() string {
-	if x != nil {
-		return x.Summary
-	}
-	return ""
-}
-
-func (x *CanonEvidence) GetSource() string {
-	if x != nil {
-		return x.Source
-	}
-	return ""
-}
-
-func (x *CanonEvidence) GetPath() string {
-	if x != nil {
-		return x.Path
-	}
-	return ""
-}
-
-func (x *CanonEvidence) GetActor() string {
-	if x != nil {
-		return x.Actor
-	}
-	return ""
-}
-
-func (x *CanonEvidence) GetObservedAt() string {
-	if x != nil {
-		return x.ObservedAt
-	}
-	return ""
-}
-
-func (x *CanonEvidence) GetCreatedAt() string {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return ""
-}
-
-func (x *CanonEvidence) GetUpdatedAt() string {
-	if x != nil {
-		return x.UpdatedAt
-	}
-	return ""
-}
-
-func (x *CanonEvidence) GetScopeNodeIds() []string {
-	if x != nil {
-		return x.ScopeNodeIds
-	}
-	return nil
-}
-
 type ListFactsRequest struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId  string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
@@ -901,7 +776,7 @@ type ListFactsRequest struct {
 
 func (x *ListFactsRequest) Reset() {
 	*x = ListFactsRequest{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[12]
+	mi := &file_polterware_local_v1_canon_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -913,7 +788,7 @@ func (x *ListFactsRequest) String() string {
 func (*ListFactsRequest) ProtoMessage() {}
 
 func (x *ListFactsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[12]
+	mi := &file_polterware_local_v1_canon_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -926,7 +801,7 @@ func (x *ListFactsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFactsRequest.ProtoReflect.Descriptor instead.
 func (*ListFactsRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{12}
+	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ListFactsRequest) GetProjectId() string {
@@ -973,7 +848,7 @@ type ListFactsResponse struct {
 
 func (x *ListFactsResponse) Reset() {
 	*x = ListFactsResponse{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[13]
+	mi := &file_polterware_local_v1_canon_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -985,7 +860,7 @@ func (x *ListFactsResponse) String() string {
 func (*ListFactsResponse) ProtoMessage() {}
 
 func (x *ListFactsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[13]
+	mi := &file_polterware_local_v1_canon_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -998,7 +873,7 @@ func (x *ListFactsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFactsResponse.ProtoReflect.Descriptor instead.
 func (*ListFactsResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{13}
+	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListFactsResponse) GetFacts() []*CanonFact {
@@ -1017,7 +892,7 @@ type GetFactRequest struct {
 
 func (x *GetFactRequest) Reset() {
 	*x = GetFactRequest{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[14]
+	mi := &file_polterware_local_v1_canon_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1029,7 +904,7 @@ func (x *GetFactRequest) String() string {
 func (*GetFactRequest) ProtoMessage() {}
 
 func (x *GetFactRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[14]
+	mi := &file_polterware_local_v1_canon_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1042,7 +917,7 @@ func (x *GetFactRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFactRequest.ProtoReflect.Descriptor instead.
 func (*GetFactRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{14}
+	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetFactRequest) GetId() string {
@@ -1055,14 +930,13 @@ func (x *GetFactRequest) GetId() string {
 type GetFactResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Fact          *CanonFact             `protobuf:"bytes,1,opt,name=fact,proto3" json:"fact,omitempty"`
-	Evidence      []*CanonEvidence       `protobuf:"bytes,2,rep,name=evidence,proto3" json:"evidence,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetFactResponse) Reset() {
 	*x = GetFactResponse{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[15]
+	mi := &file_polterware_local_v1_canon_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1074,7 +948,7 @@ func (x *GetFactResponse) String() string {
 func (*GetFactResponse) ProtoMessage() {}
 
 func (x *GetFactResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[15]
+	mi := &file_polterware_local_v1_canon_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1087,19 +961,12 @@ func (x *GetFactResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFactResponse.ProtoReflect.Descriptor instead.
 func (*GetFactResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{15}
+	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetFactResponse) GetFact() *CanonFact {
 	if x != nil {
 		return x.Fact
-	}
-	return nil
-}
-
-func (x *GetFactResponse) GetEvidence() []*CanonEvidence {
-	if x != nil {
-		return x.Evidence
 	}
 	return nil
 }
@@ -1114,7 +981,7 @@ type UpsertFactRequest struct {
 
 func (x *UpsertFactRequest) Reset() {
 	*x = UpsertFactRequest{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[16]
+	mi := &file_polterware_local_v1_canon_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1126,7 +993,7 @@ func (x *UpsertFactRequest) String() string {
 func (*UpsertFactRequest) ProtoMessage() {}
 
 func (x *UpsertFactRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[16]
+	mi := &file_polterware_local_v1_canon_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1139,7 +1006,7 @@ func (x *UpsertFactRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertFactRequest.ProtoReflect.Descriptor instead.
 func (*UpsertFactRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{16}
+	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *UpsertFactRequest) GetFact() *CanonFact {
@@ -1165,7 +1032,7 @@ type UpsertFactResponse struct {
 
 func (x *UpsertFactResponse) Reset() {
 	*x = UpsertFactResponse{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[17]
+	mi := &file_polterware_local_v1_canon_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1177,7 +1044,7 @@ func (x *UpsertFactResponse) String() string {
 func (*UpsertFactResponse) ProtoMessage() {}
 
 func (x *UpsertFactResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[17]
+	mi := &file_polterware_local_v1_canon_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1190,7 +1057,7 @@ func (x *UpsertFactResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertFactResponse.ProtoReflect.Descriptor instead.
 func (*UpsertFactResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{17}
+	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *UpsertFactResponse) GetFact() *CanonFact {
@@ -1198,520 +1065,6 @@ func (x *UpsertFactResponse) GetFact() *CanonFact {
 		return x.Fact
 	}
 	return nil
-}
-
-type ListEvidenceRequest struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	ProjectId  string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	ScopeNode  string                 `protobuf:"bytes,2,opt,name=scope_node,json=scopeNode,proto3" json:"scope_node,omitempty"`
-	ScopeExact bool                   `protobuf:"varint,3,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
-	// scope_nodes is merged with scope_node. The list is the union.
-	ScopeNodes    []string `protobuf:"bytes,4,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListEvidenceRequest) Reset() {
-	*x = ListEvidenceRequest{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListEvidenceRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListEvidenceRequest) ProtoMessage() {}
-
-func (x *ListEvidenceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListEvidenceRequest.ProtoReflect.Descriptor instead.
-func (*ListEvidenceRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *ListEvidenceRequest) GetProjectId() string {
-	if x != nil {
-		return x.ProjectId
-	}
-	return ""
-}
-
-func (x *ListEvidenceRequest) GetScopeNode() string {
-	if x != nil {
-		return x.ScopeNode
-	}
-	return ""
-}
-
-func (x *ListEvidenceRequest) GetScopeExact() bool {
-	if x != nil {
-		return x.ScopeExact
-	}
-	return false
-}
-
-func (x *ListEvidenceRequest) GetScopeNodes() []string {
-	if x != nil {
-		return x.ScopeNodes
-	}
-	return nil
-}
-
-type ListEvidenceResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Evidence      []*CanonEvidence       `protobuf:"bytes,1,rep,name=evidence,proto3" json:"evidence,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListEvidenceResponse) Reset() {
-	*x = ListEvidenceResponse{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListEvidenceResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListEvidenceResponse) ProtoMessage() {}
-
-func (x *ListEvidenceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListEvidenceResponse.ProtoReflect.Descriptor instead.
-func (*ListEvidenceResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *ListEvidenceResponse) GetEvidence() []*CanonEvidence {
-	if x != nil {
-		return x.Evidence
-	}
-	return nil
-}
-
-type GetEvidenceRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetEvidenceRequest) Reset() {
-	*x = GetEvidenceRequest{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[20]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetEvidenceRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetEvidenceRequest) ProtoMessage() {}
-
-func (x *GetEvidenceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[20]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetEvidenceRequest.ProtoReflect.Descriptor instead.
-func (*GetEvidenceRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{20}
-}
-
-func (x *GetEvidenceRequest) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-type GetEvidenceResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Evidence      *CanonEvidence         `protobuf:"bytes,1,opt,name=evidence,proto3" json:"evidence,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetEvidenceResponse) Reset() {
-	*x = GetEvidenceResponse{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[21]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetEvidenceResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetEvidenceResponse) ProtoMessage() {}
-
-func (x *GetEvidenceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[21]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetEvidenceResponse.ProtoReflect.Descriptor instead.
-func (*GetEvidenceResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{21}
-}
-
-func (x *GetEvidenceResponse) GetEvidence() *CanonEvidence {
-	if x != nil {
-		return x.Evidence
-	}
-	return nil
-}
-
-type UpsertEvidenceRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Evidence      *CanonEvidence         `protobuf:"bytes,1,opt,name=evidence,proto3" json:"evidence,omitempty"`
-	Change        *ChangeEnvelope        `protobuf:"bytes,2,opt,name=change,proto3" json:"change,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UpsertEvidenceRequest) Reset() {
-	*x = UpsertEvidenceRequest{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[22]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpsertEvidenceRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpsertEvidenceRequest) ProtoMessage() {}
-
-func (x *UpsertEvidenceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[22]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpsertEvidenceRequest.ProtoReflect.Descriptor instead.
-func (*UpsertEvidenceRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *UpsertEvidenceRequest) GetEvidence() *CanonEvidence {
-	if x != nil {
-		return x.Evidence
-	}
-	return nil
-}
-
-func (x *UpsertEvidenceRequest) GetChange() *ChangeEnvelope {
-	if x != nil {
-		return x.Change
-	}
-	return nil
-}
-
-type UpsertEvidenceResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Evidence      *CanonEvidence         `protobuf:"bytes,1,opt,name=evidence,proto3" json:"evidence,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UpsertEvidenceResponse) Reset() {
-	*x = UpsertEvidenceResponse{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[23]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpsertEvidenceResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpsertEvidenceResponse) ProtoMessage() {}
-
-func (x *UpsertEvidenceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[23]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpsertEvidenceResponse.ProtoReflect.Descriptor instead.
-func (*UpsertEvidenceResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{23}
-}
-
-func (x *UpsertEvidenceResponse) GetEvidence() *CanonEvidence {
-	if x != nil {
-		return x.Evidence
-	}
-	return nil
-}
-
-type LinkEvidenceToFactRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	FactId        string                 `protobuf:"bytes,2,opt,name=fact_id,json=factId,proto3" json:"fact_id,omitempty"`
-	EvidenceId    string                 `protobuf:"bytes,3,opt,name=evidence_id,json=evidenceId,proto3" json:"evidence_id,omitempty"`
-	Change        *ChangeEnvelope        `protobuf:"bytes,4,opt,name=change,proto3" json:"change,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *LinkEvidenceToFactRequest) Reset() {
-	*x = LinkEvidenceToFactRequest{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[24]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *LinkEvidenceToFactRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*LinkEvidenceToFactRequest) ProtoMessage() {}
-
-func (x *LinkEvidenceToFactRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[24]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use LinkEvidenceToFactRequest.ProtoReflect.Descriptor instead.
-func (*LinkEvidenceToFactRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{24}
-}
-
-func (x *LinkEvidenceToFactRequest) GetProjectId() string {
-	if x != nil {
-		return x.ProjectId
-	}
-	return ""
-}
-
-func (x *LinkEvidenceToFactRequest) GetFactId() string {
-	if x != nil {
-		return x.FactId
-	}
-	return ""
-}
-
-func (x *LinkEvidenceToFactRequest) GetEvidenceId() string {
-	if x != nil {
-		return x.EvidenceId
-	}
-	return ""
-}
-
-func (x *LinkEvidenceToFactRequest) GetChange() *ChangeEnvelope {
-	if x != nil {
-		return x.Change
-	}
-	return nil
-}
-
-type LinkEvidenceToFactResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *LinkEvidenceToFactResponse) Reset() {
-	*x = LinkEvidenceToFactResponse{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[25]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *LinkEvidenceToFactResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*LinkEvidenceToFactResponse) ProtoMessage() {}
-
-func (x *LinkEvidenceToFactResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[25]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use LinkEvidenceToFactResponse.ProtoReflect.Descriptor instead.
-func (*LinkEvidenceToFactResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{25}
-}
-
-// ScanProjectRequest imports evidence and facts from the project's files.
-type ScanProjectRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ScanProjectRequest) Reset() {
-	*x = ScanProjectRequest{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[26]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ScanProjectRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ScanProjectRequest) ProtoMessage() {}
-
-func (x *ScanProjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[26]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ScanProjectRequest.ProtoReflect.Descriptor instead.
-func (*ScanProjectRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{26}
-}
-
-func (x *ScanProjectRequest) GetProjectId() string {
-	if x != nil {
-		return x.ProjectId
-	}
-	return ""
-}
-
-type ScanProjectResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FactCount     int32                  `protobuf:"varint,1,opt,name=fact_count,json=factCount,proto3" json:"fact_count,omitempty"`
-	EvidenceCount int32                  `protobuf:"varint,2,opt,name=evidence_count,json=evidenceCount,proto3" json:"evidence_count,omitempty"`
-	SkippedCount  int32                  `protobuf:"varint,4,opt,name=skipped_count,json=skippedCount,proto3" json:"skipped_count,omitempty"`
-	Message       string                 `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ScanProjectResponse) Reset() {
-	*x = ScanProjectResponse{}
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[27]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ScanProjectResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ScanProjectResponse) ProtoMessage() {}
-
-func (x *ScanProjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_canon_proto_msgTypes[27]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ScanProjectResponse.ProtoReflect.Descriptor instead.
-func (*ScanProjectResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_canon_proto_rawDescGZIP(), []int{27}
-}
-
-func (x *ScanProjectResponse) GetFactCount() int32 {
-	if x != nil {
-		return x.FactCount
-	}
-	return 0
-}
-
-func (x *ScanProjectResponse) GetEvidenceCount() int32 {
-	if x != nil {
-		return x.EvidenceCount
-	}
-	return 0
-}
-
-func (x *ScanProjectResponse) GetSkippedCount() int32 {
-	if x != nil {
-		return x.SkippedCount
-	}
-	return 0
-}
-
-func (x *ScanProjectResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
 }
 
 var File_polterware_local_v1_canon_proto protoreflect.FileDescriptor
@@ -1792,23 +1145,6 @@ const file_polterware_local_v1_canon_proto_rawDesc = "" +
 	"\n" +
 	"updated_at\x18\n" +
 	" \x01(\tR\tupdatedAt\x12$\n" +
-	"\x0escope_node_ids\x18\f \x03(\tR\fscopeNodeIdsJ\x04\b\v\x10\fR\rscope_node_id\"\xc8\x02\n" +
-	"\rCanonEvidence\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
-	"\n" +
-	"project_id\x18\x02 \x01(\tR\tprojectId\x12\x12\n" +
-	"\x04kind\x18\x03 \x01(\tR\x04kind\x12\x18\n" +
-	"\asummary\x18\x04 \x01(\tR\asummary\x12\x16\n" +
-	"\x06source\x18\x05 \x01(\tR\x06source\x12\x12\n" +
-	"\x04path\x18\x06 \x01(\tR\x04path\x12\x14\n" +
-	"\x05actor\x18\a \x01(\tR\x05actor\x12\x1f\n" +
-	"\vobserved_at\x18\b \x01(\tR\n" +
-	"observedAt\x12\x1d\n" +
-	"\n" +
-	"created_at\x18\t \x01(\tR\tcreatedAt\x12\x1d\n" +
-	"\n" +
-	"updated_at\x18\n" +
-	" \x01(\tR\tupdatedAt\x12$\n" +
 	"\x0escope_node_ids\x18\f \x03(\tR\fscopeNodeIdsJ\x04\b\v\x10\fR\rscope_node_id\"\xaf\x01\n" +
 	"\x10ListFactsRequest\x12\x1d\n" +
 	"\n" +
@@ -1823,52 +1159,14 @@ const file_polterware_local_v1_canon_proto_rawDesc = "" +
 	"\x11ListFactsResponse\x124\n" +
 	"\x05facts\x18\x01 \x03(\v2\x1e.polterware.local.v1.CanonFactR\x05facts\" \n" +
 	"\x0eGetFactRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x85\x01\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"U\n" +
 	"\x0fGetFactResponse\x122\n" +
-	"\x04fact\x18\x01 \x01(\v2\x1e.polterware.local.v1.CanonFactR\x04fact\x12>\n" +
-	"\bevidence\x18\x02 \x03(\v2\".polterware.local.v1.CanonEvidenceR\bevidence\"\x84\x01\n" +
+	"\x04fact\x18\x01 \x01(\v2\x1e.polterware.local.v1.CanonFactR\x04factJ\x04\b\x02\x10\x03R\bevidence\"\x84\x01\n" +
 	"\x11UpsertFactRequest\x122\n" +
 	"\x04fact\x18\x01 \x01(\v2\x1e.polterware.local.v1.CanonFactR\x04fact\x12;\n" +
 	"\x06change\x18\x02 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"H\n" +
 	"\x12UpsertFactResponse\x122\n" +
-	"\x04fact\x18\x01 \x01(\v2\x1e.polterware.local.v1.CanonFactR\x04fact\"\x95\x01\n" +
-	"\x13ListEvidenceRequest\x12\x1d\n" +
-	"\n" +
-	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x1d\n" +
-	"\n" +
-	"scope_node\x18\x02 \x01(\tR\tscopeNode\x12\x1f\n" +
-	"\vscope_exact\x18\x03 \x01(\bR\n" +
-	"scopeExact\x12\x1f\n" +
-	"\vscope_nodes\x18\x04 \x03(\tR\n" +
-	"scopeNodes\"V\n" +
-	"\x14ListEvidenceResponse\x12>\n" +
-	"\bevidence\x18\x01 \x03(\v2\".polterware.local.v1.CanonEvidenceR\bevidence\"$\n" +
-	"\x12GetEvidenceRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"U\n" +
-	"\x13GetEvidenceResponse\x12>\n" +
-	"\bevidence\x18\x01 \x01(\v2\".polterware.local.v1.CanonEvidenceR\bevidence\"\x94\x01\n" +
-	"\x15UpsertEvidenceRequest\x12>\n" +
-	"\bevidence\x18\x01 \x01(\v2\".polterware.local.v1.CanonEvidenceR\bevidence\x12;\n" +
-	"\x06change\x18\x02 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"X\n" +
-	"\x16UpsertEvidenceResponse\x12>\n" +
-	"\bevidence\x18\x01 \x01(\v2\".polterware.local.v1.CanonEvidenceR\bevidence\"\xb1\x01\n" +
-	"\x19LinkEvidenceToFactRequest\x12\x1d\n" +
-	"\n" +
-	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x17\n" +
-	"\afact_id\x18\x02 \x01(\tR\x06factId\x12\x1f\n" +
-	"\vevidence_id\x18\x03 \x01(\tR\n" +
-	"evidenceId\x12;\n" +
-	"\x06change\x18\x04 \x01(\v2#.polterware.local.v1.ChangeEnvelopeR\x06change\"\x1c\n" +
-	"\x1aLinkEvidenceToFactResponse\"3\n" +
-	"\x12ScanProjectRequest\x12\x1d\n" +
-	"\n" +
-	"project_id\x18\x01 \x01(\tR\tprojectId\"\xae\x01\n" +
-	"\x13ScanProjectResponse\x12\x1d\n" +
-	"\n" +
-	"fact_count\x18\x01 \x01(\x05R\tfactCount\x12%\n" +
-	"\x0eevidence_count\x18\x02 \x01(\x05R\revidenceCount\x12#\n" +
-	"\rskipped_count\x18\x04 \x01(\x05R\fskippedCount\x12\x18\n" +
-	"\amessage\x18\x05 \x01(\tR\amessageJ\x04\b\x03\x10\x04R\fsource_count2\xd7\t\n" +
+	"\x04fact\x18\x01 \x01(\v2\x1e.polterware.local.v1.CanonFactR\x04fact2\xcc\x05\n" +
 	"\x13ProjectModelService\x12c\n" +
 	"\fListEntities\x12(.polterware.local.v1.ListEntitiesRequest\x1a).polterware.local.v1.ListEntitiesResponse\x12r\n" +
 	"\x11ListRelationships\x12-.polterware.local.v1.ListRelationshipsRequest\x1a..polterware.local.v1.ListRelationshipsResponse\x12Z\n" +
@@ -1877,12 +1175,7 @@ const file_polterware_local_v1_canon_proto_rawDesc = "" +
 	"\tListFacts\x12%.polterware.local.v1.ListFactsRequest\x1a&.polterware.local.v1.ListFactsResponse\x12T\n" +
 	"\aGetFact\x12#.polterware.local.v1.GetFactRequest\x1a$.polterware.local.v1.GetFactResponse\x12]\n" +
 	"\n" +
-	"UpsertFact\x12&.polterware.local.v1.UpsertFactRequest\x1a'.polterware.local.v1.UpsertFactResponse\x12c\n" +
-	"\fListEvidence\x12(.polterware.local.v1.ListEvidenceRequest\x1a).polterware.local.v1.ListEvidenceResponse\x12`\n" +
-	"\vGetEvidence\x12'.polterware.local.v1.GetEvidenceRequest\x1a(.polterware.local.v1.GetEvidenceResponse\x12i\n" +
-	"\x0eUpsertEvidence\x12*.polterware.local.v1.UpsertEvidenceRequest\x1a+.polterware.local.v1.UpsertEvidenceResponse\x12u\n" +
-	"\x12LinkEvidenceToFact\x12..polterware.local.v1.LinkEvidenceToFactRequest\x1a/.polterware.local.v1.LinkEvidenceToFactResponse\x12`\n" +
-	"\vScanProject\x12'.polterware.local.v1.ScanProjectRequest\x1a(.polterware.local.v1.ScanProjectResponseB\xe6\x01\n" +
+	"UpsertFact\x12&.polterware.local.v1.UpsertFactRequest\x1a'.polterware.local.v1.UpsertFactResponseB\xe6\x01\n" +
 	"\x17com.polterware.local.v1B\n" +
 	"CanonProtoP\x01ZQgithub.com/polterware/polterware/backend/platform/gen/polterware/local/v1;localv1\xa2\x02\x03PLX\xaa\x02\x13Polterware.Local.V1\xca\x02\x13Polterware\\Local\\V1\xe2\x02\x1fPolterware\\Local\\V1\\GPBMetadata\xea\x02\x15Polterware::Local::V1b\x06proto3"
 
@@ -1898,37 +1191,26 @@ func file_polterware_local_v1_canon_proto_rawDescGZIP() []byte {
 	return file_polterware_local_v1_canon_proto_rawDescData
 }
 
-var file_polterware_local_v1_canon_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_polterware_local_v1_canon_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_polterware_local_v1_canon_proto_goTypes = []any{
-	(*CanonEntity)(nil),                // 0: polterware.local.v1.CanonEntity
-	(*CanonRelationship)(nil),          // 1: polterware.local.v1.CanonRelationship
-	(*ListEntitiesRequest)(nil),        // 2: polterware.local.v1.ListEntitiesRequest
-	(*ListEntitiesResponse)(nil),       // 3: polterware.local.v1.ListEntitiesResponse
-	(*ListRelationshipsRequest)(nil),   // 4: polterware.local.v1.ListRelationshipsRequest
-	(*ListRelationshipsResponse)(nil),  // 5: polterware.local.v1.ListRelationshipsResponse
-	(*GetEntityRequest)(nil),           // 6: polterware.local.v1.GetEntityRequest
-	(*GetEntityResponse)(nil),          // 7: polterware.local.v1.GetEntityResponse
-	(*SyncProjectModelRequest)(nil),    // 8: polterware.local.v1.SyncProjectModelRequest
-	(*SyncProjectModelResponse)(nil),   // 9: polterware.local.v1.SyncProjectModelResponse
-	(*CanonFact)(nil),                  // 10: polterware.local.v1.CanonFact
-	(*CanonEvidence)(nil),              // 11: polterware.local.v1.CanonEvidence
-	(*ListFactsRequest)(nil),           // 12: polterware.local.v1.ListFactsRequest
-	(*ListFactsResponse)(nil),          // 13: polterware.local.v1.ListFactsResponse
-	(*GetFactRequest)(nil),             // 14: polterware.local.v1.GetFactRequest
-	(*GetFactResponse)(nil),            // 15: polterware.local.v1.GetFactResponse
-	(*UpsertFactRequest)(nil),          // 16: polterware.local.v1.UpsertFactRequest
-	(*UpsertFactResponse)(nil),         // 17: polterware.local.v1.UpsertFactResponse
-	(*ListEvidenceRequest)(nil),        // 18: polterware.local.v1.ListEvidenceRequest
-	(*ListEvidenceResponse)(nil),       // 19: polterware.local.v1.ListEvidenceResponse
-	(*GetEvidenceRequest)(nil),         // 20: polterware.local.v1.GetEvidenceRequest
-	(*GetEvidenceResponse)(nil),        // 21: polterware.local.v1.GetEvidenceResponse
-	(*UpsertEvidenceRequest)(nil),      // 22: polterware.local.v1.UpsertEvidenceRequest
-	(*UpsertEvidenceResponse)(nil),     // 23: polterware.local.v1.UpsertEvidenceResponse
-	(*LinkEvidenceToFactRequest)(nil),  // 24: polterware.local.v1.LinkEvidenceToFactRequest
-	(*LinkEvidenceToFactResponse)(nil), // 25: polterware.local.v1.LinkEvidenceToFactResponse
-	(*ScanProjectRequest)(nil),         // 26: polterware.local.v1.ScanProjectRequest
-	(*ScanProjectResponse)(nil),        // 27: polterware.local.v1.ScanProjectResponse
-	(*ChangeEnvelope)(nil),             // 28: polterware.local.v1.ChangeEnvelope
+	(*CanonEntity)(nil),               // 0: polterware.local.v1.CanonEntity
+	(*CanonRelationship)(nil),         // 1: polterware.local.v1.CanonRelationship
+	(*ListEntitiesRequest)(nil),       // 2: polterware.local.v1.ListEntitiesRequest
+	(*ListEntitiesResponse)(nil),      // 3: polterware.local.v1.ListEntitiesResponse
+	(*ListRelationshipsRequest)(nil),  // 4: polterware.local.v1.ListRelationshipsRequest
+	(*ListRelationshipsResponse)(nil), // 5: polterware.local.v1.ListRelationshipsResponse
+	(*GetEntityRequest)(nil),          // 6: polterware.local.v1.GetEntityRequest
+	(*GetEntityResponse)(nil),         // 7: polterware.local.v1.GetEntityResponse
+	(*SyncProjectModelRequest)(nil),   // 8: polterware.local.v1.SyncProjectModelRequest
+	(*SyncProjectModelResponse)(nil),  // 9: polterware.local.v1.SyncProjectModelResponse
+	(*CanonFact)(nil),                 // 10: polterware.local.v1.CanonFact
+	(*ListFactsRequest)(nil),          // 11: polterware.local.v1.ListFactsRequest
+	(*ListFactsResponse)(nil),         // 12: polterware.local.v1.ListFactsResponse
+	(*GetFactRequest)(nil),            // 13: polterware.local.v1.GetFactRequest
+	(*GetFactResponse)(nil),           // 14: polterware.local.v1.GetFactResponse
+	(*UpsertFactRequest)(nil),         // 15: polterware.local.v1.UpsertFactRequest
+	(*UpsertFactResponse)(nil),        // 16: polterware.local.v1.UpsertFactResponse
+	(*ChangeEnvelope)(nil),            // 17: polterware.local.v1.ChangeEnvelope
 }
 var file_polterware_local_v1_canon_proto_depIdxs = []int32{
 	0,  // 0: polterware.local.v1.ListEntitiesResponse.entities:type_name -> polterware.local.v1.CanonEntity
@@ -1936,45 +1218,28 @@ var file_polterware_local_v1_canon_proto_depIdxs = []int32{
 	0,  // 2: polterware.local.v1.GetEntityResponse.entity:type_name -> polterware.local.v1.CanonEntity
 	10, // 3: polterware.local.v1.ListFactsResponse.facts:type_name -> polterware.local.v1.CanonFact
 	10, // 4: polterware.local.v1.GetFactResponse.fact:type_name -> polterware.local.v1.CanonFact
-	11, // 5: polterware.local.v1.GetFactResponse.evidence:type_name -> polterware.local.v1.CanonEvidence
-	10, // 6: polterware.local.v1.UpsertFactRequest.fact:type_name -> polterware.local.v1.CanonFact
-	28, // 7: polterware.local.v1.UpsertFactRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	10, // 8: polterware.local.v1.UpsertFactResponse.fact:type_name -> polterware.local.v1.CanonFact
-	11, // 9: polterware.local.v1.ListEvidenceResponse.evidence:type_name -> polterware.local.v1.CanonEvidence
-	11, // 10: polterware.local.v1.GetEvidenceResponse.evidence:type_name -> polterware.local.v1.CanonEvidence
-	11, // 11: polterware.local.v1.UpsertEvidenceRequest.evidence:type_name -> polterware.local.v1.CanonEvidence
-	28, // 12: polterware.local.v1.UpsertEvidenceRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	11, // 13: polterware.local.v1.UpsertEvidenceResponse.evidence:type_name -> polterware.local.v1.CanonEvidence
-	28, // 14: polterware.local.v1.LinkEvidenceToFactRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	2,  // 15: polterware.local.v1.ProjectModelService.ListEntities:input_type -> polterware.local.v1.ListEntitiesRequest
-	4,  // 16: polterware.local.v1.ProjectModelService.ListRelationships:input_type -> polterware.local.v1.ListRelationshipsRequest
-	6,  // 17: polterware.local.v1.ProjectModelService.GetEntity:input_type -> polterware.local.v1.GetEntityRequest
-	8,  // 18: polterware.local.v1.ProjectModelService.SyncProjectModel:input_type -> polterware.local.v1.SyncProjectModelRequest
-	12, // 19: polterware.local.v1.ProjectModelService.ListFacts:input_type -> polterware.local.v1.ListFactsRequest
-	14, // 20: polterware.local.v1.ProjectModelService.GetFact:input_type -> polterware.local.v1.GetFactRequest
-	16, // 21: polterware.local.v1.ProjectModelService.UpsertFact:input_type -> polterware.local.v1.UpsertFactRequest
-	18, // 22: polterware.local.v1.ProjectModelService.ListEvidence:input_type -> polterware.local.v1.ListEvidenceRequest
-	20, // 23: polterware.local.v1.ProjectModelService.GetEvidence:input_type -> polterware.local.v1.GetEvidenceRequest
-	22, // 24: polterware.local.v1.ProjectModelService.UpsertEvidence:input_type -> polterware.local.v1.UpsertEvidenceRequest
-	24, // 25: polterware.local.v1.ProjectModelService.LinkEvidenceToFact:input_type -> polterware.local.v1.LinkEvidenceToFactRequest
-	26, // 26: polterware.local.v1.ProjectModelService.ScanProject:input_type -> polterware.local.v1.ScanProjectRequest
-	3,  // 27: polterware.local.v1.ProjectModelService.ListEntities:output_type -> polterware.local.v1.ListEntitiesResponse
-	5,  // 28: polterware.local.v1.ProjectModelService.ListRelationships:output_type -> polterware.local.v1.ListRelationshipsResponse
-	7,  // 29: polterware.local.v1.ProjectModelService.GetEntity:output_type -> polterware.local.v1.GetEntityResponse
-	9,  // 30: polterware.local.v1.ProjectModelService.SyncProjectModel:output_type -> polterware.local.v1.SyncProjectModelResponse
-	13, // 31: polterware.local.v1.ProjectModelService.ListFacts:output_type -> polterware.local.v1.ListFactsResponse
-	15, // 32: polterware.local.v1.ProjectModelService.GetFact:output_type -> polterware.local.v1.GetFactResponse
-	17, // 33: polterware.local.v1.ProjectModelService.UpsertFact:output_type -> polterware.local.v1.UpsertFactResponse
-	19, // 34: polterware.local.v1.ProjectModelService.ListEvidence:output_type -> polterware.local.v1.ListEvidenceResponse
-	21, // 35: polterware.local.v1.ProjectModelService.GetEvidence:output_type -> polterware.local.v1.GetEvidenceResponse
-	23, // 36: polterware.local.v1.ProjectModelService.UpsertEvidence:output_type -> polterware.local.v1.UpsertEvidenceResponse
-	25, // 37: polterware.local.v1.ProjectModelService.LinkEvidenceToFact:output_type -> polterware.local.v1.LinkEvidenceToFactResponse
-	27, // 38: polterware.local.v1.ProjectModelService.ScanProject:output_type -> polterware.local.v1.ScanProjectResponse
-	27, // [27:39] is the sub-list for method output_type
-	15, // [15:27] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	10, // 5: polterware.local.v1.UpsertFactRequest.fact:type_name -> polterware.local.v1.CanonFact
+	17, // 6: polterware.local.v1.UpsertFactRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	10, // 7: polterware.local.v1.UpsertFactResponse.fact:type_name -> polterware.local.v1.CanonFact
+	2,  // 8: polterware.local.v1.ProjectModelService.ListEntities:input_type -> polterware.local.v1.ListEntitiesRequest
+	4,  // 9: polterware.local.v1.ProjectModelService.ListRelationships:input_type -> polterware.local.v1.ListRelationshipsRequest
+	6,  // 10: polterware.local.v1.ProjectModelService.GetEntity:input_type -> polterware.local.v1.GetEntityRequest
+	8,  // 11: polterware.local.v1.ProjectModelService.SyncProjectModel:input_type -> polterware.local.v1.SyncProjectModelRequest
+	11, // 12: polterware.local.v1.ProjectModelService.ListFacts:input_type -> polterware.local.v1.ListFactsRequest
+	13, // 13: polterware.local.v1.ProjectModelService.GetFact:input_type -> polterware.local.v1.GetFactRequest
+	15, // 14: polterware.local.v1.ProjectModelService.UpsertFact:input_type -> polterware.local.v1.UpsertFactRequest
+	3,  // 15: polterware.local.v1.ProjectModelService.ListEntities:output_type -> polterware.local.v1.ListEntitiesResponse
+	5,  // 16: polterware.local.v1.ProjectModelService.ListRelationships:output_type -> polterware.local.v1.ListRelationshipsResponse
+	7,  // 17: polterware.local.v1.ProjectModelService.GetEntity:output_type -> polterware.local.v1.GetEntityResponse
+	9,  // 18: polterware.local.v1.ProjectModelService.SyncProjectModel:output_type -> polterware.local.v1.SyncProjectModelResponse
+	12, // 19: polterware.local.v1.ProjectModelService.ListFacts:output_type -> polterware.local.v1.ListFactsResponse
+	14, // 20: polterware.local.v1.ProjectModelService.GetFact:output_type -> polterware.local.v1.GetFactResponse
+	16, // 21: polterware.local.v1.ProjectModelService.UpsertFact:output_type -> polterware.local.v1.UpsertFactResponse
+	15, // [15:22] is the sub-list for method output_type
+	8,  // [8:15] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_polterware_local_v1_canon_proto_init() }
@@ -1989,7 +1254,7 @@ func file_polterware_local_v1_canon_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_polterware_local_v1_canon_proto_rawDesc), len(file_polterware_local_v1_canon_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   28,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

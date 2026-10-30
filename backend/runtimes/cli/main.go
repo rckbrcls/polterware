@@ -64,8 +64,6 @@ func main() {
 		err = runMCP(*dbPath)
 	case "init":
 		err = runInit(*dbPath, rest)
-	case "scan":
-		err = runScan(*dbPath, rest)
 	case "repo":
 		err = runRepo(*dbPath, rest)
 	case "brief":

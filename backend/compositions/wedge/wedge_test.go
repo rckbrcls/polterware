@@ -44,22 +44,6 @@ func TestInitScanContextDrift(t *testing.T) {
 		t.Fatalf("expected default local env, got %+v", envs)
 	}
 
-	scan, err := wedge.ScanProject(store, project.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if scan.FactCount == 0 || scan.EvidenceCount == 0 {
-		t.Fatalf("scan too small: %+v", scan)
-	}
-
-	scan2, err := wedge.ScanProject(store, project.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if scan2.FactCount != scan.FactCount || scan2.EvidenceCount != scan.EvidenceCount {
-		t.Fatalf("scan not idempotent: first=%+v second=%+v", scan, scan2)
-	}
-
 	pkg, err := wedge.CompileContext(store, wedge.ContextInput{ProjectID: project.ID})
 	if err != nil {
 		t.Fatal(err)

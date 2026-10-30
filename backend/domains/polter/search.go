@@ -61,6 +61,11 @@ func Search(in BriefInput, terms string, budget int) string {
 		}
 		lines = append(lines, line)
 	}
+	for _, rule := range in.Snapshot.Rules {
+		if matches(rule.Statement) {
+			lines = append(lines, fmt.Sprintf("rule %s: %s", rule.Handle(), rule.Statement))
+		}
+	}
 	for _, fact := range in.Snapshot.Facts {
 		if matches(fact.Statement) {
 			lines = append(lines, fmt.Sprintf("fact %s: %s", fact.TruthClass, fact.Statement))
@@ -69,7 +74,7 @@ func Search(in BriefInput, terms string, budget int) string {
 	if len(lines) == 0 {
 		return fmt.Sprintf("no matches for %q\n", strings.TrimSpace(terms))
 	}
-	return packBrief([][]string{lines}, budget)
+	return packBrief([][]string{lines}, budget, 0)
 }
 
 // excerptAround is up to 100 runes of body around the first term it holds.

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/polterware/polterware/backend/compositions/wedge"
-	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/knowledge"
 	"github.com/polterware/polterware/backend/providers/demoseed"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
@@ -103,7 +102,6 @@ func TestPolterQueryShowsOneRecordAndDrift(t *testing.T) {
 	server := testServer(t)
 	for id, want := range map[string]string{
 		"Decision-0001":    "### Decision-0001: Local SQLite authority",
-		"ev-go-mod":        "evidence ev-go-mod [file] Go module requires modernc.org/sqlite.\npath: go.mod\n",
 		"fact-no-network":  "fact fact-no-network [declared] Imports never call the network.\n",
 		"rb-service":       "doc rb-service \"Service recovery\"\n",
 		"doc-architecture": "doc doc-architecture \"System architecture\"\n",
@@ -190,10 +188,10 @@ func TestDocUpsertCreatesUpdatesAndScopesInTheSessionRun(t *testing.T) {
 	}
 }
 
-func TestPolterApplyRecordsTypedEvidenceOnFacts(t *testing.T) {
+func TestPolterApplyWritesRulesTheBriefReads(t *testing.T) {
 	server := testServer(t)
-	text := "---\npolter: 1\nsummary: Back the core fact\nrationale: The file shows it\n---\n\n" +
-		"#### one-core: One local core owns SQLite.\nevidence: file:backend/serve.go, commit:a1f3c9e, ev-go-mod\n"
+	text := "---\npolter: 1\nsummary: Add a rule\nrationale: Agents must keep secrets out of logs\n---\n\n" +
+		"#### rule no-secret-logs: Never log secrets.\n"
 	if _, err := server.callTool(ToolPolterApply, map[string]any{"project_id": demoseed.ProjectID, "text": text}); err != nil {
 		t.Fatal(err)
 	}
@@ -202,17 +200,13 @@ func TestPolterApplyRecordsTypedEvidenceOnFacts(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !strings.Contains(again, "no changes") {
-		t.Fatalf("typed evidence must resolve to the same ids on reapply: %s", again)
+		t.Fatalf("a rule is identified by its slug: %s", again)
 	}
-	shown := query(t, server, "show one-core")
-	for _, want := range []string{" file: backend/serve.go", " commit: a1f3c9e", "- ev-go-mod file: go.mod"} {
-		if !strings.Contains(shown, want) {
-			t.Fatalf("show one-core missing %q:\n%s", want, shown)
-		}
+	if shown := query(t, server, "show no-secret-logs"); !strings.Contains(shown, "rule no-secret-logs Never log secrets.\nscope: whole project\n") {
+		t.Fatalf("show rule:\n%s", shown)
 	}
-	file, _ := canon.ParseEvidenceRef("file:backend/serve.go")
-	stored, err := server.Store.GetCanonEvidence(file.Evidence(demoseed.ProjectID).ID)
-	if err != nil || stored.Kind != canon.EvidenceKindFile || stored.Path != "backend/serve.go" {
-		t.Fatalf("stored evidence: %+v %v", stored, err)
+	retired := "---\npolter: 1\nsummary: Back a fact\nrationale: x\n---\n\n#### one-core: One local core owns SQLite.\nevidence: file:backend/serve.go\n"
+	if out, err := server.callTool(ToolPolterApply, map[string]any{"project_id": demoseed.ProjectID, "text": retired}); err == nil && !strings.Contains(out, "evidence: is retired") {
+		t.Fatalf("evidence must be refused: %s", out)
 	}
 }

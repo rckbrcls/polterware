@@ -127,7 +127,6 @@ func TestBriefBudgetCutsFromTheEnd(t *testing.T) {
 	system := structure.Node{ID: "s", Path: "polterware", Level: structure.LevelSystem, Title: "Polterware", Status: structure.NodeActive}
 	domain := structure.Node{
 		ID: "d", ParentID: "s", Path: "core", Level: structure.LevelDomain, Title: "Core", Status: structure.NodeActive,
-		Invariants: []structure.Invariant{{Text: "No network calls during scan", State: work.InvariantActive}},
 	}
 	component := structure.Node{ID: "c", ParentID: "d", Path: "core/import", Level: structure.LevelComponent, Title: "Import", Status: structure.NodeActive}
 	card := work.Card{
@@ -139,19 +138,20 @@ func TestBriefBudgetCutsFromTheEnd(t *testing.T) {
 		}},
 	}
 	nodes := []structure.Node{system, domain, component}
-	in := BriefInput{Snapshot: work.Snapshot{Nodes: nodes, Cards: []work.Card{card}}}
+	rules := []work.Rule{{ID: "r1", Statement: "No network calls during scan", Scopes: []string{"core"}}}
+	in := BriefInput{Snapshot: work.Snapshot{Nodes: nodes, Cards: []work.Card{card}, Rules: rules}}
 	full, err := Brief(in, "git-import", 800)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(full, "! No network calls during scan (from core)") || !strings.Contains(full, "? Include merge commits? [blocking] (yes | no)") || strings.Contains(full, "cut to fit") {
+	if !strings.Contains(full, "- No network calls during scan (from core)") || !strings.Contains(full, "? Include merge commits? [blocking] (yes | no)") || strings.Contains(full, "cut to fit") {
 		t.Fatalf("full brief = %s", full)
 	}
 	tight, err := Brief(in, "git-import", 30)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(tight, "(from core)") || !strings.HasPrefix(tight, "## git-import: Git import\nstage: build · under: core/import\n") || !strings.Contains(tight, "lines cut to fit budget:30") {
-		t.Fatalf("a tight budget keeps the heading and cuts the invariant: %s", tight)
+	if !strings.Contains(tight, "(from core)") || strings.Contains(tight, "Include merge commits") || !strings.HasPrefix(tight, "## git-import: Git import\nstage: build · under: core/import\n") || !strings.Contains(tight, "lines cut to fit budget:30") {
+		t.Fatalf("a tight budget keeps the heading and the Rules and cuts the rest: %s", tight)
 	}
 }

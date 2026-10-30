@@ -10,7 +10,7 @@ import (
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
-func TestCompileContextIncludesFactsReasonsEvidence(t *testing.T) {
+func TestCompileContextIncludesFactsWithReasons(t *testing.T) {
 	store, err := storepkg.New(filepath.Join(t.TempDir(), "context-compile.db"))
 	if err != nil {
 		t.Fatal(err)
@@ -26,8 +26,8 @@ func TestCompileContextIncludesFactsReasonsEvidence(t *testing.T) {
 	fact, err := canon.NewFact(
 		demoseed.ProjectID,
 		"module uses Go modules for dependency management",
-		canon.TruthObserved,
-		"import:go.mod",
+		canon.TruthDeclared,
+		"polterware",
 		"system",
 		"",
 	)
@@ -37,24 +37,6 @@ func TestCompileContextIncludesFactsReasonsEvidence(t *testing.T) {
 	if err := store.UpsertCanonFact(fact); err != nil {
 		t.Fatal(err)
 	}
-	evidence, err := canon.NewEvidence(
-		demoseed.ProjectID,
-		canon.EvidenceKindFile,
-		"go.mod module line",
-		"import:go.mod",
-		"go.mod",
-		"system",
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := store.UpsertCanonEvidence(evidence); err != nil {
-		t.Fatal(err)
-	}
-	if err := store.LinkCanonEvidenceToFact(demoseed.ProjectID, fact.ID, evidence.ID); err != nil {
-		t.Fatal(err)
-	}
-
 	sample, err := store.CompileContext(contextpkg.Request{
 		ProjectID:   demoseed.ProjectID,
 		TokenBudget: 2000,
@@ -62,7 +44,7 @@ func TestCompileContextIncludesFactsReasonsEvidence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertFactItem(t, sample, fact.ID, evidence.ID, contextpkg.ReasonImportedFact)
+	assertFactItem(t, sample, fact.ID, contextpkg.ReasonProjectSample)
 
 	matched, err := store.CompileContext(contextpkg.Request{
 		ProjectID:   demoseed.ProjectID,
@@ -72,10 +54,10 @@ func TestCompileContextIncludesFactsReasonsEvidence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertFactItem(t, matched, fact.ID, evidence.ID, contextpkg.ReasonFactQueryMatch)
+	assertFactItem(t, matched, fact.ID, contextpkg.ReasonFactQueryMatch)
 }
 
-func assertFactItem(t *testing.T, pkg contextpkg.Package, factID, evidenceID, wantReason string) {
+func assertFactItem(t *testing.T, pkg contextpkg.Package, factID, wantReason string) {
 	t.Helper()
 	var found *contextpkg.Item
 	for i := range pkg.Items {
@@ -99,11 +81,5 @@ func assertFactItem(t *testing.T, pkg contextpkg.Package, factID, evidenceID, wa
 	}
 	if !hasReason {
 		t.Fatalf("expected reason %q, got %#v", wantReason, found.Reasons)
-	}
-	if len(found.Evidence) == 0 {
-		t.Fatal("expected evidence refs on fact")
-	}
-	if found.Evidence[0].ID != evidenceID {
-		t.Fatalf("expected evidence %s, got %#v", evidenceID, found.Evidence)
 	}
 }

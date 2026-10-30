@@ -12,10 +12,9 @@ import (
 
 // ContextPayload is a light snapshot of a compiled context package.
 type ContextPayload struct {
-	Query       string   `json:"query,omitempty"`
-	EntityID    string   `json:"entity_id,omitempty"`
-	ItemIDs     []string `json:"item_ids,omitempty"`
-	EvidenceIDs []string `json:"evidence_ids,omitempty"`
+	Query    string   `json:"query,omitempty"`
+	EntityID string   `json:"entity_id,omitempty"`
+	ItemIDs  []string `json:"item_ids,omitempty"`
 }
 
 // ChangePayload is a change envelope. Declared-only appends omit Tool/SubjectIDs;
@@ -28,11 +27,6 @@ type ChangePayload struct {
 	SubjectIDs []string `json:"subject_ids,omitempty"`
 	// BatchID links the step to its change_ops rows (Polter apply).
 	BatchID string `json:"batch_id,omitempty"`
-}
-
-// EvidencePayload lists evidence ids attributed to the run.
-type EvidencePayload struct {
-	EvidenceIDs []string `json:"evidence_ids"`
 }
 
 // DriftFindingPayload is a compact drift finding for audit storage.
@@ -58,28 +52,15 @@ func MarshalPayload(value any) (string, error) {
 
 func ContextFromPackage(pkg contextpkg.Package) ContextPayload {
 	itemIDs := make([]string, 0, len(pkg.Items))
-	seenEvidence := map[string]struct{}{}
-	evidenceIDs := make([]string, 0)
 	for _, item := range pkg.Items {
 		if item.ID != "" {
 			itemIDs = append(itemIDs, item.ID)
 		}
-		for _, ref := range item.Evidence {
-			if ref.ID == "" {
-				continue
-			}
-			if _, ok := seenEvidence[ref.ID]; ok {
-				continue
-			}
-			seenEvidence[ref.ID] = struct{}{}
-			evidenceIDs = append(evidenceIDs, ref.ID)
-		}
 	}
 	return ContextPayload{
-		Query:       pkg.Query,
-		EntityID:    pkg.EntityID,
-		ItemIDs:     itemIDs,
-		EvidenceIDs: evidenceIDs,
+		Query:    pkg.Query,
+		EntityID: pkg.EntityID,
+		ItemIDs:  itemIDs,
 	}
 }
 
@@ -136,15 +117,6 @@ func NewBatchChangeStep(runID, summary, rationale, tool, batchID string, subject
 		return Step{}, err
 	}
 	return newStep(runID, KindChange, strings.TrimSpace(summary), payload, now), nil
-}
-
-func NewEvidenceStep(runID string, evidenceIDs []string, now time.Time) (Step, error) {
-	payload, err := MarshalPayload(EvidencePayload{EvidenceIDs: evidenceIDs})
-	if err != nil {
-		return Step{}, err
-	}
-	summary := fmt.Sprintf("evidence: %d id(s)", len(evidenceIDs))
-	return newStep(runID, KindEvidence, summary, payload, now), nil
 }
 
 func NewContextStep(runID string, pkg contextpkg.Package, now time.Time) (Step, error) {

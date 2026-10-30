@@ -15,10 +15,9 @@ const (
 )
 
 const (
-	KindContext  = "context"
-	KindChange   = "change"
-	KindEvidence = "evidence"
-	KindDrift    = "drift"
+	KindContext = "context"
+	KindChange  = "change"
+	KindDrift   = "drift"
 )
 
 const (
@@ -61,7 +60,7 @@ type Run struct {
 	CompletedAt *time.Time
 }
 
-// Step is one link in context → change → evidence → drift.
+// Step is one link in context → change → drift.
 type Step struct {
 	ID          string
 	AgentRunID  string
@@ -97,8 +96,6 @@ func NormalizeKind(kind string) (string, error) {
 		return KindContext, nil
 	case KindChange:
 		return KindChange, nil
-	case KindEvidence:
-		return KindEvidence, nil
 	case KindDrift:
 		return KindDrift, nil
 	default:

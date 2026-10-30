@@ -86,11 +86,11 @@ func TestEncodeStructureShowsKindAndTech(t *testing.T) {
 	for i, node := range snapshot.Nodes {
 		rows[i] = structure.Row{Node: node}
 	}
-	out := EncodeStructure("demo", rows, nil, "app/data/db")
+	out := EncodeStructure("demo", rows, nil, nil, "app/data/db")
 	if !strings.Contains(out, "kind: database · tech: Postgres\n") {
 		t.Fatalf("out = %s", out)
 	}
-	if strings.Contains(EncodeStructure("demo", rows, nil, "app/data"), "kind:") {
+	if strings.Contains(EncodeStructure("demo", rows, nil, nil, "app/data"), "kind:") {
 		t.Fatal("a node without kind or tech prints no kind line")
 	}
 }

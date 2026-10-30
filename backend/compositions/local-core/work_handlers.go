@@ -352,12 +352,6 @@ func structureNodeProto(row structure.Row) *localv1.StructureNode {
 			Resource:      deploy.Resource,
 		})
 	}
-	for _, inv := range row.Invariants {
-		if inv.State == work.InvariantRemoved {
-			continue
-		}
-		out.Invariants = append(out.Invariants, &localv1.StructureInvariant{Id: inv.ID, Text: inv.Text})
-	}
 	return out
 }
 

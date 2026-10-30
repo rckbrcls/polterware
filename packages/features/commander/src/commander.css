@@ -45,7 +45,7 @@
   box-sizing: border-box;
   width: 100%;
   margin-inline: 0;
-  padding-inline: 1.25rem;
+  padding-inline: 0.5rem;
   overscroll-behavior: contain;
   -webkit-app-region: no-drag;
 }

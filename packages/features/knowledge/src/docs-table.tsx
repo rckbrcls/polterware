@@ -1,9 +1,12 @@
 import { For } from "solid-js";
 import { DataTable, FileText, StatusChip } from "@polterware/frontend-design-system";
-import type { WorkspaceDoc } from "@polterware/feature-shell";
+import type { ScopeNodeItem, WorkspaceDoc } from "@polterware/feature-shell";
+import { ContextChips } from "./context-chips";
 
 export function DocsTable(props: {
   rows: WorkspaceDoc[];
+  /** Structure nodes, to name each row's Context. */
+  nodes?: readonly ScopeNodeItem[];
   activeRowId?: string | null;
   onActivate: (id: string) => void;
   /** Marks a row active without opening it, when J/K or a removed row moves the marker. */
@@ -21,6 +24,7 @@ export function DocsTable(props: {
       <DataTable.Table aria-label="Docs">
         <DataTable.Header>
           <DataTable.ColumnHeader<WorkspaceDoc> id="title">Title</DataTable.ColumnHeader>
+          <DataTable.ColumnHeader<WorkspaceDoc> id="context" sortable={false}>Context</DataTable.ColumnHeader>
           <DataTable.ColumnHeader<WorkspaceDoc> id="tags">Tags</DataTable.ColumnHeader>
           <DataTable.ColumnHeader<WorkspaceDoc> id="updatedAt">Updated</DataTable.ColumnHeader>
         </DataTable.Header>
@@ -28,6 +32,7 @@ export function DocsTable(props: {
           {(item) => (
             <DataTable.Row row={item} rowId={item.id} onActivate={() => props.onActivate(item.id)}>
               <DataTable.PrimaryCell icon={<FileText size={16} />} iconTone="knowledge" iconSeed={item.id} title={item.title} />
+              <DataTable.Cell><ContextChips ids={item.scopeNodeIds} nodes={props.nodes ?? []} /></DataTable.Cell>
               <DataTable.Cell>
                 <div class="flex flex-wrap items-center gap-1">
                   <For each={item.tags}>{(tag) => <StatusChip tone="muted">{tag}</StatusChip>}</For>

@@ -33,6 +33,8 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// WorkServiceListRulesProcedure is the fully-qualified name of the WorkService's ListRules RPC.
+	WorkServiceListRulesProcedure = "/polterware.local.v1.WorkService/ListRules"
 	// WorkServiceListWorkCardsProcedure is the fully-qualified name of the WorkService's ListWorkCards
 	// RPC.
 	WorkServiceListWorkCardsProcedure = "/polterware.local.v1.WorkService/ListWorkCards"
@@ -102,6 +104,7 @@ const (
 
 // WorkServiceClient is a client for the polterware.local.v1.WorkService service.
 type WorkServiceClient interface {
+	ListRules(context.Context, *connect.Request[v1.ListRulesRequest]) (*connect.Response[v1.ListRulesResponse], error)
 	ListWorkCards(context.Context, *connect.Request[v1.ListWorkCardsRequest]) (*connect.Response[v1.ListWorkCardsResponse], error)
 	ListStructure(context.Context, *connect.Request[v1.ListStructureRequest]) (*connect.Response[v1.ListStructureResponse], error)
 	ListStructureHistory(context.Context, *connect.Request[v1.ListStructureHistoryRequest]) (*connect.Response[v1.ListStructureHistoryResponse], error)
@@ -139,6 +142,12 @@ func NewWorkServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 	baseURL = strings.TrimRight(baseURL, "/")
 	workServiceMethods := v1.File_polterware_local_v1_work_proto.Services().ByName("WorkService").Methods()
 	return &workServiceClient{
+		listRules: connect.NewClient[v1.ListRulesRequest, v1.ListRulesResponse](
+			httpClient,
+			baseURL+WorkServiceListRulesProcedure,
+			connect.WithSchema(workServiceMethods.ByName("ListRules")),
+			connect.WithClientOptions(opts...),
+		),
 		listWorkCards: connect.NewClient[v1.ListWorkCardsRequest, v1.ListWorkCardsResponse](
 			httpClient,
 			baseURL+WorkServiceListWorkCardsProcedure,
@@ -288,6 +297,7 @@ func NewWorkServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // workServiceClient implements WorkServiceClient.
 type workServiceClient struct {
+	listRules            *connect.Client[v1.ListRulesRequest, v1.ListRulesResponse]
 	listWorkCards        *connect.Client[v1.ListWorkCardsRequest, v1.ListWorkCardsResponse]
 	listStructure        *connect.Client[v1.ListStructureRequest, v1.ListStructureResponse]
 	listStructureHistory *connect.Client[v1.ListStructureHistoryRequest, v1.ListStructureHistoryResponse]
@@ -312,6 +322,11 @@ type workServiceClient struct {
 	updateMilestone      *connect.Client[v1.UpdateMilestoneRequest, v1.UpdateMilestoneResponse]
 	archiveMilestone     *connect.Client[v1.ArchiveMilestoneRequest, v1.ArchiveMilestoneResponse]
 	reorderMilestones    *connect.Client[v1.ReorderMilestonesRequest, v1.ReorderMilestonesResponse]
+}
+
+// ListRules calls polterware.local.v1.WorkService.ListRules.
+func (c *workServiceClient) ListRules(ctx context.Context, req *connect.Request[v1.ListRulesRequest]) (*connect.Response[v1.ListRulesResponse], error) {
+	return c.listRules.CallUnary(ctx, req)
 }
 
 // ListWorkCards calls polterware.local.v1.WorkService.ListWorkCards.
@@ -436,6 +451,7 @@ func (c *workServiceClient) ReorderMilestones(ctx context.Context, req *connect.
 
 // WorkServiceHandler is an implementation of the polterware.local.v1.WorkService service.
 type WorkServiceHandler interface {
+	ListRules(context.Context, *connect.Request[v1.ListRulesRequest]) (*connect.Response[v1.ListRulesResponse], error)
 	ListWorkCards(context.Context, *connect.Request[v1.ListWorkCardsRequest]) (*connect.Response[v1.ListWorkCardsResponse], error)
 	ListStructure(context.Context, *connect.Request[v1.ListStructureRequest]) (*connect.Response[v1.ListStructureResponse], error)
 	ListStructureHistory(context.Context, *connect.Request[v1.ListStructureHistoryRequest]) (*connect.Response[v1.ListStructureHistoryResponse], error)
@@ -469,6 +485,12 @@ type WorkServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	workServiceMethods := v1.File_polterware_local_v1_work_proto.Services().ByName("WorkService").Methods()
+	workServiceListRulesHandler := connect.NewUnaryHandler(
+		WorkServiceListRulesProcedure,
+		svc.ListRules,
+		connect.WithSchema(workServiceMethods.ByName("ListRules")),
+		connect.WithHandlerOptions(opts...),
+	)
 	workServiceListWorkCardsHandler := connect.NewUnaryHandler(
 		WorkServiceListWorkCardsProcedure,
 		svc.ListWorkCards,
@@ -615,6 +637,8 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 	)
 	return "/polterware.local.v1.WorkService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case WorkServiceListRulesProcedure:
+			workServiceListRulesHandler.ServeHTTP(w, r)
 		case WorkServiceListWorkCardsProcedure:
 			workServiceListWorkCardsHandler.ServeHTTP(w, r)
 		case WorkServiceListStructureProcedure:
@@ -671,6 +695,10 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 
 // UnimplementedWorkServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedWorkServiceHandler struct{}
+
+func (UnimplementedWorkServiceHandler) ListRules(context.Context, *connect.Request[v1.ListRulesRequest]) (*connect.Response[v1.ListRulesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ListRules is not implemented"))
+}
 
 func (UnimplementedWorkServiceHandler) ListWorkCards(context.Context, *connect.Request[v1.ListWorkCardsRequest]) (*connect.Response[v1.ListWorkCardsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ListWorkCards is not implemented"))

@@ -15,12 +15,10 @@ import type { ScopeNodeItem, WorkspaceDecision, WorkspaceDoc, WorkspaceWorkCard 
 import { CardPeek } from "./card-peek";
 import { DECISION_STATE_LABEL, decisionStateTone } from "./library-row";
 
-export type RecordPeekKind = "card" | "decision" | "fact" | "doc";
+export type RecordPeekKind = "card" | "decision" | "rule" | "doc";
 export type RecordPeekTarget = { kind: RecordPeekKind; id: string };
-/** A rule as the workspace lists it. */
-export type RecordPeekFact = { id: string; statement: string; truthClass: string; scopeNodeIds: readonly string[] };
-
-const TRUTH_LABEL: Record<string, string> = { declared: "Declared", observed: "Observed", inferred: "Inferred", verified: "Verified" };
+/** A Rule as the workspace lists it, by id. */
+export type RecordPeekRule = { id: string; statement: string; scopeNodeIds: readonly string[] };
 
 /**
  * A quick look at a card, decision, rule, or doc from where it is cited (a Structure node's
@@ -30,7 +28,7 @@ export function RecordPeek(props: {
   target: RecordPeekTarget | null;
   cards: readonly WorkspaceWorkCard[];
   decisions: readonly WorkspaceDecision[];
-  facts: readonly RecordPeekFact[];
+  rules: readonly RecordPeekRule[];
   docs: readonly WorkspaceDoc[];
   /** Structure nodes, to name a record's contexts. */
   nodes: readonly ScopeNodeItem[];
@@ -41,7 +39,7 @@ export function RecordPeek(props: {
     props.target?.kind === kind ? items.find((item) => item.id === props.target!.id) ?? null : null;
   const card = () => (props.target?.kind === "card" ? props.cards.find((item) => item.slug === props.target!.id) ?? null : null);
   const decision = () => find("decision", props.decisions);
-  const fact = () => find("fact", props.facts);
+  const rule = () => find("rule", props.rules);
   const doc = () => find("doc", props.docs);
   const expand = () => {
     const target = props.target;
@@ -91,7 +89,7 @@ export function RecordPeek(props: {
           </Peek>
         )}
       </Match>
-      <Match when={fact()}>
+      <Match when={rule()}>
         {(item) => (
           <Peek
             open
@@ -100,10 +98,7 @@ export function RecordPeek(props: {
             kind="Rule"
             onClose={props.onClose}
             onOpen={expand}
-            properties={<>
-              <Show when={TRUTH_LABEL[item().truthClass]}>{(label) => <StatusChip tone="muted" label={label()} />}</Show>
-              {contexts(item().scopeNodeIds)}
-            </>}
+            properties={contexts(item().scopeNodeIds)}
           />
         )}
       </Match>

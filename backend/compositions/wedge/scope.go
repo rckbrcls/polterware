@@ -122,20 +122,6 @@ func FilterFactsByScope(resolved storepkg.NodeScope, scopes map[string][]string,
 	return out
 }
 
-// FilterEvidenceByScope keeps the evidence with a context inside scope plus those with none.
-func FilterEvidenceByScope(resolved storepkg.NodeScope, scopes map[string][]string, items []canon.Evidence) []canon.Evidence {
-	if resolved.Set == nil {
-		return items
-	}
-	out := make([]canon.Evidence, 0, len(items))
-	for _, item := range items {
-		if resolved.MatchesAny(scopes[item.ID]) {
-			out = append(out, item)
-		}
-	}
-	return out
-}
-
 // ScopeRefs joins the legacy single node with the repeated list. Commas inside
 // a value split it. Blanks and duplicates are dropped. The single node comes first.
 func ScopeRefs(single string, many []string) []string {
@@ -227,10 +213,10 @@ func LoadNodeScopes(store *storepkg.Store, projectID string, refs []string, exac
 }
 
 // EntityScopeIndex maps entity id (or inbox item key) to its context node ids for
-// every knowledge item, fact, evidence row, and derived item that has any.
+// every knowledge item, fact, Rule, and derived item that has any.
 func EntityScopeIndex(store *storepkg.Store, projectID string) (map[string][]string, error) {
 	out := map[string][]string{}
-	for _, kind := range []string{storepkg.ScopeKnowledge, storepkg.ScopeFact, storepkg.ScopeEvidence, storepkg.ScopeItem} {
+	for _, kind := range []string{storepkg.ScopeKnowledge, storepkg.ScopeFact, storepkg.ScopeRule, storepkg.ScopeItem} {
 		mapped, err := store.ScopeMap(projectID, kind)
 		if err != nil {
 			return nil, err

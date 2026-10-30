@@ -231,7 +231,7 @@ export function ProjectSettingsDialog(props: {
           <Show when={page() === "repositories"}>
             <SettingsSection
               title="Local repositories"
-              description="Extra Git checkouts. The project directory stays the checkpoint used by status. Each path here is read on scan."
+              description="Extra Git checkouts. The project directory stays the checkpoint used by status. Each path here is read for commits."
             >
               <For each={props.repositories ?? []}>
                 {(repo) => (
@@ -279,7 +279,7 @@ export function ProjectSettingsDialog(props: {
             </SettingsSection>
             <SettingsSection
               title="AGENTS.md"
-              description="The generated Polterware block in each checkout's AGENTS.md: principles, Structure, decisions, and invariants. The rest of the file is left alone."
+              description="The generated Polterware block in each checkout's AGENTS.md: the Rules agents must follow, principles, Structure, and decisions. The rest of the file is left alone."
             >
               <SettingsRow
                 label="Keep in sync"

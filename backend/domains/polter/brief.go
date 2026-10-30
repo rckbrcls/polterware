@@ -39,11 +39,13 @@ type Doc struct {
 }
 
 // Brief renders what an agent reads before it works on a card or a Structure
-// node, most important first: the target with its kind and technology, open
-// tasks and questions with the last handoff, invariants, the decisions that
-// govern it, scope facts, the milestone goal, canvas links, and doc titles.
-// It is deterministic. A tight budget cuts lines from the end, so the
-// lowest-priority blocks go first, and the last line says what was cut.
+// node, most important first: the target with its kind and technology, the
+// Rules that hold for it (its node's, its ancestors', and the project's), open
+// tasks and questions with the last handoff, the card's invariants, the
+// decisions that govern it, scope facts, the milestone goal, canvas links,
+// and doc titles. It is deterministic. A tight budget cuts lines from the
+// end, so the lowest-priority blocks go first, and the last line says what
+// was cut; the target and the Rules are never cut.
 func Brief(in BriefInput, target string, budget int) (string, error) {
 	if budget < 1 {
 		budget = contextpkg.DefaultTokenBudget
@@ -60,7 +62,7 @@ func Brief(in BriefInput, target string, budget int) (string, error) {
 		b.focus = activeNode(in.Snapshot.Nodes, card.Under)
 	}
 	b.chain = ancestorChain(in.Snapshot.Nodes, b.focus)
-	return packBrief(b.blocks(), budget), nil
+	return packBrief(b.blocks(), budget, 2), nil
 }
 
 // resolveBriefTarget finds a card by slug, then a node by path or id.
@@ -95,6 +97,7 @@ type briefBuilder struct {
 func (b briefBuilder) blocks() [][]string {
 	return [][]string{
 		b.target(),
+		b.rules(),
 		b.openWork(),
 		b.invariants(),
 		b.decisions(),
@@ -267,32 +270,39 @@ func handoffLine(handoff work.Handoff) string {
 	return line + ": " + strings.Join(parts, " · ")
 }
 
-func (b briefBuilder) invariants() []string {
+// rules lists every Rule that holds for the target: the focus node's own,
+// its ancestors' (nearest first, marked with the node they come from), then
+// the project-wide ones. Agents must follow them.
+func (b briefBuilder) rules() []string {
+	own, project := RulesFor(b.in.Snapshot.Rules, b.chainPaths())
 	var lines []string
-	if b.card != nil {
-		for _, inv := range b.card.Invariants {
-			if inv.State != work.InvariantRemoved {
-				lines = append(lines, "! "+inv.Text)
-			}
-		}
-	}
-	if b.focus != nil {
-		for _, inv := range b.focus.Invariants {
-			if inv.State == work.InvariantRemoved {
-				continue
-			}
-			if b.card != nil {
-				lines = append(lines, fmt.Sprintf("! %s (from %s)", inv.Text, b.focus.Path))
+	for i, rules := range own {
+		for _, rule := range rules {
+			if i == 0 && b.card == nil {
+				lines = append(lines, "- "+rule.Statement)
 			} else {
-				lines = append(lines, "! "+inv.Text)
+				lines = append(lines, fmt.Sprintf("- %s (from %s)", rule.Statement, b.chainPaths()[i]))
 			}
 		}
 	}
-	for _, node := range b.chain {
-		for _, inv := range node.Invariants {
-			if inv.State != work.InvariantRemoved {
-				lines = append(lines, fmt.Sprintf("! %s (from %s)", inv.Text, node.Path))
-			}
+	for _, rule := range project {
+		lines = append(lines, "- "+rule.Statement+" (whole project)")
+	}
+	if len(lines) == 0 {
+		return nil
+	}
+	return append([]string{"Rules:"}, lines...)
+}
+
+// invariants are the card's own constraints.
+func (b briefBuilder) invariants() []string {
+	if b.card == nil {
+		return nil
+	}
+	var lines []string
+	for _, inv := range b.card.Invariants {
+		if inv.State != work.InvariantRemoved {
+			lines = append(lines, "! "+inv.Text)
 		}
 	}
 	return lines
@@ -517,11 +527,12 @@ func firstSentence(body string) string {
 }
 
 // packBrief joins the blocks with blank lines and, over budget, drops lines
-// from the end. The first two lines of the target always stay, and a block
-// header or blank line is never left dangling.
-func packBrief(blocks [][]string, budget int) string {
+// from the end. The first keep blocks (the target and the Rules) always stay
+// whole, and a block header or blank line is never left dangling.
+func packBrief(blocks [][]string, budget, keep int) string {
 	var lines []string
-	for _, block := range blocks {
+	floor := 0
+	for i, block := range blocks {
 		if len(block) == 0 {
 			continue
 		}
@@ -529,25 +540,29 @@ func packBrief(blocks [][]string, budget int) string {
 			lines = append(lines, "")
 		}
 		lines = append(lines, block...)
+		if i < keep {
+			floor = len(lines)
+		}
 	}
+	floor = max(floor, min(2, len(lines)))
 	text := strings.Join(lines, "\n") + "\n"
 	if contextpkg.EstimateTokens(text) <= budget {
 		return text
 	}
-	keep := len(lines)
-	for keep > 2 {
-		keep--
-		for keep > 2 && (lines[keep-1] == "" || strings.HasSuffix(lines[keep-1], ":") && !strings.Contains(lines[keep-1], " ")) {
-			keep--
+	kept := len(lines)
+	for kept > floor {
+		kept--
+		for kept > floor && (lines[kept-1] == "" || strings.HasSuffix(lines[kept-1], ":") && !strings.Contains(lines[kept-1], " ")) {
+			kept--
 		}
 		cut := 0
-		for _, line := range lines[keep:] {
+		for _, line := range lines[kept:] {
 			if line != "" {
 				cut++
 			}
 		}
 		note := fmt.Sprintf("(%d more lines cut to fit budget:%d)", cut, budget)
-		text = strings.Join(lines[:keep], "\n") + "\n" + note + "\n"
+		text = strings.Join(lines[:kept], "\n") + "\n" + note + "\n"
 		if contextpkg.EstimateTokens(text) <= budget {
 			return text
 		}

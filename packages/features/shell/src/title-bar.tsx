@@ -1,3 +1,4 @@
+import { For, Show } from "solid-js";
 import {
   Button,
   ChevronLeft,
@@ -9,6 +10,10 @@ import {
 } from "@polterware/frontend-design-system";
 import { createShortcutLabel } from "@polterware/frontend-state";
 import { TitleBarFrame } from "@polterware/frontend-shell";
+import "./title-bar.css";
+
+/** One step of the title bar's breadcrumb; the last one is where you are and takes no click. */
+export type TitleBarCrumb = { label: string; onClick?: () => void };
 
 export type TitleBarProps = {
   canGoBack: boolean;
@@ -22,6 +27,8 @@ export type TitleBarProps = {
   appSettingsOpen?: boolean;
   /** The sidebar's width; history and Home end on its right edge, never before the window controls. */
   sidebarWidth?: number;
+  /** Where you are in the app, after Home: project, section, and tab. */
+  crumbs?: readonly TitleBarCrumb[];
 };
 
 export function TitleBar(props: TitleBarProps) {
@@ -51,7 +58,25 @@ export function TitleBar(props: TitleBarProps) {
           </Button>
         </div>
 
-        <div class="min-w-3 flex-1" aria-hidden />
+        <Show when={props.crumbs?.length} fallback={<div class="min-w-3 flex-1" aria-hidden />}>
+          <nav aria-label="Breadcrumb" class="pw-titlebar-crumbs">
+            <ol>
+              <For each={props.crumbs}>
+                {(crumb, index) => (
+                  <li>
+                    <Show when={index() > 0}><ChevronRight size={12} class="pw-titlebar-crumbs__sep" aria-hidden /></Show>
+                    <Show
+                      when={crumb.onClick && index() < props.crumbs!.length - 1}
+                      fallback={<span class="pw-titlebar-crumbs__current" aria-current={index() === props.crumbs!.length - 1 ? "page" : undefined}>{crumb.label}</span>}
+                    >
+                      <button type="button" class="pw-titlebar-crumbs__link" onClick={() => crumb.onClick?.()}>{crumb.label}</button>
+                    </Show>
+                  </li>
+                )}
+              </For>
+            </ol>
+          </nav>
+        </Show>
 
         <div class="ml-auto flex shrink-0 items-center gap-1 [-webkit-app-region:no-drag]">
           <Button

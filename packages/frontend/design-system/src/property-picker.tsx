@@ -5,8 +5,12 @@ import { RadioMark } from "./radio-group";
 import { Popover, type PopoverProps } from "./popover";
 import "./property-picker.css";
 
-/** One value a property can take. */
-export type PropertyOption = { value: string; label: string; icon?: JSX.Element };
+/**
+ * One value a property can take. `group` puts it under a heading (groups keep the order they first
+ * appear in), `hint` is a muted second line that search also matches, and `bareIcon` shows the icon
+ * as it is (an avatar) instead of in an option tile.
+ */
+export type PropertyOption = { value: string; label: string; icon?: JSX.Element; group?: string; hint?: string; bareIcon?: boolean };
 
 export type PropertyPickerProps = {
   /** The property, such as "Stage"; it names the search box ("Set stage…"). */
@@ -20,9 +24,11 @@ export type PropertyPickerProps = {
   onClose: () => void;
   anchorRef: () => HTMLElement | undefined;
   placement?: PopoverProps["placement"];
+  /** Popover width; defaults to 240. */
+  width?: number;
 };
 
-type Row = { key: string; label: string; icon?: JSX.Element; create?: boolean };
+type Row = { key: string; label: string; icon?: JSX.Element; group?: string; hint?: string; bareIcon?: boolean; create?: boolean };
 
 /**
  * Sets one property from a short list: type to filter, ↑/↓ and Enter, or a digit
@@ -35,9 +41,12 @@ export function PropertyPicker(props: PropertyPickerProps) {
   const [active, setActive] = createSignal(0);
   const needle = () => query().trim().toLowerCase();
   const rows = createMemo<Row[]>(() => {
-    const matches = props.options
-      .filter((option) => option.label.toLowerCase().includes(needle()))
-      .map((option) => ({ key: option.value, label: option.label, icon: option.icon }));
+    const found = props.options.filter((option) =>
+      [option.label, option.hint ?? "", option.group ?? ""].some((text) => text.toLowerCase().includes(needle())));
+    // Rows of one group stay together, in the order the groups first appear.
+    const order = [...new Set(found.map((option) => option.group ?? ""))];
+    const matches = order.flatMap((group) => found.filter((option) => (option.group ?? "") === group))
+      .map((option) => ({ key: option.value, label: option.label, icon: option.icon, group: option.group, hint: option.hint, bareIcon: option.bareIcon }));
     const exact = props.options.some((option) => option.label.toLowerCase() === needle());
     return props.onCreate && needle() !== "" && !exact
       ? [...matches, { key: "__create", label: `Create “${query().trim()}”`, create: true }]
@@ -61,7 +70,7 @@ export function PropertyPicker(props: PropertyPickerProps) {
     close();
   }
   return (
-    <Popover open={props.open} onClose={close} anchorRef={props.anchorRef} width={240} placement={props.placement ?? "bottom-start"}>
+    <Popover open={props.open} onClose={close} anchorRef={props.anchorRef} width={props.width ?? 240} placement={props.placement ?? "bottom-start"}>
       <div class="pw-property-picker">
         <input
           class="pw-property-picker__input"
@@ -93,6 +102,10 @@ export function PropertyPicker(props: PropertyPickerProps) {
         <div id={listId} role="listbox" aria-label={props.label} class="pw-property-picker__options">
           <For each={rows()}>
             {(row, index) => (
+              <>
+              <Show when={row.group && row.group !== rows()[index() - 1]?.group}>
+                <span class="pw-property-picker__group" role="presentation">{row.group}</span>
+              </Show>
               <button
                 type="button"
                 role="option"
@@ -106,12 +119,18 @@ export function PropertyPicker(props: PropertyPickerProps) {
                 <Show when={!row.create} fallback={<span class="pw-property-picker__mark" aria-hidden="true" />}>
                   <RadioMark class="pw-property-picker__mark" checked={row.key === props.value} />
                 </Show>
-                {row.create ? <span class="pw-property-picker__icon"><PlusIcon size={12} /></span> : <OptionTile label={row.label} seed={row.key}>{row.icon}</OptionTile>}
-                <span class="min-w-0 flex-1 truncate">{row.label}</span>
+                {row.create
+                  ? <span class="pw-property-picker__icon"><PlusIcon size={12} /></span>
+                  : row.bareIcon ? <span class="pw-property-picker__avatar" aria-hidden="true">{row.icon}</span> : <OptionTile label={row.label} seed={row.key}>{row.icon}</OptionTile>}
+                <span class="flex min-w-0 flex-1 flex-col">
+                  <span class="truncate">{row.label}</span>
+                  <Show when={row.hint}><span class="pw-property-picker__hint">{row.hint}</span></Show>
+                </span>
                 <Show when={!row.create && query() === "" && index() < 9}>
                   <kbd class="pw-property-picker__digit">{index() + 1}</kbd>
                 </Show>
               </button>
+              </>
             )}
           </For>
           <Show when={rows().length === 0}>

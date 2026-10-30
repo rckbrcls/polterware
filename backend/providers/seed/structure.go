@@ -96,7 +96,7 @@ The Connect RPC and MCP HTTP server, the process lock, and the build handshake.
 # polterware/core/services: Project services
 level: component · under: polterware/core · decisions: Decision-0004 · path: backend/compositions/wedge · kind: service · tech: Go
 
-Composes the domains into project init, scan, Polter apply, and project model sync.
+Composes the domains into project init, Polter apply, and project model sync.
 
 # polterware/core/store: SQLite store
 level: component · under: polterware/core · decisions: Decision-0007 · path: backend/providers/sqlite · kind: database · tech: SQLite
@@ -110,19 +110,12 @@ Work cards, tasks, questions, invariants, decisions, claims, and the Polter gram
 
 ! Polter text is never stored as a blob
 
-# polterware/core/facts: Facts and evidence
+# polterware/core/facts: Facts
 level: component · under: polterware/core · decisions: Decision-0004 · path: backend/domains/canon · kind: service · tech: Go
 
-Project facts, their evidence, and the truth class each one carries.
+Project facts and the truth class each one carries.
 
-# polterware/core/import: Deterministic import
-level: component · under: polterware/core · decisions: Decision-0004, Decision-0005 · path: backend/providers/importer · kind: worker · tech: Go
-
-Reads a fixed set of project files and Git metadata into facts and evidence.
-
-! No network calls during scan
-
-# polterware/core/git: Git evidence
+# polterware/core/git: Git history
 level: component · under: polterware/core · decisions: Decision-0005 · path: backend/providers/git · kind: service · tech: Go
 
 HEAD, branch, and recent commits read from the registered checkouts.
@@ -130,9 +123,9 @@ HEAD, branch, and recent commits read from the registered checkouts.
 # polterware/core/drift: Drift checker
 level: component · under: polterware/core · decisions: Decision-0004 · path: backend/domains/drift · kind: service · tech: Go
 
-Reports where declared intent and observed code disagree.
+Reports done tasks with no commit on main and commits on main with no task.
 
-! A finding always names its evidence
+! A finding always names its task or commit
 
 # polterware/core/context: Context compiler, brief, and search
 level: component · under: polterware/core · decisions: Decision-0004, Decision-0008 · path: backend/domains/context · kind: service · tech: Go
@@ -305,16 +298,15 @@ Switch between Codex and Claude on Polterware's own development without re-expla
 ? Did the next agent start from the right point without help?
 
 ## git-metadata-import: Git metadata import
-stage: verify · under: polterware/core/import · decisions: Decision-0004, Decision-0005
+stage: verify · under: polterware/core/git · decisions: Decision-0004, Decision-0005
 
-Import HEAD, branch, and recent commits as evidence for facts.
+Read HEAD, branch, and recent commits so delivered tasks match commits on main.
 
 - [x] Read HEAD, branch, and up to 20 first-parent commits §backend/providers/git/*§
-- [x] Stamp the HEAD revision on file facts
 - [x] Link commits to tasks by explicit citation
 - [x] Drift for done tasks without a commit and commits without a task
 - [ ] Run the manual Git checklist from docs/future.md (session and import)
-! No network calls during scan
+! No network calls while reading Git
 
 ## claims: Task claims
 stage: verify · under: polterware/core/work

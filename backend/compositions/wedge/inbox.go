@@ -1,13 +1,16 @@
 package wedge
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/polterware/polterware/backend/domains/inbox"
+	"github.com/polterware/polterware/backend/domains/polter"
 	"github.com/polterware/polterware/backend/domains/work"
+	gitpkg "github.com/polterware/polterware/backend/providers/git"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
@@ -106,9 +109,9 @@ func ResolveInbox(store *storepkg.Store, in ResolveInboxInput) (ResolveInboxResu
 	if !ok {
 		return ResolveInboxResult{}, fmt.Errorf("%w (%s)", ErrUnknownInboxItem, strings.TrimSpace(in.ItemID))
 	}
-	if !inbox.ValidAction(item.Kind, in.Action) {
+	if !inbox.ValidAction(item, in.Action) {
 		labels := make([]string, 0, len(item.Actions))
-		for _, action := range inbox.KindActions[item.Kind] {
+		for _, action := range item.Actions {
 			labels = append(labels, inbox.ActionLabel(action))
 		}
 		return ResolveInboxResult{}, inboxInput("cannot %s a %s item: use %s", inbox.ActionLabel(in.Action), item.Kind, strings.Join(labels, ", "))
@@ -117,6 +120,19 @@ func ResolveInbox(store *storepkg.Store, in ResolveInboxInput) (ResolveInboxResu
 	actor := strings.TrimSpace(in.Actor)
 
 	switch in.Action {
+	case inbox.ActionLink:
+		return result, linkInboxCommit(store, in.ProjectID, item, in.Answer)
+	case inbox.ActionReopen:
+		text, err := ReopenText(item)
+		if err != nil {
+			return result, err
+		}
+		apply := in.Apply
+		apply.ProjectID = in.ProjectID
+		apply.Text = text
+		applied, err := ApplyPolter(store, apply)
+		result.Apply = &applied
+		return result, err
 	case inbox.ActionDecide:
 		text, err := DecideText(item, in.Answer)
 		if err != nil {
@@ -153,4 +169,69 @@ func DecideText(item inbox.Item, answer string) (string, error) {
 	}
 	return fmt.Sprintf("---\npolter: 1\nsummary: Answer an open question on %s: %s\nrationale: A person decided the open question from the Inbox\n---\n\n## %s\n%s -> %s\n",
 		item.CardSlug, item.QuestionText, item.CardSlug, line, answer), nil
+}
+
+// ReopenText is the Polter text that opens a done task again.
+func ReopenText(item inbox.Item) (string, error) {
+	slug, task, title := item.Details["slug"], item.Details["task"], item.Details["title"]
+	if item.Kind != inbox.KindDrift || slug == "" || task == "" || title == "" {
+		return "", inboxInput("only a done task can be opened again")
+	}
+	return fmt.Sprintf("---\npolter: 1\nsummary: Open %s %s again\nrationale: A person found no commit on main for it from the Inbox\n---\n\n## %s\n- [ ] %s %s\n",
+		slug, task, slug, task, title), nil
+}
+
+// linkInboxCommit stores a commit-to-task link. A commit item takes a task
+// ref (slug#T2); a done task takes a commit sha, resolved in each checkout.
+func linkInboxCommit(store *storepkg.Store, projectID string, item inbox.Item, answer string) error {
+	answer = strings.TrimSpace(answer)
+	if answer == "" {
+		return inboxInput("link needs a task (slug#T2) for a commit, or a commit sha for a task")
+	}
+	link := work.CommitLink{ProjectID: projectID}
+	if sha := item.Details["sha"]; sha != "" {
+		snapshot, err := store.LoadWorkSnapshot(projectID)
+		if err != nil {
+			return err
+		}
+		ref, err := polter.ParseTaskRef(answer)
+		task, found := work.Task{}, false
+		if err == nil {
+			if card, exists := snapshot.Card(ref.Slug); exists {
+				for _, candidate := range card.Tasks {
+					if candidate.Number == ref.Number {
+						task, found = candidate, true
+					}
+				}
+			}
+		}
+		if !found {
+			return inboxInput("unknown task %q: use slug#T2", answer)
+		}
+		link.Repo, link.SHA, link.TaskID = item.Details["repo"], sha, task.ID
+	} else {
+		taskID := item.Details["task_id"]
+		if taskID == "" {
+			return inboxInput("only a commit or a done task takes a link")
+		}
+		project, err := store.GetProject(projectID)
+		if err != nil {
+			return err
+		}
+		checkouts, err := driftCheckouts(store, projectID, ExpandRootPath(project.RootPath))
+		if err != nil {
+			return err
+		}
+		for _, co := range checkouts {
+			if full, ok := gitpkg.ResolveCommit(context.Background(), co.root, answer); ok {
+				link.Repo, link.SHA = co.name, full
+				break
+			}
+		}
+		if link.SHA == "" {
+			return inboxInput("unknown commit %q: no checkout of this project has it", answer)
+		}
+		link.TaskID = taskID
+	}
+	return store.InsertCommitLink(link, time.Now().UTC())
 }

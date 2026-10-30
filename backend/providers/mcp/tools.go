@@ -20,7 +20,7 @@ const (
 var retiredTools = map[string]string{
 	"context.get":        `polter.query "brief <slug|path|file>" or "search <terms>"`,
 	"entity.get":         `polter.query "show <id>"`,
-	"evidence.get":       `polter.query "show <id>"`,
+	"evidence.get":       "nothing: evidence is retired",
 	"drift.check":        `polter.query "drift"`,
 	"agent_run.start":    "nothing: polter.apply and doc.upsert join this session's run on their own",
 	"agent_run.append":   "nothing: polter.apply and doc.upsert join this session's run on their own",
@@ -28,8 +28,8 @@ var retiredTools = map[string]string{
 	"agent_run.get":      `polter.query "show <run id>"`,
 	"agent_run.list":     "the Activity page in the Desktop",
 	"fact.upsert":        "polter.apply with a #### slug: Statement block (polter.format topic facts)",
-	"evidence.upsert":    "polter.apply with evidence: file:<path>, commit:<sha>, or url:<link> on a fact",
-	"evidence.link":      "polter.apply with evidence: <id> on a fact",
+	"evidence.upsert":    "nothing: evidence is retired; a Fact is a statement with its scope",
+	"evidence.link":      "nothing: evidence is retired; a Fact is a statement with its scope",
 	"knowledge.upsert":   "doc.upsert for docs, or polter.apply with a ### block for Decisions",
 	"knowledge.link":     "doc.upsert with scope: <Structure path>",
 }

@@ -44,6 +44,7 @@ export type DispatchTabId =
   | "agents"
   | "tiers"
   | "learning"
+  | "policy"
   | "stats";
 
 export type DialogState =
@@ -126,6 +127,7 @@ export const SECTION_TABS = {
   "dispatch-routing": [
     { id: "tiers", label: "Tiers" },
     { id: "learning", label: "Learning" },
+    { id: "policy", label: "Policy" },
   ],
   // Quota and pace per agent, and what the runs cost.
   "dispatch-usage": [
@@ -257,7 +259,7 @@ export function resolveRoute(
   }
   // Legacy Dispatch routes. Worktrees folded into the run card.
   if (section === "dispatch-agents") {
-    if (tab === "tiers" || tab === "learning") {
+    if (tab === "tiers" || tab === "learning" || tab === "policy") {
       section = "dispatch-routing";
     } else {
       section = "dispatch-usage";
@@ -265,7 +267,7 @@ export function resolveRoute(
     }
   } else if (section === "dispatch") {
     if (tab === "worktrees") tab = "runs";
-    else if (tab === "tiers" || tab === "learning") section = "dispatch-routing";
+    else if (tab === "tiers" || tab === "learning" || tab === "policy") section = "dispatch-routing";
     else if (tab === "agents" || tab === "stats") section = "dispatch-usage";
   }
 

@@ -284,16 +284,16 @@ function previewGateChecks(card: (typeof previewCards)[number]) {
 
 const inboxItem = (
   id: string, kind: string, blocking: boolean, title: string, detail: string, options: string[],
-  where: string, source: string, state: string, actions: string[],
-) => ({ id, kind, blocking, title, detail, options, where, source, state, actions });
+  where: string, source: string, state: string, actions: string[], details: Record<string, string> = {},
+) => ({ id, kind, blocking, title, detail, options, where, source, state, actions, details });
 
 const previewInboxItems = [
   inboxItem("inb-1", "decision", true, "Ship the event stream behind a flag?", "The card asks for a decision.", ["Yes", "No"], "polterware/platform/core", "card:event-stream", "open", ["decide", "delegate", "defer"]),
   inboxItem("inb-2", "decision", true, "Who reviews agent handoff?", "Owner is unset.", ["Ada", "Grace"], "polterware/agents/mcp", "card:agent-handoff", "open", ["decide", "delegate", "defer"]),
   inboxItem("inb-3", "decision", false, "Keep Markdown intent files?", "Decision 004 is challenged.", ["Keep", "Replace"], "Decision 004", "decision:decision-004", "open", ["decide", "defer", "ignore"]),
-  inboxItem("inb-4", "drift", false, "API returns fields not in the contract", "Warning from the last scan.", [], "polterware/platform/api", "drift:api", "open", ["fix_code", "update_intent", "ignore"]),
+  inboxItem("inb-4", "drift", false, "commit \"Trim API fields\" is on main with no task", "Link it to the task it delivers, or dismiss it.", [], "polterware a1b2c3d", "drift:commit", "open", ["link", "defer", "ignore"], { repo: "polterware", sha: "a1b2c3d4e5f6", subject: "Trim API fields" }),
   inboxItem("inb-6", "setup", false, "Connect vercel for polterware/product/web in production", "vercel", [], "polterware/product/web", "production", "open", ["defer", "ignore"]),
-  inboxItem("inb-5", "drift", false, "Desktop imports a removed module", "Conflict with the structure.", [], "polterware/product/desktop", "drift:desktop", "deferred", ["fix_code", "update_intent", "defer"]),
+  inboxItem("inb-5", "drift", false, "task desktop-shell T2 is done with no commit on main", "Link the commit that delivered it, or reopen the task.", [], "desktop-shell#T2", "drift:task", "deferred", ["link", "reopen", "defer", "ignore"], { slug: "desktop-shell", task: "T2", task_id: "task-2", title: "Render the sidebar" }),
 ];
 
 
@@ -350,28 +350,11 @@ function byProject<T extends { projectId: string }>(items: T[]): (args?: Project
   return async (args) => items.filter((item) => item.projectId === args?.projectId);
 }
 
-const previewFactSeeds: [id: string, statement: string, truthClass: string, entityId: string, source: string, actor: string, evidence: string[]][] = [
-  ["fact-core-sqlite", "The core is the only process that opens SQLite.", "verified", "ent-core", "import", "agent", ["cev-lock", "cev-schema"]],
-  ["fact-cli-binary", "The CLI ships as the single polterware binary.", "verified", "ent-cli", "import", "agent", ["cev-build"]],
-  ["fact-api-contract", "The API returns only fields declared in the contract.", "declared", "ent-api", "desktop", "human", []],
-  ["fact-api-drift", "The API returns two undeclared fields on /status.", "observed", "ent-api", "drift-scan", "agent", ["cev-scan"]],
-  ["fact-store-baseline", "One clean SQLite baseline, no migration from older databases.", "declared", "ent-store", "desktop", "human", ["cev-schema"]],
-  ["fact-store-fts", "Knowledge search is backed by an FTS5 index.", "inferred", "ent-store", "import", "agent", []],
-  ["fact-core-idle", "The core stops itself after the configured idle time.", "observed", "ent-core", "git", "agent", ["cev-commit"]],
+const previewFactSeeds: [id: string, statement: string, truthClass: string, entityId: string, source: string, actor: string][] = [
+  ["fact-core-sqlite", "The core is the only process that opens SQLite.", "verified", "ent-core", "polter", "agent"],
+  ["fact-cli-binary", "The CLI ships as the single polterware binary.", "verified", "ent-cli", "polter", "agent"],
+  ["fact-store-fts", "Knowledge search is backed by an FTS5 index.", "inferred", "ent-store", "polter", "agent"],
 ];
-
-const previewCanonEvidenceSeeds: [id: string, kind: string, summary: string, path: string][] = [
-  ["cev-lock", "file", "Daemon lock guards the database path.", "backend/runtimes/cli/serve.go"],
-  ["cev-schema", "file", "Single baseline schema.", "backend/platform/db/sqlite/migrations/0001_baseline.sql"],
-  ["cev-build", "test", "Binary build passes in CI.", ".github/workflows/ci.yml"],
-  ["cev-scan", "scan", "Drift scan found undeclared fields.", "docs/openapi.yaml"],
-  ["cev-commit", "commit", "Idle shutdown landed in 3f9a2c1.", "backend/runtimes/cli/idle.go"],
-];
-
-const previewCanonEvidence = previewCanonEvidenceSeeds.map(([id, kind, summary, path]) => ({
-  id, projectId: PREVIEW_PROJECT_ID, kind, summary, source: "import", path, actor: "agent",
-  observedAt: "2026-09-20T09:00:00.000Z", createdAt: "2026-09-20T09:00:00.000Z", updatedAt: "2026-09-20T09:00:00.000Z",
-}));
 
 const previewFacts = previewFactSeeds.map(([id, statement, truthClass, entityId, source, actor], index) => ({
   id, projectId: PREVIEW_PROJECT_ID, statement, truthClass, entityId, source, actor,
@@ -382,11 +365,24 @@ const previewFacts = previewFactSeeds.map(([id, statement, truthClass, entityId,
   updatedAt: `2026-09-${String(12 + index).padStart(2, "0")}T09:00:00.000Z`,
 }));
 
+/** Rules agents must follow; a Rule with no nodes holds for the whole project. */
+const previewRuleSeeds: [slug: string, statement: string, entityId: string][] = [
+  ["one-sqlite-owner", "Only the core opens SQLite.", "ent-core"],
+  ["api-contract", "The API returns only fields declared in the contract.", "ent-api"],
+  ["clean-baseline", "Keep one clean SQLite baseline; never migrate older databases.", "ent-store"],
+  ["no-inline-styles", "Use design tokens; no inline styles.", ""],
+];
+
+const previewRules = previewRuleSeeds.map(([slug, statement, entityId]) => {
+  const nodeId = previewEntities.find((item) => item.id === entityId)?.refId ?? "";
+  return { id: `rule-${slug}`, slug, statement, scopeNodeIds: nodeId ? [nodeId] : [], scopePaths: [] as string[] };
+});
+
 const previewRunSeeds: [id: string, actorKind: string, label: string, task: string, status: string, steps: [kind: string, summary: string, subjects?: string[]][]][] = [
   ["run-1", "agent", "claude-code", "Import project sources", "completed", [["import", "Registered 14 sources from the project root."], ["fact", "Added fact: The core is the only process that opens SQLite."]]],
   ["run-2", "agent", "codex", "Split the API layer", "completed", [["work", "Moved card Split the API layer to Plan.", ["card-split-api"]], ["decision", "Proposed decision: Poll for changes."]]],
   ["run-3", "human", "Ada", "Review drift findings", "completed", [["drift", "Marked API drift as update intent."]]],
-  ["run-4", "agent", "claude-code", "Verify session cache", "failed", [["fact", "Could not attach evidence: no matching file."]]],
+  ["run-4", "agent", "claude-code", "Verify session cache", "failed", [["fact", "Could not record the fact: no matching file."]]],
   ["run-5", "human", "Grace", "Link runbook to Core", "completed", [["link", "Linked Deploy runbook to the Core component."]]],
   ["run-6", "human", "Ada", "Pin the local-first principle", "completed", [["decision", "Pinned Local-first truth as a principle.", ["decision-principle-local"]], ["work", "Added a task to Split the API layer.", ["card-split-api"]]]],
 ];
@@ -916,10 +912,8 @@ function createBrowserDevBridge(): PolterwareBridge {
         }),
         getFact: async (args?: { id?: string }) => {
           const fact = [...previewFacts, ...[...promotedFacts.values()].flat()].find((item) => item.id === args?.id);
-          const ids = previewFactSeeds.find((seed) => seed[0] === args?.id)?.[6] ?? [];
-          return { fact, evidence: previewCanonEvidence.filter((item) => ids.includes(item.id)) };
+          return { fact };
         },
-        listEvidence: scoped({ evidence: previewCanonEvidence }, { evidence: [] }),
       }),
       context: browserDevApi({
         listChanges: async (args?: ProjectArgs & { actorKind?: string; limit?: number; subjectId?: string }) => ({
@@ -1136,6 +1130,7 @@ function createBrowserDevBridge(): PolterwareBridge {
             .filter((card) => (card as { status?: string }).status !== "removed"),
         }),
         listInbox: async (args?: ProjectArgs) => inboxFor(args?.projectId ?? ""),
+        listRules: scoped({ rules: previewRules }, { rules: [] }),
         // The feature gates, Verify, handoffs, and brief the card page reads, over the preview cards.
         reviewFeature: async (args?: ProjectArgs & { slug?: string }) => {
           const card = args?.projectId === PREVIEW_PROJECT_ID ? structureCards.find((item) => item.slug === args.slug) : undefined;

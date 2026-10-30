@@ -57,7 +57,7 @@ func Validate(def Definition, graph Graph) []Violation {
 		if node.Ref != nil {
 			refWhere := where + ".ref"
 			if !ValidRefKind(node.Ref.Kind) {
-				add(refWhere, fmt.Sprintf("kind %q is not a card, decision, fact, evidence, or node", node.Ref.Kind))
+				add(refWhere, fmt.Sprintf("kind %q is not a card, decision, fact, or node", node.Ref.Kind))
 			}
 			if node.Ref.ID == "" {
 				add(refWhere, "id is required")

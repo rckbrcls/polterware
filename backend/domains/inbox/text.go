@@ -33,10 +33,6 @@ func StatusLines(r Result) string {
 		switch routed.Action {
 		case ActionDelegate:
 			fmt.Fprintf(&b, "delegated: %s%s: choose a default and record it with `? %s -> answer`\n", item.Title, where(item), item.QuestionText)
-		case ActionFixCode:
-			fmt.Fprintf(&b, "fix code: %s%s\n", item.Title, where(item))
-		case ActionUpdateIntent:
-			fmt.Fprintf(&b, "update intent: %s%s\n", item.Title, where(item))
 		}
 	}
 	return b.String()

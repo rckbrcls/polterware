@@ -18,7 +18,6 @@ const (
 	ReasonProjectSample   = "project_sample"
 	ReasonFactForEntity   = "fact_for_entity"
 	ReasonFactQueryMatch  = "fact_query_match"
-	ReasonImportedFact    = "imported_fact"
 )
 
 type Request struct {
@@ -53,15 +52,6 @@ func (r Request) ScopeIDs() []string {
 	return out
 }
 
-// EvidenceRef is a compact pointer to Canon evidence supporting a context item.
-type EvidenceRef struct {
-	ID      string
-	Kind    string
-	Summary string
-	Path    string
-	Source  string
-}
-
 type Item struct {
 	Kind       string
 	ID         string
@@ -71,7 +61,6 @@ type Item struct {
 	Source     string
 	Path       string
 	Reasons    []string
-	Evidence   []EvidenceRef
 }
 
 type Package struct {
@@ -124,9 +113,6 @@ func itemTokenCost(item Item) int {
 	for _, reason := range item.Reasons {
 		cost += EstimateTokens(reason)
 	}
-	for _, ev := range item.Evidence {
-		cost += EstimateTokens(ev.Summary) + EstimateTokens(ev.Path) + 4
-	}
 	return cost
 }
 
@@ -151,9 +137,6 @@ func Compile(req Request, candidates []Item) Package {
 		}
 		if used+cost > budget {
 			item.Excerpt = Excerpt(item.Excerpt, 80)
-			if len(item.Evidence) > 2 {
-				item.Evidence = item.Evidence[:2]
-			}
 			cost = itemTokenCost(item)
 			if used+cost > budget {
 				out.Truncated = true

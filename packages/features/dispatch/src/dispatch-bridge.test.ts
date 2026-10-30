@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runReviewAction, worktreeDisplayStatus } from "./dispatch-bridge";
+import { dispatchOpBody, runMoreActions, runReviewAction, worktreeDisplayStatus } from "./dispatch-bridge";
 
 describe("worktree display status", () => {
   it("shows how the run ended while its worktree is still active", () => {
@@ -29,5 +29,23 @@ describe("run review action", () => {
     expect(runReviewAction(run("completed", "verified", "2026-10-01"), true)).toBeNull();
     expect(runReviewAction(run("completed"), false)).toBeNull();
     expect(runReviewAction(run("cancelled"), true)).toBeNull();
+  });
+});
+
+describe("run header menu", () => {
+  const run = (status: string, mergedAt = "") => ({ status, mergedAt });
+  it("offers merge without verifying, recover, and clean by how the run ended", () => {
+    expect(runMoreActions(run("completed"), true)).toEqual(["merge-anyway", "clean"]);
+    expect(runMoreActions(run("failed"), true)).toEqual(["merge-anyway", "recover", "clean"]);
+    expect(runMoreActions(run("orphaned"), true)).toEqual(["recover", "clean"]);
+  });
+  it("offers nothing while running, after a merge, or without a worktree", () => {
+    expect(runMoreActions(run("running"), true)).toEqual([]);
+    expect(runMoreActions(run("completed", "2026-10-01"), true)).toEqual([]);
+    expect(runMoreActions(run("failed"), false)).toEqual([]);
+  });
+  it("reads an op body and keeps ok", () => {
+    expect(dispatchOpBody({ ok: false, json: '{"removed":"/tmp/w"}' })).toEqual({ ok: false, body: { removed: "/tmp/w" } });
+    expect(dispatchOpBody({ json: "{" })).toEqual({ ok: true, body: {} });
   });
 });

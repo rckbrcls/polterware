@@ -96,10 +96,10 @@ const RecordPeek = lazy(() =>
 const DocumentActivity = lazy(() =>
   import("@polterware/feature-knowledge").then((m) => ({ default: m.DocumentActivity })),
 );
-/** The Facts page's collection scope (`FACTS_SCOPE` in the lazily loaded knowledge feature). */
-const FACTS_SCOPE = "truth:facts";
-const TruthFactsPage = lazy(() =>
-  import("@polterware/feature-knowledge").then((m) => ({ default: m.TruthFactsPage })),
+/** The Rules page's collection scope (`RULES_SCOPE` in the lazily loaded knowledge feature). */
+const RULES_SCOPE = "truth:facts";
+const TruthRulesPage = lazy(() =>
+  import("@polterware/feature-knowledge").then((m) => ({ default: m.TruthRulesPage })),
 );
 const DispatchPage = lazy(() =>
   import("@polterware/feature-dispatch").then((m) => ({ default: m.DispatchPage })),
@@ -115,7 +115,7 @@ import {
   loadMilestones,
   loadStructure,
   loadChanges,
-  loadFacts,
+  loadRules,
   loadInbox,
   loadWorkspaceExtensions,
   setActiveScope,
@@ -164,8 +164,9 @@ import {
   persistStructureUpdateDeploys,
   persistStructureNode,
   persistWorkCardUnder,
-  persistFactScope,
+  persistRuleScope,
   persistWorkSetStage,
+  persistWorkSetTaskState,
   persistWorkSetStages,
   persistWorkSetMilestones,
   persistWorkSetCardsStatus,
@@ -694,6 +695,12 @@ export function App() {
       window.setTimeout(() => setDispatchDraft({ key: Date.now(), cardSlug: slug, prompt: `${title}: work on card ${slug}. Read \`polterware brief ${slug}\` first.` }), 200);
       return;
     }
+    if (id === "action.start-run") {
+      navigateSection("dispatch");
+      // Opened once Commander has closed and handed focus back, so its close does not dismiss Start run.
+      window.setTimeout(() => setDispatchDraft({ key: Date.now(), cardSlug: openCardSlug(), prompt: "" }), 200);
+      return;
+    }
     if (id === "action.show-shortcuts") {
       setShortcutsOpen(true);
       return;
@@ -759,9 +766,17 @@ export function App() {
     const cap = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
     const card = (item: WorkspaceSnapshot["workCards"][number]) => ({ id: item.slug, title: item.title, caption: stageLabel(item.stage) });
     const decision = (item: WorkspaceSnapshot["decisions"][number]) => ({ id: item.id, title: item.title, caption: cap(item.state) });
-    const fact = (item: WorkspaceSnapshot["structureFacts"][number]) => ({ id: item.id, title: item.statement || item.id, caption: item.truthClass ? cap(item.truthClass) : undefined });
+    const rule = (item: WorkspaceSnapshot["rules"][number], caption?: string) => ({ id: item.id, title: item.statement || item.slug, caption });
     const doc = (item: WorkspaceSnapshot["docs"][number]) => ({ id: item.id, title: item.title, caption: item.tags.join(", ") || undefined });
-    const project = { cards: workspace().workCards.map(card), decisions: workspace().decisions.map(decision), facts: workspace().structureFacts.map(fact), docs: workspace().docs.map(doc) };
+    const project = { cards: workspace().workCards.map(card), decisions: workspace().decisions.map(decision), rules: workspace().rules.map((item) => rule(item)), docs: workspace().docs.map(doc) };
+    type Node = WorkspaceSnapshot["structure"]["nodes"][number];
+    const byId = new Map(workspace().structure.nodes.map((node) => [node.id, node]));
+    /** The node's parent first, up to its system. */
+    const ancestorsOf = (node: Node) => {
+      const chain: Node[] = [];
+      for (let parent = byId.get(node.parentId); parent && !chain.includes(parent); parent = byId.get(parent.parentId)) chain.push(parent);
+      return chain;
+    };
     return { project, nodes: Object.fromEntries(workspace().structure.nodes.map((node) => {
       const entityIds = new Set(workspace().canonEntities.filter((entity) => entity.refId === node.id || entity.refId === node.path).map((entity) => entity.id));
       return [node.id, {
@@ -769,7 +784,13 @@ export function App() {
         cards: workspace().workCards.filter((item) => item.under === node.path).map((item) => ({ ...card(item), direct: true })),
         // A record with the node among its contexts is direct; unlinking removes only this node.
         decisions: workspace().decisions.filter((item) => item.scopeNodeIds.includes(node.id) || item.governs.includes(node.path) || item.entityLinks.some((link) => entityIds.has(link.entityId))).map((item) => ({ ...decision(item), direct: item.scopeNodeIds.includes(node.id) })),
-        facts: workspace().structureFacts.filter((item) => item.scopeNodeIds.includes(node.id) || entityIds.has(item.entityId)).map((item) => ({ ...fact(item), direct: item.scopeNodeIds.includes(node.id) })),
+        // Every Rule that holds here: the node's own (direct), then an ancestor's or the whole project's.
+        rules: workspace().rules.flatMap((item) => {
+          if (item.scopeNodeIds.includes(node.id)) return [{ ...rule(item), direct: true }];
+          if (item.scopeNodeIds.length === 0) return [rule(item, "Whole project")];
+          const from = ancestorsOf(node).find((ancestor) => item.scopeNodeIds.includes(ancestor.id));
+          return from ? [rule(item, `From ${from.title}`)] : [];
+        }),
         docs: workspace().docs.filter((item) => item.scopeNodeIds.includes(node.id) || item.entityLinks.some((link) => entityIds.has(link.entityId))).map((item) => ({ ...doc(item), direct: item.scopeNodeIds.includes(node.id) })),
       }];
     })) };
@@ -780,7 +801,7 @@ export function App() {
     if (kind === "card") { const next = sectionRoute("milestones"); navigateToDetail(next, next.tab === "board" ? "knowledge:board" : "knowledge:specs", id, "card"); }
     else if (kind === "decision") navigateToDetail(setTab(sectionRoute("truth"), "decisions"), "knowledge:library", id, "decision");
     else if (kind === "doc") navigateToDetail(setTab(sectionRoute("truth"), "docs"), "knowledge:docs", id, "doc");
-    else navigateToDetail(setTab(sectionRoute("truth"), "facts"), FACTS_SCOPE, id, "fact");
+    else navigateToDetail(setTab(sectionRoute("truth"), "facts"), RULES_SCOPE, id, "rule");
   }
   const scopeNodeIdList = createMemo(() => scopeNodeIds(scopeTokens(), scopeNodes()));
   const scopeEnvironments = createMemo(() => {
@@ -1294,6 +1315,16 @@ export function App() {
             return false;
           });
         }}
+        onSetTaskState={async (slug, task, state) => {
+          // Checking off a task asks no why; Activity shows the change.
+          const verb = state === "done" ? "Complete" : state === "dropped" ? "Drop" : "Reopen";
+          try {
+            await persistWorkSetTaskState({ projectId: currentProjectId(), slug, number: task.number, title: task.title, state, change: { summary: `${verb} ${slug} T${task.number}`, rationale: "" } });
+            await refreshWorkspace(currentProjectId());
+          } catch (error: unknown) {
+            pushToast(error instanceof Error ? error.message : "Could not update the task.", "danger");
+          }
+        }}
         onSetCardStage={(slug, stage) =>
           // Resolves false when the change was cancelled or failed, so the board can roll back.
           justifyChange({
@@ -1572,7 +1603,7 @@ export function App() {
             onLinkRecord={async (kind, recordId, nodeId, linked) => {
               const projectId = currentProjectId();
               const node = workspace().structure.nodes.find((item) => item.id === nodeId);
-              // A decision, fact, or doc gains or loses this one context and keeps the others.
+              // A decision, Rule, or doc gains or loses this one context and keeps the others.
               const withContext = (contexts: readonly string[]) =>
                 linked ? [...contexts.filter((id) => id !== nodeId), nodeId] : contexts.filter((id) => id !== nodeId);
               if (kind === "card") {
@@ -1580,9 +1611,9 @@ export function App() {
                 const change = await justifyChange({ title: "Link card", defaultSummary: linked && node ? `Put ${card?.title ?? recordId} under ${node.title}` : `Take ${card?.title ?? recordId} out of its component` });
                 if (!change) return;
                 await persistWorkCardUnder({ projectId, slug: recordId, under: linked ? node?.path ?? "" : "", change });
-              } else if (kind === "fact") {
-                const contexts = workspace().structureFacts.find((item) => item.id === recordId)?.scopeNodeIds ?? [];
-                await persistFactScope(projectId, recordId, withContext(contexts));
+              } else if (kind === "rule") {
+                const contexts = workspace().rules.find((item) => item.id === recordId)?.scopeNodeIds ?? [];
+                await persistRuleScope(projectId, recordId, withContext(contexts));
               } else {
                 const record = kind === "decision"
                   ? workspace().decisions.find((item) => item.id === recordId)
@@ -1655,15 +1686,14 @@ export function App() {
         </Match>
 
         <Match when={route().section === "truth" && route().tab === "facts"}>
-          <TruthFactsPage
+          <TruthRulesPage
             projectId={currentProjectId()}
             scopeNodes={scopeNodeIdList()}
             scopeTokens={scopeTokens()}
             scopeCatalogNodes={scopeNodes()}
             scopeEnvironments={scopeEnvironmentCatalog()}
             onScopeTokensChange={applyScopeTokens}
-            entities={workspace().canonEntities}
-            loadFacts={loadFacts}
+            loadRules={loadRules}
             tab="facts"
             tabs={[...SECTION_TABS.truth]}
             tabsLabel="Knowledge"
@@ -1688,6 +1718,8 @@ export function App() {
             startDraft={dispatchDraft()}
             onStartDraftUsed={() => setDispatchDraft(undefined)}
             homeKey={sectionHomeKey()}
+            projectDir={workspace().projects.find((project) => project.projectId === currentProjectId())?.directory ?? ""}
+            cards={workspace().workCards.filter((card) => card.stage !== "delivered").map((card) => ({ slug: card.slug, title: card.title, group: stageLabel(card.stage) }))}
           />
         </Match>
 
@@ -1891,7 +1923,7 @@ export function App() {
             target={peekRecord()}
             cards={workspace().workCards}
             decisions={workspace().decisions}
-            facts={workspace().structureFacts}
+            rules={workspace().rules}
             docs={workspace().docs}
             nodes={scopeNodes()}
             onClose={() => setPeekRecord(null)}

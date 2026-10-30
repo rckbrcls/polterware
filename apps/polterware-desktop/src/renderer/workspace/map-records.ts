@@ -356,8 +356,8 @@ const INBOX_ACTIONS: WorkspaceInboxAction[] = [
   "decide",
   "delegate",
   "defer",
-  "fix_code",
-  "update_intent",
+  "link",
+  "reopen",
   "ignore",
 ];
 
@@ -379,6 +379,7 @@ export function mapInbox(response: Record<string, unknown>): WorkspaceInbox {
       actions: asStringArray(item.actions).filter((action): action is WorkspaceInboxAction =>
         INBOX_ACTIONS.includes(action as WorkspaceInboxAction),
       ),
+      details: Object.fromEntries(Object.entries(asRecord(item.details)).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
     }];
   });
   return {

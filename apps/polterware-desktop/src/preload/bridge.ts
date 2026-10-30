@@ -147,6 +147,7 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         query: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.queryPolter, payload),
         apply: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.applyPolter, payload),
         listInbox: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listInbox, payload),
+        listRules: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listRules, payload),
         resolveInboxItem: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.resolveInboxItem, payload),
         setScope: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.setScope, payload),
         reviewFeature: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.reviewFeature, payload),
@@ -167,12 +168,6 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         listFacts: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listFacts, payload),
         getFact: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.getFact, payload),
         upsertFact: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.upsertFact, payload),
-        listEvidence: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listEvidence, payload),
-        getEvidence: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.getEvidence, payload),
-        upsertEvidence: (payload: JsonObject) =>
-          coreCall(ipc, IPC_CHANNELS.core.upsertEvidence, payload),
-        linkEvidenceToFact: (payload: JsonObject) =>
-          coreCall(ipc, IPC_CHANNELS.core.linkEvidenceToFact, payload),
       },
       context: {
         getAgentRun: (payload: JsonObject) =>
@@ -191,6 +186,14 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         cancelRun: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.cancelRun, payload),
         verifyRun: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.verifyRun, payload),
         mergeRun: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.mergeRun, payload),
+        cleanRun: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.cleanRun, payload),
+        recoverRun: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.recoverRun, payload),
+        route: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.routeDispatch, payload),
+        classify: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.classifyDispatch, payload),
+        config: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.dispatchConfig, payload),
+        subagents: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.dispatchSubagents, payload),
+        initVerify: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.initDispatchVerify, payload),
+        skill: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.dispatchSkill, payload),
         result: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.result, payload),
         listWorktrees: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listWorktrees, payload),
         listQuota: (payload?: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listQuota, payload),

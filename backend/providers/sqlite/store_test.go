@@ -245,7 +245,7 @@ func TestAgentRunStepsAreOrderedAndValidated(t *testing.T) {
 		t.Fatal(err)
 	}
 	base := time.Now().UTC()
-	for i, kind := range []string{agentrun.KindContext, agentrun.KindChange, agentrun.KindEvidence} {
+	for i, kind := range []string{agentrun.KindContext, agentrun.KindChange, agentrun.KindDrift} {
 		step := agentrun.Step{AgentRunID: run.ID, Kind: kind, Summary: kind, CreatedAt: base.Add(time.Duration(i) * time.Second)}
 		if err := store.AppendAgentRunStep(step); err != nil {
 			t.Fatal(err)
@@ -255,7 +255,7 @@ func TestAgentRunStepsAreOrderedAndValidated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(steps) != 3 || steps[0].Kind != agentrun.KindContext || steps[2].Kind != agentrun.KindEvidence {
+	if len(steps) != 3 || steps[0].Kind != agentrun.KindContext || steps[2].Kind != agentrun.KindDrift {
 		t.Fatalf("steps must come back oldest first: %+v", steps)
 	}
 	if steps[0].PayloadJSON != "{}" {
@@ -279,40 +279,25 @@ func TestGetAgentRunUnknown(t *testing.T) {
 	}
 }
 
-func TestReplaceCommitLinksReplacesAndFilters(t *testing.T) {
+func TestCommitLinksAreUniquePerCommitAndTask(t *testing.T) {
 	store := seededStore(t)
-	var evidenceID, taskID string
-	if err := store.DB.QueryRow(`SELECT id FROM canon_evidence WHERE project_id=? LIMIT 1`, demoseed.ProjectID).Scan(&evidenceID); err != nil {
-		t.Skipf("seed has no evidence row: %v", err)
-	}
+	var taskID string
 	if err := store.DB.QueryRow(`SELECT t.id FROM work_tasks t JOIN work_cards c ON c.id=t.card_id WHERE c.project_id=? LIMIT 1`, demoseed.ProjectID).Scan(&taskID); err != nil {
 		t.Skipf("seed has no work task: %v", err)
 	}
 	now := time.Now().UTC()
-	links := []work.CommitLink{
-		{TaskID: taskID, Method: work.LinkExplicit},
-		{TaskID: taskID, Method: work.LinkExplicit}, // duplicate is dropped
-		{TaskID: taskID, Method: work.LinkSuggested},
-		{TaskID: "", Method: work.LinkExplicit}, // empty task is dropped
-		{TaskID: taskID, Method: "made-up"},     // unknown method is dropped
-	}
-	if err := store.ReplaceCommitLinks(demoseed.ProjectID, evidenceID, links, now); err != nil {
-		t.Fatal(err)
+	link := work.CommitLink{ProjectID: demoseed.ProjectID, Repo: "api", SHA: "abc123", TaskID: taskID}
+	for range 2 {
+		if err := store.InsertCommitLink(link, now); err != nil {
+			t.Fatal(err)
+		}
 	}
 	stored, err := store.ListCommitLinks(demoseed.ProjectID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(stored) != 2 {
-		t.Fatalf("want explicit + suggested only, got %+v", stored)
-	}
-
-	if err := store.ReplaceCommitLinks(demoseed.ProjectID, evidenceID, nil, now); err != nil {
-		t.Fatal(err)
-	}
-	stored, _ = store.ListCommitLinks(demoseed.ProjectID)
-	if len(stored) != 0 {
-		t.Fatalf("replacement with no links must clear them: %+v", stored)
+	if len(stored) != 1 || stored[0].Repo != "api" || stored[0].SHA != "abc123" || stored[0].TaskID != taskID {
+		t.Fatalf("links = %+v", stored)
 	}
 }
 
@@ -346,7 +331,7 @@ func TestKnowledgeArchiveRestoreAndDelete(t *testing.T) {
 	store := seededStore(t)
 	items, err := store.ListKnowledge(demoseed.ProjectID, knowledge.KindDoc)
 	if err != nil || len(items) == 0 {
-		t.Fatalf("seed evidence = %d err=%v", len(items), err)
+		t.Fatalf("seed docs = %d err=%v", len(items), err)
 	}
 	item := items[0]
 	if err := store.DeleteKnowledge(item.ID); !errors.Is(err, knowledge.ErrNotArchived) {

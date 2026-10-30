@@ -1258,7 +1258,8 @@ func (x *EndSessionResponse) GetCompletedRuns() int32 {
 }
 
 // InboxItem is one derived item that needs a person: a Decision (open
-// question), Drift (drift finding), or Verify (fact with no evidence).
+// question), Drift (a done task with no commit on main, or a commit on main
+// with no task), or Setup (a deploy whose provider CLI is not connected).
 type InboxItem struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id is the short id people type; it is stable while the item is the same.
@@ -1269,16 +1270,19 @@ type InboxItem struct {
 	Title    string   `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
 	Detail   string   `protobuf:"bytes,5,opt,name=detail,proto3" json:"detail,omitempty"`
 	Options  []string `protobuf:"bytes,6,rep,name=options,proto3" json:"options,omitempty"`
-	// where is the card slug and task, commit, path, or fact source.
+	// where is the card slug and task, or the commit.
 	Where  string `protobuf:"bytes,7,opt,name=where,proto3" json:"where,omitempty"`
 	Source string `protobuf:"bytes,8,opt,name=source,proto3" json:"source,omitempty"`
 	// state is "open" or "deferred".
 	State string `protobuf:"bytes,9,opt,name=state,proto3" json:"state,omitempty"`
 	// actions are the item's action ids, primary first: decide, delegate,
-	// defer, fix_code, update_intent, ignore.
+	// link, reopen, defer, ignore.
 	Actions []string `protobuf:"bytes,10,rep,name=actions,proto3" json:"actions,omitempty"`
 	// scope_node_ids are the item's own contexts; empty when it follows its source.
-	ScopeNodeIds  []string `protobuf:"bytes,12,rep,name=scope_node_ids,json=scopeNodeIds,proto3" json:"scope_node_ids,omitempty"`
+	ScopeNodeIds []string `protobuf:"bytes,12,rep,name=scope_node_ids,json=scopeNodeIds,proto3" json:"scope_node_ids,omitempty"`
+	// details are a drift item's facts: slug, task, task_id for a done task;
+	// repo, sha, subject for a commit.
+	Details       map[string]string `protobuf:"bytes,13,rep,name=details,proto3" json:"details,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1390,8 +1394,15 @@ func (x *InboxItem) GetScopeNodeIds() []string {
 	return nil
 }
 
-// RoutedInboxItem is an item a person handed to agents (delegate, fix_code,
-// update_intent); `polterware status` shows it until the source changes.
+func (x *InboxItem) GetDetails() map[string]string {
+	if x != nil {
+		return x.Details
+	}
+	return nil
+}
+
+// RoutedInboxItem is an item a person handed to agents (delegate);
+// `polterware status` shows it until the source changes.
 type RoutedInboxItem struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Item          *InboxItem             `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
@@ -1515,11 +1526,9 @@ func (x *ListInboxRequest) GetScopeNodes() []string {
 	return nil
 }
 
-// SetScope assigns an entity to a Structure node, or clears it when node is empty.
-// kind is "decision", "fact", "evidence", or "item" (a derived Drift/Inbox item,
-// identified by its item key). node is a Structure node id or path.
 // SetScopeRequest replaces an entity's contexts with nodes (ids or paths); an
-// empty list clears them (the whole project).
+// empty list clears them (the whole project). kind is "decision", "fact",
+// "rule", or "item" (a derived Inbox item, identified by its item key).
 type SetScopeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
@@ -1693,8 +1702,9 @@ func (x *ListInboxResponse) GetBlockingCount() int32 {
 }
 
 // ResolveInboxItem applies one action. decide writes `? question -> answer`
-// as Polter text; verify marks the fact verified; the rest record a
-// disposition.
+// as Polter text; link stores a commit-to-task link (answer is a task ref
+// slug#T2 for a commit, or a commit sha for a task); reopen opens the task
+// again; the rest record a disposition.
 type ResolveInboxItemRequest struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
@@ -1841,58 +1851,6 @@ func (x *ResolveInboxItemResponse) GetDiagnostics() []*PolterDiagnostic {
 	return nil
 }
 
-type StructureInvariant struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *StructureInvariant) Reset() {
-	*x = StructureInvariant{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[25]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *StructureInvariant) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*StructureInvariant) ProtoMessage() {}
-
-func (x *StructureInvariant) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[25]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use StructureInvariant.ProtoReflect.Descriptor instead.
-func (*StructureInvariant) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{25}
-}
-
-func (x *StructureInvariant) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *StructureInvariant) GetText() string {
-	if x != nil {
-		return x.Text
-	}
-	return ""
-}
-
 // NodeDeployment is where one Structure node is deployed in one environment.
 // provider is a catalog id. resource names the remote target. Credentials
 // are never stored.
@@ -1910,7 +1868,7 @@ type NodeDeployment struct {
 
 func (x *NodeDeployment) Reset() {
 	*x = NodeDeployment{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[26]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1922,7 +1880,7 @@ func (x *NodeDeployment) String() string {
 func (*NodeDeployment) ProtoMessage() {}
 
 func (x *NodeDeployment) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[26]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1935,7 +1893,7 @@ func (x *NodeDeployment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeDeployment.ProtoReflect.Descriptor instead.
 func (*NodeDeployment) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{26}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *NodeDeployment) GetId() string {
@@ -1985,7 +1943,6 @@ type StructureNode struct {
 	Title         string                 `protobuf:"bytes,6,opt,name=title,proto3" json:"title,omitempty"`
 	Intent        string                 `protobuf:"bytes,7,opt,name=intent,proto3" json:"intent,omitempty"`
 	Decisions     []string               `protobuf:"bytes,8,rep,name=decisions,proto3" json:"decisions,omitempty"`
-	Invariants    []*StructureInvariant  `protobuf:"bytes,9,rep,name=invariants,proto3" json:"invariants,omitempty"`
 	Status        string                 `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
 	ChildCount    int32                  `protobuf:"varint,11,opt,name=child_count,json=childCount,proto3" json:"child_count,omitempty"`
 	FeatureCount  int32                  `protobuf:"varint,12,opt,name=feature_count,json=featureCount,proto3" json:"feature_count,omitempty"`
@@ -2010,7 +1967,7 @@ type StructureNode struct {
 
 func (x *StructureNode) Reset() {
 	*x = StructureNode{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[27]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2022,7 +1979,7 @@ func (x *StructureNode) String() string {
 func (*StructureNode) ProtoMessage() {}
 
 func (x *StructureNode) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[27]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2035,7 +1992,7 @@ func (x *StructureNode) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StructureNode.ProtoReflect.Descriptor instead.
 func (*StructureNode) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{27}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *StructureNode) GetId() string {
@@ -2090,13 +2047,6 @@ func (x *StructureNode) GetIntent() string {
 func (x *StructureNode) GetDecisions() []string {
 	if x != nil {
 		return x.Decisions
-	}
-	return nil
-}
-
-func (x *StructureNode) GetInvariants() []*StructureInvariant {
-	if x != nil {
-		return x.Invariants
 	}
 	return nil
 }
@@ -2191,7 +2141,7 @@ type ListStructureRequest struct {
 
 func (x *ListStructureRequest) Reset() {
 	*x = ListStructureRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[28]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2203,7 +2153,7 @@ func (x *ListStructureRequest) String() string {
 func (*ListStructureRequest) ProtoMessage() {}
 
 func (x *ListStructureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[28]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2216,7 +2166,7 @@ func (x *ListStructureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListStructureRequest.ProtoReflect.Descriptor instead.
 func (*ListStructureRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{28}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ListStructureRequest) GetProjectId() string {
@@ -2244,7 +2194,7 @@ type ListStructureResponse struct {
 
 func (x *ListStructureResponse) Reset() {
 	*x = ListStructureResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[29]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2256,7 +2206,7 @@ func (x *ListStructureResponse) String() string {
 func (*ListStructureResponse) ProtoMessage() {}
 
 func (x *ListStructureResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[29]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2269,7 +2219,7 @@ func (x *ListStructureResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListStructureResponse.ProtoReflect.Descriptor instead.
 func (*ListStructureResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{29}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ListStructureResponse) GetNodes() []*StructureNode {
@@ -2308,7 +2258,7 @@ type StructureHistoryEntry struct {
 
 func (x *StructureHistoryEntry) Reset() {
 	*x = StructureHistoryEntry{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[30]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2320,7 +2270,7 @@ func (x *StructureHistoryEntry) String() string {
 func (*StructureHistoryEntry) ProtoMessage() {}
 
 func (x *StructureHistoryEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[30]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2333,7 +2283,7 @@ func (x *StructureHistoryEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StructureHistoryEntry.ProtoReflect.Descriptor instead.
 func (*StructureHistoryEntry) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{30}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *StructureHistoryEntry) GetBatchId() string {
@@ -2383,7 +2333,7 @@ type SessionClaim struct {
 
 func (x *SessionClaim) Reset() {
 	*x = SessionClaim{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[31]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2395,7 +2345,7 @@ func (x *SessionClaim) String() string {
 func (*SessionClaim) ProtoMessage() {}
 
 func (x *SessionClaim) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[31]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2408,7 +2358,7 @@ func (x *SessionClaim) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SessionClaim.ProtoReflect.Descriptor instead.
 func (*SessionClaim) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{31}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *SessionClaim) GetSlug() string {
@@ -2455,7 +2405,7 @@ type AgentSession struct {
 
 func (x *AgentSession) Reset() {
 	*x = AgentSession{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[32]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2467,7 +2417,7 @@ func (x *AgentSession) String() string {
 func (*AgentSession) ProtoMessage() {}
 
 func (x *AgentSession) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[32]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2480,7 +2430,7 @@ func (x *AgentSession) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentSession.ProtoReflect.Descriptor instead.
 func (*AgentSession) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{32}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *AgentSession) GetRunId() string {
@@ -2534,7 +2484,7 @@ type SessionHandoff struct {
 
 func (x *SessionHandoff) Reset() {
 	*x = SessionHandoff{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[33]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2546,7 +2496,7 @@ func (x *SessionHandoff) String() string {
 func (*SessionHandoff) ProtoMessage() {}
 
 func (x *SessionHandoff) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[33]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2559,7 +2509,7 @@ func (x *SessionHandoff) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SessionHandoff.ProtoReflect.Descriptor instead.
 func (*SessionHandoff) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{33}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *SessionHandoff) GetSlug() string {
@@ -2629,7 +2579,7 @@ type ListAgentSessionsRequest struct {
 
 func (x *ListAgentSessionsRequest) Reset() {
 	*x = ListAgentSessionsRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[34]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2641,7 +2591,7 @@ func (x *ListAgentSessionsRequest) String() string {
 func (*ListAgentSessionsRequest) ProtoMessage() {}
 
 func (x *ListAgentSessionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[34]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2654,7 +2604,7 @@ func (x *ListAgentSessionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAgentSessionsRequest.ProtoReflect.Descriptor instead.
 func (*ListAgentSessionsRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{34}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ListAgentSessionsRequest) GetProjectId() string {
@@ -2675,7 +2625,7 @@ type ListAgentSessionsResponse struct {
 
 func (x *ListAgentSessionsResponse) Reset() {
 	*x = ListAgentSessionsResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[35]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2687,7 +2637,7 @@ func (x *ListAgentSessionsResponse) String() string {
 func (*ListAgentSessionsResponse) ProtoMessage() {}
 
 func (x *ListAgentSessionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[35]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2700,7 +2650,7 @@ func (x *ListAgentSessionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAgentSessionsResponse.ProtoReflect.Descriptor instead.
 func (*ListAgentSessionsResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{35}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ListAgentSessionsResponse) GetSessions() []*AgentSession {
@@ -2733,7 +2683,7 @@ type ListStructureHistoryRequest struct {
 
 func (x *ListStructureHistoryRequest) Reset() {
 	*x = ListStructureHistoryRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[36]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2745,7 +2695,7 @@ func (x *ListStructureHistoryRequest) String() string {
 func (*ListStructureHistoryRequest) ProtoMessage() {}
 
 func (x *ListStructureHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[36]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2758,7 +2708,7 @@ func (x *ListStructureHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListStructureHistoryRequest.ProtoReflect.Descriptor instead.
 func (*ListStructureHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{36}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ListStructureHistoryRequest) GetProjectId() string {
@@ -2777,7 +2727,7 @@ type ListStructureHistoryResponse struct {
 
 func (x *ListStructureHistoryResponse) Reset() {
 	*x = ListStructureHistoryResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[37]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2789,7 +2739,7 @@ func (x *ListStructureHistoryResponse) String() string {
 func (*ListStructureHistoryResponse) ProtoMessage() {}
 
 func (x *ListStructureHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[37]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2802,7 +2752,7 @@ func (x *ListStructureHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListStructureHistoryResponse.ProtoReflect.Descriptor instead.
 func (*ListStructureHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{37}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *ListStructureHistoryResponse) GetEntries() []*StructureHistoryEntry {
@@ -2825,7 +2775,7 @@ type ExportProjectionsRequest struct {
 
 func (x *ExportProjectionsRequest) Reset() {
 	*x = ExportProjectionsRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[38]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2837,7 +2787,7 @@ func (x *ExportProjectionsRequest) String() string {
 func (*ExportProjectionsRequest) ProtoMessage() {}
 
 func (x *ExportProjectionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[38]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2850,7 +2800,7 @@ func (x *ExportProjectionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportProjectionsRequest.ProtoReflect.Descriptor instead.
 func (*ExportProjectionsRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{38}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ExportProjectionsRequest) GetProjectId() string {
@@ -2882,7 +2832,7 @@ type ProjectionFile struct {
 
 func (x *ProjectionFile) Reset() {
 	*x = ProjectionFile{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[39]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2894,7 +2844,7 @@ func (x *ProjectionFile) String() string {
 func (*ProjectionFile) ProtoMessage() {}
 
 func (x *ProjectionFile) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[39]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2907,7 +2857,7 @@ func (x *ProjectionFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectionFile.ProtoReflect.Descriptor instead.
 func (*ProjectionFile) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{39}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ProjectionFile) GetRepo() string {
@@ -2947,7 +2897,7 @@ type ExportProjectionsResponse struct {
 
 func (x *ExportProjectionsResponse) Reset() {
 	*x = ExportProjectionsResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[40]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2959,7 +2909,7 @@ func (x *ExportProjectionsResponse) String() string {
 func (*ExportProjectionsResponse) ProtoMessage() {}
 
 func (x *ExportProjectionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[40]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2972,7 +2922,7 @@ func (x *ExportProjectionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportProjectionsResponse.ProtoReflect.Descriptor instead.
 func (*ExportProjectionsResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{40}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ExportProjectionsResponse) GetFiles() []*ProjectionFile {
@@ -2997,7 +2947,7 @@ type FileContextRequest struct {
 
 func (x *FileContextRequest) Reset() {
 	*x = FileContextRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[41]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3009,7 +2959,7 @@ func (x *FileContextRequest) String() string {
 func (*FileContextRequest) ProtoMessage() {}
 
 func (x *FileContextRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[41]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3022,7 +2972,7 @@ func (x *FileContextRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileContextRequest.ProtoReflect.Descriptor instead.
 func (*FileContextRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{41}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *FileContextRequest) GetProjectId() string {
@@ -3056,7 +3006,7 @@ type FileContextResponse struct {
 
 func (x *FileContextResponse) Reset() {
 	*x = FileContextResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[42]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3068,7 +3018,7 @@ func (x *FileContextResponse) String() string {
 func (*FileContextResponse) ProtoMessage() {}
 
 func (x *FileContextResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[42]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3081,7 +3031,7 @@ func (x *FileContextResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileContextResponse.ProtoReflect.Descriptor instead.
 func (*FileContextResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{42}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *FileContextResponse) GetText() string {
@@ -3111,7 +3061,7 @@ type SetAgentsSyncRequest struct {
 
 func (x *SetAgentsSyncRequest) Reset() {
 	*x = SetAgentsSyncRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[43]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3123,7 +3073,7 @@ func (x *SetAgentsSyncRequest) String() string {
 func (*SetAgentsSyncRequest) ProtoMessage() {}
 
 func (x *SetAgentsSyncRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[43]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3136,7 +3086,7 @@ func (x *SetAgentsSyncRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetAgentsSyncRequest.ProtoReflect.Descriptor instead.
 func (*SetAgentsSyncRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{43}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *SetAgentsSyncRequest) GetProjectId() string {
@@ -3163,7 +3113,7 @@ type SetAgentsSyncResponse struct {
 
 func (x *SetAgentsSyncResponse) Reset() {
 	*x = SetAgentsSyncResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[44]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3175,7 +3125,7 @@ func (x *SetAgentsSyncResponse) String() string {
 func (*SetAgentsSyncResponse) ProtoMessage() {}
 
 func (x *SetAgentsSyncResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[44]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3188,7 +3138,7 @@ func (x *SetAgentsSyncResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetAgentsSyncResponse.ProtoReflect.Descriptor instead.
 func (*SetAgentsSyncResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{44}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *SetAgentsSyncResponse) GetEnabled() bool {
@@ -3219,7 +3169,7 @@ type FeatureTouch struct {
 
 func (x *FeatureTouch) Reset() {
 	*x = FeatureTouch{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[45]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3231,7 +3181,7 @@ func (x *FeatureTouch) String() string {
 func (*FeatureTouch) ProtoMessage() {}
 
 func (x *FeatureTouch) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[45]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3244,7 +3194,7 @@ func (x *FeatureTouch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FeatureTouch.ProtoReflect.Descriptor instead.
 func (*FeatureTouch) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{45}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *FeatureTouch) GetPath() string {
@@ -3283,7 +3233,7 @@ type FeatureDecision struct {
 
 func (x *FeatureDecision) Reset() {
 	*x = FeatureDecision{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[46]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3295,7 +3245,7 @@ func (x *FeatureDecision) String() string {
 func (*FeatureDecision) ProtoMessage() {}
 
 func (x *FeatureDecision) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[46]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3308,7 +3258,7 @@ func (x *FeatureDecision) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FeatureDecision.ProtoReflect.Descriptor instead.
 func (*FeatureDecision) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{46}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *FeatureDecision) GetRef() string {
@@ -3356,7 +3306,7 @@ type FeatureInvariant struct {
 
 func (x *FeatureInvariant) Reset() {
 	*x = FeatureInvariant{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[47]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3368,7 +3318,7 @@ func (x *FeatureInvariant) String() string {
 func (*FeatureInvariant) ProtoMessage() {}
 
 func (x *FeatureInvariant) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[47]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3381,7 +3331,7 @@ func (x *FeatureInvariant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FeatureInvariant.ProtoReflect.Descriptor instead.
 func (*FeatureInvariant) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{47}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *FeatureInvariant) GetText() string {
@@ -3413,7 +3363,7 @@ type FeatureQuestion struct {
 
 func (x *FeatureQuestion) Reset() {
 	*x = FeatureQuestion{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[48]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3425,7 +3375,7 @@ func (x *FeatureQuestion) String() string {
 func (*FeatureQuestion) ProtoMessage() {}
 
 func (x *FeatureQuestion) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[48]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3438,7 +3388,7 @@ func (x *FeatureQuestion) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FeatureQuestion.ProtoReflect.Descriptor instead.
 func (*FeatureQuestion) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{48}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *FeatureQuestion) GetId() string {
@@ -3495,7 +3445,7 @@ type FeatureCheck struct {
 
 func (x *FeatureCheck) Reset() {
 	*x = FeatureCheck{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[49]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3507,7 +3457,7 @@ func (x *FeatureCheck) String() string {
 func (*FeatureCheck) ProtoMessage() {}
 
 func (x *FeatureCheck) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[49]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3520,7 +3470,7 @@ func (x *FeatureCheck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FeatureCheck.ProtoReflect.Descriptor instead.
 func (*FeatureCheck) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{49}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *FeatureCheck) GetStep() string {
@@ -3563,7 +3513,7 @@ type FeatureReview struct {
 
 func (x *FeatureReview) Reset() {
 	*x = FeatureReview{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[50]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3575,7 +3525,7 @@ func (x *FeatureReview) String() string {
 func (*FeatureReview) ProtoMessage() {}
 
 func (x *FeatureReview) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[50]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3588,7 +3538,7 @@ func (x *FeatureReview) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FeatureReview.ProtoReflect.Descriptor instead.
 func (*FeatureReview) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{50}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *FeatureReview) GetCard() *WorkCard {
@@ -3664,7 +3614,7 @@ type ReviewFeatureRequest struct {
 
 func (x *ReviewFeatureRequest) Reset() {
 	*x = ReviewFeatureRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[51]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3676,7 +3626,7 @@ func (x *ReviewFeatureRequest) String() string {
 func (*ReviewFeatureRequest) ProtoMessage() {}
 
 func (x *ReviewFeatureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[51]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3689,7 +3639,7 @@ func (x *ReviewFeatureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewFeatureRequest.ProtoReflect.Descriptor instead.
 func (*ReviewFeatureRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{51}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *ReviewFeatureRequest) GetProjectId() string {
@@ -3715,7 +3665,7 @@ type ReviewFeatureResponse struct {
 
 func (x *ReviewFeatureResponse) Reset() {
 	*x = ReviewFeatureResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[52]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3727,7 +3677,7 @@ func (x *ReviewFeatureResponse) String() string {
 func (*ReviewFeatureResponse) ProtoMessage() {}
 
 func (x *ReviewFeatureResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[52]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3740,7 +3690,7 @@ func (x *ReviewFeatureResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewFeatureResponse.ProtoReflect.Descriptor instead.
 func (*ReviewFeatureResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{52}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *ReviewFeatureResponse) GetReview() *FeatureReview {
@@ -3770,7 +3720,7 @@ type CreateFeatureRequest struct {
 
 func (x *CreateFeatureRequest) Reset() {
 	*x = CreateFeatureRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[53]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3782,7 +3732,7 @@ func (x *CreateFeatureRequest) String() string {
 func (*CreateFeatureRequest) ProtoMessage() {}
 
 func (x *CreateFeatureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[53]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3795,7 +3745,7 @@ func (x *CreateFeatureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateFeatureRequest.ProtoReflect.Descriptor instead.
 func (*CreateFeatureRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{53}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *CreateFeatureRequest) GetProjectId() string {
@@ -3865,7 +3815,7 @@ type CreateFeatureResponse struct {
 
 func (x *CreateFeatureResponse) Reset() {
 	*x = CreateFeatureResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[54]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3877,7 +3827,7 @@ func (x *CreateFeatureResponse) String() string {
 func (*CreateFeatureResponse) ProtoMessage() {}
 
 func (x *CreateFeatureResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[54]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3890,7 +3840,7 @@ func (x *CreateFeatureResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateFeatureResponse.ProtoReflect.Descriptor instead.
 func (*CreateFeatureResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{54}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *CreateFeatureResponse) GetSlug() string {
@@ -3930,7 +3880,7 @@ type AdvanceFeatureRequest struct {
 
 func (x *AdvanceFeatureRequest) Reset() {
 	*x = AdvanceFeatureRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[55]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3942,7 +3892,7 @@ func (x *AdvanceFeatureRequest) String() string {
 func (*AdvanceFeatureRequest) ProtoMessage() {}
 
 func (x *AdvanceFeatureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[55]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3955,7 +3905,7 @@ func (x *AdvanceFeatureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdvanceFeatureRequest.ProtoReflect.Descriptor instead.
 func (*AdvanceFeatureRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{55}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *AdvanceFeatureRequest) GetProjectId() string {
@@ -4011,7 +3961,7 @@ type AdvanceFeatureResponse struct {
 
 func (x *AdvanceFeatureResponse) Reset() {
 	*x = AdvanceFeatureResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[56]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4023,7 +3973,7 @@ func (x *AdvanceFeatureResponse) String() string {
 func (*AdvanceFeatureResponse) ProtoMessage() {}
 
 func (x *AdvanceFeatureResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[56]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4036,7 +3986,7 @@ func (x *AdvanceFeatureResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdvanceFeatureResponse.ProtoReflect.Descriptor instead.
 func (*AdvanceFeatureResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{56}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *AdvanceFeatureResponse) GetStage() string {
@@ -4072,7 +4022,7 @@ type VerifyFeatureRequest struct {
 
 func (x *VerifyFeatureRequest) Reset() {
 	*x = VerifyFeatureRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[57]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4084,7 +4034,7 @@ func (x *VerifyFeatureRequest) String() string {
 func (*VerifyFeatureRequest) ProtoMessage() {}
 
 func (x *VerifyFeatureRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[57]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4097,7 +4047,7 @@ func (x *VerifyFeatureRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyFeatureRequest.ProtoReflect.Descriptor instead.
 func (*VerifyFeatureRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{57}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *VerifyFeatureRequest) GetProjectId() string {
@@ -4124,7 +4074,7 @@ type VerifyCheck struct {
 
 func (x *VerifyCheck) Reset() {
 	*x = VerifyCheck{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[58]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4136,7 +4086,7 @@ func (x *VerifyCheck) String() string {
 func (*VerifyCheck) ProtoMessage() {}
 
 func (x *VerifyCheck) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[58]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4149,7 +4099,7 @@ func (x *VerifyCheck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyCheck.ProtoReflect.Descriptor instead.
 func (*VerifyCheck) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{58}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *VerifyCheck) GetStatus() string {
@@ -4177,7 +4127,7 @@ type VerifyFeatureResponse struct {
 
 func (x *VerifyFeatureResponse) Reset() {
 	*x = VerifyFeatureResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[59]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4189,7 +4139,7 @@ func (x *VerifyFeatureResponse) String() string {
 func (*VerifyFeatureResponse) ProtoMessage() {}
 
 func (x *VerifyFeatureResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[59]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4202,7 +4152,7 @@ func (x *VerifyFeatureResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyFeatureResponse.ProtoReflect.Descriptor instead.
 func (*VerifyFeatureResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{59}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *VerifyFeatureResponse) GetTarget() string {
@@ -4253,7 +4203,7 @@ type Milestone struct {
 
 func (x *Milestone) Reset() {
 	*x = Milestone{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[60]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4265,7 +4215,7 @@ func (x *Milestone) String() string {
 func (*Milestone) ProtoMessage() {}
 
 func (x *Milestone) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[60]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4278,7 +4228,7 @@ func (x *Milestone) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Milestone.ProtoReflect.Descriptor instead.
 func (*Milestone) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{60}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *Milestone) GetId() string {
@@ -4376,7 +4326,7 @@ type ListMilestonesRequest struct {
 
 func (x *ListMilestonesRequest) Reset() {
 	*x = ListMilestonesRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[61]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4388,7 +4338,7 @@ func (x *ListMilestonesRequest) String() string {
 func (*ListMilestonesRequest) ProtoMessage() {}
 
 func (x *ListMilestonesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[61]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4401,7 +4351,7 @@ func (x *ListMilestonesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMilestonesRequest.ProtoReflect.Descriptor instead.
 func (*ListMilestonesRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{61}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *ListMilestonesRequest) GetProjectId() string {
@@ -4420,7 +4370,7 @@ type ListMilestonesResponse struct {
 
 func (x *ListMilestonesResponse) Reset() {
 	*x = ListMilestonesResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[62]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4432,7 +4382,7 @@ func (x *ListMilestonesResponse) String() string {
 func (*ListMilestonesResponse) ProtoMessage() {}
 
 func (x *ListMilestonesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[62]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4445,7 +4395,7 @@ func (x *ListMilestonesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMilestonesResponse.ProtoReflect.Descriptor instead.
 func (*ListMilestonesResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{62}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *ListMilestonesResponse) GetMilestones() []*Milestone {
@@ -4472,7 +4422,7 @@ type CreateMilestoneRequest struct {
 
 func (x *CreateMilestoneRequest) Reset() {
 	*x = CreateMilestoneRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[63]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4484,7 +4434,7 @@ func (x *CreateMilestoneRequest) String() string {
 func (*CreateMilestoneRequest) ProtoMessage() {}
 
 func (x *CreateMilestoneRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[63]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4497,7 +4447,7 @@ func (x *CreateMilestoneRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateMilestoneRequest.ProtoReflect.Descriptor instead.
 func (*CreateMilestoneRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{63}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *CreateMilestoneRequest) GetProjectId() string {
@@ -4558,7 +4508,7 @@ type CreateMilestoneResponse struct {
 
 func (x *CreateMilestoneResponse) Reset() {
 	*x = CreateMilestoneResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[64]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4570,7 +4520,7 @@ func (x *CreateMilestoneResponse) String() string {
 func (*CreateMilestoneResponse) ProtoMessage() {}
 
 func (x *CreateMilestoneResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[64]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4583,7 +4533,7 @@ func (x *CreateMilestoneResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateMilestoneResponse.ProtoReflect.Descriptor instead.
 func (*CreateMilestoneResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{64}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *CreateMilestoneResponse) GetMilestone() *Milestone {
@@ -4610,7 +4560,7 @@ type UpdateMilestoneRequest struct {
 
 func (x *UpdateMilestoneRequest) Reset() {
 	*x = UpdateMilestoneRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[65]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4622,7 +4572,7 @@ func (x *UpdateMilestoneRequest) String() string {
 func (*UpdateMilestoneRequest) ProtoMessage() {}
 
 func (x *UpdateMilestoneRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[65]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4635,7 +4585,7 @@ func (x *UpdateMilestoneRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateMilestoneRequest.ProtoReflect.Descriptor instead.
 func (*UpdateMilestoneRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{65}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *UpdateMilestoneRequest) GetProjectId() string {
@@ -4703,7 +4653,7 @@ type UpdateMilestoneResponse struct {
 
 func (x *UpdateMilestoneResponse) Reset() {
 	*x = UpdateMilestoneResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[66]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4715,7 +4665,7 @@ func (x *UpdateMilestoneResponse) String() string {
 func (*UpdateMilestoneResponse) ProtoMessage() {}
 
 func (x *UpdateMilestoneResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[66]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4728,7 +4678,7 @@ func (x *UpdateMilestoneResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateMilestoneResponse.ProtoReflect.Descriptor instead.
 func (*UpdateMilestoneResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{66}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *UpdateMilestoneResponse) GetMilestone() *Milestone {
@@ -4751,7 +4701,7 @@ type ArchiveMilestoneRequest struct {
 
 func (x *ArchiveMilestoneRequest) Reset() {
 	*x = ArchiveMilestoneRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[67]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4763,7 +4713,7 @@ func (x *ArchiveMilestoneRequest) String() string {
 func (*ArchiveMilestoneRequest) ProtoMessage() {}
 
 func (x *ArchiveMilestoneRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[67]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4776,7 +4726,7 @@ func (x *ArchiveMilestoneRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveMilestoneRequest.ProtoReflect.Descriptor instead.
 func (*ArchiveMilestoneRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{67}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *ArchiveMilestoneRequest) GetProjectId() string {
@@ -4816,7 +4766,7 @@ type ArchiveMilestoneResponse struct {
 
 func (x *ArchiveMilestoneResponse) Reset() {
 	*x = ArchiveMilestoneResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[68]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4828,7 +4778,7 @@ func (x *ArchiveMilestoneResponse) String() string {
 func (*ArchiveMilestoneResponse) ProtoMessage() {}
 
 func (x *ArchiveMilestoneResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[68]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4841,7 +4791,7 @@ func (x *ArchiveMilestoneResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveMilestoneResponse.ProtoReflect.Descriptor instead.
 func (*ArchiveMilestoneResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{68}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *ArchiveMilestoneResponse) GetMilestone() *Milestone {
@@ -4864,7 +4814,7 @@ type ReorderMilestonesRequest struct {
 
 func (x *ReorderMilestonesRequest) Reset() {
 	*x = ReorderMilestonesRequest{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[69]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4876,7 +4826,7 @@ func (x *ReorderMilestonesRequest) String() string {
 func (*ReorderMilestonesRequest) ProtoMessage() {}
 
 func (x *ReorderMilestonesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[69]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4889,7 +4839,7 @@ func (x *ReorderMilestonesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReorderMilestonesRequest.ProtoReflect.Descriptor instead.
 func (*ReorderMilestonesRequest) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{69}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *ReorderMilestonesRequest) GetProjectId() string {
@@ -4922,7 +4872,7 @@ type ReorderMilestonesResponse struct {
 
 func (x *ReorderMilestonesResponse) Reset() {
 	*x = ReorderMilestonesResponse{}
-	mi := &file_polterware_local_v1_work_proto_msgTypes[70]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4934,7 +4884,7 @@ func (x *ReorderMilestonesResponse) String() string {
 func (*ReorderMilestonesResponse) ProtoMessage() {}
 
 func (x *ReorderMilestonesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_polterware_local_v1_work_proto_msgTypes[70]
+	mi := &file_polterware_local_v1_work_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4947,12 +4897,198 @@ func (x *ReorderMilestonesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReorderMilestonesResponse.ProtoReflect.Descriptor instead.
 func (*ReorderMilestonesResponse) Descriptor() ([]byte, []int) {
-	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{70}
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *ReorderMilestonesResponse) GetMilestones() []*Milestone {
 	if x != nil {
 		return x.Milestones
+	}
+	return nil
+}
+
+// Rule is a short imperative constraint agents read before they work.
+// scope_node_ids are the Structure nodes it applies to (and every node below
+// them); none is the whole project.
+type Rule struct {
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Id           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Slug         string                 `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
+	Statement    string                 `protobuf:"bytes,3,opt,name=statement,proto3" json:"statement,omitempty"`
+	ScopeNodeIds []string               `protobuf:"bytes,4,rep,name=scope_node_ids,json=scopeNodeIds,proto3" json:"scope_node_ids,omitempty"`
+	// scope_paths are the same nodes as paths, sorted.
+	ScopePaths    []string `protobuf:"bytes,5,rep,name=scope_paths,json=scopePaths,proto3" json:"scope_paths,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Rule) Reset() {
+	*x = Rule{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[70]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Rule) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Rule) ProtoMessage() {}
+
+func (x *Rule) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[70]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Rule.ProtoReflect.Descriptor instead.
+func (*Rule) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{70}
+}
+
+func (x *Rule) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Rule) GetSlug() string {
+	if x != nil {
+		return x.Slug
+	}
+	return ""
+}
+
+func (x *Rule) GetStatement() string {
+	if x != nil {
+		return x.Statement
+	}
+	return ""
+}
+
+func (x *Rule) GetScopeNodeIds() []string {
+	if x != nil {
+		return x.ScopeNodeIds
+	}
+	return nil
+}
+
+func (x *Rule) GetScopePaths() []string {
+	if x != nil {
+		return x.ScopePaths
+	}
+	return nil
+}
+
+type ListRulesRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	// scope_nodes keeps the Rules with a context inside them, plus the
+	// project-wide ones.
+	ScopeNodes    []string `protobuf:"bytes,2,rep,name=scope_nodes,json=scopeNodes,proto3" json:"scope_nodes,omitempty"`
+	ScopeExact    bool     `protobuf:"varint,3,opt,name=scope_exact,json=scopeExact,proto3" json:"scope_exact,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRulesRequest) Reset() {
+	*x = ListRulesRequest{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[71]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRulesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRulesRequest) ProtoMessage() {}
+
+func (x *ListRulesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[71]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRulesRequest.ProtoReflect.Descriptor instead.
+func (*ListRulesRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{71}
+}
+
+func (x *ListRulesRequest) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *ListRulesRequest) GetScopeNodes() []string {
+	if x != nil {
+		return x.ScopeNodes
+	}
+	return nil
+}
+
+func (x *ListRulesRequest) GetScopeExact() bool {
+	if x != nil {
+		return x.ScopeExact
+	}
+	return false
+}
+
+type ListRulesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Rules         []*Rule                `protobuf:"bytes,1,rep,name=rules,proto3" json:"rules,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRulesResponse) Reset() {
+	*x = ListRulesResponse{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[72]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRulesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRulesResponse) ProtoMessage() {}
+
+func (x *ListRulesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[72]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRulesResponse.ProtoReflect.Descriptor instead.
+func (*ListRulesResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{72}
+}
+
+func (x *ListRulesResponse) GetRules() []*Rule {
+	if x != nil {
+		return x.Rules
 	}
 	return nil
 }
@@ -5074,7 +5210,7 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\";\n" +
 	"\x12EndSessionResponse\x12%\n" +
-	"\x0ecompleted_runs\x18\x01 \x01(\x05R\rcompletedRuns\"\xac\x02\n" +
+	"\x0ecompleted_runs\x18\x01 \x01(\x05R\rcompletedRuns\"\xaf\x03\n" +
 	"\tInboxItem\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04kind\x18\x02 \x01(\tR\x04kind\x12\x1a\n" +
@@ -5087,7 +5223,11 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x05state\x18\t \x01(\tR\x05state\x12\x18\n" +
 	"\aactions\x18\n" +
 	" \x03(\tR\aactions\x12$\n" +
-	"\x0escope_node_ids\x18\f \x03(\tR\fscopeNodeIdsJ\x04\b\v\x10\fR\rscope_node_id\"]\n" +
+	"\x0escope_node_ids\x18\f \x03(\tR\fscopeNodeIds\x12E\n" +
+	"\adetails\x18\r \x03(\v2+.polterware.local.v1.InboxItem.DetailsEntryR\adetails\x1a:\n" +
+	"\fDetailsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01J\x04\b\v\x10\fR\rscope_node_id\"]\n" +
 	"\x0fRoutedInboxItem\x122\n" +
 	"\x04item\x18\x01 \x01(\v2\x1e.polterware.local.v1.InboxItemR\x04item\x12\x16\n" +
 	"\x06action\x18\x02 \x01(\tR\x06action\"\x92\x01\n" +
@@ -5124,16 +5264,13 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x04item\x18\x01 \x01(\v2\x1e.polterware.local.v1.InboxItemR\x04item\x12\x16\n" +
 	"\x06action\x18\x02 \x01(\tR\x06action\x12\x10\n" +
 	"\x03ops\x18\x03 \x03(\tR\x03ops\x12G\n" +
-	"\vdiagnostics\x18\x04 \x03(\v2%.polterware.local.v1.PolterDiagnosticR\vdiagnostics\"8\n" +
-	"\x12StructureInvariant\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04text\x18\x02 \x01(\tR\x04text\"\xa1\x01\n" +
+	"\vdiagnostics\x18\x04 \x03(\v2%.polterware.local.v1.PolterDiagnosticR\vdiagnostics\"\xa1\x01\n" +
 	"\x0eNodeDeployment\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
 	"\x0eenvironment_id\x18\x02 \x01(\tR\renvironmentId\x12 \n" +
 	"\venvironment\x18\x03 \x01(\tR\venvironment\x12\x1a\n" +
 	"\bprovider\x18\x04 \x01(\tR\bprovider\x12\x1a\n" +
-	"\bresource\x18\x05 \x01(\tR\bresource\"\xfd\x04\n" +
+	"\bresource\x18\x05 \x01(\tR\bresource\"\xc6\x04\n" +
 	"\rStructureNode\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tparent_id\x18\x02 \x01(\tR\bparentId\x12\x14\n" +
@@ -5142,10 +5279,7 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x04path\x18\x05 \x01(\tR\x04path\x12\x14\n" +
 	"\x05title\x18\x06 \x01(\tR\x05title\x12\x16\n" +
 	"\x06intent\x18\a \x01(\tR\x06intent\x12\x1c\n" +
-	"\tdecisions\x18\b \x03(\tR\tdecisions\x12G\n" +
-	"\n" +
-	"invariants\x18\t \x03(\v2'.polterware.local.v1.StructureInvariantR\n" +
-	"invariants\x12\x16\n" +
+	"\tdecisions\x18\b \x03(\tR\tdecisions\x12\x16\n" +
 	"\x06status\x18\n" +
 	" \x01(\tR\x06status\x12\x1f\n" +
 	"\vchild_count\x18\v \x01(\x05R\n" +
@@ -5158,7 +5292,9 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\fmigration_to\x18\x11 \x01(\tR\vmigrationTo\x12=\n" +
 	"\adeploys\x18\x13 \x03(\v2#.polterware.local.v1.NodeDeploymentR\adeploys\x12\x12\n" +
 	"\x04kind\x18\x14 \x01(\tR\x04kind\x12\x12\n" +
-	"\x04tech\x18\x15 \x01(\tR\x04techJ\x04\b\x12\x10\x13R\x04uses\"J\n" +
+	"\x04tech\x18\x15 \x01(\tR\x04techJ\x04\b\t\x10\n" +
+	"J\x04\b\x12\x10\x13R\n" +
+	"invariantsR\x04uses\"J\n" +
 	"\x14ListStructureRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x13\n" +
@@ -5386,8 +5522,25 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x19ReorderMilestonesResponse\x12>\n" +
 	"\n" +
 	"milestones\x18\x01 \x03(\v2\x1e.polterware.local.v1.MilestoneR\n" +
-	"milestones2\xe8\x13\n" +
-	"\vWorkService\x12f\n" +
+	"milestones\"\x8f\x01\n" +
+	"\x04Rule\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04slug\x18\x02 \x01(\tR\x04slug\x12\x1c\n" +
+	"\tstatement\x18\x03 \x01(\tR\tstatement\x12$\n" +
+	"\x0escope_node_ids\x18\x04 \x03(\tR\fscopeNodeIds\x12\x1f\n" +
+	"\vscope_paths\x18\x05 \x03(\tR\n" +
+	"scopePaths\"s\n" +
+	"\x10ListRulesRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x1f\n" +
+	"\vscope_nodes\x18\x02 \x03(\tR\n" +
+	"scopeNodes\x12\x1f\n" +
+	"\vscope_exact\x18\x03 \x01(\bR\n" +
+	"scopeExact\"D\n" +
+	"\x11ListRulesResponse\x12/\n" +
+	"\x05rules\x18\x01 \x03(\v2\x19.polterware.local.v1.RuleR\x05rules2\xc4\x14\n" +
+	"\vWorkService\x12Z\n" +
+	"\tListRules\x12%.polterware.local.v1.ListRulesRequest\x1a&.polterware.local.v1.ListRulesResponse\x12f\n" +
 	"\rListWorkCards\x12).polterware.local.v1.ListWorkCardsRequest\x1a*.polterware.local.v1.ListWorkCardsResponse\x12f\n" +
 	"\rListStructure\x12).polterware.local.v1.ListStructureRequest\x1a*.polterware.local.v1.ListStructureResponse\x12{\n" +
 	"\x14ListStructureHistory\x120.polterware.local.v1.ListStructureHistoryRequest\x1a1.polterware.local.v1.ListStructureHistoryResponse\x12r\n" +
@@ -5428,7 +5581,7 @@ func file_polterware_local_v1_work_proto_rawDescGZIP() []byte {
 	return file_polterware_local_v1_work_proto_rawDescData
 }
 
-var file_polterware_local_v1_work_proto_msgTypes = make([]protoimpl.MessageInfo, 71)
+var file_polterware_local_v1_work_proto_msgTypes = make([]protoimpl.MessageInfo, 74)
 var file_polterware_local_v1_work_proto_goTypes = []any{
 	(*WorkTask)(nil),                     // 0: polterware.local.v1.WorkTask
 	(*WorkQuestion)(nil),                 // 1: polterware.local.v1.WorkQuestion
@@ -5455,154 +5608,160 @@ var file_polterware_local_v1_work_proto_goTypes = []any{
 	(*ListInboxResponse)(nil),            // 22: polterware.local.v1.ListInboxResponse
 	(*ResolveInboxItemRequest)(nil),      // 23: polterware.local.v1.ResolveInboxItemRequest
 	(*ResolveInboxItemResponse)(nil),     // 24: polterware.local.v1.ResolveInboxItemResponse
-	(*StructureInvariant)(nil),           // 25: polterware.local.v1.StructureInvariant
-	(*NodeDeployment)(nil),               // 26: polterware.local.v1.NodeDeployment
-	(*StructureNode)(nil),                // 27: polterware.local.v1.StructureNode
-	(*ListStructureRequest)(nil),         // 28: polterware.local.v1.ListStructureRequest
-	(*ListStructureResponse)(nil),        // 29: polterware.local.v1.ListStructureResponse
-	(*StructureHistoryEntry)(nil),        // 30: polterware.local.v1.StructureHistoryEntry
-	(*SessionClaim)(nil),                 // 31: polterware.local.v1.SessionClaim
-	(*AgentSession)(nil),                 // 32: polterware.local.v1.AgentSession
-	(*SessionHandoff)(nil),               // 33: polterware.local.v1.SessionHandoff
-	(*ListAgentSessionsRequest)(nil),     // 34: polterware.local.v1.ListAgentSessionsRequest
-	(*ListAgentSessionsResponse)(nil),    // 35: polterware.local.v1.ListAgentSessionsResponse
-	(*ListStructureHistoryRequest)(nil),  // 36: polterware.local.v1.ListStructureHistoryRequest
-	(*ListStructureHistoryResponse)(nil), // 37: polterware.local.v1.ListStructureHistoryResponse
-	(*ExportProjectionsRequest)(nil),     // 38: polterware.local.v1.ExportProjectionsRequest
-	(*ProjectionFile)(nil),               // 39: polterware.local.v1.ProjectionFile
-	(*ExportProjectionsResponse)(nil),    // 40: polterware.local.v1.ExportProjectionsResponse
-	(*FileContextRequest)(nil),           // 41: polterware.local.v1.FileContextRequest
-	(*FileContextResponse)(nil),          // 42: polterware.local.v1.FileContextResponse
-	(*SetAgentsSyncRequest)(nil),         // 43: polterware.local.v1.SetAgentsSyncRequest
-	(*SetAgentsSyncResponse)(nil),        // 44: polterware.local.v1.SetAgentsSyncResponse
-	(*FeatureTouch)(nil),                 // 45: polterware.local.v1.FeatureTouch
-	(*FeatureDecision)(nil),              // 46: polterware.local.v1.FeatureDecision
-	(*FeatureInvariant)(nil),             // 47: polterware.local.v1.FeatureInvariant
-	(*FeatureQuestion)(nil),              // 48: polterware.local.v1.FeatureQuestion
-	(*FeatureCheck)(nil),                 // 49: polterware.local.v1.FeatureCheck
-	(*FeatureReview)(nil),                // 50: polterware.local.v1.FeatureReview
-	(*ReviewFeatureRequest)(nil),         // 51: polterware.local.v1.ReviewFeatureRequest
-	(*ReviewFeatureResponse)(nil),        // 52: polterware.local.v1.ReviewFeatureResponse
-	(*CreateFeatureRequest)(nil),         // 53: polterware.local.v1.CreateFeatureRequest
-	(*CreateFeatureResponse)(nil),        // 54: polterware.local.v1.CreateFeatureResponse
-	(*AdvanceFeatureRequest)(nil),        // 55: polterware.local.v1.AdvanceFeatureRequest
-	(*AdvanceFeatureResponse)(nil),       // 56: polterware.local.v1.AdvanceFeatureResponse
-	(*VerifyFeatureRequest)(nil),         // 57: polterware.local.v1.VerifyFeatureRequest
-	(*VerifyCheck)(nil),                  // 58: polterware.local.v1.VerifyCheck
-	(*VerifyFeatureResponse)(nil),        // 59: polterware.local.v1.VerifyFeatureResponse
-	(*Milestone)(nil),                    // 60: polterware.local.v1.Milestone
-	(*ListMilestonesRequest)(nil),        // 61: polterware.local.v1.ListMilestonesRequest
-	(*ListMilestonesResponse)(nil),       // 62: polterware.local.v1.ListMilestonesResponse
-	(*CreateMilestoneRequest)(nil),       // 63: polterware.local.v1.CreateMilestoneRequest
-	(*CreateMilestoneResponse)(nil),      // 64: polterware.local.v1.CreateMilestoneResponse
-	(*UpdateMilestoneRequest)(nil),       // 65: polterware.local.v1.UpdateMilestoneRequest
-	(*UpdateMilestoneResponse)(nil),      // 66: polterware.local.v1.UpdateMilestoneResponse
-	(*ArchiveMilestoneRequest)(nil),      // 67: polterware.local.v1.ArchiveMilestoneRequest
-	(*ArchiveMilestoneResponse)(nil),     // 68: polterware.local.v1.ArchiveMilestoneResponse
-	(*ReorderMilestonesRequest)(nil),     // 69: polterware.local.v1.ReorderMilestonesRequest
-	(*ReorderMilestonesResponse)(nil),    // 70: polterware.local.v1.ReorderMilestonesResponse
-	(*ChangeEnvelope)(nil),               // 71: polterware.local.v1.ChangeEnvelope
+	(*NodeDeployment)(nil),               // 25: polterware.local.v1.NodeDeployment
+	(*StructureNode)(nil),                // 26: polterware.local.v1.StructureNode
+	(*ListStructureRequest)(nil),         // 27: polterware.local.v1.ListStructureRequest
+	(*ListStructureResponse)(nil),        // 28: polterware.local.v1.ListStructureResponse
+	(*StructureHistoryEntry)(nil),        // 29: polterware.local.v1.StructureHistoryEntry
+	(*SessionClaim)(nil),                 // 30: polterware.local.v1.SessionClaim
+	(*AgentSession)(nil),                 // 31: polterware.local.v1.AgentSession
+	(*SessionHandoff)(nil),               // 32: polterware.local.v1.SessionHandoff
+	(*ListAgentSessionsRequest)(nil),     // 33: polterware.local.v1.ListAgentSessionsRequest
+	(*ListAgentSessionsResponse)(nil),    // 34: polterware.local.v1.ListAgentSessionsResponse
+	(*ListStructureHistoryRequest)(nil),  // 35: polterware.local.v1.ListStructureHistoryRequest
+	(*ListStructureHistoryResponse)(nil), // 36: polterware.local.v1.ListStructureHistoryResponse
+	(*ExportProjectionsRequest)(nil),     // 37: polterware.local.v1.ExportProjectionsRequest
+	(*ProjectionFile)(nil),               // 38: polterware.local.v1.ProjectionFile
+	(*ExportProjectionsResponse)(nil),    // 39: polterware.local.v1.ExportProjectionsResponse
+	(*FileContextRequest)(nil),           // 40: polterware.local.v1.FileContextRequest
+	(*FileContextResponse)(nil),          // 41: polterware.local.v1.FileContextResponse
+	(*SetAgentsSyncRequest)(nil),         // 42: polterware.local.v1.SetAgentsSyncRequest
+	(*SetAgentsSyncResponse)(nil),        // 43: polterware.local.v1.SetAgentsSyncResponse
+	(*FeatureTouch)(nil),                 // 44: polterware.local.v1.FeatureTouch
+	(*FeatureDecision)(nil),              // 45: polterware.local.v1.FeatureDecision
+	(*FeatureInvariant)(nil),             // 46: polterware.local.v1.FeatureInvariant
+	(*FeatureQuestion)(nil),              // 47: polterware.local.v1.FeatureQuestion
+	(*FeatureCheck)(nil),                 // 48: polterware.local.v1.FeatureCheck
+	(*FeatureReview)(nil),                // 49: polterware.local.v1.FeatureReview
+	(*ReviewFeatureRequest)(nil),         // 50: polterware.local.v1.ReviewFeatureRequest
+	(*ReviewFeatureResponse)(nil),        // 51: polterware.local.v1.ReviewFeatureResponse
+	(*CreateFeatureRequest)(nil),         // 52: polterware.local.v1.CreateFeatureRequest
+	(*CreateFeatureResponse)(nil),        // 53: polterware.local.v1.CreateFeatureResponse
+	(*AdvanceFeatureRequest)(nil),        // 54: polterware.local.v1.AdvanceFeatureRequest
+	(*AdvanceFeatureResponse)(nil),       // 55: polterware.local.v1.AdvanceFeatureResponse
+	(*VerifyFeatureRequest)(nil),         // 56: polterware.local.v1.VerifyFeatureRequest
+	(*VerifyCheck)(nil),                  // 57: polterware.local.v1.VerifyCheck
+	(*VerifyFeatureResponse)(nil),        // 58: polterware.local.v1.VerifyFeatureResponse
+	(*Milestone)(nil),                    // 59: polterware.local.v1.Milestone
+	(*ListMilestonesRequest)(nil),        // 60: polterware.local.v1.ListMilestonesRequest
+	(*ListMilestonesResponse)(nil),       // 61: polterware.local.v1.ListMilestonesResponse
+	(*CreateMilestoneRequest)(nil),       // 62: polterware.local.v1.CreateMilestoneRequest
+	(*CreateMilestoneResponse)(nil),      // 63: polterware.local.v1.CreateMilestoneResponse
+	(*UpdateMilestoneRequest)(nil),       // 64: polterware.local.v1.UpdateMilestoneRequest
+	(*UpdateMilestoneResponse)(nil),      // 65: polterware.local.v1.UpdateMilestoneResponse
+	(*ArchiveMilestoneRequest)(nil),      // 66: polterware.local.v1.ArchiveMilestoneRequest
+	(*ArchiveMilestoneResponse)(nil),     // 67: polterware.local.v1.ArchiveMilestoneResponse
+	(*ReorderMilestonesRequest)(nil),     // 68: polterware.local.v1.ReorderMilestonesRequest
+	(*ReorderMilestonesResponse)(nil),    // 69: polterware.local.v1.ReorderMilestonesResponse
+	(*Rule)(nil),                         // 70: polterware.local.v1.Rule
+	(*ListRulesRequest)(nil),             // 71: polterware.local.v1.ListRulesRequest
+	(*ListRulesResponse)(nil),            // 72: polterware.local.v1.ListRulesResponse
+	nil,                                  // 73: polterware.local.v1.InboxItem.DetailsEntry
+	(*ChangeEnvelope)(nil),               // 74: polterware.local.v1.ChangeEnvelope
 }
 var file_polterware_local_v1_work_proto_depIdxs = []int32{
 	0,  // 0: polterware.local.v1.WorkCard.tasks:type_name -> polterware.local.v1.WorkTask
 	1,  // 1: polterware.local.v1.WorkCard.questions:type_name -> polterware.local.v1.WorkQuestion
 	2,  // 2: polterware.local.v1.WorkCard.invariants:type_name -> polterware.local.v1.WorkInvariant
 	3,  // 3: polterware.local.v1.ListWorkCardsResponse.cards:type_name -> polterware.local.v1.WorkCard
-	71, // 4: polterware.local.v1.ApplyPolterRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	74, // 4: polterware.local.v1.ApplyPolterRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	4,  // 5: polterware.local.v1.ApplyPolterResponse.diagnostics:type_name -> polterware.local.v1.PolterDiagnostic
 	4,  // 6: polterware.local.v1.LintPolterResponse.diagnostics:type_name -> polterware.local.v1.PolterDiagnostic
-	71, // 7: polterware.local.v1.WriteHandoffRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	74, // 7: polterware.local.v1.WriteHandoffRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	4,  // 8: polterware.local.v1.WriteHandoffResponse.diagnostics:type_name -> polterware.local.v1.PolterDiagnostic
-	17, // 9: polterware.local.v1.RoutedInboxItem.item:type_name -> polterware.local.v1.InboxItem
-	17, // 10: polterware.local.v1.ListInboxResponse.items:type_name -> polterware.local.v1.InboxItem
-	18, // 11: polterware.local.v1.ListInboxResponse.routed:type_name -> polterware.local.v1.RoutedInboxItem
-	17, // 12: polterware.local.v1.ResolveInboxItemResponse.item:type_name -> polterware.local.v1.InboxItem
-	4,  // 13: polterware.local.v1.ResolveInboxItemResponse.diagnostics:type_name -> polterware.local.v1.PolterDiagnostic
-	25, // 14: polterware.local.v1.StructureNode.invariants:type_name -> polterware.local.v1.StructureInvariant
-	26, // 15: polterware.local.v1.StructureNode.deploys:type_name -> polterware.local.v1.NodeDeployment
-	27, // 16: polterware.local.v1.ListStructureResponse.nodes:type_name -> polterware.local.v1.StructureNode
-	31, // 17: polterware.local.v1.AgentSession.claims:type_name -> polterware.local.v1.SessionClaim
-	32, // 18: polterware.local.v1.ListAgentSessionsResponse.sessions:type_name -> polterware.local.v1.AgentSession
-	33, // 19: polterware.local.v1.ListAgentSessionsResponse.handoffs:type_name -> polterware.local.v1.SessionHandoff
-	30, // 20: polterware.local.v1.ListStructureHistoryResponse.entries:type_name -> polterware.local.v1.StructureHistoryEntry
-	39, // 21: polterware.local.v1.ExportProjectionsResponse.files:type_name -> polterware.local.v1.ProjectionFile
-	39, // 22: polterware.local.v1.SetAgentsSyncResponse.files:type_name -> polterware.local.v1.ProjectionFile
+	73, // 9: polterware.local.v1.InboxItem.details:type_name -> polterware.local.v1.InboxItem.DetailsEntry
+	17, // 10: polterware.local.v1.RoutedInboxItem.item:type_name -> polterware.local.v1.InboxItem
+	17, // 11: polterware.local.v1.ListInboxResponse.items:type_name -> polterware.local.v1.InboxItem
+	18, // 12: polterware.local.v1.ListInboxResponse.routed:type_name -> polterware.local.v1.RoutedInboxItem
+	17, // 13: polterware.local.v1.ResolveInboxItemResponse.item:type_name -> polterware.local.v1.InboxItem
+	4,  // 14: polterware.local.v1.ResolveInboxItemResponse.diagnostics:type_name -> polterware.local.v1.PolterDiagnostic
+	25, // 15: polterware.local.v1.StructureNode.deploys:type_name -> polterware.local.v1.NodeDeployment
+	26, // 16: polterware.local.v1.ListStructureResponse.nodes:type_name -> polterware.local.v1.StructureNode
+	30, // 17: polterware.local.v1.AgentSession.claims:type_name -> polterware.local.v1.SessionClaim
+	31, // 18: polterware.local.v1.ListAgentSessionsResponse.sessions:type_name -> polterware.local.v1.AgentSession
+	32, // 19: polterware.local.v1.ListAgentSessionsResponse.handoffs:type_name -> polterware.local.v1.SessionHandoff
+	29, // 20: polterware.local.v1.ListStructureHistoryResponse.entries:type_name -> polterware.local.v1.StructureHistoryEntry
+	38, // 21: polterware.local.v1.ExportProjectionsResponse.files:type_name -> polterware.local.v1.ProjectionFile
+	38, // 22: polterware.local.v1.SetAgentsSyncResponse.files:type_name -> polterware.local.v1.ProjectionFile
 	3,  // 23: polterware.local.v1.FeatureReview.card:type_name -> polterware.local.v1.WorkCard
-	45, // 24: polterware.local.v1.FeatureReview.touches:type_name -> polterware.local.v1.FeatureTouch
-	46, // 25: polterware.local.v1.FeatureReview.decisions:type_name -> polterware.local.v1.FeatureDecision
-	47, // 26: polterware.local.v1.FeatureReview.inherited:type_name -> polterware.local.v1.FeatureInvariant
-	48, // 27: polterware.local.v1.FeatureReview.questions:type_name -> polterware.local.v1.FeatureQuestion
-	49, // 28: polterware.local.v1.FeatureReview.checks:type_name -> polterware.local.v1.FeatureCheck
-	50, // 29: polterware.local.v1.ReviewFeatureResponse.review:type_name -> polterware.local.v1.FeatureReview
-	71, // 30: polterware.local.v1.CreateFeatureRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	44, // 24: polterware.local.v1.FeatureReview.touches:type_name -> polterware.local.v1.FeatureTouch
+	45, // 25: polterware.local.v1.FeatureReview.decisions:type_name -> polterware.local.v1.FeatureDecision
+	46, // 26: polterware.local.v1.FeatureReview.inherited:type_name -> polterware.local.v1.FeatureInvariant
+	47, // 27: polterware.local.v1.FeatureReview.questions:type_name -> polterware.local.v1.FeatureQuestion
+	48, // 28: polterware.local.v1.FeatureReview.checks:type_name -> polterware.local.v1.FeatureCheck
+	49, // 29: polterware.local.v1.ReviewFeatureResponse.review:type_name -> polterware.local.v1.FeatureReview
+	74, // 30: polterware.local.v1.CreateFeatureRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	8,  // 31: polterware.local.v1.CreateFeatureResponse.apply:type_name -> polterware.local.v1.ApplyPolterResponse
-	50, // 32: polterware.local.v1.CreateFeatureResponse.review:type_name -> polterware.local.v1.FeatureReview
-	71, // 33: polterware.local.v1.AdvanceFeatureRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	49, // 32: polterware.local.v1.CreateFeatureResponse.review:type_name -> polterware.local.v1.FeatureReview
+	74, // 33: polterware.local.v1.AdvanceFeatureRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	8,  // 34: polterware.local.v1.AdvanceFeatureResponse.apply:type_name -> polterware.local.v1.ApplyPolterResponse
-	50, // 35: polterware.local.v1.AdvanceFeatureResponse.review:type_name -> polterware.local.v1.FeatureReview
-	58, // 36: polterware.local.v1.VerifyFeatureResponse.checks:type_name -> polterware.local.v1.VerifyCheck
-	60, // 37: polterware.local.v1.ListMilestonesResponse.milestones:type_name -> polterware.local.v1.Milestone
-	71, // 38: polterware.local.v1.CreateMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	60, // 39: polterware.local.v1.CreateMilestoneResponse.milestone:type_name -> polterware.local.v1.Milestone
-	71, // 40: polterware.local.v1.UpdateMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	60, // 41: polterware.local.v1.UpdateMilestoneResponse.milestone:type_name -> polterware.local.v1.Milestone
-	71, // 42: polterware.local.v1.ArchiveMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	60, // 43: polterware.local.v1.ArchiveMilestoneResponse.milestone:type_name -> polterware.local.v1.Milestone
-	71, // 44: polterware.local.v1.ReorderMilestonesRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
-	60, // 45: polterware.local.v1.ReorderMilestonesResponse.milestones:type_name -> polterware.local.v1.Milestone
-	5,  // 46: polterware.local.v1.WorkService.ListWorkCards:input_type -> polterware.local.v1.ListWorkCardsRequest
-	28, // 47: polterware.local.v1.WorkService.ListStructure:input_type -> polterware.local.v1.ListStructureRequest
-	36, // 48: polterware.local.v1.WorkService.ListStructureHistory:input_type -> polterware.local.v1.ListStructureHistoryRequest
-	34, // 49: polterware.local.v1.WorkService.ListAgentSessions:input_type -> polterware.local.v1.ListAgentSessionsRequest
-	7,  // 50: polterware.local.v1.WorkService.ApplyPolter:input_type -> polterware.local.v1.ApplyPolterRequest
-	9,  // 51: polterware.local.v1.WorkService.LintPolter:input_type -> polterware.local.v1.LintPolterRequest
-	11, // 52: polterware.local.v1.WorkService.QueryPolter:input_type -> polterware.local.v1.QueryPolterRequest
-	13, // 53: polterware.local.v1.WorkService.WriteHandoff:input_type -> polterware.local.v1.WriteHandoffRequest
-	15, // 54: polterware.local.v1.WorkService.EndSession:input_type -> polterware.local.v1.EndSessionRequest
-	19, // 55: polterware.local.v1.WorkService.ListInbox:input_type -> polterware.local.v1.ListInboxRequest
-	23, // 56: polterware.local.v1.WorkService.ResolveInboxItem:input_type -> polterware.local.v1.ResolveInboxItemRequest
-	20, // 57: polterware.local.v1.WorkService.SetScope:input_type -> polterware.local.v1.SetScopeRequest
-	38, // 58: polterware.local.v1.WorkService.ExportProjections:input_type -> polterware.local.v1.ExportProjectionsRequest
-	43, // 59: polterware.local.v1.WorkService.SetAgentsSync:input_type -> polterware.local.v1.SetAgentsSyncRequest
-	41, // 60: polterware.local.v1.WorkService.FileContext:input_type -> polterware.local.v1.FileContextRequest
-	51, // 61: polterware.local.v1.WorkService.ReviewFeature:input_type -> polterware.local.v1.ReviewFeatureRequest
-	53, // 62: polterware.local.v1.WorkService.CreateFeature:input_type -> polterware.local.v1.CreateFeatureRequest
-	55, // 63: polterware.local.v1.WorkService.AdvanceFeature:input_type -> polterware.local.v1.AdvanceFeatureRequest
-	57, // 64: polterware.local.v1.WorkService.VerifyFeature:input_type -> polterware.local.v1.VerifyFeatureRequest
-	61, // 65: polterware.local.v1.WorkService.ListMilestones:input_type -> polterware.local.v1.ListMilestonesRequest
-	63, // 66: polterware.local.v1.WorkService.CreateMilestone:input_type -> polterware.local.v1.CreateMilestoneRequest
-	65, // 67: polterware.local.v1.WorkService.UpdateMilestone:input_type -> polterware.local.v1.UpdateMilestoneRequest
-	67, // 68: polterware.local.v1.WorkService.ArchiveMilestone:input_type -> polterware.local.v1.ArchiveMilestoneRequest
-	69, // 69: polterware.local.v1.WorkService.ReorderMilestones:input_type -> polterware.local.v1.ReorderMilestonesRequest
-	6,  // 70: polterware.local.v1.WorkService.ListWorkCards:output_type -> polterware.local.v1.ListWorkCardsResponse
-	29, // 71: polterware.local.v1.WorkService.ListStructure:output_type -> polterware.local.v1.ListStructureResponse
-	37, // 72: polterware.local.v1.WorkService.ListStructureHistory:output_type -> polterware.local.v1.ListStructureHistoryResponse
-	35, // 73: polterware.local.v1.WorkService.ListAgentSessions:output_type -> polterware.local.v1.ListAgentSessionsResponse
-	8,  // 74: polterware.local.v1.WorkService.ApplyPolter:output_type -> polterware.local.v1.ApplyPolterResponse
-	10, // 75: polterware.local.v1.WorkService.LintPolter:output_type -> polterware.local.v1.LintPolterResponse
-	12, // 76: polterware.local.v1.WorkService.QueryPolter:output_type -> polterware.local.v1.QueryPolterResponse
-	14, // 77: polterware.local.v1.WorkService.WriteHandoff:output_type -> polterware.local.v1.WriteHandoffResponse
-	16, // 78: polterware.local.v1.WorkService.EndSession:output_type -> polterware.local.v1.EndSessionResponse
-	22, // 79: polterware.local.v1.WorkService.ListInbox:output_type -> polterware.local.v1.ListInboxResponse
-	24, // 80: polterware.local.v1.WorkService.ResolveInboxItem:output_type -> polterware.local.v1.ResolveInboxItemResponse
-	21, // 81: polterware.local.v1.WorkService.SetScope:output_type -> polterware.local.v1.SetScopeResponse
-	40, // 82: polterware.local.v1.WorkService.ExportProjections:output_type -> polterware.local.v1.ExportProjectionsResponse
-	44, // 83: polterware.local.v1.WorkService.SetAgentsSync:output_type -> polterware.local.v1.SetAgentsSyncResponse
-	42, // 84: polterware.local.v1.WorkService.FileContext:output_type -> polterware.local.v1.FileContextResponse
-	52, // 85: polterware.local.v1.WorkService.ReviewFeature:output_type -> polterware.local.v1.ReviewFeatureResponse
-	54, // 86: polterware.local.v1.WorkService.CreateFeature:output_type -> polterware.local.v1.CreateFeatureResponse
-	56, // 87: polterware.local.v1.WorkService.AdvanceFeature:output_type -> polterware.local.v1.AdvanceFeatureResponse
-	59, // 88: polterware.local.v1.WorkService.VerifyFeature:output_type -> polterware.local.v1.VerifyFeatureResponse
-	62, // 89: polterware.local.v1.WorkService.ListMilestones:output_type -> polterware.local.v1.ListMilestonesResponse
-	64, // 90: polterware.local.v1.WorkService.CreateMilestone:output_type -> polterware.local.v1.CreateMilestoneResponse
-	66, // 91: polterware.local.v1.WorkService.UpdateMilestone:output_type -> polterware.local.v1.UpdateMilestoneResponse
-	68, // 92: polterware.local.v1.WorkService.ArchiveMilestone:output_type -> polterware.local.v1.ArchiveMilestoneResponse
-	70, // 93: polterware.local.v1.WorkService.ReorderMilestones:output_type -> polterware.local.v1.ReorderMilestonesResponse
-	70, // [70:94] is the sub-list for method output_type
-	46, // [46:70] is the sub-list for method input_type
-	46, // [46:46] is the sub-list for extension type_name
-	46, // [46:46] is the sub-list for extension extendee
-	0,  // [0:46] is the sub-list for field type_name
+	49, // 35: polterware.local.v1.AdvanceFeatureResponse.review:type_name -> polterware.local.v1.FeatureReview
+	57, // 36: polterware.local.v1.VerifyFeatureResponse.checks:type_name -> polterware.local.v1.VerifyCheck
+	59, // 37: polterware.local.v1.ListMilestonesResponse.milestones:type_name -> polterware.local.v1.Milestone
+	74, // 38: polterware.local.v1.CreateMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	59, // 39: polterware.local.v1.CreateMilestoneResponse.milestone:type_name -> polterware.local.v1.Milestone
+	74, // 40: polterware.local.v1.UpdateMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	59, // 41: polterware.local.v1.UpdateMilestoneResponse.milestone:type_name -> polterware.local.v1.Milestone
+	74, // 42: polterware.local.v1.ArchiveMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	59, // 43: polterware.local.v1.ArchiveMilestoneResponse.milestone:type_name -> polterware.local.v1.Milestone
+	74, // 44: polterware.local.v1.ReorderMilestonesRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	59, // 45: polterware.local.v1.ReorderMilestonesResponse.milestones:type_name -> polterware.local.v1.Milestone
+	70, // 46: polterware.local.v1.ListRulesResponse.rules:type_name -> polterware.local.v1.Rule
+	71, // 47: polterware.local.v1.WorkService.ListRules:input_type -> polterware.local.v1.ListRulesRequest
+	5,  // 48: polterware.local.v1.WorkService.ListWorkCards:input_type -> polterware.local.v1.ListWorkCardsRequest
+	27, // 49: polterware.local.v1.WorkService.ListStructure:input_type -> polterware.local.v1.ListStructureRequest
+	35, // 50: polterware.local.v1.WorkService.ListStructureHistory:input_type -> polterware.local.v1.ListStructureHistoryRequest
+	33, // 51: polterware.local.v1.WorkService.ListAgentSessions:input_type -> polterware.local.v1.ListAgentSessionsRequest
+	7,  // 52: polterware.local.v1.WorkService.ApplyPolter:input_type -> polterware.local.v1.ApplyPolterRequest
+	9,  // 53: polterware.local.v1.WorkService.LintPolter:input_type -> polterware.local.v1.LintPolterRequest
+	11, // 54: polterware.local.v1.WorkService.QueryPolter:input_type -> polterware.local.v1.QueryPolterRequest
+	13, // 55: polterware.local.v1.WorkService.WriteHandoff:input_type -> polterware.local.v1.WriteHandoffRequest
+	15, // 56: polterware.local.v1.WorkService.EndSession:input_type -> polterware.local.v1.EndSessionRequest
+	19, // 57: polterware.local.v1.WorkService.ListInbox:input_type -> polterware.local.v1.ListInboxRequest
+	23, // 58: polterware.local.v1.WorkService.ResolveInboxItem:input_type -> polterware.local.v1.ResolveInboxItemRequest
+	20, // 59: polterware.local.v1.WorkService.SetScope:input_type -> polterware.local.v1.SetScopeRequest
+	37, // 60: polterware.local.v1.WorkService.ExportProjections:input_type -> polterware.local.v1.ExportProjectionsRequest
+	42, // 61: polterware.local.v1.WorkService.SetAgentsSync:input_type -> polterware.local.v1.SetAgentsSyncRequest
+	40, // 62: polterware.local.v1.WorkService.FileContext:input_type -> polterware.local.v1.FileContextRequest
+	50, // 63: polterware.local.v1.WorkService.ReviewFeature:input_type -> polterware.local.v1.ReviewFeatureRequest
+	52, // 64: polterware.local.v1.WorkService.CreateFeature:input_type -> polterware.local.v1.CreateFeatureRequest
+	54, // 65: polterware.local.v1.WorkService.AdvanceFeature:input_type -> polterware.local.v1.AdvanceFeatureRequest
+	56, // 66: polterware.local.v1.WorkService.VerifyFeature:input_type -> polterware.local.v1.VerifyFeatureRequest
+	60, // 67: polterware.local.v1.WorkService.ListMilestones:input_type -> polterware.local.v1.ListMilestonesRequest
+	62, // 68: polterware.local.v1.WorkService.CreateMilestone:input_type -> polterware.local.v1.CreateMilestoneRequest
+	64, // 69: polterware.local.v1.WorkService.UpdateMilestone:input_type -> polterware.local.v1.UpdateMilestoneRequest
+	66, // 70: polterware.local.v1.WorkService.ArchiveMilestone:input_type -> polterware.local.v1.ArchiveMilestoneRequest
+	68, // 71: polterware.local.v1.WorkService.ReorderMilestones:input_type -> polterware.local.v1.ReorderMilestonesRequest
+	72, // 72: polterware.local.v1.WorkService.ListRules:output_type -> polterware.local.v1.ListRulesResponse
+	6,  // 73: polterware.local.v1.WorkService.ListWorkCards:output_type -> polterware.local.v1.ListWorkCardsResponse
+	28, // 74: polterware.local.v1.WorkService.ListStructure:output_type -> polterware.local.v1.ListStructureResponse
+	36, // 75: polterware.local.v1.WorkService.ListStructureHistory:output_type -> polterware.local.v1.ListStructureHistoryResponse
+	34, // 76: polterware.local.v1.WorkService.ListAgentSessions:output_type -> polterware.local.v1.ListAgentSessionsResponse
+	8,  // 77: polterware.local.v1.WorkService.ApplyPolter:output_type -> polterware.local.v1.ApplyPolterResponse
+	10, // 78: polterware.local.v1.WorkService.LintPolter:output_type -> polterware.local.v1.LintPolterResponse
+	12, // 79: polterware.local.v1.WorkService.QueryPolter:output_type -> polterware.local.v1.QueryPolterResponse
+	14, // 80: polterware.local.v1.WorkService.WriteHandoff:output_type -> polterware.local.v1.WriteHandoffResponse
+	16, // 81: polterware.local.v1.WorkService.EndSession:output_type -> polterware.local.v1.EndSessionResponse
+	22, // 82: polterware.local.v1.WorkService.ListInbox:output_type -> polterware.local.v1.ListInboxResponse
+	24, // 83: polterware.local.v1.WorkService.ResolveInboxItem:output_type -> polterware.local.v1.ResolveInboxItemResponse
+	21, // 84: polterware.local.v1.WorkService.SetScope:output_type -> polterware.local.v1.SetScopeResponse
+	39, // 85: polterware.local.v1.WorkService.ExportProjections:output_type -> polterware.local.v1.ExportProjectionsResponse
+	43, // 86: polterware.local.v1.WorkService.SetAgentsSync:output_type -> polterware.local.v1.SetAgentsSyncResponse
+	41, // 87: polterware.local.v1.WorkService.FileContext:output_type -> polterware.local.v1.FileContextResponse
+	51, // 88: polterware.local.v1.WorkService.ReviewFeature:output_type -> polterware.local.v1.ReviewFeatureResponse
+	53, // 89: polterware.local.v1.WorkService.CreateFeature:output_type -> polterware.local.v1.CreateFeatureResponse
+	55, // 90: polterware.local.v1.WorkService.AdvanceFeature:output_type -> polterware.local.v1.AdvanceFeatureResponse
+	58, // 91: polterware.local.v1.WorkService.VerifyFeature:output_type -> polterware.local.v1.VerifyFeatureResponse
+	61, // 92: polterware.local.v1.WorkService.ListMilestones:output_type -> polterware.local.v1.ListMilestonesResponse
+	63, // 93: polterware.local.v1.WorkService.CreateMilestone:output_type -> polterware.local.v1.CreateMilestoneResponse
+	65, // 94: polterware.local.v1.WorkService.UpdateMilestone:output_type -> polterware.local.v1.UpdateMilestoneResponse
+	67, // 95: polterware.local.v1.WorkService.ArchiveMilestone:output_type -> polterware.local.v1.ArchiveMilestoneResponse
+	69, // 96: polterware.local.v1.WorkService.ReorderMilestones:output_type -> polterware.local.v1.ReorderMilestonesResponse
+	72, // [72:97] is the sub-list for method output_type
+	47, // [47:72] is the sub-list for method input_type
+	47, // [47:47] is the sub-list for extension type_name
+	47, // [47:47] is the sub-list for extension extendee
+	0,  // [0:47] is the sub-list for field type_name
 }
 
 func init() { file_polterware_local_v1_work_proto_init() }
@@ -5617,7 +5776,7 @@ func file_polterware_local_v1_work_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_polterware_local_v1_work_proto_rawDesc), len(file_polterware_local_v1_work_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   71,
+			NumMessages:   74,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

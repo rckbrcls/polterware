@@ -23,13 +23,13 @@ import (
 var tokenCeilings = map[string]int{
 	// Four tools replace seventeen (initialize was 344, tools/list 2199).
 	"mcp.initialize": 237,
-	"mcp.tools_list": 681,
+	"mcp.tools_list": 683,
 	// The core alone; topics are read on demand (the whole spec was 1266).
-	"polter.format": 379,
+	"polter.format": 390,
 	// One brief replaces oracle + decision + handoff + context.get (461).
-	"card.context": 274,
+	"card.context": 275,
 	// One brief replaces oracle + context.get (273).
-	"node.context": 199,
+	"node.context": 201,
 	// Compact lines replace the context.get JSON package (340).
 	"search": 61,
 	// Mermaid with frames as subgraphs replaces node-link JSON (312).

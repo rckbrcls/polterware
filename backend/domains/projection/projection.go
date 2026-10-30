@@ -151,10 +151,11 @@ func DecisionFileNumber(name string) (string, bool) {
 }
 
 // Block renders the AGENTS.md block for checkout ("" is the project root):
-// the project's principles, the Structure nodes placed in it with their kind
-// and technology, the decisions that govern it or its nodes, the invariants of
-// those nodes and their ancestors, and how to read the brief for a file.
-func Block(checkout string, nodes []structure.Node, governed []Decision, all []Decision) string {
+// the Rules agents must follow (the project's, then those of the checkout's
+// nodes and their ancestors), the project's principles, the Structure nodes
+// placed in it with their kind and technology, the decisions that govern it
+// or its nodes, and how to read the brief for a file.
+func Block(checkout string, nodes []structure.Node, governed []Decision, all []Decision, rules []work.Rule) string {
 	applicable := applicableNodes(checkout, nodes)
 
 	var own []string
@@ -197,11 +198,18 @@ func Block(checkout string, nodes []structure.Node, governed []Decision, all []D
 	}
 	sortDecisions(decisions)
 
-	var invariants []string
+	var ruleLines []string
+	for _, rule := range rules {
+		if len(rule.Scopes) == 0 {
+			ruleLines = append(ruleLines, "- "+rule.Statement)
+		}
+	}
+	seen := map[string]bool{}
 	for _, node := range applicable {
-		for _, inv := range node.Invariants {
-			if inv.State == work.InvariantActive {
-				invariants = append(invariants, fmt.Sprintf("- %s (from %s)", inv.Text, node.Path))
+		for _, rule := range rules {
+			if !seen[rule.ID] && slices.Contains(rule.Scopes, node.Path) {
+				seen[rule.ID] = true
+				ruleLines = append(ruleLines, fmt.Sprintf("- %s (from %s)", rule.Statement, node.Path))
 			}
 		}
 	}
@@ -209,10 +217,11 @@ func Block(checkout string, nodes []structure.Node, governed []Decision, all []D
 	var b strings.Builder
 	b.WriteString(BlockBegin + "\n")
 	b.WriteString("## Polterware project context\n\n")
-	b.WriteString("Generated from the Polterware project store by `polterware export`, or on every change when AGENTS.md sync is on. Edits inside this block are replaced; change the source with `polterware apply`. Before you work on a card, a Structure node, or a file, read `polterware brief <slug|path|file>`.\n")
-	if len(principles)+len(own)+len(decisions)+len(invariants) == 0 {
-		b.WriteString("\nNo principles, Structure nodes, decisions, or invariants apply to this checkout.\n")
+	b.WriteString("Generated from the Polterware project store by `polterware export`, or on every change when AGENTS.md sync is on. Edits inside this block are replaced; change the source with `polterware apply`. Before you work on a card, a Structure node, or a file, read `polterware brief <slug|path|file>`; the Rules it lists, like the ones below, are binding.\n")
+	if len(principles)+len(own)+len(decisions)+len(ruleLines) == 0 {
+		b.WriteString("\nNo Rules, principles, Structure nodes, or decisions apply to this checkout.\n")
 	}
+	writeSection(&b, "Rules", ruleLines)
 	writeSection(&b, "Principles", principles)
 	writeSection(&b, "Structure", own)
 	var decisionLines []string
@@ -224,7 +233,6 @@ func Block(checkout string, nodes []structure.Node, governed []Decision, all []D
 		decisionLines = append(decisionLines, line)
 	}
 	writeSection(&b, "Decisions", decisionLines)
-	writeSection(&b, "Invariants", invariants)
 	b.WriteString(BlockEnd + "\n")
 	return b.String()
 }
@@ -251,7 +259,7 @@ func ReplaceBlock(existing, block string) (string, error) {
 }
 
 // applicableNodes returns active nodes placed in checkout plus their active
-// ancestors, in graph order, so inherited invariants reach every checkout.
+// ancestors, in graph order, so inherited Rules reach every checkout.
 func applicableNodes(checkout string, nodes []structure.Node) []structure.Node {
 	byID := map[string]structure.Node{}
 	for _, node := range nodes {

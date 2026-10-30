@@ -78,7 +78,7 @@ func polterReferences(store *storepkg.Store, snapshot work.Snapshot) (*polter.Re
 	if err != nil {
 		return nil, err
 	}
-	refs := &polter.References{Cards: snapshot.Cards, Nodes: snapshot.Nodes, Repos: snapshot.Repos, Environments: snapshot.Environments, Evidence: snapshot.Evidence}
+	refs := &polter.References{Cards: snapshot.Cards, Nodes: snapshot.Nodes, Repos: snapshot.Repos, Environments: snapshot.Environments}
 	for _, decision := range decisions {
 		refs.Decisions = append(refs.Decisions, polter.DecisionRef{ID: decision.ID, Title: decision.Title, Status: decision.Status})
 	}
@@ -274,9 +274,9 @@ func QueryPolterScoped(store *storepkg.Store, projectID, text string, scope stru
 				return "", err
 			}
 			return "Structure at " + query.At + " (structure only: status, features, and drift are live)\n" +
-				polter.EncodeStructure(project.Name, rows, nil, query.Slug), nil
+				polter.EncodeStructure(project.Name, rows, nil, nil, query.Slug), nil
 		}
-		return polter.EncodeStructure(project.Name, structureRows(store, snapshot), snapshot.Cards, query.Slug), nil
+		return polter.EncodeStructure(project.Name, structureRows(store, snapshot), snapshot.Cards, snapshot.Rules, query.Slug), nil
 	default:
 		return polter.EncodeList(snapshot), nil
 	}

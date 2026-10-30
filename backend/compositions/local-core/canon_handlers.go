@@ -110,15 +110,7 @@ func (core *Core) GetFact(_ context.Context, request *connect.Request[localv1.Ge
 	if err != nil {
 		return nil, internal(err)
 	}
-	evidence, err := core.Store.ListCanonEvidenceForFact(fact.ID)
-	if err != nil {
-		return nil, internal(err)
-	}
-	out := make([]*localv1.CanonEvidence, 0, len(evidence))
-	for _, item := range evidence {
-		out = append(out, canonEvidenceProto(item))
-	}
-	return connect.NewResponse(&localv1.GetFactResponse{Fact: canonFactProto(fact), Evidence: out}), nil
+	return connect.NewResponse(&localv1.GetFactResponse{Fact: canonFactProto(fact)}), nil
 }
 
 func (core *Core) UpsertFact(_ context.Context, request *connect.Request[localv1.UpsertFactRequest]) (*connect.Response[localv1.UpsertFactResponse], error) {
@@ -159,135 +151,6 @@ func (core *Core) UpsertFact(_ context.Context, request *connect.Request[localv1
 		return nil, mapAuditedErr(err)
 	}
 	return connect.NewResponse(&localv1.UpsertFactResponse{Fact: canonFactProto(fact)}), nil
-}
-
-func (core *Core) ListEvidence(_ context.Context, request *connect.Request[localv1.ListEvidenceRequest]) (*connect.Response[localv1.ListEvidenceResponse], error) {
-	if request.Msg.ProjectId == "" {
-		return nil, invalid("project id is required")
-	}
-	items, err := core.Store.ListCanonEvidence(request.Msg.ProjectId)
-	if err != nil {
-		return nil, internal(err)
-	}
-	resolved, err := wedge.LoadNodeScopes(core.Store, request.Msg.ProjectId, wedge.ScopeRefs(request.Msg.ScopeNode, request.Msg.ScopeNodes), request.Msg.ScopeExact)
-	if err != nil {
-		return nil, invalid(err.Error())
-	}
-	scopes, err := core.Store.ScopeMap(request.Msg.ProjectId, storepkg.ScopeEvidence)
-	if err != nil {
-		return nil, internal(err)
-	}
-	out := make([]*localv1.CanonEvidence, 0, len(items))
-	for _, item := range wedge.FilterEvidenceByScope(resolved, scopes, items) {
-		msg := canonEvidenceProto(item)
-		msg.ScopeNodeIds = scopes[item.ID]
-		out = append(out, msg)
-	}
-	return connect.NewResponse(&localv1.ListEvidenceResponse{Evidence: out}), nil
-}
-
-func (core *Core) GetEvidence(_ context.Context, request *connect.Request[localv1.GetEvidenceRequest]) (*connect.Response[localv1.GetEvidenceResponse], error) {
-	if request.Msg.Id == "" {
-		return nil, invalid("evidence id is required")
-	}
-	item, err := core.Store.GetCanonEvidence(request.Msg.Id)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, connect.NewError(connect.CodeNotFound, canon.ErrUnknownEvidence)
-	}
-	if err != nil {
-		return nil, internal(err)
-	}
-	return connect.NewResponse(&localv1.GetEvidenceResponse{Evidence: canonEvidenceProto(item)}), nil
-}
-
-func (core *Core) UpsertEvidence(_ context.Context, request *connect.Request[localv1.UpsertEvidenceRequest]) (*connect.Response[localv1.UpsertEvidenceResponse], error) {
-	msg := request.Msg.GetEvidence()
-	if msg == nil {
-		return nil, invalid("evidence is required")
-	}
-	env, err := changeEnvelopeFromProto(request.Msg.GetChange())
-	if err != nil {
-		return nil, mapAuditedErr(err)
-	}
-	evidence, err := canonEvidenceFromProto(msg)
-	if err != nil {
-		return nil, invalid(err.Error())
-	}
-	env.ProjectID = evidence.ProjectID
-	evidence.Actor = agentrun.ActorHuman
-	evidence.Source = agentrun.SourceDesktop
-	_, err = wedge.ExecuteAuditedWrite(
-		core.Store,
-		env,
-		agentrun.ActorKindHuman,
-		"desktop.evidence.upsert",
-		func(run agentrun.Run) ([]string, any, error) {
-			_ = run
-			if err := core.Store.UpsertCanonEvidence(evidence); err != nil {
-				return nil, nil, err
-			}
-			return []string{evidence.ID}, evidence, nil
-		},
-	)
-	if err != nil {
-		return nil, mapAuditedErr(err)
-	}
-	return connect.NewResponse(&localv1.UpsertEvidenceResponse{Evidence: canonEvidenceProto(evidence)}), nil
-}
-
-func (core *Core) LinkEvidenceToFact(_ context.Context, request *connect.Request[localv1.LinkEvidenceToFactRequest]) (*connect.Response[localv1.LinkEvidenceToFactResponse], error) {
-	if request.Msg.ProjectId == "" || request.Msg.FactId == "" || request.Msg.EvidenceId == "" {
-		return nil, invalid("project id, fact id, and evidence id are required")
-	}
-	env, err := changeEnvelopeFromProto(request.Msg.GetChange())
-	if err != nil {
-		return nil, mapAuditedErr(err)
-	}
-	env.ProjectID = request.Msg.ProjectId
-	_, err = wedge.ExecuteAuditedWrite(
-		core.Store,
-		env,
-		agentrun.ActorKindHuman,
-		"desktop.evidence.link",
-		func(run agentrun.Run) ([]string, any, error) {
-			_ = run
-			linkErr := core.Store.LinkCanonEvidenceToFact(request.Msg.ProjectId, request.Msg.FactId, request.Msg.EvidenceId)
-			if linkErr != nil {
-				return nil, nil, linkErr
-			}
-			return []string{request.Msg.FactId, request.Msg.EvidenceId}, nil, nil
-		},
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) || errors.Is(err, canon.ErrUnknownFact) || errors.Is(err, canon.ErrUnknownEvidence) {
-			return nil, connect.NewError(connect.CodeNotFound, err)
-		}
-		return nil, mapAuditedErr(err)
-	}
-	return connect.NewResponse(&localv1.LinkEvidenceToFactResponse{}), nil
-}
-
-func (core *Core) ScanProject(_ context.Context, request *connect.Request[localv1.ScanProjectRequest]) (*connect.Response[localv1.ScanProjectResponse], error) {
-	result, err := wedge.ScanProject(core.Store, request.Msg.ProjectId)
-	if err != nil {
-		msg := err.Error()
-		switch {
-		case msg == "project id is required",
-			msg == "project root path is empty",
-			msg == "project root path does not exist":
-			return nil, invalid(msg)
-		case msg == "unknown project":
-			return nil, connect.NewError(connect.CodeNotFound, err)
-		default:
-			return nil, internal(err)
-		}
-	}
-	return connect.NewResponse(&localv1.ScanProjectResponse{
-		FactCount:     result.FactCount,
-		EvidenceCount: result.EvidenceCount,
-		SkippedCount:  result.SkippedCount,
-		Message:       result.Message,
-	}), nil
 }
 
 func (core *Core) SearchKnowledge(_ context.Context, request *connect.Request[localv1.SearchKnowledgeRequest]) (*connect.Response[localv1.SearchKnowledgeResponse], error) {
@@ -465,16 +328,10 @@ func (core *Core) CompileContext(_ context.Context, request *connect.Request[loc
 	}
 	items := make([]*localv1.ContextItem, 0, len(pkg.Items))
 	for _, item := range pkg.Items {
-		evidence := make([]*localv1.ContextEvidenceRef, 0, len(item.Evidence))
-		for _, ev := range item.Evidence {
-			evidence = append(evidence, &localv1.ContextEvidenceRef{
-				Id: ev.ID, Kind: ev.Kind, Summary: ev.Summary, Path: ev.Path, Source: ev.Source,
-			})
-		}
 		items = append(items, &localv1.ContextItem{
 			Kind: item.Kind, Id: item.ID, Title: item.Title, Excerpt: item.Excerpt,
 			TruthClass: item.TruthClass, Source: item.Source, Path: item.Path,
-			Reasons: item.Reasons, Evidence: evidence,
+			Reasons: item.Reasons,
 		})
 	}
 	return connect.NewResponse(&localv1.CompileContextResponse{
@@ -535,11 +392,11 @@ func (core *Core) CheckDrift(_ context.Context, request *connect.Request[localv1
 	findings := make([]*localv1.DriftFinding, 0, len(result.Findings))
 	for _, finding := range result.Findings {
 		findings = append(findings, &localv1.DriftFinding{
-			Type:        finding.Type,
-			Severity:    finding.Severity,
-			Summary:     finding.Summary,
-			SubjectIds:  finding.SubjectIDs,
-			EvidenceIds: finding.EvidenceIDs,
+			Type:       finding.Type,
+			Severity:   finding.Severity,
+			Summary:    finding.Summary,
+			SubjectIds: finding.SubjectIDs,
+			Details:    finding.Details,
 		})
 	}
 	return connect.NewResponse(&localv1.CheckDriftResponse{
@@ -589,15 +446,6 @@ func canonFactProto(item canon.Fact) *localv1.CanonFact {
 	}
 }
 
-func canonEvidenceProto(item canon.Evidence) *localv1.CanonEvidence {
-	return &localv1.CanonEvidence{
-		Id: item.ID, ProjectId: item.ProjectID, Kind: item.Kind, Summary: item.Summary,
-		Source: item.Source, Path: item.Path, Actor: item.Actor,
-		ObservedAt: item.ObservedAt.Format(time.RFC3339), CreatedAt: item.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: item.UpdatedAt.Format(time.RFC3339),
-	}
-}
-
 func canonFactFromProto(msg *localv1.CanonFact) (canon.Fact, error) {
 	if msg.Id == "" {
 		return canon.NewFact(msg.ProjectId, msg.Statement, msg.TruthClass, msg.Source, msg.Actor, msg.EntityId)
@@ -632,39 +480,6 @@ func canonFactFromProto(msg *localv1.CanonFact) (canon.Fact, error) {
 	}
 	fact.UpdatedAt = now
 	return fact, nil
-}
-
-func canonEvidenceFromProto(msg *localv1.CanonEvidence) (canon.Evidence, error) {
-	if msg.Id == "" {
-		return canon.NewEvidence(msg.ProjectId, msg.Kind, msg.Summary, msg.Source, msg.Path, msg.Actor)
-	}
-	now := time.Now().UTC()
-	evidence := canon.Evidence{
-		ID: msg.Id, ProjectID: msg.ProjectId, Kind: msg.Kind, Summary: msg.Summary,
-		Source: msg.Source, Path: msg.Path, Actor: msg.Actor,
-		ObservedAt: now, CreatedAt: now, UpdatedAt: now,
-	}
-	if evidence.Source == "" {
-		evidence.Source = "polterware"
-	}
-	if evidence.Actor == "" {
-		evidence.Actor = "system"
-	}
-	if msg.ObservedAt != "" {
-		if parsed, err := time.Parse(time.RFC3339, msg.ObservedAt); err == nil {
-			evidence.ObservedAt = parsed
-		}
-	}
-	if msg.CreatedAt != "" {
-		if parsed, err := time.Parse(time.RFC3339, msg.CreatedAt); err == nil {
-			evidence.CreatedAt = parsed
-		}
-	}
-	if err := canon.ValidateEvidence(evidence); err != nil {
-		return canon.Evidence{}, err
-	}
-	evidence.UpdatedAt = now
-	return evidence, nil
 }
 
 func knowledgeLinkProto(item knowledge.EntityLink) *localv1.KnowledgeEntityLink {

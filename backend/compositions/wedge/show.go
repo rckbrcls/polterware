@@ -12,7 +12,7 @@ import (
 )
 
 // queryShow renders one record by id as text: a card (by slug), a Decision
-// (by ref or id), a fact (by slug or id), evidence, a doc with its body, a
+// (by ref or id), a fact or Rule (by slug or id), a doc with its body, a
 // Canon entity, or an AgentRun with its steps.
 func queryShow(store *storepkg.Store, snapshot work.Snapshot, id string) (string, error) {
 	id = strings.TrimSpace(id)
@@ -35,28 +35,17 @@ func queryShow(store *storepkg.Store, snapshot work.Snapshot, id string) (string
 			fmt.Fprintf(&b, "scope: %s\n", strings.Join(fact.Scopes, ", "))
 		}
 		fmt.Fprintf(&b, "source: %s · actor: %s\n", fact.Source, fact.Actor)
-		for _, evidenceID := range fact.Evidence {
-			line := "- " + evidenceID
-			for _, item := range snapshot.Evidence {
-				if item.ID == evidenceID {
-					line += fmt.Sprintf(" %s: %s", item.Kind, firstNonEmptyText(item.Path, item.Summary))
-				}
-			}
-			b.WriteString(line + "\n")
-		}
-		if len(fact.Evidence) == 0 {
-			b.WriteString("no evidence: back it with evidence: file:<path>, commit:<sha>, or url:<link>\n")
-		}
 		return b.String(), nil
 	}
-	for _, item := range snapshot.Evidence {
-		if item.ID == id {
-			text := fmt.Sprintf("evidence %s [%s] %s\n", item.ID, item.Kind, item.Summary)
-			if item.Path != "" {
-				text += "path: " + item.Path + "\n"
-			}
-			return text + fmt.Sprintf("source: %s · actor: %s · observed %s\n", item.Source, item.Actor, item.ObservedAt.Format("2006-01-02")), nil
+	for _, rule := range snapshot.Rules {
+		if rule.ID != id && (rule.Slug == "" || rule.Slug != id) {
+			continue
 		}
+		text := fmt.Sprintf("rule %s %s\n", rule.Handle(), rule.Statement)
+		if len(rule.Scopes) > 0 {
+			return text + "scope: " + strings.Join(rule.Scopes, ", ") + "\n", nil
+		}
+		return text + "scope: whole project\n", nil
 	}
 	if item, err := store.GetKnowledge(id); err == nil && item.ProjectID == snapshot.ProjectID && !item.Archived() {
 		scopes, err := store.ScopeMap(snapshot.ProjectID, storepkg.ScopeKnowledge)
@@ -92,7 +81,7 @@ func queryShow(store *storepkg.Store, snapshot work.Snapshot, id string) (string
 		}
 		return b.String(), nil
 	}
-	return "", fmt.Errorf("unknown id %q: show takes a card slug, a Decision ref, a fact, evidence, doc, entity, or run id (search <terms> finds them)", id)
+	return "", fmt.Errorf("unknown id %q: show takes a card slug, a Decision ref, a fact, rule, doc, entity, or run id (search <terms> finds them)", id)
 }
 
 // queryDrift runs the narrow drift checker and lists its findings, one line each.
@@ -114,13 +103,4 @@ func queryDrift(store *storepkg.Store, projectID string) (string, error) {
 		b.WriteString(line + "\n")
 	}
 	return b.String(), nil
-}
-
-func firstNonEmptyText(values ...string) string {
-	for _, value := range values {
-		if value != "" {
-			return value
-		}
-	}
-	return ""
 }

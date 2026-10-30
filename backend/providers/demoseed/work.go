@@ -44,34 +44,34 @@ Rotate signing keys without logging users out.
 ## git-metadata-import: Git metadata import
 stage: build · under: core/import · decisions: Decision-0001, Decision-0002 · owner: Platform
 
-Import HEAD, branch, and recent commits as evidence for facts.
+Read HEAD, branch, and recent commits so delivered tasks match commits on main.
 
 - [x] T1 Read HEAD and branch from the local checkout  ` + "`backend/providers/git/*`" + `
-- [x] T2 Stamp revision on observed facts
-- [ ] T3 Commit evidence upsert in core  ` + "`backend/domains/canon/*`" + `
-- [ ] T4 Show commit evidence on fact detail  ` + "`packages/features/knowledge/*`" + `
+- [x] T2 Link commits to tasks by citation
+- [ ] T3 Link a commit by hand from the Inbox  ` + "`backend/domains/inbox/*`" + `
+- [ ] T4 Show linked commits on the task  ` + "`packages/features/knowledge/*`" + `
 - [-] T5 Import tags as releases
 ? Include merge commits? [blocking] (yes | no | first-parent)
-! No network calls during scan
+! No network calls while reading Git
 
 handoff:
 branch: feat/git-metadata-import
 agent: claude-code
-goal: Commit evidence reaches facts on import
-done: HEAD and branch are read; facts carry the revision
-in_progress: Upserting commit evidence in the core
-next: Wire commit evidence into the fact detail panel
-touched: backend/providers/git/git.go, backend/compositions/wedge/git_import.go
+goal: Every done task matches a commit on main
+done: HEAD and branch are read; cited commits link their tasks
+in_progress: Linking commits by hand from the Inbox
+next: Show linked commits on the task
+touched: backend/providers/git/git.go, backend/compositions/wedge/commit_drift.go
 
 ## drift-panel: Drift panel
 stage: build · under: reality/drift · decisions: Decision-0002
 
-List drift findings where declared intent and observed code disagree.
+List the done tasks with no commit on main and the commits with no task.
 
-- [x] Drift check over declared facts
+- [x] Drift check over commits and tasks
 - [ ] Group findings by card
 - [ ] Empty state when nothing drifted
-! A finding always names its evidence
+! A finding always names its task or commit
 
 ## context-compiler: Context compiler
 stage: verify · under: agents/context · decisions: Decision-0003 · owner: Agents
@@ -99,7 +99,7 @@ One local core process owns the SQLite database; every client attaches to it.
 const claimPolter = `---
 polter: 1
 summary: Claim the fact detail task
-rationale: Pick up the commit evidence UI while the core work continues
+rationale: Pick up the linked-commits UI while the core work continues
 ---
 
 ## git-metadata-import: Git metadata import

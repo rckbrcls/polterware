@@ -13,8 +13,7 @@ import (
 )
 
 func briefFixture() BriefInput {
-	system := structure.Node{ID: "s", Path: "app", Level: structure.LevelSystem, Title: "App", Status: structure.NodeActive,
-		Invariants: []structure.Invariant{{Text: "No secrets in logs", State: work.InvariantActive}}}
+	system := structure.Node{ID: "s", Path: "app", Level: structure.LevelSystem, Title: "App", Status: structure.NodeActive}
 	api := structure.Node{ID: "c", ParentID: "s", Path: "app/api", Level: structure.LevelComponent, Title: "API", Status: structure.NodeActive,
 		Kind: "service", Tech: "Go", Folder: "backend", Decisions: []string{"Decision-0002"}}
 	db := structure.Node{ID: "d", ParentID: "s", Path: "app/db", Level: structure.LevelComponent, Title: "DB", Status: structure.NodeActive}
@@ -46,8 +45,14 @@ func briefFixture() BriefInput {
 				{ID: "k6", Title: "Decision 0006: Cache reads", Status: "active", Scopes: []string{"app/db", "app/api"}, Body: "Reads go through a cache."},
 				{ID: "k7", Title: "Decision 0007: Batch jobs", Status: "active", Scopes: []string{"app/db"}},
 			},
+			Rules: []work.Rule{
+				{ID: "r1", Statement: "No secrets in logs", Scopes: []string{"app"}},
+				{ID: "r2", Statement: "Handlers return typed errors", Scopes: []string{"app/api"}},
+				{ID: "r3", Statement: "Migrations are reversible", Scopes: []string{"app/db"}},
+				{ID: "r4", Statement: "Never commit credentials"},
+			},
 			Facts: []work.Fact{
-				{Fact: canon.Fact{Statement: "The API runs on port 8080.", TruthClass: canon.TruthObserved}, Scopes: []string{"app/api", "app/db"}},
+				{Fact: canon.Fact{Statement: "The API runs on port 8080.", TruthClass: canon.TruthInferred}, Scopes: []string{"app/api", "app/db"}},
 				{Fact: canon.Fact{Statement: "The app ships weekly.", TruthClass: canon.TruthDeclared}, Scopes: []string{"app"}},
 				{Fact: canon.Fact{Statement: "Project-wide fact.", TruthClass: canon.TruthDeclared}},
 			},
@@ -75,13 +80,17 @@ stage: build · under: app/api · milestone: beta · claim: codex
 kind: service · tech: Go · path: backend
 Sign people in.
 
+Rules:
+- Handlers return typed errors (from app/api)
+- No secrets in logs (from app)
+- Never commit credentials (whole project)
+
 - [ ] T2 Login route
 ? Which hash? [blocking] (argon2 | bcrypt)
 ? Remember me?
 handoff codex on feat/login: next: wire the route
 
 ! Rate limit attempts
-! No secrets in logs (from app)
 
 Decisions:
 - Decision-0001 [active] Sessions in cookies: Sessions live in signed cookies.
@@ -91,7 +100,7 @@ Decisions:
 principles: Local first
 
 Facts:
-- observed: The API runs on port 8080.
+- inferred: The API runs on port 8080.
 - declared: The app ships weekly.
 
 milestone beta: Beta · active · target 2026-12-01
@@ -117,16 +126,16 @@ func TestBriefNodeListsOpenCardsAndBlockingQuestions(t *testing.T) {
 	}
 	for _, want := range []string{
 		"# app/api: API\nlevel: component · kind: service · tech: Go · path: backend\n",
+		"\nRules:\n- Handlers return typed errors\n- No secrets in logs (from app)\n- Never commit credentials (whole project)\n",
 		`- login  build  "Login"  2 open?`,
 		"? Which hash? [blocking] (argon2 | bcrypt) — login",
-		"! No secrets in logs (from app)",
 		"- Decision-0002 [proposed]",
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("missing %q in:\n%s", want, text)
 		}
 	}
-	for _, unwanted := range []string{`"Old"`, "Remember me?", "milestone beta", "Decision-0001"} {
+	for _, unwanted := range []string{`"Old"`, "Remember me?", "milestone beta", "Decision-0001", "Migrations are reversible"} {
 		if strings.Contains(text, unwanted) {
 			t.Fatalf("unexpected %q in:\n%s", unwanted, text)
 		}
@@ -152,16 +161,37 @@ func TestSearchListsEveryKindOneLineEach(t *testing.T) {
 		`node app/api  component  "API"`,
 		`decision Decision-0002  proposed  "One API process"`,
 		`doc doc-1  "API runbook": Restart the API with make restart when the port is stuck.`,
-		"fact observed: The API runs on port 8080.",
+		"fact inferred: The API runs on port 8080.",
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("missing %q in:\n%s", want, text)
 		}
 	}
-	if got := Search(in, "api port", 0); !strings.Contains(got, "fact observed") || strings.Contains(got, "node app/api") {
+	if got := Search(in, "api port", 0); !strings.Contains(got, "fact inferred") || strings.Contains(got, "node app/api") {
 		t.Fatalf("every term must match: %s", got)
 	}
 	if got := Search(in, "nothing-like-this", 0); got != "no matches for \"nothing-like-this\"\n" {
 		t.Fatalf("empty search = %q", got)
+	}
+}
+
+func TestBriefNeverCutsRules(t *testing.T) {
+	text, err := Brief(briefFixture(), "login", 40)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"## login: Login", "Rules:\n", "- Never commit credentials (whole project)\n", "more lines cut to fit budget:40"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("missing %q in a tight brief:\n%s", want, text)
+		}
+	}
+	if strings.Contains(text, "Canvas:") {
+		t.Fatalf("the tail should be cut:\n%s", text)
+	}
+}
+
+func TestSearchFindsRules(t *testing.T) {
+	if got := Search(briefFixture(), "credentials", 0); !strings.Contains(got, "rule r4: Never commit credentials") {
+		t.Fatalf("search = %q", got)
 	}
 }

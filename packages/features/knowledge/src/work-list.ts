@@ -5,7 +5,7 @@ import { WORK_STAGES } from "./work-stage";
 
 export type WorkListGrouping = "none" | "stage" | "milestone";
 export type WorkListOrdering = "updated" | "title" | "stage";
-export type WorkListProperty = "slug" | "stage" | "tasks" | "milestone" | "updated";
+export type WorkListProperty = "slug" | "context" | "stage" | "tasks" | "milestone" | "updated";
 export type SortDirection = "ascending" | "descending";
 
 /** How the Work list groups, orders, and which properties it shows; remembered per surface. */
@@ -20,7 +20,7 @@ export const DEFAULT_WORK_LIST_DISPLAY: WorkListDisplay = {
   grouping: "stage",
   ordering: "updated",
   direction: "descending",
-  properties: ["slug", "stage", "tasks", "updated"],
+  properties: ["slug", "context", "stage", "tasks", "updated"],
 };
 
 export const WORK_LIST_GROUPINGS: readonly DisplayChoice[] = [
@@ -37,6 +37,7 @@ export const WORK_LIST_ORDERINGS: readonly DisplayChoice[] = [
 
 export const WORK_LIST_PROPERTIES: readonly DisplayChoice[] = [
   { value: "slug", label: "Slug" },
+  { value: "context", label: "Context" },
   { value: "stage", label: "Stage" },
   { value: "tasks", label: "Tasks" },
   { value: "milestone", label: "Milestone" },

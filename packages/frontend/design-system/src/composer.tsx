@@ -16,6 +16,8 @@ export type ComposerSingleProperty = {
   value: string;
   onChange: (value: string) => void;
   onCreate?: PropertyPickerProps["onCreate"];
+  /** The picker's width, for options with a second line. */
+  pickerWidth?: number;
 };
 
 /** A property that holds several values, edited as tokens (`TokenPicker`). */
@@ -242,6 +244,7 @@ export function Composer(props: ComposerProps) {
                         value={property().value}
                         onChange={(value) => property().onChange(value)}
                         onCreate={property().onCreate}
+                        width={property().pickerWidth}
                         open={openProperty() === property().id}
                         onClose={() => setOpenProperty(null)}
                         anchorRef={() => pills[index]}

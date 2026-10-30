@@ -39,6 +39,7 @@ import {
   type WorkspaceCanonEntity,
   type WorkspaceDoc,
   type WorkspaceWorkCard,
+  type WorkspaceWorkTask,
   type WorkspaceMilestone,
   type WorkStage,
 } from "@polterware/feature-shell";
@@ -108,7 +109,7 @@ export { DocumentActivity } from "./document-activity";
 export type { CardDraft, CardKind, ComposeRequest, DecisionDraft, DocDraft } from "./composers";
 export { WORK_STAGES, workStageLabel } from "./work-stage";
 export { NewFeatureFlow, type FeatureFlowLine } from "./new-feature-flow";
-export { TruthFactsPage } from "./truth-facts-page";
+export { TruthRulesPage } from "./truth-rules-page";
 export type { ChangeEnvelope } from "./change-envelope";
 
 const TABS: TabItem[] = [
@@ -228,6 +229,8 @@ export function KnowledgeView(props: {
   onDeleteDoc?: (item: ArchivedListItem) => Promise<void>;
   onRemoveCard?: (slug: string) => void;
   onSetCardStage?: (slug: string, stage: WorkStage) => Promise<boolean> | void;
+  /** Marks a card's task open, done, or dropped. */
+  onSetTaskState?: (slug: string, task: WorkspaceWorkTask, state: WorkspaceWorkTask["state"]) => Promise<void>;
   /** Moves the selected cards in one justified write; resolves true once written. */
   onSetCardsStage?: (slugs: string[], stage: WorkStage) => Promise<boolean> | void;
   /** Archives the selected cards in one write under one reason; false when it was cancelled. */
@@ -790,6 +793,7 @@ export function KnowledgeView(props: {
               <Show when={libraryRows().length > 0} fallback={libraryFilterEmpty()}>
                 <LibraryTable
                   rows={libraryRows()}
+                  nodes={props.scopeNodes}
                   activeRowId={
                     activeTarget()?.scopeId === scopeId()
                       ? activeTarget()?.entityId
@@ -830,6 +834,7 @@ export function KnowledgeView(props: {
               <Show when={docRows().length > 0} fallback={docsFilterEmpty()}>
                 <DocsTable
                   rows={docRows()}
+                  nodes={props.scopeNodes}
                   activeRowId={
                     activeTarget()?.scopeId === scopeId() ? activeTarget()?.entityId : null
                   }
@@ -881,6 +886,7 @@ export function KnowledgeView(props: {
               <Show when={cards().length > 0} fallback={workCardsFilterEmpty()}>
                 <WorkListTable
                   cards={cards()}
+                  nodes={props.scopeNodes}
                   milestones={props.milestones ?? []}
                   display={workListDisplay()}
                   onDisplayChange={changeWorkListDisplay}
@@ -973,6 +979,11 @@ export function KnowledgeView(props: {
             onRemove={
               props.onRemoveCard
                 ? () => props.onRemoveCard?.(item().slug)
+                : undefined
+            }
+            onSetTaskState={
+              props.onSetTaskState
+                ? (task, state) => props.onSetTaskState!(item().slug, task, state)
                 : undefined
             }
             onAdvance={

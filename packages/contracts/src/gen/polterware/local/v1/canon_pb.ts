@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file polterware/local/v1/canon.proto.
  */
 export const file_polterware_local_v1_canon: GenFile = /*@__PURE__*/
-  fileDesc("Ch9wb2x0ZXJ3YXJlL2xvY2FsL3YxL2Nhbm9uLnByb3RvEhNwb2x0ZXJ3YXJlLmxvY2FsLnYxIt0BCgtDYW5vbkVudGl0eRIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEgwKBGtpbmQYAyABKAkSEAoIcmVmX2tpbmQYBCABKAkSDgoGcmVmX2lkGAUgASgJEg0KBXRpdGxlGAYgASgJEhMKC3RydXRoX2NsYXNzGAcgASgJEg4KBnNvdXJjZRgIIAEoCRINCgVhY3RvchgJIAEoCRITCgtvYnNlcnZlZF9hdBgKIAEoCRISCgpjcmVhdGVkX2F0GAsgASgJEhIKCnVwZGF0ZWRfYXQYDCABKAki2AEKEUNhbm9uUmVsYXRpb25zaGlwEgoKAmlkGAEgASgJEhIKCnByb2plY3RfaWQYAiABKAkSGQoRc3ViamVjdF9lbnRpdHlfaWQYAyABKAkSEQoJcHJlZGljYXRlGAQgASgJEhgKEG9iamVjdF9lbnRpdHlfaWQYBSABKAkSEwoLdHJ1dGhfY2xhc3MYBiABKAkSDgoGc291cmNlGAcgASgJEg0KBWFjdG9yGAggASgJEhMKC29ic2VydmVkX2F0GAkgASgJEhIKCmNyZWF0ZWRfYXQYCiABKAkiNwoTTGlzdEVudGl0aWVzUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEgwKBGtpbmQYAiABKAkiSgoUTGlzdEVudGl0aWVzUmVzcG9uc2USMgoIZW50aXRpZXMYASADKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbm9uRW50aXR5IkEKGExpc3RSZWxhdGlvbnNoaXBzUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEhEKCWVudGl0eV9pZBgCIAEoCSJaChlMaXN0UmVsYXRpb25zaGlwc1Jlc3BvbnNlEj0KDXJlbGF0aW9uc2hpcHMYASADKAsyJi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbm9uUmVsYXRpb25zaGlwIh4KEEdldEVudGl0eVJlcXVlc3QSCgoCaWQYASABKAkiRQoRR2V0RW50aXR5UmVzcG9uc2USMAoGZW50aXR5GAEgASgLMiAucG9sdGVyd2FyZS5sb2NhbC52MS5DYW5vbkVudGl0eSItChdTeW5jUHJvamVjdE1vZGVsUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJIjAKGFN5bmNQcm9qZWN0TW9kZWxSZXNwb25zZRIUCgxlbnRpdHlfY291bnQYASABKAUi7wEKCUNhbm9uRmFjdBIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEhEKCXN0YXRlbWVudBgDIAEoCRITCgt0cnV0aF9jbGFzcxgEIAEoCRIOCgZzb3VyY2UYBSABKAkSDQoFYWN0b3IYBiABKAkSEwoLb2JzZXJ2ZWRfYXQYByABKAkSEQoJZW50aXR5X2lkGAggASgJEhIKCmNyZWF0ZWRfYXQYCSABKAkSEgoKdXBkYXRlZF9hdBgKIAEoCRIWCg5zY29wZV9ub2RlX2lkcxgMIAMoCUoECAsQDFINc2NvcGVfbm9kZV9pZCLlAQoNQ2Fub25FdmlkZW5jZRIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEgwKBGtpbmQYAyABKAkSDwoHc3VtbWFyeRgEIAEoCRIOCgZzb3VyY2UYBSABKAkSDAoEcGF0aBgGIAEoCRINCgVhY3RvchgHIAEoCRITCgtvYnNlcnZlZF9hdBgIIAEoCRISCgpjcmVhdGVkX2F0GAkgASgJEhIKCnVwZGF0ZWRfYXQYCiABKAkSFgoOc2NvcGVfbm9kZV9pZHMYDCADKAlKBAgLEAxSDXNjb3BlX25vZGVfaWQidwoQTGlzdEZhY3RzUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEhEKCWVudGl0eV9pZBgCIAEoCRISCgpzY29wZV9ub2RlGAMgASgJEhMKC3Njb3BlX2V4YWN0GAQgASgIEhMKC3Njb3BlX25vZGVzGAUgAygJIkIKEUxpc3RGYWN0c1Jlc3BvbnNlEi0KBWZhY3RzGAEgAygLMh4ucG9sdGVyd2FyZS5sb2NhbC52MS5DYW5vbkZhY3QiHAoOR2V0RmFjdFJlcXVlc3QSCgoCaWQYASABKAkidQoPR2V0RmFjdFJlc3BvbnNlEiwKBGZhY3QYASABKAsyHi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbm9uRmFjdBI0CghldmlkZW5jZRgCIAMoCzIiLnBvbHRlcndhcmUubG9jYWwudjEuQ2Fub25FdmlkZW5jZSJ2ChFVcHNlcnRGYWN0UmVxdWVzdBIsCgRmYWN0GAEgASgLMh4ucG9sdGVyd2FyZS5sb2NhbC52MS5DYW5vbkZhY3QSMwoGY2hhbmdlGAIgASgLMiMucG9sdGVyd2FyZS5sb2NhbC52MS5DaGFuZ2VFbnZlbG9wZSJCChJVcHNlcnRGYWN0UmVzcG9uc2USLAoEZmFjdBgBIAEoCzIeLnBvbHRlcndhcmUubG9jYWwudjEuQ2Fub25GYWN0ImcKE0xpc3RFdmlkZW5jZVJlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRISCgpzY29wZV9ub2RlGAIgASgJEhMKC3Njb3BlX2V4YWN0GAMgASgIEhMKC3Njb3BlX25vZGVzGAQgAygJIkwKFExpc3RFdmlkZW5jZVJlc3BvbnNlEjQKCGV2aWRlbmNlGAEgAygLMiIucG9sdGVyd2FyZS5sb2NhbC52MS5DYW5vbkV2aWRlbmNlIiAKEkdldEV2aWRlbmNlUmVxdWVzdBIKCgJpZBgBIAEoCSJLChNHZXRFdmlkZW5jZVJlc3BvbnNlEjQKCGV2aWRlbmNlGAEgASgLMiIucG9sdGVyd2FyZS5sb2NhbC52MS5DYW5vbkV2aWRlbmNlIoIBChVVcHNlcnRFdmlkZW5jZVJlcXVlc3QSNAoIZXZpZGVuY2UYASABKAsyIi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbm9uRXZpZGVuY2USMwoGY2hhbmdlGAIgASgLMiMucG9sdGVyd2FyZS5sb2NhbC52MS5DaGFuZ2VFbnZlbG9wZSJOChZVcHNlcnRFdmlkZW5jZVJlc3BvbnNlEjQKCGV2aWRlbmNlGAEgASgLMiIucG9sdGVyd2FyZS5sb2NhbC52MS5DYW5vbkV2aWRlbmNlIooBChlMaW5rRXZpZGVuY2VUb0ZhY3RSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSDwoHZmFjdF9pZBgCIAEoCRITCgtldmlkZW5jZV9pZBgDIAEoCRIzCgZjaGFuZ2UYBCABKAsyIy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoYW5nZUVudmVsb3BlIhwKGkxpbmtFdmlkZW5jZVRvRmFjdFJlc3BvbnNlIigKElNjYW5Qcm9qZWN0UmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJIn0KE1NjYW5Qcm9qZWN0UmVzcG9uc2USEgoKZmFjdF9jb3VudBgBIAEoBRIWCg5ldmlkZW5jZV9jb3VudBgCIAEoBRIVCg1za2lwcGVkX2NvdW50GAQgASgFEg8KB21lc3NhZ2UYBSABKAlKBAgDEARSDHNvdXJjZV9jb3VudDLXCQoTUHJvamVjdE1vZGVsU2VydmljZRJjCgxMaXN0RW50aXRpZXMSKC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RFbnRpdGllc1JlcXVlc3QaKS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RFbnRpdGllc1Jlc3BvbnNlEnIKEUxpc3RSZWxhdGlvbnNoaXBzEi0ucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0UmVsYXRpb25zaGlwc1JlcXVlc3QaLi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RSZWxhdGlvbnNoaXBzUmVzcG9uc2USWgoJR2V0RW50aXR5EiUucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRFbnRpdHlSZXF1ZXN0GiYucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRFbnRpdHlSZXNwb25zZRJvChBTeW5jUHJvamVjdE1vZGVsEiwucG9sdGVyd2FyZS5sb2NhbC52MS5TeW5jUHJvamVjdE1vZGVsUmVxdWVzdBotLnBvbHRlcndhcmUubG9jYWwudjEuU3luY1Byb2plY3RNb2RlbFJlc3BvbnNlEloKCUxpc3RGYWN0cxIlLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEZhY3RzUmVxdWVzdBomLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEZhY3RzUmVzcG9uc2USVAoHR2V0RmFjdBIjLnBvbHRlcndhcmUubG9jYWwudjEuR2V0RmFjdFJlcXVlc3QaJC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkdldEZhY3RSZXNwb25zZRJdCgpVcHNlcnRGYWN0EiYucG9sdGVyd2FyZS5sb2NhbC52MS5VcHNlcnRGYWN0UmVxdWVzdBonLnBvbHRlcndhcmUubG9jYWwudjEuVXBzZXJ0RmFjdFJlc3BvbnNlEmMKDExpc3RFdmlkZW5jZRIoLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEV2aWRlbmNlUmVxdWVzdBopLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEV2aWRlbmNlUmVzcG9uc2USYAoLR2V0RXZpZGVuY2USJy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkdldEV2aWRlbmNlUmVxdWVzdBooLnBvbHRlcndhcmUubG9jYWwudjEuR2V0RXZpZGVuY2VSZXNwb25zZRJpCg5VcHNlcnRFdmlkZW5jZRIqLnBvbHRlcndhcmUubG9jYWwudjEuVXBzZXJ0RXZpZGVuY2VSZXF1ZXN0GisucG9sdGVyd2FyZS5sb2NhbC52MS5VcHNlcnRFdmlkZW5jZVJlc3BvbnNlEnUKEkxpbmtFdmlkZW5jZVRvRmFjdBIuLnBvbHRlcndhcmUubG9jYWwudjEuTGlua0V2aWRlbmNlVG9GYWN0UmVxdWVzdBovLnBvbHRlcndhcmUubG9jYWwudjEuTGlua0V2aWRlbmNlVG9GYWN0UmVzcG9uc2USYAoLU2NhblByb2plY3QSJy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlNjYW5Qcm9qZWN0UmVxdWVzdBooLnBvbHRlcndhcmUubG9jYWwudjEuU2NhblByb2plY3RSZXNwb25zZULmAQoXY29tLnBvbHRlcndhcmUubG9jYWwudjFCCkNhbm9uUHJvdG9QAVpRZ2l0aHViLmNvbS9wb2x0ZXJ3YXJlL3BvbHRlcndhcmUvYmFja2VuZC9wbGF0Zm9ybS9nZW4vcG9sdGVyd2FyZS9sb2NhbC92MTtsb2NhbHYxogIDUExYqgITUG9sdGVyd2FyZS5Mb2NhbC5WMcoCE1BvbHRlcndhcmVcTG9jYWxcVjHiAh9Qb2x0ZXJ3YXJlXExvY2FsXFYxXEdQQk1ldGFkYXRh6gIVUG9sdGVyd2FyZTo6TG9jYWw6OlYxYgZwcm90bzM", [file_polterware_local_v1_agentrun]);
+  fileDesc("Ch9wb2x0ZXJ3YXJlL2xvY2FsL3YxL2Nhbm9uLnByb3RvEhNwb2x0ZXJ3YXJlLmxvY2FsLnYxIt0BCgtDYW5vbkVudGl0eRIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEgwKBGtpbmQYAyABKAkSEAoIcmVmX2tpbmQYBCABKAkSDgoGcmVmX2lkGAUgASgJEg0KBXRpdGxlGAYgASgJEhMKC3RydXRoX2NsYXNzGAcgASgJEg4KBnNvdXJjZRgIIAEoCRINCgVhY3RvchgJIAEoCRITCgtvYnNlcnZlZF9hdBgKIAEoCRISCgpjcmVhdGVkX2F0GAsgASgJEhIKCnVwZGF0ZWRfYXQYDCABKAki2AEKEUNhbm9uUmVsYXRpb25zaGlwEgoKAmlkGAEgASgJEhIKCnByb2plY3RfaWQYAiABKAkSGQoRc3ViamVjdF9lbnRpdHlfaWQYAyABKAkSEQoJcHJlZGljYXRlGAQgASgJEhgKEG9iamVjdF9lbnRpdHlfaWQYBSABKAkSEwoLdHJ1dGhfY2xhc3MYBiABKAkSDgoGc291cmNlGAcgASgJEg0KBWFjdG9yGAggASgJEhMKC29ic2VydmVkX2F0GAkgASgJEhIKCmNyZWF0ZWRfYXQYCiABKAkiNwoTTGlzdEVudGl0aWVzUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEgwKBGtpbmQYAiABKAkiSgoUTGlzdEVudGl0aWVzUmVzcG9uc2USMgoIZW50aXRpZXMYASADKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbm9uRW50aXR5IkEKGExpc3RSZWxhdGlvbnNoaXBzUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEhEKCWVudGl0eV9pZBgCIAEoCSJaChlMaXN0UmVsYXRpb25zaGlwc1Jlc3BvbnNlEj0KDXJlbGF0aW9uc2hpcHMYASADKAsyJi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbm9uUmVsYXRpb25zaGlwIh4KEEdldEVudGl0eVJlcXVlc3QSCgoCaWQYASABKAkiRQoRR2V0RW50aXR5UmVzcG9uc2USMAoGZW50aXR5GAEgASgLMiAucG9sdGVyd2FyZS5sb2NhbC52MS5DYW5vbkVudGl0eSItChdTeW5jUHJvamVjdE1vZGVsUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJIjAKGFN5bmNQcm9qZWN0TW9kZWxSZXNwb25zZRIUCgxlbnRpdHlfY291bnQYASABKAUi7wEKCUNhbm9uRmFjdBIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEhEKCXN0YXRlbWVudBgDIAEoCRITCgt0cnV0aF9jbGFzcxgEIAEoCRIOCgZzb3VyY2UYBSABKAkSDQoFYWN0b3IYBiABKAkSEwoLb2JzZXJ2ZWRfYXQYByABKAkSEQoJZW50aXR5X2lkGAggASgJEhIKCmNyZWF0ZWRfYXQYCSABKAkSEgoKdXBkYXRlZF9hdBgKIAEoCRIWCg5zY29wZV9ub2RlX2lkcxgMIAMoCUoECAsQDFINc2NvcGVfbm9kZV9pZCJ3ChBMaXN0RmFjdHNSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSEQoJZW50aXR5X2lkGAIgASgJEhIKCnNjb3BlX25vZGUYAyABKAkSEwoLc2NvcGVfZXhhY3QYBCABKAgSEwoLc2NvcGVfbm9kZXMYBSADKAkiQgoRTGlzdEZhY3RzUmVzcG9uc2USLQoFZmFjdHMYASADKAsyHi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNhbm9uRmFjdCIcCg5HZXRGYWN0UmVxdWVzdBIKCgJpZBgBIAEoCSJPCg9HZXRGYWN0UmVzcG9uc2USLAoEZmFjdBgBIAEoCzIeLnBvbHRlcndhcmUubG9jYWwudjEuQ2Fub25GYWN0SgQIAhADUghldmlkZW5jZSJ2ChFVcHNlcnRGYWN0UmVxdWVzdBIsCgRmYWN0GAEgASgLMh4ucG9sdGVyd2FyZS5sb2NhbC52MS5DYW5vbkZhY3QSMwoGY2hhbmdlGAIgASgLMiMucG9sdGVyd2FyZS5sb2NhbC52MS5DaGFuZ2VFbnZlbG9wZSJCChJVcHNlcnRGYWN0UmVzcG9uc2USLAoEZmFjdBgBIAEoCzIeLnBvbHRlcndhcmUubG9jYWwudjEuQ2Fub25GYWN0MswFChNQcm9qZWN0TW9kZWxTZXJ2aWNlEmMKDExpc3RFbnRpdGllcxIoLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEVudGl0aWVzUmVxdWVzdBopLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEVudGl0aWVzUmVzcG9uc2UScgoRTGlzdFJlbGF0aW9uc2hpcHMSLS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RSZWxhdGlvbnNoaXBzUmVxdWVzdBouLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFJlbGF0aW9uc2hpcHNSZXNwb25zZRJaCglHZXRFbnRpdHkSJS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkdldEVudGl0eVJlcXVlc3QaJi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkdldEVudGl0eVJlc3BvbnNlEm8KEFN5bmNQcm9qZWN0TW9kZWwSLC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlN5bmNQcm9qZWN0TW9kZWxSZXF1ZXN0Gi0ucG9sdGVyd2FyZS5sb2NhbC52MS5TeW5jUHJvamVjdE1vZGVsUmVzcG9uc2USWgoJTGlzdEZhY3RzEiUucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0RmFjdHNSZXF1ZXN0GiYucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0RmFjdHNSZXNwb25zZRJUCgdHZXRGYWN0EiMucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRGYWN0UmVxdWVzdBokLnBvbHRlcndhcmUubG9jYWwudjEuR2V0RmFjdFJlc3BvbnNlEl0KClVwc2VydEZhY3QSJi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlVwc2VydEZhY3RSZXF1ZXN0GicucG9sdGVyd2FyZS5sb2NhbC52MS5VcHNlcnRGYWN0UmVzcG9uc2VC5gEKF2NvbS5wb2x0ZXJ3YXJlLmxvY2FsLnYxQgpDYW5vblByb3RvUAFaUWdpdGh1Yi5jb20vcG9sdGVyd2FyZS9wb2x0ZXJ3YXJlL2JhY2tlbmQvcGxhdGZvcm0vZ2VuL3BvbHRlcndhcmUvbG9jYWwvdjE7bG9jYWx2MaICA1BMWKoCE1BvbHRlcndhcmUuTG9jYWwuVjHKAhNQb2x0ZXJ3YXJlXExvY2FsXFYx4gIfUG9sdGVyd2FyZVxMb2NhbFxWMVxHUEJNZXRhZGF0YeoCFVBvbHRlcndhcmU6OkxvY2FsOjpWMWIGcHJvdG8z", [file_polterware_local_v1_agentrun]);
 
 /**
  * @generated from message polterware.local.v1.CanonEntity
@@ -364,75 +364,6 @@ export const CanonFactSchema: GenMessage<CanonFact> = /*@__PURE__*/
   messageDesc(file_polterware_local_v1_canon, 10);
 
 /**
- * @generated from message polterware.local.v1.CanonEvidence
- */
-export type CanonEvidence = Message<"polterware.local.v1.CanonEvidence"> & {
-  /**
-   * @generated from field: string id = 1;
-   */
-  id: string;
-
-  /**
-   * @generated from field: string project_id = 2;
-   */
-  projectId: string;
-
-  /**
-   * @generated from field: string kind = 3;
-   */
-  kind: string;
-
-  /**
-   * @generated from field: string summary = 4;
-   */
-  summary: string;
-
-  /**
-   * @generated from field: string source = 5;
-   */
-  source: string;
-
-  /**
-   * @generated from field: string path = 6;
-   */
-  path: string;
-
-  /**
-   * @generated from field: string actor = 7;
-   */
-  actor: string;
-
-  /**
-   * @generated from field: string observed_at = 8;
-   */
-  observedAt: string;
-
-  /**
-   * @generated from field: string created_at = 9;
-   */
-  createdAt: string;
-
-  /**
-   * @generated from field: string updated_at = 10;
-   */
-  updatedAt: string;
-
-  /**
-   * scope_node_ids are the Structure nodes the evidence is about; none is the whole project.
-   *
-   * @generated from field: repeated string scope_node_ids = 12;
-   */
-  scopeNodeIds: string[];
-};
-
-/**
- * Describes the message polterware.local.v1.CanonEvidence.
- * Use `create(CanonEvidenceSchema)` to create a new message.
- */
-export const CanonEvidenceSchema: GenMessage<CanonEvidence> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 11);
-
-/**
  * @generated from message polterware.local.v1.ListFactsRequest
  */
 export type ListFactsRequest = Message<"polterware.local.v1.ListFactsRequest"> & {
@@ -469,7 +400,7 @@ export type ListFactsRequest = Message<"polterware.local.v1.ListFactsRequest"> &
  * Use `create(ListFactsRequestSchema)` to create a new message.
  */
 export const ListFactsRequestSchema: GenMessage<ListFactsRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 12);
+  messageDesc(file_polterware_local_v1_canon, 11);
 
 /**
  * @generated from message polterware.local.v1.ListFactsResponse
@@ -486,7 +417,7 @@ export type ListFactsResponse = Message<"polterware.local.v1.ListFactsResponse">
  * Use `create(ListFactsResponseSchema)` to create a new message.
  */
 export const ListFactsResponseSchema: GenMessage<ListFactsResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 13);
+  messageDesc(file_polterware_local_v1_canon, 12);
 
 /**
  * @generated from message polterware.local.v1.GetFactRequest
@@ -503,7 +434,7 @@ export type GetFactRequest = Message<"polterware.local.v1.GetFactRequest"> & {
  * Use `create(GetFactRequestSchema)` to create a new message.
  */
 export const GetFactRequestSchema: GenMessage<GetFactRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 14);
+  messageDesc(file_polterware_local_v1_canon, 13);
 
 /**
  * @generated from message polterware.local.v1.GetFactResponse
@@ -513,11 +444,6 @@ export type GetFactResponse = Message<"polterware.local.v1.GetFactResponse"> & {
    * @generated from field: polterware.local.v1.CanonFact fact = 1;
    */
   fact?: CanonFact | undefined;
-
-  /**
-   * @generated from field: repeated polterware.local.v1.CanonEvidence evidence = 2;
-   */
-  evidence: CanonEvidence[];
 };
 
 /**
@@ -525,7 +451,7 @@ export type GetFactResponse = Message<"polterware.local.v1.GetFactResponse"> & {
  * Use `create(GetFactResponseSchema)` to create a new message.
  */
 export const GetFactResponseSchema: GenMessage<GetFactResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 15);
+  messageDesc(file_polterware_local_v1_canon, 14);
 
 /**
  * @generated from message polterware.local.v1.UpsertFactRequest
@@ -547,7 +473,7 @@ export type UpsertFactRequest = Message<"polterware.local.v1.UpsertFactRequest">
  * Use `create(UpsertFactRequestSchema)` to create a new message.
  */
 export const UpsertFactRequestSchema: GenMessage<UpsertFactRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 16);
+  messageDesc(file_polterware_local_v1_canon, 15);
 
 /**
  * @generated from message polterware.local.v1.UpsertFactResponse
@@ -564,227 +490,7 @@ export type UpsertFactResponse = Message<"polterware.local.v1.UpsertFactResponse
  * Use `create(UpsertFactResponseSchema)` to create a new message.
  */
 export const UpsertFactResponseSchema: GenMessage<UpsertFactResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 17);
-
-/**
- * @generated from message polterware.local.v1.ListEvidenceRequest
- */
-export type ListEvidenceRequest = Message<"polterware.local.v1.ListEvidenceRequest"> & {
-  /**
-   * @generated from field: string project_id = 1;
-   */
-  projectId: string;
-
-  /**
-   * @generated from field: string scope_node = 2;
-   */
-  scopeNode: string;
-
-  /**
-   * @generated from field: bool scope_exact = 3;
-   */
-  scopeExact: boolean;
-
-  /**
-   * scope_nodes is merged with scope_node. The list is the union.
-   *
-   * @generated from field: repeated string scope_nodes = 4;
-   */
-  scopeNodes: string[];
-};
-
-/**
- * Describes the message polterware.local.v1.ListEvidenceRequest.
- * Use `create(ListEvidenceRequestSchema)` to create a new message.
- */
-export const ListEvidenceRequestSchema: GenMessage<ListEvidenceRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 18);
-
-/**
- * @generated from message polterware.local.v1.ListEvidenceResponse
- */
-export type ListEvidenceResponse = Message<"polterware.local.v1.ListEvidenceResponse"> & {
-  /**
-   * @generated from field: repeated polterware.local.v1.CanonEvidence evidence = 1;
-   */
-  evidence: CanonEvidence[];
-};
-
-/**
- * Describes the message polterware.local.v1.ListEvidenceResponse.
- * Use `create(ListEvidenceResponseSchema)` to create a new message.
- */
-export const ListEvidenceResponseSchema: GenMessage<ListEvidenceResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 19);
-
-/**
- * @generated from message polterware.local.v1.GetEvidenceRequest
- */
-export type GetEvidenceRequest = Message<"polterware.local.v1.GetEvidenceRequest"> & {
-  /**
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
-
-/**
- * Describes the message polterware.local.v1.GetEvidenceRequest.
- * Use `create(GetEvidenceRequestSchema)` to create a new message.
- */
-export const GetEvidenceRequestSchema: GenMessage<GetEvidenceRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 20);
-
-/**
- * @generated from message polterware.local.v1.GetEvidenceResponse
- */
-export type GetEvidenceResponse = Message<"polterware.local.v1.GetEvidenceResponse"> & {
-  /**
-   * @generated from field: polterware.local.v1.CanonEvidence evidence = 1;
-   */
-  evidence?: CanonEvidence | undefined;
-};
-
-/**
- * Describes the message polterware.local.v1.GetEvidenceResponse.
- * Use `create(GetEvidenceResponseSchema)` to create a new message.
- */
-export const GetEvidenceResponseSchema: GenMessage<GetEvidenceResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 21);
-
-/**
- * @generated from message polterware.local.v1.UpsertEvidenceRequest
- */
-export type UpsertEvidenceRequest = Message<"polterware.local.v1.UpsertEvidenceRequest"> & {
-  /**
-   * @generated from field: polterware.local.v1.CanonEvidence evidence = 1;
-   */
-  evidence?: CanonEvidence | undefined;
-
-  /**
-   * @generated from field: polterware.local.v1.ChangeEnvelope change = 2;
-   */
-  change?: ChangeEnvelope | undefined;
-};
-
-/**
- * Describes the message polterware.local.v1.UpsertEvidenceRequest.
- * Use `create(UpsertEvidenceRequestSchema)` to create a new message.
- */
-export const UpsertEvidenceRequestSchema: GenMessage<UpsertEvidenceRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 22);
-
-/**
- * @generated from message polterware.local.v1.UpsertEvidenceResponse
- */
-export type UpsertEvidenceResponse = Message<"polterware.local.v1.UpsertEvidenceResponse"> & {
-  /**
-   * @generated from field: polterware.local.v1.CanonEvidence evidence = 1;
-   */
-  evidence?: CanonEvidence | undefined;
-};
-
-/**
- * Describes the message polterware.local.v1.UpsertEvidenceResponse.
- * Use `create(UpsertEvidenceResponseSchema)` to create a new message.
- */
-export const UpsertEvidenceResponseSchema: GenMessage<UpsertEvidenceResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 23);
-
-/**
- * @generated from message polterware.local.v1.LinkEvidenceToFactRequest
- */
-export type LinkEvidenceToFactRequest = Message<"polterware.local.v1.LinkEvidenceToFactRequest"> & {
-  /**
-   * @generated from field: string project_id = 1;
-   */
-  projectId: string;
-
-  /**
-   * @generated from field: string fact_id = 2;
-   */
-  factId: string;
-
-  /**
-   * @generated from field: string evidence_id = 3;
-   */
-  evidenceId: string;
-
-  /**
-   * @generated from field: polterware.local.v1.ChangeEnvelope change = 4;
-   */
-  change?: ChangeEnvelope | undefined;
-};
-
-/**
- * Describes the message polterware.local.v1.LinkEvidenceToFactRequest.
- * Use `create(LinkEvidenceToFactRequestSchema)` to create a new message.
- */
-export const LinkEvidenceToFactRequestSchema: GenMessage<LinkEvidenceToFactRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 24);
-
-/**
- * @generated from message polterware.local.v1.LinkEvidenceToFactResponse
- */
-export type LinkEvidenceToFactResponse = Message<"polterware.local.v1.LinkEvidenceToFactResponse"> & {
-};
-
-/**
- * Describes the message polterware.local.v1.LinkEvidenceToFactResponse.
- * Use `create(LinkEvidenceToFactResponseSchema)` to create a new message.
- */
-export const LinkEvidenceToFactResponseSchema: GenMessage<LinkEvidenceToFactResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 25);
-
-/**
- * ScanProjectRequest imports evidence and facts from the project's files.
- *
- * @generated from message polterware.local.v1.ScanProjectRequest
- */
-export type ScanProjectRequest = Message<"polterware.local.v1.ScanProjectRequest"> & {
-  /**
-   * @generated from field: string project_id = 1;
-   */
-  projectId: string;
-};
-
-/**
- * Describes the message polterware.local.v1.ScanProjectRequest.
- * Use `create(ScanProjectRequestSchema)` to create a new message.
- */
-export const ScanProjectRequestSchema: GenMessage<ScanProjectRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 26);
-
-/**
- * @generated from message polterware.local.v1.ScanProjectResponse
- */
-export type ScanProjectResponse = Message<"polterware.local.v1.ScanProjectResponse"> & {
-  /**
-   * @generated from field: int32 fact_count = 1;
-   */
-  factCount: number;
-
-  /**
-   * @generated from field: int32 evidence_count = 2;
-   */
-  evidenceCount: number;
-
-  /**
-   * @generated from field: int32 skipped_count = 4;
-   */
-  skippedCount: number;
-
-  /**
-   * @generated from field: string message = 5;
-   */
-  message: string;
-};
-
-/**
- * Describes the message polterware.local.v1.ScanProjectResponse.
- * Use `create(ScanProjectResponseSchema)` to create a new message.
- */
-export const ScanProjectResponseSchema: GenMessage<ScanProjectResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_canon, 27);
+  messageDesc(file_polterware_local_v1_canon, 16);
 
 /**
  * @generated from service polterware.local.v1.ProjectModelService
@@ -845,46 +551,6 @@ export const ProjectModelService: GenService<{
     methodKind: "unary";
     input: typeof UpsertFactRequestSchema;
     output: typeof UpsertFactResponseSchema;
-  },
-  /**
-   * @generated from rpc polterware.local.v1.ProjectModelService.ListEvidence
-   */
-  listEvidence: {
-    methodKind: "unary";
-    input: typeof ListEvidenceRequestSchema;
-    output: typeof ListEvidenceResponseSchema;
-  },
-  /**
-   * @generated from rpc polterware.local.v1.ProjectModelService.GetEvidence
-   */
-  getEvidence: {
-    methodKind: "unary";
-    input: typeof GetEvidenceRequestSchema;
-    output: typeof GetEvidenceResponseSchema;
-  },
-  /**
-   * @generated from rpc polterware.local.v1.ProjectModelService.UpsertEvidence
-   */
-  upsertEvidence: {
-    methodKind: "unary";
-    input: typeof UpsertEvidenceRequestSchema;
-    output: typeof UpsertEvidenceResponseSchema;
-  },
-  /**
-   * @generated from rpc polterware.local.v1.ProjectModelService.LinkEvidenceToFact
-   */
-  linkEvidenceToFact: {
-    methodKind: "unary";
-    input: typeof LinkEvidenceToFactRequestSchema;
-    output: typeof LinkEvidenceToFactResponseSchema;
-  },
-  /**
-   * @generated from rpc polterware.local.v1.ProjectModelService.ScanProject
-   */
-  scanProject: {
-    methodKind: "unary";
-    input: typeof ScanProjectRequestSchema;
-    output: typeof ScanProjectResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_polterware_local_v1_canon, 0);

@@ -33,14 +33,15 @@ describe("libraryRowsFromWorkspace", () => {
   it("pins principles above local decisions", () => {
     const rows = libraryRowsFromWorkspace({ decisions: [decision, principle] });
     expect(rows.map((row) => row.id)).toEqual(["decision-2", "decision-1"]);
-    expect(rows[0]?.levelLabel).toBe("Principle");
+    expect(rows[0]?.pinned).toBe(true);
+    expect(rows[0]?.scopeNodeIds).toEqual([]);
   });
 
   it("filters by status, linked, and query", () => {
     const rows = libraryRowsFromWorkspace({ decisions: [decision, principle] });
     expect(filterLibraryRows(rows, { ...EMPTY_LIBRARY_FILTERS, statuses: ["active"] }).map((row) => row.id)).toEqual(["decision-1"]);
     expect(filterLibraryRows(rows, { ...EMPTY_LIBRARY_FILTERS, linked: "linked" })).toHaveLength(0);
-    expect(filterLibraryRows(rows, { ...EMPTY_LIBRARY_FILTERS, query: "evidence" }).map((row) => row.id)).toEqual(["decision-2"]);
+    expect(filterLibraryRows(rows, { ...EMPTY_LIBRARY_FILTERS, query: "principle" }).map((row) => row.id)).toEqual(["decision-2"]);
   });
 
   it("reports active filters and toggles values", () => {

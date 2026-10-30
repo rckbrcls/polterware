@@ -68,7 +68,7 @@ export function DecisionDetail(props: {
             {props.decision.reviewTrigger}
           </KnowledgeDocumentProperty>
           <Show when={props.onScopeChange}>
-            <KnowledgeDocumentProperty label="About">
+            <KnowledgeDocumentProperty label="Context">
               <ContextPicker
                 nodes={props.scopeNodes ?? []}
                 values={props.decision.scopeNodeIds}

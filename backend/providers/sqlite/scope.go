@@ -11,8 +11,8 @@ import (
 const (
 	ScopeDecision = "decision"
 	ScopeFact     = "fact"
-	ScopeEvidence = "evidence"
-	// ScopeKnowledge is any knowledge item, such as the Evidence notes the Desktop lists.
+	ScopeRule     = "rule"
+	// ScopeKnowledge is any knowledge item, such as a doc.
 	ScopeKnowledge = "knowledge"
 	// ScopeItem is a derived Drift finding or Inbox item, keyed by its item key.
 	ScopeItem = "item"
@@ -22,7 +22,7 @@ var scopeTables = map[string]string{
 	ScopeDecision:  "knowledge_items",
 	ScopeKnowledge: "knowledge_items",
 	ScopeFact:      "canon_facts",
-	ScopeEvidence:  "canon_evidence",
+	ScopeRule:      "rules",
 }
 
 // SetScope replaces an entity's contexts (or a derived item's, by item key) with
@@ -109,7 +109,7 @@ func (s *Store) ScopeMap(projectID, kind string) (map[string][]string, error) {
 		query = `SELECT c.entity_id,c.node_id FROM entity_contexts c WHERE c.project_id=?
 			AND NOT EXISTS (SELECT 1 FROM knowledge_items t WHERE t.id=c.entity_id)
 			AND NOT EXISTS (SELECT 1 FROM canon_facts t WHERE t.id=c.entity_id)
-			AND NOT EXISTS (SELECT 1 FROM canon_evidence t WHERE t.id=c.entity_id)
+			AND NOT EXISTS (SELECT 1 FROM rules t WHERE t.id=c.entity_id)
 			ORDER BY c.entity_id, c.node_id`
 	} else {
 		table, ok := scopeTables[kind]

@@ -5,7 +5,7 @@ option go_package = "github.com/polterware/polterware/backend/platform/gen/polte
 import "polterware/local/v1/agentrun.proto";
 
 // CanvasRef cites another project entity.
-// kind is "card", "decision", "fact", "evidence", or "node" (a structure node).
+// kind is "card", "decision", "fact", "rule", or "node" (a structure node).
 message CanvasRef {
   string kind = 1;
   string id = 2;

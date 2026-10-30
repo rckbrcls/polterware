@@ -54,8 +54,8 @@ func Defaults(store *storepkg.Store) error {
 }
 
 // Polterware registers the project at root, its sibling checkouts, and the
-// real Polterware content: Decisions, Structure nodes, Work cards, docs, facts, and the
-// evidence a scan finds in the checkout.
+// real Polterware content: Decisions, Structure nodes, Rules, Work cards, docs,
+// and facts.
 func Polterware(store *storepkg.Store, root string) error {
 	if _, err := wedge.InitProject(store, wedge.InitInput{ID: ProjectID, Name: ProjectName, RootPath: root}); err != nil {
 		return err
@@ -85,11 +85,7 @@ func Polterware(store *storepkg.Store, root string) error {
 	if _, err := store.SyncProjectModel(ProjectID); err != nil {
 		return err
 	}
-	if err := seedFacts(store); err != nil {
-		return err
-	}
-	_, err := wedge.ScanProject(store, ProjectID)
-	return err
+	return seedFacts(store)
 }
 
 // apply writes one Polter text and reports the first error diagnostic, which

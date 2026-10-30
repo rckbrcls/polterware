@@ -429,12 +429,8 @@ func (m *tuiModel) runAction(action string) tea.Cmd {
 				return actionMsg{err: err}
 			}
 			project := initRes.Msg.Project
-			scanRes, err := c.Canon.ScanProject(ctx, connect.NewRequest(&localv1.ScanProjectRequest{ProjectId: project.Id}))
-			if err != nil {
-				return actionMsg{err: err, projectID: project.Id}
-			}
 			return actionMsg{
-				text:      fmt.Sprintf("Registered %s · %d facts.", project.Name, scanRes.Msg.FactCount),
+				text:      fmt.Sprintf("Registered %s.", project.Name),
 				projectID: project.Id,
 			}
 		}
@@ -886,7 +882,7 @@ func (m *tuiModel) confirmText() string {
 	case m.confirm == "core:stop":
 		return "Stop the standalone core?"
 	case m.confirm == "init":
-		return fmt.Sprintf("Register %s as a project and scan it?", shortPath(m.cwd))
+		return fmt.Sprintf("Register %s as a project?", shortPath(m.cwd))
 	case strings.HasPrefix(m.confirm, "client:"):
 		state := m.clients[m.clientIndex(strings.TrimPrefix(m.confirm, "client:"))]
 		if state.status == clientConfigured {

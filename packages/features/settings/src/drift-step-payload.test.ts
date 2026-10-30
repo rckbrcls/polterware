@@ -9,30 +9,30 @@ describe("parseDriftStepPayload", () => {
     const payload = JSON.stringify({
       findings: [
         {
-          type: "dependency_added",
+          type: "task_done_unmatched",
           severity: "warning",
-          summary: "New import fact",
-          subject_ids: ["fact-1", "ent-1"],
+          summary: "task api T2 is done with no commit on main",
+          subject_ids: ["task-1"],
         },
         {
-          type: "declared_observed_conflict",
-          severity: "conflict",
-          summary: "Statement mismatch",
+          type: "commit_without_task",
+          severity: "warning",
+          summary: "commit is on main with no task",
         },
       ],
     });
     expect(parseDriftStepPayload(payload)).toEqual({
       findings: [
         {
-          type: "dependency_added",
+          type: "task_done_unmatched",
           severity: "warning",
-          summary: "New import fact",
-          subjectIds: ["fact-1", "ent-1"],
+          summary: "task api T2 is done with no commit on main",
+          subjectIds: ["task-1"],
         },
         {
-          type: "declared_observed_conflict",
-          severity: "conflict",
-          summary: "Statement mismatch",
+          type: "commit_without_task",
+          severity: "warning",
+          summary: "commit is on main with no task",
           subjectIds: [],
         },
       ],

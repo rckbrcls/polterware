@@ -31,7 +31,7 @@ describe("first version routes", () => {
     expect(SECTION_TABS.truth?.map((tab) => tab.id)).toEqual(["decisions", "facts", "docs"]);
     expect(SECTION_TABS.dispatch?.map((tab) => tab.id)).toEqual(["runs"]);
     expect(SECTION_TABS["dispatch-usage"]?.map((tab) => tab.id)).toEqual(["agents", "stats"]);
-    expect(SECTION_TABS["dispatch-routing"]?.map((tab) => tab.id)).toEqual(["tiers", "learning"]);
+    expect(SECTION_TABS["dispatch-routing"]?.map((tab) => tab.id)).toEqual(["tiers", "learning", "policy"]);
     expect(DEFAULT_TABS.milestones).toBe("board");
     expect(DEFAULT_TABS.dispatch).toBe("runs");
     expect(DEFAULT_TABS["dispatch-routing"]).toBe("tiers");

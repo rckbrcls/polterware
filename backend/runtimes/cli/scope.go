@@ -13,7 +13,7 @@ import (
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
 )
 
-const scopeUsage = `usage: polterware scope <decision|fact|evidence|item> <id> [<node path>...] [--project <id>]
+const scopeUsage = `usage: polterware scope <decision|fact|rule|item> <id> [<node path>...] [--project <id>]
        (the nodes replace its contexts, separated by spaces or commas; none clears
        them (the whole project); item is a derived Drift or Inbox item key)`
 

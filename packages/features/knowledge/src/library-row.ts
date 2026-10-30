@@ -21,12 +21,12 @@ export type LibraryRow = {
   id: string;
   entityKind: LibraryEntityKind;
   title: string;
-  levelLabel: string;
+  /** Structure nodes the Decision is about; none makes it a principle for the whole project. */
+  scopeNodeIds: readonly string[];
   /** The Decision's lifecycle state id; the filter matches it. */
   state: WorkspaceDecision["state"];
   statusLabel: string;
   statusTone: StatusTone;
-  owner: string;
   updatedAt: string;
   hasLinks: boolean;
   /** Principles stay above the rest of the list. */
@@ -47,14 +47,13 @@ export function libraryRowsFromWorkspace(input: { decisions?: WorkspaceDecision[
     id: decision.id,
     entityKind: "decision",
     title: decision.title,
-    // A decision with no contexts is a principle: it applies to the whole project.
-    levelLabel: decision.scopeNodeIds.length === 0 ? "Principle" : "Decision",
+    scopeNodeIds: decision.scopeNodeIds,
     state: decision.state,
     statusLabel: DECISION_STATE_LABEL[decision.state],
     statusTone: decisionStateTone(decision.state),
-    owner: decision.owner,
     updatedAt: decision.updatedAt,
     hasLinks: decision.entityLinks.length > 0,
+    // A decision with no contexts is a principle: it applies to the whole project.
     pinned: decision.scopeNodeIds.length === 0,
   }));
   return [...rows.filter((row) => row.pinned), ...rows.filter((row) => !row.pinned)];
@@ -74,7 +73,7 @@ export function filterLibraryRows(
     if (filters.linked === "linked" && !row.hasLinks) return false;
     if (filters.linked === "unlinked" && row.hasLinks) return false;
     if (!needle) return true;
-    return [row.title, row.owner, row.levelLabel, row.statusLabel].some(
+    return [row.title, row.statusLabel, row.pinned ? "principle" : ""].some(
       (value) => value.toLowerCase().includes(needle),
     );
   });

@@ -32,9 +32,6 @@ const (
 	TaskDone    = "done"
 	TaskDropped = "dropped"
 
-	LinkExplicit  = "explicit"
-	LinkSuggested = "suggested"
-
 	QuestionOpen     = "open"
 	QuestionAnswered = "answered"
 	QuestionRemoved  = "removed"
@@ -155,15 +152,15 @@ type Task struct {
 	Claim *Claim
 }
 
-// CommitLink joins one git commit evidence row to one task.
-// Suggested links come from full-text search and are not a delivery match.
+// CommitLink joins one commit of a checkout (Repo empty is the project root)
+// to one task. Stored links are the ones a person made from the Inbox.
 type CommitLink struct {
-	ID         string
-	ProjectID  string
-	EvidenceID string
-	TaskID     string
-	Method     string
-	CreatedAt  time.Time
+	ID        string
+	ProjectID string
+	Repo      string
+	SHA       string
+	TaskID    string
+	CreatedAt time.Time
 }
 
 type Question struct {
@@ -215,20 +212,46 @@ type Snapshot struct {
 	// Decisions are the project's Decisions with their lifecycle state.
 	Decisions []decision.Decision
 	Facts     []Fact
-	Evidence  []canon.Evidence
+	// Rules are the project's active Rules, in position order.
+	Rules []Rule
 	// Milestones lists every milestone, archived ones included, so a card's
 	// stored milestone still resolves.
 	Milestones []Milestone
 }
 
-// Fact is a canon fact with its Polter identity, context paths and evidence links.
+// Fact is a canon fact with its Polter identity and context paths.
 type Fact struct {
 	canon.Fact
 	Slug string
 	// Scopes are the paths of the Structure nodes the fact is about, sorted; none
 	// is the whole project.
-	Scopes   []string
-	Evidence []string
+	Scopes []string
+}
+
+// Rule is a short imperative constraint agents read before they work. Scopes
+// are the paths of the Structure nodes it applies to, sorted; none is the
+// whole project, and a node's Rules hold for every node below it.
+type Rule struct {
+	ID        string
+	Slug      string
+	Statement string
+	Scopes    []string
+	Status    string
+	Position  int
+}
+
+// Rule states.
+const (
+	RuleActive  = "active"
+	RuleRemoved = "removed"
+)
+
+// Handle is the Polter reference of a Rule: its slug, or its id when it has none.
+func (r Rule) Handle() string {
+	if r.Slug != "" {
+		return r.Slug
+	}
+	return r.ID
 }
 
 // NamedEnvironment is a project environment a deploys: line can name.
@@ -280,6 +303,7 @@ const (
 	EntityNode      = "node"
 	EntityDecision  = "decision"
 	EntityFact      = "fact"
+	EntityRule      = "rule"
 	EntityMilestone = "milestone"
 
 	OpCreate = "create"

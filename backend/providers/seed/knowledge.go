@@ -12,7 +12,7 @@ import (
 var principles = []struct{ id, title, summary, body string }{
 	{"decision-principle-local-first", "Local-first truth", "Project state must stay useful on one machine.", "Project state must remain useful on one machine without requiring a hosted account."},
 	{"decision-principle-honest-boundaries", "Honest product boundaries", "Never describe planned work as shipped.", "Do not describe planned capabilities as shipped. Post-wedge depth (Change Gates, Web App, Cloud) is direction, not behavior."},
-	{"decision-principle-provenance", "Provenance over inference", "Observed facts win over inferred ones.", "Declared and observed facts take precedence over inferred knowledge. Inference never silently becomes project truth."},
+	{"decision-principle-provenance", "Provenance over inference", "Declared facts win over inferred ones.", "Declared and verified facts take precedence over inferred knowledge. Inference never silently becomes project truth."},
 	{"decision-principle-one-authority", "One authority per database", "Only the local core opens SQLite.", "Only the local core opens SQLite; every other surface is a client."},
 	{"decision-principle-shared-interface", "Opaque, shared interface", "Product UI uses the shared design system.", "Product UI uses the shared design system: opaque surfaces, token colors and radii, one icon set."},
 }

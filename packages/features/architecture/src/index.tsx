@@ -22,14 +22,15 @@ export { filterStructureNodes } from "./structure-tree";
 export type { StructureNode } from "./structure-tree";
 export const STRUCTURE_SCOPE = "structure:nodes";
 const PROJECT_ID = "structure:project";
-/** One thing that cites a node: a card (by slug), decision, fact, or doc, with a muted caption such as its stage. */
+/** One thing that cites a node: a card (by slug), decision, Rule, or doc, with a muted caption such as its stage. */
 /** `direct` marks a link the node owns (a card under it, a record scoped to it), which its document can remove. */
 export type StructureRecord = { id: string; title: string; caption?: string; direct?: boolean };
 /** The fields of a node its document edits in place; a field left out is unchanged, and an empty value clears it. */
 export type StructureNodePatch = { title?: string; intent?: string; level?: StructureKind; repo?: string; folder?: string; kind?: string; tech?: string };
-export type StructureRecordKind = "card" | "decision" | "fact" | "doc";
-export type StructureRecords = { cards: readonly StructureRecord[]; decisions: readonly StructureRecord[]; facts: readonly StructureRecord[]; docs: readonly StructureRecord[] };
-const NO_RECORDS: StructureRecords = { cards: [], decisions: [], facts: [], docs: [] };
+export type StructureRecordKind = "card" | "decision" | "rule" | "doc";
+/** `rules` holds every Rule that holds for the node: its own (direct) and those of its ancestors and the whole project. */
+export type StructureRecords = { cards: readonly StructureRecord[]; decisions: readonly StructureRecord[]; rules: readonly StructureRecord[]; docs: readonly StructureRecord[] };
+const NO_RECORDS: StructureRecords = { cards: [], decisions: [], rules: [], docs: [] };
 export type StructureDraft = { title: string; level: StructureKind; parentId: string };
 
 // Nine catalog providers from the integrations catalog
@@ -84,7 +85,7 @@ function DocumentSection(props: { title: string; count?: number; actions?: JSX.E
 /** A table row: a record, a dependency, or a deploy target, with an optional warning chip before its end. */
 type TableRecord = StructureRecord & { warn?: string };
 
-/** The cards, decisions, facts, or docs that cite a node (or its dependencies and deploys), one row each with its status on the right; a row opens its page, and a direct link can be removed. */
+/** The cards, Rules, decisions, or docs that cite a node (or its dependencies and deploys), one row each with its status on the right; a row opens its page, and a direct link can be removed. */
 function RecordTable(props: { label: string; rows: readonly TableRecord[]; icon: JSX.Element; unlinkLabel?: string; onOpen?: (id: string) => void; onUnlink?: (id: string) => void }) {
   return <DataTable.Root rows={props.rows} getRowId={(row) => row.id} density="list">
     <DataTable.Table aria-label={props.label}>
@@ -109,9 +110,9 @@ function RecordTable(props: { label: string; rows: readonly TableRecord[]; icon:
 }
 
 const RECORD_SECTIONS = [
+  { key: "rules", kind: "rule", title: "Rules", Icon: ShieldCheck },
   { key: "cards", kind: "card", title: "Cards", Icon: FolderKanban },
   { key: "decisions", kind: "decision", title: "Decisions", Icon: Scale },
-  { key: "facts", kind: "fact", title: "Rules", Icon: ShieldCheck },
   { key: "docs", kind: "doc", title: "Docs", Icon: FileText },
 ] as const;
 
@@ -320,7 +321,7 @@ export function StructureView(props: {
   records: Readonly<Record<string, StructureRecords>>;
   /** Everything in the project, for the project's own document. */
   projectRecords: StructureRecords;
-  /** Opens a card (by slug), decision, fact, or doc listed in a node's document. */
+  /** Opens a card (by slug), decision, Rule, or doc listed in a node's document. */
   onOpenRecord?: (kind: StructureRecordKind, id: string) => void;
   loading?: boolean;
   error?: string;
@@ -342,7 +343,7 @@ export function StructureView(props: {
   /** Writes the project's name or description from its document. */
   onEditProject?: (patch: { name?: string; description?: string }) => Promise<void>;
   /**
-   * Links a card, decision, fact, or doc to a node (`linked`), or unlinks it. A decision, fact, or doc
+   * Links a card, decision, Rule, or doc to a node (`linked`), or unlinks it. A decision, Rule, or doc
    * gains or loses only this node among its contexts; a card moves under it or out of any component.
    */
   onLinkRecord?: (kind: StructureRecordKind, recordId: string, nodeId: string, linked: boolean) => Promise<void>;
@@ -517,7 +518,7 @@ export function StructureView(props: {
       editDeploys: node.level === "component" && props.onDeploysChange ? () => openDeploysDialog(node) : undefined,
       linkOptions: props.onLinkRecord ? {
         ...(node.level === "component" ? { card: candidates("cards") } : {}),
-        decision: candidates("decisions"), fact: candidates("facts"), doc: candidates("docs"),
+        rule: candidates("rules"), decision: candidates("decisions"), doc: candidates("docs"),
       } : undefined,
       link: props.onLinkRecord ? (kind, id) => write(props.onLinkRecord!(kind, id, node.id, true), "Could not link it.") : undefined,
       unlink: props.onLinkRecord ? (kind, id) => write(props.onLinkRecord!(kind, id, node.id, false), "Could not unlink it.") : undefined,

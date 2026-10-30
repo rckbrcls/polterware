@@ -27,6 +27,7 @@ import {
   Keyboard,
   Layers,
   ListOrdered,
+  Play,
   Plug,
   Plus,
   Pencil,
@@ -59,6 +60,7 @@ const PALETTE_TILES: Record<string, { tone: IconTileTone; icon: () => JSX.Elemen
   "nav.cli-reference": { tone: "identity", icon: () => <Terminal size={12} /> },
   "nav.settings": { tone: "neutral", icon: () => <Settings size={12} /> },
   "nav.app-settings": { tone: "neutral", icon: () => <Settings size={12} /> },
+  "action.start-run": { tone: "execution", icon: () => <Play size={12} /> },
   "action.open-sync": { tone: "execution", icon: () => <Activity size={12} /> },
   "action.create-node": { tone: "architecture", icon: () => <Plus size={12} /> },
   "action.connect-integration": { tone: "integration", icon: () => <Plug size={12} /> },
@@ -295,12 +297,12 @@ function PaletteResults(props: {
   });
 
   const rowClass =
-    "relative flex w-full items-center justify-between rounded-[var(--radius-item)] px-2 py-2 text-left text-[var(--color-text-secondary)] transition-colors duration-[var(--duration-fast)] data-[fluid-hover-active]:text-[var(--color-text-primary)]";
+    "relative flex w-full items-center justify-between rounded-[var(--radius-item)] px-2 py-1.5 text-left text-[var(--color-text-secondary)] transition-colors duration-[var(--duration-fast)] data-[fluid-hover-active]:text-[var(--color-text-primary)]";
 
   return (
     <div
       ref={scroller}
-      class="commander-results-scroll relative min-h-0 flex-1 overflow-y-auto pt-3 pb-1"
+      class="commander-results-scroll relative min-h-0 flex-1 overflow-y-auto pt-2 pb-1"
       {...hover.handlers}
     >
       <FluidHoverHighlight hover={hover} class="commander-result-highlight" />
@@ -311,7 +313,7 @@ function PaletteResults(props: {
           {(group, groupIndex) => {
             const headingId = `${props.listId}-group-${groupIndex}`;
             return (
-              <div class="mb-4 last:mb-0" role="group" aria-labelledby={headingId}>
+              <div class="mb-2 last:mb-0" role="group" aria-labelledby={headingId}>
                 <p
                   id={headingId}
                   class="relative m-0 px-2 py-1 text-[10px] font-medium tracking-wide text-[var(--color-text-disabled)] uppercase"

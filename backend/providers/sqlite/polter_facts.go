@@ -27,22 +27,14 @@ func (s *Store) loadPolterFacts(projectID string) ([]work.Fact, error) {
 	for i := range result {
 		result[i].Scopes = contexts[result[i].ID]
 	}
-	// Load handles and links together rather than querying once per Fact.
-	err = s.eachRow(`SELECT f.id,COALESCE(f.slug,''),COALESCE(fe.evidence_id,'')
-		FROM canon_facts f LEFT JOIN canon_fact_evidence fe ON fe.fact_id=f.id WHERE f.project_id=?`, projectID, func(rows *sql.Rows) error {
-		var id, slug, evidence string
-		if err := rows.Scan(&id, &slug, &evidence); err != nil {
+	err = s.eachRow(`SELECT id,COALESCE(slug,'') FROM canon_facts WHERE project_id=?`, projectID, func(rows *sql.Rows) error {
+		var id, slug string
+		if err := rows.Scan(&id, &slug); err != nil {
 			return err
 		}
-		i, ok := index[id]
-		if !ok {
-			return nil
+		if i, ok := index[id]; ok {
+			result[i].Slug = slug
 		} // A concurrent insert belongs to the next snapshot.
-		item := &result[i]
-		item.Slug = slug
-		if evidence != "" {
-			item.Evidence = append(item.Evidence, evidence)
-		}
 		return nil
 	})
 	if err != nil {
@@ -88,35 +80,6 @@ func applyFactOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 	if paths, ok := op.Fields["scope"].([]string); ok {
 		if err := setContextPaths(tx, projectID, op.EntityID, paths); err != nil {
 			return err
-		}
-	}
-	// Typed references (file:, commit:, url:) record their evidence before the links.
-	if records, ok := op.Fields["evidence_new"].([]map[string]string); ok {
-		for _, record := range records {
-			evidence := canon.Evidence{
-				ID: record["id"], ProjectID: projectID, Kind: record["kind"], Summary: record["summary"], Path: record["path"],
-				Source: "polter", Actor: fact.Actor, ObservedAt: timestamp, CreatedAt: timestamp, UpdatedAt: timestamp,
-			}
-			if err := canon.ValidateEvidence(evidence); err != nil {
-				return err
-			}
-			if err := upsertCanonEvidence(tx, evidence); err != nil {
-				return err
-			}
-		}
-	}
-	if evidence, ok := op.Fields["evidence"].([]string); ok {
-		if _, err := tx.Exec(`DELETE FROM canon_fact_evidence WHERE fact_id=?`, op.EntityID); err != nil {
-			return err
-		}
-		for _, id := range evidence {
-			var found string
-			if err := tx.QueryRow(`SELECT id FROM canon_evidence WHERE project_id=? AND id=?`, projectID, id).Scan(&found); err != nil {
-				return fmt.Errorf("unknown evidence %q", id)
-			}
-			if _, err := tx.Exec(`INSERT INTO canon_fact_evidence(fact_id,evidence_id,created_at) VALUES(?,?,?)`, op.EntityID, id, now); err != nil {
-				return err
-			}
 		}
 	}
 	return nil

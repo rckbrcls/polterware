@@ -1,5 +1,5 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
-import { EntityDetailHost, createPageFilters, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem, type WorkspaceCanonEntity } from "@polterware/feature-shell";
+import { EntityDetailHost, createPageFilters, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
 import {
   FilterPopover,
   ActiveFilterBar,
@@ -13,13 +13,13 @@ import {
   type TabItem,
 } from "@polterware/frontend-design-system";
 import { isTypingTarget, matchesShortcut } from "@polterware/frontend-state";
-import { CanonFactsPanel, type CanonJustifyChange } from "./canon-facts-panel";
+import { RulesPanel, type CanonJustifyChange } from "./rules-panel";
 
-/** Truth → Facts: statements about the project with their subject, scope, and evidence. */
-export function TruthFactsPage(props: {
+/** Knowledge → Rules: the constraints agents read in their brief, each with the parts of the project it holds for. */
+export function TruthRulesPage(props: {
   projectId: string;
   scopeNodes?: readonly string[];
-  loadFacts?: (projectId: string) => Promise<unknown>;
+  loadRules?: (projectId: string) => Promise<unknown>;
   tab: string;
   tabs: TabItem[];
   tabsLabel: string;
@@ -29,14 +29,12 @@ export function TruthFactsPage(props: {
   scopeCatalogNodes?: readonly ScopeNodeItem[];
   scopeEnvironments?: readonly EnvironmentItem[];
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
-  /** Canon entities, to name the subject of a rule with no contexts. */
-  entities?: readonly WorkspaceCanonEntity[];
 }) {
   const [query, setQuery] = createSignal("");
   const [busy, setBusy] = createSignal(false);
   const [createToken, setCreateToken] = createSignal(0);
 
-  // C opens the composer for a new fact, like the toolbar "+".
+  // C opens the composer for a new rule, like the toolbar "+".
   onMount(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.repeat || isTypingTarget(event.target) || !matchesShortcut("shell.create", event)) return;
@@ -104,14 +102,13 @@ export function TruthFactsPage(props: {
         onClausesChange={filters.onClausesChange}
         saved={filters.saved()}
       />
-      {/* A Fact opens in a dialog over the list, which stays in place. */}
+      {/* A Rule opens in the composer over the list, which stays in place. */}
       <PageContent class="flex min-h-0 flex-1 flex-col p-0">
-        <CanonFactsPanel
+        <RulesPanel
           projectId={props.projectId}
           scopeNodes={props.scopeNodes}
-          entities={props.entities}
           scopeCatalogNodes={props.scopeCatalogNodes}
-          loadFacts={props.loadFacts}
+          loadRules={props.loadRules}
           query={query()}
           clauses={filters.pageClauses()}
           createToken={createToken()}

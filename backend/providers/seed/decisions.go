@@ -23,7 +23,7 @@ polterware-web remains an active product repository and owns both the public Pol
 
 ### new: Product positioning and wedge
 
-Category: Project Context and Change Intelligence for AI Coding. Stack: Desktop Electron and Solid, Go core, SQLite. The wedge is the Polterware Project Model with facts, evidence and provenance, deterministic import, the Context Compiler, stable MCP reads, a narrow Drift Checker, AgentRun audit, audited MCP writes, and the CLI. Not the product: an IDP or software catalog, AI memory as positioning, the architecture canvas as the thesis, generic RAG marketing, an Operations control plane.
+Category: Project Context and Change Intelligence for AI Coding. Stack: Desktop Electron and Solid, Go core, SQLite. The wedge is the Polterware Project Model with facts, the Rules agents follow, the Context Compiler, stable MCP reads, a narrow Drift Checker, AgentRun audit, audited MCP writes, and the CLI. Not the product: an IDP or software catalog, AI memory as positioning, the architecture canvas as the thesis, generic RAG marketing, an Operations control plane.
 
 ### new: Post-wedge Cloud and enrichment boundary
 

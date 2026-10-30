@@ -46,6 +46,18 @@ func Format(doc Document) string {
 			}
 		}
 	}
+	for _, rule := range doc.Rules {
+		fmt.Fprintf(&b, "\n#### %s%s", ruleHeadingPrefix, rule.Ref)
+		if rule.Statement != "" {
+			fmt.Fprintf(&b, ": %s", rule.Statement)
+		}
+		b.WriteString("\n")
+		for _, key := range RuleMetaKeys {
+			if value, ok := rule.MetaValue(key); ok {
+				fmt.Fprintf(&b, "%s: %s\n", key, value)
+			}
+		}
+	}
 	return b.String()
 }
 

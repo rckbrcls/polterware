@@ -68,7 +68,7 @@ export function createBrowserCanvas(): PolterwareBridge["core"]["canvas"] {
       ids.add(String(node.id));
       if (!node.kind || !type.nodeKinds.includes(String(node.kind))) throw new Error(`nodes[${index}]: kind is not allowed`);
       const ref = node.ref as JsonObject | undefined;
-      if (ref && (!["card", "decision", "fact", "evidence", "node"].includes(String(ref.kind)) || !ref.id)) throw new Error(`nodes[${index}]: invalid reference`);
+      if (ref && (!["card", "decision", "fact", "node"].includes(String(ref.kind)) || !ref.id)) throw new Error(`nodes[${index}]: invalid reference`);
       if (structure.includes(String(node.kind)) && (ref?.kind !== "node" || !ref.id)) throw new Error(`nodes[${index}]: requires a ref to a structure node`);
     });
     graph.edges.forEach((edge, index) => {

@@ -20,24 +20,20 @@ func TestCompileRespectsBudget(t *testing.T) {
 	}
 }
 
-func TestCompilePreservesReasonsAndEvidence(t *testing.T) {
+func TestCompilePreservesReasons(t *testing.T) {
 	items := []Item{
 		{
 			Kind: "fact", ID: "f1", Title: "Uses Go modules", Excerpt: "module example",
-			TruthClass: "observed", Source: "import:go.mod", Path: "canon/fact/f1",
-			Reasons:  []string{ReasonImportedFact},
-			Evidence: []EvidenceRef{{ID: "ev1", Kind: "file", Summary: "go.mod", Path: "go.mod", Source: "import:go.mod"}},
+			TruthClass: "declared", Source: "polterware", Path: "canon/fact/f1",
+			Reasons: []string{ReasonProjectSample},
 		},
 	}
 	pkg := Compile(Request{ProjectID: "p1", TokenBudget: 500}, items)
 	if len(pkg.Items) != 1 {
 		t.Fatalf("expected 1 item, got %d", len(pkg.Items))
 	}
-	if len(pkg.Items[0].Reasons) != 1 || pkg.Items[0].Reasons[0] != ReasonImportedFact {
+	if len(pkg.Items[0].Reasons) != 1 || pkg.Items[0].Reasons[0] != ReasonProjectSample {
 		t.Fatalf("reasons not preserved: %#v", pkg.Items[0].Reasons)
-	}
-	if len(pkg.Items[0].Evidence) != 1 || pkg.Items[0].Evidence[0].ID != "ev1" {
-		t.Fatalf("evidence not preserved: %#v", pkg.Items[0].Evidence)
 	}
 }
 
@@ -55,17 +51,11 @@ func TestFactOutranksDoc(t *testing.T) {
 	}
 }
 
-func TestBudgetTrimsEvidenceHeavyItems(t *testing.T) {
+func TestBudgetTrimsHeavyItems(t *testing.T) {
 	heavy := Item{
-		Kind: "fact", ID: "f1", Title: "Heavy", Excerpt: stringsRepeat("a", 200),
-		TruthClass: "observed", Source: "import",
-		Reasons: []string{ReasonImportedFact},
-		Evidence: []EvidenceRef{
-			{ID: "e1", Kind: "file", Summary: stringsRepeat("s", 80), Path: "a.md"},
-			{ID: "e2", Kind: "file", Summary: stringsRepeat("s", 80), Path: "b.md"},
-			{ID: "e3", Kind: "file", Summary: stringsRepeat("s", 80), Path: "c.md"},
-			{ID: "e4", Kind: "file", Summary: stringsRepeat("s", 80), Path: "d.md"},
-		},
+		Kind: "fact", ID: "f1", Title: "Heavy", Excerpt: stringsRepeat("a", 800),
+		TruthClass: "declared", Source: "polterware",
+		Reasons: []string{ReasonProjectSample},
 	}
 	light := Item{
 		Kind: "entity", ID: "e1", Title: "API", Excerpt: "svc",
@@ -81,11 +71,11 @@ func TestBudgetTrimsEvidenceHeavyItems(t *testing.T) {
 }
 
 func TestMergeReasonsDedupes(t *testing.T) {
-	got := MergeReasons([]string{ReasonFTSHit, ReasonTitleMatch}, ReasonFTSHit, ReasonImportedFact)
+	got := MergeReasons([]string{ReasonFTSHit, ReasonTitleMatch}, ReasonFTSHit, ReasonProjectSample)
 	if len(got) != 3 {
 		t.Fatalf("expected 3 unique reasons, got %#v", got)
 	}
-	if got[0] != ReasonFTSHit || got[1] != ReasonTitleMatch || got[2] != ReasonImportedFact {
+	if got[0] != ReasonFTSHit || got[1] != ReasonTitleMatch || got[2] != ReasonProjectSample {
 		t.Fatalf("unexpected order: %#v", got)
 	}
 }

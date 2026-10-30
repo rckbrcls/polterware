@@ -25,6 +25,7 @@ export const DEFAULT_PALETTE_ITEMS: PaletteItem[] = [
   { id: "nav.app-settings", label: "Open App settings", group: "Navigation" },
   { id: "nav.platforms", label: "Open Project settings > Platforms", group: "Navigation" },
   { id: "nav.cli-reference", label: "Open App settings > CLI reference", group: "Navigation" },
+  { id: "action.start-run", label: "Start agent run", group: "Actions" },
   { id: "action.open-sync", label: "Open App settings > Local core", group: "Actions" },
   { id: "action.create-card", label: "New card", group: "Actions", shortcutId: "shell.create" },
   { id: "action.create-decision", label: "New decision", group: "Actions" },

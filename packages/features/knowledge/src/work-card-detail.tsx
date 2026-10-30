@@ -1,4 +1,4 @@
-import { For, Show, createMemo } from "solid-js";
+import { For, Show, createMemo, createSignal } from "solid-js";
 import { StatusDot,
   Check,
   DetailPanel,
@@ -30,7 +30,20 @@ export function WorkCardDetail(props: {
   onRemove?: () => void;
   /** Passes the card's next gate (shape → plan, plan → build); resolves with the refusal lines. */
   onAdvance?: (step: "contract" | "plan") => Promise<string[]>;
+  /** Marks a task open, done, or dropped. */
+  onSetTaskState?: (task: WorkspaceWorkTask, state: WorkspaceWorkTask["state"]) => Promise<void>;
 }) {
+  // The task being written, so its controls wait for the write.
+  const [savingTask, setSavingTask] = createSignal("");
+  const setTaskState = async (task: WorkspaceWorkTask, state: WorkspaceWorkTask["state"]) => {
+    if (!props.onSetTaskState || savingTask()) return;
+    setSavingTask(task.id);
+    try {
+      await props.onSetTaskState(task, state);
+    } finally {
+      setSavingTask("");
+    }
+  };
   return (
     <Show
       when={props.card}
@@ -65,7 +78,7 @@ export function WorkCardDetail(props: {
               </>
             }
             metadataActions={<>
-              <p class="pw-detail-panel__text" data-empty>Agents edit tasks, questions, and invariants with polterware apply.</p>
+              <p class="pw-detail-panel__text" data-empty>Agents add tasks, questions, and invariants with polterware apply.</p>
             </>}
             footerActions={
               <Show when={props.onRemove}>
@@ -92,15 +105,28 @@ export function WorkCardDetail(props: {
                   <For each={card().tasks}>
                     {(task) => (
                       <li
-                        class="flex items-start gap-2 text-[12.5px]"
+                        class="group flex items-start gap-2 text-[12.5px]"
                         classList={{
                           "text-[var(--color-text-secondary)]": task.state === "open",
                           "text-[var(--color-text-muted)]": task.state !== "open",
                         }}
                       >
-                        <span class="mt-0.5 shrink-0">
-                          <TaskStateIcon state={task.state} />
-                        </span>
+                        <Show
+                          when={props.onSetTaskState}
+                          fallback={<span class="mt-0.5 shrink-0"><TaskStateIcon state={task.state} /></span>}
+                        >
+                          {/* The box toggles done and open; a dropped task opens again. */}
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            class="-my-1 shrink-0"
+                            aria-label={task.state === "open" ? `Mark T${task.number} done` : `Reopen T${task.number}`}
+                            disabled={savingTask() !== ""}
+                            onClick={() => void setTaskState(task, task.state === "open" ? "done" : "open")}
+                          >
+                            <TaskStateIcon state={task.state} />
+                          </Button>
+                        </Show>
                         <span class="w-7 shrink-0 font-mono text-[11px] leading-5 text-[var(--color-text-muted)]">
                           T{task.number}
                         </span>
@@ -117,6 +143,20 @@ export function WorkCardDetail(props: {
                             </span>
                           </Show>
                         </span>
+                        <Show when={props.onSetTaskState && task.state === "open"}>
+                          <span class="invisible shrink-0 group-hover:visible group-focus-within:visible">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              class="-my-1"
+                              aria-label={`Drop T${task.number}`}
+                              disabled={savingTask() !== ""}
+                              onClick={() => void setTaskState(task, "dropped")}
+                            >
+                              <X size={14} />
+                            </Button>
+                          </span>
+                        </Show>
                       </li>
                     )}
                   </For>

@@ -11,14 +11,9 @@ import (
 func testGraph() ([]structure.Node, []Decision) {
 	nodes := []structure.Node{
 		{ID: "s", Path: "shop", Level: structure.LevelSystem, Title: "Shop", Status: structure.NodeActive,
-			Decisions:  []string{"Decision 0001"},
-			Invariants: []structure.Invariant{{Text: "Money is integer cents", State: work.InvariantActive}}},
+			Decisions: []string{"Decision 0001"}},
 		{ID: "d", ParentID: "s", Path: "shop/auth", Level: structure.LevelDomain, Title: "Auth", Status: structure.NodeActive,
-			Repo: "api", Folder: "src/auth", Decisions: []string{"decision-tokens"},
-			Invariants: []structure.Invariant{
-				{Text: "Tokens expire in 15 minutes", State: work.InvariantActive},
-				{Text: "Old rule", State: work.InvariantRemoved},
-			}},
+			Repo: "api", Folder: "src/auth", Decisions: []string{"decision-tokens"}},
 	}
 	decisions := []Decision{
 		{ID: "decision-cents", Title: "Decision 0001: Integer cents", Body: "## Decision\n\nStore cents.", Status: "accepted"},
@@ -26,6 +21,14 @@ func testGraph() ([]structure.Node, []Decision) {
 		{ID: "decision-free", Title: "Decision 0003: Free standing", Body: "Body."},
 	}
 	return nodes, decisions
+}
+
+func testRules() []work.Rule {
+	return []work.Rule{
+		{ID: "r1", Statement: "Money is integer cents", Scopes: []string{"shop"}},
+		{ID: "r2", Statement: "Tokens expire in 15 minutes", Scopes: []string{"shop/auth"}},
+		{ID: "r3", Statement: "Never log secrets"},
+	}
 }
 
 func TestGovernByCitingNodeRepo(t *testing.T) {
@@ -69,13 +72,14 @@ func TestDecisionFile(t *testing.T) {
 func TestBlockInheritsAncestors(t *testing.T) {
 	nodes, decisions := testGraph()
 	governed := Govern(nodes, decisions)
-	api := Block("api", nodes, governed["api"], decisions)
+	api := Block("api", nodes, governed["api"], decisions, testRules())
 	for _, want := range []string{
 		"- shop/auth (domain) Auth · path: src/auth",
 		"- Decision 0001: Integer cents (accepted)",
 		"- Decision 0002: Short tokens",
 		"- Money is integer cents (from shop)",
 		"- Tokens expire in 15 minutes (from shop/auth)",
+		"- Never log secrets\n",
 	} {
 		if !strings.Contains(api, want) {
 			t.Fatalf("api block missing %q:\n%s", want, api)
@@ -84,7 +88,7 @@ func TestBlockInheritsAncestors(t *testing.T) {
 	if strings.Contains(api, "Old rule") || strings.Contains(api, "Decision 0003") || strings.Contains(api, "- shop (system)") {
 		t.Fatalf("api block has foreign lines:\n%s", api)
 	}
-	root := Block("", nodes, governed[""], decisions)
+	root := Block("", nodes, governed[""], decisions, testRules())
 	if strings.Contains(root, "Tokens expire") || !strings.Contains(root, "Decision 0003: Free standing") {
 		t.Fatalf("root block:\n%s", root)
 	}
@@ -127,7 +131,12 @@ func TestBlockListsPrinciplesStructureAndTheBriefLine(t *testing.T) {
 	want := BlockBegin + `
 ## Polterware project context
 
-Generated from the Polterware project store by ` + "`polterware export`" + `, or on every change when AGENTS.md sync is on. Edits inside this block are replaced; change the source with ` + "`polterware apply`" + `. Before you work on a card, a Structure node, or a file, read ` + "`polterware brief <slug|path|file>`" + `.
+Generated from the Polterware project store by ` + "`polterware export`" + `, or on every change when AGENTS.md sync is on. Edits inside this block are replaced; change the source with ` + "`polterware apply`" + `. Before you work on a card, a Structure node, or a file, read ` + "`polterware brief <slug|path|file>`" + `; the Rules it lists, like the ones below, are binding.
+
+Rules:
+- Never log secrets
+- Money is integer cents (from shop)
+- Tokens expire in 15 minutes (from shop/auth)
 
 Principles:
 - Local first
@@ -139,15 +148,11 @@ Structure:
 Decisions:
 - Decision 0001: Integer cents (accepted)
 - Decision 0002: Short tokens
-
-Invariants:
-- Money is integer cents (from shop)
-- Tokens expire in 15 minutes (from shop/auth)
 ` + BlockEnd + "\n"
-	if got := Block("api", nodes, governed["api"], decisions); got != want {
+	if got := Block("api", nodes, governed["api"], decisions, testRules()); got != want {
 		t.Fatalf("block:\n%s\nwant:\n%s", got, want)
 	}
-	if root := Block("", nodes, governed[""], decisions); !strings.Contains(root, "Principles:\n- Local first\n") || strings.Contains(root, "- Local first (active)") {
+	if root := Block("", nodes, governed[""], decisions, nil); !strings.Contains(root, "Principles:\n- Local first\n") || strings.Contains(root, "- Local first (active)") {
 		t.Fatalf("a principle is listed once, under Principles:\n%s", root)
 	}
 }

@@ -18,6 +18,8 @@ import (
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
 	"github.com/polterware/polterware/backend/providers/dispatch/adapters"
 	"github.com/polterware/polterware/backend/providers/dispatch/sandbox"
+	"github.com/polterware/polterware/backend/providers/dispatch/skill"
+	"github.com/polterware/polterware/backend/providers/dispatch/worktree"
 )
 
 // dispatchDepsIn is dispatchDeps with the global and project routing policy
@@ -418,4 +420,85 @@ func (core *Core) Subagents(ctx context.Context, request *connect.Request[localv
 		}
 	}
 	return respond(len(problems) == 0, map[string]any{"profiles": len(profiles), "problems": problems})
+}
+
+// InitVerify writes the example .dispatch/verify.json at the root of the
+// repository that holds dir, like `polterware verify --init`.
+func (core *Core) InitVerify(ctx context.Context, request *connect.Request[localv1.InitVerifyRequest]) (*connect.Response[localv1.InitVerifyResponse], error) {
+	dir := strings.TrimSpace(request.Msg.GetDir())
+	if dir == "" {
+		return nil, invalid("a repository directory is required")
+	}
+	if root := worktree.Root(dir); root != "" {
+		dir = root
+	}
+	path := dispatch.ConfigPath(dir)
+	if _, err := os.Stat(path); err == nil {
+		return nil, invalid(path + " already exists")
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return nil, internal(err)
+	}
+	if err := os.WriteFile(path, []byte(dispatch.VerifyExample), 0o644); err != nil {
+		return nil, internal(err)
+	}
+	body, err := jsonBody(map[string]any{"wrote": path})
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&localv1.InitVerifyResponse{Ok: true, Json: body}), nil
+}
+
+// Skill installs the dispatch skill for the agent CLIs, or refreshes the
+// copies already installed, like `polterware skill install|refresh`.
+func (core *Core) Skill(ctx context.Context, request *connect.Request[localv1.SkillRequest]) (*connect.Response[localv1.SkillResponse], error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, internal(err)
+	}
+	m := request.Msg
+	out := map[string]any{}
+	switch m.GetAction() {
+	case "refresh":
+		paths, err := skill.Refresh(home)
+		if err != nil {
+			return nil, internal(err)
+		}
+		out["refreshed"] = paths
+	case "install":
+		agent := strings.TrimSpace(m.GetAgent())
+		targets := skill.Targets(home)
+		names := make([]string, 0, len(targets))
+		for name := range targets {
+			if agent == "" || agent == name {
+				names = append(names, name)
+			}
+		}
+		if len(names) == 0 {
+			return nil, invalid(fmt.Sprintf("unknown agent %q", agent))
+		}
+		slices.Sort(names)
+		installed, skipped, seen := []string{}, []string{}, map[string]bool{}
+		for _, name := range names {
+			dir := targets[name].Dir
+			if seen[dir] {
+				continue
+			}
+			seen[dir] = true
+			path, err := skill.Install(dir, m.GetForce())
+			if err != nil {
+				skipped = append(skipped, fmt.Sprintf("%s: %v", name, err))
+				continue
+			}
+			installed = append(installed, path)
+		}
+		out["installed"], out["skipped"] = installed, skipped
+	default:
+		return nil, invalid("unknown skill action: use install or refresh")
+	}
+	body, err := jsonBody(out)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&localv1.SkillResponse{Ok: true, Json: body}), nil
 }

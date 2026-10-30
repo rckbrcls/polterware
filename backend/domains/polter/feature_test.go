@@ -13,14 +13,14 @@ func featureSnapshot(card work.Card) work.Snapshot {
 		ProjectID: "p1",
 		Nodes: []structure.Node{
 			{ID: "n-core", Level: structure.LevelDomain, Path: "core", Title: "Core", Status: structure.NodeActive,
-				Decisions:  []string{"Decision 0007"},
-				Invariants: []structure.Invariant{{Text: "No network calls during scan", State: work.InvariantActive}}},
+				Decisions: []string{"Decision 0007"}},
 			{ID: "n-import", ParentID: "n-core", Level: structure.LevelComponent, Path: "core/import", Title: "Import",
 				Intent: "Deterministic import of project files and git metadata", Status: structure.NodeActive},
 			{ID: "n-auth", ParentID: "n-core", Level: structure.LevelComponent, Path: "core/auth", Title: "Auth",
 				Intent: "Bearer sessions", Status: structure.NodeActive},
 		},
 		Cards: []work.Card{card},
+		Rules: []work.Rule{{ID: "r1", Statement: "No network calls during scan", Scopes: []string{"core"}, Status: work.RuleActive}},
 	}
 }
 

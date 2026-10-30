@@ -105,7 +105,7 @@ func TestContextAndDriftPayloads(t *testing.T) {
 	pkg := contextpkg.Package{
 		Query: "sqlite", EntityID: "ent-1", TokensUsed: 40,
 		Items: []contextpkg.Item{
-			{ID: "item-1", Evidence: []contextpkg.EvidenceRef{{ID: "ev-1"}, {ID: "ev-1"}}},
+			{ID: "item-1"},
 			{ID: "item-2"},
 		},
 	}
@@ -118,7 +118,7 @@ func TestContextAndDriftPayloads(t *testing.T) {
 	}
 
 	result := drift.Result{
-		Findings: []drift.Finding{{Type: drift.TypeDependencyAdded, Severity: drift.SeverityInfo, Summary: "new dep"}},
+		Findings: []drift.Finding{{Type: drift.TypeCommitWithoutTask, Severity: drift.SeverityWarning, Summary: "bare commit"}},
 	}
 	driftStep, err := NewDriftStep("arun-1", result, time.Time{})
 	if err != nil {

@@ -52,7 +52,6 @@ func usage() {
 	fmt.Fprintf(os.Stderr, `Usage:
   polterware [-db path]                (interactive status and MCP setup; requires a terminal)
   polterware [-db path] init --name <name> [--path <root>] [--id <id>] [--json]
-  polterware [-db path] scan --project <id> [--json]
   polterware [-db path] repo list --project <id> [--json]
   polterware [-db path] repo add --project <id> --name <name> --path <dir> [--json]
   polterware [-db path] repo remove --project <id> --name <name>
@@ -67,7 +66,7 @@ func usage() {
   polterware [-db path] drift --project <id> [--entity ...] [--agent-run-id ...] [--json]
   polterware [-db path] apply <file|-> [--dry-run] [--project <id>] [--summary ...] [--rationale ...] [--agent-run-id ...]
   polterware [-db path] lint <file|dir|-> [--project <id>]   (silent on success)
-  polterware [-db path] format [structure|decisions|facts|feature]   (the Polter format core, or one topic)
+  polterware [-db path] format [structure|rules|decisions|facts|feature]   (the Polter format core, or one topic)
   polterware [-db path] query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "brief <target>" | "search <terms>" | "show <id>" | "drift" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <decision>" | "feature <slug> [step]" | "verify <slug>" | "milestones" | "roadmap" | "canvas [<name|id>]" [--scope <node>[,<node>]] [--exact] [--project <id>]
   polterware [-db path] status [--scope <node>[,<node>]] [--exact] [--project <id>]
   polterware [-db path] handoff [--card <slug>] [--note "..."] [--project <id>]
@@ -76,8 +75,8 @@ func usage() {
   polterware [-db path] feature new "<intent>" [--title "..."] [--under <node>] [--project <id>]
   polterware [-db path] feature shape <slug> | contract <slug> [--accept] | plan <slug> [--approve] [--project <id>]
   polterware [-db path] verify <slug|slug#T2> [--project <id>]   (exit 1 when a check fails)
-  polterware [-db path] inbox [<id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore] [--agent name] [--scope <node>[,<node>]] [--exact] [--project <id>]
-  polterware [-db path] scope <decision|fact|evidence|item> <id> [<node path>...] [--project <id>]   (the nodes replace its contexts; none clears them)
+  polterware [-db path] inbox [<id> decide "<answer>" | delegate | link <slug#T2|sha> | reopen | defer | ignore] [--agent name] [--scope <node>[,<node>]] [--exact] [--project <id>]
+  polterware [-db path] scope <decision|fact|rule|item> <id> [<node path>...] [--project <id>]   (the nodes replace its contexts; none clears them)
   polterware [-db path] setup [doctor] | claude [--uninstall | --enable | --disable | --skill-only] | codex [--uninstall] [--project <id>]
   polterware [-db path] hooks [list] | enable|disable <status|stop|lint|context|session|all>
   polterware [-db path] hook session-start [--label name] | session-end | lint | context | status | stop   (Claude Code hooks; JSON on stdin)

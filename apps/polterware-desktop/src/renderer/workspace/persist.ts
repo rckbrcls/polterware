@@ -369,9 +369,9 @@ export async function persistWorkCardUnder(input: { projectId: string; slug: str
   await applyPolter(input.projectId, polterCard(input.slug, null, { under: input.under }), input.change);
 }
 
-/** Replaces the contexts of a fact with Structure node ids; none clears them. */
-export async function persistFactScope(projectId: string, id: string, nodeIds: readonly string[]): Promise<void> {
-  await core().work.setScope({ projectId, kind: "fact", id, nodes: [...nodeIds] });
+/** Replaces the contexts of a Rule with Structure node ids; none makes it hold for the whole project. */
+export async function persistRuleScope(projectId: string, id: string, nodeIds: readonly string[]): Promise<void> {
+  await core().work.setScope({ projectId, kind: "rule", id, nodes: [...nodeIds] });
 }
 
 async function applyPolter(projectId: string, text: string, change: ChangeEnvelope): Promise<void> {
@@ -518,6 +518,19 @@ export async function persistFeatureLine(
 ): Promise<WorkspaceFeatureReview> {
   await applyPolter(projectId, featureLineText(slug, line), change);
   return loadFeatureReview(projectId, slug);
+}
+
+/** Mark one task open, done, or dropped: its `- [ ] T3 Title` line under the card. */
+export async function persistWorkSetTaskState(input: {
+  projectId: string;
+  slug: string;
+  number: number;
+  title: string;
+  state: "open" | "done" | "dropped";
+  change: ChangeEnvelope;
+}): Promise<void> {
+  const box = input.state === "done" ? "x" : input.state === "dropped" ? "-" : " ";
+  await applyPolter(input.projectId, `---\npolter: 1\n---\n\n## ${input.slug}\n- [${box}] T${input.number} ${oneLine(input.title)}\n`, input.change);
 }
 
 export async function persistWorkSetStage(

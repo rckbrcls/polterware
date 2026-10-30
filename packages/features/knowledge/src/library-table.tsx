@@ -1,5 +1,7 @@
 import { Show } from "solid-js";
 import { DataTable, FileText, Scale, StatusChip } from "@polterware/frontend-design-system";
+import type { ScopeNodeItem } from "@polterware/feature-shell";
+import { ContextChips } from "./context-chips";
 import type { LibraryRow } from "./library-row";
 
 function levelIcon(row: LibraryRow) {
@@ -8,6 +10,8 @@ function levelIcon(row: LibraryRow) {
 
 export function LibraryTable(props: {
   rows: LibraryRow[];
+  /** Structure nodes, to name each row's Context. */
+  nodes?: readonly ScopeNodeItem[];
   activeRowId?: string | null;
   onActivate: (row: LibraryRow) => void;
 }) {
@@ -27,9 +31,8 @@ export function LibraryTable(props: {
       <DataTable.Table aria-label="Library">
         <DataTable.Header>
           <DataTable.ColumnHeader<LibraryRow> id="title">Title</DataTable.ColumnHeader>
-          <DataTable.ColumnHeader<LibraryRow> id="levelLabel">Level</DataTable.ColumnHeader>
+          <DataTable.ColumnHeader<LibraryRow> id="context" sortable={false}>Context</DataTable.ColumnHeader>
           <DataTable.ColumnHeader<LibraryRow> id="statusLabel">Status</DataTable.ColumnHeader>
-          <DataTable.ColumnHeader<LibraryRow> id="owner">Owner</DataTable.ColumnHeader>
           <DataTable.ColumnHeader<LibraryRow> id="updatedAt">Updated</DataTable.ColumnHeader>
         </DataTable.Header>
         <DataTable.Body<LibraryRow>>
@@ -41,13 +44,12 @@ export function LibraryTable(props: {
                 iconSeed={item.id}
                 title={item.title}
               />
-              <DataTable.Cell>{item.levelLabel}</DataTable.Cell>
+              <DataTable.Cell><ContextChips ids={item.scopeNodeIds} nodes={props.nodes ?? []} /></DataTable.Cell>
               <DataTable.Cell>
                 <Show when={item.statusLabel}>
                   <StatusChip tone={item.statusTone} label={item.statusLabel} />
                 </Show>
               </DataTable.Cell>
-              <DataTable.Cell>{item.owner}</DataTable.Cell>
               <DataTable.Cell class="text-[var(--color-text-muted)]">{item.updatedAt}</DataTable.Cell>
             </DataTable.Row>
           )}

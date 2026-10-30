@@ -146,7 +146,8 @@ message EndSessionRequest { string session_id = 1; }
 message EndSessionResponse { int32 completed_runs = 1; }
 
 // InboxItem is one derived item that needs a person: a Decision (open
-// question), Drift (drift finding), or Verify (fact with no evidence).
+// question), Drift (a done task with no commit on main, or a commit on main
+// with no task), or Setup (a deploy whose provider CLI is not connected).
 message InboxItem {
   // id is the short id people type; it is stable while the item is the same.
   string id = 1;
@@ -156,22 +157,25 @@ message InboxItem {
   string title = 4;
   string detail = 5;
   repeated string options = 6;
-  // where is the card slug and task, commit, path, or fact source.
+  // where is the card slug and task, or the commit.
   string where = 7;
   string source = 8;
   // state is "open" or "deferred".
   string state = 9;
   // actions are the item's action ids, primary first: decide, delegate,
-  // defer, fix_code, update_intent, ignore.
+  // link, reopen, defer, ignore.
   repeated string actions = 10;
   reserved 11;
   reserved "scope_node_id";
   // scope_node_ids are the item's own contexts; empty when it follows its source.
   repeated string scope_node_ids = 12;
+  // details are a drift item's facts: slug, task, task_id for a done task;
+  // repo, sha, subject for a commit.
+  map<string, string> details = 13;
 }
 
-// RoutedInboxItem is an item a person handed to agents (delegate, fix_code,
-// update_intent); `polterware status` shows it until the source changes.
+// RoutedInboxItem is an item a person handed to agents (delegate);
+// `polterware status` shows it until the source changes.
 message RoutedInboxItem {
   InboxItem item = 1;
   string action = 2;
@@ -187,11 +191,9 @@ message ListInboxRequest {
   repeated string scope_nodes = 4;
 }
 
-// SetScope assigns an entity to a Structure node, or clears it when node is empty.
-// kind is "decision", "fact", "evidence", or "item" (a derived Drift/Inbox item,
-// identified by its item key). node is a Structure node id or path.
 // SetScopeRequest replaces an entity's contexts with nodes (ids or paths); an
-// empty list clears them (the whole project).
+// empty list clears them (the whole project). kind is "decision", "fact",
+// "rule", or "item" (a derived Inbox item, identified by its item key).
 message SetScopeRequest {
   string project_id = 1;
   string kind = 2;
@@ -209,8 +211,9 @@ message ListInboxResponse {
 }
 
 // ResolveInboxItem applies one action. decide writes `? question -> answer`
-// as Polter text; verify marks the fact verified; the rest record a
-// disposition.
+// as Polter text; link stores a commit-to-task link (answer is a task ref
+// slug#T2 for a commit, or a commit sha for a task); reopen opens the task
+// again; the rest record a disposition.
 message ResolveInboxItemRequest {
   string project_id = 1;
   string item_id = 2;
@@ -225,11 +228,6 @@ message ResolveInboxItemResponse {
   // ops is set for decide: the Polter operations it applied.
   repeated string ops = 3;
   repeated PolterDiagnostic diagnostics = 4;
-}
-
-message StructureInvariant {
-  string id = 1;
-  string text = 2;
 }
 
 // NodeDeployment is where one Structure node is deployed in one environment.
@@ -255,7 +253,9 @@ message StructureNode {
   string title = 6;
   string intent = 7;
   repeated string decisions = 8;
-  repeated StructureInvariant invariants = 9;
+  // invariants became Rules with the node as a context.
+  reserved 9;
+  reserved "invariants";
   string status = 10;
   int32 child_count = 11;
   int32 feature_count = 12;
@@ -571,7 +571,29 @@ message ReorderMilestonesRequest {
 }
 message ReorderMilestonesResponse { repeated Milestone milestones = 1; }
 
+// Rule is a short imperative constraint agents read before they work.
+// scope_node_ids are the Structure nodes it applies to (and every node below
+// them); none is the whole project.
+message Rule {
+  string id = 1;
+  string slug = 2;
+  string statement = 3;
+  repeated string scope_node_ids = 4;
+  // scope_paths are the same nodes as paths, sorted.
+  repeated string scope_paths = 5;
+}
+
+message ListRulesRequest {
+  string project_id = 1;
+  // scope_nodes keeps the Rules with a context inside them, plus the
+  // project-wide ones.
+  repeated string scope_nodes = 2;
+  bool scope_exact = 3;
+}
+message ListRulesResponse { repeated Rule rules = 1; }
+
 service WorkService {
+  rpc ListRules(ListRulesRequest) returns (ListRulesResponse);
   rpc ListWorkCards(ListWorkCardsRequest) returns (ListWorkCardsResponse);
   rpc ListStructure(ListStructureRequest) returns (ListStructureResponse);
   rpc ListStructureHistory(ListStructureHistoryRequest) returns (ListStructureHistoryResponse);

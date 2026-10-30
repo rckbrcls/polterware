@@ -61,7 +61,7 @@ func AddProjectRepo(store *storepkg.Store, projectID, name, path string) (projec
 	return repo, nil
 }
 
-// RemoveProjectRepo deletes one named checkout. Evidence already written stays.
+// RemoveProjectRepo deletes one named checkout.
 func RemoveProjectRepo(store *storepkg.Store, projectID, name string) error {
 	if projectID == "" || name == "" {
 		return fmt.Errorf("project id and repository name are required")

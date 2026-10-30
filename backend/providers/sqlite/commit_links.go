@@ -10,43 +10,21 @@ import (
 	"github.com/polterware/polterware/backend/platform/ids"
 )
 
-// ReplaceCommitLinks deletes every link for one commit evidence row and writes
-// the replacement set. Commits outside the current scan window are left alone.
-func (s *Store) ReplaceCommitLinks(projectID, evidenceID string, links []work.CommitLink, now time.Time) error {
-	tx, err := s.DB.Begin()
-	if err != nil {
-		return err
+// InsertCommitLink stores a link a person made between one commit and one
+// task. Links cited in commit subjects are derived when Drift runs.
+func (s *Store) InsertCommitLink(link work.CommitLink, now time.Time) error {
+	id := link.ID
+	if id == "" {
+		id = ids.NewULID()
 	}
-	defer func() { _ = tx.Rollback() }()
-	if _, err := tx.Exec(`DELETE FROM work_commit_links WHERE project_id=? AND evidence_id=?`, projectID, evidenceID); err != nil {
-		return err
-	}
-	stamp := now.UTC().Format(time.RFC3339)
-	seen := map[string]bool{}
-	for _, link := range links {
-		if link.TaskID == "" || (link.Method != work.LinkExplicit && link.Method != work.LinkSuggested) {
-			continue
-		}
-		key := link.TaskID + "\x00" + link.Method
-		if seen[key] {
-			continue
-		}
-		seen[key] = true
-		id := link.ID
-		if id == "" {
-			id = ids.NewULID()
-		}
-		if _, err := tx.Exec(`INSERT INTO work_commit_links(id,project_id,evidence_id,task_id,method,created_at) VALUES(?,?,?,?,?,?)`,
-			id, projectID, evidenceID, link.TaskID, link.Method, stamp); err != nil {
-			return err
-		}
-	}
-	return tx.Commit()
+	_, err := s.DB.Exec(`INSERT OR IGNORE INTO work_commit_links(id,project_id,repo,sha,task_id,created_at) VALUES(?,?,?,?,?,?)`,
+		id, link.ProjectID, link.Repo, link.SHA, link.TaskID, now.UTC().Format(time.RFC3339))
+	return err
 }
 
-// ListCommitLinks returns every commit-to-task link for a project.
+// ListCommitLinks returns every stored commit-to-task link for a project.
 func (s *Store) ListCommitLinks(projectID string) ([]work.CommitLink, error) {
-	rows, err := s.DB.Query(`SELECT id, project_id, evidence_id, task_id, method, created_at
+	rows, err := s.DB.Query(`SELECT id, project_id, repo, sha, task_id, created_at
 		FROM work_commit_links WHERE project_id=? ORDER BY created_at, id`, projectID)
 	if err != nil {
 		return nil, err
@@ -56,43 +34,13 @@ func (s *Store) ListCommitLinks(projectID string) ([]work.CommitLink, error) {
 	for rows.Next() {
 		var link work.CommitLink
 		var created string
-		if err := rows.Scan(&link.ID, &link.ProjectID, &link.EvidenceID, &link.TaskID, &link.Method, &created); err != nil {
+		if err := rows.Scan(&link.ID, &link.ProjectID, &link.Repo, &link.SHA, &link.TaskID, &created); err != nil {
 			return nil, err
 		}
 		link.CreatedAt, _ = time.Parse(time.RFC3339, created)
 		out = append(out, link)
 	}
 	return out, rows.Err()
-}
-
-// SearchWorkTasks returns task ids ranked by BM25 against the work full-text
-// index. The caller keeps at most one as a suggestion.
-func (s *Store) SearchWorkTasks(projectID, subject string, limit int) ([]string, error) {
-	if limit <= 0 {
-		limit = 5
-	}
-	// FTS5 treats "-" as a column filter, so a subject like "zzzz-unrelated-token"
-	// has to be split into words before the query is built.
-	query := sanitizeFTSQuery(strings.ReplaceAll(subject, "-", " "))
-	if query == "" {
-		return nil, nil
-	}
-	rows, err := s.DB.Query(`SELECT task_id FROM work_fts
-		WHERE work_fts MATCH ? AND project_id=?
-		ORDER BY bm25(work_fts) LIMIT ?`, query, projectID, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var ids []string
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-	return ids, rows.Err()
 }
 
 func reindexWorkCardFTS(tx *sql.Tx, cardID string) error {

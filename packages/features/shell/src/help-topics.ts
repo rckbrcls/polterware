@@ -46,7 +46,7 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     body: [
       {
         icon: Bot,
-        text: "Polterware is Project Context & Change Intelligence for AI Coding. It gives every coding agent the same evidence-backed understanding of your project — and flags when their changes drift from your architecture, decisions, or specs.",
+        text: "Polterware is Project Context & Change Intelligence for AI Coding. It gives every coding agent the same understanding of your project, with the Rules they must follow, and flags commits that drift from the work they claim.",
       },
       {
         icon: Layers,

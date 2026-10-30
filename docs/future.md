@@ -28,10 +28,10 @@ Category: **Project Context & Change Intelligence for AI Coding.** Polterware ke
 
 ## Local
 
-1. **Manual Git verification** (never run end to end). Session: `status` prints the branch; outside a work tree it still runs; `delivered` prints only when the stored stage is `delivered` and `HEAD` is an ancestor of local `main`/`master`; `handoff` compares `touched:` and `branch:` with the local diff. Import: a scan writes one `git:HEAD` row plus up to 20 `git:commit` rows, re-scan updates HEAD, a non-work-tree scan still succeeds, and `polterware repo add` adds a separate `git:<name>:HEAD` row.
+1. **Manual Git verification** (never run end to end). Session: `status` prints the branch; outside a work tree it still runs; `delivered` prints only when the stored stage is `delivered` and `HEAD` is an ancestor of local `main`/`master`; `handoff` compares `touched:` and `branch:` with the local diff.
 2. **Two-week continuity measure.** How often context had to be re-explained, whether the agent started from the right point, whether the operator opened `status` unprompted.
 3. **Broader deterministic import and scan reconcile.** More source families; prune on re-scan so drift stays honest.
-4. **Provider observations (read path).** Connected CLIs/APIs become evidence, not a control plane.
+4. **Provider observations (read path).** Connected CLIs/APIs become facts, not a control plane.
 5. **Architecture as Code export.** Versionable YAML/JSON/Markdown projection of the relevant model. No proprietary DSL.
 6. **Context profiles and secret filtering.** Intent-shaped packages; strip secrets before MCP or Desktop packages.
 7. **Richer Drift UI.** Findings open the entity, decision, or fact in the shared DetailPanel.
@@ -41,7 +41,8 @@ Category: **Project Context & Change Intelligence for AI Coding.** Polterware ke
 11. **Engineering packs** that generate Inbox *questions*, never rules.
 12. **Similarity beyond word sets.** Add an FTS5 index when a ranked-search consumer needs it. Add local embeddings (`sqlite-vec`, small local model, opt-in download) only if measured misses are material.
 13. **Weak spots to close:** Structure timeline by commit is weak for rebased history (no per-batch commit stamp); automatic challenge from a decision review trigger; decision status chips on Canvas nodes; importing projected Decision files.
-14. **Scope exclusion in filters.** Scope pills are inclusion-only because reads take one `scope_nodes` union; `is not` on System / Domain / Component / Environment needs an `exclude_scope_nodes` on the scoped reads. Polterware Notes search filters are inclusion-only for the same reason (the core takes inclusion lists and caps results).
+14. **Rules in a run's Verify.** An optional check of a dispatch run's diff against the Rules that hold for the nodes it touches, reported beside the project checks; advisory until a Decision makes it a gate.
+15. **Scope exclusion in filters.** Scope pills are inclusion-only because reads take one `scope_nodes` union; `is not` on System / Domain / Component / Environment needs an `exclude_scope_nodes` on the scoped reads. Polterware Notes search filters are inclusion-only for the same reason (the core takes inclusion lists and caps results).
 
 ## Cloud (needs a Decision before any code)
 

@@ -3,21 +3,18 @@ package drift
 import "fmt"
 
 func checkCommitTasks(tasks []DoneTask, links []TaskCommit, window []WindowCommit) []Finding {
-	explicitOnMain := map[string]bool{}
-	explicitEvidence := map[string]bool{}
+	onMain := map[string]bool{}
+	linked := map[string]bool{}
 	for _, link := range links {
-		if link.Method != LinkMethodExplicit {
-			continue
-		}
-		explicitEvidence[link.EvidenceID] = true
+		linked[CommitKey(link.Repo, link.SHA)] = true
 		if link.OnMain {
-			explicitOnMain[link.TaskID] = true
+			onMain[link.TaskID] = true
 		}
 	}
 
 	findings := make([]Finding, 0)
 	for _, task := range tasks {
-		if explicitOnMain[task.ID] {
+		if onMain[task.ID] {
 			continue
 		}
 		findings = append(findings, Finding{
@@ -26,22 +23,25 @@ func checkCommitTasks(tasks []DoneTask, links []TaskCommit, window []WindowCommi
 			Summary:    fmt.Sprintf("task %s T%d is done with no commit on main", task.Slug, task.Number),
 			SubjectIDs: []string{task.ID},
 			Details: map[string]string{
-				"slug": task.Slug,
-				"task": fmt.Sprintf("T%d", task.Number),
+				"slug":    task.Slug,
+				"task":    fmt.Sprintf("T%d", task.Number),
+				"task_id": task.ID,
+				"title":   task.Title,
 			},
 		})
 	}
 	for _, commit := range window {
-		if !commit.OnMain || explicitEvidence[commit.EvidenceID] {
+		key := CommitKey(commit.Repo, commit.SHA)
+		if !commit.OnMain || linked[key] {
 			continue
 		}
 		findings = append(findings, Finding{
-			Type:        TypeCommitWithoutTask,
-			Severity:    SeverityWarning,
-			Summary:     fmt.Sprintf("commit %q is on main with no task", commit.Subject),
-			SubjectIDs:  []string{commit.EvidenceID},
-			EvidenceIDs: []string{commit.EvidenceID},
+			Type:       TypeCommitWithoutTask,
+			Severity:   SeverityWarning,
+			Summary:    fmt.Sprintf("commit %q is on main with no task", commit.Subject),
+			SubjectIDs: []string{key},
 			Details: map[string]string{
+				"repo":    commit.Repo,
 				"sha":     commit.SHA,
 				"subject": commit.Subject,
 			},

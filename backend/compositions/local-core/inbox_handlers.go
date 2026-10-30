@@ -114,5 +114,6 @@ func inboxItemProto(item inbox.Item) *localv1.InboxItem {
 		Source:   item.Source,
 		State:    item.State,
 		Actions:  item.Actions,
+		Details:  item.Details,
 	}
 }

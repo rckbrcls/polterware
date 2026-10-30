@@ -1,32 +1,39 @@
 import { createEffect, createSignal, on, type JSX } from "solid-js";
 import { Composer, type ComposerProperty } from "@polterware/frontend-design-system";
 import type { ScopeNodeItem } from "@polterware/feature-shell";
-import type { CanonFactDraft, CanonFactTruthClass } from "./canon-facts-types";
 import { contextProperty } from "./composers";
 
+/** A Rule as the composer edits it: the statement and the Structure nodes it holds for. */
+export type RuleDraft = {
+  /** The Rule's handle (slug, or id when it has none); empty creates a Rule. */
+  ref?: string;
+  statement: string;
+  /** Structure nodes the Rule holds for; none is the whole project. */
+  scopeNodeIds: string[];
+  /** Optional reason, recorded as the change rationale. */
+  why?: string;
+};
+
 /**
- * Adds or edits a rule in the shared composer: the statement first, then the parts of the project it
- * is about (its contexts). A rule has no kind to pick: a new one is declared, and an edit keeps how
- * it is known and the canon subject it already had (the CLI and MCP still set it).
+ * Adds or edits a Rule in the shared composer: the statement first, then the parts of the project it
+ * holds for (its contexts). Agents read every Rule that holds for their target in the brief.
  */
-export function CanonFactFormDialog(props: {
+export function RuleFormDialog(props: {
   open: boolean;
   mode: "create" | "edit";
-  initial?: CanonFactDraft;
+  initial?: RuleDraft;
   onClose: () => void;
   /** Resolves false when the write failed, so the composer keeps the draft. */
-  onSubmit: (draft: CanonFactDraft) => Promise<boolean>;
-  /** Structure nodes a rule can be about; none leaves the Context property out. */
+  onSubmit: (draft: RuleDraft) => Promise<boolean>;
+  /** Structure nodes a Rule can hold for; none leaves the Context property out. */
   scopeNodes?: readonly ScopeNodeItem[];
-  /** A quiet action at the start of the footer, such as Link evidence. */
+  /** A quiet action at the start of the footer, such as Remove rule. */
   footerAction?: JSX.Element;
 }) {
-  const [truthClass, setTruthClass] = createSignal<CanonFactTruthClass>("declared");
   const [contexts, setContexts] = createSignal<string[]>([]);
 
   createEffect(on(() => props.open, (open) => {
     if (!open) return;
-    setTruthClass(props.initial?.truthClass ?? "declared");
     setContexts([...(props.initial?.scopeNodeIds ?? [])]);
   }));
 
@@ -48,10 +55,8 @@ export function CanonFactFormDialog(props: {
       submitLabel={props.mode === "edit" ? "Save rule" : "Create rule"}
       onSubmit={(draft) =>
         props.onSubmit({
-          id: props.initial?.id,
+          ref: props.initial?.ref,
           statement: draft.title,
-          truthClass: truthClass(),
-          entityId: props.initial?.entityId ?? "",
           scopeNodeIds: contexts(),
           why: draft.why,
         })}

@@ -22,7 +22,7 @@ const (
 )
 
 // CanvasRef cites another project entity.
-// kind is "card", "decision", "fact", "evidence", or "node" (a structure node).
+// kind is "card", "decision", "fact", "rule", or "node" (a structure node).
 type CanvasRef struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Kind          string                 `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`

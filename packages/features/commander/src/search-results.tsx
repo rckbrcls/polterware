@@ -37,10 +37,10 @@ export function knowledgeHitsFromSearch(hits: Array<{
     const title = hit.item?.title;
     if (!id || !title) return [];
     const tags = hit.item?.tags ?? [];
-    const kind = hit.item?.kind === "decision" ? "decision" : "evidence";
+    const kind = hit.item?.kind === "decision" ? "decision" : "doc";
     const { section, tab, category } = kind === "decision"
       ? { section: "truth", tab: "decisions", category: "Knowledge" }
-      : { section: "truth", tab: "evidence", category: "Knowledge" };
+      : { section: "truth", tab: "docs", category: "Knowledge" };
     const entityKind = kind;
     return [{
       id: `knowledge-${id}`,

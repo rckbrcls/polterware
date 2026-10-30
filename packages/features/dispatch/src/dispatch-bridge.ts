@@ -32,8 +32,24 @@ export type DispatchBridge = {
   cancelRun: (payload: { id: string }) => Promise<unknown>;
   /** Runs the project checks in the run's worktree; `ok` is false when they fail. */
   verifyRun?: (payload: { id: string }) => Promise<unknown>;
-  /** Merges a verified run's branch; `ok` is false when the merge reports a failure. */
-  mergeRun?: (payload: { id: string }) => Promise<unknown>;
+  /** Merges a verified run's branch; `ok` is false when the merge reports a failure. `noVerify` merges without the checks, `force` past a dirty base. */
+  mergeRun?: (payload: { id: string; force?: boolean; noVerify?: boolean }) => Promise<unknown>;
+  /** Removes a finished run's worktree and branch; `force` drops uncommitted changes. */
+  cleanRun?: (payload: { id: string; force?: boolean }) => Promise<unknown>;
+  /** Saves what an orphaned or interrupted run left in its worktree. */
+  recoverRun?: (payload: { id: string }) => Promise<unknown>;
+  /** Dry-runs the router: the candidates a run with these options would try, in order. */
+  route?: (payload: { tier?: string; agent?: string; provider?: string; model?: string; effort?: string; priority?: string; relax?: boolean; readOnly?: boolean; dir?: string; profile?: string }) => Promise<unknown>;
+  /** Predicts the tier a prompt needs from the learned classifier; `resetModel` forgets what it learned. */
+  classify?: (payload: { tier?: string; prompt?: string; dir?: string; readOnly?: boolean; explain?: boolean; resetModel?: boolean }) => Promise<unknown>;
+  /** Reads or edits the routing policy (`get`, `set`, `allow-add|rm`, `deny-add|rm`), global or the project's. */
+  config?: (payload: { action: string; dir?: string; project?: boolean; key?: string; values?: string[] }) => Promise<unknown>;
+  /** Lists, checks, or writes the example subagent profiles (`list`, `check`, `init`). */
+  subagents?: (payload: { action: string; dir?: string }) => Promise<unknown>;
+  /** Writes the example `.dispatch/verify.json` at the root of the repository that holds `dir`. */
+  initVerify?: (payload: { dir: string }) => Promise<unknown>;
+  /** Installs the dispatch skill for the agent CLIs, or refreshes the installed copies. */
+  skill?: (payload: { action: "install" | "refresh"; agent?: string; force?: boolean }) => Promise<unknown>;
   result: (payload: { id: string; section?: string; offset?: number; limit?: number }) => Promise<unknown>;
   listWorktrees: (payload: { projectId: string }) => Promise<unknown>;
   listQuota: (payload?: { agent?: string; since?: string }) => Promise<unknown>;
@@ -94,6 +110,14 @@ export function dispatchBridge(): DispatchBridge | undefined {
     cancelRun: d.cancelRun,
     verifyRun: d.verifyRun,
     mergeRun: d.mergeRun,
+    cleanRun: d.cleanRun,
+    recoverRun: d.recoverRun,
+    route: d.route,
+    classify: d.classify,
+    config: d.config,
+    subagents: d.subagents,
+    initVerify: d.initVerify,
+    skill: d.skill,
     result: d.result,
     listWorktrees: d.listWorktrees,
     listQuota: d.listQuota,
@@ -522,6 +546,33 @@ export function worktreeDisplayStatus(runStatus: string, worktreeStatus: string)
 export function formatUsedPercent(usedPercent: number | undefined): string {
   if (usedPercent === undefined || !Number.isFinite(usedPercent)) return "unknown";
   return `${usedPercent.toFixed(1)}%`;
+}
+
+/** The body of a dispatch op response (`{ ok, json }`), parsed; an unreadable body is empty. */
+export function dispatchOpBody(raw: unknown): { ok: boolean; body: Record<string, unknown> } {
+  const record = asRecord(raw);
+  let body: Record<string, unknown> = {};
+  try {
+    body = asRecord(JSON.parse(asString(record.json) || "{}"));
+  } catch {
+    body = {};
+  }
+  return { ok: record.ok !== false, body };
+}
+
+/** The run's other ops in its header menu: merge without the checks, recover an interrupted run, remove its worktree. */
+export function runMoreActions(
+  run: Pick<DispatchRunView, "status" | "mergedAt">,
+  hasWorktree: boolean,
+): ("merge-anyway" | "recover" | "clean")[] {
+  const status = run.status.toLowerCase();
+  if (!hasWorktree || status === "pending" || status === "running" || run.mergedAt.trim()) return [];
+  const ended = status === "failed" || status === "cancelled" || status === "timed_out" || status === "orphaned";
+  return [
+    ...(status === "completed" || status === "failed" ? ["merge-anyway" as const] : []),
+    ...(ended ? ["recover" as const] : []),
+    "clean" as const,
+  ];
 }
 
 /** What the run header offers next: Verify a finished run that is not verified, Merge a verified one. */

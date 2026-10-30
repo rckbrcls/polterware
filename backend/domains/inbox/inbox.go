@@ -1,7 +1,7 @@
 // Package inbox derives the items that need a person from data the project
-// already has: open questions (Decision), drift findings (Drift: the code
-// disagrees with a rule or a decision), and deploy links whose provider CLI is
-// not connected (Setup). Items are never stored; only a person's disposition
+// already has: open questions (Decision), drift findings (Drift: a done task
+// with no commit on main, or a commit on main with no task), and deploy links
+// whose provider CLI is not connected (Setup). Items are never stored; only a person's disposition
 // is, keyed by the item's stable key.
 package inbox
 
@@ -25,27 +25,40 @@ const (
 	StateOpen     = "open"
 	StateDeferred = "deferred"
 
-	ActionDecide       = "decide"
-	ActionDelegate     = "delegate"
-	ActionDefer        = "defer"
-	ActionFixCode      = "fix_code"
-	ActionUpdateIntent = "update_intent"
-	ActionIgnore       = "ignore"
+	ActionDecide   = "decide"
+	ActionDelegate = "delegate"
+	ActionDefer    = "defer"
+	// ActionLink links a commit to a task: a task ref (slug#T2) for a commit
+	// with no task, or a commit sha for a done task with none.
+	ActionLink = "link"
+	// ActionReopen opens a done task again.
+	ActionReopen = "reopen"
+	ActionIgnore = "ignore"
 )
 
 // kindOrder sorts items of equal blocking by kind.
 var kindOrder = map[string]int{KindDecision: 0, KindDrift: 1, KindSetup: 2}
 
-// KindActions lists the actions each kind accepts, primary first.
+// KindActions lists the actions each kind accepts, primary first. A drift
+// item takes the ones its finding allows (FindingActions).
 var KindActions = map[string][]string{
 	KindDecision: {ActionDecide, ActionDelegate, ActionDefer},
-	KindDrift:    {ActionFixCode, ActionUpdateIntent, ActionIgnore},
+	KindDrift:    {ActionLink, ActionReopen, ActionDefer, ActionIgnore},
 	KindSetup:    {ActionDefer, ActionIgnore},
 }
 
-// ValidAction reports whether kind accepts action.
-func ValidAction(kind, action string) bool {
-	return slices.Contains(KindActions[kind], action)
+// FindingActions lists the actions of a drift item, primary first: a done
+// task links a commit or opens again; a commit links a task.
+func FindingActions(findingType string) []string {
+	if findingType == drift.TypeTaskDoneUnmatched {
+		return []string{ActionLink, ActionReopen, ActionDefer, ActionIgnore}
+	}
+	return []string{ActionLink, ActionDefer, ActionIgnore}
+}
+
+// ValidAction reports whether the item accepts action.
+func ValidAction(item Item, action string) bool {
+	return slices.Contains(item.Actions, action)
 }
 
 // Recorded reports whether action is stored as a disposition. Decide writes
@@ -57,7 +70,7 @@ func Recorded(action string) bool {
 // Routed reports whether a disposition hands the item to agents through
 // `polterware status` instead of leaving it for a person.
 func Routed(action string) bool {
-	return action == ActionDelegate || action == ActionFixCode || action == ActionUpdateIntent
+	return action == ActionDelegate
 }
 
 // Question is an open question on an active card.
@@ -117,6 +130,9 @@ type Item struct {
 	// CardSlug and QuestionText let Decide write the answer.
 	CardSlug     string
 	QuestionText string
+	// Details are the drift finding's details (slug, task, task_id, repo, sha,
+	// subject), which Link and Reopen act on.
+	Details map[string]string
 }
 
 // RoutedItem is an item a person handed to agents, with the action taken.
@@ -176,16 +192,12 @@ func ShortID(key string) string {
 	return "i" + hex.EncodeToString(sum[:4])
 }
 
-// DriftKey fingerprints a finding by type, subjects, evidence, and details, so
-// a changed finding is a new item and an ignored one stays ignored only while
-// it is the same.
+// DriftKey fingerprints a finding by type, subjects, and details, so a
+// changed finding is a new item and an ignored one stays ignored only while it
+// is the same.
 func DriftKey(finding drift.Finding) string {
 	parts := append([]string{}, finding.SubjectIDs...)
 	sort.Strings(parts)
-	evidence := append([]string{}, finding.EvidenceIDs...)
-	sort.Strings(evidence)
-	parts = append(parts, "|")
-	parts = append(parts, evidence...)
 	parts = append(parts, "|")
 	keys := make([]string, 0, len(finding.Details))
 	for key := range finding.Details {
@@ -230,7 +242,7 @@ func providerConnected(provider, environmentID string, connections []ProviderCon
 }
 
 // Derive builds the Inbox from its sources and the latest disposition per key.
-// Info drift is left out: a scan clears it, not a person. deploys are the
+// Info drift is left out: it needs no person. deploys are the
 // links whose provider CLI is not connected.
 func Derive(questions []Question, findings []drift.Finding, deploys []DeployLink, dispositions []Disposition) Result {
 	latest := map[string]Disposition{}
@@ -257,6 +269,7 @@ func Derive(questions []Question, findings []drift.Finding, deploys []DeployLink
 		items = append(items, Item{
 			ID: ShortID(key), Key: key, Kind: KindDrift, Blocking: f.Severity == drift.SeverityConflict,
 			Title: f.Summary, Detail: f.Type, Where: driftWhere(f), Source: "system",
+			Actions: FindingActions(f.Type), Details: f.Details,
 		})
 	}
 	for _, link := range deploys {
@@ -279,7 +292,9 @@ func Derive(questions []Question, findings []drift.Finding, deploys []DeployLink
 	var result Result
 	for _, item := range items {
 		item.State = StateOpen
-		item.Actions = KindActions[item.Kind]
+		if item.Actions == nil {
+			item.Actions = KindActions[item.Kind]
+		}
 		if d, ok := latest[item.Key]; ok {
 			switch {
 			case d.Action == ActionDefer:
@@ -316,15 +331,11 @@ func driftWhere(f drift.Finding) string {
 			sha = sha[:7]
 		}
 		return sha
-	case f.Details["path"] != "":
-		return f.Details["path"]
-	case f.Details["source"] != "":
-		return f.Details["source"]
 	}
 	return ""
 }
 
-// ActionLabel is the CLI spelling of an action ("fix_code" → "fix-code").
+// ActionLabel is the CLI spelling of an action ("update_intent" → "update-intent").
 func ActionLabel(action string) string {
 	return strings.ReplaceAll(action, "_", "-")
 }
@@ -337,5 +348,5 @@ func ParseAction(text string) (string, error) {
 			return action, nil
 		}
 	}
-	return "", fmt.Errorf("unknown action %q: use decide, delegate, defer, fix-code, update-intent, or ignore", strings.TrimSpace(text))
+	return "", fmt.Errorf("unknown action %q: use decide, delegate, defer, link, reopen, or ignore", strings.TrimSpace(text))
 }

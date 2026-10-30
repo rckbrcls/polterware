@@ -2,6 +2,7 @@ package polter
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/polterware/polterware/backend/domains/structure"
@@ -9,7 +10,7 @@ import (
 )
 
 // EncodeStructure renders the graph, or one node and its children, as plain text.
-func EncodeStructure(projectName string, rows []structure.Row, cards []work.Card, focus string) string {
+func EncodeStructure(projectName string, rows []structure.Row, cards []work.Card, rules []work.Rule, focus string) string {
 	if projectName == "" {
 		projectName = "project"
 	}
@@ -28,7 +29,7 @@ func EncodeStructure(projectName string, rows []structure.Row, cards []work.Card
 		if !ok {
 			return fmt.Sprintf("unknown node %q: list the graph with polterware structure\n", focus)
 		}
-		writeStructureRow(&b, projectName, row, rows, cards)
+		writeStructureRow(&b, projectName, row, rows, cards, rules)
 		return b.String()
 	}
 	fmt.Fprintf(&b, "%s\n", projectName)
@@ -46,7 +47,7 @@ func EncodeStructure(projectName string, rows []structure.Row, cards []work.Card
 	return b.String()
 }
 
-func writeStructureRow(b *strings.Builder, projectName string, row structure.Row, rows []structure.Row, cards []work.Card) {
+func writeStructureRow(b *strings.Builder, projectName string, row structure.Row, rows []structure.Row, cards []work.Card, rules []work.Rule) {
 	fmt.Fprintf(b, "%s\n", structureBreadcrumb(projectName, row, rows))
 	fmt.Fprintf(b, "%s  %s  %s\n", row.Path, row.Level, statusLabel(row.Derived))
 	if line := kindTechLine(&row.Node); line != "" {
@@ -55,16 +56,16 @@ func writeStructureRow(b *strings.Builder, projectName string, row structure.Row
 	if row.Intent != "" {
 		fmt.Fprintf(b, "Intent: %s\n", row.Intent)
 	}
-	wroteContract := false
-	for _, inv := range row.Invariants {
-		if inv.State == work.InvariantRemoved {
+	wroteRules := false
+	for _, rule := range rules {
+		if !slices.Contains(rule.Scopes, row.Path) {
 			continue
 		}
-		if !wroteContract {
-			b.WriteString("Contract:\n")
-			wroteContract = true
+		if !wroteRules {
+			b.WriteString("Rules:\n")
+			wroteRules = true
 		}
-		fmt.Fprintf(b, "! %s\n", inv.Text)
+		fmt.Fprintf(b, "- %s\n", rule.Statement)
 	}
 	if len(row.Decisions) > 0 {
 		fmt.Fprintf(b, "Decisions: %s\n", strings.Join(row.Decisions, ", "))

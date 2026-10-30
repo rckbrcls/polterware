@@ -50,7 +50,8 @@ func AllowedParent(level, parentLevel string) bool {
 	return level == LevelComponent && parentLevel == LevelSystem
 }
 
-// Node is one Structure node. Invariants are its contract.
+// Node is one Structure node. The Rules that hold for it live apart, with the
+// node among their contexts.
 type Node struct {
 	ID        string
 	ProjectID string
@@ -80,16 +81,6 @@ type Node struct {
 	// Both empty means it is not migrating.
 	MigrationFrom string
 	MigrationTo   string
-	Invariants    []Invariant
-}
-
-// Invariant is one contract line on a node. Removed lines stay in the table.
-type Invariant struct {
-	ID       string
-	NodeID   string
-	Text     string
-	State    string
-	Position int
 }
 
 // Feature is a Work card reduced to what status derivation needs.

@@ -90,7 +90,7 @@ func seedKnowledge(store *storepkg.Store) error {
 		},
 		principleItem("decision-principle-local-first", "Local-first truth", "Project state must stay useful on one machine.", "Project state must remain useful on one machine without requiring a hosted account.", docsUpdated.Add(-48*time.Hour)),
 		principleItem("decision-principle-honest-boundaries", "Honest product boundaries", "Never describe planned work as shipped.", "Do not describe planned capabilities as shipped.", docsUpdated.Add(-48*time.Hour)),
-		principleItem("decision-principle-provenance", "Provenance over inference", "Observed facts win over inferred ones.", "Declared and observed facts take precedence over inferred knowledge.", docsUpdated.Add(-48*time.Hour)),
+		principleItem("decision-principle-provenance", "Provenance over inference", "Declared facts win over inferred ones.", "Declared and verified facts take precedence over inferred knowledge.", docsUpdated.Add(-48*time.Hour)),
 	}
 	for _, item := range items {
 		if err := store.SaveKnowledge(item); err != nil {

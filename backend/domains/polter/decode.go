@@ -49,6 +49,7 @@ type Document struct {
 	Cards     []CardNode
 	Decisions []DecisionNode
 	Facts     []FactNode
+	Rules     []RuleNode
 }
 
 // DecisionNode is one `### ref: Title` block: a Decision lifecycle change. Ref is
@@ -234,6 +235,8 @@ type decoder struct {
 	decision   *DecisionNode
 	fact       *FactNode
 	factRefs   map[string]int
+	rule       *RuleNode
+	ruleRefs   map[string]int
 	decRefs    map[string]int
 	inMeta     bool
 	inHandoff  bool
@@ -253,6 +256,7 @@ func (d *decoder) run() {
 	d.pathLines = map[string]int{}
 	d.decRefs = map[string]int{}
 	d.factRefs = map[string]int{}
+	d.ruleRefs = map[string]int{}
 	start := d.frontmatter()
 	if !d.sawVersion {
 		d.errorf(1, `missing version header: start with "---", "polter: 1", "---"`)
@@ -264,6 +268,7 @@ func (d *decoder) run() {
 	d.closeNode()
 	d.closeDecision()
 	d.closeFact()
+	d.closeRule()
 }
 
 // frontmatter consumes the leading --- block and returns the next line index.
@@ -321,7 +326,12 @@ func (d *decoder) line(n int, raw string) {
 	switch {
 	case strings.HasPrefix(trimmed, "#### "):
 		d.endHandoff()
-		d.factHeading(n, strings.TrimSpace(trimmed[5:]))
+		body := strings.TrimSpace(trimmed[5:])
+		if strings.HasPrefix(body, ruleHeadingPrefix) {
+			d.ruleHeading(n, strings.TrimSpace(body[len(ruleHeadingPrefix):]))
+		} else {
+			d.factHeading(n, body)
+		}
 		return
 	case strings.HasPrefix(trimmed, "### "):
 		d.endHandoff()
@@ -346,12 +356,17 @@ func (d *decoder) line(n int, raw string) {
 		return
 	case strings.HasPrefix(trimmed, "#"):
 		d.endHandoff()
-		d.errorf(n, `unsupported heading: cards use "## slug: title", decisions "### Decision-0007: title", Facts "#### slug: Statement"`)
+		d.errorf(n, `unsupported heading: cards use "## slug: title", decisions "### Decision-0007: title", Facts "#### slug: Statement", Rules "#### rule slug: Statement"`)
 		return
 	}
 
 	if d.fact != nil {
 		d.factLine(n, trimmed)
+		return
+	}
+
+	if d.rule != nil {
+		d.ruleLine(n, trimmed)
 		return
 	}
 
@@ -427,6 +442,7 @@ func (d *decoder) heading(n int, body string) {
 	d.closeNode()
 	d.closeDecision()
 	d.closeFact()
+	d.closeRule()
 	slug, title := body, ""
 	if idx := strings.Index(body, ":"); idx >= 0 {
 		slug = strings.TrimSpace(body[:idx])
@@ -763,6 +779,7 @@ func (d *decoder) nodeHeading(n int, slug, headingPath, title string) {
 	d.closeNode()
 	d.closeDecision()
 	d.closeFact()
+	d.closeRule()
 	if prev, dup := d.pathLines[headingPath]; dup {
 		d.errorf(n, "duplicate path %q (also line %d): merge the two nodes", headingPath, prev)
 	} else {
@@ -952,6 +969,7 @@ func (d *decoder) decisionHeading(n int, body string) {
 	d.closeNode()
 	d.closeDecision()
 	d.closeFact()
+	d.closeRule()
 	ref, title := body, ""
 	if idx := strings.Index(body, ":"); idx >= 0 {
 		ref = strings.TrimSpace(body[:idx])

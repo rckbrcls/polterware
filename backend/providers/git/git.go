@@ -212,3 +212,16 @@ func CommitTime(ctx context.Context, root, ref string) (time.Time, bool) {
 	t, err := time.Parse(time.RFC3339, out)
 	return t, err == nil
 }
+
+// ResolveCommit returns the full sha of ref when it names a commit in root.
+func ResolveCommit(ctx context.Context, root, ref string) (string, bool) {
+	ref = strings.TrimSpace(ref)
+	if ref == "" || strings.HasPrefix(ref, "-") {
+		return "", false
+	}
+	out, ok := gitOut(ctx, root, "rev-parse", "--verify", "--quiet", ref+"^{commit}")
+	if !ok || out == "" {
+		return "", false
+	}
+	return out, true
+}

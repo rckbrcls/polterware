@@ -10,6 +10,7 @@ import (
 	"github.com/polterware/polterware/backend/domains/decision"
 	"github.com/polterware/polterware/backend/domains/projection"
 	"github.com/polterware/polterware/backend/domains/structure"
+	"github.com/polterware/polterware/backend/domains/work"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
@@ -100,10 +101,11 @@ type projections struct {
 	// readable; binding leaves out superseded ones, which agents do not follow.
 	decisions, binding []projection.Decision
 	governed           map[string][]projection.Decision
+	rules              []work.Rule
 }
 
 func (p projections) block(checkout string) string {
-	return projection.Block(checkout, p.nodes, p.governed[checkout], p.binding)
+	return projection.Block(checkout, p.nodes, p.governed[checkout], p.binding, p.rules)
 }
 
 func loadProjections(store *storepkg.Store, projectID string) (projections, error) {
@@ -123,7 +125,7 @@ func loadProjections(store *storepkg.Store, projectID string) (projections, erro
 	if err != nil {
 		return projections{}, err
 	}
-	in := projections{nodes: snapshot.Nodes}
+	in := projections{nodes: snapshot.Nodes, rules: snapshot.Rules}
 	for _, item := range items {
 		record := projection.Decision{ID: item.ID, Title: item.Title, Body: item.Body, Status: decision.Normalize(item.Status), Contexts: contexts[item.ID], Principle: len(contexts[item.ID]) == 0}
 		in.decisions = append(in.decisions, record)

@@ -103,6 +103,11 @@ const (
 	// DispatchServiceSubagentsProcedure is the fully-qualified name of the DispatchService's Subagents
 	// RPC.
 	DispatchServiceSubagentsProcedure = "/polterware.local.v1.DispatchService/Subagents"
+	// DispatchServiceInitVerifyProcedure is the fully-qualified name of the DispatchService's
+	// InitVerify RPC.
+	DispatchServiceInitVerifyProcedure = "/polterware.local.v1.DispatchService/InitVerify"
+	// DispatchServiceSkillProcedure is the fully-qualified name of the DispatchService's Skill RPC.
+	DispatchServiceSkillProcedure = "/polterware.local.v1.DispatchService/Skill"
 )
 
 // DispatchServiceClient is a client for the polterware.local.v1.DispatchService service.
@@ -132,6 +137,8 @@ type DispatchServiceClient interface {
 	RecoverRun(context.Context, *connect.Request[v1.RecoverRunRequest]) (*connect.Response[v1.RecoverRunResponse], error)
 	Config(context.Context, *connect.Request[v1.ConfigRequest]) (*connect.Response[v1.ConfigResponse], error)
 	Subagents(context.Context, *connect.Request[v1.SubagentsRequest]) (*connect.Response[v1.SubagentsResponse], error)
+	InitVerify(context.Context, *connect.Request[v1.InitVerifyRequest]) (*connect.Response[v1.InitVerifyResponse], error)
+	Skill(context.Context, *connect.Request[v1.SkillRequest]) (*connect.Response[v1.SkillResponse], error)
 }
 
 // NewDispatchServiceClient constructs a client for the polterware.local.v1.DispatchService service.
@@ -295,6 +302,18 @@ func NewDispatchServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(dispatchServiceMethods.ByName("Subagents")),
 			connect.WithClientOptions(opts...),
 		),
+		initVerify: connect.NewClient[v1.InitVerifyRequest, v1.InitVerifyResponse](
+			httpClient,
+			baseURL+DispatchServiceInitVerifyProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("InitVerify")),
+			connect.WithClientOptions(opts...),
+		),
+		skill: connect.NewClient[v1.SkillRequest, v1.SkillResponse](
+			httpClient,
+			baseURL+DispatchServiceSkillProcedure,
+			connect.WithSchema(dispatchServiceMethods.ByName("Skill")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -325,6 +344,8 @@ type dispatchServiceClient struct {
 	recoverRun    *connect.Client[v1.RecoverRunRequest, v1.RecoverRunResponse]
 	config        *connect.Client[v1.ConfigRequest, v1.ConfigResponse]
 	subagents     *connect.Client[v1.SubagentsRequest, v1.SubagentsResponse]
+	initVerify    *connect.Client[v1.InitVerifyRequest, v1.InitVerifyResponse]
+	skill         *connect.Client[v1.SkillRequest, v1.SkillResponse]
 }
 
 // ListRuns calls polterware.local.v1.DispatchService.ListRuns.
@@ -452,6 +473,16 @@ func (c *dispatchServiceClient) Subagents(ctx context.Context, req *connect.Requ
 	return c.subagents.CallUnary(ctx, req)
 }
 
+// InitVerify calls polterware.local.v1.DispatchService.InitVerify.
+func (c *dispatchServiceClient) InitVerify(ctx context.Context, req *connect.Request[v1.InitVerifyRequest]) (*connect.Response[v1.InitVerifyResponse], error) {
+	return c.initVerify.CallUnary(ctx, req)
+}
+
+// Skill calls polterware.local.v1.DispatchService.Skill.
+func (c *dispatchServiceClient) Skill(ctx context.Context, req *connect.Request[v1.SkillRequest]) (*connect.Response[v1.SkillResponse], error) {
+	return c.skill.CallUnary(ctx, req)
+}
+
 // DispatchServiceHandler is an implementation of the polterware.local.v1.DispatchService service.
 type DispatchServiceHandler interface {
 	ListRuns(context.Context, *connect.Request[v1.ListRunsRequest]) (*connect.Response[v1.ListRunsResponse], error)
@@ -479,6 +510,8 @@ type DispatchServiceHandler interface {
 	RecoverRun(context.Context, *connect.Request[v1.RecoverRunRequest]) (*connect.Response[v1.RecoverRunResponse], error)
 	Config(context.Context, *connect.Request[v1.ConfigRequest]) (*connect.Response[v1.ConfigResponse], error)
 	Subagents(context.Context, *connect.Request[v1.SubagentsRequest]) (*connect.Response[v1.SubagentsResponse], error)
+	InitVerify(context.Context, *connect.Request[v1.InitVerifyRequest]) (*connect.Response[v1.InitVerifyResponse], error)
+	Skill(context.Context, *connect.Request[v1.SkillRequest]) (*connect.Response[v1.SkillResponse], error)
 }
 
 // NewDispatchServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -638,6 +671,18 @@ func NewDispatchServiceHandler(svc DispatchServiceHandler, opts ...connect.Handl
 		connect.WithSchema(dispatchServiceMethods.ByName("Subagents")),
 		connect.WithHandlerOptions(opts...),
 	)
+	dispatchServiceInitVerifyHandler := connect.NewUnaryHandler(
+		DispatchServiceInitVerifyProcedure,
+		svc.InitVerify,
+		connect.WithSchema(dispatchServiceMethods.ByName("InitVerify")),
+		connect.WithHandlerOptions(opts...),
+	)
+	dispatchServiceSkillHandler := connect.NewUnaryHandler(
+		DispatchServiceSkillProcedure,
+		svc.Skill,
+		connect.WithSchema(dispatchServiceMethods.ByName("Skill")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/polterware.local.v1.DispatchService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DispatchServiceListRunsProcedure:
@@ -690,6 +735,10 @@ func NewDispatchServiceHandler(svc DispatchServiceHandler, opts ...connect.Handl
 			dispatchServiceConfigHandler.ServeHTTP(w, r)
 		case DispatchServiceSubagentsProcedure:
 			dispatchServiceSubagentsHandler.ServeHTTP(w, r)
+		case DispatchServiceInitVerifyProcedure:
+			dispatchServiceInitVerifyHandler.ServeHTTP(w, r)
+		case DispatchServiceSkillProcedure:
+			dispatchServiceSkillHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -797,4 +846,12 @@ func (UnimplementedDispatchServiceHandler) Config(context.Context, *connect.Requ
 
 func (UnimplementedDispatchServiceHandler) Subagents(context.Context, *connect.Request[v1.SubagentsRequest]) (*connect.Response[v1.SubagentsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.Subagents is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) InitVerify(context.Context, *connect.Request[v1.InitVerifyRequest]) (*connect.Response[v1.InitVerifyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.InitVerify is not implemented"))
+}
+
+func (UnimplementedDispatchServiceHandler) Skill(context.Context, *connect.Request[v1.SkillRequest]) (*connect.Response[v1.SkillResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.DispatchService.Skill is not implemented"))
 }

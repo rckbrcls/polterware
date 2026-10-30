@@ -31,7 +31,7 @@ export function DocDetail(props: {
           properties={
             <>
               <Show when={props.onScopeChange}>
-                <KnowledgeDocumentProperty label="About">
+                <KnowledgeDocumentProperty label="Context">
                   <ContextPicker
                     nodes={props.scopeNodes ?? []}
                     values={doc().scopeNodeIds}

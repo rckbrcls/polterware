@@ -7,19 +7,10 @@ import (
 	"time"
 )
 
-const (
-	TruthVerified = "verified"
-
-	EvidenceKindFile        = "file"
-	EvidenceKindObservation = "observation"
-	EvidenceKindTest        = "test"
-	EvidenceKindCommit      = "commit"
-	EvidenceKindOther       = "other"
-)
+const TruthVerified = "verified"
 
 var (
-	ErrUnknownFact     = errors.New("unknown canon fact")
-	ErrUnknownEvidence = errors.New("unknown canon evidence")
+	ErrUnknownFact = errors.New("unknown canon fact")
 	// ErrVerifiedRequiresActor is returned when truth_class is verified without a human actor.
 	ErrVerifiedRequiresActor = errors.New("verified facts require a non-system actor")
 )
@@ -47,7 +38,7 @@ func NewFactID() string {
 
 func ValidFactTruthClass(value string) bool {
 	switch value {
-	case TruthDeclared, TruthObserved, TruthInferred, TruthVerified:
+	case TruthDeclared, TruthInferred, TruthVerified:
 		return true
 	default:
 		return false

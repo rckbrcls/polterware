@@ -99,12 +99,8 @@ func Replay(projectID string, ops []HistoryOp) []Node {
 	invariantOwner := map[string]string{}
 	for _, op := range ops {
 		if op.NodeID != "" {
-			node := nodes[op.NodeID]
-			if node == nil {
-				continue
-			}
+			// A node invariant op from before Rules; Rules are not replayed.
 			invariantOwner[op.EntityID] = op.NodeID
-			replayInvariant(node, op)
 			continue
 		}
 		if _, isInvariant := invariantOwner[op.EntityID]; isInvariant {
@@ -129,31 +125,6 @@ func Replay(projectID string, ops []HistoryOp) []Node {
 	}
 	sort.SliceStable(result, func(i, j int) bool { return result[i].Position < result[j].Position })
 	return result
-}
-
-func replayInvariant(node *Node, op HistoryOp) {
-	for i := range node.Invariants {
-		if node.Invariants[i].ID != op.EntityID {
-			continue
-		}
-		applyInvariantFields(&node.Invariants[i], op.Fields)
-		return
-	}
-	inv := Invariant{ID: op.EntityID, NodeID: node.ID}
-	applyInvariantFields(&inv, op.Fields)
-	node.Invariants = append(node.Invariants, inv)
-}
-
-func applyInvariantFields(inv *Invariant, fields map[string]any) {
-	if v, ok := fields["text"].(string); ok {
-		inv.Text = v
-	}
-	if v, ok := fields["state"].(string); ok {
-		inv.State = v
-	}
-	if v, ok := number(fields["position"]); ok {
-		inv.Position = v
-	}
 }
 
 func applyNodeFields(node *Node, fields map[string]any) {

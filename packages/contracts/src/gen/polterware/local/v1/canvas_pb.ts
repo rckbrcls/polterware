@@ -16,7 +16,7 @@ export const file_polterware_local_v1_canvas: GenFile = /*@__PURE__*/
 
 /**
  * CanvasRef cites another project entity.
- * kind is "card", "decision", "fact", "evidence", or "node" (a structure node).
+ * kind is "card", "decision", "fact", "rule", or "node" (a structure node).
  *
  * @generated from message polterware.local.v1.CanvasRef
  */

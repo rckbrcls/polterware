@@ -262,8 +262,8 @@ export type WorkspaceInboxAction =
   | "decide"
   | "delegate"
   | "defer"
-  | "fix_code"
-  | "update_intent"
+  | "link"
+  | "reopen"
   | "ignore";
 
 /** One derived item that needs a person (WorkService.ListInbox). */
@@ -278,6 +278,8 @@ export type WorkspaceInboxItem = {
   source: string;
   state: "open" | "deferred";
   actions: WorkspaceInboxAction[];
+  /** Commit items: repo, sha, subject; done-task items: slug, task (T2), task_id, title. */
+  details: Record<string, string>;
 };
 
 export type WorkspaceInbox = {

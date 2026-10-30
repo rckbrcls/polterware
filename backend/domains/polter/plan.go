@@ -30,6 +30,7 @@ func PlanAs(doc Document, snapshot work.Snapshot, holder string) ([]work.Op, []D
 		taskState:    map[string]string{},
 		removedCards: map[string]bool{},
 		nodes:        map[string]structure.Node{},
+		rules:        append([]work.Rule(nil), snapshot.Rules...),
 	}
 	for _, node := range snapshot.Nodes {
 		p.nodes[node.Path] = node
@@ -54,6 +55,7 @@ func PlanAs(doc Document, snapshot work.Snapshot, holder string) ([]work.Op, []D
 	}
 	p.planDecisions(doc)
 	p.planFacts(doc)
+	p.planRules(doc)
 	return p.ops, p.diags
 }
 
@@ -66,6 +68,8 @@ type planner struct {
 	holder       string
 	// nodes is the project's structure nodes by path, including ones this text creates.
 	nodes map[string]structure.Node
+	// rules is the project's active Rules, updated as ops are planned.
+	rules []work.Rule
 	// claims is the project's active claims by task id, updated as ops are planned.
 	claims map[string]heldClaim
 	// taskState holds task states this text changes, by task id.
@@ -198,7 +202,7 @@ func (p *planner) createNode(node StructureNode, path, level, parentID string) {
 	})
 	p.nextNode++
 	p.nodes[path] = created
-	p.nodeInvariants(node, &created)
+	p.nodeRules(node, &created)
 	p.nodes[path] = created
 }
 
@@ -309,7 +313,7 @@ func (p *planner) updateNode(node StructureNode, existing structure.Node, path, 
 		existing.Tech = tech
 	}
 	existing.MigrationFrom, existing.MigrationTo = migrationFrom, migrationTo
-	p.nodeInvariants(node, &existing)
+	p.nodeRules(node, &existing)
 	p.nodes[path] = existing
 }
 
@@ -350,61 +354,6 @@ func (p *planner) rewriteMovedPaths(oldPath, newPath string) {
 			CardSlug: card.Slug, Label: card.Title,
 			Fields: map[string]any{"under": next},
 			Before: map[string]any{"under": under},
-		})
-	}
-}
-
-func (p *planner) nodeInvariants(node StructureNode, stored *structure.Node) {
-	maxPosition := -1
-	for _, inv := range stored.Invariants {
-		maxPosition = max(maxPosition, inv.Position)
-	}
-	for _, inv := range node.Invariants {
-		key := work.NormalizeText(inv.Text)
-		var existing *structure.Invariant
-		for i := range stored.Invariants {
-			if work.NormalizeText(stored.Invariants[i].Text) == key {
-				existing = &stored.Invariants[i]
-				break
-			}
-		}
-		if existing == nil {
-			if inv.Removed {
-				continue
-			}
-			maxPosition++
-			id := ids.NewULID()
-			stored.Invariants = append(stored.Invariants, structure.Invariant{
-				ID: id, NodeID: stored.ID, Text: inv.Text, State: work.InvariantActive, Position: maxPosition,
-			})
-			p.ops = append(p.ops, work.Op{
-				Entity: work.EntityNode, Kind: work.OpCreate, EntityID: id, NodeID: stored.ID,
-				CardSlug: stored.Path, Label: inv.Text,
-				Fields: map[string]any{"text": inv.Text, "state": work.InvariantActive, "position": maxPosition},
-			})
-			continue
-		}
-		fields, before := map[string]any{}, map[string]any{}
-		if inv.Removed {
-			if existing.State != work.InvariantRemoved {
-				fields["state"], before["state"] = work.InvariantRemoved, existing.State
-			}
-		} else if existing.State == work.InvariantRemoved {
-			fields["state"], before["state"] = work.InvariantActive, existing.State
-		}
-		if inv.Text != existing.Text {
-			fields["text"], before["text"] = inv.Text, existing.Text
-		}
-		if len(fields) == 0 {
-			continue
-		}
-		kind := work.OpUpdate
-		if inv.Removed {
-			kind = work.OpRemove
-		}
-		p.ops = append(p.ops, work.Op{
-			Entity: work.EntityNode, Kind: kind, EntityID: existing.ID, NodeID: stored.ID,
-			CardSlug: stored.Path, Label: existing.Text, Fields: fields, Before: before,
 		})
 	}
 }

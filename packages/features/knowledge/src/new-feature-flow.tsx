@@ -250,7 +250,7 @@ export function NewFeatureFlow(props: {
               size="sm"
               rows={4}
               value={intent()}
-              placeholder="Import HEAD, branch, and recent commits as evidence"
+              placeholder="Link recent commits to the tasks they cite"
               onInput={(event) => setIntent(event.currentTarget.value)}
             />
           </Field>
@@ -350,8 +350,8 @@ export function NewFeatureFlow(props: {
                     </For>
                   </ul>
                 </Section>
-                <Section title="Inherits" empty={review().inherited.length === 0} emptyText="No inherited contract.">
-                  <ul class="pw-feature-flow__list" aria-label="Inherited invariants">
+                <Section title="Rules" empty={review().inherited.length === 0} emptyText="No Rules hold here.">
+                  <ul class="pw-feature-flow__list" aria-label="Rules">
                     <For each={review().inherited}>
                       {(invariant) => (
                         <li class="pw-feature-flow__row">
@@ -387,8 +387,8 @@ export function NewFeatureFlow(props: {
               </Show>
 
               <Show when={props.step === "contract"}>
-                <Section title="Inherited contract" empty={review().inherited.length === 0} emptyText="Nothing inherited.">
-                  <ul class="pw-feature-flow__list" aria-label="Inherited invariants">
+                <Section title="Rules" empty={review().inherited.length === 0} emptyText="No Rules hold here.">
+                  <ul class="pw-feature-flow__list" aria-label="Rules">
                     <For each={review().inherited}>
                       {(invariant) => (
                         <li class="pw-feature-flow__row">
@@ -472,7 +472,7 @@ export function NewFeatureFlow(props: {
                       class="min-w-0 flex-1"
                       aria-label="Task title"
                       value={taskTitle()}
-                      placeholder="Upsert commit evidence"
+                      placeholder="Store the commit link"
                       onInput={(event) => setTaskTitle(event.currentTarget.value)}
                       onKeyDown={(event) => {
                         if (event.key === "Enter") addTask();

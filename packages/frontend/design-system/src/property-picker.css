@@ -18,3 +18,8 @@
 .pw-property-picker__mark { width: 14px; height: 14px; flex: none; }
 .pw-property-picker__digit { color: var(--color-text-muted); font-family: inherit; font-size: 11px; }
 .pw-property-picker__empty { padding: 8px 10px; color: var(--color-text-muted); font-size: 12px; }
+/* Grouped options (models by agent): a muted heading above each group. */
+.pw-property-picker__group { padding: 8px 10px 2px; color: var(--color-text-muted); font-size: 11px; font-weight: 500; }
+.pw-property-picker__hint { overflow: hidden; color: var(--color-text-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.pw-property-picker__option:has(.pw-property-picker__hint) { min-height: 40px; }
+.pw-property-picker__avatar { display: inline-flex; flex: none; }

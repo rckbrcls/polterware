@@ -99,26 +99,26 @@ ${CLOSING}`,
 
 const DOC_PROMPTS: KnowledgeAgentPrompt[] = [
   {
-    id: "prompt-doc-facts",
+    id: "prompt-doc-rules",
     kind: "doc",
-    title: "Record facts",
-    description: "Declare what the code shows and link its evidence.",
+    title: "Propose rules",
+    description: "Turn what the code must keep into Rules agents follow.",
     tone: "knowledge",
     prompt: `${PREAMBLE}
 
-Read the registered docs (documents, runbooks, and sources) and the code. Record the important facts about this project as Facts: what it is built with, how it runs, and what it depends on. Set the kind to observed when you saw it in the code, and link each Fact to the existing evidence ids that back it. Scope each Fact to the Structure node it describes.
+Read the registered docs and the code. Find the constraints every change must keep: boundaries between parts, what must never happen, and conventions the code already follows everywhere. Read \`polterware format rules\`, then propose each one as a Rule with \`scope:\` set to the Structure nodes it holds for (none for the whole project) and a reason, so I can keep or remove it.
 
 ${CLOSING}`,
   },
   {
-    id: "prompt-doc-verify",
+    id: "prompt-doc-facts",
     kind: "doc",
-    title: "Back unverified facts",
-    description: "Find Facts without evidence and support them.",
+    title: "Record facts",
+    description: "Write down what the project is built with and how it runs.",
     tone: "execution",
     prompt: `${PREAMBLE}
 
-Run \`polterware inbox\` and take the Verify items: Facts that have no evidence. For each one, check the code and the registered evidence. When something backs it, link it by listing its evidence id on the Fact. When the Fact is wrong or stale, update the statement instead of linking.
+Read the registered docs and the code. Record the important facts about this project as Facts: what it is built with, how it runs, and what it depends on. Read \`polterware format facts\` first, and scope each Fact to the Structure node it describes.
 
 ${CLOSING}`,
   },

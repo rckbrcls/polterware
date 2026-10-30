@@ -39,7 +39,6 @@ const (
 	RefCard     = "card"
 	RefDecision = "decision"
 	RefFact     = "fact"
-	RefEvidence = "evidence"
 	RefNode     = "node"
 
 	// Entity is the change_ops entity name for a canvas write.
@@ -136,7 +135,7 @@ func (c Canvas) Archived() bool { return !c.ArchivedAt.IsZero() }
 // ValidRefKind reports whether kind is an entity a node may cite.
 func ValidRefKind(kind string) bool {
 	switch kind {
-	case RefCard, RefDecision, RefFact, RefEvidence, RefNode:
+	case RefCard, RefDecision, RefFact, RefNode:
 		return true
 	default:
 		return false

@@ -60,7 +60,7 @@ func (s *Store) LoadWorkSnapshot(projectID string) (work.Snapshot, error) {
 	if snapshot.Facts, err = s.loadPolterFacts(projectID); err != nil {
 		return snapshot, err
 	}
-	if snapshot.Evidence, err = s.ListCanonEvidence(projectID); err != nil {
+	if snapshot.Rules, err = s.loadRules(projectID); err != nil {
 		return snapshot, err
 	}
 	if len(snapshot.Cards) == 0 {
@@ -280,6 +280,9 @@ func applyWorkOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 	}
 	if op.Entity == work.EntityFact {
 		return applyFactOp(tx, projectID, op, now)
+	}
+	if op.Entity == work.EntityRule {
+		return applyRuleOp(tx, projectID, op, now)
 	}
 	if op.Entity == work.EntityDecision {
 		return applyDecisionOp(tx, projectID, op, now)

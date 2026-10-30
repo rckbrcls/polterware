@@ -14,10 +14,10 @@ func TestDeriveSourcesAndOrder(t *testing.T) {
 		{ID: "q2", CardSlug: "git-import", Text: "Include merge commits?", Blocking: true, Options: []string{"yes", "no"}},
 	}
 	findings := []drift.Finding{
-		{Type: drift.TypeDependencyAdded, Severity: drift.SeverityInfo, Summary: "scan clears this", Details: map[string]string{"key": "x"}},
+		{Type: drift.TypeCommitWithoutTask, Severity: drift.SeverityInfo, Summary: "needs no person", Details: map[string]string{"sha": "x"}},
 		{Type: drift.TypeTaskDoneUnmatched, Severity: drift.SeverityWarning, Summary: "task git-import T2 is done with no commit on main",
 			SubjectIDs: []string{"t2"}, Details: map[string]string{"slug": "git-import", "task": "T2"}},
-		{Type: drift.TypeDeclaredObservedConflict, Severity: drift.SeverityConflict, Summary: "conflict", SubjectIDs: []string{"e1"}},
+		{Type: drift.TypeCommitWithoutTask, Severity: drift.SeverityConflict, Summary: "conflict", SubjectIDs: []string{"e1"}, Details: map[string]string{"sha": "e1"}},
 	}
 	result := Derive(questions, findings, nil, nil)
 
@@ -46,6 +46,12 @@ func TestDeriveSourcesAndOrder(t *testing.T) {
 	if got := result.Items[0].Actions; strings.Join(got, ",") != "decide,delegate,defer" {
 		t.Fatalf("decision actions = %v", got)
 	}
+	if got := result.Items[1].Actions; strings.Join(got, ",") != "link,defer,ignore" {
+		t.Fatalf("commit actions = %v", got)
+	}
+	if got := result.Items[3].Actions; strings.Join(got, ",") != "link,reopen,defer,ignore" {
+		t.Fatalf("done task actions = %v", got)
+	}
 }
 
 func TestDeriveDispositions(t *testing.T) {
@@ -53,7 +59,7 @@ func TestDeriveDispositions(t *testing.T) {
 		{ID: "q1", CardSlug: "a", Text: "Defer me?"},
 		{ID: "q2", CardSlug: "a", Text: "Delegate me?", Blocking: true},
 	}
-	finding := drift.Finding{Type: drift.TypeCommitWithoutTask, Severity: drift.SeverityWarning, Summary: "commit", SubjectIDs: []string{"ev1"}, EvidenceIDs: []string{"ev1"}}
+	finding := drift.Finding{Type: drift.TypeCommitWithoutTask, Severity: drift.SeverityWarning, Summary: "commit", SubjectIDs: []string{"ev1"}}
 	kept := []DeployLink{{NodeID: "n1", NodePath: "app/web", EnvironmentID: "env-prod", Environment: "production", Provider: "vercel"}}
 	t0 := time.Date(2026, 9, 28, 12, 0, 0, 0, time.UTC)
 	dispositions := []Disposition{
@@ -83,8 +89,8 @@ func TestDeriveDispositions(t *testing.T) {
 }
 
 func TestDriftKeyStableAndSensitive(t *testing.T) {
-	a := drift.Finding{Type: drift.TypeDependencyRemoved, SubjectIDs: []string{"b", "a"}, Details: map[string]string{"statement": "dep x"}}
-	b := drift.Finding{Type: drift.TypeDependencyRemoved, SubjectIDs: []string{"a", "b"}, Details: map[string]string{"statement": "dep x"}, Summary: "other text"}
+	a := drift.Finding{Type: drift.TypeCommitWithoutTask, SubjectIDs: []string{"b", "a"}, Details: map[string]string{"statement": "dep x"}}
+	b := drift.Finding{Type: drift.TypeCommitWithoutTask, SubjectIDs: []string{"a", "b"}, Details: map[string]string{"statement": "dep x"}, Summary: "other text"}
 	if DriftKey(a) != DriftKey(b) {
 		t.Fatal("key must not depend on subject order or summary")
 	}
@@ -142,13 +148,16 @@ func TestDeriveUnconnectedDeploy(t *testing.T) {
 }
 
 func TestParseActionAndStatusLines(t *testing.T) {
-	if action, err := ParseAction("fix-code"); err != nil || action != ActionFixCode {
-		t.Fatalf("ParseAction(fix-code) = %q, %v", action, err)
+	if action, err := ParseAction("reopen"); err != nil || action != ActionReopen {
+		t.Fatalf("ParseAction(reopen) = %q, %v", action, err)
+	}
+	if _, err := ParseAction("fix-code"); err == nil {
+		t.Fatal("fix-code is retired")
 	}
 	if _, err := ParseAction("approve"); err == nil {
 		t.Fatal("unknown action should fail")
 	}
-	if ValidAction(KindSetup, ActionDecide) {
+	if ValidAction(Item{Kind: KindSetup, Actions: KindActions[KindSetup]}, ActionDecide) {
 		t.Fatal("setup items do not take decide")
 	}
 

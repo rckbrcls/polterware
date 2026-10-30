@@ -38,21 +38,6 @@ func (s *Store) loadStructureNodes(projectID string) ([]structure.Node, error) {
 	if len(nodes) == 0 {
 		return nil, nil
 	}
-	err = s.eachRow(`SELECT id,node_id,text,state,position FROM structure_invariants
-		WHERE node_id IN (SELECT id FROM structure_nodes WHERE project_id=?) ORDER BY position`,
-		projectID, func(rows *sql.Rows) error {
-			var inv structure.Invariant
-			if err := rows.Scan(&inv.ID, &inv.NodeID, &inv.Text, &inv.State, &inv.Position); err != nil {
-				return err
-			}
-			if i, ok := index[inv.NodeID]; ok {
-				nodes[i].Invariants = append(nodes[i].Invariants, inv)
-			}
-			return nil
-		})
-	if err != nil {
-		return nil, err
-	}
 	err = s.eachRow(`SELECT d.id,d.node_id,d.environment_id,COALESCE(e.name,''),d.provider,d.resource
 		FROM node_deployments d LEFT JOIN environments e ON e.id=d.environment_id
 		WHERE d.project_id=? ORDER BY e.name, d.environment_id`,
@@ -71,9 +56,6 @@ func (s *Store) loadStructureNodes(projectID string) ([]structure.Node, error) {
 }
 
 func applyStructureOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
-	if op.NodeID != "" {
-		return applyStructureInvariant(tx, op, now)
-	}
 	deploys, hasDeploys := op.Fields["deploys"]
 	parent, _ := op.Fields["parent_id"].(string)
 	switch op.Kind {
@@ -218,34 +200,4 @@ func updateStructureNode(tx *sql.Tx, op work.Op, now string) error {
 	values = append(values, now, op.EntityID)
 	_, err := tx.Exec(`UPDATE structure_nodes SET `+strings.Join(sets, ",")+` WHERE id=?`, values...)
 	return err
-}
-
-func applyStructureInvariant(tx *sql.Tx, op work.Op, now string) error {
-	switch op.Kind {
-	case work.OpCreate:
-		_, err := tx.Exec(`INSERT INTO structure_invariants(id,node_id,text,state,position,created_at,updated_at)
-			VALUES(?,?,?,?,?,?,?)`,
-			op.EntityID, op.NodeID, op.Fields["text"], op.Fields["state"], op.Fields["position"], now, now)
-		return err
-	case work.OpUpdate, work.OpRemove:
-		var sets []string
-		var values []any
-		for _, field := range []string{"text", "state", "position"} {
-			value, ok := op.Fields[field]
-			if !ok {
-				continue
-			}
-			sets = append(sets, field+"=?")
-			values = append(values, value)
-		}
-		if len(sets) == 0 {
-			return nil
-		}
-		sets = append(sets, "updated_at=?")
-		values = append(values, now, op.EntityID)
-		_, err := tx.Exec(`UPDATE structure_invariants SET `+strings.Join(sets, ",")+` WHERE id=?`, values...)
-		return err
-	default:
-		return fmt.Errorf("unknown op %q", op.Kind)
-	}
 }

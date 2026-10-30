@@ -10,44 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file polterware/local/v1/context.proto.
  */
 export const file_polterware_local_v1_context: GenFile = /*@__PURE__*/
-  fileDesc("CiFwb2x0ZXJ3YXJlL2xvY2FsL3YxL2NvbnRleHQucHJvdG8SE3BvbHRlcndhcmUubG9jYWwudjEiXQoSQ29udGV4dEV2aWRlbmNlUmVmEgoKAmlkGAEgASgJEgwKBGtpbmQYAiABKAkSDwoHc3VtbWFyeRgDIAEoCRIMCgRwYXRoGAQgASgJEg4KBnNvdXJjZRgFIAEoCSLGAQoLQ29udGV4dEl0ZW0SDAoEa2luZBgBIAEoCRIKCgJpZBgCIAEoCRINCgV0aXRsZRgDIAEoCRIPCgdleGNlcnB0GAQgASgJEhMKC3RydXRoX2NsYXNzGAUgASgJEg4KBnNvdXJjZRgGIAEoCRIMCgRwYXRoGAcgASgJEg8KB3JlYXNvbnMYCCADKAkSOQoIZXZpZGVuY2UYCSADKAsyJy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNvbnRleHRFdmlkZW5jZVJlZiK3AQoVQ29tcGlsZUNvbnRleHRSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSDQoFcXVlcnkYAiABKAkSEQoJZW50aXR5X2lkGAMgASgJEhQKDHRva2VuX2J1ZGdldBgEIAEoBRIUCgxhZ2VudF9ydW5faWQYBSABKAkSEgoKc2NvcGVfbm9kZRgGIAEoCRITCgtzY29wZV9leGFjdBgHIAEoCBITCgtzY29wZV9ub2RlcxgIIAMoCSK9AQoWQ29tcGlsZUNvbnRleHRSZXNwb25zZRISCgpwcm9qZWN0X2lkGAEgASgJEg0KBXF1ZXJ5GAIgASgJEhEKCWVudGl0eV9pZBgDIAEoCRIUCgx0b2tlbl9idWRnZXQYBCABKAUSEwoLdG9rZW5zX3VzZWQYBSABKAUSEQoJdHJ1bmNhdGVkGAYgASgIEi8KBWl0ZW1zGAcgAygLMiAucG9sdGVyd2FyZS5sb2NhbC52MS5Db250ZXh0SXRlbSK4AQoNQWdlbnRUb29sQ2FsbBIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEhEKCXRvb2xfbmFtZRgDIAEoCRIWCg5hcmd1bWVudHNfanNvbhgEIAEoCRIWCg5yZXN1bHRfc3VtbWFyeRgFIAEoCRIKCgJvaxgGIAEoCBIOCgZzb3VyY2UYByABKAkSEgoKY3JlYXRlZF9hdBgIIAEoCRIUCgxhZ2VudF9ydW5faWQYCSABKAkiKgoZTGlzdEFnZW50VG9vbENhbGxzUmVxdWVzdBINCgVsaW1pdBgBIAEoBSJPChpMaXN0QWdlbnRUb29sQ2FsbHNSZXNwb25zZRIxCgVjYWxscxgBIAMoCzIiLnBvbHRlcndhcmUubG9jYWwudjEuQWdlbnRUb29sQ2FsbCJqCgxEcmlmdEZpbmRpbmcSDAoEdHlwZRgBIAEoCRIQCghzZXZlcml0eRgCIAEoCRIPCgdzdW1tYXJ5GAMgASgJEhMKC3N1YmplY3RfaWRzGAQgAygJEhQKDGV2aWRlbmNlX2lkcxgFIAMoCSJQChFDaGVja0RyaWZ0UmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEhEKCWVudGl0eV9pZBgCIAEoCRIUCgxhZ2VudF9ydW5faWQYAyABKAkikQEKEkNoZWNrRHJpZnRSZXNwb25zZRISCgpwcm9qZWN0X2lkGAEgASgJEhEKCWVudGl0eV9pZBgCIAEoCRIOCgZzdGF0dXMYAyABKAkSDwoHY2hlY2tlchgEIAEoCRIzCghmaW5kaW5ncxgFIAMoCzIhLnBvbHRlcndhcmUubG9jYWwudjEuRHJpZnRGaW5kaW5nMtECCg5Db250ZXh0U2VydmljZRJpCg5Db21waWxlQ29udGV4dBIqLnBvbHRlcndhcmUubG9jYWwudjEuQ29tcGlsZUNvbnRleHRSZXF1ZXN0GisucG9sdGVyd2FyZS5sb2NhbC52MS5Db21waWxlQ29udGV4dFJlc3BvbnNlEnUKEkxpc3RBZ2VudFRvb2xDYWxscxIuLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEFnZW50VG9vbENhbGxzUmVxdWVzdBovLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEFnZW50VG9vbENhbGxzUmVzcG9uc2USXQoKQ2hlY2tEcmlmdBImLnBvbHRlcndhcmUubG9jYWwudjEuQ2hlY2tEcmlmdFJlcXVlc3QaJy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoZWNrRHJpZnRSZXNwb25zZULoAQoXY29tLnBvbHRlcndhcmUubG9jYWwudjFCDENvbnRleHRQcm90b1ABWlFnaXRodWIuY29tL3BvbHRlcndhcmUvcG9sdGVyd2FyZS9iYWNrZW5kL3BsYXRmb3JtL2dlbi9wb2x0ZXJ3YXJlL2xvY2FsL3YxO2xvY2FsdjGiAgNQTFiqAhNQb2x0ZXJ3YXJlLkxvY2FsLlYxygITUG9sdGVyd2FyZVxMb2NhbFxWMeICH1BvbHRlcndhcmVcTG9jYWxcVjFcR1BCTWV0YWRhdGHqAhVQb2x0ZXJ3YXJlOjpMb2NhbDo6VjFiBnByb3RvMw");
-
-/**
- * @generated from message polterware.local.v1.ContextEvidenceRef
- */
-export type ContextEvidenceRef = Message<"polterware.local.v1.ContextEvidenceRef"> & {
-  /**
-   * @generated from field: string id = 1;
-   */
-  id: string;
-
-  /**
-   * @generated from field: string kind = 2;
-   */
-  kind: string;
-
-  /**
-   * @generated from field: string summary = 3;
-   */
-  summary: string;
-
-  /**
-   * @generated from field: string path = 4;
-   */
-  path: string;
-
-  /**
-   * @generated from field: string source = 5;
-   */
-  source: string;
-};
-
-/**
- * Describes the message polterware.local.v1.ContextEvidenceRef.
- * Use `create(ContextEvidenceRefSchema)` to create a new message.
- */
-export const ContextEvidenceRefSchema: GenMessage<ContextEvidenceRef> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_context, 0);
+  fileDesc("CiFwb2x0ZXJ3YXJlL2xvY2FsL3YxL2NvbnRleHQucHJvdG8SE3BvbHRlcndhcmUubG9jYWwudjEimwEKC0NvbnRleHRJdGVtEgwKBGtpbmQYASABKAkSCgoCaWQYAiABKAkSDQoFdGl0bGUYAyABKAkSDwoHZXhjZXJwdBgEIAEoCRITCgt0cnV0aF9jbGFzcxgFIAEoCRIOCgZzb3VyY2UYBiABKAkSDAoEcGF0aBgHIAEoCRIPCgdyZWFzb25zGAggAygJSgQICRAKUghldmlkZW5jZSK3AQoVQ29tcGlsZUNvbnRleHRSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkSDQoFcXVlcnkYAiABKAkSEQoJZW50aXR5X2lkGAMgASgJEhQKDHRva2VuX2J1ZGdldBgEIAEoBRIUCgxhZ2VudF9ydW5faWQYBSABKAkSEgoKc2NvcGVfbm9kZRgGIAEoCRITCgtzY29wZV9leGFjdBgHIAEoCBITCgtzY29wZV9ub2RlcxgIIAMoCSK9AQoWQ29tcGlsZUNvbnRleHRSZXNwb25zZRISCgpwcm9qZWN0X2lkGAEgASgJEg0KBXF1ZXJ5GAIgASgJEhEKCWVudGl0eV9pZBgDIAEoCRIUCgx0b2tlbl9idWRnZXQYBCABKAUSEwoLdG9rZW5zX3VzZWQYBSABKAUSEQoJdHJ1bmNhdGVkGAYgASgIEi8KBWl0ZW1zGAcgAygLMiAucG9sdGVyd2FyZS5sb2NhbC52MS5Db250ZXh0SXRlbSK4AQoNQWdlbnRUb29sQ2FsbBIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEhEKCXRvb2xfbmFtZRgDIAEoCRIWCg5hcmd1bWVudHNfanNvbhgEIAEoCRIWCg5yZXN1bHRfc3VtbWFyeRgFIAEoCRIKCgJvaxgGIAEoCBIOCgZzb3VyY2UYByABKAkSEgoKY3JlYXRlZF9hdBgIIAEoCRIUCgxhZ2VudF9ydW5faWQYCSABKAkiKgoZTGlzdEFnZW50VG9vbENhbGxzUmVxdWVzdBINCgVsaW1pdBgBIAEoBSJPChpMaXN0QWdlbnRUb29sQ2FsbHNSZXNwb25zZRIxCgVjYWxscxgBIAMoCzIiLnBvbHRlcndhcmUubG9jYWwudjEuQWdlbnRUb29sQ2FsbCLZAQoMRHJpZnRGaW5kaW5nEgwKBHR5cGUYASABKAkSEAoIc2V2ZXJpdHkYAiABKAkSDwoHc3VtbWFyeRgDIAEoCRITCgtzdWJqZWN0X2lkcxgEIAMoCRI/CgdkZXRhaWxzGAYgAygLMi4ucG9sdGVyd2FyZS5sb2NhbC52MS5EcmlmdEZpbmRpbmcuRGV0YWlsc0VudHJ5Gi4KDERldGFpbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBSgQIBRAGUgxldmlkZW5jZV9pZHMiUAoRQ2hlY2tEcmlmdFJlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRIRCgllbnRpdHlfaWQYAiABKAkSFAoMYWdlbnRfcnVuX2lkGAMgASgJIpEBChJDaGVja0RyaWZ0UmVzcG9uc2USEgoKcHJvamVjdF9pZBgBIAEoCRIRCgllbnRpdHlfaWQYAiABKAkSDgoGc3RhdHVzGAMgASgJEg8KB2NoZWNrZXIYBCABKAkSMwoIZmluZGluZ3MYBSADKAsyIS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRyaWZ0RmluZGluZzLRAgoOQ29udGV4dFNlcnZpY2USaQoOQ29tcGlsZUNvbnRleHQSKi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNvbXBpbGVDb250ZXh0UmVxdWVzdBorLnBvbHRlcndhcmUubG9jYWwudjEuQ29tcGlsZUNvbnRleHRSZXNwb25zZRJ1ChJMaXN0QWdlbnRUb29sQ2FsbHMSLi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RBZ2VudFRvb2xDYWxsc1JlcXVlc3QaLy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RBZ2VudFRvb2xDYWxsc1Jlc3BvbnNlEl0KCkNoZWNrRHJpZnQSJi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkNoZWNrRHJpZnRSZXF1ZXN0GicucG9sdGVyd2FyZS5sb2NhbC52MS5DaGVja0RyaWZ0UmVzcG9uc2VC6AEKF2NvbS5wb2x0ZXJ3YXJlLmxvY2FsLnYxQgxDb250ZXh0UHJvdG9QAVpRZ2l0aHViLmNvbS9wb2x0ZXJ3YXJlL3BvbHRlcndhcmUvYmFja2VuZC9wbGF0Zm9ybS9nZW4vcG9sdGVyd2FyZS9sb2NhbC92MTtsb2NhbHYxogIDUExYqgITUG9sdGVyd2FyZS5Mb2NhbC5WMcoCE1BvbHRlcndhcmVcTG9jYWxcVjHiAh9Qb2x0ZXJ3YXJlXExvY2FsXFYxXEdQQk1ldGFkYXRh6gIVUG9sdGVyd2FyZTo6TG9jYWw6OlYxYgZwcm90bzM");
 
 /**
  * @generated from message polterware.local.v1.ContextItem
@@ -92,11 +55,6 @@ export type ContextItem = Message<"polterware.local.v1.ContextItem"> & {
    * @generated from field: repeated string reasons = 8;
    */
   reasons: string[];
-
-  /**
-   * @generated from field: repeated polterware.local.v1.ContextEvidenceRef evidence = 9;
-   */
-  evidence: ContextEvidenceRef[];
 };
 
 /**
@@ -104,7 +62,7 @@ export type ContextItem = Message<"polterware.local.v1.ContextItem"> & {
  * Use `create(ContextItemSchema)` to create a new message.
  */
 export const ContextItemSchema: GenMessage<ContextItem> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_context, 1);
+  messageDesc(file_polterware_local_v1_context, 0);
 
 /**
  * @generated from message polterware.local.v1.CompileContextRequest
@@ -158,7 +116,7 @@ export type CompileContextRequest = Message<"polterware.local.v1.CompileContextR
  * Use `create(CompileContextRequestSchema)` to create a new message.
  */
 export const CompileContextRequestSchema: GenMessage<CompileContextRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_context, 2);
+  messageDesc(file_polterware_local_v1_context, 1);
 
 /**
  * @generated from message polterware.local.v1.CompileContextResponse
@@ -205,7 +163,7 @@ export type CompileContextResponse = Message<"polterware.local.v1.CompileContext
  * Use `create(CompileContextResponseSchema)` to create a new message.
  */
 export const CompileContextResponseSchema: GenMessage<CompileContextResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_context, 3);
+  messageDesc(file_polterware_local_v1_context, 2);
 
 /**
  * @generated from message polterware.local.v1.AgentToolCall
@@ -262,7 +220,7 @@ export type AgentToolCall = Message<"polterware.local.v1.AgentToolCall"> & {
  * Use `create(AgentToolCallSchema)` to create a new message.
  */
 export const AgentToolCallSchema: GenMessage<AgentToolCall> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_context, 4);
+  messageDesc(file_polterware_local_v1_context, 3);
 
 /**
  * @generated from message polterware.local.v1.ListAgentToolCallsRequest
@@ -279,7 +237,7 @@ export type ListAgentToolCallsRequest = Message<"polterware.local.v1.ListAgentTo
  * Use `create(ListAgentToolCallsRequestSchema)` to create a new message.
  */
 export const ListAgentToolCallsRequestSchema: GenMessage<ListAgentToolCallsRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_context, 5);
+  messageDesc(file_polterware_local_v1_context, 4);
 
 /**
  * @generated from message polterware.local.v1.ListAgentToolCallsResponse
@@ -296,7 +254,7 @@ export type ListAgentToolCallsResponse = Message<"polterware.local.v1.ListAgentT
  * Use `create(ListAgentToolCallsResponseSchema)` to create a new message.
  */
 export const ListAgentToolCallsResponseSchema: GenMessage<ListAgentToolCallsResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_context, 6);
+  messageDesc(file_polterware_local_v1_context, 5);
 
 /**
  * @generated from message polterware.local.v1.DriftFinding
@@ -323,9 +281,12 @@ export type DriftFinding = Message<"polterware.local.v1.DriftFinding"> & {
   subjectIds: string[];
 
   /**
-   * @generated from field: repeated string evidence_ids = 5;
+   * details are the finding's facts: slug, task, task_id for a done task;
+   * repo, sha, subject for a commit.
+   *
+   * @generated from field: map<string, string> details = 6;
    */
-  evidenceIds: string[];
+  details: { [key: string]: string };
 };
 
 /**
@@ -333,7 +294,7 @@ export type DriftFinding = Message<"polterware.local.v1.DriftFinding"> & {
  * Use `create(DriftFindingSchema)` to create a new message.
  */
 export const DriftFindingSchema: GenMessage<DriftFinding> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_context, 7);
+  messageDesc(file_polterware_local_v1_context, 6);
 
 /**
  * @generated from message polterware.local.v1.CheckDriftRequest
@@ -360,7 +321,7 @@ export type CheckDriftRequest = Message<"polterware.local.v1.CheckDriftRequest">
  * Use `create(CheckDriftRequestSchema)` to create a new message.
  */
 export const CheckDriftRequestSchema: GenMessage<CheckDriftRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_context, 8);
+  messageDesc(file_polterware_local_v1_context, 7);
 
 /**
  * @generated from message polterware.local.v1.CheckDriftResponse
@@ -397,7 +358,7 @@ export type CheckDriftResponse = Message<"polterware.local.v1.CheckDriftResponse
  * Use `create(CheckDriftResponseSchema)` to create a new message.
  */
 export const CheckDriftResponseSchema: GenMessage<CheckDriftResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_context, 9);
+  messageDesc(file_polterware_local_v1_context, 8);
 
 /**
  * @generated from service polterware.local.v1.ContextService
@@ -429,4 +390,3 @@ export const ContextService: GenService<{
   },
 }> = /*@__PURE__*/
   serviceDesc(file_polterware_local_v1_context, 0);
-

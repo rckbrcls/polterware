@@ -105,7 +105,7 @@ func TestFileContextSendsEachNodeBriefOncePerSession(t *testing.T) {
 	file := filepath.Join(root, "src", "web", "page.tsx")
 
 	text, node, err := wedge.FileContext(store, project.ID, "s1", file)
-	if err != nil || node != "app/web" || !strings.HasPrefix(text, "Polterware: "+file+" is under app/web.") || !strings.Contains(text, "! No inline styles") {
+	if err != nil || node != "app/web" || !strings.HasPrefix(text, "Polterware: "+file+" is under app/web.") || !strings.Contains(text, "Rules:\n- No inline styles\n") {
 		t.Fatalf("first read: %q %q %v", text, node, err)
 	}
 	if again, _, err := wedge.FileContext(store, project.ID, "s1", filepath.Join(root, "src", "web", "other.tsx")); err != nil || again != "" {

@@ -16,7 +16,7 @@ type FactNode struct {
 	Meta      []MetaEntry
 }
 
-var FactMetaKeys = []string{"kind", "scope", "evidence"}
+var FactMetaKeys = []string{"kind", "scope"}
 
 func (n FactNode) MetaValue(key string) (string, bool) {
 	value, found := "", false
@@ -33,6 +33,7 @@ func (d *decoder) factHeading(n int, body string) {
 	d.closeNode()
 	d.closeDecision()
 	d.closeFact()
+	d.closeRule()
 	ref, statement, _ := strings.Cut(body, ":")
 	ref, statement = strings.TrimSpace(ref), strings.TrimSpace(statement)
 	if !work.ValidSlug(ref) {
@@ -53,7 +54,7 @@ func (d *decoder) factLine(n int, line string) {
 	for _, part := range metaSplitter.Split(line, -1) {
 		m := metaKey.FindStringSubmatch(strings.TrimSpace(part))
 		if m == nil {
-			d.errorf(n, "Facts use a heading statement and kind:, scope:, or evidence: metadata")
+			d.errorf(n, "Facts use a heading statement and kind: or scope: metadata")
 			continue
 		}
 		key, value := m[1], strings.TrimSpace(m[2])
@@ -61,11 +62,14 @@ func (d *decoder) factLine(n int, line string) {
 		case "kind":
 			value = strings.ToLower(value)
 			if !canon.ValidFactTruthClass(value) {
-				d.errorf(n, "unknown fact kind %q: use declared|observed|inferred|verified", value)
+				d.errorf(n, "unknown fact kind %q: use declared|inferred|verified", value)
 			}
-		case "scope", "evidence":
+		case "scope":
+		case "evidence":
+			d.errorf(n, "evidence: is retired: a Fact is a statement with its scope")
+			continue
 		default:
-			d.errorf(n, "unknown fact key %q: use kind, scope, evidence", key)
+			d.errorf(n, "unknown fact key %q: use kind or scope", key)
 			continue
 		}
 		d.fact.Meta = append(d.fact.Meta, MetaEntry{Key: key, Value: value, Line: n})
@@ -82,50 +86,7 @@ func (d *decoder) closeFact() {
 	d.inMeta = false
 }
 
-// resolveFactEvidence reads an evidence: list of existing ids and typed
-// references (file:, commit:, url:). A typed reference that is not stored yet
-// comes back in created; unknown is the first plain id that does not exist.
-func resolveFactEvidence(projectID, value string, evidence []canon.Evidence) (ids []string, created []canon.Evidence, unknown string) {
-	ids = []string{}
-	exists := func(id string) bool {
-		return slices.ContainsFunc(evidence, func(item canon.Evidence) bool { return item.ID == id })
-	}
-	for _, ref := range splitList(value) {
-		id := ref
-		if typed, ok := canon.ParseEvidenceRef(ref); ok {
-			record := typed.Evidence(projectID)
-			id = record.ID
-			if !exists(id) && !slices.ContainsFunc(created, func(item canon.Evidence) bool { return item.ID == id }) {
-				created = append(created, record)
-			}
-		} else if !exists(id) {
-			return nil, nil, ref
-		}
-		if !slices.Contains(ids, id) {
-			ids = append(ids, id)
-		}
-	}
-	slices.Sort(ids)
-	return ids, created, ""
-}
-
-func checkFactEvidence(projectID string, doc Document, evidence []canon.Evidence) []Diagnostic {
-	var diags []Diagnostic
-	for _, node := range doc.Facts {
-		for _, entry := range node.Meta {
-			if entry.Key != "evidence" {
-				continue
-			}
-			if _, _, unknown := resolveFactEvidence(projectID, entry.Value, evidence); unknown != "" {
-				diags = append(diags, Diagnostic{Line: entry.Line, Severity: SeverityError, Message: "unknown evidence " + unknown + ": use an existing evidence id, or file:<path>, commit:<sha>, or url:<link> to record new evidence"})
-			}
-		}
-	}
-	return diags
-}
-
 func (p *planner) planFacts(doc Document) {
-	p.diags = append(p.diags, checkFactEvidence(p.snapshot.ProjectID, doc, p.snapshot.Evidence)...)
 	state := append([]work.Fact(nil), p.snapshot.Facts...)
 	for _, node := range doc.Facts {
 		failed := p.failed(node.Line)
@@ -158,7 +119,7 @@ func (p *planner) planFacts(doc Document) {
 		}
 		if kind, ok := node.MetaValue("kind"); ok {
 			if !canon.ValidFactTruthClass(kind) {
-				p.errorf(factMetaLine(node, "kind"), "unknown fact kind %q: use declared|observed|inferred|verified", kind)
+				p.errorf(factMetaLine(node, "kind"), "unknown fact kind %q: use declared|inferred|verified", kind)
 				continue
 			}
 			if kind != current.TruthClass {
@@ -177,25 +138,6 @@ func (p *planner) planFacts(doc Document) {
 			if !slices.Equal(scopes, current.Scopes) {
 				set("scope", current.Scopes, scopes)
 				current.Scopes = scopes
-			}
-		}
-		if value, ok := node.MetaValue("evidence"); ok {
-			evidence, created, unknown := resolveFactEvidence(p.snapshot.ProjectID, value, p.snapshot.Evidence)
-			if unknown != "" {
-				continue
-			}
-			old := append([]string{}, current.Evidence...)
-			slices.Sort(old)
-			if !slices.Equal(old, evidence) {
-				set("evidence", old, evidence)
-				current.Evidence = evidence
-			}
-			if len(created) > 0 {
-				records := make([]map[string]string, 0, len(created))
-				for _, item := range created {
-					records = append(records, map[string]string{"id": item.ID, "kind": item.Kind, "path": item.Path, "summary": item.Summary})
-				}
-				fields["evidence_new"] = records
 			}
 		}
 		if len(fields) == 0 {

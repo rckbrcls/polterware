@@ -16,8 +16,8 @@ function mount(options: { error?: string; loading?: boolean; onEditNode?: (nodeI
   document.body.append(host);
   const open = vi.fn((entityId: string) => { detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId, entityKind: "arch-node" }); });
   const openRecord = vi.fn();
-  dispose = render(() => <StructureView projectName="Project" nodes={nodes} records={{ api: { cards: [{ id: "api-auth", title: "Add auth", caption: "Build", direct: true }], decisions: [{ id: "dec-1", title: "Use Go", caption: "Active", direct: true }], facts: [], docs: [] } }}
-    projectRecords={{ cards: [{ id: "api-auth", title: "Add auth" }], decisions: [{ id: "dec-1", title: "Use Go" }, { id: "dec-2", title: "Keep one core" }], facts: [], docs: [] }} onOpenRecord={openRecord}
+  dispose = render(() => <StructureView projectName="Project" nodes={nodes} records={{ api: { cards: [{ id: "api-auth", title: "Add auth", caption: "Build", direct: true }], decisions: [{ id: "dec-1", title: "Use Go", caption: "Active", direct: true }], rules: [], docs: [] } }}
+    projectRecords={{ cards: [{ id: "api-auth", title: "Add auth" }], decisions: [{ id: "dec-1", title: "Use Go" }, { id: "dec-2", title: "Keep one core" }], rules: [], docs: [] }} onOpenRecord={openRecord}
     onOpenNode={open} onSelect={() => {}} onOpenCreate={() => {}} onCloseCreate={() => {}} onCreate={async () => {}} onMove={async () => {}} {...options} />, host);
   return { host, open, openRecord };
 }
