@@ -26,40 +26,60 @@
   visibility: visible;
 }
 
-/* A node's page: its description, then its sections, separated by space alone. */
-.pw-structure-page__intent {
-  margin: 8px 0 0;
-  color: var(--color-text-secondary);
-  font-size: 15px;
-  line-height: 24px;
-}
-
-.pw-structure-page__sections {
+/* A card's expanded details, under its title line: description, a label/value list, and deploys. */
+.pw-structure-info {
   display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: 32px;
-  margin-top: 32px;
+  gap: 10px;
+  padding: 10px 0 4px;
 }
 
-.pw-structure-page__empty {
+.pw-structure-info__description,
+.pw-structure-info__empty {
   margin: 0;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   font-size: 13px;
+  line-height: 20px;
 }
 
-.pw-structure-page__deploys {
+.pw-structure-info__empty {
+  color: var(--color-text-muted);
+}
+
+.pw-structure-info__rows {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.pw-structure-info__rows dt {
+  color: var(--color-text-muted);
+}
+
+.pw-structure-info__rows dd {
+  overflow-wrap: anywhere;
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.pw-structure-info__deploys {
   display: flex;
   flex-direction: column;
+  gap: 6px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.pw-structure-page__deploy {
+.pw-structure-info__deploys li {
   display: flex;
   min-width: 0;
-  height: 44px;
   align-items: center;
-  gap: 12px;
-  font-size: 13px;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 12px;
 }

@@ -22,7 +22,7 @@ beforeEach(() => detailPanelStore.setState(detailPanelDefaultState));
 afterEach(() => { dispose?.(); document.body.replaceChildren(); });
 
 describe("Structure collection", () => {
-  it("keeps the branch tree with one compact line per card and opens a node as its own page", async () => {
+  it("keeps the branch tree with one compact line per card that expands in place", async () => {
     const { host, open } = mount();
     await tick();
     expect(detailPanelStore.getState().open).toBe(false);
@@ -32,9 +32,10 @@ describe("Structure collection", () => {
     search.dispatchEvent(new Event("input", { bubbles: true }));
     await tick();
     const api = host.querySelector<HTMLElement>('[data-part="item"][data-value="api"]')!;
-    // One line: kind / technology and the record counts; the description waits for the page.
+    // One line: kind / technology and the record counts; the details start folded.
     expect(api.textContent).toContain("API / Go / 2 cards / 1 decision / 3 facts");
-    expect(api.textContent).not.toContain("Serves the project");
+    const details = api.querySelector<HTMLElement>(".pw-structure-expand")!;
+    expect(details.hidden).toBe(true);
     expect(api.querySelector('[aria-label="Actions for API"]')).not.toBeNull();
     // A component has no children, so its card offers no Add child; its system does.
     expect(api.querySelector('[aria-label^="Add child"]')).toBeNull();
@@ -47,17 +48,17 @@ describe("Structure collection", () => {
     api.click();
     await tick();
     expect(open).toHaveBeenCalledWith("api");
-    expect(host.querySelector("h1")?.textContent).toBe("API");
-    expect(host.textContent).toContain("Serves the project");
-    expect(host.querySelector('[aria-label="Properties"]')?.textContent).toContain("API / Go");
-    host.querySelector<HTMLButtonElement>('button[aria-label="Back"]')!.click();
+    expect(details.hidden).toBe(false);
+    expect(details.textContent).toContain("Serves the project");
+    expect(details.textContent).toContain("backend/src/api");
+    expect(details.textContent).toContain("app/api");
+    // A click inside the details keeps them open; a click on the card folds them again.
+    details.querySelector<HTMLElement>("dd")!.click();
     await tick();
-    // Back returns to the same tree, and the same card opens again.
-    const again = host.querySelector<HTMLElement>('[data-part="item"][data-value="api"]')!;
-    expect(again).not.toBeNull();
-    again.click();
-    await tick();
-    expect(host.querySelector("h1")?.textContent).toBe("API");
+    expect(details.hidden).toBe(false);
+    api.click();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(details.hidden).toBe(true);
   });
   it("retains the toolbar and exposes a collection error", async () => {
     const { host } = mount({ error: "Core unavailable" });

@@ -4,7 +4,8 @@ import {
   A11yDialog, Boxes, Button, PromptCardGrid, Checkbox, Field, Folder, FormStack, Input,
   ActiveFilterBar, FilterPopover, IconTile, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
   Cloud, Delete, EntityContextMenu, EntityMenuButton, Link2, Package, Route,
-  SearchBar, Select, TreeView, createEntityContextMenu, pushToast,
+  SearchBar, Select, StatusChip, TreeView, animateCollapse, createEntityContextMenu, pushToast,
+  type CollapseControls,
   type EntityAction, type TreeViewNode,
   ToolbarIconButton,
 } from "@polterware/frontend-design-system";
@@ -12,7 +13,6 @@ import { createDetailPanelSelector, detailPanelStore, readRemembered, writeRemem
 import { COMPONENTS, component } from "@polterware/feature-canvas/components";
 import { STRUCTURE_AGENT_PROMPTS } from "./agent-prompts";
 import { buildStructureTree, flattenStructureTree, structureParents, type StructureKind, type StructureNode, type StructureTreeItem } from "./structure-tree";
-import { StructureNodePage, recordsLabel } from "./structure-node-page";
 import type { ProjectEnvironment } from "./domain/project-environments";
 import type { WorkspaceIntegration } from "@polterware/feature-shell";
 import "./structure.css";
@@ -61,6 +61,58 @@ function levelLabel(node: Pick<StructureNode, "level" | "kind" | "tech">): strin
   return node.tech ? `${kind} / ${node.tech}` : kind;
 }
 
+function plural(count: number, singular: string) {
+  return `${count} ${singular}${count === 1 ? "" : "s"}`;
+}
+
+/** "2 cards / 1 decision / 3 facts", leaving out the empty ones; empty when there are none. */
+function recordsLabel(counts: Counts | undefined): string {
+  if (!counts) return "";
+  return [counts.work ? plural(counts.work, "card") : "", counts.decisions ? plural(counts.decisions, "decision") : "", counts.facts ? plural(counts.facts, "fact") : ""]
+    .filter(Boolean).join(" / ");
+}
+
+/** A card's details region: collapses to its measured height on the shared springs, snapping on first paint. */
+function NodeExpand(props: { open: boolean; children: JSX.Element }) {
+  let region: HTMLDivElement | undefined;
+  let controls: CollapseControls | undefined;
+  let first = true;
+  createEffect(() => {
+    const open = props.open;
+    if (!region) return;
+    controls = animateCollapse(region, open, { previous: controls, instant: first });
+    first = false;
+  });
+  onCleanup(() => controls?.stop());
+  // Clicks inside the open details (selecting a path) stay there instead of closing the card.
+  return <div ref={region} class="pw-structure-expand" hidden onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()}>
+    {props.children}
+  </div>;
+}
+
+/** What a card shows when it expands: its description, checkout, path, dependencies, and deploys; empty values are left out. */
+function NodeInfo(props: { description?: string; checkout?: string; path?: string; uses?: readonly string[]; deploys?: StructureNode["deploys"]; isProviderConnected: (provider: string) => boolean }) {
+  const rows = () => [["Checkout", props.checkout], ["Path", props.path], ["Uses", (props.uses ?? []).join(" / ")]].filter(([, value]) => value) as [string, string][];
+  return <div class="pw-structure-info">
+    <Show when={props.description} fallback={<p class="pw-structure-info__empty">No description yet.</p>}>{(text) => <p class="pw-structure-info__description">{text()}</p>}</Show>
+    <Show when={rows().length > 0}>
+      <dl class="pw-structure-info__rows">
+        <For each={rows()}>{([label, value]) => <><dt>{label}</dt><dd class="pw-selectable" classList={{ "font-mono": label !== "Uses" }}>{value}</dd></>}</For>
+      </dl>
+    </Show>
+    <Show when={props.deploys?.length}>
+      <ul class="pw-structure-info__deploys" aria-label="Deploys">
+        <For each={props.deploys!}>{(deploy) => <li>
+          <Cloud size={14} aria-hidden="true" />
+          <span class="truncate text-[var(--color-text-primary)]">{deploy.resource}</span>
+          <span class="truncate text-[var(--color-text-muted)]">{deploy.provider} / {deploy.environment || deploy.environmentId}</span>
+          <Show when={!props.isProviderConnected(deploy.provider)}><StatusChip tone="warn" label="CLI not connected" /></Show>
+        </li>}</For>
+      </ul>
+    </Show>
+  </div>;
+}
+
 /** A tree card's one line after its title: kind / technology and the record counts, then Add child and the actions. */
 function NodeLine(props: { meta: string; addLabel?: string; onAdd?: () => void; title: string; actions: readonly EntityAction[] }) {
   return <span class="pw-structure-line" onKeyDown={(event) => event.stopPropagation()}>
@@ -74,7 +126,7 @@ function NodeLine(props: { meta: string; addLabel?: string; onAdd?: () => void; 
   </span>;
 }
 
-// A click opens the node's page, so the tree keeps no selection of its own and every click reports.
+// A click expands the card, so the tree keeps no selection of its own and every click reports.
 const NO_SELECTION: string[] = [];
 const NO_KIND = "none";
 const KIND_OPTIONS = [{ value: NO_KIND, label: "None" }, ...COMPONENTS.map((item) => ({ value: item.kind, label: item.label }))];
@@ -212,6 +264,8 @@ export function StructureView(props: {
     trailing: <NodeLine title={item.node.title} actions={nodeActions(item.node)} meta={meta([levelLabel(item.node), recordsLabel(props.counts[item.node.id])])}
       onAdd={item.node.level === "component" ? undefined : () => addChild(item.node.id)} addLabel={`Add child to ${item.node.title}`} />,
     onContextMenu: (event) => rowMenu.open(event, nodeActions(item.node)),
+    details: <NodeExpand open={detailsOpen(item.node.id)}><NodeInfo description={item.node.intent} checkout={checkoutLabel(item.node.repo, item.node.folder)} path={item.node.path}
+      uses={usesTitles(item.node)} deploys={item.node.level === "component" ? item.node.deploys : undefined} isProviderConnected={isProviderConnected} /></NodeExpand>,
     children: item.children.map(toTreeNode),
   });
   const treeNodes = createMemo<TreeViewNode[]>(() => props.loading || props.error ? [] : [{
@@ -219,24 +273,16 @@ export function StructureView(props: {
     trailing: <NodeLine title={props.projectName} actions={projectActions()} meta={meta(["Project", recordsLabel(props.projectCounts)])}
       onAdd={props.loading || props.error ? undefined : () => addChild(PROJECT_ID)} addLabel="Add system" />,
     onContextMenu: (event) => rowMenu.open(event, projectActions()),
+    details: <NodeExpand open={detailsOpen(PROJECT_ID)}><NodeInfo description={props.projectDescription} checkout={props.projectRepository} isProviderConnected={isProviderConnected} /></NodeExpand>,
     children: tree().map(toTreeNode),
   }]);
 
-  // A node opens as a page of its own; Back returns to the tree with the same branches open.
-  const [pageId, setPageId] = createSignal("");
-  const pageNode = createMemo(() => props.nodes.find((node) => node.id === pageId()));
-  const openPage = (id: string) => { open(id); if (id !== PROJECT_ID) setPageId(id); };
-  const ancestorsOf = (node: StructureNode) => {
-    const chain: StructureNode[] = [];
-    const seen = new Set<string>([node.id]);
-    for (let parent = props.nodes.find((item) => item.id === node.parentId); parent && !seen.has(parent.id); parent = props.nodes.find((item) => item.id === parent!.parentId)) {
-      seen.add(parent.id);
-      chain.unshift(parent);
-    }
-    return chain;
-  };
+  // A card expands in place to show its details; another click folds it again.
+  const [openDetails, setOpenDetails] = createSignal<string[]>([]);
+  const detailsOpen = (id: string) => openDetails().includes(id);
+  const toggleDetails = (id: string) => setOpenDetails((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
 
-  // A node's details are its page, so the collection only tracks the selection (for links and dialogs) and offers no panel.
+  // A card carries its own details, so the collection only tracks the selection (for links and dialogs) and offers no panel.
   createEffect(() => {
     const targets = [PROJECT_ID, ...visible().map((node) => node.id)].map((entityId) => ({ scopeId: STRUCTURE_SCOPE, entityId, entityKind: "arch-node" }));
     detailPanelStore.getState().registerCollection({ scopeId: STRUCTURE_SCOPE, status: props.loading ? "loading" : props.error ? "error" : "ready", targets, details: false, selectFirst: false });
@@ -282,7 +328,6 @@ export function StructureView(props: {
   });
 
   return <div class="flex min-h-0 flex-1 flex-col">
-    <Show when={pageNode()} fallback={<>
     <PageToolbar.Root>
       <PageToolbar.Leading>{null}</PageToolbar.Leading>
       <PageToolbar.Actions>
@@ -309,18 +354,10 @@ export function StructureView(props: {
       <PageContent class="pw-scroll-fade overflow-auto p-4">
                 <Show when={visible().length} fallback={<PageEmpty title={query().trim() ? "No matches" : "No structure yet"} mood={query().trim() ? "lost" : "sleeping"} >{!query().trim() ? <PromptCardGrid items={STRUCTURE_AGENT_PROMPTS.map((item) => ({ id: item.id, title: item.title, description: item.description, tone: item.tone, icon: <KindIcon kind={item.level} size={16} />, prompt: item.prompt }))} /> : undefined}</PageEmpty>}>
           <EntityContextMenu menu={rowMenu} />
-          <TreeView label="Project structure" branches expandOnClick={false} class="[&_h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)} selectedValue={NO_SELECTION} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) openPage(id); }} />
+          <TreeView label="Project structure" branches expandOnClick={false} class="[&_h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)} selectedValue={NO_SELECTION} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) { open(id); toggleDetails(id); } }} />
         </Show>
       </PageContent>
     }><PageError message={props.error!} /></Show>}><PageLoading label="Loading structure…" /></Show>
-    </>}>
-      {(node) => <StructureNodePage node={node()} ancestors={ancestorsOf(node())}
-        children={props.nodes.filter((item) => item.parentId === node().id)} counts={props.counts}
-        icon={(level, size) => <KindIcon kind={level} size={size} />} levelLabel={levelLabel}
-        checkout={checkoutLabel(node().repo, node().folder)} uses={usesTitles(node())} actions={nodeActions(node())}
-        isProviderConnected={isProviderConnected} onBack={() => setPageId("")} onOpen={openPage}
-        onAddChild={node().level === "component" ? undefined : () => addChild(node().id)} />}
-    </Show>
     <A11yDialog open={!!props.createDialogOpen || moveOpen()} title={moveOpen() ? "Move node" : "Add structure node"} dismissible={!busy()} onClose={() => { if (!busy()) { setMoveOpen(false); props.onCloseCreate(); } }} footer={<>
       <Button variant="ghost" disabled={busy()} onClick={() => { setMoveOpen(false); props.onCloseCreate(); }}>Cancel</Button>
       <Button disabled={busy() || (!moveOpen() && !title().trim()) || ((moveOpen() || kind() !== "system") && !parents().some((node) => node.id === parent()))} onClick={() => void save(() => moveOpen() ? props.onMove(selected()!.id, parent()) : props.onCreate({ title: title().trim(), level: kind(), parentId: parent() }), () => { setMoveOpen(false); props.onCloseCreate(); })}>{busy() ? "Saving…" : "Save"}</Button>
