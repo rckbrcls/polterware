@@ -205,7 +205,7 @@ function DetailPanelSection(props: DetailPanelSectionProps) {
 }
 
 /** Titled, collapsible block for page content (not the floating panel); shares the animated body. */
-export function CollapsibleSection(props: { title: string; icon?: JSX.Element; defaultOpen?: boolean; class?: string; children: JSX.Element }) {
+export function CollapsibleSection(props: { title: string; icon?: JSX.Element; /** Muted text after the title, such as a count. */ aside?: JSX.Element; defaultOpen?: boolean; class?: string; children: JSX.Element }) {
   const [open, setOpen] = createSignal(props.defaultOpen !== false);
   const titleId = createUniqueId();
   const bodyId = createUniqueId();
@@ -214,6 +214,7 @@ export function CollapsibleSection(props: { title: string; icon?: JSX.Element; d
       <button type="button" class="pw-detail-panel__section-toggle !w-auto !flex-none !py-1 [[data-open=true]_&]:!pb-4" aria-expanded={open()} aria-controls={bodyId} onClick={() => setOpen(value => !value)}>
         <Show when={props.icon}><span class="pw-detail-panel__section-icon" aria-hidden>{props.icon}</span></Show>
         <h3 id={titleId} class="pw-detail-panel__section-title">{props.title}</h3>
+        <Show when={props.aside}><span class="pw-detail-panel__section-aside">{props.aside}</span></Show>
         <ChevronDown size={14} class="pw-detail-panel__section-chevron" aria-hidden />
       </button>
       <DetailPanelSectionBody id={bodyId} open={open()}>{props.children}</DetailPanelSectionBody>

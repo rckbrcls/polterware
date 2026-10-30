@@ -292,6 +292,8 @@ export function IconTile(props: IconTileProps) {
   // masked by the mark. Thin strokes need the saturated ramp; the tile ramp reads as silver at mark size.
   // It repaints when the mark or its tint changes; without an SVG mark or WebGL2 the mark keeps the flat accent.
   const paintMark = () => {
+    // A tile rendered outside the document (a row built before it is placed) has no computed color yet.
+    if (!tile.isConnected) return;
     const tint = parseComputedColor(getComputedStyle(tile).color);
     const variant = chromeVariant(chromeVariantIndex(props.seed), props.chromePreset);
     const mask = markMaskImage(mark);
@@ -315,6 +317,7 @@ export function IconTile(props: IconTileProps) {
       createEffect(on([accent, size, () => props.seed, () => props.chromeStops, () => props.chromePreset], paintMark, { defer: true }));
       return;
     }
+    if (!tile.isConnected) return;
     const style = getComputedStyle(tile);
     const tint = parseComputedColor(style.color);
     const variant = chromeVariant(chromeVariantIndex(props.seed), props.chromePreset);

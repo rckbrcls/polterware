@@ -6,10 +6,19 @@
   grid-template-columns: 280px minmax(0, 1fr);
 }
 
+/* The tree sits on the shared ring Card, as tall as its rows; past the pane's height the card scrolls. */
 .pw-structure__tree {
+  display: flex;
   min-height: 0;
+  align-items: flex-start;
+  padding: 8px 0 8px 8px;
+}
+
+.pw-structure__tree-card {
+  max-height: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
   overflow: auto;
-  padding: 8px;
 }
 
 .pw-structure__pane {
@@ -28,7 +37,7 @@
   color: var(--color-text-primary);
 }
 
-/* A tree row's line after its title: Add child and the actions. */
+/* A tree row's line after its title: Add child alone. */
 .pw-structure-line {
   display: inline-flex;
   min-width: 0;
@@ -47,7 +56,15 @@
   visibility: visible;
 }
 
-/* The document: metadata sections under the title, then the description and the records. Sections are RailGroups (a 24px icon tile, the title, and a count). */
+/* Every action but Add child, under the document title. */
+.pw-structure__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 16px -8px;
+}
+
+/* The document: metadata sections under the title, then the description and the records. Sections are collapsible (CollapsibleSections: a 24px icon tile, the title, and a count). */
 .pw-structure__meta {
   display: flex;
   flex-direction: column;
@@ -60,9 +77,8 @@
   margin-top: 32px;
 }
 
-.pw-structure__section-body {
-  min-width: 0;
-  padding: 0 4px 0 36px;
+.pw-structure__section {
+  margin-bottom: 12px;
 }
 
 .pw-structure__text {
@@ -92,4 +108,16 @@
   gap: 8px;
   color: var(--color-text-muted);
   font-size: 13px;
+}
+
+/* Add child is the bare +: no hover circle, sized to the 20px label line; hover only brightens the glyph. */
+.pw-structure-line__add .pw-button {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.pw-structure-line__add .pw-button::before {
+  display: none;
 }

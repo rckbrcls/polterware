@@ -29,7 +29,7 @@ describe("Structure collection", () => {
     // The document sits in the page, not the global panel; the project is shown first.
     expect(detailPanelStore.getState().available).toBe(false);
     expect(host.querySelector(".pw-tree--compact")).not.toBeNull();
-    expect(host.querySelector(".card-panel")).toBeNull();
+    expect(host.querySelector(".pw-tree__row.card-panel")).toBeNull();
     expect(host.querySelector(".pw-structure__document h1")?.textContent).toBe("Project");
     const search = host.querySelector<HTMLInputElement>('[role="searchbox"]')!;
     search.value = "api";
@@ -38,7 +38,8 @@ describe("Structure collection", () => {
     const api = host.querySelector<HTMLElement>('[data-part="item"][data-value="api"]')!;
     // One line with the title alone; the node's content lives in the document.
     expect(api.textContent).not.toContain("Go");
-    expect(api.querySelector('[aria-label="Actions for API"]')).not.toBeNull();
+    // The row carries no actions menu; the node's actions sit in its document.
+    expect(api.querySelector('[aria-label="Actions for API"]')).toBeNull();
     // A component has no children, so its row offers no Add child; its system does.
     expect(api.querySelector('[aria-label^="Add child"]')).toBeNull();
     expect(host.querySelector('[aria-label="Add child to Application"]')).not.toBeNull();
@@ -53,15 +54,17 @@ describe("Structure collection", () => {
     expect(api.hasAttribute("data-selected")).toBe(true);
     const doc = host.querySelector<HTMLElement>(".pw-structure__document")!;
     expect(doc.querySelector("h1")?.textContent).toBe("API");
+    expect(doc.querySelector('[role="toolbar"][aria-label="Actions for API"]')?.textContent).toContain("Dependencies");
     // Metadata sits in sections under the title, the description below it.
     const meta = doc.querySelector(".pw-structure__meta")?.textContent ?? "";
     for (const text of ["Properties", "Technology", "Go", "Checkout", "backend/src/api", "app/api"]) expect(meta).toContain(text);
     expect(meta).not.toContain("Serves the project");
     expect(doc.textContent).toContain("Serves the project");
-    // Every card and decision that cites the node is listed and opens; empty sections are left out.
+    // Every card and decision that cites the node is a table row that opens it; empty sections are left out.
     expect(doc.textContent).toContain("Add auth");
     expect(doc.textContent).not.toContain("Facts");
-    [...doc.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent?.includes("Use Go"))!.click();
+    expect(doc.querySelector('table[aria-label="Decisions"]')).not.toBeNull();
+    doc.querySelector<HTMLElement>('tr[aria-label="Use Go"]')!.click();
     expect(openRecord).toHaveBeenCalledWith("decision", "dec-1");
   });
   it("retains the toolbar and exposes a collection error", async () => {

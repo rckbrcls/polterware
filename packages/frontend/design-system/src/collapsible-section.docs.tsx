@@ -18,6 +18,11 @@ export default {
       <CollapsibleSection title="Project files" icon={<Folder size={14} />}><p class="text-sm text-[var(--color-text-secondary)]">Source imports are ready.</p></CollapsibleSection>
       // #endregion
     ) },
+    { id: "aside", title: "With a count", render: () => (
+      // #region aside
+      <CollapsibleSection title="Cards" icon={<Folder size={14} />} aside="3"><p class="text-sm text-[var(--color-text-secondary)]">Three cards cite this component.</p></CollapsibleSection>
+      // #endregion
+    ) },
     { id: "closed", title: "Initially closed", render: () => (
       // #region closed
       <CollapsibleSection title="Advanced settings" defaultOpen={false}><p class="text-sm text-[var(--color-text-secondary)]">Open this section to reveal its content.</p></CollapsibleSection>

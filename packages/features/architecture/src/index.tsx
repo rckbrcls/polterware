@@ -1,10 +1,10 @@
 import { For, Index, Show, createEffect, createMemo, createSignal, onCleanup, untrack, type JSX } from "solid-js";
 import { createPageFilters, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
 import {
-  A11yDialog, Boxes, Button, PromptCardGrid, Checkbox, Field, Folder, FormStack, Input,
-  ActiveFilterBar, FilterPopover, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
-  Cloud, Delete, DetailPanel, EntityContextMenu, EntityMenuButton, Link2, Package, Route,
-  Scale, ShieldCheck, FileText, GitBranch, InformationCircle, RailGroup, SearchBar, Select, FolderKanban, StatusChip, TreeView, createEntityContextMenu, pushToast,
+  A11yDialog, Boxes, Button, Card, PromptCardGrid, Checkbox, Field, Folder, FormStack, Input,
+  ActiveFilterBar, CollapsibleSection, DataTable, FilterPopover, IconTile, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
+  Cloud, Delete, DetailPanel, Link2, Package, Route,
+  Scale, ShieldCheck, FileText, GitBranch, InformationCircle, SearchBar, Select, FolderKanban, StatusChip, TreeView, pushToast,
   type EntityAction, type TreeViewNode,
   ToolbarIconButton,
 } from "@polterware/frontend-design-system";
@@ -63,30 +63,54 @@ function nodeProperties(node: Pick<StructureNode, "level" | "kind" | "tech">): r
   return [["Level", kindLabel(node.level)], ["Kind", node.kind ? componentKindLabel(node.kind) : undefined], ["Technology", node.tech || undefined]];
 }
 
-/** A document section: a 24px icon tile, the title, and a count; space alone separates it from the next. */
+/** A document section that folds behind its heading: a 24px icon tile, the title, and a count. */
 function DocumentSection(props: { title: string; icon: JSX.Element; count?: number; children: JSX.Element }) {
-  return <RailGroup title={props.title} icon={props.icon} aside={props.count === undefined ? undefined : String(props.count)}>
-    <div class="pw-structure__section-body">{props.children}</div>
-  </RailGroup>;
+  return <CollapsibleSection class="pw-structure__section" title={props.title} icon={<IconTile size={24} tone="neutral" seed={`structure-section-${props.title}`}>{props.icon}</IconTile>}
+    aside={props.count === undefined ? undefined : String(props.count)}>{props.children}</CollapsibleSection>;
+}
+
+/** The cards, decisions, facts, or docs that cite a node, as a table; a row opens its page. */
+function RecordTable(props: { label: string; status: string; rows: readonly StructureRecord[]; icon: JSX.Element; onOpen?: (id: string) => void }) {
+  return <DataTable.Root rows={props.rows} getRowId={(row) => row.id} density="list">
+    <DataTable.Table aria-label={props.label}>
+      <DataTable.Header>
+        <DataTable.ColumnHeader<StructureRecord> id="title" sortBy={(row) => row.title}>Title</DataTable.ColumnHeader>
+        <DataTable.ColumnHeader<StructureRecord> id="status" width="22%" sortBy={(row) => row.caption ?? ""}>{props.status}</DataTable.ColumnHeader>
+      </DataTable.Header>
+      <DataTable.Body<StructureRecord>>
+        {(row) => <DataTable.Row row={row} rowId={row.id} aria-label={row.title} onActivate={props.onOpen ? () => props.onOpen!(row.id) : undefined}>
+          <DataTable.PrimaryCell icon={props.icon} iconTone="neutral" iconSeed={row.id} title={row.title} />
+          <DataTable.Cell><span class="text-[var(--color-text-muted)]">{row.caption}</span></DataTable.Cell>
+        </DataTable.Row>}
+      </DataTable.Body>
+    </DataTable.Table>
+  </DataTable.Root>;
 }
 
 const RECORD_SECTIONS = [
-  { key: "cards", kind: "card", title: "Cards", Icon: FolderKanban },
-  { key: "decisions", kind: "decision", title: "Decisions", Icon: Scale },
-  { key: "facts", kind: "fact", title: "Facts", Icon: ShieldCheck },
-  { key: "docs", kind: "doc", title: "Docs", Icon: FileText },
+  { key: "cards", kind: "card", title: "Cards", status: "Stage", Icon: FolderKanban },
+  { key: "decisions", kind: "decision", title: "Decisions", status: "State", Icon: Scale },
+  { key: "facts", kind: "fact", title: "Facts", status: "Kind", Icon: ShieldCheck },
+  { key: "docs", kind: "doc", title: "Docs", status: "Type", Icon: FileText },
 ] as const;
 
 /**
  * The selected node as a document beside the tree: the central column of a docs page with
- * no rail. Under the title, the metadata in sections led by an icon tile (Properties with the
+ * no rail. Under the title, the metadata in collapsible sections led by an icon tile (Properties with the
  * level, kind, and technology; Checkout with folder and path), then the description, every
- * card, decision, fact, and doc that cites the node as links, Uses, and Deploys. Empty sections
+ * card, decision, fact, and doc that cites the node as a table, Uses, and Deploys. Empty sections
  * are left out.
  */
-function NodeDocument(props: { title: string; description?: string; properties: readonly (readonly [string, string | undefined])[]; records: StructureRecords; checkout?: string; path?: string; uses?: readonly string[]; deploys?: StructureNode["deploys"]; isProviderConnected: (provider: string) => boolean; onOpenRecord?: (kind: StructureRecordKind, id: string) => void }) {
+function NodeDocument(props: { title: string; actions: readonly EntityAction[]; description?: string; properties: readonly (readonly [string, string | undefined])[]; records: StructureRecords; checkout?: string; path?: string; uses?: readonly string[]; deploys?: StructureNode["deploys"]; isProviderConnected: (provider: string) => boolean; onOpenRecord?: (kind: StructureRecordKind, id: string) => void }) {
   return <article class="pw-document__column pw-structure__document" aria-label={props.title}>
     <h1 class="pw-document__title">{props.title}</h1>
+    <Show when={props.actions.length}>
+      <div class="pw-structure__actions" role="toolbar" aria-label={`Actions for ${props.title}`}>
+        <For each={props.actions}>{(action) => <Button variant="ghost" size="sm" disabled={action.disabled} onClick={() => action.onSelect()}>
+          <Show when={action.icon}>{(Icon) => { const Glyph = Icon(); return <Glyph size={14} />; }}</Show>{action.label}
+        </Button>}</For>
+      </div>
+    </Show>
     <div class="pw-structure__meta">
       <DocumentSection title="Properties" icon={<InformationCircle size={14} />}>
         <DetailPanel.Properties variant="inline">
@@ -106,7 +130,8 @@ function NodeDocument(props: { title: string; description?: string; properties: 
     <div class="pw-structure__sections">
       <For each={RECORD_SECTIONS}>{(section) => <Show when={props.records[section.key].length}>
         <DocumentSection title={section.title} icon={<section.Icon size={14} />} count={props.records[section.key].length}>
-          <DetailPanel.LinkedEntities items={props.records[section.key]} onOpen={props.onOpenRecord ? (id) => props.onOpenRecord!(section.kind, id) : undefined} />
+          <RecordTable label={section.title} status={section.status} rows={props.records[section.key]} icon={<section.Icon size={14} />}
+            onOpen={props.onOpenRecord ? (id) => props.onOpenRecord!(section.kind, id) : undefined} />
         </DocumentSection>
       </Show>}</For>
       <Show when={props.uses?.length}>
@@ -129,16 +154,15 @@ function NodeDocument(props: { title: string; description?: string; properties: 
   </article>;
 }
 
-/** A tree row's line after its title: Add child and the actions; everything else is in the document beside the tree. */
-function NodeLine(props: { addLabel?: string; onAdd?: () => void; title: string; actions: readonly EntityAction[] }) {
-  return <span class="pw-structure-line" onKeyDown={(event) => event.stopPropagation()}>
-    <Show when={props.onAdd}>
+/** A tree row's line after its title: Add child alone; every other action is in the node's document. */
+function NodeLine(props: { addLabel?: string; onAdd?: () => void }) {
+  return <Show when={props.onAdd}>
+    <span class="pw-structure-line" onKeyDown={(event) => event.stopPropagation()}>
       <span class="pw-structure-line__add">
         <Button size="icon" variant="ghost" aria-label={props.addLabel ?? "Add child"} onClick={(event) => { event.stopPropagation(); props.onAdd?.(); }}><Plus size={14} /></Button>
       </span>
-    </Show>
-    <EntityMenuButton label={`Actions for ${props.title}`} actions={props.actions} />
-  </span>;
+    </span>
+  </Show>;
 }
 
 const NO_KIND = "none";
@@ -273,20 +297,17 @@ export function StructureView(props: {
     ...(node.level === "component" && props.onDeploysChange ? [{ id: "deploys", label: "Edit deploys", icon: Cloud, onSelect: () => { open(node.id); openDeploysDialog(node); } }] : []),
   ];
   const projectActions = (): EntityAction[] => [{ id: "add-system", label: "Add system", icon: Plus, disabled: !!props.loading || !!props.error, onSelect: () => { open(PROJECT_ID); props.onOpenCreate(); } }];
-  const rowMenu = createEntityContextMenu();
   const addChild = (id: string) => { open(id); props.onOpenCreate(); };
   const toTreeNode = (item: StructureTreeItem): TreeViewNode => ({
     id: item.node.id, label: item.node.title, icon: <span class="pw-structure__icon"><KindIcon kind={item.node.level} size={14} /></span>,
-    trailing: <NodeLine title={item.node.title} actions={nodeActions(item.node)}
+    trailing: <NodeLine
       onAdd={item.node.level === "component" ? undefined : () => addChild(item.node.id)} addLabel={`Add child to ${item.node.title}`} />,
-    onContextMenu: (event) => rowMenu.open(event, nodeActions(item.node)),
     children: item.children.map(toTreeNode),
   });
   const treeNodes = createMemo<TreeViewNode[]>(() => props.loading || props.error ? [] : [{
     id: PROJECT_ID, label: props.projectName, icon: <span class="pw-structure__icon"><KindIcon kind="project" size={14} /></span>,
-    trailing: <NodeLine title={props.projectName} actions={projectActions()}
+    trailing: <NodeLine
       onAdd={props.loading || props.error ? undefined : () => addChild(PROJECT_ID)} addLabel="Add system" />,
-    onContextMenu: (event) => rowMenu.open(event, projectActions()),
     children: tree().map(toTreeNode),
   }]);
 
@@ -294,10 +315,10 @@ export function StructureView(props: {
   const treeSelection = createMemo(() => [selectedId() ?? PROJECT_ID]);
   const detail = createMemo(() => {
     const id = selectedId() ?? PROJECT_ID;
-    if (id === PROJECT_ID) return { title: props.projectName, description: props.projectDescription, properties: [["Level", "Project"]] as const, records: props.projectRecords, checkout: props.projectRepository };
+    if (id === PROJECT_ID) return { title: props.projectName, actions: projectActions(), description: props.projectDescription, properties: [["Level", "Project"]] as const, records: props.projectRecords, checkout: props.projectRepository };
     const node = selected();
     if (!node) return undefined;
-    return { title: node.title, description: node.intent, properties: nodeProperties(node), records: props.records[node.id] ?? NO_RECORDS, checkout: checkoutLabel(node.repo, node.folder), path: node.path,
+    return { title: node.title, actions: nodeActions(node), description: node.intent, properties: nodeProperties(node), records: props.records[node.id] ?? NO_RECORDS, checkout: checkoutLabel(node.repo, node.folder), path: node.path,
       uses: usesTitles(node), deploys: node.level === "component" ? node.deploys : undefined };
   });
 
@@ -372,10 +393,11 @@ export function StructureView(props: {
       <PageContent class="flex flex-col overflow-hidden">
         <Show when={visible().length} fallback={<PageEmpty title={query().trim() ? "No matches" : "No structure yet"} mood={query().trim() ? "lost" : "sleeping"} >{!query().trim() ? <PromptCardGrid items={STRUCTURE_AGENT_PROMPTS.map((item) => ({ id: item.id, title: item.title, description: item.description, tone: item.tone, icon: <KindIcon kind={item.level} size={16} />, prompt: item.prompt }))} /> : undefined}</PageEmpty>}>
           <div class="pw-structure">
-          <EntityContextMenu menu={rowMenu} />
-          <nav class="pw-structure__tree pw-scroll-fade" aria-label="Structure tree">
+          <nav class="pw-structure__tree" aria-label="Structure tree">
+            <Card class="pw-structure__tree-card pw-scroll-fade">
             <TreeView label="Project structure" branches compact expandOnClick={false} class="[&>h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)}
               selectedValue={treeSelection()} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} onFocusChange={(event) => { if (event.focusedValue && event.focusedValue !== selectedId()) open(event.focusedValue); }} />
+            </Card>
           </nav>
           <div class="pw-structure__pane pw-scroll-fade">
             <Show when={detail()}>{(item) => <NodeDocument {...item()} isProviderConnected={isProviderConnected} onOpenRecord={props.onOpenRecord} />}</Show>
