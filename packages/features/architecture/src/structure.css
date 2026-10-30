@@ -240,9 +240,20 @@ tr:focus-within .pw-structure__row-unlink {
   padding: 8px 4px;
 }
 
-/* The heading takes the rows' 12px inset, so its tile, count, and chevron line up with theirs. */
+/* The heading takes the rows' 12px inset, so its tile, count, and chevron line up with theirs.
+ * While open, a divider runs under it across the whole card, edge to edge. */
 .pw-structure__section .pw-collapsible-section__heading {
-  padding-inline: 12px;
+  margin-inline: -4px;
+  padding-inline: 16px;
+}
+
+.pw-structure__section [data-open="true"] > .pw-collapsible-section__heading {
+  padding-bottom: 8px;
+  box-shadow: inset 0 -0.5px 0 0 var(--color-border-default);
+}
+
+.pw-structure__section [data-open="true"] > .pw-detail-panel__section-clip > .pw-detail-panel__section-body {
+  padding-top: 8px;
 }
 
 .pw-structure__section .pw-detail-panel__section-toggle {
