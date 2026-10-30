@@ -1417,7 +1417,6 @@ function DispatchRunDetail(props: {
   const linked = () => props.run.resumedOf.trim() || props.resumedBy.length > 0 || props.childRuns.length > 0;
   const actions = () => (
     <>
-      <StatusChip tone={dispatchStatusTone(props.run.status)} label={props.run.status || "unknown"} />
       <Show when={isRunActive(props.run.status)}>
         <Button size="sm" variant="ghost" disabled={props.cancelling} onClick={() => props.onCancel()}>
           <Stop size={12} />
@@ -1440,17 +1439,17 @@ function DispatchRunDetail(props: {
   );
   const rail = () => (
     <>
-      <RailGroup title="Agent" icon={<Bot size={14} />}>
+      <RailGroup collapsible title="Agent" icon={<Bot size={14} />}>
         <div class="px-1"><RunAgentBar run={props.run} attempts={attempts()} /></div>
       </RailGroup>
       <Show when={promptRest()}>
         {(rest) => (
-          <RailGroup title="Prompt" icon={<FileText size={14} />}>
+          <RailGroup collapsible title="Prompt" icon={<FileText size={14} />}>
             <p class="m-0 whitespace-pre-wrap px-1 text-[13px] leading-5 text-[var(--color-text-secondary)]">{rest()}</p>
           </RailGroup>
         )}
       </Show>
-      <RailGroup title="Run" icon={<InformationCircle size={14} />}>
+      <RailGroup collapsible title="Run" icon={<InformationCircle size={14} />}>
         <DetailPanel.Properties variant="rail">
           <DetailPanel.Property label="Run" mono value={props.run.id} />
           <DetailPanel.Property label="Route" value={routeLabel(props.run)} />
@@ -1461,7 +1460,7 @@ function DispatchRunDetail(props: {
           <DetailPanel.Property label="Note" value={text(props.run.note)} />
         </DetailPanel.Properties>
       </RailGroup>
-      <RailGroup title="Changes" icon={<FileDiff size={14} />}>
+      <RailGroup collapsible title="Changes" icon={<FileDiff size={14} />}>
         <DetailPanel.Properties variant="rail">
           <DetailPanel.Property label="Files" value={formatFiles(props.run) ? <FileChangeLine run={props.run} /> : undefined} />
           <DetailPanel.Property label="Branch" mono value={text(branch())} />
@@ -1471,7 +1470,7 @@ function DispatchRunDetail(props: {
         </DetailPanel.Properties>
       </RailGroup>
       <Show when={linked()}>
-        <RailGroup title="Linked runs" icon={<Route size={14} />}>
+        <RailGroup collapsible title="Linked runs" icon={<Route size={14} />}>
           <div class="flex flex-col gap-0.5 px-1">
             <Show when={props.run.resumedOf.trim()}>
               <LinkedRunRow label={`Resumed from ${shortRunId(props.run.resumedOf)}`} seed={`${props.run.id}:resumed-of`} onOpen={() => props.onSelect(props.run.resumedOf)} />

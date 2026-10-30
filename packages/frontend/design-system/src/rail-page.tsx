@@ -1,8 +1,9 @@
-import { Show, createEffect, createSignal, onCleanup, onMount, untrack, type JSX } from "solid-js";
+import { Show, createEffect, createSignal, createUniqueId, onCleanup, onMount, untrack, type JSX } from "solid-js";
 import { animate, motionValue, type AnimationPlaybackControls } from "motion";
 import { Button } from "./button";
 import { useDesignSystem } from "./provider";
-import { ChevronLeft, SidebarRightIcon } from "./hugeicons";
+import { ChevronDown, ChevronLeft, SidebarRightIcon } from "./hugeicons";
+import { DetailPanelSectionBody } from "./detail-panel";
 import { IconTile, type IconTileTone } from "./icon-tile";
 import { prefersReducedMotion } from "./reduced-motion";
 import { spring } from "./springs";
@@ -236,19 +237,41 @@ export function RailGroup(props: {
   /** Shown at the end of the title row, such as a count. */
   aside?: JSX.Element;
   actions?: JSX.Element;
+  /** The heading toggles the group's content on the shared springs. */
+  collapsible?: boolean;
   children: JSX.Element;
 }) {
-  return (
-    <section class="pw-document__group">
-      <Show when={props.icon} fallback={<h3 class="pw-document__group-title">{props.title}</h3>}>
-        <div class="pw-document__group-heading">
-          <IconTile size={24} tone={props.tone ?? "neutral"} seed={`document-group-${props.title}`}>{props.icon}</IconTile>
-          <h3 class="pw-document__group-title pw-document__group-title--tiled">{props.title}</h3>
-          <Show when={props.aside}><span class="pw-document__group-aside">{props.aside}</span></Show>
-        </div>
-      </Show>
+  const [open, setOpen] = createSignal(true);
+  const bodyId = createUniqueId();
+  const heading = () => (
+    <>
+      <IconTile size={24} tone={props.tone ?? "neutral"} seed={`document-group-${props.title}`}>{props.icon}</IconTile>
+      <h3 class="pw-document__group-title pw-document__group-title--tiled">{props.title}</h3>
+      <Show when={props.aside}><span class="pw-document__group-aside">{props.aside}</span></Show>
+    </>
+  );
+  const content = () => (
+    <>
       {props.children}
       <Show when={props.actions}><div class="pw-document__group-actions">{props.actions}</div></Show>
+    </>
+  );
+  return (
+    <section class="pw-document__group" data-open={open()}>
+      <Show when={props.collapsible} fallback={
+        <>
+          <Show when={props.icon} fallback={<h3 class="pw-document__group-title">{props.title}</h3>}>
+            <div class="pw-document__group-heading">{heading()}</div>
+          </Show>
+          {content()}
+        </>
+      }>
+        <button type="button" class="pw-document__group-heading pw-document__group-toggle" aria-expanded={open()} aria-controls={bodyId} onClick={() => setOpen((value) => !value)}>
+          {heading()}
+          <ChevronDown size={14} class="pw-document__group-chevron" aria-hidden />
+        </button>
+        <DetailPanelSectionBody id={bodyId} open={open()} class="pw-document__group-content">{content()}</DetailPanelSectionBody>
+      </Show>
     </section>
   );
 }

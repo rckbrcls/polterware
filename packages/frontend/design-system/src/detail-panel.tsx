@@ -226,7 +226,7 @@ export function CollapsibleSection(props: { title: string; icon?: JSX.Element; /
 }
 
 /** Collapses to a measured pixel height with the shared springs; snaps on first paint and under reduced motion. */
-function DetailPanelSectionBody(props: { id: string; open: boolean; children: JSX.Element }) {
+export function DetailPanelSectionBody(props: { id: string; open: boolean; class?: string; children: JSX.Element }) {
   let clip: HTMLDivElement | undefined;
   let inner: HTMLDivElement | undefined;
   let controls: AnimationPlaybackControls | undefined;
@@ -264,7 +264,7 @@ function DetailPanelSectionBody(props: { id: string; open: boolean; children: JS
   onCleanup(() => controls?.stop());
   return (
     <div ref={clip} id={props.id} class="pw-detail-panel__section-clip" hidden={!initiallyOpen}>
-      <div ref={inner} class="pw-detail-panel__section-body">{props.children}</div>
+      <div ref={inner} class={props.class ?? "pw-detail-panel__section-body"}>{props.children}</div>
     </div>
   );
 }
