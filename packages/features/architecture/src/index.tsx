@@ -4,7 +4,7 @@ import {
   A11yDialog, Boxes, Button, PromptCardGrid, Checkbox, Field, Folder, FormStack, Input,
   ActiveFilterBar, FilterPopover, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
   Cloud, Delete, DetailPanel, EntityContextMenu, EntityMenuButton, Link2, Package, Route,
-  SearchBar, Select, StatusChip, TreeView, createEntityContextMenu, pushToast,
+  Scale, ShieldCheck, FileText, GitBranch, InformationCircle, RailGroup, SearchBar, Select, FolderKanban, StatusChip, TreeView, createEntityContextMenu, pushToast,
   type EntityAction, type TreeViewNode,
   ToolbarIconButton,
 } from "@polterware/frontend-design-system";
@@ -21,7 +21,11 @@ export { filterStructureNodes } from "./structure-tree";
 export type { StructureNode } from "./structure-tree";
 export const STRUCTURE_SCOPE = "structure:nodes";
 const PROJECT_ID = "structure:project";
-type Counts = { work: number; decisions: number; facts: number };
+/** One thing that cites a node: a card (by slug), decision, fact, or doc, with a muted caption such as its stage. */
+export type StructureRecord = { id: string; title: string; caption?: string };
+export type StructureRecordKind = "card" | "decision" | "fact" | "doc";
+export type StructureRecords = { cards: readonly StructureRecord[]; decisions: readonly StructureRecord[]; facts: readonly StructureRecord[]; docs: readonly StructureRecord[] };
+const NO_RECORDS: StructureRecords = { cards: [], decisions: [], facts: [], docs: [] };
 export type StructureDraft = { title: string; level: StructureKind; parentId: string };
 
 // Nine catalog providers from the integrations catalog
@@ -59,43 +63,69 @@ function nodeProperties(node: Pick<StructureNode, "level" | "kind" | "tech">): r
   return [["Level", kindLabel(node.level)], ["Kind", node.kind ? componentKindLabel(node.kind) : undefined], ["Technology", node.tech || undefined]];
 }
 
+/** A document section: a 24px icon tile, the title, and a count; space alone separates it from the next. */
+function DocumentSection(props: { title: string; icon: JSX.Element; count?: number; children: JSX.Element }) {
+  return <RailGroup title={props.title} icon={props.icon} aside={props.count === undefined ? undefined : String(props.count)}>
+    <div class="pw-structure__section-body">{props.children}</div>
+  </RailGroup>;
+}
+
+const RECORD_SECTIONS = [
+  { key: "cards", kind: "card", title: "Cards", Icon: FolderKanban },
+  { key: "decisions", kind: "decision", title: "Decisions", Icon: Scale },
+  { key: "facts", kind: "fact", title: "Facts", Icon: ShieldCheck },
+  { key: "docs", kind: "doc", title: "Docs", Icon: FileText },
+] as const;
+
 /**
  * The selected node as a document beside the tree: the central column of a docs page with
- * no rail. The title, then every metadata value in one wrapping row (level, kind, technology,
- * checkout, path, and record counts; empty values are left out), then the description, Uses,
- * and Deploys.
+ * no rail. Under the title, the metadata in sections led by an icon tile (Properties with the
+ * level, kind, and technology; Checkout with folder and path), then the description, every
+ * card, decision, fact, and doc that cites the node as links, Uses, and Deploys. Empty sections
+ * are left out.
  */
-function NodeDocument(props: { title: string; description?: string; properties: readonly (readonly [string, string | undefined])[]; counts?: Counts; checkout?: string; path?: string; uses?: readonly string[]; deploys?: StructureNode["deploys"]; isProviderConnected: (provider: string) => boolean }) {
-  const count = (value: number | undefined) => value ? String(value) : undefined;
+function NodeDocument(props: { title: string; description?: string; properties: readonly (readonly [string, string | undefined])[]; records: StructureRecords; checkout?: string; path?: string; uses?: readonly string[]; deploys?: StructureNode["deploys"]; isProviderConnected: (provider: string) => boolean; onOpenRecord?: (kind: StructureRecordKind, id: string) => void }) {
   return <article class="pw-document__column pw-structure__document" aria-label={props.title}>
     <h1 class="pw-document__title">{props.title}</h1>
-    <DetailPanel.Properties variant="inline" class="pw-structure__meta">
-      <For each={props.properties}>{([label, value]) => <DetailPanel.Property label={label} value={value} />}</For>
-      <DetailPanel.Property label="Folder" value={props.checkout} mono />
-      <DetailPanel.Property label="Path" value={props.path} mono />
-      <DetailPanel.Property label="Cards" value={count(props.counts?.work)} />
-      <DetailPanel.Property label="Decisions" value={count(props.counts?.decisions)} />
-      <DetailPanel.Property label="Facts" value={count(props.counts?.facts)} />
-    </DetailPanel.Properties>
+    <div class="pw-structure__meta">
+      <DocumentSection title="Properties" icon={<InformationCircle size={14} />}>
+        <DetailPanel.Properties variant="inline">
+          <For each={props.properties}>{([label, value]) => <DetailPanel.Property label={label} value={value} />}</For>
+        </DetailPanel.Properties>
+      </DocumentSection>
+      <Show when={props.checkout || props.path}>
+        <DocumentSection title="Checkout" icon={<GitBranch size={14} />}>
+          <DetailPanel.Properties variant="inline">
+            <DetailPanel.Property label="Folder" value={props.checkout} mono />
+            <DetailPanel.Property label="Path" value={props.path} mono />
+          </DetailPanel.Properties>
+        </DocumentSection>
+      </Show>
+    </div>
     <Show when={props.description} fallback={<p class="pw-structure__text pw-structure__text--empty">No description yet.</p>}>{(text) => <p class="pw-structure__text">{text()}</p>}</Show>
-    <Show when={props.uses?.length}>
-      <section class="pw-structure__section">
-        <h2 class="pw-structure__heading">Uses</h2>
-        <p class="pw-structure__text">{props.uses!.join(" / ")}</p>
-      </section>
-    </Show>
-    <Show when={props.deploys?.length}>
-      <section class="pw-structure__section">
-        <h2 class="pw-structure__heading">Deploys</h2>
-        <ul class="pw-structure__deploys" aria-label="Deploys">
-          <For each={props.deploys!}>{(deploy) => <li>
-            <span class="truncate text-[var(--color-text-primary)]">{deploy.resource}</span>
-            <span class="truncate">{deploy.provider} / {deploy.environment || deploy.environmentId}</span>
-            <Show when={!props.isProviderConnected(deploy.provider)}><StatusChip tone="warn" label="CLI not connected" /></Show>
-          </li>}</For>
-        </ul>
-      </section>
-    </Show>
+    <div class="pw-structure__sections">
+      <For each={RECORD_SECTIONS}>{(section) => <Show when={props.records[section.key].length}>
+        <DocumentSection title={section.title} icon={<section.Icon size={14} />} count={props.records[section.key].length}>
+          <DetailPanel.LinkedEntities items={props.records[section.key]} onOpen={props.onOpenRecord ? (id) => props.onOpenRecord!(section.kind, id) : undefined} />
+        </DocumentSection>
+      </Show>}</For>
+      <Show when={props.uses?.length}>
+        <DocumentSection title="Uses" icon={<Link2 size={14} />} count={props.uses!.length}>
+          <p class="pw-structure__text">{props.uses!.join(" / ")}</p>
+        </DocumentSection>
+      </Show>
+      <Show when={props.deploys?.length}>
+        <DocumentSection title="Deploys" icon={<Cloud size={14} />} count={props.deploys!.length}>
+          <ul class="pw-structure__deploys" aria-label="Deploys">
+            <For each={props.deploys!}>{(deploy) => <li>
+              <span class="truncate text-[var(--color-text-primary)]">{deploy.resource}</span>
+              <span class="truncate">{deploy.provider} / {deploy.environment || deploy.environmentId}</span>
+              <Show when={!props.isProviderConnected(deploy.provider)}><StatusChip tone="warn" label="CLI not connected" /></Show>
+            </li>}</For>
+          </ul>
+        </DocumentSection>
+      </Show>
+    </div>
   </article>;
 }
 
@@ -121,8 +151,12 @@ export function StructureView(props: {
   nodes: readonly StructureNode[];
   /** Full registry for parent and dependency choices under a collection scope filter. */
   registryNodes?: readonly StructureNode[];
-  counts: Readonly<Record<string, Counts>>;
-  projectCounts: Counts;
+  /** What cites each node, by node id. */
+  records: Readonly<Record<string, StructureRecords>>;
+  /** Everything in the project, for the project's own document. */
+  projectRecords: StructureRecords;
+  /** Opens a card (by slug), decision, fact, or doc listed in a node's document. */
+  onOpenRecord?: (kind: StructureRecordKind, id: string) => void;
   loading?: boolean;
   error?: string;
   createDialogOpen?: boolean;
@@ -260,10 +294,10 @@ export function StructureView(props: {
   const treeSelection = createMemo(() => [selectedId() ?? PROJECT_ID]);
   const detail = createMemo(() => {
     const id = selectedId() ?? PROJECT_ID;
-    if (id === PROJECT_ID) return { title: props.projectName, description: props.projectDescription, properties: [["Level", "Project"]] as const, counts: props.projectCounts, checkout: props.projectRepository };
+    if (id === PROJECT_ID) return { title: props.projectName, description: props.projectDescription, properties: [["Level", "Project"]] as const, records: props.projectRecords, checkout: props.projectRepository };
     const node = selected();
     if (!node) return undefined;
-    return { title: node.title, description: node.intent, properties: nodeProperties(node), counts: props.counts[node.id], checkout: checkoutLabel(node.repo, node.folder), path: node.path,
+    return { title: node.title, description: node.intent, properties: nodeProperties(node), records: props.records[node.id] ?? NO_RECORDS, checkout: checkoutLabel(node.repo, node.folder), path: node.path,
       uses: usesTitles(node), deploys: node.level === "component" ? node.deploys : undefined };
   });
 
@@ -344,7 +378,7 @@ export function StructureView(props: {
               selectedValue={treeSelection()} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} onFocusChange={(event) => { if (event.focusedValue && event.focusedValue !== selectedId()) open(event.focusedValue); }} />
           </nav>
           <div class="pw-structure__pane pw-scroll-fade">
-            <Show when={detail()}>{(item) => <NodeDocument {...item()} isProviderConnected={isProviderConnected} />}</Show>
+            <Show when={detail()}>{(item) => <NodeDocument {...item()} isProviderConnected={isProviderConnected} onOpenRecord={props.onOpenRecord} />}</Show>
           </div>
           </div>
         </Show>

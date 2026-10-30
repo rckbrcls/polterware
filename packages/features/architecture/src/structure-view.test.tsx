@@ -14,16 +14,17 @@ function mount(options: { error?: string; loading?: boolean } = {}) {
   const host = document.createElement("div");
   document.body.append(host);
   const open = vi.fn((entityId: string) => { detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId, entityKind: "arch-node" }); });
-  dispose = render(() => <StructureView projectName="Project" nodes={nodes} counts={{ api: { work: 2, decisions: 1, facts: 3 } }} projectCounts={{ work: 2, decisions: 1, facts: 3 }}
+  const openRecord = vi.fn();
+  dispose = render(() => <StructureView projectName="Project" nodes={nodes} records={{ api: { cards: [{ id: "api-auth", title: "Add auth", caption: "Build" }], decisions: [{ id: "dec-1", title: "Use Go", caption: "Active" }], facts: [], docs: [] } }} projectRecords={{ cards: [], decisions: [], facts: [], docs: [] }} onOpenRecord={openRecord}
     onOpenNode={open} onSelect={() => {}} onOpenCreate={() => {}} onCloseCreate={() => {}} onCreate={async () => {}} onMove={async () => {}} onUses={async () => {}} {...options} />, host);
-  return { host, open };
+  return { host, open, openRecord };
 }
 beforeEach(() => detailPanelStore.setState(detailPanelDefaultState));
 afterEach(() => { dispose?.(); document.body.replaceChildren(); });
 
 describe("Structure collection", () => {
   it("keeps a compact branch tree with one line per node and shows the selected node's document beside it", async () => {
-    const { host, open } = mount();
+    const { host, open, openRecord } = mount();
     await tick();
     // The document sits in the page, not the global panel; the project is shown first.
     expect(detailPanelStore.getState().available).toBe(false);
@@ -52,11 +53,16 @@ describe("Structure collection", () => {
     expect(api.hasAttribute("data-selected")).toBe(true);
     const doc = host.querySelector<HTMLElement>(".pw-structure__document")!;
     expect(doc.querySelector("h1")?.textContent).toBe("API");
-    // Metadata sits in one row under the title, the description below it.
+    // Metadata sits in sections under the title, the description below it.
     const meta = doc.querySelector(".pw-structure__meta")?.textContent ?? "";
-    for (const text of ["Technology", "Go", "Decisions", "backend/src/api", "app/api"]) expect(meta).toContain(text);
+    for (const text of ["Properties", "Technology", "Go", "Checkout", "backend/src/api", "app/api"]) expect(meta).toContain(text);
     expect(meta).not.toContain("Serves the project");
     expect(doc.textContent).toContain("Serves the project");
+    // Every card and decision that cites the node is listed and opens; empty sections are left out.
+    expect(doc.textContent).toContain("Add auth");
+    expect(doc.textContent).not.toContain("Facts");
+    [...doc.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent?.includes("Use Go"))!.click();
+    expect(openRecord).toHaveBeenCalledWith("decision", "dec-1");
   });
   it("retains the toolbar and exposes a collection error", async () => {
     const { host } = mount({ error: "Core unavailable" });

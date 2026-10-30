@@ -47,7 +47,7 @@ import {
   type WorkspaceInboxAction,
   type WorkspaceInboxItem,
 } from "@polterware/feature-shell";
-import { StructureView, STRUCTURE_SCOPE, filterStructureNodes } from "@polterware/feature-architecture";
+import { StructureView, STRUCTURE_SCOPE, filterStructureNodes, type StructureRecordKind } from "@polterware/feature-architecture";
 import { CanvasWorkspace } from "./canvas-workspace";
 import type { CardDraft, ComposeRequest, DecisionDraft, DocDraft, MilestoneAction } from "@polterware/feature-knowledge";
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
@@ -89,6 +89,8 @@ const NewFeatureFlow = lazy(() =>
 const KnowledgeComposer = lazy(() =>
   import("@polterware/feature-knowledge").then((m) => ({ default: m.KnowledgeComposer })),
 );
+/** The Facts page's collection scope (`FACTS_SCOPE` in the lazily loaded knowledge feature). */
+const FACTS_SCOPE = "truth:facts";
 const TruthFactsPage = lazy(() =>
   import("@polterware/feature-knowledge").then((m) => ({ default: m.TruthFactsPage })),
 );
@@ -728,14 +730,30 @@ export function App() {
       title: node.title,
     })),
   );
-  const structureCounts = createMemo(() => Object.fromEntries(workspace().structure.nodes.map((node) => {
-    const entityIds = new Set(workspace().canonEntities.filter((entity) => entity.refId === node.id || entity.refId === node.path).map((entity) => entity.id));
-    return [node.id, {
-      work: workspace().workCards.filter((card) => card.under === node.path).length,
-      decisions: workspace().decisions.filter((decision) => decision.scopeNodeId === node.id || decision.governs.includes(node.path) || decision.entityLinks.some((link) => entityIds.has(link.entityId))).length,
-      facts: workspace().structureFacts.filter((fact) => fact.scopeNodeId === node.id || entityIds.has(fact.entityId)).length,
-    }];
-  })));
+  // Everything that cites a Structure node, listed in its document beside the tree.
+  const structureRecords = createMemo(() => {
+    const cap = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+    const card = (item: WorkspaceSnapshot["workCards"][number]) => ({ id: item.slug, title: item.title, caption: stageLabel(item.stage) });
+    const decision = (item: WorkspaceSnapshot["decisions"][number]) => ({ id: item.id, title: item.title, caption: cap(item.state) });
+    const fact = (item: WorkspaceSnapshot["structureFacts"][number]) => ({ id: item.id, title: item.statement || item.id, caption: item.truthClass ? cap(item.truthClass) : undefined });
+    const doc = (item: WorkspaceSnapshot["docs"][number]) => ({ id: item.id, title: item.title, caption: cap(item.docType) });
+    const project = { cards: workspace().workCards.map(card), decisions: workspace().decisions.map(decision), facts: workspace().structureFacts.map(fact), docs: workspace().docs.map(doc) };
+    return { project, nodes: Object.fromEntries(workspace().structure.nodes.map((node) => {
+      const entityIds = new Set(workspace().canonEntities.filter((entity) => entity.refId === node.id || entity.refId === node.path).map((entity) => entity.id));
+      return [node.id, {
+        cards: workspace().workCards.filter((item) => item.under === node.path).map(card),
+        decisions: workspace().decisions.filter((item) => item.scopeNodeId === node.id || item.governs.includes(node.path) || item.entityLinks.some((link) => entityIds.has(link.entityId))).map(decision),
+        facts: workspace().structureFacts.filter((item) => item.scopeNodeId === node.id || entityIds.has(item.entityId)).map(fact),
+        docs: workspace().docs.filter((item) => item.scopeNodeId === node.id || item.entityLinks.some((link) => entityIds.has(link.entityId))).map(doc),
+      }];
+    })) };
+  });
+  function openStructureRecord(kind: StructureRecordKind, id: string) {
+    if (kind === "card") { const next = sectionRoute("milestones"); navigateToDetail(next, next.tab === "board" ? "knowledge:board" : "knowledge:specs", id, "card"); }
+    else if (kind === "decision") navigateToDetail(setTab(sectionRoute("truth"), "decisions"), "knowledge:library", id, "decision");
+    else if (kind === "doc") navigateToDetail(setTab(sectionRoute("truth"), "docs"), "knowledge:docs", id, "doc");
+    else navigateToDetail(setTab(sectionRoute("truth"), "facts"), FACTS_SCOPE, id, "fact");
+  }
   const scopeNodeIdList = createMemo(() => scopeNodeIds(scopeTokens(), scopeNodes()));
   const scopeEnvironments = createMemo(() => {
     const selected = new Set(environmentIds(scopeTokens()));
@@ -1583,9 +1601,10 @@ export function App() {
             projectRepository={workspace().settings.repository}
             nodes={filterStructureNodes(workspace().structure.nodes, scopeNodeIdList()).map((node) => ({ ...node, deploys: node.deploys?.filter((deploy) =>
               matchesEnvironment([deploy.environmentId, deploy.environment], scopeEnvironments())) }))}
-            counts={structureCounts()}
+            records={structureRecords().nodes}
             registryNodes={workspace().structure.nodes}
-            projectCounts={{ work: workspace().workCards.length, decisions: workspace().decisions.length, facts: workspace().structureFacts.length }}
+            projectRecords={structureRecords().project}
+            onOpenRecord={openStructureRecord}
             error={structureError() || (!workspace().available ? workspace().healthMessage : undefined)}
             loading={!structureError() && workspace().available && (loading() || !workspace().extensionsReady)}
             createDialogOpen={route().dialog?.type === "arch-node-create"}

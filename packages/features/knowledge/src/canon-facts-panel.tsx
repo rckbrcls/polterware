@@ -166,6 +166,8 @@ export function CanonFactsPanel(props: {
   onBusyChange: (busy: boolean) => void;
 }) {
   const [facts, setFacts] = createSignal<CanonFactRow[]>([]);
+  // Loading until the first list arrives, so a Fact opened from another surface is not dropped as missing.
+  const [factsLoaded, setFactsLoaded] = createSignal(false);
   const [selectedId, setSelectedId] = createSignal("");
   const [detail, setDetail] = createSignal<CanonFactDetail | undefined>();
   const [projectEvidence, setProjectEvidence] = createSignal<CanonEvidenceRow[]>([]);
@@ -232,6 +234,7 @@ export function CanonFactsPanel(props: {
     const loadEvidence = props.loadEvidence;
     if ((!bridge && !loadFacts) || !projectId) {
       setFacts([]);
+      setFactsLoaded(true);
       setDetail(undefined);
       setSelectedId("");
       setProjectEvidence([]);
@@ -256,6 +259,7 @@ export function CanonFactsPanel(props: {
         },
       );
       setFacts(nextFacts);
+      setFactsLoaded(true);
       const evidenceResponse = asRecord(
         await (loadEvidence
           ? loadEvidence(projectId)
@@ -280,6 +284,7 @@ export function CanonFactsPanel(props: {
       else setDetail(undefined);
     } catch (error: unknown) {
       pushToast(error instanceof Error ? error.message : "Could not load facts.", "danger");
+      setFactsLoaded(true);
     } finally {
       if (ticket === refreshTicket) props.onBusyChange(false);
     }
@@ -375,7 +380,7 @@ export function CanonFactsPanel(props: {
   createEffect(() => {
     detailPanelStore.getState().registerCollection({
       scopeId: FACTS_SCOPE,
-      status: "ready",
+      status: factsLoaded() ? "ready" : "loading",
       targets: visibleFacts().map((fact) => ({ scopeId: FACTS_SCOPE, entityId: fact.id, entityKind: "fact" })),
       selectFirst: false,
     });

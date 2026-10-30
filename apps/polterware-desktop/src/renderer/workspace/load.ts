@@ -59,7 +59,7 @@ export type WorkspaceSnapshot = {
   integrationResources: WorkspaceIntegrationResource[];
   syncRuns: WorkspaceIntegrationSyncRun[];
   rawKnowledge: Record<string, unknown>[];
-  structureFacts: { id: string; entityId: string; scopeNodeId: string }[];
+  structureFacts: { id: string; entityId: string; scopeNodeId: string; statement: string; truthClass: string }[];
 };
 
 /** Extension-domain fields merged after the Architecture shell paints. */
@@ -379,7 +379,7 @@ export async function loadWorkspaceExtensions(
     integrationResources,
     syncRuns,
     rawKnowledge: knowledgeItems,
-    structureFacts: asObjectArray(asRecord(settled[12]).facts).map((fact) => ({ id: asString(fact.id), entityId: asString(fact.entityId), scopeNodeId: asString(fact.scopeNodeId) })),
+    structureFacts: asObjectArray(asRecord(settled[12]).facts).map((fact) => ({ id: asString(fact.id), entityId: asString(fact.entityId), scopeNodeId: asString(fact.scopeNodeId), statement: asString(fact.statement), truthClass: asString(fact.truthClass) })),
   };
 }
 
