@@ -41,13 +41,27 @@
   padding: 0;
 }
 
+/* The groups' tiles line up with the card's own tile, at the card's left padding. */
+.pw-structure-info .pw-document__group-heading {
+  padding: 0;
+}
+
+/* A folded card keeps its title line centered: no gap or indent waits for the details. */
+.pw-structure-tree .pw-tree__row--details {
+  row-gap: 0;
+}
+
+.pw-structure-tree .pw-tree__details {
+  padding-left: 0;
+}
+
 /* Group content lines up with the group title, past its tile. */
 .pw-structure-info__text,
 .pw-structure-info__empty,
 .pw-structure-info__rows,
 .pw-structure-info__deploys {
   margin: 0;
-  padding-left: 36px;
+  padding-left: 32px;
 }
 
 .pw-structure-info__text,

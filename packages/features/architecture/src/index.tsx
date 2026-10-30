@@ -274,7 +274,7 @@ export function StructureView(props: {
   const addChild = (id: string) => { open(id); props.onOpenCreate(); };
   const meta = (parts: readonly string[]) => parts.filter(Boolean).join(" / ");
   const toTreeNode = (item: StructureTreeItem): TreeViewNode => ({
-    id: item.node.id, label: item.node.title, icon: <IconTile size={20} tone="neutral" seed={item.node.id}><KindIcon kind={item.node.level} size={12} /></IconTile>,
+    id: item.node.id, label: item.node.title, icon: <IconTile size={24} tone="neutral" seed={item.node.id}><KindIcon kind={item.node.level} size={14} /></IconTile>,
     trailing: <NodeLine title={item.node.title} actions={nodeActions(item.node)} meta={meta([levelLabel(item.node), recordsLabel(props.counts[item.node.id])])}
       onAdd={item.node.level === "component" ? undefined : () => addChild(item.node.id)} addLabel={`Add child to ${item.node.title}`} />,
     onContextMenu: (event) => rowMenu.open(event, nodeActions(item.node)),
@@ -283,7 +283,7 @@ export function StructureView(props: {
     children: item.children.map(toTreeNode),
   });
   const treeNodes = createMemo<TreeViewNode[]>(() => props.loading || props.error ? [] : [{
-    id: PROJECT_ID, label: props.projectName, icon: <IconTile size={20} tone="neutral" seed={PROJECT_ID}><KindIcon kind="project" size={12} /></IconTile>,
+    id: PROJECT_ID, label: props.projectName, icon: <IconTile size={24} tone="neutral" seed={PROJECT_ID}><KindIcon kind="project" size={14} /></IconTile>,
     trailing: <NodeLine title={props.projectName} actions={projectActions()} meta={meta(["Project", recordsLabel(props.projectCounts)])}
       onAdd={props.loading || props.error ? undefined : () => addChild(PROJECT_ID)} addLabel="Add system" />,
     onContextMenu: (event) => rowMenu.open(event, projectActions()),
@@ -368,7 +368,7 @@ export function StructureView(props: {
       <PageContent class="pw-scroll-fade overflow-auto p-4">
                 <Show when={visible().length} fallback={<PageEmpty title={query().trim() ? "No matches" : "No structure yet"} mood={query().trim() ? "lost" : "sleeping"} >{!query().trim() ? <PromptCardGrid items={STRUCTURE_AGENT_PROMPTS.map((item) => ({ id: item.id, title: item.title, description: item.description, tone: item.tone, icon: <KindIcon kind={item.level} size={16} />, prompt: item.prompt }))} /> : undefined}</PageEmpty>}>
           <EntityContextMenu menu={rowMenu} />
-          <TreeView label="Project structure" branches expandOnClick={false} class="[&>h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)} selectedValue={NO_SELECTION} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) { open(id); toggleDetails(id); } }} />
+          <TreeView label="Project structure" branches expandOnClick={false} class="pw-structure-tree [&>h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)} selectedValue={NO_SELECTION} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) { open(id); toggleDetails(id); } }} />
         </Show>
       </PageContent>
     }><PageError message={props.error!} /></Show>}><PageLoading label="Loading structure…" /></Show>
