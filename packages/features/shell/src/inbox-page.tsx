@@ -2,19 +2,14 @@ import { For, Show, createEffect, createMemo, createSignal, onCleanup } from "so
 import {
   Button,
   ActiveFilterBar,
-  Dialog,
   DataTable,
   EntityContextMenu,
-  EntityMenuButton,
-  Field,
   FilterPopover,
-  Input,
   PageContent,
   PageEmpty,
   PageLoading,
   PageToolbar,
   RefreshCw,
-  Select,
   SearchBar,
   StatusDot,
   Bot,
@@ -37,7 +32,7 @@ import { EntityDetailHost } from "./entity-detail-host";
 import { createPageFilters } from "./page-filters";
 import type { EnvironmentItem, ScopeNodeItem } from "./types";
 import type { ScopeFilterToken } from "./scope-filter";
-import { InboxItemDetail } from "./inbox-item-detail";
+import { InboxItemDetail, type InboxActionRequest } from "./inbox-item-detail";
 import { keyActionTargets, sharedInboxActions } from "./inbox-actions";
 import type {
   WorkspaceInbox,
@@ -122,8 +117,9 @@ export function InboxPage(props: {
       setChecking(false);
     }
   }
-  const [deciding, setDeciding] = createSignal<WorkspaceInboxItem | null>(null);
-  const [answer, setAnswer] = createSignal("");
+  // The row menu opens an action's confirm in the detail instead of running it.
+  const [request, setRequest] = createSignal<InboxActionRequest | null>(null);
+  let requests = 0;
   const [query, setQuery] = createSignal("");
   const [selected, setSelected] = createSignal<ReadonlySet<string>>(new Set());
   async function runMany(selection: readonly WorkspaceInboxItem[], action: WorkspaceInboxAction, clear: () => void) {
@@ -256,23 +252,16 @@ export function InboxPage(props: {
       : run(targets[0]!, action);
     void write.then(() => {
       if (next && ordered().some((item) => item.id === next.id)) markActive(next.id);
-    });
+    }, () => undefined);
   }
   window.addEventListener("keydown", onKeyDown);
   onCleanup(() => window.removeEventListener("keydown", onKeyDown));
 
+  /** Runs one action; it rejects when the write fails (the host reports it), so a confirm can stay open. */
   async function run(item: WorkspaceInboxItem, action: WorkspaceInboxAction, value?: string) {
-    if (action === "decide" && value === undefined) {
-      setAnswer(item.options[0] ?? "");
-      setDeciding(item);
-      return;
-    }
     setPending(item.id);
     try {
       await props.onResolve?.(item, action, value);
-      if (action === "decide") setDeciding(null);
-    } catch {
-      // The host reports the failure; the dialog stays open to retry.
     } finally {
       setPending("");
     }
@@ -286,7 +275,10 @@ export function InboxPage(props: {
           label: ACTION_LABEL[action],
           icon: ACTION_ICON[action],
           disabled: pending() !== "",
-          onSelect: () => void run(item, action),
+          onSelect: () => {
+            markActive(item.id);
+            setRequest({ itemId: item.id, action, nonce: ++requests });
+          },
         }))
       : [];
 
@@ -316,10 +308,6 @@ export function InboxPage(props: {
           <StatusChip tone={item().state === "deferred" ? "muted" : item().blocking ? "danger" : "muted"}>
             {item().state === "deferred" ? "Later" : item().blocking ? "Blocking" : "Open"}
           </StatusChip>
-        </DataTable.Cell>
-        <DataTable.Cell class="pw-inbox-context">{item().where || "—"}</DataTable.Cell>
-        <DataTable.Cell align="right" class="pw-inbox-actions">
-          <EntityMenuButton label={`Actions for ${item().title}`} actions={itemActions(item())} />
         </DataTable.Cell>
       </DataTable.Row>
     );
@@ -387,10 +375,8 @@ export function InboxPage(props: {
             <DataTable.Table aria-label="Inbox items">
               <DataTable.Header>
                 <Show when={props.onResolveMany}><DataTable.SelectionCell /></Show>
-                <DataTable.ColumnHeader<WorkspaceInboxItem> id="title" width="52%">Item</DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<WorkspaceInboxItem> id="status" sortBy={statusLabel}>Status</DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<WorkspaceInboxItem> id="where">Context</DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<WorkspaceInboxItem> id="actions" width="44px" align="right" sortable={false} resizable={false}><span class="sr-only">Actions</span></DataTable.ColumnHeader>
+                <DataTable.ColumnHeader<WorkspaceInboxItem> id="title">Item</DataTable.ColumnHeader>
+                <DataTable.ColumnHeader<WorkspaceInboxItem> id="status" width="112px" sortBy={statusLabel}>Status</DataTable.ColumnHeader>
               </DataTable.Header>
               <DataTable.Body<WorkspaceInboxItem>>
                 {(item) => <Row item={item} />}
@@ -431,53 +417,11 @@ export function InboxPage(props: {
           <InboxItemDetail
             item={item()}
             disabled={pending() !== "" || !props.onResolve}
-            onAction={(action) => void run(item(), action)}
+            onAction={(action, answer) => run(item(), action, answer)}
+            request={request()}
           />
         )}
       </Show>
-
-      <Dialog
-        open={deciding() !== null}
-        title="Decide"
-        description={deciding()?.title}
-        size="sm"
-        onClose={() => setDeciding(null)}
-        footer={
-          <>
-            <Button variant="texture" onClick={() => setDeciding(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              disabled={answer().trim() === "" || pending() !== ""}
-              onClick={() => {
-                const item = deciding();
-                if (item) void run(item, "decide", answer().trim());
-              }}
-            >
-              {pending() !== "" ? "Saving…" : "Record decision"}
-            </Button>
-          </>
-        }
-      >
-        <Show
-          when={(deciding()?.options.length ?? 0) > 0}
-          fallback={
-            <Field label="Answer">
-              <Input value={answer()} onInput={(event) => setAnswer(event.currentTarget.value)} />
-            </Field>
-          }
-        >
-          <Field label="Answer">
-            <Select
-              aria-label="Answer"
-              value={answer()}
-              onChange={setAnswer}
-              options={(deciding()?.options ?? []).map((option) => ({ value: option, label: option }))}
-            />
-          </Field>
-        </Show>
-      </Dialog>
     </EntityDetailHost>
   );
 }

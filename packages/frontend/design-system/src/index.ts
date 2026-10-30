@@ -74,6 +74,8 @@ export { Tabs, TabPanel } from "./tabs";
 export type { TabItem, TabTooltip } from "./tabs";
 export { Drawer } from "./drawer";
 export { Popover } from "./popover";
+export { Morph, useMorph } from "./morph";
+export type { MorphPanelProps, MorphRootProps, MorphTriggerProps } from "./morph";
 export { TagPicker } from "./tag-picker";
 export type { TagPickerOption, TagPickerProps } from "./tag-picker";
 export {

@@ -1,0 +1,61 @@
+/* Morph (morph.tsx): a trigger that turns into a panel. Geometry and opacity are JS springs. */
+
+.pw-morph-anchor {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.pw-morph-anchor > .pw-morph-trigger {
+  width: 100%;
+  min-width: 0;
+}
+
+/* The panel stands in for the trigger until the exit morph ends. */
+.pw-morph-anchor[data-morphed] {
+  visibility: hidden;
+}
+
+/* A hint explains an action in a sentence, so it wraps instead of the one-line tooltip. */
+.pw-tooltip-content.pw-morph-hint {
+  max-width: min(260px, calc(100vw - 16px));
+  white-space: normal;
+  text-align: left;
+}
+
+.pw-morph-panel {
+  --pw-morph-radius: var(--radius-menu);
+  position: fixed;
+  z-index: var(--z-dropdown, 105);
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  will-change: transform, width, height;
+}
+
+.pw-morph-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 14px 12px;
+}
+
+.pw-morph-title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.pw-morph-body {
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.pw-morph-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 4px;
+}

@@ -2,9 +2,3 @@
 .pw-inbox-row--deferred .pw-data-table-primary-title {
   color: var(--color-text-muted);
 }
-
-.pw-inbox-context {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
