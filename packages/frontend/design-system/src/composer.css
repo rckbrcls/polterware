@@ -60,6 +60,13 @@
   padding-top: 4px;
 }
 
+/* Holds one pill and its picker; PillPresence moves it on the compositor. */
+.pw-composer__pill {
+  display: inline-flex;
+  transform-origin: left center;
+  will-change: opacity, transform;
+}
+
 .pw-composer__field {
   display: flex;
   align-items: center;

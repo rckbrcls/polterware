@@ -1,7 +1,10 @@
-import { Index, Show, createEffect, createSignal, on, type JSX } from "solid-js";
+import { Index, Show, createEffect, createSignal, on, onCleanup, type JSX } from "solid-js";
+import { animate, motionValue, type AnimationPlaybackControls } from "motion";
 import { Button } from "./button";
 import { A11yDialog } from "./dialog";
 import { PropertyPicker, type PropertyOption, type PropertyPickerProps } from "./property-picker";
+import { prefersReducedMotion } from "./reduced-motion";
+import { spring } from "./springs";
 import { Switch } from "./switch";
 import { TokenPicker } from "./token-picker";
 import "./composer.css";
@@ -18,6 +21,8 @@ export type ComposerSingleProperty = {
   onCreate?: PropertyPickerProps["onCreate"];
   /** The picker's width, for options with a second line. */
   pickerWidth?: number;
+  /** Hides the pill, such as one that only applies once another property is set; it fades in and out. */
+  hidden?: boolean;
 };
 
 /** A property that holds several values, edited as tokens (`TokenPicker`). */
@@ -35,6 +40,60 @@ export type ComposerTokensProperty = {
 export type ComposerProperty = ComposerSingleProperty | ComposerTokensProperty;
 
 const isTokens = (property: ComposerProperty): property is ComposerTokensProperty => "values" in property;
+
+/**
+ * Keeps a pill mounted through its exit: it enters with a fade, a short slide from the
+ * pill before it, and a slight scale on `spring.moderate`, and leaves on the quicker exit
+ * tween before it unmounts. Interrupted, it turns back from where it is. Reduced motion
+ * keeps only the fade.
+ */
+function PillPresence(props: { shown: boolean; children: JSX.Element }) {
+  const [mounted, setMounted] = createSignal(props.shown);
+  const alpha = motionValue(props.shown ? 1 : 0);
+  const x = motionValue(0);
+  const scale = motionValue(1);
+  let element: HTMLSpanElement | undefined;
+  let running: AnimationPlaybackControls[] = [];
+  const paint = () => {
+    if (!element) return;
+    element.style.opacity = String(alpha.get());
+    element.style.transform = `translateX(${x.get()}px) scale(${scale.get()})`;
+  };
+  const unsubscribe = [alpha.on("change", paint), x.on("change", paint), scale.on("change", paint)];
+  const stop = () => { running.forEach((controls) => controls.stop()); running = []; };
+  onCleanup(() => { stop(); unsubscribe.forEach((off) => off()); });
+
+  createEffect(on(() => props.shown, (shown) => {
+    stop();
+    const reduced = prefersReducedMotion();
+    if (shown) {
+      // A pill that was fully gone starts from its hidden pose; one still leaving turns back.
+      if (!mounted()) { alpha.jump(0); x.jump(reduced ? 0 : -6); scale.jump(reduced ? 1 : 0.96); }
+      setMounted(true);
+      paint();
+      running = [animate(alpha, 1, spring.moderate), animate(x, 0, spring.moderate), animate(scale, 1, spring.moderate)];
+      return;
+    }
+    if (!mounted()) return;
+    const exit = { type: "tween" as const, ...spring.moderate.exit };
+    running = [
+      animate(alpha, 0, exit),
+      ...(reduced ? [] : [animate(x, -6, exit), animate(scale, 0.96, exit)]),
+    ];
+    const leaving = running;
+    void Promise.all(leaving.map((controls) => controls.finished)).then(() => {
+      if (running === leaving) setMounted(false);
+    }, () => undefined);
+  }, { defer: true }));
+
+  return (
+    <Show when={mounted()}>
+      <span ref={(node) => { element = node; paint(); }} class="pw-composer__pill" aria-hidden={props.shown ? undefined : "true"}>
+        {props.children}
+      </span>
+    </Show>
+  );
+}
 
 /** A short labelled text field under the description, such as a file path. */
 export type ComposerField = {
@@ -226,7 +285,7 @@ export function Composer(props: ComposerProps) {
                   }
                 >
                   {(property) => (
-                    <>
+                    <PillPresence shown={!property().hidden}>
                       <Button
                         ref={(element: HTMLButtonElement) => { pills[index] = element; }}
                         size="sm"
@@ -245,11 +304,11 @@ export function Composer(props: ComposerProps) {
                         onChange={(value) => property().onChange(value)}
                         onCreate={property().onCreate}
                         width={property().pickerWidth}
-                        open={openProperty() === property().id}
+                        open={openProperty() === property().id && !property().hidden}
                         onClose={() => setOpenProperty(null)}
                         anchorRef={() => pills[index]}
                       />
-                    </>
+                    </PillPresence>
                   )}
                 </Show>
               )}

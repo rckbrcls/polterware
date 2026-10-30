@@ -879,11 +879,10 @@ export function DispatchPage(props: {
     ];
     const cardOptions: PropertyOption[] = [
       { value: "", label: "No card", get icon() { return <FolderKanban size={14} />; } },
-      ...cards.filter((card) => !draftMilestone() || card.milestone === draftMilestone()).map((card): PropertyOption => ({
+      ...cards.filter((card) => card.milestone === draftMilestone()).map((card): PropertyOption => ({
         value: card.slug,
         label: card.title || card.slug,
-        // Under one milestone its name would only repeat the pill.
-        hint: draftMilestone() || !card.milestone ? card.slug : `${card.slug} / ${card.milestone}`,
+        hint: card.slug,
         group: card.stage,
         get icon() { return <FolderKanban size={14} />; },
       })),
@@ -911,8 +910,8 @@ export function DispatchPage(props: {
         value: draftMilestone(),
         onChange: (value) => {
           setDraftMilestone(value);
-          // A card from another milestone no longer fits the pick.
-          if (value && cards.find((card) => card.slug === draftCard())?.milestone !== value) setDraftCard("");
+          // Card shows only under a milestone, and a card from another one no longer fits the pick.
+          if (cards.find((card) => card.slug === draftCard())?.milestone !== value) setDraftCard("");
         },
         pickerWidth: 280,
       },
@@ -920,6 +919,8 @@ export function DispatchPage(props: {
         id: "card",
         label: "Card",
         get icon() { return <FolderKanban size={14} />; },
+        // Picking a milestone first keeps the card list short.
+        hidden: !draftMilestone(),
         options: cardOptions,
         value: draftCard(),
         onChange: (value) => {
