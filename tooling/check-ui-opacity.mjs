@@ -87,6 +87,8 @@ const MOTION_VALUE_PATHS = new Set([
   // Collapses and tree branches fade their content as they open and fold.
   "packages/frontend/design-system/src/collapse.ts",
   "packages/frontend/design-system/src/tree-view.tsx",
+  // The Structure tree pane fades as it closes and opens, like a document's rail.
+  "packages/features/architecture/src/tree-pane.ts",
   // Marketing page sections fade in once on scroll and the hero fades out as the page moves on.
   "apps/web/src/components/scroll-motion.ts",
 ]);

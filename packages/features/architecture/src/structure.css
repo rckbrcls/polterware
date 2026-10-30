@@ -1,28 +1,33 @@
 /* Structure: a plain file tree on the left and the selected node's document on the right, both flat; each pane scrolls on its own. */
 .pw-structure {
-  display: grid;
-  min-height: 0;
-  flex: 1 1 auto;
-  grid-template-columns: 280px minmax(0, 1fr);
-}
-
-/* The tree sits on the shared ring Card, as tall as its rows; past the pane's height the card scrolls. */
-.pw-structure__tree {
   display: flex;
   min-height: 0;
+  flex: 1 1 auto;
+}
+
+/* The tree sits on the shared ring Card, as tall as its rows; past the pane's height the card scrolls.
+ * The pane's width closes from the toolbar (tree-pane.ts); the card keeps its 280px so nothing rewraps. */
+.pw-structure__tree {
+  display: flex;
+  width: 288px;
+  min-height: 0;
+  flex: none;
   align-items: flex-start;
+  overflow: hidden;
   padding: 8px 0 8px 8px;
 }
 
 .pw-structure__tree-card {
+  width: 280px;
   max-height: 100%;
-  min-width: 0;
-  flex: 1 1 auto;
+  flex: none;
   overflow: auto;
 }
 
 .pw-structure__pane {
+  min-width: 0;
   min-height: 0;
+  flex: 1 1 auto;
   overflow: auto;
   padding: 0 48px 64px;
 }

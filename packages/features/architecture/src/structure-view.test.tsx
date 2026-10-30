@@ -65,6 +65,11 @@ describe("Structure collection", () => {
     expect(doc.querySelector('table[aria-label="Decisions"]')).not.toBeNull();
     doc.querySelector<HTMLElement>('tr[aria-label="Use Go"]')!.click();
     expect(openRecord).toHaveBeenCalledWith("decision", "dec-1");
+    // The toolbar closes the tree pane; it stays mounted but leaves the tab order.
+    host.querySelector<HTMLButtonElement>('button[aria-label="Hide structure tree"]')!.click();
+    await tick();
+    expect(host.querySelector<HTMLElement>(".pw-structure__tree")!.inert).toBe(true);
+    expect(host.querySelector('button[aria-label="Show structure tree"]')?.getAttribute("aria-expanded")).toBe("false");
   });
   it("retains the toolbar and exposes a collection error", async () => {
     const { host } = mount({ error: "Core unavailable" });

@@ -4,7 +4,7 @@ import {
   A11yDialog, Boxes, Button, Card, Cpu, EntityMenuButton, PromptCardGrid, Checkbox, Field, Folder, FormStack, Input,
   ActiveFilterBar, CollapsibleSection, DataTable, FilterPopover, IconTile, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
   Cloud, Delete, DetailPanel, Link2, Package, Route,
-  Scale, ShieldCheck, FileText, GitBranch, InformationCircle, SearchBar, Select, FolderKanban, StatusChip, TreeView, pushToast,
+  Scale, ShieldCheck, FileText, GitBranch, InformationCircle, SearchBar, Select, SidebarLeftIcon, FolderKanban, StatusChip, TreeView, pushToast,
   type EntityAction, type TreeViewNode,
   ToolbarIconButton,
 } from "@polterware/frontend-design-system";
@@ -14,6 +14,7 @@ import { STRUCTURE_AGENT_PROMPTS } from "./agent-prompts";
 import { buildStructureTree, flattenStructureTree, structureParents, type StructureKind, type StructureNode, type StructureTreeItem } from "./structure-tree";
 import type { ProjectEnvironment } from "./domain/project-environments";
 import type { WorkspaceIntegration } from "@polterware/feature-shell";
+import { createTreePane } from "./tree-pane";
 import "./structure.css";
 
 export type { ArchViewCard } from "./extra-fixtures";
@@ -200,6 +201,11 @@ export function StructureView(props: {
   // Expanded tree rows are remembered, so returning to Structure keeps the same layout.
   const [expanded, setExpanded] = createSignal<string[]>(readRemembered("structure.expanded", [PROJECT_ID]));
   createEffect(() => writeRemembered("structure.expanded", expanded()));
+  // The tree pane closes from the toolbar like a document's rail, and the choice is remembered.
+  const [treeOpen, setTreeOpen] = createSignal(readRemembered("structure.tree", true));
+  createEffect(() => writeRemembered("structure.tree", treeOpen()));
+  const [treePane, setTreePane] = createSignal<HTMLElement>();
+  createTreePane(treePane, treeOpen);
   const [busy, setBusy] = createSignal(false);
   const [title, setTitle] = createSignal("");
   const [kind, setKind] = createSignal<StructureKind>("system");
@@ -360,7 +366,10 @@ export function StructureView(props: {
 
   return <div class="flex min-h-0 flex-1 flex-col">
     <PageToolbar.Root>
-      <PageToolbar.Leading>{null}</PageToolbar.Leading>
+      <PageToolbar.Leading>
+        <Button size="icon" variant="texture" aria-label={treeOpen() ? "Hide structure tree" : "Show structure tree"} aria-expanded={treeOpen()} selected={treeOpen()}
+          onClick={() => setTreeOpen((value) => !value)}><SidebarLeftIcon size={14} /></Button>
+      </PageToolbar.Leading>
       <PageToolbar.Actions>
         <SearchBar placeholder="Search structure…" value={query()} onInput={setQuery} />
         <FilterPopover
@@ -385,7 +394,7 @@ export function StructureView(props: {
       <PageContent class="flex flex-col overflow-hidden">
         <Show when={visible().length} fallback={<PageEmpty title={query().trim() ? "No matches" : "No structure yet"} mood={query().trim() ? "lost" : "sleeping"} >{!query().trim() ? <PromptCardGrid items={STRUCTURE_AGENT_PROMPTS.map((item) => ({ id: item.id, title: item.title, description: item.description, tone: item.tone, icon: <KindIcon kind={item.level} size={16} />, prompt: item.prompt }))} /> : undefined}</PageEmpty>}>
           <div class="pw-structure">
-          <nav class="pw-structure__tree" aria-label="Structure tree">
+          <nav ref={setTreePane} class="pw-structure__tree" aria-label="Structure tree">
             <Card class="pw-structure__tree-card pw-scroll-fade">
             <TreeView label="Project structure" branches compact expandOnClick={false} class="[&>h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)}
               selectedValue={treeSelection()} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} onFocusChange={(event) => { if (event.focusedValue && event.focusedValue !== selectedId()) open(event.focusedValue); }} />
