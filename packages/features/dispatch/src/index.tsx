@@ -835,7 +835,7 @@ export function DispatchPage(props: {
    * Start run's pills: the tier, the agent and model (grouped by agent with their bots, from the
    * models the installed agents report, plus agents with no listed model), and the card it works on.
    */
-  const startProperties = createMemo((): ComposerProperty[] => {
+  const startProperties = (): ComposerProperty[] => {
     const avatar = (agent: string) => <DispatchAgentAvatar agent={agent} seed={agent} size={18} />;
     const listed = new Set(paletteModels().map((model) => model.agent));
     const agentOptions: PropertyOption[] = [
@@ -872,7 +872,7 @@ export function DispatchPage(props: {
       { id: "agent", label: "Agent", icon: <Bot size={14} />, options: agentOptions, value: draftAgent(), onChange: setDraftAgent, pickerWidth: 320 },
       { id: "card", label: "Card", icon: <FolderKanban size={14} />, options: cardOptions, value: draftCard(), onChange: setDraftCard, pickerWidth: 320 },
     ];
-  });
+  };
 
   /** Per-agent usedPercent series ordered by sampledAt, skipping snapshots without usedPercent. */
   const agentQuotaSeries = createMemo((): AgentQuotaSeries[] => {
