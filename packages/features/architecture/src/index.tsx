@@ -59,14 +59,16 @@ export function checkoutLabel(repo = "", folder = ""): string {
   return repo && folder ? `${repo}/${folder}` : repo || folder;
 }
 
-/** A titled block of the document, set apart by space alone: the title, a count, a fold chevron, and its actions. */
+/** A titled block of the document on the ring Card, from its heading (the title, a count, a fold chevron, and its actions) to its rows. */
 function DocumentSection(props: { title: string; count?: number; actions?: JSX.Element; children: JSX.Element }) {
-  return <CollapsibleSection class="pw-structure__section" title={props.title} aside={props.count === undefined ? undefined : String(props.count)} actions={props.actions}>{props.children}</CollapsibleSection>;
+  return <Card class="pw-structure__section">
+    <CollapsibleSection title={props.title} aside={props.count === undefined ? undefined : String(props.count)} actions={props.actions}>{props.children}</CollapsibleSection>
+  </Card>;
 }
 
-/** The cards, decisions, facts, or docs that cite a node, on the ring Card, one row each with its status on the right; a row opens its page, and a direct link can be removed. */
+/** The cards, decisions, facts, or docs that cite a node, one row each with its status on the right; a row opens its page, and a direct link can be removed. */
 function RecordTable(props: { label: string; rows: readonly StructureRecord[]; icon: JSX.Element; onOpen?: (id: string) => void; onUnlink?: (id: string) => void }) {
-  return <Card class="pw-structure__records"><DataTable.Root rows={props.rows} getRowId={(row) => row.id} density="list">
+  return <DataTable.Root rows={props.rows} getRowId={(row) => row.id} density="list">
     <DataTable.Table aria-label={props.label}>
       <DataTable.Body<StructureRecord>>
         {(row) => <DataTable.Row row={row} rowId={row.id} aria-label={row.title} onActivate={props.onOpen ? () => props.onOpen!(row.id) : undefined}>
@@ -84,7 +86,7 @@ function RecordTable(props: { label: string; rows: readonly StructureRecord[]; i
         </DataTable.Row>}
       </DataTable.Body>
     </DataTable.Table>
-  </DataTable.Root></Card>;
+  </DataTable.Root>;
 }
 
 const RECORD_SECTIONS = [
