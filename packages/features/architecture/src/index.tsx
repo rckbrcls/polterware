@@ -59,10 +59,10 @@ export function checkoutLabel(repo = "", folder = ""): string {
   return repo && folder ? `${repo}/${folder}` : repo || folder;
 }
 
-/** A titled block of the document on the ring Card, from its heading (the title, a count, a fold chevron, and its actions) to its rows. */
-function DocumentSection(props: { title: string; count?: number; actions?: JSX.Element; children: JSX.Element }) {
+/** A titled block of the document on the ring Card, from its heading (a 24px icon tile lined up with the rows' tiles, the title, a count, a fold chevron, and its actions) to its rows. */
+function DocumentSection(props: { title: string; icon: JSX.Element; count?: number; actions?: JSX.Element; children: JSX.Element }) {
   return <Card class="pw-structure__section">
-    <CollapsibleSection title={props.title} aside={props.count === undefined ? undefined : String(props.count)} actions={props.actions}>{props.children}</CollapsibleSection>
+    <CollapsibleSection title={props.title} icon={<IconTile size={24} tone="neutral" seed={`structure-section-${props.title}`}>{props.icon}</IconTile>} aside={props.count === undefined ? undefined : String(props.count)} actions={props.actions}>{props.children}</CollapsibleSection>
   </Card>;
 }
 
@@ -264,7 +264,7 @@ function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityA
     <For each={RECORD_SECTIONS}>{(section) => {
       const options = () => props.edits.linkOptions?.[section.kind];
       return <Show when={doc().records[section.key].length || options()}>
-        <DocumentSection title={section.title} count={doc().records[section.key].length}
+        <DocumentSection title={section.title} icon={<section.Icon size={14} />} count={doc().records[section.key].length}
           actions={options() && props.edits.link ? <LinkButton label={`Link ${section.title.toLowerCase().replace(/s$/, "")}`} options={options()!} onPick={(id) => props.edits.link!(section.kind, id)} /> : undefined}>
           <Show when={doc().records[section.key].length} fallback={<p class="pw-structure__empty">Nothing linked yet.</p>}>
             <RecordTable label={section.title} rows={doc().records[section.key]} icon={<section.Icon size={14} />}

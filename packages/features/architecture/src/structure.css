@@ -239,3 +239,12 @@ tr:focus-within .pw-structure__row-unlink {
   margin-bottom: 16px;
   padding: 8px 12px;
 }
+
+/* The heading takes the rows' 12px inset, so its tile, count, and chevron line up with theirs. */
+.pw-structure__section .pw-collapsible-section__heading {
+  padding-inline: 12px;
+}
+
+.pw-structure__section .pw-detail-panel__section-toggle {
+  gap: 10px;
+}
