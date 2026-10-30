@@ -237,7 +237,7 @@ tr:focus-within .pw-structure__row-unlink {
 /* Each record section sits on the shared ring Card, from its heading to its rows; 16px between cards. */
 .pw-structure__section.card-panel {
   margin-bottom: 16px;
-  padding: 8px 12px;
+  padding: 8px 4px;
 }
 
 /* The heading takes the rows' 12px inset, so its tile, count, and chevron line up with theirs. */
