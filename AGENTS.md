@@ -80,7 +80,7 @@ Scope is a global filter, not a surface: each scoped page edits the one shared s
 
 While a Work card is open, Commander lists Copy agent brief (`polterware brief <slug>` to the clipboard) and Dispatch this card (Runs' Start run with the card and a prompt filled in, `DispatchPage` `startDraft`) first.
 
-Keep history controls, the Home button with the breadcrumb after it (project › section › tab; earlier steps navigate), Commander (its input also takes an agent prompt: the Run an agent row leads the results, Enter runs a matching command or else starts the run, Cmd+Enter always starts it, at once, on the Route, Milestone, and Card pills under the search (Start run's, from `@polterware/feature-dispatch/run-route`; the open card comes preset), and Runs opens on it), App settings, and Project settings. Project switching happens on the Projects screen; do not introduce additional product surfaces without an approved decision.
+Keep history controls, the Home button with the breadcrumb after it (project › section › tab; earlier steps navigate), Commander (its input also takes an agent prompt: a query that matches no command reads as a run, so the search icon turns into Play, Run an agent is the one row, and the Route, Milestone, and Card pills open under the search; Enter runs a matching command or else starts the run, Cmd+Enter always starts it, at once, on those pills (Start run's, from `@polterware/feature-dispatch/run-route`; the open card comes preset), and Runs opens on it), App settings, and Project settings. Project switching happens on the Projects screen; do not introduce additional product surfaces without an approved decision.
 
 ## UI law
 

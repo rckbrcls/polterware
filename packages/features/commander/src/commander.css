@@ -12,6 +12,11 @@
 }
 
 /* Run an agent's Route, Milestone, and Card, under the search row. */
+/* Opens and closes with a measured-height collapse when the query reads as a run. */
+.commander-run-pills-region {
+  flex-shrink: 0;
+}
+
 .commander-run-pills {
   flex-shrink: 0;
   padding: 10px 1.25rem;

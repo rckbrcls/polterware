@@ -13,6 +13,7 @@ import {
 } from "solid-js";
 import {
   Activity,
+  animateCollapse,
   Terminal,
   Box,
   Briefcase06Icon,
@@ -22,6 +23,7 @@ import {
   FluidHoverHighlight,
   Gauge,
   History,
+  IconSwap,
   IconTile,
   Inbox,
   Keyboard,
@@ -36,6 +38,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  type CollapseControls,
   type ComposerProperty,
   type FluidHover,
   type IconTileTone,
@@ -103,11 +106,12 @@ export type PaletteBodyProps = {
   /** When true, hide the command results list (detail view). */
   hideResults?: boolean;
   /**
-   * Leads the results with Run an agent: the query becomes the prompt. Enter runs it when no
-   * command matches, Cmd+Enter always; it selects `action.run-agent:<query>`.
+   * The query doubles as an agent prompt: once it matches no command it reads as a run, the
+   * search icon turns into Run, the run pills open, and Run an agent is the one row, so
+   * Enter runs it; Cmd+Enter always does. It selects `action.run-agent:<query>`.
    */
   runAgent?: boolean;
-  /** Pills under the search that set how Run an agent runs, such as its route and card. */
+  /** Pills under the search that set how a run goes, such as its route and card; shown for a run only. */
   runProperties?: readonly ComposerProperty[];
 };
 
@@ -154,7 +158,18 @@ export function PaletteBody(props: PaletteBodyProps) {
     (props.items ?? DEFAULT_PALETTE_ITEMS).filter((item) =>
       capabilityEnabled(props.platform, item.requiredCapability),
     );
-  const { q, setQ, groups } = usePaletteFilter(items, props.onQueryChange);
+  const { q, setQ, filtered, groups } = usePaletteFilter(items, props.onQueryChange);
+  // Text that matches no command is a prompt, not a search.
+  const runMode = createMemo(() => Boolean(props.runAgent) && q().trim().length > 0 && filtered().length === 0);
+  let runPills: HTMLDivElement | undefined;
+  let pillsMotion: CollapseControls | undefined;
+  let pillsPainted = false;
+  createEffect(on(runMode, (open) => {
+    if (!runPills) return;
+    pillsMotion = animateCollapse(runPills, open, { previous: pillsMotion, fade: true, instant: !pillsPainted });
+    pillsPainted = true;
+  }));
+  onCleanup(() => pillsMotion?.stop());
   const listId = createUniqueId();
   const [activeRowId, setActiveRowId] = createSignal<string>();
   let searchInput: HTMLInputElement | undefined;
@@ -174,7 +189,13 @@ export function PaletteBody(props: PaletteBodyProps) {
           props.searchRowClass ?? "",
         ].join(" ")}
       >
-        <Search size={16} class="commander-search-row__icon shrink-0 text-[var(--color-text-muted)]" aria-hidden />
+        <IconSwap
+          class="commander-search-row__icon shrink-0 text-[var(--color-text-muted)]"
+          size={16}
+          swapped={runMode()}
+          from={<Search size={16} aria-hidden />}
+          to={<Play size={16} aria-hidden />}
+        />
         <input
           ref={(element) => { searchInput = element; props.searchInputRef?.(element); }}
           class="commander-search-input min-w-0 flex-1 border-0 bg-transparent text-[13px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)]"
@@ -199,12 +220,14 @@ export function PaletteBody(props: PaletteBodyProps) {
         </Show>
       </div>
       <Show when={props.runAgent && (props.runProperties?.length ?? 0) > 0}>
-        <PropertyPills
-          class="commander-run-pills"
-          properties={props.runProperties ?? []}
-          // The search field keeps the keys: a pick hands focus back to it.
-          onPickerClose={() => requestAnimationFrame(() => searchInput?.focus())}
-        />
+        <div ref={runPills} class="commander-run-pills-region" hidden>
+          <PropertyPills
+            class="commander-run-pills"
+            properties={props.runProperties ?? []}
+            // The search field keeps the keys: a pick hands focus back to it.
+            onPickerClose={() => requestAnimationFrame(() => searchInput?.focus())}
+          />
+        </div>
       </Show>
       {props.belowSearch}
       <Show when={!props.hideResults}>
@@ -214,6 +237,7 @@ export function PaletteBody(props: PaletteBodyProps) {
           groups={groups()}
           leading={props.scrollLeading}
           runAgent={props.runAgent}
+          runMode={runMode()}
           onSelect={select}
           onActiveRowId={setActiveRowId}
           bindKeys={(handler) => {
@@ -242,6 +266,8 @@ function PaletteResults(props: {
   groups: [string, PaletteItem[]][];
   leading?: JSX.Element;
   runAgent?: boolean;
+  /** The query matches no command: Run an agent with it is the one row. */
+  runMode: boolean;
   onSelect: (id: string) => void;
   onActiveRowId: (id: string | undefined) => void;
   bindKeys: (handler: ResultsKeyHandler) => void;
@@ -253,8 +279,8 @@ function PaletteResults(props: {
     gapClick: { maxDistance: 8 },
   });
   const commands = createMemo(() => props.groups.flatMap(([, list]) => list));
-  // Run an agent is row 0 when shown, so the commands start after it.
-  const lead = () => (props.runAgent ? 1 : 0);
+  // Run an agent is row 0 for a run, so the commands (none then) start after it.
+  const lead = () => (props.runMode ? 1 : 0);
   const groupOffsets = createMemo(() => {
     let offset = lead();
     return props.groups.map(([, list]) => {
@@ -273,7 +299,7 @@ function PaletteResults(props: {
   const rowElementId = (index: number) => `${props.listId}-row-${index}`;
 
   const runRow = (index: number) => {
-    if (props.runAgent && index === 0) return runAgent();
+    if (props.runMode && index === 0) return runAgent();
     const command = commands()[index - lead()];
     if (command) props.onSelect(command.id);
     else if (index === searchAllIndex() && showSearchAll()) {
@@ -294,9 +320,7 @@ function PaletteResults(props: {
   );
   createEffect(
     on(rowSetKey, () => {
-      // A typed query that matches a command lights it; otherwise Run an agent (or the first row).
-      const firstCommand = props.query.trim() && commands().length > 0 ? lead() : 0;
-      hover.setActiveIndex(rowCount() > 0 ? firstCommand : null);
+      hover.setActiveIndex(rowCount() > 0 ? 0 : null);
       if (scroller) scroller.scrollTop = 0;
     }),
   );
@@ -347,7 +371,7 @@ function PaletteResults(props: {
       {props.leading}
       {/* Mousedown anywhere in the list keeps focus in the search field. */}
       <div id={props.listId} role="listbox" aria-label="Commands" onMouseDown={(event) => event.preventDefault()}>
-        <Show when={props.runAgent}>
+        <Show when={props.runMode}>
           <PaletteRow
             hover={hover}
             index={0}
@@ -358,12 +382,10 @@ function PaletteResults(props: {
             <span class="flex min-w-0 items-center gap-2">
               <PaletteItemTile id="action.start-run" />
               <span class="min-w-0 truncate">
-                <Show when={props.query.trim()} fallback="Run an agent">
-                  Run an agent: <span class="text-[var(--color-text-primary)]">“{props.query.trim()}”</span>
-                </Show>
+                Run an agent: <span class="text-[var(--color-text-primary)]">“{props.query.trim()}”</span>
               </span>
             </span>
-            <span class="shrink-0 text-[11px] text-[var(--color-text-disabled)]">{formatRunAgentKeys()}</span>
+            <span class="shrink-0 text-[11px] text-[var(--color-text-disabled)]">↵</span>
           </PaletteRow>
         </Show>
         <Index each={props.groups}>
@@ -432,11 +454,6 @@ function PaletteResults(props: {
       </div>
     </div>
   );
-}
-
-/** Cmd+Enter, in the platform's own notation. */
-function formatRunAgentKeys() {
-  return typeof navigator !== "undefined" && /Mac/i.test(navigator.platform) ? "⌘↵" : "Ctrl+↵";
 }
 
 function PaletteRow(props: {

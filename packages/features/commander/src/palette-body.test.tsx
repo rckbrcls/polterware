@@ -31,11 +31,12 @@ function mount(runProperties?: ComposerProperty[]) {
 }
 
 describe("PaletteBody Run an agent", () => {
-  it("leads the results with Run an agent", () => {
+  it("offers Run an agent only once the query matches no command", () => {
     const { host, type } = mount();
-    expect(host.querySelector('[role="option"]')?.textContent).toContain("Run an agent");
+    expect(host.querySelector('[role="option"]')?.textContent).toContain("Inbox");
     type("fix the toast");
-    expect(host.querySelector('[role="option"]')?.textContent).toContain("Run an agent: “fix the toast”");
+    const options = [...host.querySelectorAll('[role="option"]')].map((option) => option.textContent);
+    expect(options[0]).toContain("Run an agent: “fix the toast”");
   });
 
   it("runs a matching command on Enter", () => {
@@ -61,12 +62,19 @@ describe("PaletteBody Run an agent", () => {
     expect(onCommand).toHaveBeenCalledWith(`${RUN_AGENT_PREFIX}inbox`);
   });
 
-  it("shows Run an agent's pills under the search", () => {
-    const { host } = mount([
+  it("opens the run pills only for a run", () => {
+    const { host, type } = mount([
       { id: "route", label: "Route", options: [{ value: "tier:normal", label: "Normal" }], value: "tier:normal", onChange: () => {} },
       { id: "card", label: "Card", options: [{ value: "", label: "No card" }], value: "", onChange: () => {}, hidden: true },
     ]);
-    const pills = [...host.querySelectorAll('[aria-label="Properties"] button')].map((button) => button.getAttribute("aria-label"));
+    const region = () => host.querySelector<HTMLElement>(".commander-run-pills-region")!;
+    expect(region().hidden).toBe(true);
+    type("inbox");
+    expect(region().dataset.state ?? "closed").toBe("closed");
+    type("fix the toast spacing");
+    expect(region().hidden).toBe(false);
+    expect(region().dataset.state).toBe("open");
+    const pills = [...region().querySelectorAll('[aria-label="Properties"] button')].map((button) => button.getAttribute("aria-label"));
     expect(pills).toEqual(["Route: Normal"]);
   });
 });
