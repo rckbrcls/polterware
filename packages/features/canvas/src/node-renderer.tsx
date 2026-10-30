@@ -1,6 +1,6 @@
 import { createUniqueId, Show, type JSX } from "solid-js";
 import type { ArchNode } from "@polterware/frontend-canvas";
-import { Box, Boxes, IconTile, Layers, type HugeiconComponent } from "@polterware/frontend-design-system";
+import { Box, IconTile, Layers, type HugeiconComponent } from "@polterware/frontend-design-system";
 import { componentIcons } from "./component-icons";
 import { component, silhouette, structureKind } from "./components";
 import { roundedBy } from "./outlines";
@@ -9,7 +9,7 @@ import { kindLabel, shape, type ShapeDefinition } from "./shapes";
 import { fillTextToken, fillToken, readStyle, strokeToken, type ShapeStyle } from "./style";
 import { propertyText, type NodeVariant } from "./types/shared";
 
-const structureIcons: Readonly<Record<string, HugeiconComponent>> = { system: Boxes, domain: Layers, component: Box };
+const structureIcons: Readonly<Record<string, HugeiconComponent>> = { domain: Layers, component: Box };
 /** The sign a semantic card carries: its component type or its Structure level. */
 export function nodeIcon(kind: string): HugeiconComponent | undefined { return componentIcons[kind] ?? structureIcons[kind]; }
 
@@ -37,7 +37,7 @@ function SemanticCard(props: { node: ArchNode; selected: boolean; linked?: Linke
       fill={style().stroke === "neutral" ? "var(--tone-neutral-rim)" : strokeToken(style().stroke)} />}</Show>
     <foreignObject x={props.node.x + inset().left} y={props.node.y + inset().top}
       width={Math.max(0, props.node.width - inset().left - inset().right)} height={Math.max(0, props.node.height - inset().top - inset().bottom)}>
-      <div class="pw-canvas-node-card" data-group={props.node.type === "system" || props.node.type === "domain" ? "" : undefined} style={{ color: fillTextToken(style().fill) }}>
+      <div class="pw-canvas-node-card" data-group={props.node.type === "domain" ? "" : undefined} style={{ color: fillTextToken(style().fill) }}>
         <IconTile size={28} tone="architecture" brand={[technology(), kind()]} seed={props.node.id} class={outline().round ? "pw-icon-tile--circle" : undefined}>{icon()({ size: 16 })}</IconTile>
         <div class="pw-canvas-node-card-text">
           {props.children}

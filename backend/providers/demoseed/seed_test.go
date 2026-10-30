@@ -76,8 +76,8 @@ func TestDefaultsDoesNotOverwriteAnExistingDatabase(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer store.Close()
-	if _, err := store.DB.Exec(`INSERT INTO projects(id,name,root_path,created_at,updated_at,status,archived_at)
-		VALUES('proj-user','Mine','/mine','2026-01-01T00:00:00Z','2026-01-01T00:00:00Z','active','')`); err != nil {
+	if _, err := store.DB.Exec(`INSERT INTO projects(id,name,created_at,updated_at,status,archived_at)
+		VALUES('proj-user','Mine','2026-01-01T00:00:00Z','2026-01-01T00:00:00Z','active','')`); err != nil {
 		t.Fatal(err)
 	}
 	if err := demoseed.Defaults(store); err != nil {

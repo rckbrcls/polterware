@@ -39,5 +39,5 @@ export function linkedFacts(node: { metadata?: Record<string, unknown> }, entiti
   return { kind: entity.componentKind || undefined, tech: entity.tech || undefined };
 }
 export function structureEntities(entities: readonly StoreEntity[]): StoreEntity[] {
-  return entities.filter((entity) => entity.kind === "node" && ["system", "domain", "component"].includes(entity.level ?? ""));
+  return entities.filter((entity) => entity.kind === "node" && ["domain", "component"].includes(entity.level ?? ""));
 }

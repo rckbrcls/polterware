@@ -5,25 +5,26 @@ export function createBrowserStructure(seedProjectId: string, seed: readonly Par
   const projects = new Map<string, WorkspaceStructureNode[]>();
   const list = (projectId: string) => {
     if (!projects.has(projectId)) projects.set(projectId, projectId === seedProjectId ? seed.map((node) => ({
-      id: "", parentId: "", level: "system", slug: "", path: "", title: "", intent: "", decisions: [], invariants: [], status: "proposed",
+      id: "", parentId: "", level: "domain", slug: "", path: "", title: "", intent: "", decisions: [], invariants: [], status: "proposed",
       childCount: 0, featureCount: 0, openQuestions: 0, repo: "", folder: "", migrationFrom: "", migrationTo: "", deploys: [], ...structuredClone(node),
     })) : []);
     return projects.get(projectId)!;
   };
   return {
-    list: (projectId: string) => ({ nodes: structuredClone(list(projectId)), driftSlugs: projectId === seedProjectId ? ["api"] : [], historical: false }),
+    list: (projectId: string) => ({ nodes: structuredClone(list(projectId)), historical: false }),
     apply: (projectId: string, text: string, dryRun = false) => {
       const heading = /^# ([^:\s]+):\s*(.+)$/m.exec(text);
       if (!heading) throw new Error("A structure node heading is required.");
       const metadata = (key: string) => new RegExp(`(?:^|·\\s*)${key}:([^\\n·]*)`, "m").exec(text)?.[1]?.trim();
       const level = metadata("level");
-      if (level !== "system" && level !== "domain" && level !== "component") throw new Error("Invalid structure kind.");
+      if (level !== "domain" && level !== "component") throw new Error("Invalid structure kind.");
       const nodes = list(projectId);
       const existing = nodes.find((node) => node.path === heading[1]);
       const under = metadata("under");
       const parent = under === undefined && existing ? nodes.find((node) => node.id === existing.parentId) : under ? nodes.find((node) => node.path === under) : undefined;
       if (under && !parent) throw new Error("Parent not found.");
-      if (level === "system" && parent || level === "domain" && parent?.level !== "system" || level === "component" && parent?.level !== "system" && parent?.level !== "domain") throw new Error("Invalid parent kind.");
+      // A domain sits under the project; a component under a domain or loose under the project.
+      if (level === "domain" && parent || level === "component" && parent && parent.level !== "domain") throw new Error("Invalid parent kind.");
       // Like the core, a node may change its level where it sits; a component cannot hold children.
       if (existing && level === "component" && nodes.some((node) => node.parentId === existing.id)) throw new Error("A node with children cannot become a component.");
       const slug = existing?.slug ?? heading[1]!.split("/").at(-1)!;
@@ -59,7 +60,7 @@ export function createBrowserStructure(seedProjectId: string, seed: readonly Par
           for (const node of nodes) node.path = rewrite(node.path);
         }
       } else {
-        nodes.push({ id: `structure-${crypto.randomUUID()}`, parentId: parent?.id ?? "", level, slug, path: nextPath, title: heading[2]!.trim(), intent: "", decisions: [], invariants: [], status: "proposed", childCount: 0, featureCount: 0, openQuestions: 0, repo: "", folder: "", kind: kind ?? "", tech: tech ?? "", migrationFrom: "", migrationTo: "", deploys: [] });
+        nodes.push({ id: `structure-${crypto.randomUUID()}`, parentId: parent?.id ?? "", level, slug, path: nextPath, title: heading[2]!.trim(), intent: intent ?? "", decisions: [], invariants: [], status: "proposed", childCount: 0, featureCount: 0, openQuestions: 0, repo: "", folder: "", kind: kind ?? "", tech: tech ?? "", migrationFrom: "", migrationTo: "", deploys: [] });
       }
       for (const node of nodes) node.childCount = nodes.filter((child) => child.parentId === node.id).length;
       return { applied: true, diagnostics: [], ops: [`${existing ? "~" : "+"} node ${nextPath}`] };

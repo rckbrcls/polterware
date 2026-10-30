@@ -19,7 +19,6 @@ export type EnvironmentItem = {
 export type ProjectSwitcherItem = {
   projectId: string;
   name: string;
-  directory?: string;
   environmentSummary: string;
   isCurrent: boolean;
   /** Optional table/card display fields (fixture or live). */
@@ -43,7 +42,7 @@ export type WorkspaceScope = {
 export type ScopeNodeItem = {
   id: string;
   parentId: string;
-  level: "system" | "domain" | "component";
+  level: "domain" | "component";
   path: string;
   title: string;
 };

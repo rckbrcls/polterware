@@ -17,6 +17,6 @@ export function StructurePicker(props: { open: boolean; entities: readonly Store
         </DataTable.Row>}</DataTable.Body>
       </DataTable.Table>
     </DataTable.Root>
-    <Show when={!matches().length}><p role="status" class="mt-3 text-sm text-[var(--color-text-muted)]">No matching system, domain or component nodes in the loaded workspace.</p></Show>
+    <Show when={!matches().length}><p role="status" class="mt-3 text-sm text-[var(--color-text-muted)]">No matching domain or component nodes in the loaded workspace.</p></Show>
   </A11yDialog>;
 }

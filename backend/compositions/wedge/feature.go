@@ -2,10 +2,8 @@ package wedge
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
-	"github.com/polterware/polterware/backend/domains/drift"
 	"github.com/polterware/polterware/backend/domains/inbox"
 	"github.com/polterware/polterware/backend/domains/polter"
 	"github.com/polterware/polterware/backend/domains/work"
@@ -118,19 +116,6 @@ func VerifyFeature(store *storepkg.Store, projectID, target string) (polter.Veri
 	if err != nil {
 		return polter.VerifyResult{}, err
 	}
-	input, err := assembleDriftInput(store, projectID, "")
-	if err != nil {
-		return polter.VerifyResult{}, err
-	}
-	unmatched := map[int]bool{}
-	for _, finding := range drift.Check(input).Findings {
-		if finding.Type != drift.TypeTaskDoneUnmatched || finding.Details["slug"] != slug {
-			continue
-		}
-		if n, err := strconv.Atoi(strings.TrimPrefix(finding.Details["task"], "T")); err == nil {
-			unmatched[n] = true
-		}
-	}
 	var contract []polter.ReviewInvariant
 	for _, inv := range review.Card.Invariants {
 		if inv.State == work.InvariantActive {
@@ -141,8 +126,6 @@ func VerifyFeature(store *storepkg.Store, projectID, target string) (polter.Veri
 	return polter.VerifyFeature(polter.VerifyInput{
 		Card:      review.Card,
 		Task:      number,
-		Unmatched: unmatched,
-		GitReady:  input.GitDeliveryReady,
 		Delivered: ProjectGit(store, projectID).Delivered,
 		Contract:  contract,
 	})

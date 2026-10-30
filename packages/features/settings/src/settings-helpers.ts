@@ -37,18 +37,8 @@ export const SETTINGS_TABS: SettingsTab[] = [
     label: "General",
     tooltip: {
       title: "Project settings",
-      description: "Name, description, primary repository, and default environment.",
+      description: "Name, description, default environment, and AGENTS.md sync.",
       icon: Folder,
-    },
-  },
-  {
-    id: "repositories",
-    group: "Project",
-    label: "Repositories",
-    tooltip: {
-      title: "Local repositories",
-      description: "Manage extra local Git checkouts and their paths.",
-      icon: GitBranch,
     },
   },
   {
@@ -222,6 +212,8 @@ export function normalizeSettingsTab(raw?: string): SettingsTabId {
   switch (raw) {
     case "agents-access": return "agents-mcp";
     case "advanced": return "appearance";
+    // Repositories belong to components now; the AGENTS.md sync switch moved to General.
+    case "repositories": return "general";
     default: return "agents-mcp";
   }
 }

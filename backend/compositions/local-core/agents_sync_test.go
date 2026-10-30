@@ -23,7 +23,7 @@ func TestAgentsSyncRewritesTheBlockAfterChanges(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = store.Close() })
 	root := t.TempDir()
-	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Shop", RootPath: root})
+	project, err := initWithRepo(store, "Shop", root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +59,7 @@ func TestAgentsSyncRewritesTheBlockAfterChanges(t *testing.T) {
 		time.Sleep(5 * time.Millisecond)
 	}
 
-	apply("# shop: Shop\nlevel: system\n\n! Money is integer cents\n")
+	apply("# shop: Shop\nlevel: domain\n\n! Money is integer cents\n")
 	time.Sleep(300 * time.Millisecond)
 	if read() != "" {
 		t.Fatalf("sync is off by default, yet AGENTS.md was written:\n%s", read())
@@ -85,7 +85,7 @@ func TestAgentsSyncRewritesTheBlockAfterChanges(t *testing.T) {
 		t.Fatalf("a settings save must keep sync on: %+v %v", settings.Msg.GetSettings(), err)
 	}
 
-	apply("# shop: Shop\nlevel: system\n\n! Money is integer cents\n! Refunds keep the original currency\n")
+	apply("# shop: Shop\nlevel: domain\n\n! Money is integer cents\n! Refunds keep the original currency\n")
 	waitFor("Refunds keep the original currency (from shop)")
 	if _, err := os.Stat(filepath.Join(root, "docs", "decision")); !os.IsNotExist(err) {
 		t.Fatalf("sync writes only AGENTS.md: %v", err)
@@ -94,7 +94,7 @@ func TestAgentsSyncRewritesTheBlockAfterChanges(t *testing.T) {
 	if _, err := core.SetAgentsSync(context.Background(), connect.NewRequest(&localv1.SetAgentsSyncRequest{ProjectId: project.ID, Enabled: false})); err != nil {
 		t.Fatal(err)
 	}
-	apply("# shop: Shop\nlevel: system\n\n! Money is integer cents\n! Refunds keep the original currency\n! Prices include tax\n")
+	apply("# shop: Shop\nlevel: domain\n\n! Money is integer cents\n! Refunds keep the original currency\n! Prices include tax\n")
 	time.Sleep(300 * time.Millisecond)
 	if strings.Contains(read(), "Prices include tax") {
 		t.Fatalf("sync off must leave AGENTS.md alone:\n%s", read())

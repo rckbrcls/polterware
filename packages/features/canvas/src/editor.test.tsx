@@ -178,7 +178,7 @@ describe("Desktop canvas interactions", () => {
     const dialog = () => document.body.querySelector('[role="dialog"]')!;
     const promote = () => [...dialog().querySelectorAll("button")].find((button) => button.textContent === "Promote")!;
     await vi.waitFor(() => expect(dialog()).toBeTruthy());
-    expect(dialog().querySelector<HTMLInputElement>('[aria-label="Promotion slug"]')!.value).toBe("original");
+    expect(dialog().querySelector<HTMLInputElement>('[aria-label="Slug"]')!.value).toBe("original");
     promote().click();
     await vi.waitFor(() => expect(dialog().textContent).toContain("Server validation refused"));
     promote().click();

@@ -20,7 +20,7 @@ func seedSyncTestProject(t *testing.T, store *storepkg.Store, projectID string) 
 	t.Helper()
 	now := time.Now().UTC()
 	if err := store.SaveProject(projects.Project{
-		ID: projectID, Name: "Test", RootPath: "/tmp", CreatedAt: now, UpdatedAt: now, Status: projects.StatusActive,
+		ID: projectID, Name: "Test", CreatedAt: now, UpdatedAt: now, Status: projects.StatusActive,
 	}); err != nil {
 		t.Fatal(err)
 	}

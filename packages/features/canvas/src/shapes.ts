@@ -55,7 +55,7 @@ export const freeform = (kind: string) => annotation(kind) || byKind.has(kind);
 export type PaletteGroup = { id: string; title: string; kinds: string[] };
 /**
  * One generic component per family, then the drawing library and annotations; kinds a newer core adds fall into Other.
- * System, domain and component nodes come only from the library's Project structure list, already linked to a real node.
+ * Domain and component nodes come only from the library's Project structure list, already linked to a real node.
  */
 export function paletteGroups(palette: readonly string[]): PaletteGroup[] {
   const known = (kind: string) => freeform(kind) || !!component(kind) || structureKind(kind);

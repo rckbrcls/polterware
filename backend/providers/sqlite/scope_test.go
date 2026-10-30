@@ -19,7 +19,7 @@ func TestEntityContextsMatchAnyNode(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = store.Close() })
 	now := time.Now().UTC()
-	if err := store.SaveProject(projects.Project{ID: "p", Name: "p", RootPath: "/p", CreatedAt: now, UpdatedAt: now}); err != nil {
+	if err := store.SaveProject(projects.Project{ID: "p", Name: "p", CreatedAt: now, UpdatedAt: now}); err != nil {
 		t.Fatal(err)
 	}
 	stamp := now.Format(time.RFC3339)

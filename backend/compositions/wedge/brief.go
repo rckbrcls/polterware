@@ -95,17 +95,13 @@ func NodeForPath(store *storepkg.Store, snapshot work.Snapshot, file string) (st
 	if file == "" {
 		return structure.Node{}, false, nil
 	}
-	project, err := store.GetProject(snapshot.ProjectID)
-	if err != nil {
-		return structure.Node{}, false, err
-	}
-	repos, err := store.ListProjectRepos(snapshot.ProjectID)
+	repos, err := projectCheckouts(store, snapshot.ProjectID)
 	if err != nil {
 		return structure.Node{}, false, err
 	}
 	repo, rel := "", ""
 	if filepath.IsAbs(file) {
-		// The deepest checkout that holds the file wins: a repo may sit inside the root.
+		// The deepest checkout that holds the file wins: a repo may sit inside another.
 		best := -1
 		consider := func(name, root string) {
 			if root == "" {
@@ -117,9 +113,8 @@ func NodeForPath(store *storepkg.Store, snapshot work.Snapshot, file string) (st
 			}
 			best, repo, rel = len(root), name, inside
 		}
-		consider("", project.RootPath)
 		for _, item := range repos {
-			consider(item.Name, item.Path)
+			consider(item.name, item.root)
 		}
 		if best < 0 {
 			return structure.Node{}, false, nil
@@ -128,7 +123,7 @@ func NodeForPath(store *storepkg.Store, snapshot work.Snapshot, file string) (st
 		rel = file
 		if name, rest, ok := strings.Cut(file, ":"); ok {
 			for _, item := range repos {
-				if item.Name == name {
+				if item.name == name {
 					repo, rel = name, rest
 				}
 			}
@@ -137,8 +132,9 @@ func NodeForPath(store *storepkg.Store, snapshot work.Snapshot, file string) (st
 	rel = filepath.ToSlash(filepath.Clean(rel))
 	var found structure.Node
 	ok := false
-	for _, node := range snapshot.Nodes {
-		if node.Status == structure.NodeRemoved || node.Folder == "" || node.Repo != repo {
+	for _, node := range withDefaultRepo(snapshot.Nodes, repos) {
+		// A relative path with no repo: prefix may sit in any repository.
+		if node.Status == structure.NodeRemoved || node.Folder == "" || (repo != "" && node.Repo != repo) {
 			continue
 		}
 		folder := strings.Trim(filepath.ToSlash(filepath.Clean(node.Folder)), "/")

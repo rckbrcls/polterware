@@ -8,7 +8,7 @@ go build -o ../dist/polterware ./runtimes/cli
 ../dist/polterware -db /tmp/polterware-test.db init --name Demo --path /path/to/repo
 ../dist/polterware -db /tmp/polterware-test.db scan --project <id>
 ../dist/polterware -db /tmp/polterware-test.db context --project <id> --json
-../dist/polterware -db /tmp/polterware-test.db drift --project <id> --json
+../dist/polterware -db /tmp/polterware-test.db query "commits <slug>"
 ```
 
 Run `../dist/polterware` with no subcommand in a terminal for the status TUI (core start/stop, MCP setup for Claude Code / Codex / Cursor, sessions, runs, history).

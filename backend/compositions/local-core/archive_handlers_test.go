@@ -22,7 +22,7 @@ func TestKnowledgeArchiveRules(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = store.Close() })
 	now := time.Now().UTC()
-	project := projects.Project{ID: "proj-archive", Name: "Archive", RootPath: t.TempDir(), CreatedAt: now, UpdatedAt: now}
+	project := projects.Project{ID: "proj-archive", Name: "Archive", CreatedAt: now, UpdatedAt: now}
 	if err := store.SaveProject(project); err != nil {
 		t.Fatal(err)
 	}

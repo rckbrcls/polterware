@@ -13,7 +13,7 @@ import (
 )
 
 func briefFixture() BriefInput {
-	system := structure.Node{ID: "s", Path: "app", Level: structure.LevelSystem, Title: "App", Status: structure.NodeActive}
+	system := structure.Node{ID: "s", Path: "app", Level: structure.LevelDomain, Title: "App", Status: structure.NodeActive}
 	api := structure.Node{ID: "c", ParentID: "s", Path: "app/api", Level: structure.LevelComponent, Title: "API", Status: structure.NodeActive,
 		Kind: "service", Tech: "Go", Folder: "backend", Decisions: []string{"Decision-0002"}}
 	db := structure.Node{ID: "d", ParentID: "s", Path: "app/db", Level: structure.LevelComponent, Title: "DB", Status: structure.NodeActive}

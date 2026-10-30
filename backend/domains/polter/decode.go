@@ -50,6 +50,7 @@ type Document struct {
 	Decisions []DecisionNode
 	Facts     []FactNode
 	Rules     []RuleNode
+	Conflicts []ConflictNode
 }
 
 // DecisionNode is one `### ref: Title` block: a Decision lifecycle change. Ref is
@@ -84,7 +85,7 @@ var DecisionMetaKeys = []string{"status", "level", "supersedes", "trigger", "rea
 // DecisionNewRef is the ref that proposes a new decision.
 const DecisionNewRef = "new"
 
-// StructureNode is a system, domain, or component. Path is the heading path
+// StructureNode is a domain or a component. Path is the heading path
 // (`core` or `core/import`); the store materializes it with under:.
 type StructureNode struct {
 	Line       int
@@ -199,7 +200,7 @@ var MetaKeys = []string{"stage", "owner", "under", "milestone", "decisions", "st
 // NodeMetaKeys are the Structure node metadata keys. repo: names a registered
 // checkout (empty is the project root); path: is a folder inside it. kind: is
 // what a component is and tech: its technology.
-var NodeMetaKeys = []string{"level", "kind", "tech", "under", "repo", "path", "decisions", "deploys", "status", "migrating"}
+var NodeMetaKeys = []string{"level", "kind", "tech", "under", "repo", "dir", "path", "decisions", "deploys", "status", "migrating"}
 
 var frontmatterKeys = map[string]bool{"polter": true, "summary": true, "rationale": true}
 
@@ -236,6 +237,7 @@ type decoder struct {
 	fact       *FactNode
 	factRefs   map[string]int
 	rule       *RuleNode
+	conflict   *ConflictNode
 	ruleRefs   map[string]int
 	decRefs    map[string]int
 	inMeta     bool
@@ -269,6 +271,7 @@ func (d *decoder) run() {
 	d.closeDecision()
 	d.closeFact()
 	d.closeRule()
+	d.closeConflict()
 }
 
 // frontmatter consumes the leading --- block and returns the next line index.
@@ -329,6 +332,8 @@ func (d *decoder) line(n int, raw string) {
 		body := strings.TrimSpace(trimmed[5:])
 		if strings.HasPrefix(body, ruleHeadingPrefix) {
 			d.ruleHeading(n, strings.TrimSpace(body[len(ruleHeadingPrefix):]))
+		} else if strings.HasPrefix(body, conflictHeadingPrefix) {
+			d.conflictHeading(n, strings.TrimSpace(body[len(conflictHeadingPrefix):]))
 		} else {
 			d.factHeading(n, body)
 		}
@@ -356,7 +361,7 @@ func (d *decoder) line(n int, raw string) {
 		return
 	case strings.HasPrefix(trimmed, "#"):
 		d.endHandoff()
-		d.errorf(n, `unsupported heading: cards use "## slug: title", decisions "### Decision-0007: title", Facts "#### slug: Statement", Rules "#### rule slug: Statement"`)
+		d.errorf(n, `unsupported heading: cards use "## slug: title", decisions "### Decision-0007: title", Facts "#### slug: Statement", Rules "#### rule slug: Statement", Conflicts "#### conflict slug: Request"`)
 		return
 	}
 
@@ -367,6 +372,11 @@ func (d *decoder) line(n int, raw string) {
 
 	if d.rule != nil {
 		d.ruleLine(n, trimmed)
+		return
+	}
+
+	if d.conflict != nil {
+		d.conflictLine(n, trimmed)
 		return
 	}
 
@@ -443,6 +453,7 @@ func (d *decoder) heading(n int, body string) {
 	d.closeDecision()
 	d.closeFact()
 	d.closeRule()
+	d.closeConflict()
 	slug, title := body, ""
 	if idx := strings.Index(body, ":"); idx >= 0 {
 		slug = strings.TrimSpace(body[:idx])
@@ -780,6 +791,7 @@ func (d *decoder) nodeHeading(n int, slug, headingPath, title string) {
 	d.closeDecision()
 	d.closeFact()
 	d.closeRule()
+	d.closeConflict()
 	if prev, dup := d.pathLines[headingPath]; dup {
 		d.errorf(n, "duplicate path %q (also line %d): merge the two nodes", headingPath, prev)
 	} else {
@@ -853,6 +865,10 @@ func (d *decoder) nodeMeta(n int, line string) {
 		case "repo":
 			if value != "" && !work.ValidSlug(value) {
 				d.errorf(n, "invalid repo %q: use a registered checkout name like api", value)
+			}
+		case "dir":
+			if !strings.HasPrefix(value, "/") && !strings.HasPrefix(value, "~") {
+				d.errorf(n, "invalid dir %q: use the absolute folder of a local clone, like ~/code/api", value)
 			}
 		case "path":
 			folder, ok := CleanFolder(value)
@@ -970,6 +986,7 @@ func (d *decoder) decisionHeading(n int, body string) {
 	d.closeDecision()
 	d.closeFact()
 	d.closeRule()
+	d.closeConflict()
 	ref, title := body, ""
 	if idx := strings.Index(body, ":"); idx >= 0 {
 		ref = strings.TrimSpace(body[:idx])

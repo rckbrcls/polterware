@@ -58,6 +58,18 @@ func Format(doc Document) string {
 			}
 		}
 	}
+	for _, conflict := range doc.Conflicts {
+		fmt.Fprintf(&b, "\n#### %s%s", conflictHeadingPrefix, conflict.Ref)
+		if conflict.Request != "" {
+			fmt.Fprintf(&b, ": %s", conflict.Request)
+		}
+		b.WriteString("\n")
+		for _, key := range ConflictMetaKeys {
+			if value, ok := conflict.MetaValue(key); ok {
+				fmt.Fprintf(&b, "%s: %s\n", key, value)
+			}
+		}
+	}
 	return b.String()
 }
 

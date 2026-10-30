@@ -48,7 +48,7 @@ Read HEAD, branch, and recent commits so delivered tasks match commits on main.
 
 - [x] T1 Read HEAD and branch from the local checkout  ` + "`backend/providers/git/*`" + `
 - [x] T2 Link commits to tasks by citation
-- [ ] T3 Link a commit by hand from the Inbox  ` + "`backend/domains/inbox/*`" + `
+- [ ] T3 Link a commit by hand from the card  ` + "`backend/domains/inbox/*`" + `
 - [ ] T4 Show linked commits on the task  ` + "`packages/features/knowledge/*`" + `
 - [-] T5 Import tags as releases
 ? Include merge commits? [blocking] (yes | no | first-parent)
@@ -59,19 +59,19 @@ branch: feat/git-metadata-import
 agent: claude-code
 goal: Every done task matches a commit on main
 done: HEAD and branch are read; cited commits link their tasks
-in_progress: Linking commits by hand from the Inbox
+in_progress: Linking commits by hand from the card
 next: Show linked commits on the task
-touched: backend/providers/git/git.go, backend/compositions/wedge/commit_drift.go
+touched: backend/providers/git/git.go, backend/compositions/wedge/commits.go
 
-## drift-panel: Drift panel
-stage: build · under: reality/drift · decisions: Decision-0002
+## commits-panel: Commits panel
+stage: build · under: reality/commits · decisions: Decision-0002
 
-List the done tasks with no commit on main and the commits with no task.
+Show each card's commits with their subject, task, and GitHub link.
 
-- [x] Drift check over commits and tasks
-- [ ] Group findings by card
-- [ ] Empty state when nothing drifted
-! A finding always names its task or commit
+- [x] Read the commits that cite a task
+- [ ] Group commits by task
+- [ ] Empty state when no commit cites the card
+! A commit always names its task
 
 ## context-compiler: Context compiler
 stage: verify · under: agents/context · decisions: Decision-0003 · owner: Agents

@@ -58,7 +58,7 @@ level: component · under: core · repo: api · path: ./src/auth/
 }
 
 func TestDecodeRejectsBadRepoAndFolder(t *testing.T) {
-	text := "---\npolter: 1\n---\n# auth: Auth\nlevel: system · path: ../outside\n\n## login: Login\n- [ ] Mixed [repo: api] `web:src/*`\n"
+	text := "---\npolter: 1\n---\n# auth: Auth\nlevel: domain · path: ../outside\n\n## login: Login\n- [ ] Mixed [repo: api] `web:src/*`\n"
 	_, diags := Decode(text)
 	if !hasDiag(diags, 5, "invalid path") {
 		t.Fatalf("folder: %+v", diags)
@@ -69,7 +69,7 @@ func TestDecodeRejectsBadRepoAndFolder(t *testing.T) {
 }
 
 func TestLintUnknownRepo(t *testing.T) {
-	text := "---\npolter: 1\n---\n# api: API\nlevel: system · repo: api\n\n## login: Login\n- [ ] Callback [repo: web]\n- [ ] Root task `src/*`\n"
+	text := "---\npolter: 1\n---\n# api: API\nlevel: domain · repo: api\n\n## login: Login\n- [ ] Callback [repo: web]\n- [ ] Root task `src/*`\n"
 	_, diags := Lint(text, &References{Repos: []string{"api"}})
 	if hasDiag(diags, 5, "unknown repo") {
 		t.Fatalf("api is registered: %+v", diags)
@@ -84,7 +84,7 @@ func TestLintUnknownRepo(t *testing.T) {
 
 func TestPlanNodeRepoAndFolder(t *testing.T) {
 	snapshot := work.Snapshot{ProjectID: "p1", Repos: []string{"api"}}
-	doc := mustDecode(t, "---\npolter: 1\n---\n# api: API\nlevel: system · repo: api · path: services/api\n")
+	doc := mustDecode(t, "---\npolter: 1\n---\n# api: API\nlevel: domain · repo: api · path: services/api\n")
 	ops, diags := Plan(doc, snapshot)
 	if HasErrors(diags) || len(ops) != 1 {
 		t.Fatalf("create: ops=%+v diags=%+v", ops, diags)
@@ -95,7 +95,7 @@ func TestPlanNodeRepoAndFolder(t *testing.T) {
 	}
 
 	snapshot.Nodes = []structure.Node{{
-		ID: "n1", Path: "api", Slug: "api", Title: "API", Level: structure.LevelSystem, Status: structure.NodeActive,
+		ID: "n1", Path: "api", Slug: "api", Title: "API", Level: structure.LevelDomain, Status: structure.NodeActive,
 		Repo: "api", Folder: "services/api",
 	}}
 	// Absent keys leave the stored values; an empty repo: moves to the root.

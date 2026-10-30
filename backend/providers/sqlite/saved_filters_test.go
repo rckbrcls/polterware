@@ -13,7 +13,7 @@ func TestSavedFilterStoreRoundTrip(t *testing.T) {
 	store := newStore(t)
 	now := time.Now().UTC()
 	for _, id := range []string{"proj-a", "proj-b"} {
-		if err := store.SaveProject(projects.Project{ID: id, Name: id, RootPath: "/" + id, CreatedAt: now, UpdatedAt: now}); err != nil {
+		if err := store.SaveProject(projects.Project{ID: id, Name: id, CreatedAt: now, UpdatedAt: now}); err != nil {
 			t.Fatal(err)
 		}
 	}

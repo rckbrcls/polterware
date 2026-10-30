@@ -42,7 +42,7 @@ func TestRegistryHasOneGeneralistType(t *testing.T) {
 	if len(types) != 1 || types[0].Type != TypeCanvas || types[0].Unrestricted {
 		t.Fatalf("types = %+v", types)
 	}
-	for _, kind := range []string{"database", "frontend", "llm", "agent", "secrets", "pipeline", "dataset", KindSystem, "cylinder", "frame", KindNote, KindText} {
+	for _, kind := range []string{"database", "frontend", "llm", "agent", "secrets", "pipeline", "dataset", KindDomain, "cylinder", "frame", KindNote, KindText} {
 		if !contains(types[0].NodeKinds, kind) {
 			t.Fatalf("palette missing node %s: %v", kind, types[0].NodeKinds)
 		}
@@ -58,7 +58,7 @@ func TestValidateCanvas(t *testing.T) {
 	structure := &Ref{Kind: RefNode, ID: "structure-1"}
 	mustValid(t, TypeCanvas, Graph{
 		Nodes: []Node{
-			{ID: "s", Kind: KindSystem, Label: "App", Ref: structure},
+			{ID: "s", Kind: KindDomain, Label: "App", Ref: structure},
 			{ID: "web", Kind: "frontend", Label: "Web", Props: map[string]any{"technology": "React"}},
 			{ID: "db", Kind: "database", Label: "Main", Props: map[string]any{"technology": "Postgres"}, Ref: &Ref{Kind: RefNode, ID: "structure-2"}},
 			{ID: "r", Kind: "rectangle", Label: "box"},
@@ -70,7 +70,7 @@ func TestValidateCanvas(t *testing.T) {
 			{ID: "e2", From: "s", To: "web", Kind: EdgeContains},
 		},
 	})
-	mustReject(t, TypeCanvas, Graph{Nodes: []Node{{ID: "s", Kind: KindSystem}}}, "structure node")
+	mustReject(t, TypeCanvas, Graph{Nodes: []Node{{ID: "s", Kind: KindDomain}}}, "structure node")
 	mustReject(t, TypeCanvas, Graph{Nodes: []Node{{ID: "s", Kind: KindDomain, Ref: &Ref{Kind: RefCard, ID: "card-1"}}}}, "structure node")
 	mustReject(t, TypeCanvas, Graph{Nodes: []Node{{ID: "x", Kind: "spaceship"}}}, "not allowed")
 	mustReject(t, TypeCanvas, Graph{

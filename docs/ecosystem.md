@@ -21,7 +21,7 @@ Members may command each other. A member can launch agents, call another member'
 
 | Member | Role | Integrates with |
 |---|---|---|
-| Polterware | Project context, work cards, decisions, drift | Agents via MCP/CLI (`polter.apply`, `polter.query`, AgentRun) |
+| Polterware | Project context, work cards, decisions, commits | Agents via MCP/CLI (`polter.apply`, `polter.query`, AgentRun) |
 | Polterware Notes | Notes and reminders | Agents via MCP/CLI; notifier |
 | Polterware Vitals | SSH host metrics | Local core protocol |
 | dispatch (candidate) | Routes a task to the right coding-agent CLI by tier and quota | Polterware, Polterware Notes, and Polterware Vitals (below) |

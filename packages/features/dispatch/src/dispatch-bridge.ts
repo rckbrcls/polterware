@@ -25,6 +25,7 @@ export type DispatchBridge = {
     prompt: string;
     cardSlug?: string;
     agent?: string;
+    repo?: string;
     worktree?: string;
     dir?: string;
     readOnly?: boolean;

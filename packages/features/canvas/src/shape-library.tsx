@@ -6,7 +6,7 @@ import { structureEntities, type StoreEntity } from "./references";
 
 export const SHAPE_MIME = "application/x-polter-shape";
 export const ENTITY_MIME = "application/x-polter-entity";
-const LEVELS = [["system", "Systems"], ["domain", "Domains"], ["component", "Components"]] as const;
+const LEVELS = [["domain", "Domains"], ["component", "Components"]] as const;
 
 /** One library entry: the kind drawn as it lands on the canvas, with its name below; click adds it, drag drops it. */
 function LibraryTile(props: { label: string; name?: string; drag?: { type: string; value: string }; onAdd: () => void; children: JSX.Element }) {
@@ -45,7 +45,7 @@ export function ShapeLibrary(props: {
               drag={{ type: ENTITY_MIME, value: entity.id }} onAdd={() => props.onAddEntity!(entity)}><NodeSample kind={level} title={entity.title} id={entity.id} /></LibraryTile>}</For>
           </div>
         </Show>}</For>
-        <Show when={!structure().length}><p role="status" class="pw-canvas-panel-note px-2">No matching system, domain or component nodes.</p></Show>
+        <Show when={!structure().length}><p role="status" class="pw-canvas-panel-note px-2">No matching domain or component nodes.</p></Show>
       </CollapsibleSection></Show>
       <Show when={query() && !groups().length && !structure().length}><p role="status" class="pw-canvas-panel-note flex items-center gap-2 px-1"><Search size={14} />No shapes match “{query()}”.</p></Show>
     </div>

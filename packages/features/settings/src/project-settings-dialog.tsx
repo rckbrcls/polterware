@@ -1,9 +1,8 @@
-import { createEffect, createSignal, For, Show, type JSX } from "solid-js";
+import { createEffect, createSignal, Show, type JSX } from "solid-js";
 import {
   A11yDialog,
   Button,
   Input,
-  GitBranch,
   Plus,
   Select,
   SettingsDialog,
@@ -15,7 +14,7 @@ import { CreateEnvironmentDialog, type CreateEnvironmentDraft } from "./create-e
 import { EnvironmentsEmpty } from "./environments-empty";
 import { EnvironmentRows } from "./environment-rows";
 import { archiveProjectToast, saveGeneralSettingsToast } from "./environment-status";
-import type { ProjectEnvironment, ProjectGeneralSettings, ProjectRepository, ProjectSettingsPageId } from "./types";
+import type { ProjectEnvironment, ProjectGeneralSettings, ProjectSettingsPageId } from "./types";
 import { environmentSelectOptions, SETTINGS_TABS } from "./settings-helpers";
 import { SettingsRow, SettingsSection } from "./settings-section";
 import { SETTINGS_SEARCH_ENTRIES } from "./settings-search";
@@ -26,7 +25,7 @@ const PROJECT_SETTINGS_SEARCH_ENTRIES = SETTINGS_SEARCH_ENTRIES
   .filter((entry) => PROJECT_SETTINGS_ITEMS.some((item) => item.id === entry.tab))
   .map((entry) => ({ ...entry, item: entry.tab }));
 
-/** Name, repositories, environments, and archive for the current project. */
+/** Name, AGENTS.md sync, environments, and archive for the current project. Repositories belong to Structure components. */
 export function ProjectSettingsDialog(props: {
   open: boolean;
   onClose: () => void;
@@ -35,11 +34,7 @@ export function ProjectSettingsDialog(props: {
   tab?: ProjectSettingsPageId;
   general?: ProjectGeneralSettings;
   environments?: ProjectEnvironment[];
-  repositories?: ProjectRepository[];
   onSaveGeneral?: (settings: ProjectGeneralSettings) => void;
-  onAddRepository?: (draft: { name: string; path: string }) => Promise<void> | void;
-  onRemoveRepository?: (name: string) => Promise<void> | void;
-  onBrowseRepository?: () => Promise<string | null | undefined>;
   onAgentsSyncChange?: (enabled: boolean) => Promise<void> | void;
   onCreateEnvironment?: (draft: CreateEnvironmentDraft) => void;
   onSetDefaultEnvironment?: (environmentId: string) => void;
@@ -52,10 +47,6 @@ export function ProjectSettingsDialog(props: {
   const [name, setName] = createSignal(general()?.name ?? "");
   const [description, setDescription] = createSignal(general()?.description ?? "");
   const [defaultEnvironmentId, setDefaultEnvironmentId] = createSignal(general()?.defaultEnvironmentId ?? "");
-  const [repository, setRepository] = createSignal(general()?.repository ?? "");
-  const [repoName, setRepoName] = createSignal("");
-  const [repoPath, setRepoPath] = createSignal("");
-  const [repoBusy, setRepoBusy] = createSignal(false);
   const [syncBusy, setSyncBusy] = createSignal(false);
   const [archiveOpen, setArchiveOpen] = createSignal(false);
   const [createOpen, setCreateOpen] = createSignal(false);
@@ -68,41 +59,7 @@ export function ProjectSettingsDialog(props: {
     setName(next.name);
     setDescription(next.description);
     setDefaultEnvironmentId(next.defaultEnvironmentId);
-    setRepository(next.repository);
   });
-
-  async function handleAddRepository() {
-    const nextName = repoName().trim();
-    const path = repoPath().trim();
-    if (!nextName || !path || !props.onAddRepository) return;
-    setRepoBusy(true);
-    try {
-      await props.onAddRepository({ name: nextName, path });
-      setRepoName("");
-      setRepoPath("");
-    } catch {
-      // The caller reports the error.
-    } finally {
-      setRepoBusy(false);
-    }
-  }
-
-  async function handleBrowseRepository() {
-    const picked = await props.onBrowseRepository?.();
-    if (picked) setRepoPath(picked);
-  }
-
-  async function handleRemoveRepository(repoNameToRemove: string) {
-    if (!props.onRemoveRepository) return;
-    setRepoBusy(true);
-    try {
-      await props.onRemoveRepository(repoNameToRemove);
-    } catch {
-      // The caller reports the error.
-    } finally {
-      setRepoBusy(false);
-    }
-  }
 
   function handleSaveGeneral() {
     const current = general();
@@ -111,7 +68,7 @@ export function ProjectSettingsDialog(props: {
       description: description(),
       defaultEnvironmentId: defaultEnvironmentId(),
       projectId: current?.projectId ?? "",
-      repository: repository(),
+      repository: current?.repository ?? "",
       agentsSync: current?.agentsSync ?? false,
       dataSource: current?.dataSource ?? "empty",
     });
@@ -181,16 +138,6 @@ export function ProjectSettingsDialog(props: {
                   onInput={(event) => setDescription(event.currentTarget.value)}
                 />
               </SettingsRow>
-              <SettingsRow label="Primary repository" for="settings-project-repo">
-                <Input
-                  id="settings-project-repo"
-                  size="md"
-                  class="w-72"
-                  placeholder="org/repo"
-                  value={repository()}
-                  onInput={(event) => setRepository(event.currentTarget.value)}
-                />
-              </SettingsRow>
               <SettingsRow label="Default environment" for="settings-default-env">
                 <Select
                   id="settings-default-env"
@@ -216,7 +163,6 @@ export function ProjectSettingsDialog(props: {
                     setName(general()?.name ?? "");
                     setDescription(general()?.description ?? "");
                     setDefaultEnvironmentId(general()?.defaultEnvironmentId ?? "");
-                    setRepository(general()?.repository ?? "");
                   }}
                 >
                   Cancel
@@ -226,60 +172,9 @@ export function ProjectSettingsDialog(props: {
                 </Button>
               </div>
             </SettingsSection>
-          </Show>
-
-          <Show when={page() === "repositories"}>
-            <SettingsSection
-              title="Local repositories"
-              description="Extra Git checkouts. The project directory stays the checkpoint used by status. Each path here is read for commits."
-            >
-              <For each={props.repositories ?? []}>
-                {(repo) => (
-                  <SettingsRow
-                    icon={GitBranch}
-                    tone="integration"
-                    seed={repo.id}
-                    label={<span class="font-mono text-[12px]">{repo.name}</span>}
-                    description={<span class="font-mono" title={repo.path}>{repo.path}</span>}
-                  >
-                    <Button size="sm" variant="ghost" disabled={repoBusy()} onClick={() => void handleRemoveRepository(repo.name)}>
-                      Remove
-                    </Button>
-                  </SettingsRow>
-                )}
-              </For>
-              <SettingsRow label="Name" for="settings-repo-name">
-                <Input
-                  id="settings-repo-name"
-                  size="md"
-                  class="w-72"
-                  placeholder="api"
-                  value={repoName()}
-                  onInput={(event) => setRepoName(event.currentTarget.value)}
-                />
-              </SettingsRow>
-              <SettingsRow label="Path" for="settings-repo-path">
-                <Input
-                  id="settings-repo-path"
-                  size="md"
-                  class="w-72"
-                  placeholder="/path/to/checkout"
-                  value={repoPath()}
-                  onInput={(event) => setRepoPath(event.currentTarget.value)}
-                />
-              </SettingsRow>
-              <div class="flex justify-end gap-2">
-                <Button size="sm" variant="ghost" disabled={repoBusy()} onClick={() => void handleBrowseRepository()}>
-                  Browse
-                </Button>
-                <Button size="sm" variant="secondary" disabled={repoBusy() || !repoName().trim() || !repoPath().trim()} onClick={() => void handleAddRepository()}>
-                  Add repository
-                </Button>
-              </div>
-            </SettingsSection>
             <SettingsSection
               title="AGENTS.md"
-              description="The generated Polterware block in each checkout's AGENTS.md: the Rules agents must follow, principles, Structure, and decisions. The rest of the file is left alone."
+              description="The generated Polterware block in the AGENTS.md of each repository clone: the Rules agents must follow, principles, Structure, and decisions. The rest of the file is left alone."
             >
               <SettingsRow
                 label="Keep in sync"

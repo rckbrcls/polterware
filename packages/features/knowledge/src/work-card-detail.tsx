@@ -119,7 +119,7 @@ export function WorkCardDetail(props: {
 
             </>}
           >
-            <WorkCardWork slug={card().slug} stage={card().stage} onAdvance={props.onAdvance} leading={<>
+            <WorkCardWork slug={card().slug} stage={card().stage} tasks={card().tasks.filter((task) => task.state !== "dropped")} onAdvance={props.onAdvance} leading={<>
             <RailGroup
               title="Tasks" icon={<ListChecks size={14} />}
               aside={

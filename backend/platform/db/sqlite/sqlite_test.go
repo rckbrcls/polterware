@@ -90,7 +90,7 @@ func TestMigrateRebuildsIncompatibleProjectsBaseline(t *testing.T) {
 		t.Fatalf("expected legacy rows wiped during rebuild, got %d", count)
 	}
 
-	if _, err := db.Exec(`INSERT INTO projects(id,name,root_path,created_at,updated_at,status,archived_at) VALUES ('p2','Ok','/tmp','2026-01-01T00:00:00Z','2026-01-01T00:00:00Z','active','')`); err != nil {
+	if _, err := db.Exec(`INSERT INTO projects(id,name,created_at,updated_at,status,archived_at) VALUES ('p2','Ok','2026-01-01T00:00:00Z','2026-01-01T00:00:00Z','active','')`); err != nil {
 		t.Fatal(err)
 	}
 }

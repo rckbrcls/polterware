@@ -20,12 +20,14 @@ import type { StoreEntity } from "./references";
 export type CanvasNavigation = {
   openCanvasId?: string;
   onOpenCanvasChange?: (canvasId: string | undefined) => void;
+  /** Reports the open canvas's name (the title bar's breadcrumb), and undefined once none is open. */
+  onOpenCanvasName?: (name: string | undefined) => void;
   /** A new value closes the open canvas and shows the list (the Canvas item chosen again). */
   homeKey?: number;
 };
 
 export function CanvasView(props: { projectId: string; port: CanvasPort; entities?: readonly StoreEntity[] } & CanvasNavigation) {
-  return <Show when={props.projectId} keyed>{(projectId) => <CanvasProject projectId={projectId} port={props.port} entities={props.entities} openCanvasId={props.openCanvasId} onOpenCanvasChange={props.onOpenCanvasChange} homeKey={props.homeKey} />}</Show>;
+  return <Show when={props.projectId} keyed>{(projectId) => <CanvasProject projectId={projectId} port={props.port} entities={props.entities} openCanvasId={props.openCanvasId} onOpenCanvasChange={props.onOpenCanvasChange} onOpenCanvasName={props.onOpenCanvasName} homeKey={props.homeKey} />}</Show>;
 }
 
 function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: readonly StoreEntity[] } & CanvasNavigation) {
@@ -42,6 +44,8 @@ function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: 
     setSelectedCanvas(value);
     props.onOpenCanvasChange?.(value?.canvas.id);
   };
+  createEffect(() => props.onOpenCanvasName?.(selected()?.canvas.name));
+  onCleanup(() => props.onOpenCanvasName?.(undefined));
   // Reopen the last open canvas once the list loads, when it still exists.
   let restored = false;
   createEffect(() => {

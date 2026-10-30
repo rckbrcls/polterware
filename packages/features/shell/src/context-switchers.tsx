@@ -41,7 +41,6 @@ export function WorkspaceContextBar(props: {
   onOpenProjectSettings?: () => void;
 }) {
   const [openMenu, setOpenMenu] = createSignal<MenuId>(null);
-  const [query, setQuery] = createSignal("");
   let projectTrigger: HTMLButtonElement | undefined;
   let environmentTrigger: HTMLButtonElement | undefined;
 
@@ -70,11 +69,6 @@ export function WorkspaceContextBar(props: {
       close();
     }, SELECTION_ACK_MS);
   };
-  const filteredProjects = createMemo(() => {
-    const normalized = query().trim().toLowerCase();
-    if (!normalized) return projects();
-    return projects().filter((project) => project.name.toLowerCase().includes(normalized));
-  });
   const projectEnvironments = createMemo(() =>
     environments().filter((environment) => environment.projectId === props.context.projectId),
   );
@@ -82,7 +76,6 @@ export function WorkspaceContextBar(props: {
   function close() {
     clearAcknowledge();
     setOpenMenu(null);
-    setQuery("");
   }
 
   return (
@@ -142,53 +135,15 @@ export function WorkspaceContextBar(props: {
         </Show>
       </SwitcherTrigger>
 
-      <Popover
+      <ProjectSwitcherPopover
         open={openMenu() === "project"}
         onClose={close}
-        title="Switch project"
-        width={300}
-        placement="bottom-start"
-        anchorRef={() => projectTrigger}
-      >
-        <PopoverSearchField
-          placeholder="Find project…"
-          value={query()}
-          onInput={setQuery}
-          autofocus
-        />
-        <MenuList class="min-h-0 flex-1 overflow-auto p-2">
-          <For each={filteredProjects()}>
-            {(project) => (
-              <MenuItem
-                class="gap-2 py-2 text-[13.5px]"
-                selected={project.projectId === props.context.projectId}
-                onClick={() => {
-                  props.onSelectProject?.(project.projectId);
-                  closeAfterAcknowledge();
-                }}
-              >
-                <IconTile size={20} tone="architecture" seed={project.projectId}>
-                  <Folder size={12} />
-                </IconTile>
-                <span class="min-w-0 flex-1 truncate text-[var(--color-text-primary)]">{project.name}</span>
-                <SelectionCheck checked={project.projectId === props.context.projectId} size={15} />
-              </MenuItem>
-            )}
-          </For>
-        </MenuList>
-        <div class="border-t border-[var(--color-border-subtle)] p-2">
-          <MenuItem
-            class="gap-2 py-2 text-[13px]"
-            onClick={() => {
-              props.onCreateProject?.();
-              close();
-            }}
-          >
-            <Plus size={14} />
-            New project
-          </MenuItem>
-        </div>
-      </Popover>
+        anchor={() => projectTrigger}
+        projects={projects()}
+        currentProjectId={props.context.projectId}
+        onSelect={(projectId) => props.onSelectProject?.(projectId)}
+        onCreateProject={props.onCreateProject}
+      />
 
       <Popover
         open={openMenu() === "env"}
@@ -224,5 +179,79 @@ export function WorkspaceContextBar(props: {
         </MenuList>
       </Popover>
     </div>
+  );
+}
+
+/**
+ * Switch project: a search over the projects, each with its folder tile and a check on the open one,
+ * then New project. The title bar's project crumb opens it.
+ */
+export function ProjectSwitcherPopover(props: {
+  open: boolean;
+  onClose: () => void;
+  anchor: () => HTMLElement | undefined;
+  projects: readonly ProjectSwitcherItem[];
+  currentProjectId: string;
+  onSelect: (projectId: string) => void;
+  onCreateProject?: () => void;
+}) {
+  const [query, setQuery] = createSignal("");
+  // A pick holds the popover open briefly so the marker glide and check are seen.
+  let acknowledgeTimer: ReturnType<typeof setTimeout> | undefined;
+  const clearAcknowledge = () => {
+    if (acknowledgeTimer !== undefined) clearTimeout(acknowledgeTimer);
+    acknowledgeTimer = undefined;
+  };
+  onCleanup(clearAcknowledge);
+  const close = () => {
+    clearAcknowledge();
+    setQuery("");
+    props.onClose();
+  };
+  const filtered = createMemo(() => {
+    const normalized = query().trim().toLowerCase();
+    const live = props.projects.filter((project) => project.status !== "archived");
+    return normalized ? live.filter((project) => project.name.toLowerCase().includes(normalized)) : live;
+  });
+
+  return (
+    <Popover open={props.open} onClose={close} title="Switch project" width={300} placement="bottom-start" anchorRef={props.anchor}>
+      <PopoverSearchField placeholder="Find project…" value={query()} onInput={setQuery} autofocus />
+      <MenuList class="min-h-0 flex-1 overflow-auto p-2">
+        <For each={filtered()} fallback={<p class="px-2 py-3 text-[13px] text-[var(--color-text-muted)]">No matching projects.</p>}>
+          {(project) => (
+            <MenuItem
+              class="gap-2 py-2 text-[13.5px]"
+              selected={project.projectId === props.currentProjectId}
+              onClick={() => {
+                if (project.projectId !== props.currentProjectId) props.onSelect(project.projectId);
+                clearAcknowledge();
+                acknowledgeTimer = setTimeout(close, SELECTION_ACK_MS);
+              }}
+            >
+              <IconTile size={20} tone="architecture" seed={project.projectId}>
+                <Folder size={12} />
+              </IconTile>
+              <span class="min-w-0 flex-1 truncate text-[var(--color-text-primary)]">{project.name}</span>
+              <SelectionCheck checked={project.projectId === props.currentProjectId} size={15} />
+            </MenuItem>
+          )}
+        </For>
+      </MenuList>
+      <Show when={props.onCreateProject}>
+        <div class="border-t border-[var(--color-border-subtle)] p-2">
+          <MenuItem
+            class="gap-2 py-2 text-[13px]"
+            onClick={() => {
+              close();
+              props.onCreateProject?.();
+            }}
+          >
+            <Plus size={14} />
+            New project
+          </MenuItem>
+        </div>
+      </Show>
+    </Popover>
   );
 }

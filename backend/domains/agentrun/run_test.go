@@ -7,7 +7,6 @@ import (
 	"time"
 
 	contextpkg "github.com/polterware/polterware/backend/domains/context"
-	"github.com/polterware/polterware/backend/domains/drift"
 )
 
 func TestStartAndComplete(t *testing.T) {
@@ -101,7 +100,7 @@ func TestMutationChangeStepIncludesTool(t *testing.T) {
 	}
 }
 
-func TestContextAndDriftPayloads(t *testing.T) {
+func TestContextPayload(t *testing.T) {
 	pkg := contextpkg.Package{
 		Query: "sqlite", EntityID: "ent-1", TokensUsed: 40,
 		Items: []contextpkg.Item{
@@ -115,17 +114,6 @@ func TestContextAndDriftPayloads(t *testing.T) {
 	}
 	if step.Kind != KindContext || !strings.Contains(step.PayloadJSON, "item-1") {
 		t.Fatalf("unexpected context step: %+v", step)
-	}
-
-	result := drift.Result{
-		Findings: []drift.Finding{{Type: drift.TypeCommitWithoutTask, Severity: drift.SeverityWarning, Summary: "bare commit"}},
-	}
-	driftStep, err := NewDriftStep("arun-1", result, time.Time{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if driftStep.Kind != KindDrift || !strings.Contains(driftStep.Summary, "1 finding") {
-		t.Fatalf("unexpected drift step: %+v", driftStep)
 	}
 }
 

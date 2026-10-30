@@ -32,7 +32,7 @@ func TestInboxEndToEnd(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer store.Close()
-	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", RootPath: t.TempDir()})
+	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,7 +132,7 @@ func TestInboxDefer(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer store.Close()
-	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", RootPath: t.TempDir()})
+	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo"})
 	if err != nil {
 		t.Fatal(err)
 	}

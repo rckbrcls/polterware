@@ -14,7 +14,7 @@ func TestStructureKindAndTechPersist(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer store.Close()
-	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", RootPath: t.TempDir()})
+	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +33,7 @@ rationale: Record what the store is built with
 ---
 
 # app: App
-level: system
+level: domain
 
 # app/db: Database
 level: component

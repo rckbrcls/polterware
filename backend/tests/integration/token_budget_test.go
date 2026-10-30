@@ -23,15 +23,18 @@ import (
 var tokenCeilings = map[string]int{
 	// Four tools replace seventeen (initialize was 344, tools/list 2199).
 	"mcp.initialize": 237,
-	"mcp.tools_list": 683,
-	// The core alone; topics are read on demand (the whole spec was 1266).
-	"polter.format": 390,
+	// The query list names "commits <slug>" in place of "drift" (683) and the
+	// Conflict reads, and the format topics gain conflicts.
+	"mcp.tools_list": 702,
+	// The core alone; topics are read on demand (the whole spec was 1266). It
+	// tells agents to raise a Conflict instead of breaking a Rule (390).
+	"polter.format": 397,
 	// One brief replaces oracle + decision + handoff + context.get (461).
 	"card.context": 275,
 	// One brief replaces oracle + context.get (273).
 	"node.context": 201,
 	// Compact lines replace the context.get JSON package (340).
-	"search": 61,
+	"search": 57,
 	// Mermaid with frames as subgraphs replaces node-link JSON (312).
 	"canvas.show": 91,
 }
@@ -55,8 +58,8 @@ func TestAgentReadTokenBudget(t *testing.T) {
 		// What an agent reads before it works on one card or node: its
 		// brief (tasks, invariants, governing decisions, facts, milestone).
 		"card.context": {toolCall(mcp.ToolPolterQuery, map[string]any{"project_id": seed.ProjectID, "query": "brief local-build-dogfood"})},
-		"node.context": {toolCall(mcp.ToolPolterQuery, map[string]any{"project_id": seed.ProjectID, "query": "brief polterware/cli/commands"})},
-		"search":       {toolCall(mcp.ToolPolterQuery, map[string]any{"project_id": seed.ProjectID, "query": "search drift"})},
+		"node.context": {toolCall(mcp.ToolPolterQuery, map[string]any{"project_id": seed.ProjectID, "query": "brief cli/commands"})},
+		"search":       {toolCall(mcp.ToolPolterQuery, map[string]any{"project_id": seed.ProjectID, "query": "search commits"})},
 		"canvas.show":  {toolCall(mcp.ToolPolterQuery, map[string]any{"project_id": seed.ProjectID, "query": "canvas Architecture"})},
 	}
 
@@ -112,8 +115,8 @@ func seedArchitectureCanvas(t *testing.T, store *storepkg.Store) {
 	graph := canvas.Graph{
 		Nodes: []canvas.Node{
 			{ID: "node-frame-core", Kind: "frame", Label: "Local core"},
-			{ID: "node-core-server", Kind: "service", Label: "Server", Ref: ref("polterware/core/server")},
-			{ID: "node-core-store", Kind: "database", Label: "Store", Ref: ref("polterware/core/store")},
+			{ID: "node-core-server", Kind: "service", Label: "Server", Ref: ref("core/server")},
+			{ID: "node-core-store", Kind: "database", Label: "Store", Ref: ref("core/store")},
 			{ID: "node-renderer", Kind: "frontend", Label: "Renderer", Props: map[string]any{"technology": "Solid", "style": map[string]any{"fill": "blue"}}},
 			{ID: "node-sqlite", Kind: "database", Label: "SQLite file", Props: map[string]any{"technology": "SQLite"}},
 			{ID: "node-note-lock", Kind: canvas.KindNote, Label: "One serve process per database, guarded by a lock."},

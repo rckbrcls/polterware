@@ -358,67 +358,6 @@ func (core *Core) ListAgentToolCalls(_ context.Context, request *connect.Request
 	return connect.NewResponse(&localv1.ListAgentToolCallsResponse{Calls: out}), nil
 }
 
-func (core *Core) CheckDrift(_ context.Context, request *connect.Request[localv1.CheckDriftRequest]) (*connect.Response[localv1.CheckDriftResponse], error) {
-	if request.Msg.ProjectId == "" {
-		return nil, invalid("project id is required")
-	}
-	result, err := wedge.CheckDrift(core.Store, wedge.DriftInput{
-		ProjectID:  request.Msg.ProjectId,
-		EntityID:   request.Msg.EntityId,
-		AgentRunID: request.Msg.AgentRunId,
-	})
-	summary := "drift check failed"
-	ok := err == nil
-	if err == nil {
-		summary = agentaccess.SummarizeResult(
-			fmt.Sprintf("checker=%s findings=%d", result.Checker, len(result.Findings)),
-			240,
-		)
-	} else {
-		summary = agentaccess.SummarizeResult(err.Error(), 240)
-	}
-	_ = core.Store.AppendAgentToolCall(agentaccess.ToolCall{
-		ProjectID:     request.Msg.ProjectId,
-		AgentRunID:    request.Msg.AgentRunId,
-		ToolName:      "drift.check",
-		ArgumentsJSON: fmt.Sprintf(`{"entity_id":%q}`, request.Msg.EntityId),
-		ResultSummary: summary,
-		OK:            ok,
-		Source:        clientOf(request.Header()),
-	})
-	if err != nil {
-		return nil, mapDriftErr(err)
-	}
-	findings := make([]*localv1.DriftFinding, 0, len(result.Findings))
-	for _, finding := range result.Findings {
-		findings = append(findings, &localv1.DriftFinding{
-			Type:       finding.Type,
-			Severity:   finding.Severity,
-			Summary:    finding.Summary,
-			SubjectIds: finding.SubjectIDs,
-			Details:    finding.Details,
-		})
-	}
-	return connect.NewResponse(&localv1.CheckDriftResponse{
-		ProjectId: result.ProjectID,
-		EntityId:  result.EntityID,
-		Status:    result.Status,
-		Checker:   result.Checker,
-		Findings:  findings,
-	}), nil
-}
-
-func mapDriftErr(err error) error {
-	if err == nil {
-		return nil
-	}
-	msg := err.Error()
-	if msg == "unknown project" || msg == "project_id is required" {
-		return invalid(msg)
-	}
-	return internal(err)
-}
-
 func canonEntityProto(item canon.Entity) *localv1.CanonEntity {
 	return &localv1.CanonEntity{
 		Id: item.ID, ProjectId: item.ProjectID, Kind: item.Kind, RefKind: item.RefKind, RefId: item.RefID,

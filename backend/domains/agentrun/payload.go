@@ -7,7 +7,6 @@ import (
 	"time"
 
 	contextpkg "github.com/polterware/polterware/backend/domains/context"
-	"github.com/polterware/polterware/backend/domains/drift"
 )
 
 // ContextPayload is a light snapshot of a compiled context package.
@@ -27,19 +26,6 @@ type ChangePayload struct {
 	SubjectIDs []string `json:"subject_ids,omitempty"`
 	// BatchID links the step to its change_ops rows (Polter apply).
 	BatchID string `json:"batch_id,omitempty"`
-}
-
-// DriftFindingPayload is a compact drift finding for audit storage.
-type DriftFindingPayload struct {
-	Type       string   `json:"type"`
-	Severity   string   `json:"severity"`
-	Summary    string   `json:"summary"`
-	SubjectIDs []string `json:"subject_ids,omitempty"`
-}
-
-// DriftPayload stores narrow checker findings attached to a run.
-type DriftPayload struct {
-	Findings []DriftFindingPayload `json:"findings"`
 }
 
 func MarshalPayload(value any) (string, error) {
@@ -66,27 +52,6 @@ func ContextFromPackage(pkg contextpkg.Package) ContextPayload {
 
 func ContextStepSummary(pkg contextpkg.Package) string {
 	return fmt.Sprintf("context package: %d items, %d tokens", len(pkg.Items), pkg.TokensUsed)
-}
-
-func DriftFromResult(result drift.Result) DriftPayload {
-	findings := make([]DriftFindingPayload, 0, len(result.Findings))
-	for _, f := range result.Findings {
-		findings = append(findings, DriftFindingPayload{
-			Type:       f.Type,
-			Severity:   f.Severity,
-			Summary:    f.Summary,
-			SubjectIDs: f.SubjectIDs,
-		})
-	}
-	return DriftPayload{Findings: findings}
-}
-
-func DriftStepSummary(result drift.Result) string {
-	n := len(result.Findings)
-	if n == 0 {
-		return "drift check: no findings"
-	}
-	return fmt.Sprintf("drift check: %d finding(s)", n)
 }
 
 func NewChangeStep(runID, summary, rationale string, paths []string, now time.Time) (Step, error) {
@@ -125,14 +90,6 @@ func NewContextStep(runID string, pkg contextpkg.Package, now time.Time) (Step, 
 		return Step{}, err
 	}
 	return newStep(runID, KindContext, ContextStepSummary(pkg), payload, now), nil
-}
-
-func NewDriftStep(runID string, result drift.Result, now time.Time) (Step, error) {
-	payload, err := MarshalPayload(DriftFromResult(result))
-	if err != nil {
-		return Step{}, err
-	}
-	return newStep(runID, KindDrift, DriftStepSummary(result), payload, now), nil
 }
 
 func newStep(runID, kind, summary, payloadJSON string, now time.Time) Step {

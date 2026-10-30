@@ -283,25 +283,28 @@ function polterCard(slug: string, title: string | null, meta: Record<string, str
   return `---\npolter: 1\n---\n\n${heading}\n${metaLine}\n`;
 }
 
-function structureNodeText(input: { heading: string; title: string; level: string; under?: string }): string {
+function structureNodeText(input: { heading: string; title: string; level: string; under?: string; intent?: string }): string {
   const meta = [`level: ${input.level}`];
-  if (input.under) meta.push(`under: ${input.under}`);
-  return `---\npolter: 1\n---\n\n# ${input.heading}: ${polterValue(input.title)}\n${meta.join(" · ")}\n`;
+  // An empty under: (a move) places the node right under the project.
+  if (input.under !== undefined) meta.push(input.under ? `under: ${input.under}` : "under:");
+  const intent = input.intent?.trim() ? `\n${input.intent.trim()}\n` : "";
+  return `---\npolter: 1\n---\n\n# ${input.heading}: ${polterValue(input.title)}\n${meta.join(" · ")}\n${intent}`;
 }
 
-/** Create a Structure node. The heading is the slug; under names the parent path. */
+/** Create a Structure node. The heading is the slug; under names the parent path; the intent is its description. */
 export async function persistStructureCreateNode(input: {
   projectId: string;
   heading: string;
   title: string;
   level: string;
   under?: string;
+  intent?: string;
   change: ChangeEnvelope;
 }): Promise<void> {
   await applyPolter(input.projectId, structureNodeText(input), input.change);
 }
 
-/** Move an existing Structure node under a new parent. The heading is its current path. */
+/** Move an existing Structure node under a new parent, or under the project with an empty under. The heading is its current path. */
 export async function persistStructureMoveNode(input: {
   projectId: string;
   path: string;
@@ -354,7 +357,7 @@ export async function persistStructureKindTech(input: {
 }
 
 /** The fields of a Structure node its document edits in place; a field left out is unchanged. */
-export type StructureNodePatch = { title?: string; intent?: string; level?: string; repo?: string; folder?: string; kind?: string; tech?: string };
+export type StructureNodePatch = { title?: string; intent?: string; level?: string; repo?: string; dir?: string; folder?: string; kind?: string; tech?: string };
 
 /**
  * Edit a Structure node in place: the title in its heading, `level:` (a domain clears `kind:` with it), `repo:`, `path:` (the folder),
@@ -373,6 +376,8 @@ export async function persistStructureNode(input: {
   const { patch } = input;
   let text = structureNodeText({ heading: input.path, title: patch.title ?? input.title, level: patch.level ?? input.level });
   if (patch.repo !== undefined) text += `repo: ${patch.repo}\n`;
+  // dir: links the local clone at that folder; the core turns it into repo: <name>.
+  if (patch.dir !== undefined) text += `dir: ${patch.dir}\n`;
   if (patch.folder !== undefined) text += `path: ${patch.folder}\n`;
   if (patch.kind !== undefined) text += `kind: ${patch.kind}\n`;
   if (patch.tech !== undefined) text += `tech: ${polterValue(patch.tech)}\n`;
@@ -671,14 +676,6 @@ export async function persistKnowledgeDuplicate(
   return id;
 }
 
-export async function persistAddProjectRepo(projectId: string, name: string, path: string): Promise<void> {
-  await core().projects.addRepo({ projectId, name, path });
-}
-
-export async function persistRemoveProjectRepo(projectId: string, name: string): Promise<void> {
-  await core().projects.removeRepo({ projectId, name });
-}
-
 export async function persistProjectSettings(
   projectId: string,
   settings: ProjectGeneralSettings,
@@ -789,7 +786,6 @@ export async function persistArchiveProject(projectId: string): Promise<void> {
 
 export async function persistCreatedProject(input: {
   name: string;
-  directory: string;
   environments: string[];
 }): Promise<{ projectId: string; environmentId?: string }> {
   const projectId = newId("proj");
@@ -797,7 +793,6 @@ export async function persistCreatedProject(input: {
     project: {
       id: projectId,
       name: input.name,
-      rootPath: input.directory,
     },
   });
   let firstEnvironmentId: string | undefined;

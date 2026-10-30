@@ -1,24 +1,65 @@
 import { For, Show, createEffect, createSignal, on, type JSX } from "solid-js";
 import {
-  Button, Check, Copy, HelpCircle, History, Play, RailGroup, ShieldCheck, SourceCodeIcon, StatusChip, X, pushToast,
+  Button, Check, Copy, GitCommit, Github, HelpCircle, History, Input, Morph, Play, Plus, RadioGroup, RailGroup, ShieldCheck,
+  SourceCodeIcon, StatusChip, X, pushToast, useMorph,
   type StatusTone,
 } from "@polterware/frontend-design-system";
 import { requestSectionNavigate } from "@polterware/feature-shell";
 import { activeProjectId } from "@polterware/frontend-state";
 import {
-  cardRuns, gateChecks, latestHandoff, mapVerification, nextGate,
-  type CardGateCheck, type CardHandoff, type CardRun, type CardVerification,
+  cardCommits, cardRuns, gateChecks, latestHandoff, mapVerification, nextGate,
+  type CardCommit, type CardGateCheck, type CardHandoff, type CardRun, type CardVerification,
 } from "./work-card-model";
 
 type CoreCall = (payload: Record<string, unknown>) => Promise<unknown>;
-type CardBridge = { reviewFeature?: CoreCall; verifyFeature?: CoreCall; query?: CoreCall; listAgentSessions?: CoreCall; listRuns?: CoreCall };
+type CardBridge = {
+  reviewFeature?: CoreCall; verifyFeature?: CoreCall; query?: CoreCall; listAgentSessions?: CoreCall; listRuns?: CoreCall;
+  listCardCommits?: CoreCall; linkTaskCommit?: CoreCall; unlinkTaskCommit?: CoreCall;
+};
 
 function cardBridge(): CardBridge {
   const core = (globalThis as { polterware?: { core?: { work?: Record<string, CoreCall>; dispatch?: Record<string, CoreCall> } } }).polterware?.core;
   return {
     reviewFeature: core?.work?.reviewFeature, verifyFeature: core?.work?.verifyFeature, query: core?.work?.query,
     listAgentSessions: core?.work?.listAgentSessions, listRuns: core?.dispatch?.listRuns,
+    listCardCommits: core?.work?.listCardCommits, linkTaskCommit: core?.work?.linkTaskCommit, unlinkTaskCommit: core?.work?.unlinkTaskCommit,
   };
+}
+
+function openExternal(url: string) {
+  void (globalThis as { polterware?: { app?: { openExternal?: (target: string) => Promise<unknown> } } }).polterware?.app?.openExternal?.(url);
+}
+
+/** Links a commit to one of the card's tasks: the task, then the sha, in the "+" Morph. */
+function LinkCommitForm(props: { tasks: { number: number; title: string }[]; onLink: (task: number, sha: string) => Promise<boolean> }) {
+  const morph = useMorph();
+  const [task, setTask] = createSignal(props.tasks.length === 1 ? String(props.tasks[0]!.number) : "");
+  const [sha, setSha] = createSignal("");
+  const [saving, setSaving] = createSignal(false);
+  const ready = () => Boolean(task()) && /^[0-9a-f]{4,40}$/i.test(sha().trim()) && !saving();
+  async function link() {
+    if (!ready()) return;
+    setSaving(true);
+    try {
+      if (await props.onLink(Number(task()), sha().trim())) morph.close();
+    } finally {
+      setSaving(false);
+    }
+  }
+  return (
+    <>
+      <Morph.Body>
+        <RadioGroup aria-label="Task" value={task()} onValueChange={setTask}
+          options={props.tasks.map((item) => ({ value: String(item.number), label: `T${item.number} ${item.title}` }))} />
+        <Input aria-label="Commit sha" placeholder="Commit sha" class="pw-card-work__sha" data-autofocus value={sha()}
+          onInput={(event) => setSha(event.currentTarget.value)}
+          onKeyDown={(event) => { if (event.key === "Enter") void link(); }} />
+      </Morph.Body>
+      <Morph.Footer>
+        <Button size="sm" variant="primary" disabled={!ready()} onClick={() => void link()}>{saving() ? "Linking…" : "Link commit"}</Button>
+      </Morph.Footer>
+    </>
+  );
 }
 
 const runTone = (status: string): StatusTone =>
@@ -43,6 +84,8 @@ export function WorkCardWork(props: {
   onAdvance?: (step: "contract" | "plan") => Promise<string[]>;
   /** Groups shown before the next steps, such as the card's Tasks and Invariants. */
   leading?: JSX.Element;
+  /** The card's tasks, which a commit can be linked to. */
+  tasks?: { number: number; title: string }[];
 }) {
   const [checks, setChecks] = createSignal<CardGateCheck[]>([]);
   const [refusal, setRefusal] = createSignal<string[]>([]);
@@ -51,6 +94,7 @@ export function WorkCardWork(props: {
   const [verifying, setVerifying] = createSignal(false);
   const [handoff, setHandoff] = createSignal<CardHandoff>();
   const [runs, setRuns] = createSignal<CardRun[]>([]);
+  const [commits, setCommits] = createSignal<CardCommit[]>([]);
   const [brief, setBrief] = createSignal("");
   const [briefOpen, setBriefOpen] = createSignal(false);
   const gate = () => nextGate(props.stage);
@@ -65,6 +109,7 @@ export function WorkCardWork(props: {
     void bridge.reviewFeature?.({ projectId, slug }).then((raw) => setChecks(gateChecks(raw, stage)), () => setChecks([]));
     void bridge.listAgentSessions?.({ projectId }).then((raw) => setHandoff(latestHandoff(raw, slug)), () => setHandoff(undefined));
     void bridge.listRuns?.({ projectId, limit: 200 }).then((raw) => setRuns(cardRuns(raw, slug)), () => setRuns([]));
+    void bridge.listCardCommits?.({ projectId, slug }).then((raw) => setCommits(cardCommits(raw)), () => setCommits([]));
     void bridge.query?.({ projectId, query: `brief ${slug}` }).then((raw) => setBrief(String((raw as { text?: unknown })?.text ?? "")), () => setBrief(""));
   }));
 
@@ -89,6 +134,31 @@ export function WorkCardWork(props: {
       pushToast(error instanceof Error ? error.message : "Could not verify the card.", "danger");
     } finally {
       setVerifying(false);
+    }
+  }
+
+  async function reloadCommits() {
+    const raw = await cardBridge().listCardCommits?.({ projectId: activeProjectId(), slug: props.slug }).catch(() => undefined);
+    if (raw) setCommits(cardCommits(raw));
+  }
+
+  async function linkCommit(task: number, sha: string): Promise<boolean> {
+    try {
+      await cardBridge().linkTaskCommit?.({ projectId: activeProjectId(), task: `${props.slug}#T${task}`, sha });
+      await reloadCommits();
+      return true;
+    } catch (error) {
+      pushToast(error instanceof Error ? error.message : "Could not link the commit.", "danger");
+      return false;
+    }
+  }
+
+  async function unlinkCommit(commit: CardCommit) {
+    try {
+      await cardBridge().unlinkTaskCommit?.({ projectId: activeProjectId(), task: `${props.slug}#T${commit.task}`, sha: commit.sha });
+      await reloadCommits();
+    } catch (error) {
+      pushToast(error instanceof Error ? error.message : "Could not unlink the commit.", "danger");
     }
   }
 
@@ -144,6 +214,39 @@ export function WorkCardWork(props: {
               </ul>
             </>
           )}
+        </Show>
+      </RailGroup>
+
+      <RailGroup title="Commits" icon={<GitCommit size={14} />}
+        aside={<Show when={(props.tasks?.length ?? 0) > 0 && cardBridge().linkTaskCommit}>
+          <Morph.Root>
+            <Morph.Trigger size="icon" variant="ghost" aria-label="Link a commit" hint="Link a commit to one of this card's tasks.">
+              <Plus size={14} />
+            </Morph.Trigger>
+            <Morph.Panel title="Link a commit">
+              <LinkCommitForm tasks={props.tasks ?? []} onLink={linkCommit} />
+            </Morph.Panel>
+          </Morph.Root>
+        </Show>}>
+        <Show when={commits().length > 0} fallback={<p class="pw-card-work__muted">Commits whose message cites <code>{props.slug}#T1</code> show here, and so do commits linked with <code>polterware task done {props.slug}#T1 --commit &lt;sha&gt;</code>.</p>}>
+          <ul class="pw-card-work__commits" aria-label="Commits on this card">
+            <For each={commits()}>
+              {(commit) => (
+                <li class="pw-card-work__commit">
+                  <GitCommit size={14} class="shrink-0 text-[var(--color-text-muted)]" />
+                  <span class="min-w-0 flex-1 truncate text-[var(--color-text-primary)]" title={commit.subject}>{commit.subject || commit.shortSha}</span>
+                  <StatusChip tone="muted" label={`T${commit.task}`} />
+                  <code class="pw-card-work__sha-label">{commit.shortSha}</code>
+                  <Show when={commit.url}>
+                    <Button size="icon" variant="ghost" aria-label="Open on GitHub" onClick={() => openExternal(commit.url)}><Github size={14} /></Button>
+                  </Show>
+                  <Show when={!commit.cited}>
+                    <Button size="icon" variant="ghost" aria-label="Unlink commit" onClick={() => void unlinkCommit(commit)}><X size={14} /></Button>
+                  </Show>
+                </li>
+              )}
+            </For>
+          </ul>
         </Show>
       </RailGroup>
 

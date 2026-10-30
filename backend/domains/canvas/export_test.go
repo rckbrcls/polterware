@@ -11,7 +11,7 @@ import (
 func TestExportNodeLinkShape(t *testing.T) {
 	body, err := Export(Graph{
 		Nodes: []Node{
-			{ID: "s", Kind: KindSystem, Label: "API", Props: map[string]any{"tier": "edge"}, Ref: &Ref{Kind: RefNode, ID: "structure-1"}},
+			{ID: "s", Kind: KindDomain, Label: "API", Props: map[string]any{"tier": "edge"}, Ref: &Ref{Kind: RefNode, ID: "structure-1"}},
 			{ID: "n", Kind: KindNote, Label: "later"},
 		},
 		Edges: []Edge{{ID: "e", From: "s", To: "n", Kind: EdgeUses, Props: map[string]any{"sync": true}}},
@@ -38,7 +38,7 @@ func TestExportNodeLinkShape(t *testing.T) {
 		t.Fatalf("nodes=%d links=%d body=%s", len(nodes), len(links), body)
 	}
 	first, _ := nodes[0].(map[string]any)
-	if first["id"] != "s" || first["kind"] != KindSystem || first["label"] != "API" {
+	if first["id"] != "s" || first["kind"] != KindDomain || first["label"] != "API" {
 		t.Fatalf("node = %v", first)
 	}
 	props, _ := first["props"].(map[string]any)
@@ -192,16 +192,16 @@ func TestExportMermaidNestsByLayoutAndDropsBlankShapes(t *testing.T) {
 func TestExportFormatDefaultsToMermaid(t *testing.T) {
 	graph := Graph{
 		Nodes: []Node{
-			{ID: "s", Kind: KindSystem, Label: "API", Ref: &Ref{Kind: RefNode, ID: "structure-1"}},
+			{ID: "s", Kind: KindDomain, Label: "API", Ref: &Ref{Kind: RefNode, ID: "structure-1"}},
 			{ID: "n", Kind: KindNote, Label: "later"},
 		},
 		Edges: []Edge{{ID: "e", From: "s", To: "n", Kind: EdgeUses}},
 	}
-	if text, err := ExportFormat(graph, "", ""); err != nil || text != "flowchart LR\n  n1[\"API · system\"]\n  %% note on API: later\n" {
+	if text, err := ExportFormat(graph, "", ""); err != nil || text != "flowchart LR\n  n1[\"API · domain\"]\n  %% note on API: later\n" {
 		t.Fatalf("default = %q err=%v", text, err)
 	}
 	dot, err := ExportFormat(graph, "", "dot")
-	wantDot := "digraph canvas {\n  rankdir=LR;\n  \"s\" [label=\"API\" kind=\"system\" trust=\"referenced\"];\n  \"n\" [label=\"later\" kind=\"note\" trust=\"unverified\"];\n  \"s\" -> \"n\" [label=\"uses\"];\n}\n"
+	wantDot := "digraph canvas {\n  rankdir=LR;\n  \"s\" [label=\"API\" kind=\"domain\" trust=\"referenced\"];\n  \"n\" [label=\"later\" kind=\"note\" trust=\"unverified\"];\n  \"s\" -> \"n\" [label=\"uses\"];\n}\n"
 	if err != nil || dot != wantDot {
 		t.Fatalf("dot =\n%s", dot)
 	}

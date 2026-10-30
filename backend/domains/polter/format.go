@@ -33,7 +33,7 @@ const SpecCore = "Polter format v1: markdown that writes Work cards. One apply i
 	"\n" +
 	"handoff:\n" +
 	"branch: feat/git-import\n" +
-	"next: wire into CheckDrift\n" +
+	"next: wire into import\n" +
 	"\n" +
 	"Rules:\n" +
 	"- `## slug: Title` is a card; the lowercase-kebab slug is its identity. Stages: shape, plan, build, verify, delivered. under: is a Structure component path; milestone: is a milestone slug (empty is the Backlog).\n" +
@@ -41,8 +41,8 @@ const SpecCore = "Polter format v1: markdown that writes Work cards. One apply i
 	"- handoff: needs branch:; it also takes goal, done, in_progress, next, touched, agent.\n" +
 	"- Claim a task before editing it: `claim: T2`; `done: T2` finishes it, `release: T2` lets go.\n" +
 	"- A text changes only what it mentions. Remove with status: removed, [-], or a trailing [removed].\n" +
-	"- Read `polterware brief <slug|path|file>` before you edit; its Rules: are binding, so follow every one. Find with `polterware search <terms>`. Start with `polterware status`; end with a handoff.\n" +
-	"- More: `polterware format structure|rules|decisions|facts|feature`. Check with `polterware lint <file>`; write with `polterware apply <file|-> [--dry-run]`.\n"
+	"- Read `polterware brief <slug|path|file>` before you edit; its Rules: bind you; raise a Conflict when a request breaks one. Find with `polterware search <terms>`. Start with `polterware status`; end with a handoff.\n" +
+	"- More: `polterware format structure|rules|decisions|facts|feature|conflicts`. Check with `polterware lint <file>`; write with `polterware apply <file|-> [--dry-run]`.\n"
 
 // SpecCoreTokens is the size polter.format declares for SpecCore; a test
 // keeps it within 10% of the measured text.
@@ -59,10 +59,10 @@ var SpecTopics = map[string]string{
 		"\n" +
 		"! No network calls during import\n" +
 		"\n" +
-		"- `# path: Title` is a Structure node. level: system, domain, or component. under: names the parent path. A component may also sit directly under its system (outside any domain). A different under: on an existing node moves it and rewrites descendant paths.\n" +
+		"- `# path: Title` is a Structure node. level: domain or component. A domain sits under the project (no under:); a component sits under a domain (under: names its path) or loose under the project. A different under: on an existing component moves it and rewrites its path.\n" +
 		"- kind: says what a component is (frontend, service, api, worker, database, cache, queue, storage, auth, llm, and the other canvas component kinds; only components have one, empty clears); tech: names its technology in free text (Go, Postgres; empty clears).\n" +
 		"- How nodes relate is drawn on a canvas, not declared here. deploys: lists env=provider:resource links (comma separated; a present line replaces them, empty clears).\n" +
-		"- repo: names a checkout from `polterware repo add` (empty is the project root); path: is a folder inside it, not the node path. A brief of a file finds the node with the longest repo + path prefix.\n" +
+		"- dir: <folder> links a local clone: it creates the repository (or reuses the one cloned there, or with the same GitHub remote) and becomes repo: <name>. repo: names a repository (`polterware repo list`); with one repository, none is needed. path: is a folder inside it, not the node path. A brief of a file finds the node with the longest repo + path prefix. A repository no node uses is removed.\n" +
 		"- migrating: old design -> new design marks a node in transition (empty clears it). A card with `kind: architecture` is an Architecture Change: its under: names the node it changes; clear migrating: when the card is delivered.\n" +
 		"- A `!` line under a node is a Rule for that node and every node below it (see `polterware format rules`); `[removed]` retires it.\n" +
 		"- A card under: names a component path once any component exists.\n",
@@ -74,6 +74,16 @@ var SpecTopics = map[string]string{
 		"- `#### rule slug: Statement` creates a Rule or updates it by its lowercase-kebab slug (or id). A Rule is one short imperative constraint.\n" +
 		"- `scope:` lists the Structure node paths it holds for, comma separated; a node's Rules also hold for every node below it. None (or empty) is the whole project. `status: removed` retires it.\n" +
 		"- `polterware brief` opens with every Rule that holds for its target, never cut by the budget, and the generated AGENTS.md block lists them. Follow them; change one only with a rationale saying why.\n",
+	"conflicts": "Polter Conflicts: when a request goes against a Rule or a Decision.\n" +
+		"\n" +
+		"#### conflict cache-in-core: Add a Redis cache to the core\n" +
+		"rule: local-only\n" +
+		"card: git-import\n" +
+		"options: Keep it local | Allow Redis for this card\n" +
+		"\n" +
+		"- Do not act against a Rule or Decision: raise a Conflict with `#### conflict slug: <the request>` and `rule:` (slug or id) and/or `decision:` (Decision-0003). card: and options: (a | b) are optional. One key per line.\n" +
+		"- A person decides it in the Inbox. Go on with work it does not block; `polterware conflict wait <slug>` blocks until the answer, and `polterware query \"conflict <slug>\"`, status, and the card's brief show it.\n" +
+		"- `status: withdrawn` drops one you no longer need. `polterware conflict raise|decide|list` are shortcuts.\n",
 	"decisions": "Polter Decisions.\n" +
 		"\n" +
 		"### new: Local SQLite authority\n" +
@@ -103,7 +113,7 @@ var SpecTopics = map[string]string{
 }
 
 // SpecTopicNames lists the topics in the order the help prints them.
-var SpecTopicNames = []string{"structure", "rules", "decisions", "facts", "feature"}
+var SpecTopicNames = []string{"structure", "rules", "decisions", "facts", "feature", "conflicts"}
 
 // FormatSpec returns SpecCore for an empty topic, or one topic's block.
 func FormatSpec(topic string) (string, error) {
@@ -141,7 +151,9 @@ const (
 	QueryBrief     = "brief"
 	QuerySearch    = "search"
 	QueryShow      = "show"
-	QueryDrift     = "drift"
+	QueryCommits   = "commits"
+	QueryConflicts = "conflicts"
+	QueryConflict  = "conflict"
 	QueryStructure = "structure"
 	QueryFeature   = "feature"
 	QueryVerify    = "verify"
@@ -153,7 +165,7 @@ const (
 	QueryRoadmap    = "roadmap"
 )
 
-const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "brief <slug|path|file>", "search <terms>", "show <id>", "drift", "structure [<path>] [at <point>]", "structure history", "decisions [proposed|active|challenged|superseded]", "decision <decision>", "feature <slug> [shape|contract|plan]", "verify <slug|slug#T2>", "canvas", "canvas <name|id>", "milestones", or "roadmap"`
+const queryUsage = `use "cards", "card <slug>", "status", "inbox", "handoff <slug>", "brief <slug|path|file>", "search <terms>", "show <id>", "commits <slug>", "conflicts", "conflict <slug>", "structure [<path>] [at <point>]", "structure history", "decisions [proposed|active|challenged|superseded]", "decision <decision>", "feature <slug> [shape|contract|plan]", "verify <slug|slug#T2>", "canvas", "canvas <name|id>", "milestones", or "roadmap"`
 
 // ParseQuery parses the v1 query language.
 func ParseQuery(text string) (Query, error) {
@@ -233,8 +245,12 @@ func ParseQuery(text string) (Query, error) {
 		return Query{Kind: QueryMilestones}, nil
 	case len(fields) == 1 && fields[0] == QueryRoadmap:
 		return Query{Kind: QueryRoadmap}, nil
-	case len(fields) == 1 && fields[0] == QueryDrift:
-		return Query{Kind: QueryDrift}, nil
+	case len(fields) == 2 && fields[0] == QueryCommits:
+		return Query{Kind: QueryCommits, Slug: fields[1]}, nil
+	case len(fields) == 1 && fields[0] == QueryConflicts:
+		return Query{Kind: QueryConflicts}, nil
+	case len(fields) == 2 && fields[0] == QueryConflict:
+		return Query{Kind: QueryConflict, Slug: fields[1]}, nil
 	case len(fields) == 2 && fields[0] == QueryCard:
 		return Query{Kind: QueryCard, Slug: fields[1]}, nil
 	case len(fields) == 2 && fields[0] == QueryHandoff:

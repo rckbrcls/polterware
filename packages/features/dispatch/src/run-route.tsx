@@ -4,6 +4,8 @@ import {
   Briefcase06Icon,
   FolderKanban,
   Gauge,
+  GitBranch,
+  Github,
   type ComposerSingleProperty,
   type PropertyOption,
 } from "@polterware/frontend-design-system";
@@ -14,16 +16,23 @@ import type { DispatchAgentView, DispatchModelView, DispatchTierView } from "./d
 /** An open card a run can work on, listed under its stage and narrowed by its milestone. */
 export type RunRouteCard = { slug: string; title: string; milestone?: string; stage?: string };
 
-/** What a run starts with: a tier, or one agent (and model), and the card it works on. */
-export type RunRouteSelection = { tier: string; agent: string; model: string; cardSlug: string };
+/** A repository a run can work in: its GitHub identity (github.com/owner/repo), if any. */
+export type RunRouteRepository = { name: string; remote: string };
+
+/**
+ * What a run starts with: a tier, or one agent (and model), the card it works on, and the repository
+ * it runs in (empty lets the core pick the card's component repository or the only one).
+ */
+export type RunRouteSelection = { tier: string; agent: string; model: string; cardSlug: string; repo?: string };
 
 const DEFAULT_TIERS = ["easy", "normal", "hard"];
 export const DEFAULT_RUN_TIER = "normal";
 
 /**
- * Start run's Route, Milestone, and Card pills, shared by Runs' Start run and Commander's
- * Run an agent. Route is a tier (its table picks the agent and model, with fallbacks) or one
- * model, grouped by agent with their bots; Card shows once a milestone is picked.
+ * Start run's Route, Milestone, Card, and Repository pills, shared by Runs' Start run and
+ * Commander's Run an agent. Route is a tier (its table picks the agent and model, with fallbacks)
+ * or one model, grouped by agent with their bots; Card shows once a milestone is picked; Repository
+ * shows when the project has two or more.
  */
 // Option icons are getters: an icon is a DOM node, and the pill and the list each need their own.
 export function createRunRoute(options: {
@@ -31,12 +40,14 @@ export function createRunRoute(options: {
   agents: Accessor<readonly DispatchAgentView[]>;
   models: Accessor<readonly DispatchModelView[]>;
   cards: Accessor<readonly RunRouteCard[]>;
+  repositories?: Accessor<readonly RunRouteRepository[]>;
 }) {
   const [tier, setTier] = createSignal(DEFAULT_RUN_TIER);
   // "agent" or "agent<NUL>model"; empty lets the tier choose.
   const [agent, setAgent] = createSignal("");
   const [milestone, setMilestone] = createSignal("");
   const [card, setCardSlug] = createSignal("");
+  const [repo, setRepo] = createSignal("");
 
   const setCard = (slug: string) => {
     setCardSlug(slug);
@@ -97,6 +108,17 @@ export function createRunRoute(options: {
         get icon() { return <FolderKanban size={14} />; },
       })),
     ];
+    const repositories = options.repositories?.() ?? [];
+    const repositoryIcon = (remote: string) => remote ? <Github size={14} /> : <GitBranch size={14} />;
+    const repositoryOptions: PropertyOption[] = [
+      { value: "", label: "Card's repository", hint: "The card's component, or ask", get icon() { return <GitBranch size={14} />; } },
+      ...repositories.map((item): PropertyOption => ({
+        value: item.name,
+        label: item.remote.startsWith("github.com/") ? item.remote.slice("github.com/".length) : item.name,
+        hint: item.remote ? item.name : undefined,
+        get icon() { return repositoryIcon(item.remote); },
+      })),
+    ];
     return [
       {
         id: "route",
@@ -136,12 +158,23 @@ export function createRunRoute(options: {
         onChange: setCard,
         pickerWidth: 320,
       },
+      {
+        id: "repository",
+        label: "Repository",
+        get icon() { return <GitBranch size={14} />; },
+        // With one repository (or none) the core needs no pick.
+        hidden: repositories.length < 2,
+        options: repositoryOptions,
+        value: repo(),
+        onChange: setRepo,
+        pickerWidth: 280,
+      },
     ];
   };
 
   const selection = (): RunRouteSelection => {
     const [picked = "", model = ""] = agent().split("\u0000");
-    return { tier: tier(), agent: picked, model, cardSlug: card().trim() };
+    return { tier: tier(), agent: picked, model, cardSlug: card().trim(), ...(repo() ? { repo: repo() } : {}) };
   };
 
   return {

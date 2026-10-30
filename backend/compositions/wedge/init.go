@@ -7,29 +7,31 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/polterware/polterware/backend/domains/agentrun"
 	"github.com/polterware/polterware/backend/domains/projects"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
-// InitInput registers a local project in the SQLite store.
+// InitInput registers a local project in the SQLite store. Dir is optional:
+// given a folder, the project starts with one component linked to the
+// repository cloned there.
 type InitInput struct {
-	ID       string
-	Name     string
-	RootPath string
+	ID   string
+	Name string
+	Dir  string
 }
 
 func InitProject(store *storepkg.Store, in InitInput) (projects.Project, error) {
 	name := strings.TrimSpace(in.Name)
-	rootPath := strings.TrimSpace(in.RootPath)
 	if name == "" {
 		return projects.Project{}, fmt.Errorf("name is required")
 	}
-	if rootPath == "" {
-		return projects.Project{}, fmt.Errorf("path is required")
-	}
-	abs, err := filepath.Abs(ExpandRootPath(rootPath))
-	if err != nil {
-		return projects.Project{}, fmt.Errorf("resolve path: %w", err)
+	dir := strings.TrimSpace(in.Dir)
+	var err error
+	if dir != "" {
+		if dir, err = absoluteDir(dir); err != nil {
+			return projects.Project{}, err
+		}
 	}
 	id := strings.TrimSpace(in.ID)
 	if id == "" {
@@ -38,7 +40,7 @@ func InitProject(store *storepkg.Store, in InitInput) (projects.Project, error) 
 			return projects.Project{}, err
 		}
 	}
-	project, err := projects.NewProject(id, name, abs)
+	project, err := projects.NewProject(id, name)
 	if err != nil {
 		return projects.Project{}, err
 	}
@@ -73,7 +75,29 @@ func InitProject(store *storepkg.Store, in InitInput) (projects.Project, error) 
 			return projects.Project{}, err
 		}
 	}
+	if dir != "" {
+		if err := linkInitialComponent(store, project.ID, dir); err != nil {
+			return projects.Project{}, err
+		}
+	}
 	return project, nil
+}
+
+// linkInitialComponent gives a new project its first component, named after
+// the folder and linked to the repository cloned there. A project that already
+// has nodes keeps them.
+func linkInitialComponent(store *storepkg.Store, projectID, dir string) error {
+	snapshot, err := store.LoadWorkSnapshot(projectID)
+	if err != nil || len(snapshot.Nodes) > 0 {
+		return err
+	}
+	slug := repoNameFor("", dir)
+	text := fmt.Sprintf("---\npolter: 1\n---\n\n# %s: %s\nlevel: component\ndir: %s\n", slug, filepath.Base(dir), dir)
+	_, err = ApplyPolter(store, ApplyInput{
+		ProjectID: projectID, Text: text, ActorKind: agentrun.ActorKindHuman, Tool: "init",
+		Summary: "Link the project folder", Rationale: "The project was created from this folder",
+	})
+	return err
 }
 
 func newProjectID() (string, error) {

@@ -18,10 +18,10 @@ import {
 import { scopeFilterMenuSections, toggleScopeFilterMenuToken } from "./scope-filter-menu-state";
 
 const nodes: ScopeFilterNode[] = [
-  { id: "sys", parentId: "", level: "system", title: "Polterware", path: "polterware" },
-  { id: "auth", parentId: "sys", level: "domain", title: "Auth", path: "polterware/auth" },
-  { id: "login", parentId: "auth", level: "component", title: "Login", path: "polterware/auth/login" },
-  { id: "billing", parentId: "sys", level: "domain", title: "Billing", path: "polterware/billing" },
+  { id: "auth", parentId: "", level: "domain", title: "Auth", path: "auth" },
+  { id: "login", parentId: "auth", level: "component", title: "Login", path: "auth/login" },
+  { id: "billing", parentId: "", level: "domain", title: "Billing", path: "billing" },
+  { id: "cache", parentId: "", level: "component", title: "Cache", path: "cache" },
 ];
 
 const environments = [
@@ -33,21 +33,21 @@ const catalog: ScopeFilterCatalog = { nodes, environments, allowEnv: true };
 
 describe("parseScopeFilter", () => {
   it("parses complete tokens in any order and keeps an incomplete tail as the draft", () => {
-    expect(parseScopeFilter("domain:Billing system:Polterware comp")).toEqual({
+    expect(parseScopeFilter("domain:Billing component:Login comp")).toEqual({
       tokens: [
         { key: "domain", value: "Billing" },
-        { key: "system", value: "Polterware" },
+        { key: "component", value: "Login" },
       ],
       draft: "comp",
     });
-    expect(parseScopeFilter("system:")).toEqual({ tokens: [], draft: "system:" });
-    expect(parseScopeFilter("sys")).toEqual({ tokens: [], draft: "sys" });
+    expect(parseScopeFilter("domain:")).toEqual({ tokens: [], draft: "domain:" });
+    expect(parseScopeFilter("dom")).toEqual({ tokens: [], draft: "dom" });
   });
 
   it("reads quoted values and round-trips them through serialization", () => {
-    const parsed = parseScopeFilter('system:"Auth Service" env:Production');
+    const parsed = parseScopeFilter('domain:"Auth Service" env:Production');
     expect(parsed.tokens).toEqual([
-      { key: "system", value: "Auth Service" },
+      { key: "domain", value: "Auth Service" },
       { key: "env", value: "Production" },
     ]);
     expect(parseScopeFilter(serializeScopeFilter(parsed.tokens))).toEqual({
@@ -57,8 +57,8 @@ describe("parseScopeFilter", () => {
   });
 
   it("dedupes a repeated key and value and keeps a repeated key with another value", () => {
-    expect(dedupeParsedScopeTokens(parseScopeFilter("system:Auth system:auth domain:Billing").tokens)).toEqual([
-      { key: "system", value: "Auth" },
+    expect(dedupeParsedScopeTokens(parseScopeFilter("domain:Auth domain:auth domain:Billing").tokens)).toEqual([
+      { key: "domain", value: "Auth" },
       { key: "domain", value: "Billing" },
     ]);
     expect(
@@ -76,13 +76,13 @@ describe("parseScopeFilter", () => {
 
 describe("splitScopeFilterInput", () => {
   it("keeps the segment being typed as the draft until whitespace commits it", () => {
-    expect(splitScopeFilterInput("system:Po")).toEqual({ tokens: [], draft: "system:Po" });
-    expect(splitScopeFilterInput("system:Polterware ")).toEqual({
-      tokens: [{ key: "system", value: "Polterware" }],
+    expect(splitScopeFilterInput("component:Lo")).toEqual({ tokens: [], draft: "component:Lo" });
+    expect(splitScopeFilterInput("component:Login ")).toEqual({
+      tokens: [{ key: "component", value: "Login" }],
       draft: "",
     });
-    expect(splitScopeFilterInput("system:Polterware domain:")).toEqual({
-      tokens: [{ key: "system", value: "Polterware" }],
+    expect(splitScopeFilterInput("component:Login domain:")).toEqual({
+      tokens: [{ key: "component", value: "Login" }],
       draft: "domain:",
     });
   });
@@ -90,15 +90,14 @@ describe("splitScopeFilterInput", () => {
 
 describe("suggestScopeFilter", () => {
   it("suggests each matching key once, then that key's values", () => {
-    expect(suggestScopeFilter("s", catalog).map((item) => item.label)).toEqual(["system"]);
+    expect(suggestScopeFilter("c", catalog).map((item) => item.label)).toEqual(["component"]);
     expect(suggestScopeFilter("", { ...catalog, allowEnv: false }).map((item) => item.label)).toEqual([
-      "system",
       "domain",
       "component",
     ]);
     expect(suggestScopeFilter("en", catalog).map((item) => item.label)).toEqual(["env"]);
     expect(suggestScopeFilter("en", { ...catalog, allowEnv: false })).toEqual([]);
-    expect(suggestScopeFilter("system:", catalog).map((item) => item.label)).toEqual(["Polterware"]);
+    expect(suggestScopeFilter("component:", catalog).map((item) => item.label)).toEqual(["Cache", "Login"]);
     expect(suggestScopeFilter("domain:bi", catalog).map((item) => ({ kind: item.kind, label: item.label }))).toEqual([
       { kind: "value", label: "Billing" },
     ]);
@@ -113,14 +112,14 @@ describe("suggestScopeFilter", () => {
 
 describe("scope node and environment matching", () => {
   const tokens: ScopeFilterToken[] = [
-    { key: "system", value: "Polterware", id: "sys" },
+    { key: "domain", value: "Auth", id: "auth" },
     { key: "domain", value: "Billing", id: "billing" },
     { key: "env", value: "Production", id: "env-prod" },
     { key: "env", value: "Staging", id: "env-stage" },
   ];
 
   it("unions node tokens and includes a parent's children", () => {
-    expect(scopeNodeIds(tokens, nodes)).toEqual(["sys", "auth", "login", "billing"]);
+    expect(scopeNodeIds(tokens, nodes)).toEqual(["auth", "login", "billing"]);
     expect(scopeNodeIds([{ key: "domain", value: "Auth", id: "auth" }], nodes)).toEqual(["auth", "login"]);
     expect(scopeNodeIds([{ key: "component", value: "Missing", id: "gone" }], nodes)).toEqual([]);
   });
@@ -161,7 +160,7 @@ describe("scope filter menu groups", () => {
       environments,
       allowEnv: true,
     });
-    expect(sections.map((section) => section.label)).toEqual(["System", "Domain", "Component", "Environment"]);
+    expect(sections.map((section) => section.label)).toEqual(["Domain", "Component", "Environment"]);
     expect(toggleScopeFilterMenuToken([{ key: "domain", value: "Auth", id: "auth" }], {
       key: "domain", value: "Billing", id: "billing",
     }, true)).toEqual([
@@ -169,6 +168,6 @@ describe("scope filter menu groups", () => {
       { key: "domain", value: "Billing", id: "billing" },
     ]);
     expect(scopeFilterMenuSections({ nodes, environments, allowEnv: false })
-      .map((section) => section.label)).toEqual(["System", "Domain", "Component"]);
+      .map((section) => section.label)).toEqual(["Domain", "Component"]);
   });
 });

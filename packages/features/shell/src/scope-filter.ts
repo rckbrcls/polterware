@@ -1,6 +1,6 @@
 /** Typed scope tokens. Node keys are a union; `env` is a separate environment narrowing. */
 
-export const SCOPE_FILTER_KEYS = ["system", "domain", "component", "env"] as const;
+export const SCOPE_FILTER_KEYS = ["domain", "component", "env"] as const;
 
 export type ScopeFilterKey = (typeof SCOPE_FILTER_KEYS)[number];
 
@@ -16,7 +16,7 @@ export type ScopeFilterToken = ParsedScopeToken & {
 export type ScopeFilterNode = {
   id: string;
   parentId: string;
-  level: "system" | "domain" | "component";
+  level: "domain" | "component";
   title: string;
   path?: string;
 };
@@ -36,7 +36,7 @@ export type ScopeFilterSuggestion =
   | { kind: "key"; key: ScopeFilterKey; label: string }
   | { kind: "value"; key: ScopeFilterKey; id: string; label: string };
 
-const NODE_KEYS = new Set<ScopeFilterKey>(["system", "domain", "component"]);
+const NODE_KEYS = new Set<ScopeFilterKey>(["domain", "component"]);
 
 export function isScopeFilterKey(value: string): value is ScopeFilterKey {
   return (SCOPE_FILTER_KEYS as readonly string[]).includes(value);
@@ -155,7 +155,7 @@ export function parseScopeFilter(input: string): { tokens: ParsedScopeToken[]; d
 
 /**
  * Typing split: the last segment stays the draft until the input ends with
- * whitespace, so `system:Au` can still suggest values.
+ * whitespace, so `domain:Au` can still suggest values.
  */
 export function splitScopeFilterInput(input: string): { tokens: ParsedScopeToken[]; draft: string } {
   const { segments, trailingSpace } = readSegments(input);

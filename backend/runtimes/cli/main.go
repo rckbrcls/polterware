@@ -76,8 +76,6 @@ func main() {
 		err = runCanvas(*dbPath, rest)
 	case "export":
 		err = runExport(*dbPath, rest)
-	case "drift":
-		err = runDrift(*dbPath, rest)
 	case "apply":
 		err = runApply(*dbPath, rest)
 	case "lint":
@@ -100,6 +98,8 @@ func main() {
 		err = runVerify(*dbPath, rest)
 	case "inbox":
 		err = runInbox(*dbPath, rest)
+	case "conflict":
+		err = runConflict(*dbPath, rest)
 	case "scope":
 		err = runScope(*dbPath, rest)
 	case "setup":

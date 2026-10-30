@@ -2,10 +2,13 @@ syntax = "proto3";
 package polterware.local.v1;
 option go_package = "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1;localv1";
 
+// Project is a name plus its environments; it has no folder of its own.
+// Repositories belong to its Structure components.
 message Project {
   string id = 1;
   string name = 2;
-  string root_path = 3;
+  reserved 3;
+  reserved "root_path";
   string created_at = 4;
   string updated_at = 5;
   string status = 6; // active | archived
@@ -63,34 +66,28 @@ message ResolveProjectRequest {
 message ResolveProjectResponse { Project project = 1; }
 
 // InitProject registers a project with an empty layout and a "local" environment.
+// dir is optional: a local clone the project's first component links.
 message InitProjectRequest {
   string id = 1;
   string name = 2;
-  string root_path = 3;
+  string dir = 3;
 }
 message InitProjectResponse { Project project = 1; }
 
-// ProjectRepo is an extra local Git checkout. The project root_path is not a row.
+// ProjectRepo is a repository Structure components link by name. remote is
+// its GitHub-level identity (github.com/owner/repo, empty when it has none);
+// local_path is this machine's clone, empty when it is not cloned here. A
+// node's `dir:` creates or reuses one; it is removed when no node uses it.
 message ProjectRepo {
   string id = 1;
   string project_id = 2;
   string name = 3;
-  string path = 4;
+  string local_path = 4;
+  string remote = 5;
 }
 
 message ListProjectReposRequest { string project_id = 1; }
 message ListProjectReposResponse { repeated ProjectRepo repos = 1; }
-message AddProjectRepoRequest {
-  string project_id = 1;
-  string name = 2;
-  string path = 3;
-}
-message AddProjectRepoResponse { ProjectRepo repo = 1; }
-message RemoveProjectRepoRequest {
-  string project_id = 1;
-  string name = 2;
-}
-message RemoveProjectRepoResponse {}
 
 service ProjectService {
   rpc ResolveProject(ResolveProjectRequest) returns (ResolveProjectResponse);
@@ -104,6 +101,4 @@ service ProjectService {
   rpc GetProjectSettings(GetProjectSettingsRequest) returns (GetProjectSettingsResponse);
   rpc SaveProjectSettings(SaveProjectSettingsRequest) returns (SaveProjectSettingsResponse);
   rpc ListProjectRepos(ListProjectReposRequest) returns (ListProjectReposResponse);
-  rpc AddProjectRepo(AddProjectRepoRequest) returns (AddProjectRepoResponse);
-  rpc RemoveProjectRepo(RemoveProjectRepoRequest) returns (RemoveProjectRepoResponse);
 }

@@ -17,7 +17,7 @@ describe("mapFeatureReview", () => {
       underPath: "core/import",
       underTitle: "Import",
       suggested: [],
-      touches: [{ path: "core", level: "system", title: "Core" }],
+      touches: [{ path: "core", level: "domain", title: "Core" }],
       decisions: [{ ref: "Decision-0007", id: "decision-7", title: "Decision 0007 Deterministic import", status: "accepted", from: "core" }],
       inherited: [{ text: "No network calls during scan", from: "core" }],
       questions: [
@@ -33,7 +33,7 @@ describe("mapFeatureReview", () => {
 
     expect(review?.card.slug).toBe("git-import");
     expect(review?.underPath).toBe("core/import");
-    expect(review?.touches[0]).toEqual({ path: "core", level: "system", title: "Core" });
+    expect(review?.touches[0]).toEqual({ path: "core", level: "domain", title: "Core" });
     expect(review?.decisions[0]).toMatchObject({ status: "accepted", from: "core" });
     expect(review?.questions.map((q) => q.route)).toEqual(["delegated", "inbox"]);
     expect(review?.checks).toHaveLength(2);

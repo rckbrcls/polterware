@@ -143,7 +143,7 @@ export function emptyInbox(): WorkspaceInbox {
 }
 
 export function emptyStructure(): WorkspaceStructure {
-  return { nodes: [], driftSlugs: [], historical: false };
+  return { nodes: [], historical: false };
 }
 
 /**

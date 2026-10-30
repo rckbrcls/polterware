@@ -10,11 +10,11 @@ export function createBrowserCanvas(): PolterwareBridge["core"]["canvas"] {
     "database", "cache", "queue", "stream", "storage", "search", "warehouse", "auth", "cdn", "cluster", "monitoring",
     "external", "llm", "payment", "email", "user", "team",
     "agent", "mcp", "vector", "secrets", "firewall", "kms", "logs", "tracing", "alerting", "pipeline", "ci", "webhook", "config", "spec", "dataset"];
-  const structure = ["system", "domain", "component"];
+  const structure = ["domain", "component"];
   const types = [{
     type: "canvas", label: "Canvas", nodeKinds: [...components, ...structure, ...shapes, "note", "text"],
     edgeKinds: ["relates", "flows", "uses", "calls", "reads", "writes", "publishes", "subscribes", "depends_on", "contains"],
-    rules: ["Components may carry a technology and an optional ref to a structure node.", "System, domain, and component nodes ref a structure node.",
+    rules: ["Components may carry a technology and an optional ref to a structure node.", "Domain and component nodes ref a structure node.",
       "Drawing shapes, notes, and text carry no meaning and skip structural rules."],
     unrestricted: false,
   }];

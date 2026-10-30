@@ -125,7 +125,7 @@ func ReadMetadata(ctx context.Context, root string) Metadata {
 }
 
 // DeliveryBase is the local branch a commit must be an ancestor of before
-// drift treats it as delivered: refs/heads/main, or refs/heads/master when
+// a task treats it as delivered: refs/heads/main, or refs/heads/master when
 // main is absent. ok is false outside a work tree and when neither ref exists.
 func DeliveryBase(ctx context.Context, root string) (string, bool) {
 	if strings.TrimSpace(root) == "" {
@@ -224,4 +224,73 @@ func ResolveCommit(ctx context.Context, root, ref string) (string, bool) {
 		return "", false
 	}
 	return out, true
+}
+
+// CommitDetail is one commit's subject and committer time, read by ref.
+type CommitDetail struct {
+	SHA         string
+	Subject     string
+	CommittedAt time.Time
+}
+
+// ReadCommit returns the full sha, subject, and committer time of ref when it
+// names a commit in root.
+func ReadCommit(ctx context.Context, root, ref string) (CommitDetail, bool) {
+	sha, ok := ResolveCommit(ctx, root, ref)
+	if !ok {
+		return CommitDetail{}, false
+	}
+	out, ok := gitOut(ctx, root, "log", "-1", "--format=%s%x1f%cI", sha, "--")
+	if !ok {
+		return CommitDetail{SHA: sha}, true
+	}
+	subject, when, _ := strings.Cut(out, "\x1f")
+	detail := CommitDetail{SHA: sha, Subject: strings.TrimSpace(subject)}
+	detail.CommittedAt, _ = time.Parse(time.RFC3339, strings.TrimSpace(when))
+	return detail, true
+}
+
+// GitHubRepo returns "owner/repo" for root's origin when it is on GitHub
+// (git@github.com:o/r.git, ssh://git@github.com/o/r, or https://github.com/o/r),
+// and false for any other remote or none.
+func GitHubRepo(ctx context.Context, root string) (string, bool) {
+	remote, ok := gitOut(ctx, root, "remote", "get-url", "origin")
+	if !ok {
+		return "", false
+	}
+	return ParseGitHubRemote(remote)
+}
+
+// ParseGitHubRemote reads "owner/repo" from a GitHub remote URL.
+func ParseGitHubRemote(remote string) (string, bool) {
+	remote = strings.TrimSpace(remote)
+	var path string
+	switch {
+	case strings.HasPrefix(remote, "git@github.com:"):
+		path = strings.TrimPrefix(remote, "git@github.com:")
+	default:
+		for _, prefix := range []string{"https://github.com/", "http://github.com/", "ssh://git@github.com/", "git://github.com/"} {
+			if strings.HasPrefix(remote, prefix) {
+				path = strings.TrimPrefix(remote, prefix)
+				break
+			}
+		}
+		if path == "" {
+			// https://user@github.com/o/r
+			if at := strings.Index(remote, "@github.com/"); at >= 0 && strings.HasPrefix(remote, "https://") {
+				path = remote[at+len("@github.com/"):]
+			}
+		}
+	}
+	path = strings.TrimSuffix(strings.TrimSuffix(path, "/"), ".git")
+	owner, repo, found := strings.Cut(path, "/")
+	if !found || owner == "" || repo == "" || strings.Contains(repo, "/") {
+		return "", false
+	}
+	return owner + "/" + repo, true
+}
+
+// GitHubCommitURL is the commit's page on GitHub.
+func GitHubCommitURL(ownerRepo, sha string) string {
+	return "https://github.com/" + ownerRepo + "/commit/" + sha
 }

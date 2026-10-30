@@ -28,7 +28,7 @@ var definitions = []Definition{
 		EdgeKinds: EdgeKinds,
 		Rules: []string{
 			"Components may carry a technology and an optional ref to a structure node.",
-			"System, domain, and component nodes ref a structure node.",
+			"Domain and component nodes ref a structure node.",
 			"Drawing shapes, notes, and text carry no meaning and skip structural rules.",
 		},
 	},

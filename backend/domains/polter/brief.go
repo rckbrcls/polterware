@@ -98,6 +98,7 @@ func (b briefBuilder) blocks() [][]string {
 	return [][]string{
 		b.target(),
 		b.rules(),
+		b.conflicts(),
 		b.openWork(),
 		b.invariants(),
 		b.decisions(),
@@ -169,6 +170,30 @@ func openClaim(card *work.Card) string {
 		return task.Claim.Holder
 	}
 	return ""
+}
+
+// conflicts lists the card's Conflicts: open ones wait for a person, and a
+// decided one carries the answer to follow.
+func (b briefBuilder) conflicts() []string {
+	if b.card == nil {
+		return nil
+	}
+	var lines []string
+	for _, conflict := range b.in.Snapshot.Conflicts {
+		if conflict.CardSlug != b.card.Slug {
+			continue
+		}
+		switch conflict.State {
+		case work.ConflictOpen:
+			lines = append(lines, fmt.Sprintf("- %s: %s (open: wait for a person)", conflict.Slug, conflict.Request))
+		case work.ConflictDecided:
+			lines = append(lines, fmt.Sprintf("- %s: %s -> %s", conflict.Slug, conflict.Request, conflict.Answer))
+		}
+	}
+	if lines == nil {
+		return nil
+	}
+	return append([]string{"Conflicts:"}, lines...)
 }
 
 func (b briefBuilder) openWork() []string {

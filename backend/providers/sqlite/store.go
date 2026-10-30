@@ -40,17 +40,17 @@ func (s *Store) SaveProject(project projects.Project) error {
 	if !project.ArchivedAt.IsZero() {
 		archivedAt = project.ArchivedAt.Format(time.RFC3339)
 	}
-	_, err := s.DB.Exec(`INSERT INTO projects(id,name,root_path,created_at,updated_at,status,archived_at) VALUES(?,?,?,?,?,?,?)
-		ON CONFLICT(id) DO UPDATE SET name=excluded.name,root_path=excluded.root_path,updated_at=excluded.updated_at,status=excluded.status,archived_at=excluded.archived_at`,
-		project.ID, project.Name, project.RootPath, project.CreatedAt.Format(time.RFC3339), project.UpdatedAt.Format(time.RFC3339), project.Status, archivedAt)
+	_, err := s.DB.Exec(`INSERT INTO projects(id,name,created_at,updated_at,status,archived_at) VALUES(?,?,?,?,?,?)
+		ON CONFLICT(id) DO UPDATE SET name=excluded.name,updated_at=excluded.updated_at,status=excluded.status,archived_at=excluded.archived_at`,
+		project.ID, project.Name, project.CreatedAt.Format(time.RFC3339), project.UpdatedAt.Format(time.RFC3339), project.Status, archivedAt)
 	return err
 }
 
 func (s *Store) GetProject(id string) (projects.Project, error) {
 	var item projects.Project
 	var created, updated, archived string
-	err := s.DB.QueryRow(`SELECT id,name,root_path,created_at,updated_at,status,archived_at FROM projects WHERE id=?`, id).
-		Scan(&item.ID, &item.Name, &item.RootPath, &created, &updated, &item.Status, &archived)
+	err := s.DB.QueryRow(`SELECT id,name,created_at,updated_at,status,archived_at FROM projects WHERE id=?`, id).
+		Scan(&item.ID, &item.Name, &created, &updated, &item.Status, &archived)
 	if err != nil {
 		return projects.Project{}, err
 	}
@@ -66,7 +66,7 @@ func (s *Store) GetProject(id string) (projects.Project, error) {
 }
 
 func (s *Store) ListProjects(includeArchived bool) ([]projects.Project, error) {
-	query := `SELECT id,name,root_path,created_at,updated_at,status,archived_at FROM projects`
+	query := `SELECT id,name,created_at,updated_at,status,archived_at FROM projects`
 	if !includeArchived {
 		query += ` WHERE status != 'archived'`
 	}
@@ -80,7 +80,7 @@ func (s *Store) ListProjects(includeArchived bool) ([]projects.Project, error) {
 	for rows.Next() {
 		var item projects.Project
 		var created, updated, archived string
-		if err := rows.Scan(&item.ID, &item.Name, &item.RootPath, &created, &updated, &item.Status, &archived); err != nil {
+		if err := rows.Scan(&item.ID, &item.Name, &created, &updated, &item.Status, &archived); err != nil {
 			return nil, err
 		}
 		item.CreatedAt, _ = time.Parse(time.RFC3339, created)

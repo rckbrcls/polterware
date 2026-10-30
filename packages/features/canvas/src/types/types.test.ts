@@ -13,7 +13,7 @@ import { SHAPES, freeform, kindLabel, paletteGroups, paletteLabel } from "../sha
 const shapes = SHAPES.map((item) => item.kind);
 const components = COMPONENTS.map((item) => item.kind);
 const definition = (nodeKinds: string[], edgeKinds: string[] = ["relates"]): CanvasType => ({ type: "canvas", label: "Canvas", nodeKinds, edgeKinds, rules: [], unrestricted: false });
-const canvas = definition([...components, "system", "domain", "component", ...shapes, "note", "text"], ["relates", "flows", "calls", "depends_on", "contains"]);
+const canvas = definition([...components, "domain", "component", ...shapes, "note", "text"], ["relates", "flows", "calls", "depends_on", "contains"]);
 
 describe("generalist canvas behavior", () => {
   it("keeps the palette constrained by the live definition, including future server changes", () => {
@@ -55,7 +55,8 @@ describe("generalist canvas behavior", () => {
     expect(shapes.every(freeform)).toBe(true);
     expect(components.some(freeform)).toBe(false);
     expect(components.some(structureKind)).toBe(false);
-    expect(["system", "domain", "component"].every(structureKind)).toBe(true);
+    expect(["domain", "component"].every(structureKind)).toBe(true);
+    expect(structureKind("system")).toBe(false);
     expect(component("cache")?.technologies).toContain("Redis");
     expect(paletteLabel("database")).toBe("Storage");
     expect(paletteLabel("llm")).toBe("AI");
@@ -78,6 +79,6 @@ describe("generalist canvas behavior", () => {
       { kind: "node", id: "a", level: "system", title: "A" }, { kind: "node", id: "b", level: "domain", title: "B" },
       { kind: "node", id: "c", level: "component", title: "C" }, { kind: "node", id: "d", level: "other", title: "D" },
       { kind: "card", id: "e", title: "E" },
-    ]).map((entity) => entity.id)).toEqual(["a", "b", "c"]);
+    ]).map((entity) => entity.id)).toEqual(["b", "c"]);
   });
 });

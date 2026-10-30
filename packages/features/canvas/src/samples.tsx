@@ -13,7 +13,7 @@ const familySamples: Record<string, string> = {
   client: "Storefront", compute: "Orders", workflow: "Nightly sync", storage: "Orders DB", messaging: "Order events", ai: "Assistant", edge: "Public edge",
   security: "Sign-in", platform: "Production", observability: "Health", external: "Stripe", people: "Customers", document: "Orders API",
 };
-const samples: Record<string, string> = { note: "Retry budget", text: "Heading text", system: "Storefront", domain: "Billing", component: "Checkout" };
+const samples: Record<string, string> = { note: "Retry budget", text: "Heading text", domain: "Billing", component: "Checkout" };
 
 /** The node the editor would insert for this kind, at the origin, with sample text so it reads as it will on a canvas. */
 function sampleNode(kind: string, title?: string, id = `sample-${kind}`): ArchNode {

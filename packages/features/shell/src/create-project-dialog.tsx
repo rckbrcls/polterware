@@ -6,8 +6,6 @@ import {
   type StatusTone,
 } from "@polterware/frontend-design-system";
 import type { CreateProjectEnvironmentKind } from "./environment-kind-chips";
-import { projectNameFromDirectory } from "./project-name-from-directory";
-import { RepositoryPicker } from "./repository-picker";
 
 const DEFAULT_ENVS: CreateProjectEnvironmentKind[] = [
   "development",
@@ -22,28 +20,23 @@ const ENV_OPTIONS: ReadonlyArray<{ id: CreateProjectEnvironmentKind; label: stri
 ];
 
 /**
- * Create-project dialog, in the shared Composer: the name first, the initial environments
- * as a property, and the repository folder picked under the title (its name proposes the
- * project's). Persists a local project through the Desktop core.
+ * Create-project dialog, in the shared Composer: the name and the initial environments. A
+ * project has no folder of its own; its Structure components link repositories later.
  */
 export function CreateProjectDialog(props: {
   open: boolean;
   /** When false, the composer cannot be dismissed, so an empty store cannot leave the form. */
   canCancel?: boolean;
   onClose: () => void;
-  onPickDirectory: () => Promise<string | null | undefined>;
   onCreate?: (input: {
     name: string;
-    directory: string;
     environments: string[];
   }) => void;
 }) {
-  const [directory, setDirectory] = createSignal("");
   const [envs, setEnvs] = createSignal<CreateProjectEnvironmentKind[]>([...DEFAULT_ENVS]);
 
   createEffect(on(() => props.open, (open) => {
     if (!open) return;
-    setDirectory("");
     setEnvs([...DEFAULT_ENVS]);
   }));
 
@@ -75,20 +68,10 @@ export function CreateProjectDialog(props: {
       titlePlaceholder="Project name"
       properties={properties()}
       createMore={false}
-      suggestedTitle={projectNameFromDirectory(directory())}
-      canSubmit={directory().trim().length > 0 && envs().length > 0}
-      body={
-        <RepositoryPicker
-          appearance="dashed"
-          value={directory()}
-          onPick={props.onPickDirectory}
-          onChange={setDirectory}
-        />
-      }
+      canSubmit={envs().length > 0}
       submitLabel="Create project"
       onSubmit={(draft) => {
-        if (!directory().trim()) return false;
-        props.onCreate?.({ name: draft.title, directory: directory().trim(), environments: [...envs()] });
+        props.onCreate?.({ name: draft.title, environments: [...envs()] });
       }}
     />
   );

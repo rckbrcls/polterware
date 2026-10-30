@@ -1,10 +1,10 @@
-import { Box, Boxes, Cloud, Layers, type FilterClause, type FilterField, type PropertyOption } from "@polterware/frontend-design-system";
+import { Box, Cloud, Layers, type FilterClause, type FilterField, type PropertyOption } from "@polterware/frontend-design-system";
 import type { ScopeFilterEnvironment, ScopeFilterKey, ScopeFilterNode, ScopeFilterToken } from "./scope-filter";
 import { dedupeScopeTokens } from "./scope-filter";
 import { scopeFilterMenuSections } from "./scope-filter-menu-state";
 
 function ScopeIcon(props: { kind: ScopeFilterKey }) {
-  const Icon = props.kind === "system" ? Boxes : props.kind === "domain" ? Layers : props.kind === "component" ? Box : Cloud;
+  const Icon = props.kind === "domain" ? Layers : props.kind === "component" ? Box : Cloud;
   return <Icon size={14} aria-hidden />;
 }
 
@@ -41,7 +41,7 @@ export function scopeFilterFields(props: {
 
 /**
  * The Structure nodes as context options for a `TokenPicker`: the scope filter menu's
- * groups in its order (systems, then domains, then components) with the same icons, and
+ * groups in its order (domains, then components) with the same icons, and
  * the node id as the value. A title two nodes share shows its path instead.
  */
 export function scopeContextOptions(nodes: readonly (ScopeFilterNode & { path?: string })[]): PropertyOption[] {

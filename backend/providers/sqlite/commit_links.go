@@ -10,21 +10,36 @@ import (
 	"github.com/polterware/polterware/backend/platform/ids"
 )
 
-// InsertCommitLink stores a link a person made between one commit and one
-// task. Links cited in commit subjects are derived when Drift runs.
+// InsertCommitLink stores a link an agent or a person made between one commit
+// and one task. Links cited in commit subjects are derived on read.
 func (s *Store) InsertCommitLink(link work.CommitLink, now time.Time) error {
 	id := link.ID
 	if id == "" {
 		id = ids.NewULID()
 	}
-	_, err := s.DB.Exec(`INSERT OR IGNORE INTO work_commit_links(id,project_id,repo,sha,task_id,created_at) VALUES(?,?,?,?,?,?)`,
-		id, link.ProjectID, link.Repo, link.SHA, link.TaskID, now.UTC().Format(time.RFC3339))
+	committed := ""
+	if !link.CommittedAt.IsZero() {
+		committed = link.CommittedAt.UTC().Format(time.RFC3339)
+	}
+	_, err := s.DB.Exec(`INSERT OR IGNORE INTO work_commit_links(id,project_id,repo,sha,task_id,subject,url,committed_at,created_at) VALUES(?,?,?,?,?,?,?,?,?)`,
+		id, link.ProjectID, link.Repo, link.SHA, link.TaskID, link.Subject, link.URL, committed, now.UTC().Format(time.RFC3339))
 	return err
+}
+
+// DeleteCommitLink removes the stored link between a commit and a task. It
+// reports false when there was none.
+func (s *Store) DeleteCommitLink(projectID, taskID, sha string) (bool, error) {
+	res, err := s.DB.Exec(`DELETE FROM work_commit_links WHERE project_id=? AND task_id=? AND sha=?`, projectID, taskID, sha)
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	return n > 0, err
 }
 
 // ListCommitLinks returns every stored commit-to-task link for a project.
 func (s *Store) ListCommitLinks(projectID string) ([]work.CommitLink, error) {
-	rows, err := s.DB.Query(`SELECT id, project_id, repo, sha, task_id, created_at
+	rows, err := s.DB.Query(`SELECT id, project_id, repo, sha, task_id, subject, url, committed_at, created_at
 		FROM work_commit_links WHERE project_id=? ORDER BY created_at, id`, projectID)
 	if err != nil {
 		return nil, err
@@ -33,10 +48,11 @@ func (s *Store) ListCommitLinks(projectID string) ([]work.CommitLink, error) {
 	var out []work.CommitLink
 	for rows.Next() {
 		var link work.CommitLink
-		var created string
-		if err := rows.Scan(&link.ID, &link.ProjectID, &link.Repo, &link.SHA, &link.TaskID, &created); err != nil {
+		var committed, created string
+		if err := rows.Scan(&link.ID, &link.ProjectID, &link.Repo, &link.SHA, &link.TaskID, &link.Subject, &link.URL, &committed, &created); err != nil {
 			return nil, err
 		}
+		link.CommittedAt, _ = time.Parse(time.RFC3339, committed)
 		link.CreatedAt, _ = time.Parse(time.RFC3339, created)
 		out = append(out, link)
 	}

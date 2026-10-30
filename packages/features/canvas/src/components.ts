@@ -137,7 +137,7 @@ const byKind = new Map(COMPONENTS.map((item) => [item.kind, item]));
 export function component(kind: string): ComponentDefinition | undefined { return byKind.get(kind); }
 /** The family a component type belongs to; the library offers one generic component per family and the type is picked in the inspector. */
 export function family(kind: string): ComponentFamily | undefined { const item = byKind.get(kind); return item ? familyById.get(item.family) : undefined; }
-/** System, domain, and component nodes stand for Structure nodes and require a ref (canvas.StructureKinds). */
-export const structureKind = (kind: string) => kind === "system" || kind === "domain" || kind === "component";
+/** Domain and component nodes stand for Structure nodes and require a ref (canvas.StructureKinds). */
+export const structureKind = (kind: string) => kind === "domain" || kind === "component";
 /** The silhouette a semantic node is drawn in: its family's, or the plain Compute card for Structure nodes. */
 export function silhouette(kind: string): ComponentFamily | undefined { return family(kind) ?? (structureKind(kind) ? familyById.get("compute") : undefined); }

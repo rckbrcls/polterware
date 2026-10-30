@@ -23,7 +23,7 @@ export async function drawStructureCanvas(projectId: string, nodes: readonly Str
 }
 
 /** Canvas references use renderer workspace records; Facts reload with that snapshot. */
-export function CanvasWorkspace(props: { projectId: string; workspace: WorkspaceSnapshot; onReload: () => Promise<void>; homeKey?: number }) {
+export function CanvasWorkspace(props: { projectId: string; workspace: WorkspaceSnapshot; onReload: () => Promise<void>; homeKey?: number; onOpenCanvasName?: (name: string | undefined) => void }) {
   const [reloadError, setReloadError] = createSignal("");
   const [promoted, setPromoted] = createSignal<StoreEntity[]>([]);
   const [facts, { refetch }] = createResource(() => [props.projectId, props.workspace] as const, async ([projectId]) => {
@@ -58,6 +58,6 @@ export function CanvasWorkspace(props: { projectId: string; workspace: Workspace
     <Show when={reloadError()}><p role="alert" class="px-4 text-sm text-[var(--color-danger)]">Promotion saved. Could not refresh project data: {reloadError()} <Button size="sm" variant="ghost" onClick={() => void reload()}>Retry refresh</Button></p></Show>
     <CanvasView projectId={props.projectId} port={port} entities={entities()}
       openCanvasId={readRemembered<string | undefined>(`canvas.${props.projectId}`, undefined)}
-      onOpenCanvasChange={(id) => writeRemembered(`canvas.${props.projectId}`, id)} homeKey={props.homeKey} />
+      onOpenCanvasChange={(id) => writeRemembered(`canvas.${props.projectId}`, id)} onOpenCanvasName={props.onOpenCanvasName} homeKey={props.homeKey} />
   </div>;
 }

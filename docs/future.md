@@ -42,7 +42,7 @@ Category: **Project Context & Change Intelligence for AI Coding.** Polterware ke
 12. **Similarity beyond word sets.** Add an FTS5 index when a ranked-search consumer needs it. Add local embeddings (`sqlite-vec`, small local model, opt-in download) only if measured misses are material.
 13. **Weak spots to close:** Structure timeline by commit is weak for rebased history (no per-batch commit stamp); automatic challenge from a decision review trigger; decision status chips on Canvas nodes; importing projected Decision files.
 14. **Rules in a run's Verify.** An optional check of a dispatch run's diff against the Rules that hold for the nodes it touches, reported beside the project checks; advisory until a Decision makes it a gate.
-15. **Scope exclusion in filters.** Scope pills are inclusion-only because reads take one `scope_nodes` union; `is not` on System / Domain / Component / Environment needs an `exclude_scope_nodes` on the scoped reads. Polterware Notes search filters are inclusion-only for the same reason (the core takes inclusion lists and caps results).
+15. **Scope exclusion in filters.** Scope pills are inclusion-only because reads take one `scope_nodes` union; `is not` on Domain / Component / Environment needs an `exclude_scope_nodes` on the scoped reads. Polterware Notes search filters are inclusion-only for the same reason (the core takes inclusion lists and caps results).
 
 ## Cloud (needs a Decision before any code)
 
@@ -98,7 +98,7 @@ Still open:
 
 Direction: Git is the most reliable evidence of what changed, so Polterware reads it deeply and ties every change to the card, Decision, agent, and run that justified it. It is evidence and lifecycle, never a Git client.
 
-Starting point (shipped, narrow): the scan writes a `git:HEAD` row and up to 20 `git:commit` rows, `repo add` adds `git:<name>:HEAD`, `status` prints the branch, `delivered` checks that `HEAD` is on local `main`/`master`, and `handoff` compares `touched:` and `branch:` with the local diff (see Local item 1; end-to-end verification is still pending). Everything below is not implemented.
+Starting point (shipped, narrow): the scan writes a `git:HEAD` row and up to 20 `git:commit` rows, each repository clone adds `git:<name>:HEAD`, `status` prints the branch, `delivered` checks that `HEAD` is on local `main`/`master`, and `handoff` compares `touched:` and `branch:` with the local diff (see Local item 1; end-to-end verification is still pending). Everything below is not implemented.
 
 Worktree lifecycle still open (the engine already creates one worktree per run, records path, branch, base, owner, card, and status, and keeps one writer per directory):
 
@@ -145,7 +145,7 @@ Open: branch naming scheme and whether it is configurable; where worktrees live 
 
 ## Product questions still open
 
-1. Who creates the upper Structure levels (System, Domain): by hand, imported from code, or agent-suggested and human-approved?
+1. Who creates the domains of the Structure: by hand, imported from code, or agent-suggested and human-approved?
 2. Should the default route flip from Inbox to Work?
 3. Work state per feature, per branch, or per session? (Leaning: per feature, branches linked.)
 

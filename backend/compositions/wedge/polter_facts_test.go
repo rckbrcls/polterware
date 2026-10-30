@@ -19,12 +19,12 @@ func TestPolterFactApplyRoundTripAndAudit(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer store.Close()
-	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Facts", RootPath: t.TempDir()})
+	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Facts"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	header := "---\npolter: 1\nsummary: Promote canvas item\nrationale: promoted from canvas Sketch\n---\n"
-	text := header + "# core: Core\nlevel: system\n#### local-core: One local core owns SQLite.\nkind: declared\nscope: core\n"
+	text := header + "# core: Core\nlevel: domain\n#### local-core: One local core owns SQLite.\nkind: declared\nscope: core\n"
 	apply := func(text string, dry bool) (wedge.ApplyResult, error) {
 		return wedge.ApplyPolter(store, wedge.ApplyInput{ProjectID: project.ID, Text: text, DryRun: dry, AutoStartLabel: "codex", Agent: "codex"})
 	}

@@ -2,13 +2,12 @@ import { describe, expect, it } from "vitest";
 import { drawStructure, isStructureCanvas, type StructureSource } from "./structure-canvas";
 
 const tree: StructureSource[] = [
-  { id: "app", parentId: "", level: "system", title: "App" },
-  { id: "core", parentId: "app", level: "domain", title: "Core" },
+  { id: "core", parentId: "", level: "domain", title: "Core" },
   { id: "api", parentId: "core", level: "component", title: "API" },
   { id: "db", parentId: "core", level: "component", title: "DB" },
-  { id: "cli", parentId: "app", level: "component", title: "CLI" },
-  { id: "old", parentId: "app", level: "component", title: "Old", status: "removed" },
-  { id: "docs", parentId: "", level: "system", title: "Docs" },
+  { id: "cli", parentId: "", level: "component", title: "CLI" },
+  { id: "old", parentId: "core", level: "component", title: "Old", status: "removed" },
+  { id: "docs", parentId: "", level: "domain", title: "Docs" },
 ];
 
 type Rect = { x: number; y: number; width: number; height: number };
@@ -19,19 +18,19 @@ const inside = (inner: Rect, outer: Rect) => inner.x >= outer.x && inner.y >= ou
 describe("drawStructure", () => {
   it("draws every live node once, citing its Structure node, parents before children", () => {
     const { graph, layoutJson } = drawStructure(tree);
-    expect(graph.nodes.map((node) => node.id)).toEqual(["structure-app", "structure-cli", "structure-core", "structure-api", "structure-db", "structure-docs"]);
-    expect(graph.nodes[0]).toMatchObject({ kind: "system", label: "App", ref: { kind: "node", id: "app" } });
+    expect(graph.nodes.map((node) => node.id)).toEqual(["structure-cli", "structure-core", "structure-api", "structure-db", "structure-docs"]);
+    expect(graph.nodes[1]).toMatchObject({ kind: "domain", label: "Core", ref: { kind: "node", id: "core" } });
     expect(graph.edges).toEqual([]);
     expect(isStructureCanvas({ layoutJson })).toBe(true);
   });
 
-  it("places each node inside its parent and stacks systems apart", () => {
+  it("places each component inside its domain and keeps the project's children apart from the origin", () => {
     const nodes = rects(drawStructure(tree).layoutJson);
-    expect(inside(nodes["structure-core"]!, nodes["structure-app"]!)).toBe(true);
     expect(inside(nodes["structure-api"]!, nodes["structure-core"]!)).toBe(true);
-    expect(inside(nodes["structure-cli"]!, nodes["structure-app"]!)).toBe(true);
+    expect(inside(nodes["structure-db"]!, nodes["structure-core"]!)).toBe(true);
     expect(inside(nodes["structure-cli"]!, nodes["structure-core"]!)).toBe(false);
-    expect(nodes["structure-docs"]!.y).toBeGreaterThan(nodes["structure-app"]!.y + nodes["structure-app"]!.height);
+    expect(nodes["structure-cli"]).toMatchObject({ x: 0, y: 0 });
+    expect(nodes["structure-docs"]!.x).toBeGreaterThan(nodes["structure-core"]!.x + nodes["structure-core"]!.width);
   });
 
   it("is the same drawing every time", () => {

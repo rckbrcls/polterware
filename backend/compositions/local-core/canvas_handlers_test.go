@@ -22,7 +22,7 @@ func TestCanvasServiceRejectsAndUpdatesParts(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = store.Close() })
 	now := time.Now().UTC()
-	project := projects.Project{ID: "proj-canvas", Name: "Canvas", RootPath: t.TempDir(), CreatedAt: now, UpdatedAt: now}
+	project := projects.Project{ID: "proj-canvas", Name: "Canvas", CreatedAt: now, UpdatedAt: now}
 	if err := store.SaveProject(project); err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +66,7 @@ func TestCanvasServiceRejectsAndUpdatesParts(t *testing.T) {
 		Name:      "Sketch",
 		Type:      "canvas",
 		Change:    change,
-		Graph:     &localv1.CanvasGraph{Nodes: []*localv1.CanvasNode{{Id: "s", Kind: "system", Label: "API"}}},
+		Graph:     &localv1.CanvasGraph{Nodes: []*localv1.CanvasNode{{Id: "s", Kind: "domain", Label: "API"}}},
 	}))
 	if !errors.As(err, &connectErr) || connectErr.Code() != connect.CodeInvalidArgument || !strings.Contains(connectErr.Message(), "structure node") {
 		t.Fatalf("missing ref: %v", err)

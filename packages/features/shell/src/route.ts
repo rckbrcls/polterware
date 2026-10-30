@@ -22,7 +22,6 @@ export type NavSectionId =
 export type SectionId = NavSectionId;
 export type ProjectSettingsTabId =
   | "general"
-  | "repositories"
   | "environments"
   | "project-danger"
   | "agents-mcp"

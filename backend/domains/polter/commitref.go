@@ -17,12 +17,14 @@ type CommitRef struct {
 var (
 	// polter: git-metadata-import#T2
 	polterCommitRef = regexp.MustCompile(`(?:^|[^A-Za-z0-9-])polter:[ \t]*([a-z0-9]+(?:-[a-z0-9]+)*)#T([1-9][0-9]{0,5})(?:[^0-9]|$)`)
+	// git-metadata-import#T2
+	hashCommitRef = regexp.MustCompile(`(?:^|[^A-Za-z0-9-])([a-z0-9]+(?:-[a-z0-9]+)*)#T([1-9][0-9]{0,5})(?:[^0-9]|$)`)
 	// git-metadata-import T2
 	plainCommitRef = regexp.MustCompile(`(?:^|[^A-Za-z0-9-])([a-z0-9]+(?:-[a-z0-9]+)*)[ \t]+T([1-9][0-9]{0,5})(?:[^0-9]|$)`)
 )
 
 // ParseCommitRefs finds explicit task citations in a commit subject.
-// The two forms are `slug T2` and `polter: slug#T2`. Order is first
+// The forms are `slug#T2`, `slug T2`, and `polter: slug#T2`. Order is first
 // appearance. A repeated citation is returned once.
 func ParseCommitRefs(subject string) []CommitRef {
 	type hit struct {
@@ -46,6 +48,7 @@ func ParseCommitRefs(subject string) []CommitRef {
 		}
 	}
 	collect(polterCommitRef)
+	collect(hashCommitRef)
 	collect(plainCommitRef)
 	sort.SliceStable(hits, func(i, j int) bool { return hits[i].at < hits[j].at })
 

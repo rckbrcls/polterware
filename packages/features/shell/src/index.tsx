@@ -88,7 +88,7 @@ export {
 export { ShortcutsPanel } from "./shortcuts-panel";
 export { SidebarNav, SidebarSettingsItem } from "./sidebar";
 export type { SidebarCount } from "./sidebar";
-export { TitleBar } from "./title-bar";
+export { TitleBar, type TitleBarCrumb } from "./title-bar";
 export { CliReferenceSettings } from "./cli-reference-page";
 export { CLI_COMMANDS } from "./cli-reference";
 export { InboxPage } from "./inbox-page";
@@ -184,6 +184,8 @@ export function Shell(props: {
   onBack?: () => void;
   onForward?: () => void;
   onGoHome?: () => void;
+  /** What is open in the list, after it in the breadcrumb: a milestone, a canvas, a run, a doc. */
+  trail?: readonly TitleBarCrumb[];
   children: JSX.Element;
 }) {
   const [localWorkspace, setLocalWorkspace] = createSignal<WorkspaceContext | null>(null);
@@ -221,20 +223,30 @@ export function Shell(props: {
     return matched?.id ?? "";
   });
 
-  /** Project › section group › section › tab, for the title bar; at home, just Projects. */
+  /**
+   * After the project crumb: the list you are in (a tab of its own, such as Decisions or Tiers, or
+   * else the section), then what is open in it. A milestone's Board and List are layouts of one
+   * board, so Milestones names the section and the trail names the board. At home, just Projects.
+   */
   const crumbs = createMemo((): TitleBarCrumb[] => {
     if (atHome()) return [{ label: "Projects" }];
     const section = currentSection();
-    const project = (props.projects ?? []).find((item) => item.projectId === workspace().projectId);
     const item = items().find((entry) => entry.section === section);
     const tabs = (SECTION_TABS as Partial<Record<string, readonly { id: string; label: string }[]>>)[section] ?? [];
-    const tab = tabs.length > 1 ? tabs.find((entry) => entry.id === (props.route?.().tab ?? DEFAULT_TABS[section as keyof typeof DEFAULT_TABS])) : undefined;
+    const tab = section !== "milestones" && tabs.length > 1
+      ? tabs.find((entry) => entry.id === (props.route?.().tab ?? DEFAULT_TABS[section as keyof typeof DEFAULT_TABS]))
+      : undefined;
     const out: TitleBarCrumb[] = [];
-    if (project) out.push({ label: project.name, onClick: () => props.onGoHome?.() });
-    if (item?.group === "Agents") out.push({ label: "Agents", onClick: () => select("dispatch") });
-    if (item) out.push({ label: item.label, onClick: () => select(section) });
-    if (tab) out.push({ label: tab.label });
-    return out;
+    if (tab) out.push({ label: tab.label, onClick: () => select(section, tab.id) });
+    else if (item) out.push({ label: item.label, onClick: () => select(section) });
+    return [...out, ...(props.trail ?? [])];
+  });
+  const titleBarProject = createMemo(() => {
+    if (atHome()) return undefined;
+    const projectId = workspace().projectId;
+    return (props.projects ?? []).some((item) => item.projectId === projectId)
+      ? { projects: props.projects ?? [], currentProjectId: projectId, onSelect: (id: string) => props.onProjectSelect?.(id), onCreateProject: props.onCreateProject }
+      : undefined;
   });
 
   function select(section: string, tab?: string) {
@@ -271,6 +283,7 @@ export function Shell(props: {
         appSettingsOpen={props.appSettingsOpen}
         sidebarWidth={sidebarWidth()}
         crumbs={crumbs()}
+        project={titleBarProject()}
       />
 
       <div class="flex min-h-0 flex-1">

@@ -124,8 +124,6 @@ func statusLabel(status string) string {
 		return "in progress"
 	case structure.StatusDelivered:
 		return "delivered"
-	case structure.StatusDrift:
-		return "drift"
 	default:
 		return "proposed"
 	}

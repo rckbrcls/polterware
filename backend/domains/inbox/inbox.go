@@ -1,7 +1,7 @@
 // Package inbox derives the items that need a person from data the project
-// already has: open questions (Decision), drift findings (Drift: a done task
-// with no commit on main, or a commit on main with no task), and deploy links
-// whose provider CLI is not connected (Setup). Items are never stored; only a person's disposition
+// already has: open Conflicts (a request against a Rule or Decision), open
+// questions (Decision), and deploy links whose provider CLI is not connected
+// (Setup). Items are never stored; only a person's disposition
 // is, keyed by the item's stable key.
 package inbox
 
@@ -13,13 +13,11 @@ import (
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/polterware/polterware/backend/domains/drift"
 )
 
 const (
+	KindConflict = "conflict"
 	KindDecision = "decision"
-	KindDrift    = "drift"
 	KindSetup    = "setup"
 
 	StateOpen     = "open"
@@ -28,32 +26,17 @@ const (
 	ActionDecide   = "decide"
 	ActionDelegate = "delegate"
 	ActionDefer    = "defer"
-	// ActionLink links a commit to a task: a task ref (slug#T2) for a commit
-	// with no task, or a commit sha for a done task with none.
-	ActionLink = "link"
-	// ActionReopen opens a done task again.
-	ActionReopen = "reopen"
-	ActionIgnore = "ignore"
+	ActionIgnore   = "ignore"
 )
 
 // kindOrder sorts items of equal blocking by kind.
-var kindOrder = map[string]int{KindDecision: 0, KindDrift: 1, KindSetup: 2}
+var kindOrder = map[string]int{KindConflict: 0, KindDecision: 1, KindSetup: 2}
 
-// KindActions lists the actions each kind accepts, primary first. A drift
-// item takes the ones its finding allows (FindingActions).
+// KindActions lists the actions each kind accepts, primary first.
 var KindActions = map[string][]string{
+	KindConflict: {ActionDecide, ActionDefer},
 	KindDecision: {ActionDecide, ActionDelegate, ActionDefer},
-	KindDrift:    {ActionLink, ActionReopen, ActionDefer, ActionIgnore},
 	KindSetup:    {ActionDefer, ActionIgnore},
-}
-
-// FindingActions lists the actions of a drift item, primary first: a done
-// task links a commit or opens again; a commit links a task.
-func FindingActions(findingType string) []string {
-	if findingType == drift.TypeTaskDoneUnmatched {
-		return []string{ActionLink, ActionReopen, ActionDefer, ActionIgnore}
-	}
-	return []string{ActionLink, ActionDefer, ActionIgnore}
 }
 
 // ValidAction reports whether the item accepts action.
@@ -80,6 +63,17 @@ type Question struct {
 	Text     string
 	Blocking bool
 	Options  []string
+}
+
+// Conflict is an open request that goes against a Rule or a Decision.
+// Against names it ("Rule: …" or "Decision: …"); Details carry the parts.
+type Conflict struct {
+	Slug     string
+	Request  string
+	Against  string
+	CardSlug string
+	Options  []string
+	Details  map[string]string
 }
 
 // DeployLink is one node deployment. A Setup item is derived when its
@@ -127,11 +121,12 @@ type Item struct {
 	Source   string
 	State    string
 	Actions  []string
-	// CardSlug and QuestionText let Decide write the answer.
+	// CardSlug and QuestionText let Decide write a question's answer, and
+	// ConflictSlug a Conflict's.
 	CardSlug     string
 	QuestionText string
-	// Details are the drift finding's details (slug, task, task_id, repo, sha,
-	// subject), which Link and Reopen act on.
+	ConflictSlug string
+	// Details are the item's facts, such as a setup item's provider.
 	Details map[string]string
 }
 
@@ -192,25 +187,6 @@ func ShortID(key string) string {
 	return "i" + hex.EncodeToString(sum[:4])
 }
 
-// DriftKey fingerprints a finding by type, subjects, and details, so a
-// changed finding is a new item and an ignored one stays ignored only while it
-// is the same.
-func DriftKey(finding drift.Finding) string {
-	parts := append([]string{}, finding.SubjectIDs...)
-	sort.Strings(parts)
-	parts = append(parts, "|")
-	keys := make([]string, 0, len(finding.Details))
-	for key := range finding.Details {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	for _, key := range keys {
-		parts = append(parts, key+"="+finding.Details[key])
-	}
-	sum := sha256.Sum256([]byte(strings.Join(parts, "\x00")))
-	return "drift:" + finding.Type + ":" + hex.EncodeToString(sum[:6])
-}
-
 // DeployKey is the stable key of a Setup item for one node in one environment.
 // It does not include the provider or resource, so a relink stays the same item.
 func DeployKey(nodeID, environmentID string) string {
@@ -242,9 +218,8 @@ func providerConnected(provider, environmentID string, connections []ProviderCon
 }
 
 // Derive builds the Inbox from its sources and the latest disposition per key.
-// Info drift is left out: it needs no person. deploys are the
-// links whose provider CLI is not connected.
-func Derive(questions []Question, findings []drift.Finding, deploys []DeployLink, dispositions []Disposition) Result {
+// deploys are the links whose provider CLI is not connected.
+func Derive(conflicts []Conflict, questions []Question, deploys []DeployLink, dispositions []Disposition) Result {
 	latest := map[string]Disposition{}
 	for _, d := range dispositions {
 		if current, ok := latest[d.Key]; !ok || !d.CreatedAt.Before(current.CreatedAt) {
@@ -253,23 +228,20 @@ func Derive(questions []Question, findings []drift.Finding, deploys []DeployLink
 	}
 
 	var items []Item
+	for _, c := range conflicts {
+		key := "conflict:" + c.Slug
+		items = append(items, Item{
+			ID: ShortID(key), Key: key, Kind: KindConflict, Blocking: true,
+			Title: c.Request, Detail: c.Against, Options: c.Options, Where: c.CardSlug,
+			CardSlug: c.CardSlug, ConflictSlug: c.Slug, Details: c.Details,
+		})
+	}
 	for _, q := range questions {
 		key := "decision:" + q.ID
 		items = append(items, Item{
 			ID: ShortID(key), Key: key, Kind: KindDecision, Blocking: q.Blocking,
 			Title: q.Text, Options: q.Options, Where: q.CardSlug,
 			CardSlug: q.CardSlug, QuestionText: q.Text,
-		})
-	}
-	for _, f := range findings {
-		if f.Severity == drift.SeverityInfo {
-			continue
-		}
-		key := DriftKey(f)
-		items = append(items, Item{
-			ID: ShortID(key), Key: key, Kind: KindDrift, Blocking: f.Severity == drift.SeverityConflict,
-			Title: f.Summary, Detail: f.Type, Where: driftWhere(f), Source: "system",
-			Actions: FindingActions(f.Type), Details: f.Details,
 		})
 	}
 	for _, link := range deploys {
@@ -321,20 +293,6 @@ func Derive(questions []Question, findings []drift.Finding, deploys []DeployLink
 	return result
 }
 
-func driftWhere(f drift.Finding) string {
-	switch {
-	case f.Details["slug"] != "" && f.Details["task"] != "":
-		return f.Details["slug"] + " " + f.Details["task"]
-	case f.Details["sha"] != "":
-		sha := f.Details["sha"]
-		if len(sha) > 7 {
-			sha = sha[:7]
-		}
-		return sha
-	}
-	return ""
-}
-
 // ActionLabel is the CLI spelling of an action ("update_intent" → "update-intent").
 func ActionLabel(action string) string {
 	return strings.ReplaceAll(action, "_", "-")
@@ -348,5 +306,5 @@ func ParseAction(text string) (string, error) {
 			return action, nil
 		}
 	}
-	return "", fmt.Errorf("unknown action %q: use decide, delegate, defer, link, reopen, or ignore", strings.TrimSpace(text))
+	return "", fmt.Errorf("unknown action %q: use decide, delegate, defer, or ignore", strings.TrimSpace(text))
 }

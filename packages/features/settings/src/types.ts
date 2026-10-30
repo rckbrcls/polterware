@@ -17,10 +17,14 @@ export type ProjectEnvironment = {
   dataSource: DataSource;
 };
 
+/** A repository Structure components link: its GitHub identity and this machine's clone. */
 export type ProjectRepository = {
   id: string;
   name: string;
-  path: string;
+  /** github.com/owner/repo, empty when it has no GitHub remote. */
+  remote: string;
+  /** This machine's clone, empty when it is not cloned here. */
+  localPath: string;
 };
 
 export type ProjectGeneralSettings = {
@@ -29,10 +33,10 @@ export type ProjectGeneralSettings = {
   defaultEnvironmentId: string;
   projectId: string;
   repository: string;
-  /** Whether the core keeps each checkout's AGENTS.md block current. */
+  /** Whether the core keeps the AGENTS.md block of each repository clone current. */
   agentsSync: boolean;
   dataSource: DataSource;
 };
 
 export type SettingsTabId = import("@polterware/feature-shell").ProjectSettingsTabId;
-export type ProjectSettingsPageId = Extract<SettingsTabId, "general" | "repositories" | "environments" | "project-danger">;
+export type ProjectSettingsPageId = Extract<SettingsTabId, "general" | "environments" | "project-danger">;

@@ -53,14 +53,14 @@ func Defaults(store *storepkg.Store) error {
 // seedEmptyProject creates a project the way a user-registered one starts:
 // empty layout, default settings, and one local environment.
 func seedEmptyProject(store *storepkg.Store) error {
-	_, err := wedge.InitProject(store, wedge.InitInput{ID: EmptyProjectID, Name: "Empty project", RootPath: "~/projects/empty"})
+	_, err := wedge.InitProject(store, wedge.InitInput{ID: EmptyProjectID, Name: "Empty project"})
 	return err
 }
 
 func seedProject(store *storepkg.Store) error {
 	created := time.Date(2026, 3, 12, 9, 14, 2, 0, time.UTC)
 	project := projects.Project{
-		ID: ProjectID, Name: "Polter", RootPath: "~/projects/polter",
+		ID: ProjectID, Name: "Polter",
 		CreatedAt: created, UpdatedAt: created,
 	}
 	if err := store.SaveProject(project); err != nil {

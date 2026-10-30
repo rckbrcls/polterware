@@ -40,8 +40,19 @@ func TestDefaultsCreatesPolterwareAndEmptyProjects(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Polterware project missing: %v", err)
 	}
-	if project.Name != "Polterware" || project.RootPath != seed.DetectRoot() {
+	if project.Name != "Polterware" {
 		t.Fatalf("project = %+v", project)
+	}
+	repos, err := store.ListRepositories(seed.ProjectID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	main := false
+	for _, repo := range repos {
+		main = main || (repo.Name == "main" && repo.LocalPath == seed.DetectRoot())
+	}
+	if !main {
+		t.Fatalf("the checkout is the main repository: %+v", repos)
 	}
 	if _, err := store.GetProject(seed.EmptyProjectID); err != nil {
 		t.Fatalf("empty project missing: %v", err)

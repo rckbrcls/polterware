@@ -10,7 +10,7 @@ import (
 
 func testGraph() ([]structure.Node, []Decision) {
 	nodes := []structure.Node{
-		{ID: "s", Path: "shop", Level: structure.LevelSystem, Title: "Shop", Status: structure.NodeActive,
+		{ID: "s", Path: "shop", Level: structure.LevelDomain, Title: "Shop", Status: structure.NodeActive,
 			Decisions: []string{"Decision 0001"}},
 		{ID: "d", ParentID: "s", Path: "shop/auth", Level: structure.LevelDomain, Title: "Auth", Status: structure.NodeActive,
 			Repo: "api", Folder: "src/auth", Decisions: []string{"decision-tokens"}},
@@ -33,7 +33,7 @@ func testRules() []work.Rule {
 
 func TestGovernByCitingNodeRepo(t *testing.T) {
 	nodes, decisions := testGraph()
-	governed := Govern(nodes, decisions)
+	governed := Govern(nodes, decisions, []string{""})
 	ids := func(list []Decision) string {
 		var out []string
 		for _, decision := range list {
@@ -71,7 +71,7 @@ func TestDecisionFile(t *testing.T) {
 
 func TestBlockInheritsAncestors(t *testing.T) {
 	nodes, decisions := testGraph()
-	governed := Govern(nodes, decisions)
+	governed := Govern(nodes, decisions, []string{""})
 	api := Block("api", nodes, governed["api"], decisions, testRules())
 	for _, want := range []string{
 		"- shop/auth (domain) Auth · path: src/auth",
@@ -127,7 +127,7 @@ func TestBlockListsPrinciplesStructureAndTheBriefLine(t *testing.T) {
 	nodes = append(nodes, structure.Node{ID: "c", ParentID: "d", Path: "shop/auth/session", Level: structure.LevelComponent, Title: "Sessions",
 		Status: structure.NodeActive, Repo: "api", Folder: "src/auth/session", Kind: "service", Tech: "Go"})
 	decisions = append(decisions, Decision{ID: "decision-local", Title: "Local first", Status: "active", Principle: true})
-	governed := Govern(nodes, decisions)
+	governed := Govern(nodes, decisions, []string{""})
 	want := BlockBegin + `
 ## Polterware project context
 

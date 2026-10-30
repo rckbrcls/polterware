@@ -4,9 +4,9 @@ import { detailPanelDefaultState, detailPanelStore } from "@polterware/frontend-
 import { STRUCTURE_SCOPE, StructureView, checkoutLabel, componentKindLabel, type StructureNode, type StructureNodePatch } from "./index";
 
 const nodes: StructureNode[] = [
-  { id: "sys", parentId: "", level: "system", path: "app", title: "Application", intent: "", repo: "", decisions: [] },
-  { id: "api", parentId: "sys", level: "component", path: "app/api", title: "API", intent: "Serves the project", repo: "backend", folder: "src/api", kind: "api", tech: "Go", decisions: [] },
-  { id: "core", parentId: "sys", level: "domain", path: "app/core", title: "Core", intent: "", repo: "", decisions: [] },
+  { id: "sys", parentId: "", level: "domain", path: "app", title: "Application", intent: "", repo: "", decisions: [] },
+  { id: "api", parentId: "", level: "component", path: "api", title: "API", intent: "Serves the project", repo: "backend", folder: "src/api", kind: "api", tech: "Go", decisions: [] },
+  { id: "core", parentId: "", level: "domain", path: "core", title: "Core", intent: "", repo: "", decisions: [] },
   { id: "web", parentId: "sys", level: "component", path: "app/web", title: "Web", intent: "", repo: "", decisions: [] },
 ];
 let dispose: (() => void) | undefined;
@@ -60,9 +60,10 @@ describe("Structure collection", () => {
     expect(api.textContent).not.toContain("Go");
     // The row carries no actions menu; the node's actions sit in its document.
     expect(api.querySelector('[aria-label="Actions for API"]')).toBeNull();
-    // A component has no children, so its row offers no Add child; its system does.
-    expect(api.querySelector('[aria-label^="Add child"]')).toBeNull();
-    expect(host.querySelector('[aria-label="Add child to Application"]')).not.toBeNull();
+    // A component has no children, so its row offers no add; a domain adds a component and the project a domain.
+    expect(api.querySelector('[aria-label^="Add component"]')).toBeNull();
+    expect(host.querySelector('[aria-label="Add component to Application"]')).not.toBeNull();
+    expect(host.querySelector('[aria-label="Add domain"]')).not.toBeNull();
     // Branch rows are led by a texture +/- key; the open project key shows the minus.
     const key = host.querySelector<HTMLElement>('.pw-tree__key[aria-label="Toggle Project"]')!;
     expect(key.classList.contains("pw-texture-button")).toBe(true);
@@ -81,7 +82,7 @@ describe("Structure collection", () => {
     // The description is the summary under the title; the metadata sits on labeled lines below it.
     expect(doc.querySelector(".pw-structure__summary")?.textContent).toBe("Serves the project");
     const head = doc.querySelector(".pw-structure__head")?.textContent ?? "";
-    for (const text of ["Properties", "Component", "Go", "Checkout", "backend/src/api", "app/api"]) expect(head).toContain(text);
+    for (const text of ["Properties", "Component", "Go", "Checkout", "backend/src/api", "api"]) expect(head).toContain(text);
     // Every card and decision that cites the node is a table row that opens it; empty sections are left out.
     expect(doc.textContent).toContain("Add auth");
     expect(doc.textContent).not.toContain("Rules");
@@ -139,12 +140,12 @@ describe("Structure collection", () => {
       row.click();
       await tick();
     };
-    // Right under a system with no children, a component can become a domain; its kind is cleared.
+    // Right under the project with no children, a component can become a domain; its kind is cleared.
     await pick("Level: Component", "Domain");
     expect(onEditNode).toHaveBeenLastCalledWith("api", { level: "domain", kind: "" });
-    await pick("Parent: Application", "Core");
+    await pick("Parent: Project", "Core");
     expect(onMove).toHaveBeenLastCalledWith("api", "core");
-    // A system has no parent and keeps its level.
+    // A domain with children has no parent and keeps its level.
     detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId: "sys", entityKind: "arch-node" });
     await tick();
     expect(host.querySelector('button[aria-label^="Level:"]')).toBeNull();

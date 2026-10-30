@@ -11,7 +11,7 @@ import (
 func TestMilestoneStoreArchiveMovesCardsToBacklog(t *testing.T) {
 	store := newStore(t)
 	now := time.Now().UTC()
-	if err := store.SaveProject(projects.Project{ID: "proj", Name: "proj", RootPath: "/proj", CreatedAt: now, UpdatedAt: now}); err != nil {
+	if err := store.SaveProject(projects.Project{ID: "proj", Name: "proj", CreatedAt: now, UpdatedAt: now}); err != nil {
 		t.Fatal(err)
 	}
 	beta, err := store.CreateMilestone("proj", "", "batch-1", work.Milestone{Slug: "beta", Name: "Beta", State: work.MilestoneActive, ExitCriteria: []string{"ships"}})

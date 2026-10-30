@@ -23,7 +23,7 @@ func TestExecuteAuditedWriteHumanAutoRun(t *testing.T) {
 	}
 	defer store.Close()
 
-	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", RootPath: root})
+	project, err := initWithRepo(store, "Demo", root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,7 +98,7 @@ func TestListChangesHidesWorkspaceLayoutWrites(t *testing.T) {
 	}
 	defer store.Close()
 
-	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", RootPath: root})
+	project, err := initWithRepo(store, "Demo", root)
 	if err != nil {
 		t.Fatal(err)
 	}

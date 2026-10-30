@@ -1,6 +1,7 @@
-import { For, Show } from "solid-js";
+import { For, Show, createSignal } from "solid-js";
 import {
   Button,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Home01Icon,
@@ -10,10 +11,20 @@ import {
 } from "@polterware/frontend-design-system";
 import { createShortcutLabel } from "@polterware/frontend-state";
 import { TitleBarFrame } from "@polterware/frontend-shell";
+import { ProjectSwitcherPopover } from "./context-switchers";
+import type { ProjectSwitcherItem } from "./types";
 import "./title-bar.css";
 
 /** One step of the title bar's breadcrumb; the last one is where you are and takes no click. */
 export type TitleBarCrumb = { label: string; onClick?: () => void };
+
+/** The project crumb opens Switch project instead of navigating. */
+export type TitleBarProject = {
+  projects: readonly ProjectSwitcherItem[];
+  currentProjectId: string;
+  onSelect: (projectId: string) => void;
+  onCreateProject?: () => void;
+};
 
 export type TitleBarProps = {
   canGoBack: boolean;
@@ -27,9 +38,43 @@ export type TitleBarProps = {
   appSettingsOpen?: boolean;
   /** The sidebar's width; history and Home end on its right edge, never before the window controls. */
   sidebarWidth?: number;
-  /** Where you are in the app, after Home: project, section, and tab. */
+  /** Where you are in the project, after its crumb: the list, then what is open in it. */
   crumbs?: readonly TitleBarCrumb[];
+  /** The open project, first in the breadcrumb. */
+  project?: TitleBarProject;
 };
+
+function ProjectCrumb(props: { project: TitleBarProject }) {
+  const [open, setOpen] = createSignal(false);
+  let trigger: HTMLButtonElement | undefined;
+  const current = () => props.project.projects.find((item) => item.projectId === props.project.currentProjectId);
+  return (
+    <>
+      <button
+        ref={(element) => { trigger = element; }}
+        type="button"
+        class="pw-titlebar-crumbs__link pw-titlebar-crumbs__project"
+        aria-haspopup="dialog"
+        aria-expanded={open()}
+        aria-label={`Switch project: ${current()?.name ?? "Project"}`}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span class="truncate">{current()?.name ?? "Project"}</span>
+        {/* Shows on hover, focus, or while Switch project is open; it slides out of a clip as its track opens. */}
+        <span class="pw-titlebar-crumbs__chevron" aria-hidden="true"><span><ChevronDown size={11} /></span></span>
+      </button>
+      <ProjectSwitcherPopover
+        open={open()}
+        onClose={() => setOpen(false)}
+        anchor={() => trigger}
+        projects={props.project.projects}
+        currentProjectId={props.project.currentProjectId}
+        onSelect={props.project.onSelect}
+        onCreateProject={props.project.onCreateProject}
+      />
+    </>
+  );
+}
 
 export function TitleBar(props: TitleBarProps) {
   const commanderShortcut = createShortcutLabel("shell.toggle_commander");
@@ -58,13 +103,14 @@ export function TitleBar(props: TitleBarProps) {
           </Button>
         </div>
 
-        <Show when={props.crumbs?.length} fallback={<div class="min-w-3 flex-1" aria-hidden />}>
+        <Show when={props.crumbs?.length || props.project} fallback={<div class="min-w-3 flex-1" aria-hidden />}>
           <nav aria-label="Breadcrumb" class="pw-titlebar-crumbs">
             <ol>
+              <Show when={props.project}>{(project) => <li class="pw-titlebar-crumbs__project-item"><ProjectCrumb project={project()} /></li>}</Show>
               <For each={props.crumbs}>
                 {(crumb, index) => (
                   <li>
-                    <Show when={index() > 0}><span class="pw-titlebar-crumbs__sep" aria-hidden="true">/</span></Show>
+                    <Show when={index() > 0 || props.project}><span class="pw-titlebar-crumbs__sep" aria-hidden="true">/</span></Show>
                     <Show
                       when={crumb.onClick && index() < props.crumbs!.length - 1}
                       fallback={<span class="pw-titlebar-crumbs__current" aria-current={index() === props.crumbs!.length - 1 ? "page" : undefined}>{crumb.label}</span>}

@@ -41,7 +41,7 @@ beforeEach(() => {
 });
 afterEach(async () => { dispose?.(); dispose = undefined; await Promise.resolve(); container.remove(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
-const kinds = ["system", "domain", "component", "frontend", "service", "database", "cache", "queue", "rectangle", "cylinder"];
+const kinds = ["domain", "component", "frontend", "service", "database", "cache", "queue", "rectangle", "cylinder"];
 const edges = ["relates", "calls", "reads", "depends_on"];
 
 describe("generalist canvas with semantic components", () => {
@@ -123,7 +123,7 @@ describe("generalist canvas with semantic components", () => {
     const entities: StoreEntity[] = [{ kind: "node", id: "core", title: "Core", level: "component" }];
     mount(record("canvas", []), kinds, edges, entities);
     const library = container.querySelector('[aria-label="Shape library"]')!;
-    for (const label of ["System", "Domain", "Component"]) expect(library.querySelector(`button[aria-label="${label}"]`)).toBeNull();
+    for (const label of ["Domain", "Component"]) expect(library.querySelector(`button[aria-label="${label}"]`)).toBeNull();
     expect(library.querySelector('button[aria-label="Add component: Core"]')).toBeTruthy();
   });
 

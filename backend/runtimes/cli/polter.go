@@ -149,7 +149,7 @@ func runQuery(dbPath string, args []string) error {
 		return err
 	}
 	if len(positional) == 0 {
-		return errors.New(`usage: polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "brief <target>" | "search <terms>" | "show <id>" | "drift" | "structure" | "decisions [state]" | "decision <decision>" | "feature <slug> [step]" | "verify <slug>" | "canvas [<name|id>]"`)
+		return errors.New(`usage: polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "brief <target>" | "search <terms>" | "show <id>" | "commits <slug>" | "structure" | "decisions [state]" | "decision <decision>" | "feature <slug> [step]" | "verify <slug>" | "canvas [<name|id>]"`)
 	}
 	c, err := dial(dbPath)
 	if err != nil {
@@ -326,7 +326,7 @@ func writeDiagnostics(w io.Writer, name string, diags []polter.Diagnostic) {
 // runTask claims, finishes, or releases one task for the session agent. It
 // writes the matching Polter coordination line through ApplyPolter.
 func runTask(dbPath string, args []string) error {
-	const taskUsage = "usage: polterware task claim|done|release <slug>#T2 [--agent name] [--project <id>]"
+	const taskUsage = "usage: polterware task claim|done|release <slug>#T2 [--agent name] [--commit <sha>] [--project <id>]"
 	if len(args) == 0 {
 		return errors.New(taskUsage)
 	}
@@ -338,6 +338,7 @@ func runTask(dbPath string, args []string) error {
 	flags.SetOutput(os.Stderr)
 	projectID := flags.String("project", "", "project id (default: project containing the cwd)")
 	agent := flags.String("agent", "", "agent label holding the claim (default: $"+envAgentLabel+")")
+	commit := flags.String("commit", "", "with done: the commit that finished the task, shown on the card")
 	positional, err := parseInterspersed(flags, args[1:])
 	if err != nil {
 		return err
@@ -386,8 +387,17 @@ func runTask(dbPath string, args []string) error {
 	}
 	if len(res.Msg.Ops) == 0 {
 		fmt.Println("no changes")
-		return nil
+	} else {
+		fmt.Println(strings.Join(res.Msg.Ops, "\n"))
 	}
-	fmt.Println(strings.Join(res.Msg.Ops, "\n"))
+	if sha := strings.TrimSpace(*commit); sha != "" && action == polter.CoordDone {
+		linked, err := c.Work.LinkTaskCommit(context.Background(), connect.NewRequest(&localv1.LinkTaskCommitRequest{
+			ProjectId: project.Id, Task: fmt.Sprintf("%s#T%d", ref.Slug, ref.Number), Sha: sha,
+		}))
+		if err != nil {
+			return err
+		}
+		fmt.Printf("commit %s linked to %s T%d\n", linked.Msg.Commit.ShortSha, ref.Slug, ref.Number)
+	}
 	return nil
 }

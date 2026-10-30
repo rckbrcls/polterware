@@ -213,21 +213,21 @@ func TestVerifyFeature(t *testing.T) {
 		{Number: 3, Title: "Old idea", State: work.TaskDropped},
 		{Number: 4, Title: "Link commits", State: work.TaskDone},
 	}}
-	result, err := VerifyFeature(VerifyInput{Card: card, Unmatched: map[int]bool{4: true}, GitReady: true,
+	result, err := VerifyFeature(VerifyInput{Card: card,
 		Contract: []ReviewInvariant{{Text: "No network calls", From: "core"}}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.Passed {
-		t.Fatalf("open task and unmatched done task should fail: %+v", result)
+		t.Fatalf("an open task should fail: %+v", result)
 	}
 	text := EncodeVerify(result)
-	for _, want := range []string{"verify git-import  FAIL", "fail  T2 is open", "fail  T4 is done with no commit on main", "pass  T1 done", "check ! No network calls (from core)"} {
+	for _, want := range []string{"verify git-import  FAIL", "fail  T2 is open", "pass  T4 done", "pass  T1 done", "check ! No network calls (from core)"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("verify text misses %q:\n%s", want, text)
 		}
 	}
-	one, err := VerifyFeature(VerifyInput{Card: card, Task: 1, GitReady: true})
+	one, err := VerifyFeature(VerifyInput{Card: card, Task: 1})
 	if err != nil || !one.Passed || one.Target != "git-import#T1" {
 		t.Fatalf("task verify = %+v err=%v", one, err)
 	}

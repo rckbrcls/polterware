@@ -22,31 +22,31 @@ func TestBriefResolvesFilesToTheNodeThatHoldsThem(t *testing.T) {
 	if err := os.MkdirAll(apiDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", RootPath: root})
+	project, err := initWithRepo(store, "Demo", root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := wedge.AddProjectRepo(store, project.ID, "api", apiDir); err != nil {
+	if _, err := wedge.EnsureRepository(store, project.ID, apiDir); err != nil {
 		t.Fatal(err)
 	}
-	result, err := wedge.ApplyPolter(store, wedge.ApplyInput{ProjectID: project.ID, AutoStartLabel: "cli", Text: `---
+	result, err := wedge.ApplyPolter(store, wedge.ApplyInput{ProjectID: project.ID, AutoStartLabel: "cli", Text: strings.ReplaceAll(`---
 polter: 1
 summary: Map the checkouts
 rationale: Briefs find a file's node by its checkout
 ---
 
 # app: App
-level: system · path: src
+level: domain · dir: {root} · path: src
 
 # app/web: Web
-level: component · under: app · path: src/web
+level: component · under: app · dir: {root} · path: src/web
 
 # app/auth: Auth
 level: component · under: app · repo: api · path: internal/auth
 
 ## login: Login
 stage: build · under: app/auth
-`})
+`, "{root}", root)})
 	if err != nil || len(result.Diagnostics) > 0 {
 		t.Fatalf("apply: %v %+v", err, result.Diagnostics)
 	}
@@ -89,7 +89,7 @@ func TestFileContextSendsEachNodeBriefOncePerSession(t *testing.T) {
 	}
 	defer store.Close()
 	root := t.TempDir()
-	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", RootPath: root})
+	project, err := initWithRepo(store, "Demo", root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func TestFileContextSendsEachNodeBriefOncePerSession(t *testing.T) {
 			t.Fatalf("apply: %v %+v", err, result.Diagnostics)
 		}
 	}
-	apply("# app: App\nlevel: system · path: src\n\n# app/web: Web\nlevel: component · under: app · path: src/web\n\n! No inline styles\n")
+	apply("# app: App\nlevel: domain · path: src\n\n# app/web: Web\nlevel: component · under: app · path: src/web\n\n! No inline styles\n")
 	file := filepath.Join(root, "src", "web", "page.tsx")
 
 	text, node, err := wedge.FileContext(store, project.ID, "s1", file)

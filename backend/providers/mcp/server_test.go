@@ -70,7 +70,7 @@ func TestInitializeStableVersion(t *testing.T) {
 		t.Fatalf("version=%v", info["version"])
 	}
 	instructions, _ := payload["instructions"].(string)
-	for _, want := range []string{"polter.query", "polter.apply", "polter.format", "doc.upsert", "brief", "search", "show", "drift"} {
+	for _, want := range []string{"polter.query", "polter.apply", "polter.format", "doc.upsert", "brief", "search", "show", "commits"} {
 		if !strings.Contains(instructions, want) {
 			t.Fatalf("instructions missing %q: %s", want, instructions)
 		}
@@ -98,7 +98,7 @@ func TestRetiredToolsPointToTheirReplacement(t *testing.T) {
 	}
 }
 
-func TestPolterQueryShowsOneRecordAndDrift(t *testing.T) {
+func TestPolterQueryShowsOneRecordAndCommits(t *testing.T) {
 	server := testServer(t)
 	for id, want := range map[string]string{
 		"Decision-0001":    "### Decision-0001: Local SQLite authority",
@@ -113,15 +113,15 @@ func TestPolterQueryShowsOneRecordAndDrift(t *testing.T) {
 	if _, err := server.callTool(ToolPolterQuery, map[string]any{"project_id": demoseed.ProjectID, "query": "show nope"}); err == nil || !strings.Contains(err.Error(), "search <terms>") {
 		t.Fatalf("unknown id: %v", err)
 	}
-	if text := query(t, server, "drift"); !strings.Contains(text, "drift findings") {
-		t.Fatalf("drift: %s", text)
+	if text := query(t, server, "commits commits-panel"); !strings.Contains(text, "commits for commits-panel") {
+		t.Fatalf("commits: %s", text)
 	}
 }
 
 func TestDocUpsertCreatesUpdatesAndScopesInTheSessionRun(t *testing.T) {
 	server := testServer(t)
 	if _, err := wedge.ApplyPolter(server.Store, wedge.ApplyInput{ProjectID: demoseed.ProjectID, AutoStartLabel: "cli",
-		Text: "---\npolter: 1\nsummary: Map auth\nrationale: Docs need a scope\n---\n\n# services: Services\nlevel: system\n\n# services/auth: Auth\nlevel: component · under: services\n"}); err != nil {
+		Text: "---\npolter: 1\nsummary: Map auth\nrationale: Docs need a scope\n---\n\n# services: Services\nlevel: domain\n\n# services/auth: Auth\nlevel: component · under: services\n"}); err != nil {
 		t.Fatal(err)
 	}
 	seeded, _ := server.Store.ListAgentRuns(demoseed.ProjectID, 50)

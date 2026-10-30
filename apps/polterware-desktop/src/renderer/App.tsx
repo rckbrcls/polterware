@@ -39,6 +39,7 @@ import {
   scopeNodeIds,
   serializeScopeFilter,
   type ScopeFilterToken,
+  type TitleBarCrumb,
   type ScopeNodeItem,
   type EnvironmentItem,
   type FeatureFlowStep,
@@ -145,9 +146,7 @@ import {
   persistKnowledgeArchived,
   persistKnowledgeDeletePermanently,
   loadArchivedKnowledge,
-  persistAddProjectRepo,
   persistProjectSettings,
-  persistRemoveProjectRepo,
   persistAgentsSync,
   persistDecisionAction,
   persistWorkCreateCard,
@@ -692,7 +691,7 @@ export function App() {
   const [dispatchDraft, setDispatchDraft] = createSignal<{ key: number; cardSlug: string; prompt: string; route?: RunRouteSelection }>();
   // Commander's Run an agent picks its Route, Milestone, and Card like Start run; the open card comes preset.
   const paletteRouteSources = createRunRouteSources();
-  const paletteRoute = createRunRoute({ ...paletteRouteSources, cards: startRunCards });
+  const paletteRoute = createRunRoute({ ...paletteRouteSources, cards: startRunCards, repositories: () => workspace().repositories });
   createEffect(on(paletteOpen, (open) => {
     if (!open) return;
     void paletteRouteSources.load();
@@ -869,6 +868,34 @@ export function App() {
     applyRoute(section ? rememberedSection(goSection(entered, section)) : entered);
   }
 
+  // What is open in the list, for the breadcrumb after it: a canvas or a run lives outside the route.
+  const [openCanvasName, setOpenCanvasName] = createSignal<string>();
+  const [openRunTitle, setOpenRunTitle] = createSignal<string>();
+  function openDetailTitle(open: { entityId: string; entityKind: string }): string | undefined {
+    const current = workspace();
+    if (open.entityKind === "card") return current.workCards.find((card) => card.slug === open.entityId || card.id === open.entityId)?.title;
+    if (open.entityKind === "doc") return current.docs.find((doc) => doc.id === open.entityId)?.title;
+    if (open.entityKind === "decision") return current.decisions.find((decision) => decision.id === open.entityId)?.title;
+    return undefined;
+  }
+  const breadcrumbTrail = createMemo((): TitleBarCrumb[] => {
+    const current = route();
+    const open = current.expandedDetail;
+    const out: TitleBarCrumb[] = [];
+    if (current.section === "milestones" && current.milestone) {
+      const name = current.milestone === "all" ? "All cards"
+        : current.milestone === "backlog" ? "Backlog"
+        : workspace().milestones.find((milestone) => milestone.id === current.milestone)?.name;
+      // With a card open, the board's crumb closes the card back to it.
+      if (name) out.push({ label: name, onClick: open ? () => requestDetailExpanded(false) : undefined });
+    }
+    if (current.section === "canvas" && openCanvasName()) out.push({ label: openCanvasName()! });
+    if (current.section === "dispatch" && openRunTitle()) out.push({ label: openRunTitle()! });
+    const title = open ? openDetailTitle(open) : undefined;
+    if (title) out.push({ label: title });
+    return out;
+  });
+
   const currentProjectId = () => route().projectId ?? workspace().settings.projectId;
   createEffect(() => setActiveProjectId(currentProjectId() ?? ""));
 
@@ -932,20 +959,6 @@ export function App() {
       if (currentProjectId() === projectId) setWorkspace((current) => ({ ...current, workCards, structure, inbox }));
     }
     pushToast(`${done} ${done === 1 ? "item" : "items"} updated.`, "success");
-  }
-
-  /** The Inbox derives Drift on read; a re-read picks up files changed outside Polterware. */
-  async function checkDrift() {
-    const projectId = currentProjectId();
-    try {
-      const inbox = await loadInbox(projectId);
-      if (currentProjectId() !== projectId) return;
-      setWorkspace((current) => ({ ...current, inbox }));
-      const drift = inbox.items.filter((item) => item.kind === "drift" && item.state === "open").length;
-      pushToast(drift === 0 ? "No drift found." : `${drift} drift ${drift === 1 ? "item" : "items"} in the Inbox.`, drift === 0 ? "success" : "default");
-    } catch (error) {
-      pushToast(error instanceof Error ? error.message : "Could not check drift.", "danger");
-    }
   }
 
   /** Cards open in the Board or Specs detail scope, matching the visible Milestones layout. */
@@ -1463,31 +1476,6 @@ export function App() {
         onClose={() => applyRoute(closeDialog(route()), "silent")}
         general={workspace().settings}
         environments={workspace().settingsEnvironments}
-        repositories={workspace().repositories}
-        onAddRepository={async (draft) => {
-          try {
-            await persistAddProjectRepo(currentProjectId(), draft.name, draft.path);
-            pushToast(`Repository "${draft.name}" added.`, "success");
-            await refreshWorkspace(currentProjectId());
-          } catch (error: unknown) {
-            pushToast(error instanceof Error ? error.message : "Could not add repository.", "danger");
-            throw error;
-          }
-        }}
-        onRemoveRepository={async (name) => {
-          try {
-            await persistRemoveProjectRepo(currentProjectId(), name);
-            pushToast(`Repository "${name}" removed.`, "success");
-            await refreshWorkspace(currentProjectId());
-          } catch (error: unknown) {
-            pushToast(error instanceof Error ? error.message : "Could not remove repository.", "danger");
-            throw error;
-          }
-        }}
-        onBrowseRepository={async () => {
-          const selected = await window.polterware.app.selectDirectory();
-          return selected.path;
-        }}
         onAgentsSyncChange={async (enabled) => {
           try {
             const written = await persistAgentsSync(currentProjectId(), enabled);
@@ -1600,6 +1588,7 @@ export function App() {
       onBack={goBack}
       onForward={goForward}
       onGoHome={goProjectsHome}
+      trail={breadcrumbTrail()}
       status={{ dataMode: dataMode() }}
       platform={PLATFORM_CONTEXT}
       navCounts={{
@@ -1639,22 +1628,21 @@ export function App() {
             scopeNodes={scopeNodes()}
             scopeEnvironments={scopeEnvironmentCatalog()}
             onScopeTokensChange={applyScopeTokens}
-            onCheckDrift={checkDrift}
           />
         </Match>
 
         <Match when={route().section === "canvas"}>
-          <Show when={currentProjectId()} keyed>{(projectId) => <CanvasWorkspace projectId={projectId} homeKey={sectionHomeKey()} workspace={workspace()} onReload={() => refreshWorkspace(projectId)} />}</Show>
+          <Show when={currentProjectId()} keyed>{(projectId) => <CanvasWorkspace projectId={projectId} homeKey={sectionHomeKey()} workspace={workspace()} onReload={() => refreshWorkspace(projectId)} onOpenCanvasName={setOpenCanvasName} />}</Show>
         </Match>
 
         <Match when={route().section === "structure"}>
           <StructureView
             projectName={workspace().settings.name || "Project"}
             projectDescription={workspace().settings.description}
-            projectRepository={workspace().settings.repository}
             nodes={workspace().structure.nodes}
             records={structureRecords().nodes}
-            repositories={workspace().repositories.map((repo) => repo.name)}
+            repositories={workspace().repositories}
+            onPickFolder={async () => (await window.polterware.app.selectDirectory()).path}
             registryNodes={workspace().structure.nodes}
             projectRecords={structureRecords().project}
             onOpenRecord={(kind, id) => setPeekRecord({ kind, id })}
@@ -1726,15 +1714,15 @@ export function App() {
             onMove={async (nodeId, parentId) => {
               const nodes = workspace().structure.nodes;
               const node = nodes.find((item) => item.id === nodeId);
-              const parent = nodes.find((item) => item.id === parentId);
-              if (!node || !parent) throw new Error("Missing structure node.");
+              // An empty parent is the project: the component sits loose under it.
+              const parent = parentId ? nodes.find((item) => item.id === parentId) : undefined;
+              if (!node || (parentId && !parent)) throw new Error("Missing structure node.");
               const from = nodes.find((item) => item.id === node.parentId);
               const change = await justifyChange({
                 title: "Move structure node",
-                defaultSummary:
-                  parent.level === "system" && from
-                    ? `Move ${node.title} out of ${from.title}`
-                    : `Move ${node.title} under ${parent.title}`,
+                defaultSummary: parent
+                  ? `Move ${node.title} under ${parent.title}`
+                  : `Move ${node.title} out of ${from?.title ?? "its domain"}`,
               });
               if (!change) throw new Error("Cancelled.");
               await persistStructureMoveNode({
@@ -1742,7 +1730,7 @@ export function App() {
                 path: node.path,
                 title: node.title,
                 level: node.level,
-                under: parent.path,
+                under: parent?.path ?? "",
                 change,
               });
               await refreshWorkspace(currentProjectId());
@@ -1750,10 +1738,10 @@ export function App() {
             onCreate={async (draft) => {
               const nodes = workspace().structure.nodes;
               const parent = nodes.find((node) => node.id === draft.parentId);
-              const change = await justifyChange({ title: "Add structure node", defaultSummary: `Add ${draft.title}${parent ? ` under ${parent.title}` : ""}` });
+              const change = await justifyChange({ title: "Add structure node", defaultSummary: `Add ${draft.title}${parent ? ` under ${parent.title}` : ""}`, why: draft.why });
               if (!change) throw new Error("Cancelled.");
               await persistStructureCreateNode({ projectId: currentProjectId(), heading: uniqueStructureSlug(nodes, draft.title), title: draft.title,
-                level: draft.level, under: parent?.path, change });
+                level: draft.level, under: parent?.path, intent: draft.intent, change });
               await refreshWorkspace(currentProjectId());
               pushToast("Structure node added.", "success");
             }}
@@ -1820,6 +1808,8 @@ export function App() {
             onStartDraftUsed={() => setDispatchDraft(undefined)}
             homeKey={sectionHomeKey()}
             cards={startRunCards()}
+            repositories={workspace().repositories}
+            onOpenRunTitle={setOpenRunTitle}
           />
         </Match>
 
@@ -1849,7 +1839,7 @@ export function App() {
               applyRoute(closeDialog(route()), "silent");
             }}
             projectId={currentProjectId()}
-            projectDir={workspace().projects.find((project) => project.projectId === currentProjectId())?.directory ?? ""}
+            projectDir={workspace().repositories.find((repo) => repo.localPath)?.localPath ?? ""}
             loading={loading()}
             onTabChange={(tab) => applyRoute(openDialog(route(), { type: "settings", tab: tab as ProjectSettingsTabId }), "silent")}
             renderProjectSettings={(tab) => <ProjectSettings embedded tab={tab} />}
@@ -1920,10 +1910,6 @@ export function App() {
         onClose={() => {
           if (workspace().projects.length === 0) return;
           setCreateProjectOpen(false);
-        }}
-        onPickDirectory={async () => {
-          const result = await window.polterware.app.selectDirectory();
-          return result.path;
         }}
         onCreate={(input) => {
           void (async () => {

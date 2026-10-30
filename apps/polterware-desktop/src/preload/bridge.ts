@@ -112,8 +112,6 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         saveSettings: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.saveProjectSettings, payload),
         setAgentsSync: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.setAgentsSync, payload),
         listRepos: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listProjectRepos, payload),
-        addRepo: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.addProjectRepo, payload),
-        removeRepo: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.removeProjectRepo, payload),
       },
       canvas: {
         listCanvases: (payload: JsonObject = {}) => coreCall(ipc, IPC_CHANNELS.core.listCanvases, payload),
@@ -154,6 +152,9 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
         createFeature: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.createFeature, payload),
         advanceFeature: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.advanceFeature, payload),
         verifyFeature: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.verifyFeature, payload),
+        listCardCommits: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listCardCommits, payload),
+        linkTaskCommit: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.linkTaskCommit, payload),
+        unlinkTaskCommit: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.unlinkTaskCommit, payload),
       },
       savedFilters: {
         list: ({ projectId, surface }: SavedFilterListInput) =>

@@ -66,12 +66,6 @@ const (
 	// ProjectServiceListProjectReposProcedure is the fully-qualified name of the ProjectService's
 	// ListProjectRepos RPC.
 	ProjectServiceListProjectReposProcedure = "/polterware.local.v1.ProjectService/ListProjectRepos"
-	// ProjectServiceAddProjectRepoProcedure is the fully-qualified name of the ProjectService's
-	// AddProjectRepo RPC.
-	ProjectServiceAddProjectRepoProcedure = "/polterware.local.v1.ProjectService/AddProjectRepo"
-	// ProjectServiceRemoveProjectRepoProcedure is the fully-qualified name of the ProjectService's
-	// RemoveProjectRepo RPC.
-	ProjectServiceRemoveProjectRepoProcedure = "/polterware.local.v1.ProjectService/RemoveProjectRepo"
 )
 
 // ProjectServiceClient is a client for the polterware.local.v1.ProjectService service.
@@ -87,8 +81,6 @@ type ProjectServiceClient interface {
 	GetProjectSettings(context.Context, *connect.Request[v1.GetProjectSettingsRequest]) (*connect.Response[v1.GetProjectSettingsResponse], error)
 	SaveProjectSettings(context.Context, *connect.Request[v1.SaveProjectSettingsRequest]) (*connect.Response[v1.SaveProjectSettingsResponse], error)
 	ListProjectRepos(context.Context, *connect.Request[v1.ListProjectReposRequest]) (*connect.Response[v1.ListProjectReposResponse], error)
-	AddProjectRepo(context.Context, *connect.Request[v1.AddProjectRepoRequest]) (*connect.Response[v1.AddProjectRepoResponse], error)
-	RemoveProjectRepo(context.Context, *connect.Request[v1.RemoveProjectRepoRequest]) (*connect.Response[v1.RemoveProjectRepoResponse], error)
 }
 
 // NewProjectServiceClient constructs a client for the polterware.local.v1.ProjectService service.
@@ -168,18 +160,6 @@ func NewProjectServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(projectServiceMethods.ByName("ListProjectRepos")),
 			connect.WithClientOptions(opts...),
 		),
-		addProjectRepo: connect.NewClient[v1.AddProjectRepoRequest, v1.AddProjectRepoResponse](
-			httpClient,
-			baseURL+ProjectServiceAddProjectRepoProcedure,
-			connect.WithSchema(projectServiceMethods.ByName("AddProjectRepo")),
-			connect.WithClientOptions(opts...),
-		),
-		removeProjectRepo: connect.NewClient[v1.RemoveProjectRepoRequest, v1.RemoveProjectRepoResponse](
-			httpClient,
-			baseURL+ProjectServiceRemoveProjectRepoProcedure,
-			connect.WithSchema(projectServiceMethods.ByName("RemoveProjectRepo")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
@@ -196,8 +176,6 @@ type projectServiceClient struct {
 	getProjectSettings  *connect.Client[v1.GetProjectSettingsRequest, v1.GetProjectSettingsResponse]
 	saveProjectSettings *connect.Client[v1.SaveProjectSettingsRequest, v1.SaveProjectSettingsResponse]
 	listProjectRepos    *connect.Client[v1.ListProjectReposRequest, v1.ListProjectReposResponse]
-	addProjectRepo      *connect.Client[v1.AddProjectRepoRequest, v1.AddProjectRepoResponse]
-	removeProjectRepo   *connect.Client[v1.RemoveProjectRepoRequest, v1.RemoveProjectRepoResponse]
 }
 
 // ResolveProject calls polterware.local.v1.ProjectService.ResolveProject.
@@ -255,16 +233,6 @@ func (c *projectServiceClient) ListProjectRepos(ctx context.Context, req *connec
 	return c.listProjectRepos.CallUnary(ctx, req)
 }
 
-// AddProjectRepo calls polterware.local.v1.ProjectService.AddProjectRepo.
-func (c *projectServiceClient) AddProjectRepo(ctx context.Context, req *connect.Request[v1.AddProjectRepoRequest]) (*connect.Response[v1.AddProjectRepoResponse], error) {
-	return c.addProjectRepo.CallUnary(ctx, req)
-}
-
-// RemoveProjectRepo calls polterware.local.v1.ProjectService.RemoveProjectRepo.
-func (c *projectServiceClient) RemoveProjectRepo(ctx context.Context, req *connect.Request[v1.RemoveProjectRepoRequest]) (*connect.Response[v1.RemoveProjectRepoResponse], error) {
-	return c.removeProjectRepo.CallUnary(ctx, req)
-}
-
 // ProjectServiceHandler is an implementation of the polterware.local.v1.ProjectService service.
 type ProjectServiceHandler interface {
 	ResolveProject(context.Context, *connect.Request[v1.ResolveProjectRequest]) (*connect.Response[v1.ResolveProjectResponse], error)
@@ -278,8 +246,6 @@ type ProjectServiceHandler interface {
 	GetProjectSettings(context.Context, *connect.Request[v1.GetProjectSettingsRequest]) (*connect.Response[v1.GetProjectSettingsResponse], error)
 	SaveProjectSettings(context.Context, *connect.Request[v1.SaveProjectSettingsRequest]) (*connect.Response[v1.SaveProjectSettingsResponse], error)
 	ListProjectRepos(context.Context, *connect.Request[v1.ListProjectReposRequest]) (*connect.Response[v1.ListProjectReposResponse], error)
-	AddProjectRepo(context.Context, *connect.Request[v1.AddProjectRepoRequest]) (*connect.Response[v1.AddProjectRepoResponse], error)
-	RemoveProjectRepo(context.Context, *connect.Request[v1.RemoveProjectRepoRequest]) (*connect.Response[v1.RemoveProjectRepoResponse], error)
 }
 
 // NewProjectServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -355,18 +321,6 @@ func NewProjectServiceHandler(svc ProjectServiceHandler, opts ...connect.Handler
 		connect.WithSchema(projectServiceMethods.ByName("ListProjectRepos")),
 		connect.WithHandlerOptions(opts...),
 	)
-	projectServiceAddProjectRepoHandler := connect.NewUnaryHandler(
-		ProjectServiceAddProjectRepoProcedure,
-		svc.AddProjectRepo,
-		connect.WithSchema(projectServiceMethods.ByName("AddProjectRepo")),
-		connect.WithHandlerOptions(opts...),
-	)
-	projectServiceRemoveProjectRepoHandler := connect.NewUnaryHandler(
-		ProjectServiceRemoveProjectRepoProcedure,
-		svc.RemoveProjectRepo,
-		connect.WithSchema(projectServiceMethods.ByName("RemoveProjectRepo")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/polterware.local.v1.ProjectService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ProjectServiceResolveProjectProcedure:
@@ -391,10 +345,6 @@ func NewProjectServiceHandler(svc ProjectServiceHandler, opts ...connect.Handler
 			projectServiceSaveProjectSettingsHandler.ServeHTTP(w, r)
 		case ProjectServiceListProjectReposProcedure:
 			projectServiceListProjectReposHandler.ServeHTTP(w, r)
-		case ProjectServiceAddProjectRepoProcedure:
-			projectServiceAddProjectRepoHandler.ServeHTTP(w, r)
-		case ProjectServiceRemoveProjectRepoProcedure:
-			projectServiceRemoveProjectRepoHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -446,12 +396,4 @@ func (UnimplementedProjectServiceHandler) SaveProjectSettings(context.Context, *
 
 func (UnimplementedProjectServiceHandler) ListProjectRepos(context.Context, *connect.Request[v1.ListProjectReposRequest]) (*connect.Response[v1.ListProjectReposResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.ProjectService.ListProjectRepos is not implemented"))
-}
-
-func (UnimplementedProjectServiceHandler) AddProjectRepo(context.Context, *connect.Request[v1.AddProjectRepoRequest]) (*connect.Response[v1.AddProjectRepoResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.ProjectService.AddProjectRepo is not implemented"))
-}
-
-func (UnimplementedProjectServiceHandler) RemoveProjectRepo(context.Context, *connect.Request[v1.RemoveProjectRepoRequest]) (*connect.Response[v1.RemoveProjectRepoResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.ProjectService.RemoveProjectRepo is not implemented"))
 }

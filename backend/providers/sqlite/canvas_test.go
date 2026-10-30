@@ -22,7 +22,7 @@ func TestCanvasRoundTrip(t *testing.T) {
 	t.Cleanup(func() { _ = store.Close() })
 	now := time.Now().UTC()
 	for _, id := range []string{"proj-canvas", "proj-other"} {
-		if err := store.SaveProject(projects.Project{ID: id, Name: id, RootPath: "/" + id, CreatedAt: now, UpdatedAt: now}); err != nil {
+		if err := store.SaveProject(projects.Project{ID: id, Name: id, CreatedAt: now, UpdatedAt: now}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -156,7 +156,7 @@ func TestCanvasRoundTrip(t *testing.T) {
 func TestCanvasRejectsInvalidGraphAndScope(t *testing.T) {
 	store := newStore(t)
 	now := time.Now().UTC()
-	if err := store.SaveProject(projects.Project{ID: "proj-canvas", Name: "Canvas", RootPath: "/canvas", CreatedAt: now, UpdatedAt: now}); err != nil {
+	if err := store.SaveProject(projects.Project{ID: "proj-canvas", Name: "Canvas", CreatedAt: now, UpdatedAt: now}); err != nil {
 		t.Fatal(err)
 	}
 	_, err := store.CreateCanvas(canvas.Canvas{

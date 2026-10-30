@@ -1,5 +1,5 @@
 import { For, Show, createMemo, createSignal, type JSX } from "solid-js";
-import { A11yDialog, ArrowUp, Button, CollapsibleSection, DataTable, Field, FormStack, GitBranch, Input, Link2, ListChecks, ScrollText, ShieldCheck, StatusChip } from "@polterware/frontend-design-system";
+import { ArrowUp, Button, CollapsibleSection, Composer, DataTable, GitBranch, Input, Link2, ListChecks, ScrollText, ShieldCheck, StatusChip } from "@polterware/frontend-design-system";
 import { buildRef, canPromote, kindLabel, readRef, referenceState, type CanvasRef, type StoreEntity } from "./references";
 import { deriveSlug, PromotionAppliedError, promotionText, type PromotionInput, type PromotionKind } from "./promotion";
 import type { ArchNode } from "@polterware/frontend-canvas";
@@ -17,30 +17,31 @@ export function NodeInspector(props: {
 }) {
   const [search, setSearch] = createSignal("");
   const [promotion, setPromotion] = createSignal<PromotionKind>();
-  const [title, setTitle] = createSignal("");
   const [slug, setSlug] = createSignal("");
-  const [busy, setBusy] = createSignal(false);
   const [applied, setApplied] = createSignal(false);
   const [error, setError] = createSignal("");
   const ref = () => readRef(props.node);
   const state = () => referenceState(ref(), props.entities);
   const matches = createMemo(() => props.entities.filter((entity) => (!props.structureRequired || entity.kind === "node") && `${kindLabel(entity.kind)} ${entity.title} ${entity.slug ?? ""}`.toLowerCase().includes(search().toLowerCase())));
   function open(kind: PromotionKind) {
-    setTitle(props.node.name); setSlug(deriveSlug(props.node.name, props.entities.filter((e) => e.kind === kind).map((e) => e.slug ?? "")));
+    setSlug(deriveSlug(props.node.name, props.entities.filter((e) => e.kind === kind).map((e) => e.slug ?? "")));
     setError(""); setApplied(false); setPromotion(kind);
   }
-  async function submit() {
-    if (busy() || applied() || !promotion() || !props.promote) return;
-    setBusy(true); setError("");
+  /** Resolves false to keep the Composer open with the error under the title. */
+  async function submit(title: string): Promise<boolean> {
+    if (applied() || !promotion() || !props.promote) return false;
+    setError("");
     try {
-      const input = { kind: promotion()!, title: title(), slug: slug(), canvasName: props.canvasName };
+      const input = { kind: promotion()!, title, slug: slug(), canvasName: props.canvasName };
       promotionText(input); // Validate before contacting the core.
       const entity = await props.promote(input);
       setApplied(true); props.onLink(buildRef(entity)); setPromotion(undefined);
+      return true;
     } catch (error) {
       if (error instanceof PromotionAppliedError) setApplied(true);
       setError(error instanceof Error ? error.message : String(error));
-    } finally { setBusy(false); }
+      return false;
+    }
   }
   return <>
     {props.children}
@@ -69,14 +70,21 @@ export function NodeInspector(props: {
     <Show when={canPromote(props.node)}><CollapsibleSection title="Promote" icon={<ArrowUp size={14} />}>
       <div class="flex flex-col items-start gap-1"><For each={["card", "decision", "fact"] as const}>{(kind) => <Button size="sm" variant="ghost" disabled={!props.promote} onClick={() => open(kind)}><EntityIcon kind={kind} />Promote to {kindLabel(kind)}</Button>}</For></div>
     </CollapsibleSection></Show>
-    <A11yDialog open={!!promotion()} title={`Promote to ${kindLabel(promotion() ?? "card")}`} onClose={() => { if (!busy()) setPromotion(undefined); }} dismissible={!busy()}
-      footer={<><Button variant="ghost" disabled={busy()} onClick={() => setPromotion(undefined)}>Cancel</Button><Button disabled={busy() || applied() || !title().trim()} onClick={() => void submit()}>{busy() ? "Promoting…" : "Promote"}</Button></>}>
-      <FormStack>
-        <Field label="Title"><Input aria-label="Promotion title" disabled={busy() || applied()} value={title()} onInput={(e) => setTitle(e.currentTarget.value)} /></Field>
-        <Show when={promotion() === "card" || promotion() === "fact"}><Field label="Slug"><Input aria-label="Promotion slug" disabled={busy() || applied()} value={slug()} onInput={(e) => setSlug(e.currentTarget.value)} /></Field></Show>
+    <Composer
+      open={!!promotion()}
+      crumbs={[props.canvasName, `Promote to ${kindLabel(promotion() ?? "card")}`]}
+      titlePlaceholder="Title"
+      fields={promotion() === "card" || promotion() === "fact" ? [{ id: "slug", label: "Slug", placeholder: "lowercase-kebab", value: slug(), onChange: setSlug }] : undefined}
+      body={<>
         <p class="text-xs text-[var(--color-text-muted)]">{promotion() === "card" ? "Stage: Idea" : promotion() === "decision" ? "Status: Proposed. The core assigns a Decision number." : "Agents keep the code to it."}</p>
-      </FormStack>
-      <Show when={error()}><p role="alert" class="mt-3 text-sm text-[var(--color-danger)]">{error()}</p></Show>
-    </A11yDialog>
+        <Show when={error()}><p role="alert" class="mt-2 text-sm text-[var(--color-danger)]">{error()}</p></Show>
+      </>}
+      initial={{ title: props.node.name }}
+      createMore={false}
+      canSubmit={!applied()}
+      submitLabel="Promote"
+      onClose={() => setPromotion(undefined)}
+      onSubmit={(draft) => submit(draft.title)}
+    />
   </>;
 }

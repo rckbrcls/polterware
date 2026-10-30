@@ -1,12 +1,10 @@
 import { Show, createMemo, createSignal } from "solid-js";
 import {
   ActiveFilterBar,
-  Copy,
   DataTable,
   EntityContextMenu,
   EntityMenuButton,
   ExternalLink,
-  Folder,
   FolderKanban,
   FilterPopover,
   IconTile,
@@ -20,7 +18,6 @@ import {
   Settings,
   StatusDot,
   ToolbarIconButton,
-  Tooltip,
   createEntityContextMenu,
   matchClauses,
   type EntityAction,
@@ -44,25 +41,12 @@ export type ProjectsScreenProps = {
   onCreateProject: () => void;
 };
 
-/** Last path segment, shown in the Folder column. */
-function folderName(project: ProjectSwitcherItem): string | undefined {
-  const path = project.directory?.trim().replace(/[\\/]+$/, "");
-  if (!path) return undefined;
-  return path.split(/[\\/]/).pop() || undefined;
-}
-
 type ProjectStatus = NonNullable<ProjectSwitcherItem["status"]>;
-type FolderFilter = "linked" | "none";
 
 const STATUS_FILTERS: { id: ProjectStatus; label: string; tone: StatusTone }[] = [
   { id: "active", label: "Active", tone: "ok" },
   { id: "paused", label: "Paused", tone: "warn" },
   { id: "archived", label: "Archived", tone: "muted" },
-];
-
-const FOLDER_FILTERS: { id: FolderFilter; label: string }[] = [
-  { id: "linked", label: "Linked folder" },
-  { id: "none", label: "No folder" },
 ];
 
 /** A project without a stored status is treated as active. */
@@ -73,10 +57,6 @@ function statusOf(project: ProjectSwitcherItem): ProjectStatus {
 function statusOption(project: ProjectSwitcherItem) {
   const status = statusOf(project);
   return STATUS_FILTERS.find((option) => option.id === status)!;
-}
-
-function folderOf(project: ProjectSwitcherItem): FolderFilter {
-  return project.directory?.trim() ? "linked" : "none";
 }
 
 /** `lastActivity` is already formatted; sort by the instant it names when it parses. */
@@ -91,13 +71,11 @@ function projectActions(
   onOpen: (projectId: string) => void,
   onOpenSettings?: (projectId: string) => void,
 ): EntityAction[] {
-  const path = project.directory?.trim();
   return [
     { id: "open", label: "Open", icon: ExternalLink, hint: "↵", onSelect: () => onOpen(project.projectId) },
     ...(onOpenSettings
       ? [{ id: "settings", label: "Project settings", icon: Settings, onSelect: () => onOpenSettings(project.projectId) }]
       : []),
-    ...(path ? [{ id: "copy-path", label: "Copy path", icon: Copy, onSelect: () => void navigator.clipboard?.writeText(path) }] : []),
   ];
 }
 
@@ -139,16 +117,6 @@ function ProjectRow(props: {
         <StatusDot tone={statusOption(project()).tone} label={statusOption(project()).label} />
       </DataTable.Cell>
       <DataTable.Cell>{project().environmentSummary}</DataTable.Cell>
-      <DataTable.Cell>
-        <Show when={folderName(project())} fallback="—">
-          {(name) => (
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild={(triggerProps) => <span {...triggerProps()}>{name()}</span>} />
-              <Tooltip.Content>{project().directory}</Tooltip.Content>
-            </Tooltip.Root>
-          )}
-        </Show>
-      </DataTable.Cell>
       <DataTable.Cell>{project().lastActivity ?? "—"}</DataTable.Cell>
       <DataTable.Cell align="right" class="pw-projects-row-menu">
         <EntityMenuButton label={`Actions for ${project().name}`} actions={actions()} />
@@ -175,18 +143,6 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
         icon: () => <StatusDot tone={option.tone} showLabel={false} />,
       })),
     },
-    {
-      id: "folder",
-      label: "Folder",
-      kind: "multi",
-      icon: () => <Folder size={14} aria-hidden />,
-      options: FOLDER_FILTERS.map((option) => ({
-        id: option.id,
-        label: option.label,
-        trailing: String(countOf((project) => folderOf(project) === option.id)),
-        icon: () => <Folder size={14} aria-hidden />,
-      })),
-    },
   ];
   const filters = createPageFilters({ surface: "projects", appLevel: true, fields });
   const filtered = createMemo(() => {
@@ -194,7 +150,7 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
     return props.projects.filter(
       (project) =>
         (!normalized || project.name.toLowerCase().includes(normalized)) &&
-        matchClauses(project, filters.pageClauses(), { status: statusOf, folder: folderOf }),
+        matchClauses(project, filters.pageClauses(), { status: statusOf }),
     );
   });
 
@@ -291,9 +247,6 @@ export function ProjectsScreen(props: ProjectsScreenProps) {
                     </DataTable.ColumnHeader>
                     <DataTable.ColumnHeader<ProjectSwitcherItem> id="environments" sortBy={(project) => project.environmentSummary}>
                       Environments
-                    </DataTable.ColumnHeader>
-                    <DataTable.ColumnHeader<ProjectSwitcherItem> id="folder" sortBy={folderName}>
-                      Folder
                     </DataTable.ColumnHeader>
                     <DataTable.ColumnHeader<ProjectSwitcherItem> id="updated" sortBy={updatedAt}>
                       Updated

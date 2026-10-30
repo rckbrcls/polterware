@@ -12,9 +12,9 @@ func kindSnapshot() work.Snapshot {
 	return work.Snapshot{
 		ProjectID: "p1",
 		Nodes: []structure.Node{
-			{ID: "app", Path: "app", Level: structure.LevelSystem, Title: "App", Status: structure.NodeActive},
-			{ID: "data", ParentID: "app", Path: "app/data", Level: structure.LevelDomain, Title: "Data", Status: structure.NodeActive},
-			{ID: "db", ParentID: "data", Path: "app/data/db", Level: structure.LevelComponent, Title: "DB", Status: structure.NodeActive, Kind: "database", Tech: "Postgres"},
+			{ID: "data", Path: "data", Level: structure.LevelDomain, Title: "Data", Status: structure.NodeActive},
+			{ID: "db", ParentID: "data", Path: "data/db", Level: structure.LevelComponent, Title: "DB", Status: structure.NodeActive, Kind: "database", Tech: "Postgres"},
+			{ID: "cache", Path: "cache", Level: structure.LevelComponent, Title: "Cache", Status: structure.NodeActive, Kind: "cache"},
 		},
 	}
 }
@@ -29,7 +29,7 @@ func planKind(t *testing.T, text string) ([]work.Op, []Diagnostic) {
 }
 
 func TestPlanCreatesComponentKindAndTech(t *testing.T) {
-	ops, diags := planKind(t, "# app/data/cache: Cache\nlevel: component\nkind: Cache\ntech: Redis\n")
+	ops, diags := planKind(t, "# data/cache: Cache\nlevel: component\nkind: Cache\ntech: Redis\n")
 	if HasErrors(diags) {
 		t.Fatalf("plan: %+v", diags)
 	}
@@ -39,7 +39,7 @@ func TestPlanCreatesComponentKindAndTech(t *testing.T) {
 }
 
 func TestPlanUpdatesAndClearsKindAndTech(t *testing.T) {
-	ops, diags := planKind(t, "# app/data/db: DB\nkind:\ntech: SQLite\n")
+	ops, diags := planKind(t, "# data/db: DB\nkind:\ntech: SQLite\n")
 	if HasErrors(diags) {
 		t.Fatalf("plan: %+v", diags)
 	}
@@ -48,23 +48,23 @@ func TestPlanUpdatesAndClearsKindAndTech(t *testing.T) {
 		t.Fatalf("ops = %+v", ops)
 	}
 	// An unchanged kind writes nothing.
-	ops, diags = planKind(t, "# app/data/db: DB\nkind: database\n")
+	ops, diags = planKind(t, "# data/db: DB\nkind: database\n")
 	if HasErrors(diags) || len(ops) != 0 {
 		t.Fatalf("unchanged kind: ops = %+v diags = %+v", ops, diags)
 	}
 }
 
 func TestKindIsOnlyForComponents(t *testing.T) {
-	_, diags := planKind(t, "# app/ops: Ops\nlevel: domain\nunder: app\nkind: service\n")
+	_, diags := planKind(t, "# ops: Ops\nlevel: domain\nkind: service\n")
 	if !HasErrors(diags) || !strings.Contains(diags[0].Message, "only components have a kind") {
 		t.Fatalf("domain kind: %+v", diags)
 	}
 	// A component that becomes a domain must clear its kind in the same block.
-	_, diags = planKind(t, "# app/data/db: DB\nlevel: domain\nunder: app\n")
+	_, diags = planKind(t, "# cache: Cache\nlevel: domain\n")
 	if !HasErrors(diags) || !strings.Contains(diags[0].Message, "write kind: to clear it") {
 		t.Fatalf("level change keeps kind: %+v", diags)
 	}
-	if _, diags = planKind(t, "# app/data/db: DB\nlevel: domain\nunder: app\nkind:\n"); HasErrors(diags) {
+	if _, diags = planKind(t, "# cache: Cache\nlevel: domain\nkind:\n"); HasErrors(diags) {
 		t.Fatalf("cleared kind should pass: %+v", diags)
 	}
 }
@@ -86,7 +86,7 @@ func TestEncodeStructureShowsKindAndTech(t *testing.T) {
 	for i, node := range snapshot.Nodes {
 		rows[i] = structure.Row{Node: node}
 	}
-	out := EncodeStructure("demo", rows, nil, nil, "app/data/db")
+	out := EncodeStructure("demo", rows, nil, nil, "data/db")
 	if !strings.Contains(out, "kind: database · tech: Postgres\n") {
 		t.Fatalf("out = %s", out)
 	}

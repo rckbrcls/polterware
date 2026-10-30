@@ -10,9 +10,12 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file polterware/local/v1/project.proto.
  */
 export const file_polterware_local_v1_project: GenFile = /*@__PURE__*/
-  fileDesc("CiFwb2x0ZXJ3YXJlL2xvY2FsL3YxL3Byb2plY3QucHJvdG8SE3BvbHRlcndhcmUubG9jYWwudjEigwEKB1Byb2plY3QSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIRCglyb290X3BhdGgYAyABKAkSEgoKY3JlYXRlZF9hdBgEIAEoCRISCgp1cGRhdGVkX2F0GAUgASgJEg4KBnN0YXR1cxgGIAEoCRITCgthcmNoaXZlZF9hdBgHIAEoCSKGAQoLRW52aXJvbm1lbnQSCgoCaWQYASABKAkSEgoKcHJvamVjdF9pZBgCIAEoCRIMCgRuYW1lGAMgASgJEgwKBGtpbmQYBCABKAkSEgoKcHJvdGVjdGlvbhgFIAEoCRISCgppc19kZWZhdWx0GAYgASgIEhMKC2Rlc2NyaXB0aW9uGAcgASgJIoMBCg9Qcm9qZWN0U2V0dGluZ3MSEgoKcHJvamVjdF9pZBgBIAEoCRITCgtkZXNjcmlwdGlvbhgCIAEoCRIeChZkZWZhdWx0X2Vudmlyb25tZW50X2lkGAMgASgJEhIKCnJlcG9zaXRvcnkYBCABKAkSEwoLYWdlbnRzX3N5bmMYBSABKAgiLwoTTGlzdFByb2plY3RzUmVxdWVzdBIYChBpbmNsdWRlX2FyY2hpdmVkGAEgASgIIkYKFExpc3RQcm9qZWN0c1Jlc3BvbnNlEi4KCHByb2plY3RzGAEgAygLMhwucG9sdGVyd2FyZS5sb2NhbC52MS5Qcm9qZWN0IkMKElNhdmVQcm9qZWN0UmVxdWVzdBItCgdwcm9qZWN0GAEgASgLMhwucG9sdGVyd2FyZS5sb2NhbC52MS5Qcm9qZWN0IkQKE1NhdmVQcm9qZWN0UmVzcG9uc2USLQoHcHJvamVjdBgBIAEoCzIcLnBvbHRlcndhcmUubG9jYWwudjEuUHJvamVjdCIjChVBcmNoaXZlUHJvamVjdFJlcXVlc3QSCgoCaWQYASABKAkiRwoWQXJjaGl2ZVByb2plY3RSZXNwb25zZRItCgdwcm9qZWN0GAEgASgLMhwucG9sdGVyd2FyZS5sb2NhbC52MS5Qcm9qZWN0Ii0KF0xpc3RFbnZpcm9ubWVudHNSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkiUgoYTGlzdEVudmlyb25tZW50c1Jlc3BvbnNlEjYKDGVudmlyb25tZW50cxgBIAMoCzIgLnBvbHRlcndhcmUubG9jYWwudjEuRW52aXJvbm1lbnQiTwoWU2F2ZUVudmlyb25tZW50UmVxdWVzdBI1CgtlbnZpcm9ubWVudBgBIAEoCzIgLnBvbHRlcndhcmUubG9jYWwudjEuRW52aXJvbm1lbnQiUAoXU2F2ZUVudmlyb25tZW50UmVzcG9uc2USNQoLZW52aXJvbm1lbnQYASABKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkVudmlyb25tZW50IjoKGERlbGV0ZUVudmlyb25tZW50UmVxdWVzdBIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJIhsKGURlbGV0ZUVudmlyb25tZW50UmVzcG9uc2UiLwoZR2V0UHJvamVjdFNldHRpbmdzUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJIlQKGkdldFByb2plY3RTZXR0aW5nc1Jlc3BvbnNlEjYKCHNldHRpbmdzGAEgASgLMiQucG9sdGVyd2FyZS5sb2NhbC52MS5Qcm9qZWN0U2V0dGluZ3MiVAoaU2F2ZVByb2plY3RTZXR0aW5nc1JlcXVlc3QSNgoIc2V0dGluZ3MYASABKAsyJC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlByb2plY3RTZXR0aW5ncyJVChtTYXZlUHJvamVjdFNldHRpbmdzUmVzcG9uc2USNgoIc2V0dGluZ3MYASABKAsyJC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlByb2plY3RTZXR0aW5ncyIwChVSZXNvbHZlUHJvamVjdFJlcXVlc3QSCgoCaWQYASABKAkSCwoDZGlyGAIgASgJIkcKFlJlc29sdmVQcm9qZWN0UmVzcG9uc2USLQoHcHJvamVjdBgBIAEoCzIcLnBvbHRlcndhcmUubG9jYWwudjEuUHJvamVjdCJBChJJbml0UHJvamVjdFJlcXVlc3QSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIRCglyb290X3BhdGgYAyABKAkiRAoTSW5pdFByb2plY3RSZXNwb25zZRItCgdwcm9qZWN0GAEgASgLMhwucG9sdGVyd2FyZS5sb2NhbC52MS5Qcm9qZWN0IkkKC1Byb2plY3RSZXBvEgoKAmlkGAEgASgJEhIKCnByb2plY3RfaWQYAiABKAkSDAoEbmFtZRgDIAEoCRIMCgRwYXRoGAQgASgJIi0KF0xpc3RQcm9qZWN0UmVwb3NSZXF1ZXN0EhIKCnByb2plY3RfaWQYASABKAkiSwoYTGlzdFByb2plY3RSZXBvc1Jlc3BvbnNlEi8KBXJlcG9zGAEgAygLMiAucG9sdGVyd2FyZS5sb2NhbC52MS5Qcm9qZWN0UmVwbyJHChVBZGRQcm9qZWN0UmVwb1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEgwKBHBhdGgYAyABKAkiSAoWQWRkUHJvamVjdFJlcG9SZXNwb25zZRIuCgRyZXBvGAEgASgLMiAucG9sdGVyd2FyZS5sb2NhbC52MS5Qcm9qZWN0UmVwbyI8ChhSZW1vdmVQcm9qZWN0UmVwb1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCRIMCgRuYW1lGAIgASgJIhsKGVJlbW92ZVByb2plY3RSZXBvUmVzcG9uc2UyowsKDlByb2plY3RTZXJ2aWNlEmkKDlJlc29sdmVQcm9qZWN0EioucG9sdGVyd2FyZS5sb2NhbC52MS5SZXNvbHZlUHJvamVjdFJlcXVlc3QaKy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlJlc29sdmVQcm9qZWN0UmVzcG9uc2USYAoLSW5pdFByb2plY3QSJy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkluaXRQcm9qZWN0UmVxdWVzdBooLnBvbHRlcndhcmUubG9jYWwudjEuSW5pdFByb2plY3RSZXNwb25zZRJjCgxMaXN0UHJvamVjdHMSKC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RQcm9qZWN0c1JlcXVlc3QaKS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RQcm9qZWN0c1Jlc3BvbnNlEmAKC1NhdmVQcm9qZWN0EicucG9sdGVyd2FyZS5sb2NhbC52MS5TYXZlUHJvamVjdFJlcXVlc3QaKC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlNhdmVQcm9qZWN0UmVzcG9uc2USaQoOQXJjaGl2ZVByb2plY3QSKi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkFyY2hpdmVQcm9qZWN0UmVxdWVzdBorLnBvbHRlcndhcmUubG9jYWwudjEuQXJjaGl2ZVByb2plY3RSZXNwb25zZRJvChBMaXN0RW52aXJvbm1lbnRzEiwucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0RW52aXJvbm1lbnRzUmVxdWVzdBotLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEVudmlyb25tZW50c1Jlc3BvbnNlEmwKD1NhdmVFbnZpcm9ubWVudBIrLnBvbHRlcndhcmUubG9jYWwudjEuU2F2ZUVudmlyb25tZW50UmVxdWVzdBosLnBvbHRlcndhcmUubG9jYWwudjEuU2F2ZUVudmlyb25tZW50UmVzcG9uc2UScgoRRGVsZXRlRW52aXJvbm1lbnQSLS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRlbGV0ZUVudmlyb25tZW50UmVxdWVzdBouLnBvbHRlcndhcmUubG9jYWwudjEuRGVsZXRlRW52aXJvbm1lbnRSZXNwb25zZRJ1ChJHZXRQcm9qZWN0U2V0dGluZ3MSLi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkdldFByb2plY3RTZXR0aW5nc1JlcXVlc3QaLy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkdldFByb2plY3RTZXR0aW5nc1Jlc3BvbnNlEngKE1NhdmVQcm9qZWN0U2V0dGluZ3MSLy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlNhdmVQcm9qZWN0U2V0dGluZ3NSZXF1ZXN0GjAucG9sdGVyd2FyZS5sb2NhbC52MS5TYXZlUHJvamVjdFNldHRpbmdzUmVzcG9uc2USbwoQTGlzdFByb2plY3RSZXBvcxIsLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdFByb2plY3RSZXBvc1JlcXVlc3QaLS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RQcm9qZWN0UmVwb3NSZXNwb25zZRJpCg5BZGRQcm9qZWN0UmVwbxIqLnBvbHRlcndhcmUubG9jYWwudjEuQWRkUHJvamVjdFJlcG9SZXF1ZXN0GisucG9sdGVyd2FyZS5sb2NhbC52MS5BZGRQcm9qZWN0UmVwb1Jlc3BvbnNlEnIKEVJlbW92ZVByb2plY3RSZXBvEi0ucG9sdGVyd2FyZS5sb2NhbC52MS5SZW1vdmVQcm9qZWN0UmVwb1JlcXVlc3QaLi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlJlbW92ZVByb2plY3RSZXBvUmVzcG9uc2VC6AEKF2NvbS5wb2x0ZXJ3YXJlLmxvY2FsLnYxQgxQcm9qZWN0UHJvdG9QAVpRZ2l0aHViLmNvbS9wb2x0ZXJ3YXJlL3BvbHRlcndhcmUvYmFja2VuZC9wbGF0Zm9ybS9nZW4vcG9sdGVyd2FyZS9sb2NhbC92MTtsb2NhbHYxogIDUExYqgITUG9sdGVyd2FyZS5Mb2NhbC5WMcoCE1BvbHRlcndhcmVcTG9jYWxcVjHiAh9Qb2x0ZXJ3YXJlXExvY2FsXFYxXEdQQk1ldGFkYXRh6gIVUG9sdGVyd2FyZTo6TG9jYWw6OlYxYgZwcm90bzM");
+  fileDesc("CiFwb2x0ZXJ3YXJlL2xvY2FsL3YxL3Byb2plY3QucHJvdG8SE3BvbHRlcndhcmUubG9jYWwudjEigQEKB1Byb2plY3QSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRISCgpjcmVhdGVkX2F0GAQgASgJEhIKCnVwZGF0ZWRfYXQYBSABKAkSDgoGc3RhdHVzGAYgASgJEhMKC2FyY2hpdmVkX2F0GAcgASgJSgQIAxAEUglyb290X3BhdGgihgEKC0Vudmlyb25tZW50EgoKAmlkGAEgASgJEhIKCnByb2plY3RfaWQYAiABKAkSDAoEbmFtZRgDIAEoCRIMCgRraW5kGAQgASgJEhIKCnByb3RlY3Rpb24YBSABKAkSEgoKaXNfZGVmYXVsdBgGIAEoCBITCgtkZXNjcmlwdGlvbhgHIAEoCSKDAQoPUHJvamVjdFNldHRpbmdzEhIKCnByb2plY3RfaWQYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSHgoWZGVmYXVsdF9lbnZpcm9ubWVudF9pZBgDIAEoCRISCgpyZXBvc2l0b3J5GAQgASgJEhMKC2FnZW50c19zeW5jGAUgASgIIi8KE0xpc3RQcm9qZWN0c1JlcXVlc3QSGAoQaW5jbHVkZV9hcmNoaXZlZBgBIAEoCCJGChRMaXN0UHJvamVjdHNSZXNwb25zZRIuCghwcm9qZWN0cxgBIAMoCzIcLnBvbHRlcndhcmUubG9jYWwudjEuUHJvamVjdCJDChJTYXZlUHJvamVjdFJlcXVlc3QSLQoHcHJvamVjdBgBIAEoCzIcLnBvbHRlcndhcmUubG9jYWwudjEuUHJvamVjdCJEChNTYXZlUHJvamVjdFJlc3BvbnNlEi0KB3Byb2plY3QYASABKAsyHC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlByb2plY3QiIwoVQXJjaGl2ZVByb2plY3RSZXF1ZXN0EgoKAmlkGAEgASgJIkcKFkFyY2hpdmVQcm9qZWN0UmVzcG9uc2USLQoHcHJvamVjdBgBIAEoCzIcLnBvbHRlcndhcmUubG9jYWwudjEuUHJvamVjdCItChdMaXN0RW52aXJvbm1lbnRzUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJIlIKGExpc3RFbnZpcm9ubWVudHNSZXNwb25zZRI2CgxlbnZpcm9ubWVudHMYASADKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkVudmlyb25tZW50Ik8KFlNhdmVFbnZpcm9ubWVudFJlcXVlc3QSNQoLZW52aXJvbm1lbnQYASABKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkVudmlyb25tZW50IlAKF1NhdmVFbnZpcm9ubWVudFJlc3BvbnNlEjUKC2Vudmlyb25tZW50GAEgASgLMiAucG9sdGVyd2FyZS5sb2NhbC52MS5FbnZpcm9ubWVudCI6ChhEZWxldGVFbnZpcm9ubWVudFJlcXVlc3QSCgoCaWQYASABKAkSEgoKcHJvamVjdF9pZBgCIAEoCSIbChlEZWxldGVFbnZpcm9ubWVudFJlc3BvbnNlIi8KGUdldFByb2plY3RTZXR0aW5nc1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCSJUChpHZXRQcm9qZWN0U2V0dGluZ3NSZXNwb25zZRI2CghzZXR0aW5ncxgBIAEoCzIkLnBvbHRlcndhcmUubG9jYWwudjEuUHJvamVjdFNldHRpbmdzIlQKGlNhdmVQcm9qZWN0U2V0dGluZ3NSZXF1ZXN0EjYKCHNldHRpbmdzGAEgASgLMiQucG9sdGVyd2FyZS5sb2NhbC52MS5Qcm9qZWN0U2V0dGluZ3MiVQobU2F2ZVByb2plY3RTZXR0aW5nc1Jlc3BvbnNlEjYKCHNldHRpbmdzGAEgASgLMiQucG9sdGVyd2FyZS5sb2NhbC52MS5Qcm9qZWN0U2V0dGluZ3MiMAoVUmVzb2x2ZVByb2plY3RSZXF1ZXN0EgoKAmlkGAEgASgJEgsKA2RpchgCIAEoCSJHChZSZXNvbHZlUHJvamVjdFJlc3BvbnNlEi0KB3Byb2plY3QYASABKAsyHC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlByb2plY3QiOwoSSW5pdFByb2plY3RSZXF1ZXN0EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSCwoDZGlyGAMgASgJIkQKE0luaXRQcm9qZWN0UmVzcG9uc2USLQoHcHJvamVjdBgBIAEoCzIcLnBvbHRlcndhcmUubG9jYWwudjEuUHJvamVjdCJfCgtQcm9qZWN0UmVwbxIKCgJpZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEgwKBG5hbWUYAyABKAkSEgoKbG9jYWxfcGF0aBgEIAEoCRIOCgZyZW1vdGUYBSABKAkiLQoXTGlzdFByb2plY3RSZXBvc1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCSJLChhMaXN0UHJvamVjdFJlcG9zUmVzcG9uc2USLwoFcmVwb3MYASADKAsyIC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlByb2plY3RSZXBvMsQJCg5Qcm9qZWN0U2VydmljZRJpCg5SZXNvbHZlUHJvamVjdBIqLnBvbHRlcndhcmUubG9jYWwudjEuUmVzb2x2ZVByb2plY3RSZXF1ZXN0GisucG9sdGVyd2FyZS5sb2NhbC52MS5SZXNvbHZlUHJvamVjdFJlc3BvbnNlEmAKC0luaXRQcm9qZWN0EicucG9sdGVyd2FyZS5sb2NhbC52MS5Jbml0UHJvamVjdFJlcXVlc3QaKC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkluaXRQcm9qZWN0UmVzcG9uc2USYwoMTGlzdFByb2plY3RzEigucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0UHJvamVjdHNSZXF1ZXN0GikucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0UHJvamVjdHNSZXNwb25zZRJgCgtTYXZlUHJvamVjdBInLnBvbHRlcndhcmUubG9jYWwudjEuU2F2ZVByb2plY3RSZXF1ZXN0GigucG9sdGVyd2FyZS5sb2NhbC52MS5TYXZlUHJvamVjdFJlc3BvbnNlEmkKDkFyY2hpdmVQcm9qZWN0EioucG9sdGVyd2FyZS5sb2NhbC52MS5BcmNoaXZlUHJvamVjdFJlcXVlc3QaKy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkFyY2hpdmVQcm9qZWN0UmVzcG9uc2USbwoQTGlzdEVudmlyb25tZW50cxIsLnBvbHRlcndhcmUubG9jYWwudjEuTGlzdEVudmlyb25tZW50c1JlcXVlc3QaLS5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RFbnZpcm9ubWVudHNSZXNwb25zZRJsCg9TYXZlRW52aXJvbm1lbnQSKy5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlNhdmVFbnZpcm9ubWVudFJlcXVlc3QaLC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLlNhdmVFbnZpcm9ubWVudFJlc3BvbnNlEnIKEURlbGV0ZUVudmlyb25tZW50Ei0ucG9sdGVyd2FyZS5sb2NhbC52MS5EZWxldGVFbnZpcm9ubWVudFJlcXVlc3QaLi5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkRlbGV0ZUVudmlyb25tZW50UmVzcG9uc2USdQoSR2V0UHJvamVjdFNldHRpbmdzEi4ucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRQcm9qZWN0U2V0dGluZ3NSZXF1ZXN0Gi8ucG9sdGVyd2FyZS5sb2NhbC52MS5HZXRQcm9qZWN0U2V0dGluZ3NSZXNwb25zZRJ4ChNTYXZlUHJvamVjdFNldHRpbmdzEi8ucG9sdGVyd2FyZS5sb2NhbC52MS5TYXZlUHJvamVjdFNldHRpbmdzUmVxdWVzdBowLnBvbHRlcndhcmUubG9jYWwudjEuU2F2ZVByb2plY3RTZXR0aW5nc1Jlc3BvbnNlEm8KEExpc3RQcm9qZWN0UmVwb3MSLC5wb2x0ZXJ3YXJlLmxvY2FsLnYxLkxpc3RQcm9qZWN0UmVwb3NSZXF1ZXN0Gi0ucG9sdGVyd2FyZS5sb2NhbC52MS5MaXN0UHJvamVjdFJlcG9zUmVzcG9uc2VC6AEKF2NvbS5wb2x0ZXJ3YXJlLmxvY2FsLnYxQgxQcm9qZWN0UHJvdG9QAVpRZ2l0aHViLmNvbS9wb2x0ZXJ3YXJlL3BvbHRlcndhcmUvYmFja2VuZC9wbGF0Zm9ybS9nZW4vcG9sdGVyd2FyZS9sb2NhbC92MTtsb2NhbHYxogIDUExYqgITUG9sdGVyd2FyZS5Mb2NhbC5WMcoCE1BvbHRlcndhcmVcTG9jYWxcVjHiAh9Qb2x0ZXJ3YXJlXExvY2FsXFYxXEdQQk1ldGFkYXRh6gIVUG9sdGVyd2FyZTo6TG9jYWw6OlYxYgZwcm90bzM");
 
 /**
+ * Project is a name plus its environments; it has no folder of its own.
+ * Repositories belong to its Structure components.
+ *
  * @generated from message polterware.local.v1.Project
  */
 export type Project = Message<"polterware.local.v1.Project"> & {
@@ -25,11 +28,6 @@ export type Project = Message<"polterware.local.v1.Project"> & {
    * @generated from field: string name = 2;
    */
   name: string;
-
-  /**
-   * @generated from field: string root_path = 3;
-   */
-  rootPath: string;
 
   /**
    * @generated from field: string created_at = 4;
@@ -465,6 +463,7 @@ export const ResolveProjectResponseSchema: GenMessage<ResolveProjectResponse> = 
 
 /**
  * InitProject registers a project with an empty layout and a "local" environment.
+ * dir is optional: a local clone the project's first component links.
  *
  * @generated from message polterware.local.v1.InitProjectRequest
  */
@@ -480,9 +479,9 @@ export type InitProjectRequest = Message<"polterware.local.v1.InitProjectRequest
   name: string;
 
   /**
-   * @generated from field: string root_path = 3;
+   * @generated from field: string dir = 3;
    */
-  rootPath: string;
+  dir: string;
 };
 
 /**
@@ -510,7 +509,10 @@ export const InitProjectResponseSchema: GenMessage<InitProjectResponse> = /*@__P
   messageDesc(file_polterware_local_v1_project, 22);
 
 /**
- * ProjectRepo is an extra local Git checkout. The project root_path is not a row.
+ * ProjectRepo is a repository Structure components link by name. remote is
+ * its GitHub-level identity (github.com/owner/repo, empty when it has none);
+ * local_path is this machine's clone, empty when it is not cloned here. A
+ * node's `dir:` creates or reuses one; it is removed when no node uses it.
  *
  * @generated from message polterware.local.v1.ProjectRepo
  */
@@ -531,9 +533,14 @@ export type ProjectRepo = Message<"polterware.local.v1.ProjectRepo"> & {
   name: string;
 
   /**
-   * @generated from field: string path = 4;
+   * @generated from field: string local_path = 4;
    */
-  path: string;
+  localPath: string;
+
+  /**
+   * @generated from field: string remote = 5;
+   */
+  remote: string;
 };
 
 /**
@@ -576,85 +583,6 @@ export type ListProjectReposResponse = Message<"polterware.local.v1.ListProjectR
  */
 export const ListProjectReposResponseSchema: GenMessage<ListProjectReposResponse> = /*@__PURE__*/
   messageDesc(file_polterware_local_v1_project, 25);
-
-/**
- * @generated from message polterware.local.v1.AddProjectRepoRequest
- */
-export type AddProjectRepoRequest = Message<"polterware.local.v1.AddProjectRepoRequest"> & {
-  /**
-   * @generated from field: string project_id = 1;
-   */
-  projectId: string;
-
-  /**
-   * @generated from field: string name = 2;
-   */
-  name: string;
-
-  /**
-   * @generated from field: string path = 3;
-   */
-  path: string;
-};
-
-/**
- * Describes the message polterware.local.v1.AddProjectRepoRequest.
- * Use `create(AddProjectRepoRequestSchema)` to create a new message.
- */
-export const AddProjectRepoRequestSchema: GenMessage<AddProjectRepoRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_project, 26);
-
-/**
- * @generated from message polterware.local.v1.AddProjectRepoResponse
- */
-export type AddProjectRepoResponse = Message<"polterware.local.v1.AddProjectRepoResponse"> & {
-  /**
-   * @generated from field: polterware.local.v1.ProjectRepo repo = 1;
-   */
-  repo?: ProjectRepo | undefined;
-};
-
-/**
- * Describes the message polterware.local.v1.AddProjectRepoResponse.
- * Use `create(AddProjectRepoResponseSchema)` to create a new message.
- */
-export const AddProjectRepoResponseSchema: GenMessage<AddProjectRepoResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_project, 27);
-
-/**
- * @generated from message polterware.local.v1.RemoveProjectRepoRequest
- */
-export type RemoveProjectRepoRequest = Message<"polterware.local.v1.RemoveProjectRepoRequest"> & {
-  /**
-   * @generated from field: string project_id = 1;
-   */
-  projectId: string;
-
-  /**
-   * @generated from field: string name = 2;
-   */
-  name: string;
-};
-
-/**
- * Describes the message polterware.local.v1.RemoveProjectRepoRequest.
- * Use `create(RemoveProjectRepoRequestSchema)` to create a new message.
- */
-export const RemoveProjectRepoRequestSchema: GenMessage<RemoveProjectRepoRequest> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_project, 28);
-
-/**
- * @generated from message polterware.local.v1.RemoveProjectRepoResponse
- */
-export type RemoveProjectRepoResponse = Message<"polterware.local.v1.RemoveProjectRepoResponse"> & {
-};
-
-/**
- * Describes the message polterware.local.v1.RemoveProjectRepoResponse.
- * Use `create(RemoveProjectRepoResponseSchema)` to create a new message.
- */
-export const RemoveProjectRepoResponseSchema: GenMessage<RemoveProjectRepoResponse> = /*@__PURE__*/
-  messageDesc(file_polterware_local_v1_project, 29);
 
 /**
  * @generated from service polterware.local.v1.ProjectService
@@ -748,22 +676,5 @@ export const ProjectService: GenService<{
     input: typeof ListProjectReposRequestSchema;
     output: typeof ListProjectReposResponseSchema;
   },
-  /**
-   * @generated from rpc polterware.local.v1.ProjectService.AddProjectRepo
-   */
-  addProjectRepo: {
-    methodKind: "unary";
-    input: typeof AddProjectRepoRequestSchema;
-    output: typeof AddProjectRepoResponseSchema;
-  },
-  /**
-   * @generated from rpc polterware.local.v1.ProjectService.RemoveProjectRepo
-   */
-  removeProjectRepo: {
-    methodKind: "unary";
-    input: typeof RemoveProjectRepoRequestSchema;
-    output: typeof RemoveProjectRepoResponseSchema;
-  },
 }> = /*@__PURE__*/
   serviceDesc(file_polterware_local_v1_project, 0);
-

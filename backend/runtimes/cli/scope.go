@@ -15,7 +15,7 @@ import (
 
 const scopeUsage = `usage: polterware scope <decision|fact|rule|item> <id> [<node path>...] [--project <id>]
        (the nodes replace its contexts, separated by spaces or commas; none clears
-       them (the whole project); item is a derived Drift or Inbox item key)`
+       them (the whole project); item is a derived Inbox item key)`
 
 // scopeList accepts repeated --scope flags and comma-separated nodes.
 type scopeList []string

@@ -21,7 +21,7 @@ var retiredTools = map[string]string{
 	"context.get":        `polter.query "brief <slug|path|file>" or "search <terms>"`,
 	"entity.get":         `polter.query "show <id>"`,
 	"evidence.get":       "nothing: evidence is retired",
-	"drift.check":        `polter.query "drift"`,
+	"drift.check":        `polter.query "commits <slug>"`,
 	"agent_run.start":    "nothing: polter.apply and doc.upsert join this session's run on their own",
 	"agent_run.append":   "nothing: polter.apply and doc.upsert join this session's run on their own",
 	"agent_run.complete": "nothing: the session run completes when the session closes",
@@ -53,7 +53,7 @@ func toolDefinitions() []map[string]any {
 				"type": "object",
 				"properties": map[string]any{
 					"project_id":  map[string]any{"type": "string"},
-					"query":       map[string]any{"type": "string", "description": "\"brief <slug|path|file> [budget:N]\", \"search <terms>\", \"show <id>\", \"drift\", \"cards\" (default), \"card <slug>\", \"status\", \"inbox\", \"handoff <slug>\", \"structure [<path>]\", \"decisions [state]\", \"decision <id>\", \"feature <slug> [shape|contract|plan]\", \"verify <slug|slug#T2>\", \"milestones\", \"roadmap\", or \"canvas [<name|id>]\""},
+					"query":       map[string]any{"type": "string", "description": "\"brief <slug|path|file> [budget:N]\", \"search <terms>\", \"show <id>\", \"commits <slug>\", \"conflict <slug>\", \"conflicts\", \"cards\" (default), \"card <slug>\", \"status\", \"inbox\", \"handoff <slug>\", \"structure [<path>]\", \"decisions [state]\", \"decision <id>\", \"feature <slug> [shape|contract|plan]\", \"verify <slug|slug#T2>\", \"milestones\", \"roadmap\", or \"canvas [<name|id>]\""},
 					"scope":       scopeArgumentSchema(),
 					"scope_exact": map[string]any{"type": "boolean", "description": "With scope, leave out each node's ancestors."},
 				},

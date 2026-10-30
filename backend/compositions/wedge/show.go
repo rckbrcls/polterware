@@ -84,21 +84,22 @@ func queryShow(store *storepkg.Store, snapshot work.Snapshot, id string) (string
 	return "", fmt.Errorf("unknown id %q: show takes a card slug, a Decision ref, a fact, rule, doc, entity, or run id (search <terms> finds them)", id)
 }
 
-// queryDrift runs the narrow drift checker and lists its findings, one line each.
-func queryDrift(store *storepkg.Store, projectID string) (string, error) {
-	result, err := CheckDrift(store, DriftInput{ProjectID: projectID})
+// queryCommits lists a card's commits, one line each: task, short sha,
+// subject, and the GitHub URL when there is one.
+func queryCommits(store *storepkg.Store, projectID, slug string) (string, error) {
+	commits, err := CardCommits(store, projectID, slug)
 	if err != nil {
 		return "", err
 	}
-	if len(result.Findings) == 0 {
-		return "no drift findings (" + result.Checker + " checker)\n", nil
+	if len(commits) == 0 {
+		return "no commits for " + slug + ": cite `" + slug + "#T2` in a commit subject, or run polterware task done " + slug + "#T2 --commit <sha>\n", nil
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "%d drift findings (%s checker); they are advisory, never overwrite truth from one\n", len(result.Findings), result.Checker)
-	for _, finding := range result.Findings {
-		line := fmt.Sprintf("- %s %s: %s", finding.Severity, finding.Type, finding.Summary)
-		if len(finding.SubjectIDs) > 0 {
-			line += " [" + strings.Join(finding.SubjectIDs, ", ") + "]"
+	fmt.Fprintf(&b, "%d commits for %s\n", len(commits), slug)
+	for _, commit := range commits {
+		line := fmt.Sprintf("- T%d %s %s", commit.TaskNumber, commit.ShortSHA(), commit.Subject)
+		if commit.URL != "" {
+			line += " " + commit.URL
 		}
 		b.WriteString(line + "\n")
 	}

@@ -153,14 +153,18 @@ type Task struct {
 }
 
 // CommitLink joins one commit of a checkout (Repo empty is the project root)
-// to one task. Stored links are the ones a person made from the Inbox.
+// to one task: one an agent or a person linked. Subject, URL (the commit on
+// GitHub, or empty), and CommittedAt are read from the checkout when linking.
 type CommitLink struct {
-	ID        string
-	ProjectID string
-	Repo      string
-	SHA       string
-	TaskID    string
-	CreatedAt time.Time
+	ID          string
+	ProjectID   string
+	Repo        string
+	SHA         string
+	TaskID      string
+	Subject     string
+	URL         string
+	CommittedAt time.Time
+	CreatedAt   time.Time
 }
 
 type Question struct {
@@ -203,8 +207,7 @@ type Snapshot struct {
 	ProjectID string
 	Cards     []Card
 	Nodes     []structure.Node
-	// Repos names the project's extra checkouts (project_repos). The
-	// project root is the unnamed default and is not listed.
+	// Repos names the project's repositories, which components link by name.
 	Repos []string
 	// Environments are the project's environments. A deploys: line names one
 	// by id or by name.
@@ -214,6 +217,8 @@ type Snapshot struct {
 	Facts     []Fact
 	// Rules are the project's active Rules, in position order.
 	Rules []Rule
+	// Conflicts are every Conflict of the project, newest first.
+	Conflicts []Conflict
 	// Milestones lists every milestone, archived ones included, so a card's
 	// stored milestone still resolves.
 	Milestones []Milestone
@@ -245,6 +250,40 @@ const (
 	RuleActive  = "active"
 	RuleRemoved = "removed"
 )
+
+// Conflict is a request that goes against a Rule or a Decision. An agent
+// raises it instead of acting against the law; a person decides it.
+type Conflict struct {
+	ID       string
+	Slug     string
+	Request  string
+	RuleID   string
+	Decision string
+	CardSlug string
+	Options  []string
+	State    string
+	Answer   string
+	// CreatedAt and DecidedAt are RFC 3339; DecidedAt is empty while open.
+	CreatedAt string
+	DecidedAt string
+}
+
+// Conflict states.
+const (
+	ConflictOpen      = "open"
+	ConflictDecided   = "decided"
+	ConflictWithdrawn = "withdrawn"
+)
+
+// Conflict returns the project's Conflict with this slug.
+func (s Snapshot) Conflict(slug string) (Conflict, bool) {
+	for _, conflict := range s.Conflicts {
+		if conflict.Slug == slug {
+			return conflict, true
+		}
+	}
+	return Conflict{}, false
+}
 
 // Handle is the Polter reference of a Rule: its slug, or its id when it has none.
 func (r Rule) Handle() string {
@@ -304,6 +343,7 @@ const (
 	EntityDecision  = "decision"
 	EntityFact      = "fact"
 	EntityRule      = "rule"
+	EntityConflict  = "conflict"
 	EntityMilestone = "milestone"
 
 	OpCreate = "create"

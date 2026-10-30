@@ -14,7 +14,6 @@ const (
 type Project struct {
 	ID         string
 	Name       string
-	RootPath   string
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	Status     string
@@ -41,13 +40,15 @@ type Settings struct {
 	AgentsSync bool
 }
 
-// Repository is one extra local Git checkout registered on a project.
-// The project root path is not stored here; it remains the primary checkout.
+// Repository is a Git repository Structure components link by name. Remote is
+// its GitHub-level identity (github.com/owner/repo, empty when it has none);
+// LocalPath is this machine's clone, empty when it is not cloned here.
 type Repository struct {
 	ID        string
 	ProjectID string
 	Name      string
-	Path      string
+	Remote    string
+	LocalPath string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -61,23 +62,22 @@ func ValidRepoName(name string) bool {
 
 var ErrInvalid = errors.New("invalid project entity")
 
-func NewProject(id, name, rootPath string) (Project, error) {
-	if id == "" || name == "" || rootPath == "" {
+func NewProject(id, name string) (Project, error) {
+	if id == "" || name == "" {
 		return Project{}, ErrInvalid
 	}
 	now := time.Now().UTC()
 	return Project{
 		ID:        id,
 		Name:      name,
-		RootPath:  rootPath,
 		CreatedAt: now,
 		UpdatedAt: now,
 		Status:    StatusActive,
 	}, nil
 }
 
-func NewRepository(id, projectID, name, path string) (Repository, error) {
-	if id == "" || projectID == "" || path == "" || !ValidRepoName(name) {
+func NewRepository(id, projectID, name, remote, localPath string) (Repository, error) {
+	if id == "" || projectID == "" || (remote == "" && localPath == "") || !ValidRepoName(name) {
 		return Repository{}, ErrInvalid
 	}
 	now := time.Now().UTC()
@@ -85,7 +85,8 @@ func NewRepository(id, projectID, name, path string) (Repository, error) {
 		ID:        id,
 		ProjectID: projectID,
 		Name:      name,
-		Path:      path,
+		Remote:    remote,
+		LocalPath: localPath,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}, nil

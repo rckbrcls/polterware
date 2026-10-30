@@ -66,6 +66,8 @@ type clientState struct {
 
 type snapshot struct {
 	projects []projects.Project
+	// cwdProject is the project whose repository clone holds the working directory.
+	cwdProject string
 	core     runstate.Core
 	coreUp   bool
 	sessions []mcpSession
@@ -169,7 +171,7 @@ func tick() tea.Cmd {
 }
 
 func (m *tuiModel) loadSnapshot() tea.Cmd {
-	dbPath, projectID := m.dbPath, m.projectID
+	dbPath, projectID, cwd := m.dbPath, m.projectID, m.cwd
 	return func() tea.Msg {
 		var snap snapshot
 		snap.core, snap.coreUp = runstate.ReadCore(dbPath)
@@ -195,7 +197,10 @@ func (m *tuiModel) loadSnapshot() tea.Cmd {
 			return snapshotMsg(snap)
 		}
 		for _, item := range list.Msg.Projects {
-			snap.projects = append(snap.projects, projects.Project{ID: item.Id, Name: item.Name, RootPath: item.RootPath, Status: item.Status, UpdatedAt: parseTime(item.UpdatedAt)})
+			snap.projects = append(snap.projects, projects.Project{ID: item.Id, Name: item.Name, Status: item.Status, UpdatedAt: parseTime(item.UpdatedAt)})
+		}
+		if res, err := c.Projects.ResolveProject(ctx, connect.NewRequest(&localv1.ResolveProjectRequest{Dir: cwd})); err == nil {
+			snap.cwdProject = res.Msg.Project.GetId()
 		}
 		if projectID == "" {
 			return snapshotMsg(snap)
@@ -278,7 +283,7 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.snap = snapshot(msg)
 		m.loaded = true
 		if m.projectID == "" || !m.hasProject(m.projectID) {
-			if id := pickProject(m.snap.projects, m.cwd); id != "" {
+			if id := pickProject(m.snap.projects, m.snap.cwdProject); id != "" {
 				m.projectID = id
 				return m, m.loadSnapshot()
 			}
@@ -348,7 +353,7 @@ func (m *tuiModel) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		for _, project := range m.snap.projects {
-			if filepath.Clean(project.RootPath) == m.cwd {
+			if project.ID == m.snap.cwdProject {
 				m.projectID = project.ID
 				m.setMessage(fmt.Sprintf("%s is already registered as %s.", shortPath(m.cwd), project.Name), nil)
 				return m, m.loadSnapshot()
@@ -424,7 +429,7 @@ func (m *tuiModel) runAction(action string) tea.Cmd {
 				return actionMsg{err: err}
 			}
 			ctx := context.Background()
-			initRes, err := c.Projects.InitProject(ctx, connect.NewRequest(&localv1.InitProjectRequest{Name: filepath.Base(cwd), RootPath: cwd}))
+			initRes, err := c.Projects.InitProject(ctx, connect.NewRequest(&localv1.InitProjectRequest{Name: filepath.Base(cwd), Dir: cwd}))
 			if err != nil {
 				return actionMsg{err: err}
 			}
@@ -518,17 +523,13 @@ func (m *tuiModel) cycleProject() {
 	m.offsets = [sectionCount]int{}
 }
 
-// pickProject prefers the project whose root contains cwd, then the most recently updated.
-func pickProject(list []projects.Project, cwd string) string {
-	best, bestLen := "", -1
+// pickProject prefers the project whose repository clone holds the working
+// directory (cwdProject), then the most recently updated.
+func pickProject(list []projects.Project, cwdProject string) string {
 	for _, project := range list {
-		root := filepath.Clean(project.RootPath)
-		if project.RootPath != "" && (cwd == root || strings.HasPrefix(cwd, root+string(filepath.Separator))) && len(root) > bestLen {
-			best, bestLen = project.ID, len(root)
+		if project.ID == cwdProject {
+			return project.ID
 		}
-	}
-	if best != "" {
-		return best
 	}
 	var latest projects.Project
 	for _, project := range list {

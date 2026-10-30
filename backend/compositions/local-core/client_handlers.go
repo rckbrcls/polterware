@@ -24,13 +24,13 @@ func (core *Core) ResolveProject(_ context.Context, request *connect.Request[loc
 	return connect.NewResponse(&localv1.ResolveProjectResponse{Project: projectProto(project)}), nil
 }
 
-// InitProject registers a project; root_path must be absolute (the client
-// resolves it against its own working directory).
+// InitProject registers a project; dir is optional and must be absolute (the
+// client resolves it against its own working directory).
 func (core *Core) InitProject(_ context.Context, request *connect.Request[localv1.InitProjectRequest]) (*connect.Response[localv1.InitProjectResponse], error) {
 	project, err := wedge.InitProject(core.Store, wedge.InitInput{
-		ID:       request.Msg.Id,
-		Name:     request.Msg.Name,
-		RootPath: request.Msg.RootPath,
+		ID:   request.Msg.Id,
+		Name: request.Msg.Name,
+		Dir:  request.Msg.Dir,
 	})
 	if err != nil {
 		return nil, invalid(err.Error())

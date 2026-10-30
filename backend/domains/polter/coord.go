@@ -30,7 +30,7 @@ func CoordText(action string, ref CommitRef, holder string) (string, error) {
 		rationale = "Reserve the task scope before editing so other agents do not write the same files"
 	case CoordDone:
 		summary = fmt.Sprintf("Mark %s T%d done by %s", ref.Slug, ref.Number, holder)
-		rationale = "The agent finished the task; Git delivery is confirmed by drift"
+		rationale = "The agent finished the task"
 	case CoordRelease:
 		summary = fmt.Sprintf("Release %s T%d held by %s", ref.Slug, ref.Number, holder)
 		rationale = "The agent stopped working on the task without finishing it"

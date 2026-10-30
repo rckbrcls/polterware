@@ -16,7 +16,7 @@ var commitSHA = regexp.MustCompile(`^[0-9a-fA-F]{7,40}$`)
 
 // StructureAt replays the Structure as it was at point: a change batch id, an RFC3339
 // time, a YYYY-MM-DD day, or a commit sha (resolved to its committer time).
-// Rows carry no derived status, feature counts, or drift: those are live-only.
+// Rows carry no derived status, feature counts, those are live-only.
 func StructureAt(ctx context.Context, store *storepkg.Store, projectID, point string) ([]structure.Row, error) {
 	ops, err := store.ListStructureChangeOps(projectID)
 	if err != nil {
@@ -45,15 +45,16 @@ func resolveCommitPoint(ctx context.Context, store *storepkg.Store, projectID st
 			return point, nil
 		}
 	}
-	project, err := store.GetProject(projectID)
+	checkouts, err := projectCheckouts(store, projectID)
 	if err != nil {
 		return "", err
 	}
-	committed, ok := git.CommitTime(ctx, project.RootPath, point)
-	if !ok {
-		return "", fmt.Errorf("unknown point %q: not a change batch, and not a commit in the project checkout", point)
+	for _, co := range checkouts {
+		if committed, ok := git.CommitTime(ctx, co.root, point); ok {
+			return committed.UTC().Format(time.RFC3339), nil
+		}
 	}
-	return committed.UTC().Format(time.RFC3339), nil
+	return "", fmt.Errorf("unknown point %q: not a change batch, and not a commit in the project's repositories", point)
 }
 
 // StructureHistory lists the change batches that touched the Structure, newest first.

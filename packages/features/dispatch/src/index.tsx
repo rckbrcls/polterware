@@ -1,6 +1,6 @@
 import { For, Index, Match, Show, Switch, createEffect, createMemo, createSignal, on, onCleanup, onMount, type JSX } from "solid-js";
 import { DispatchAgentAvatar } from "./agent-avatar";
-import { createRunRoute, type RunRouteSelection } from "./run-route";
+import { createRunRoute, type RunRouteRepository, type RunRouteSelection } from "./run-route";
 import { EntityDetailHost, createPageFilters, type PageFilters } from "@polterware/feature-shell";
 import {
   Bot,
@@ -86,7 +86,7 @@ export * from "./dispatch-types";
 export * from "./dispatch-bridge";
 export { DispatchLearningPage } from "./learning-page";
 export { DispatchPolicySettings } from "./policy-page";
-export { createRunRoute, createRunRouteSources, type RunRouteCard, type RunRouteSelection } from "./run-route";
+export { createRunRoute, createRunRouteSources, type RunRouteCard, type RunRouteRepository, type RunRouteSelection } from "./run-route";
 export { DispatchStatsPage } from "./stats-page";
 
 const DISPATCH_RUNS_SCOPE = "dispatch:runs";
@@ -405,6 +405,10 @@ export function DispatchPage(props: {
   homeKey?: number;
   /** Open cards Start run can work on, searchable by title and slug, listed under their stage in this order. */
   cards?: readonly { slug: string; title: string; milestone?: string; stage?: string }[];
+  /** The project's repositories; Start run asks which one with two or more. */
+  repositories?: readonly RunRouteRepository[];
+  /** Reports the open run's title (its prompt's first line), and undefined once none is open. */
+  onOpenRunTitle?: (title: string | undefined) => void;
 }) {
   const [localTab, setLocalTab] = createSignal<DispatchTab>(normalizeDispatchTab(props.tab));
   const activeTab = () => (props.tab ? normalizeDispatchTab(props.tab) : localTab());
@@ -425,7 +429,7 @@ export function DispatchPage(props: {
   const [liveEvents, setLiveEvents] = createSignal<DispatchWatchEventView[]>([]);
 
   // Start run's Route, Milestone, and Card; the models load when it opens.
-  const route = createRunRoute({ tiers, agents, models: () => paletteModels(), cards: () => props.cards ?? [] });
+  const route = createRunRoute({ tiers, agents, models: () => paletteModels(), cards: () => props.cards ?? [], repositories: () => props.repositories ?? [] });
   const [draftPrompt, setDraftPrompt] = createSignal("");
   const [startOpen, setStartOpen] = createSignal(false);
   const [cancellingId, setCancellingId] = createSignal("");
@@ -610,6 +614,7 @@ export function DispatchPage(props: {
           tier: picked.tier,
           prompt: prompt.trim(),
           ...(picked.cardSlug ? { cardSlug: picked.cardSlug } : {}),
+          ...(picked.repo ? { repo: picked.repo } : {}),
           ...(picked.agent ? { agent: picked.agent } : {}),
           ...(picked.model ? { model: picked.model } : {}),
         }),
@@ -746,6 +751,13 @@ export function DispatchPage(props: {
     return map;
   });
   const runLogText = createMemo(() => runLog(selectedRunResult(), liveEvents()));
+
+  createEffect(() => {
+    const id = openedRunId();
+    const run = id ? runs().find((item) => item.id === id) ?? selectedRunDetail() : undefined;
+    props.onOpenRunTitle?.(id ? run?.prompt.split("\n")[0]?.trim() || shortRunId(id) : undefined);
+  });
+  onCleanup(() => props.onOpenRunTitle?.(undefined));
 
   const [focusRunId, setFocusRunId] = createSignal("");
   const openRun = (id: string) => {

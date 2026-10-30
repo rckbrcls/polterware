@@ -14,6 +14,7 @@ import (
 	"github.com/polterware/polterware/backend/compositions/wedge"
 	"github.com/polterware/polterware/backend/domains/polter"
 	"github.com/polterware/polterware/backend/domains/projects"
+	"github.com/polterware/polterware/backend/platform/ids"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
@@ -57,10 +58,13 @@ func Defaults(store *storepkg.Store) error {
 // real Polterware content: Decisions, Structure nodes, Rules, Work cards, docs,
 // and facts.
 func Polterware(store *storepkg.Store, root string) error {
-	if _, err := wedge.InitProject(store, wedge.InitInput{ID: ProjectID, Name: ProjectName, RootPath: root}); err != nil {
+	if _, err := wedge.InitProject(store, wedge.InitInput{ID: ProjectID, Name: ProjectName}); err != nil {
 		return err
 	}
 	if err := seedSettings(store); err != nil {
+		return err
+	}
+	if err := saveRepository(store, "main", root); err != nil {
 		return err
 	}
 	registered := map[string]bool{}
@@ -69,7 +73,7 @@ func Polterware(store *storepkg.Store, root string) error {
 		if _, err := os.Stat(filepath.Join(dir, ".git")); err != nil {
 			continue
 		}
-		if _, err := wedge.AddProjectRepo(store, ProjectID, checkout.name, dir); err != nil {
+		if err := saveRepository(store, checkout.name, dir); err != nil {
 			return err
 		}
 		registered[checkout.name] = true
@@ -86,6 +90,16 @@ func Polterware(store *storepkg.Store, root string) error {
 		return err
 	}
 	return seedFacts(store)
+}
+
+// saveRepository registers one clone under a fixed name, so the seed text can
+// link components to it.
+func saveRepository(store *storepkg.Store, name, dir string) error {
+	repo, err := projects.NewRepository(ids.NewULID(), ProjectID, name, wedge.RepositoryRemote(dir), dir)
+	if err != nil {
+		return err
+	}
+	return store.SaveRepository(repo)
 }
 
 // apply writes one Polter text and reports the first error diagnostic, which
@@ -155,7 +169,7 @@ func gitTopLevel(dir string) string {
 // seedEmptyProject creates a project the way a user-registered one starts:
 // empty layout, default settings, and one local environment.
 func seedEmptyProject(store *storepkg.Store) error {
-	_, err := wedge.InitProject(store, wedge.InitInput{ID: EmptyProjectID, Name: "Empty project", RootPath: "~/projects/empty"})
+	_, err := wedge.InitProject(store, wedge.InitInput{ID: EmptyProjectID, Name: "Empty project"})
 	return err
 }
 

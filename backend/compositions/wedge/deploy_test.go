@@ -18,7 +18,7 @@ func TestDeployLinksPersistAndInbox(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer store.Close()
-	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", RootPath: t.TempDir()})
+	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ rationale: Record where it deploys
 ---
 
 # app: App
-level: system
+level: domain
 
 # app/web: Web
 level: component

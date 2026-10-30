@@ -33,9 +33,7 @@ func (core *Core) GetAgentSetup(_ context.Context, request *connect.Request[loca
 	report := agentsetup.Doctor(core.DBDir)
 	root := ""
 	if id := request.Msg.ProjectId; id != "" {
-		if project, err := core.Store.GetProject(id); err == nil {
-			root = wedge.ExpandRootPath(project.RootPath)
-		}
+		root = wedge.FirstCheckout(core.Store, id)
 	}
 	agents := agentsetup.InspectAgents(root)
 	return connect.NewResponse(&localv1.GetAgentSetupResponse{Setup: &localv1.AgentSetup{

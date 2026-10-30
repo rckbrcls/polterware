@@ -24,10 +24,6 @@ import type {
 } from "./agents-types";
 import { mergeActivityRows } from "./activity-rows";
 import { activityDayGroups, activityDayId } from "./activity-days";
-import {
-  driftFindingSeverityTone,
-  parseDriftStepPayload,
-} from "./drift-step-payload";
 
 export type ChangeActorFilter = "all" | "human" | "agent";
 
@@ -290,7 +286,6 @@ function ChangeDetail(props: {
                 <ol class="m-0 flex list-none flex-col gap-3 p-0 text-[12.5px]">
                   <For each={run().steps}>
                     {(step) => {
-                      const drift = step.kind === "drift" ? parseDriftStepPayload(step.payloadJson) : undefined;
                       const selected = () => step.id === props.selectedStepId;
                       return (
                         <li
@@ -307,31 +302,6 @@ function ChangeDetail(props: {
                             </span>
                           </div>
                           <p class="m-0 text-[var(--color-text-primary)]">{step.summary || "—"}</p>
-                          <Show when={drift && drift.findings.length > 0}>
-                            <ul class="m-0 mt-1 flex list-none flex-col gap-2 p-0">
-                              <For each={drift!.findings}>
-                                {(finding) => (
-                                  <li class="flex flex-col gap-0.5">
-                                    <div class="flex flex-wrap items-center gap-1.5">
-                                      <StatusChip
-                                        tone={driftFindingSeverityTone(finding.severity)}
-                                        label={finding.severity || "finding"}
-                                      />
-                                      <Show when={finding.type}>
-                                        <span class="font-mono text-[11px] text-[var(--color-text-muted)]">{finding.type}</span>
-                                      </Show>
-                                    </div>
-                                    <span class="text-[12px]">{finding.summary || "—"}</span>
-                                    <Show when={finding.subjectIds.length > 0}>
-                                      <span class="font-mono text-[11px] text-[var(--color-text-muted)] pw-selectable">
-                                        {finding.subjectIds.join(", ")}
-                                      </span>
-                                    </Show>
-                                  </li>
-                                )}
-                              </For>
-                            </ul>
-                          </Show>
                         </li>
                       );
                     }}

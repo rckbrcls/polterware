@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// ExpandRootPath expands a leading ~ to the user home directory.
-func ExpandRootPath(path string) string {
+// ExpandPath expands a leading ~ to the user home directory.
+func ExpandPath(path string) string {
 	path = strings.TrimSpace(path)
 	if path == "" {
 		return ""

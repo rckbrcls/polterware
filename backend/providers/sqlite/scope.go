@@ -14,7 +14,7 @@ const (
 	ScopeRule     = "rule"
 	// ScopeKnowledge is any knowledge item, such as a doc.
 	ScopeKnowledge = "knowledge"
-	// ScopeItem is a derived Drift finding or Inbox item, keyed by its item key.
+	// ScopeItem is a derived Inbox item, keyed by its item key.
 	ScopeItem = "item"
 )
 

@@ -12,7 +12,6 @@ const previewProjects = [
   {
     id: PREVIEW_PROJECT_ID,
     name: "Browser preview",
-    rootPath: "/preview",
     description: "Sample project with data in every surface.",
     status: "active",
     createdAt: "2026-01-01T00:00:00.000Z",
@@ -21,7 +20,6 @@ const previewProjects = [
   {
     id: EMPTY_PROJECT_ID,
     name: "Empty project",
-    rootPath: "/empty",
     description: "",
     status: "active",
     createdAt: "2026-01-02T00:00:00.000Z",
@@ -42,8 +40,8 @@ const previewSettings = [
 ];
 
 const previewRepos = [
-  { id: "repo-core", name: "polterware", path: "/preview/repos/polterware" },
-  { id: "repo-web", name: "polterware-web", path: "/preview/repos/polterware-web" },
+  { id: "repo-core", name: "polterware", remote: "github.com/polterware/polterware", localPath: "/preview/repos/polterware" },
+  { id: "repo-web", name: "polterware-web", remote: "", localPath: "/preview/repos/polterware-web" },
 ];
 
 const knowledgeItem = (
@@ -133,24 +131,23 @@ const previewEntities = [
   entity("ent-store", "component", "comp-store", "Store"),
 ];
 
-type StructureSeed = [id: string, parentId: string, level: "system" | "domain" | "component", slug: string, path: string, title: string, status: "proposed" | "in_progress" | "delivered" | "drift", decisions: string[], childCount: number, featureCount: number, openQuestions: number, folder: string];
+type StructureSeed = [id: string, parentId: string, level: "domain" | "component", slug: string, path: string, title: string, status: "proposed" | "in_progress" | "delivered", decisions: string[], childCount: number, featureCount: number, openQuestions: number, folder: string];
 
 const structureSeeds: StructureSeed[] = [
-  ["n-sys", "", "system", "polterware", "polterware", "Polterware", "in_progress", [], 4, 0, 0, ""],
-  ["n-platform", "n-sys", "domain", "platform", "polterware/platform", "Platform", "in_progress", [], 3, 1, 0, "backend"],
-  ["n-product", "n-sys", "domain", "product", "polterware/product", "Product", "in_progress", [], 3, 2, 1, "apps"],
-  ["n-data", "n-sys", "domain", "data", "polterware/data", "Data", "delivered", [], 2, 1, 0, "schemas"],
-  ["n-agents", "n-sys", "domain", "agents", "polterware/agents", "Agents", "proposed", [], 2, 0, 1, "plugins"],
-  ["comp-core", "n-platform", "component", "core", "polterware/platform/core", "Core", "delivered", ["Decision 001", "Decision 003"], 0, 2, 0, "backend/runtimes"],
-  ["comp-cli", "n-platform", "component", "cli", "polterware/platform/cli", "CLI", "delivered", [], 0, 1, 0, "backend/cli"],
-  ["comp-api", "n-platform", "component", "api", "polterware/platform/api", "API", "drift", ["Decision 003"], 0, 1, 1, "backend/api"],
-  ["comp-desktop", "n-product", "component", "desktop", "polterware/product/desktop", "Desktop", "in_progress", [], 0, 3, 1, "apps/polterware-desktop"],
-  ["comp-structure", "n-product", "component", "structure", "polterware/product/structure", "Structure", "in_progress", ["Decision 004"], 0, 2, 0, "packages/features/structure"],
-  ["comp-inbox", "n-product", "component", "inbox", "polterware/product/inbox", "Inbox", "delivered", [], 0, 1, 0, "packages/features/inbox"],
-  ["comp-store", "n-data", "component", "store", "polterware/data/store", "Store", "delivered", ["Decision 001"], 0, 1, 0, "backend/store"],
-  ["comp-contracts", "n-data", "component", "contracts", "polterware/data/contracts", "Contracts", "delivered", [], 0, 0, 0, "schemas"],
-  ["comp-mcp", "n-agents", "component", "mcp", "polterware/agents/mcp", "MCP bridge", "proposed", ["Decision 005"], 0, 1, 1, "backend/mcp"],
-  ["comp-plugin", "n-agents", "component", "plugin", "polterware/agents/plugin", "Agent plugin", "proposed", [], 0, 0, 0, "plugins/polterware"],
+  ["n-platform", "", "domain", "platform", "platform", "Platform", "in_progress", [], 3, 1, 0, "backend"],
+  ["n-product", "", "domain", "product", "product", "Product", "in_progress", [], 3, 2, 1, "apps"],
+  ["n-data", "", "domain", "data", "data", "Data", "delivered", [], 2, 1, 0, "schemas"],
+  ["n-agents", "", "domain", "agents", "agents", "Agents", "proposed", [], 2, 0, 1, "plugins"],
+  ["comp-core", "n-platform", "component", "core", "platform/core", "Core", "delivered", ["Decision 001", "Decision 003"], 0, 2, 0, "backend/runtimes"],
+  ["comp-cli", "n-platform", "component", "cli", "platform/cli", "CLI", "delivered", [], 0, 1, 0, "backend/cli"],
+  ["comp-api", "n-platform", "component", "api", "platform/api", "API", "in_progress", ["Decision 003"], 0, 1, 1, "backend/api"],
+  ["comp-desktop", "n-product", "component", "desktop", "product/desktop", "Desktop", "in_progress", [], 0, 3, 1, "apps/polterware-desktop"],
+  ["comp-structure", "n-product", "component", "structure", "product/structure", "Structure", "in_progress", ["Decision 004"], 0, 2, 0, "packages/features/structure"],
+  ["comp-inbox", "n-product", "component", "inbox", "product/inbox", "Inbox", "delivered", [], 0, 1, 0, "packages/features/inbox"],
+  ["comp-store", "n-data", "component", "store", "data/store", "Store", "delivered", ["Decision 001"], 0, 1, 0, "backend/store"],
+  ["comp-contracts", "n-data", "component", "contracts", "data/contracts", "Contracts", "delivered", [], 0, 0, 0, "schemas"],
+  ["comp-mcp", "n-agents", "component", "mcp", "agents/mcp", "MCP bridge", "proposed", ["Decision 005"], 0, 1, 1, "backend/mcp"],
+  ["comp-plugin", "n-agents", "component", "plugin", "agents/plugin", "Agent plugin", "proposed", [], 0, 0, 0, "plugins/polterware"],
 ];
 
 /** Component kind and technology per node id; the plugin leaves its technology empty. */
@@ -176,7 +173,6 @@ const previewStructure = {
     invariants: level === "component" ? [{ id: `inv-${slug}`, text: `${title} never writes outside its own folder.` }] : [],
     repo: level === "component" ? "polterware" : "",
   })),
-  driftSlugs: ["api"],
   historical: false,
 };
 
@@ -233,24 +229,24 @@ async function applyPreviewPolter(args?: { projectId?: string; text?: string; dr
 
 const previewStructureHistory = [
   { batchId: "batch-4", at: "2026-09-25T10:00:00.000Z", nodeOps: 3, summary: "Added the agents domain." },
-  { batchId: "batch-3", at: "2026-09-18T10:00:00.000Z", nodeOps: 2, summary: "Marked the API component as drifting." },
+  { batchId: "batch-3", at: "2026-09-18T10:00:00.000Z", nodeOps: 2, summary: "Linked the API component to its checkout." },
   { batchId: "batch-2", at: "2026-09-10T10:00:00.000Z", nodeOps: 5, summary: "Split platform into core and CLI." },
   { batchId: "batch-1", at: "2026-09-01T10:00:00.000Z", nodeOps: 8, summary: "Imported the first hierarchy." },
 ];
 
 const cardSeeds: [slug: string, title: string, stage: string, kind: string, under: string, taskStates: string[]][] = [
-  ["clarify-scope", "Clarify project scope", "shape", "feature", "polterware/product/desktop", ["open"]],
-  ["agent-handoff", "Agent handoff summary", "shape", "feature", "polterware/agents/mcp", []],
-  ["split-api", "Split the API layer", "plan", "architecture", "polterware/platform/api", ["open", "open"]],
-  ["event-stream", "Change event stream", "plan", "feature", "polterware/platform/core", ["done", "open"]],
-  ["structure-canvas", "Structure canvas", "build", "feature", "polterware/product/structure", ["done", "open", "open"]],
-  ["board-view", "Work board", "build", "feature", "polterware/product/desktop", ["done", "done", "open"]],
-  ["inbox-actions", "Inbox actions", "build", "feature", "polterware/product/inbox", ["open", "dropped"]],
-  ["drift-checks", "Drift checks", "verify", "feature", "polterware/platform/api", ["done", "done"]],
-  ["store-baseline", "Store baseline", "verify", "architecture", "polterware/data/store", ["done"]],
-  ["core-daemon", "Core daemon lock", "delivered", "feature", "polterware/platform/core", ["done", "done"]],
-  ["cli-status", "CLI status command", "delivered", "feature", "polterware/platform/cli", ["done"]],
-  ["contracts-gen", "Contract generation", "delivered", "architecture", "polterware/data/contracts", ["done", "done"]],
+  ["clarify-scope", "Clarify project scope", "shape", "feature", "product/desktop", ["open"]],
+  ["agent-handoff", "Agent handoff summary", "shape", "feature", "agents/mcp", []],
+  ["split-api", "Split the API layer", "plan", "architecture", "platform/api", ["open", "open"]],
+  ["event-stream", "Change event stream", "plan", "feature", "platform/core", ["done", "open"]],
+  ["structure-canvas", "Structure canvas", "build", "feature", "product/structure", ["done", "open", "open"]],
+  ["board-view", "Work board", "build", "feature", "product/desktop", ["done", "done", "open"]],
+  ["inbox-actions", "Inbox actions", "build", "feature", "product/inbox", ["open", "dropped"]],
+  ["card-commits", "Card commits", "verify", "feature", "platform/api", ["done", "done"]],
+  ["store-baseline", "Store baseline", "verify", "architecture", "data/store", ["done"]],
+  ["core-daemon", "Core daemon lock", "delivered", "feature", "platform/core", ["done", "done"]],
+  ["cli-status", "CLI status command", "delivered", "feature", "platform/cli", ["done"]],
+  ["contracts-gen", "Contract generation", "delivered", "architecture", "data/contracts", ["done", "done"]],
 ];
 
 const previewCards = cardSeeds.map(([slug, title, stage, kind, under, taskStates], index) => ({
@@ -288,12 +284,12 @@ const inboxItem = (
 ) => ({ id, kind, blocking, title, detail, options, where, source, state, actions, details });
 
 const previewInboxItems = [
-  inboxItem("inb-1", "decision", true, "Ship the event stream behind a flag?", "The card asks for a decision.", ["Yes", "No"], "polterware/platform/core", "card:event-stream", "open", ["decide", "delegate", "defer"]),
-  inboxItem("inb-2", "decision", true, "Who reviews agent handoff?", "Owner is unset.", ["Ada", "Grace"], "polterware/agents/mcp", "card:agent-handoff", "open", ["decide", "delegate", "defer"]),
+  inboxItem("inb-0", "conflict", true, "Cache sessions in Redis", "Rule: Never call the network from the core.", ["Keep sessions local", "Allow Redis for this card"], "agent-handoff", "", "open", ["decide", "defer"],
+    { conflict: "redis-sessions", rule: "Never call the network from the core.", rule_id: "rule-local-only" }),
+  inboxItem("inb-1", "decision", true, "Ship the event stream behind a flag?", "The card asks for a decision.", ["Yes", "No"], "platform/core", "card:event-stream", "open", ["decide", "delegate", "defer"]),
+  inboxItem("inb-2", "decision", true, "Who reviews agent handoff?", "Owner is unset.", ["Ada", "Grace"], "agents/mcp", "card:agent-handoff", "open", ["decide", "delegate", "defer"]),
   inboxItem("inb-3", "decision", false, "Keep Markdown intent files?", "Decision 004 is challenged.", ["Keep", "Replace"], "Decision 004", "decision:decision-004", "open", ["decide", "defer", "ignore"]),
-  inboxItem("inb-4", "drift", false, "commit \"Trim API fields\" is on main with no task", "Link it to the task it delivers, or dismiss it.", [], "polterware a1b2c3d", "drift:commit", "open", ["link", "defer", "ignore"], { repo: "polterware", sha: "a1b2c3d4e5f6", subject: "Trim API fields" }),
-  inboxItem("inb-6", "setup", false, "Connect vercel for polterware/product/web in production", "vercel", [], "polterware/product/web", "production", "open", ["defer", "ignore"]),
-  inboxItem("inb-5", "drift", false, "task desktop-shell T2 is done with no commit on main", "Link the commit that delivered it, or reopen the task.", [], "desktop-shell#T2", "drift:task", "deferred", ["link", "reopen", "defer", "ignore"], { slug: "desktop-shell", task: "T2", task_id: "task-2", title: "Render the sidebar" }),
+  inboxItem("inb-6", "setup", false, "Connect vercel for product/web in production", "vercel", [], "product/web", "production", "open", ["defer", "ignore"]),
 ];
 
 
@@ -378,10 +374,13 @@ const previewRules = previewRuleSeeds.map(([slug, statement, entityId]) => {
   return { id: `rule-${slug}`, slug, statement, scopeNodeIds: nodeId ? [nodeId] : [], scopePaths: [] as string[] };
 });
 
+/** Commits linked by hand in the browser preview, per card slug. */
+const previewCommitLinks = new Map<string, { taskNumber: number; sha: string; shortSha: string; subject: string; url: string; committedAt: string; repo: string; cited: boolean }[]>();
+
 const previewRunSeeds: [id: string, actorKind: string, label: string, task: string, status: string, steps: [kind: string, summary: string, subjects?: string[]][]][] = [
   ["run-1", "agent", "claude-code", "Import project sources", "completed", [["import", "Registered 14 sources from the project root."], ["fact", "Added fact: The core is the only process that opens SQLite."]]],
   ["run-2", "agent", "codex", "Split the API layer", "completed", [["work", "Moved card Split the API layer to Plan.", ["card-split-api"]], ["decision", "Proposed decision: Poll for changes."]]],
-  ["run-3", "human", "Ada", "Review drift findings", "completed", [["drift", "Marked API drift as update intent."]]],
+  ["run-3", "human", "Ada", "Review the API card", "completed", [["work", "Moved the API card to In review."]]],
   ["run-4", "agent", "claude-code", "Verify session cache", "failed", [["fact", "Could not record the fact: no matching file."]]],
   ["run-5", "human", "Grace", "Link runbook to Core", "completed", [["link", "Linked Deploy runbook to the Core component."]]],
   ["run-6", "human", "Ada", "Pin the local-first principle", "completed", [["decision", "Pinned Local-first truth as a principle.", ["decision-principle-local"]], ["work", "Added a task to Split the API layer.", ["card-split-api"]]]],
@@ -759,7 +758,7 @@ function createBrowserDevBridge(): PolterwareBridge {
     createdAt: "2026-09-20T12:00:00.000Z", updatedAt: "2026-09-20T12:00:00.000Z",
   }));
   const seedMilestone: Record<string, string> = {
-    "board-view": "beta", "inbox-actions": "beta", "drift-checks": "beta", "store-baseline": "beta", "core-daemon": "beta",
+    "board-view": "beta", "inbox-actions": "beta", "card-commits": "beta", "store-baseline": "beta", "core-daemon": "beta",
     "structure-canvas": "launch", "agent-handoff": "launch",
   };
   for (const card of structureCards) (card as { milestoneId?: string }).milestoneId = seedMilestone[card.slug] ? `preview-milestone-${seedMilestone[card.slug]}` : "";
@@ -945,6 +944,7 @@ function createBrowserDevBridge(): PolterwareBridge {
           prompt?: string;
           cardSlug?: string;
           agent?: string;
+          repo?: string;
           worktree?: string;
           dir?: string;
           readOnly?: boolean;
@@ -1144,6 +1144,35 @@ function createBrowserDevBridge(): PolterwareBridge {
           card.stage = args?.step === "contract" ? "plan" : "build";
           card.updatedAt = new Date().toISOString();
           return { stage: card.stage, review: { card, checks: previewGateChecks(card) } };
+        },
+        listCardCommits: async (args?: ProjectArgs & { slug?: string }) => {
+          const card = structureCards.find((item) => item.slug === args?.slug);
+          const done = (card?.tasks ?? []).filter((task) => task.state === "done");
+          const extra = previewCommitLinks.get(args?.slug ?? "") ?? [];
+          return { commits: [
+            ...extra,
+            ...done.map((task, index) => {
+              const sha = `${(index + 3).toString(16).repeat(4)}${card!.slug.length.toString(16).padStart(4, "0")}${"0".repeat(32)}`;
+              return {
+                taskNumber: task.number, sha, shortSha: sha.slice(0, 7), subject: `${task.title} (${card!.slug}#T${task.number})`,
+                url: `https://github.com/polterware/polterware/commit/${sha}`, committedAt: new Date(Date.UTC(2026, 9, 28 - index, 15)).toISOString(), repo: "", cited: true,
+              };
+            }),
+          ] };
+        },
+        linkTaskCommit: async (args?: ProjectArgs & { task?: string; sha?: string }) => {
+          const [slug, number] = (args?.task ?? "").split("#T");
+          const sha = (args?.sha ?? "").trim();
+          if (!slug || !number || !/^[0-9a-f]{4,40}$/.test(sha)) throw new Error(`unknown commit "${sha}": no checkout of this project has it`);
+          const full = sha.padEnd(40, "0");
+          const commit = { taskNumber: Number(number), sha: full, shortSha: full.slice(0, 7), subject: "Linked by hand", url: "", committedAt: new Date().toISOString(), repo: "", cited: false };
+          previewCommitLinks.set(slug, [commit, ...(previewCommitLinks.get(slug) ?? [])]);
+          return { commit };
+        },
+        unlinkTaskCommit: async (args?: ProjectArgs & { task?: string; sha?: string }) => {
+          const [slug] = (args?.task ?? "").split("#T");
+          previewCommitLinks.set(slug ?? "", (previewCommitLinks.get(slug ?? "") ?? []).filter((commit) => commit.sha !== args?.sha));
+          return {};
         },
         verifyFeature: async (args?: ProjectArgs & { target?: string }) => {
           const card = structureCards.find((item) => item.slug === args?.target);

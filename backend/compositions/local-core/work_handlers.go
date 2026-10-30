@@ -67,9 +67,7 @@ func (core *Core) ListStructure(ctx context.Context, request *connect.Request[lo
 	for _, row := range rows {
 		nodes = append(nodes, structureNodeProto(row))
 	}
-	return connect.NewResponse(&localv1.ListStructureResponse{
-		Nodes: nodes, DriftSlugs: wedge.DriftSlugs(core.Store, request.Msg.ProjectId),
-	}), nil
+	return connect.NewResponse(&localv1.ListStructureResponse{Nodes: nodes}), nil
 }
 
 func (core *Core) ListStructureHistory(_ context.Context, request *connect.Request[localv1.ListStructureHistoryRequest]) (*connect.Response[localv1.ListStructureHistoryResponse], error) {

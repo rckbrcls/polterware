@@ -1,4 +1,4 @@
-export type StructureKind = "system" | "domain" | "component";
+export type StructureKind = "domain" | "component";
 export type StructureNode = {
   id: string;
   parentId: string;
@@ -55,10 +55,9 @@ export function flattenStructureTree(items: readonly StructureTreeItem[]): Struc
   return items.flatMap((item) => [item.node, ...flattenStructureTree(item.children)]);
 }
 
-/** Only the existing hierarchy levels are valid move destinations. */
+/** A component's parent is a domain (or none: it sits loose under the project); a domain has none. */
 export function structureParents(nodes: readonly StructureNode[], kind: StructureKind, movingId?: string): StructureNode[] {
-  return nodes.filter((node) => node.id !== movingId &&
-    (kind === "domain" ? node.level === "system" : kind === "component" ? node.level === "system" || node.level === "domain" : false));
+  return nodes.filter((node) => node.id !== movingId && kind === "component" && node.level === "domain");
 }
 
 /** Scope nodes form a union of subtrees; their ancestors retain the project hierarchy. */

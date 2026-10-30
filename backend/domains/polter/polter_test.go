@@ -256,7 +256,7 @@ func TestLintHints(t *testing.T) {
 			Questions:  []work.Question{{Text: "Include merge commits?", State: work.QuestionOpen}},
 			Invariants: []work.Invariant{{Text: "No network calls during scan", State: work.InvariantActive}},
 		},
-		{Slug: "drift-panel", Title: "Drift panel", Status: work.CardActive, Under: "desktop/reality"},
+		{Slug: "commits-panel", Title: "Commits panel", Status: work.CardActive, Under: "desktop/reality"},
 	}
 	text := `---
 polter: 1

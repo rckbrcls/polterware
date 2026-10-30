@@ -1258,30 +1258,28 @@ func (x *EndSessionResponse) GetCompletedRuns() int32 {
 }
 
 // InboxItem is one derived item that needs a person: a Decision (open
-// question), Drift (a done task with no commit on main, or a commit on main
-// with no task), or Setup (a deploy whose provider CLI is not connected).
+// question) or Setup (a deploy whose provider CLI is not connected).
 type InboxItem struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id is the short id people type; it is stable while the item is the same.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// kind is "decision", "drift", or "setup".
+	// kind is "conflict", "decision", or "setup".
 	Kind     string   `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	Blocking bool     `protobuf:"varint,3,opt,name=blocking,proto3" json:"blocking,omitempty"`
 	Title    string   `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
 	Detail   string   `protobuf:"bytes,5,opt,name=detail,proto3" json:"detail,omitempty"`
 	Options  []string `protobuf:"bytes,6,rep,name=options,proto3" json:"options,omitempty"`
-	// where is the card slug and task, or the commit.
+	// where is the card slug and task, or the deploy.
 	Where  string `protobuf:"bytes,7,opt,name=where,proto3" json:"where,omitempty"`
 	Source string `protobuf:"bytes,8,opt,name=source,proto3" json:"source,omitempty"`
 	// state is "open" or "deferred".
 	State string `protobuf:"bytes,9,opt,name=state,proto3" json:"state,omitempty"`
 	// actions are the item's action ids, primary first: decide, delegate,
-	// link, reopen, defer, ignore.
+	// defer, ignore.
 	Actions []string `protobuf:"bytes,10,rep,name=actions,proto3" json:"actions,omitempty"`
 	// scope_node_ids are the item's own contexts; empty when it follows its source.
 	ScopeNodeIds []string `protobuf:"bytes,12,rep,name=scope_node_ids,json=scopeNodeIds,proto3" json:"scope_node_ids,omitempty"`
-	// details are a drift item's facts: slug, task, task_id for a done task;
-	// repo, sha, subject for a commit.
+	// details are the item's facts, such as a setup item's provider.
 	Details       map[string]string `protobuf:"bytes,13,rep,name=details,proto3" json:"details,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1932,7 +1930,7 @@ func (x *NodeDeployment) GetResource() string {
 }
 
 // StructureNode is a system, domain, or component. status is derived:
-// proposed, in_progress, delivered, or drift.
+// proposed, in_progress, or delivered.
 type StructureNode struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -2186,7 +2184,6 @@ func (x *ListStructureRequest) GetAsOf() string {
 type ListStructureResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Nodes         []*StructureNode       `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
-	DriftSlugs    []string               `protobuf:"bytes,2,rep,name=drift_slugs,json=driftSlugs,proto3" json:"drift_slugs,omitempty"`
 	Historical    bool                   `protobuf:"varint,3,opt,name=historical,proto3" json:"historical,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2225,13 +2222,6 @@ func (*ListStructureResponse) Descriptor() ([]byte, []int) {
 func (x *ListStructureResponse) GetNodes() []*StructureNode {
 	if x != nil {
 		return x.Nodes
-	}
-	return nil
-}
-
-func (x *ListStructureResponse) GetDriftSlugs() []string {
-	if x != nil {
-		return x.DriftSlugs
 	}
 	return nil
 }
@@ -5093,6 +5083,410 @@ func (x *ListRulesResponse) GetRules() []*Rule {
 	return nil
 }
 
+// CardCommit is one commit of a card's task: linked by an agent or a person,
+// or cited in its subject (slug#T2) and read from a checkout.
+type CardCommit struct {
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	TaskNumber int32                  `protobuf:"varint,1,opt,name=task_number,json=taskNumber,proto3" json:"task_number,omitempty"`
+	// sha is the full commit hash; short_sha its first seven characters.
+	Sha      string `protobuf:"bytes,2,opt,name=sha,proto3" json:"sha,omitempty"`
+	ShortSha string `protobuf:"bytes,3,opt,name=short_sha,json=shortSha,proto3" json:"short_sha,omitempty"`
+	Subject  string `protobuf:"bytes,4,opt,name=subject,proto3" json:"subject,omitempty"`
+	// url is the commit on GitHub when its checkout has a GitHub remote; else empty.
+	Url string `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`
+	// committed_at is RFC3339; empty when unknown.
+	CommittedAt string `protobuf:"bytes,6,opt,name=committed_at,json=committedAt,proto3" json:"committed_at,omitempty"`
+	// repo is the checkout name; empty for the project directory.
+	Repo string `protobuf:"bytes,7,opt,name=repo,proto3" json:"repo,omitempty"`
+	// cited is true for a commit found by its subject, which has no stored link to remove.
+	Cited         bool `protobuf:"varint,8,opt,name=cited,proto3" json:"cited,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CardCommit) Reset() {
+	*x = CardCommit{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[73]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CardCommit) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CardCommit) ProtoMessage() {}
+
+func (x *CardCommit) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[73]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CardCommit.ProtoReflect.Descriptor instead.
+func (*CardCommit) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{73}
+}
+
+func (x *CardCommit) GetTaskNumber() int32 {
+	if x != nil {
+		return x.TaskNumber
+	}
+	return 0
+}
+
+func (x *CardCommit) GetSha() string {
+	if x != nil {
+		return x.Sha
+	}
+	return ""
+}
+
+func (x *CardCommit) GetShortSha() string {
+	if x != nil {
+		return x.ShortSha
+	}
+	return ""
+}
+
+func (x *CardCommit) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
+func (x *CardCommit) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *CardCommit) GetCommittedAt() string {
+	if x != nil {
+		return x.CommittedAt
+	}
+	return ""
+}
+
+func (x *CardCommit) GetRepo() string {
+	if x != nil {
+		return x.Repo
+	}
+	return ""
+}
+
+func (x *CardCommit) GetCited() bool {
+	if x != nil {
+		return x.Cited
+	}
+	return false
+}
+
+type ListCardCommitsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Slug          string                 `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCardCommitsRequest) Reset() {
+	*x = ListCardCommitsRequest{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[74]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCardCommitsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCardCommitsRequest) ProtoMessage() {}
+
+func (x *ListCardCommitsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[74]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCardCommitsRequest.ProtoReflect.Descriptor instead.
+func (*ListCardCommitsRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{74}
+}
+
+func (x *ListCardCommitsRequest) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *ListCardCommitsRequest) GetSlug() string {
+	if x != nil {
+		return x.Slug
+	}
+	return ""
+}
+
+type ListCardCommitsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Commits       []*CardCommit          `protobuf:"bytes,1,rep,name=commits,proto3" json:"commits,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCardCommitsResponse) Reset() {
+	*x = ListCardCommitsResponse{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[75]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCardCommitsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCardCommitsResponse) ProtoMessage() {}
+
+func (x *ListCardCommitsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[75]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCardCommitsResponse.ProtoReflect.Descriptor instead.
+func (*ListCardCommitsResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{75}
+}
+
+func (x *ListCardCommitsResponse) GetCommits() []*CardCommit {
+	if x != nil {
+		return x.Commits
+	}
+	return nil
+}
+
+// LinkTaskCommit links a commit (a sha or a prefix of one) to a task, given as slug#T2.
+type LinkTaskCommitRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Task          string                 `protobuf:"bytes,2,opt,name=task,proto3" json:"task,omitempty"`
+	Sha           string                 `protobuf:"bytes,3,opt,name=sha,proto3" json:"sha,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LinkTaskCommitRequest) Reset() {
+	*x = LinkTaskCommitRequest{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[76]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LinkTaskCommitRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LinkTaskCommitRequest) ProtoMessage() {}
+
+func (x *LinkTaskCommitRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[76]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LinkTaskCommitRequest.ProtoReflect.Descriptor instead.
+func (*LinkTaskCommitRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{76}
+}
+
+func (x *LinkTaskCommitRequest) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *LinkTaskCommitRequest) GetTask() string {
+	if x != nil {
+		return x.Task
+	}
+	return ""
+}
+
+func (x *LinkTaskCommitRequest) GetSha() string {
+	if x != nil {
+		return x.Sha
+	}
+	return ""
+}
+
+type LinkTaskCommitResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Commit        *CardCommit            `protobuf:"bytes,1,opt,name=commit,proto3" json:"commit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LinkTaskCommitResponse) Reset() {
+	*x = LinkTaskCommitResponse{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[77]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LinkTaskCommitResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LinkTaskCommitResponse) ProtoMessage() {}
+
+func (x *LinkTaskCommitResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[77]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LinkTaskCommitResponse.ProtoReflect.Descriptor instead.
+func (*LinkTaskCommitResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{77}
+}
+
+func (x *LinkTaskCommitResponse) GetCommit() *CardCommit {
+	if x != nil {
+		return x.Commit
+	}
+	return nil
+}
+
+type UnlinkTaskCommitRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Task          string                 `protobuf:"bytes,2,opt,name=task,proto3" json:"task,omitempty"`
+	Sha           string                 `protobuf:"bytes,3,opt,name=sha,proto3" json:"sha,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnlinkTaskCommitRequest) Reset() {
+	*x = UnlinkTaskCommitRequest{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[78]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnlinkTaskCommitRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnlinkTaskCommitRequest) ProtoMessage() {}
+
+func (x *UnlinkTaskCommitRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[78]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnlinkTaskCommitRequest.ProtoReflect.Descriptor instead.
+func (*UnlinkTaskCommitRequest) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{78}
+}
+
+func (x *UnlinkTaskCommitRequest) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *UnlinkTaskCommitRequest) GetTask() string {
+	if x != nil {
+		return x.Task
+	}
+	return ""
+}
+
+func (x *UnlinkTaskCommitRequest) GetSha() string {
+	if x != nil {
+		return x.Sha
+	}
+	return ""
+}
+
+type UnlinkTaskCommitResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnlinkTaskCommitResponse) Reset() {
+	*x = UnlinkTaskCommitResponse{}
+	mi := &file_polterware_local_v1_work_proto_msgTypes[79]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnlinkTaskCommitResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnlinkTaskCommitResponse) ProtoMessage() {}
+
+func (x *UnlinkTaskCommitResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_polterware_local_v1_work_proto_msgTypes[79]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnlinkTaskCommitResponse.ProtoReflect.Descriptor instead.
+func (*UnlinkTaskCommitResponse) Descriptor() ([]byte, []int) {
+	return file_polterware_local_v1_work_proto_rawDescGZIP(), []int{79}
+}
+
 var File_polterware_local_v1_work_proto protoreflect.FileDescriptor
 
 const file_polterware_local_v1_work_proto_rawDesc = "" +
@@ -5298,14 +5692,12 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x14ListStructureRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x13\n" +
-	"\x05as_of\x18\x02 \x01(\tR\x04asOf\"\x92\x01\n" +
+	"\x05as_of\x18\x02 \x01(\tR\x04asOf\"\x84\x01\n" +
 	"\x15ListStructureResponse\x128\n" +
-	"\x05nodes\x18\x01 \x03(\v2\".polterware.local.v1.StructureNodeR\x05nodes\x12\x1f\n" +
-	"\vdrift_slugs\x18\x02 \x03(\tR\n" +
-	"driftSlugs\x12\x1e\n" +
+	"\x05nodes\x18\x01 \x03(\v2\".polterware.local.v1.StructureNodeR\x05nodes\x12\x1e\n" +
 	"\n" +
 	"historical\x18\x03 \x01(\bR\n" +
-	"historical\"\x99\x01\n" +
+	"historicalJ\x04\b\x02\x10\x03R\vdrift_slugs\"\x99\x01\n" +
 	"\x15StructureHistoryEntry\x12\x19\n" +
 	"\bbatch_id\x18\x01 \x01(\tR\abatchId\x12\x0e\n" +
 	"\x02at\x18\x02 \x01(\tR\x02at\x12 \n" +
@@ -5538,7 +5930,37 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\vscope_exact\x18\x03 \x01(\bR\n" +
 	"scopeExact\"D\n" +
 	"\x11ListRulesResponse\x12/\n" +
-	"\x05rules\x18\x01 \x03(\v2\x19.polterware.local.v1.RuleR\x05rules2\xc4\x14\n" +
+	"\x05rules\x18\x01 \x03(\v2\x19.polterware.local.v1.RuleR\x05rules\"\xd5\x01\n" +
+	"\n" +
+	"CardCommit\x12\x1f\n" +
+	"\vtask_number\x18\x01 \x01(\x05R\n" +
+	"taskNumber\x12\x10\n" +
+	"\x03sha\x18\x02 \x01(\tR\x03sha\x12\x1b\n" +
+	"\tshort_sha\x18\x03 \x01(\tR\bshortSha\x12\x18\n" +
+	"\asubject\x18\x04 \x01(\tR\asubject\x12\x10\n" +
+	"\x03url\x18\x05 \x01(\tR\x03url\x12!\n" +
+	"\fcommitted_at\x18\x06 \x01(\tR\vcommittedAt\x12\x12\n" +
+	"\x04repo\x18\a \x01(\tR\x04repo\x12\x14\n" +
+	"\x05cited\x18\b \x01(\bR\x05cited\"K\n" +
+	"\x16ListCardCommitsRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x12\n" +
+	"\x04slug\x18\x02 \x01(\tR\x04slug\"T\n" +
+	"\x17ListCardCommitsResponse\x129\n" +
+	"\acommits\x18\x01 \x03(\v2\x1f.polterware.local.v1.CardCommitR\acommits\"\\\n" +
+	"\x15LinkTaskCommitRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x12\n" +
+	"\x04task\x18\x02 \x01(\tR\x04task\x12\x10\n" +
+	"\x03sha\x18\x03 \x01(\tR\x03sha\"Q\n" +
+	"\x16LinkTaskCommitResponse\x127\n" +
+	"\x06commit\x18\x01 \x01(\v2\x1f.polterware.local.v1.CardCommitR\x06commit\"^\n" +
+	"\x17UnlinkTaskCommitRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x12\n" +
+	"\x04task\x18\x02 \x01(\tR\x04task\x12\x10\n" +
+	"\x03sha\x18\x03 \x01(\tR\x03sha\"\x1a\n" +
+	"\x18UnlinkTaskCommitResponse2\x8e\x17\n" +
 	"\vWorkService\x12Z\n" +
 	"\tListRules\x12%.polterware.local.v1.ListRulesRequest\x1a&.polterware.local.v1.ListRulesResponse\x12f\n" +
 	"\rListWorkCards\x12).polterware.local.v1.ListWorkCardsRequest\x1a*.polterware.local.v1.ListWorkCardsResponse\x12f\n" +
@@ -5561,7 +5983,10 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\rReviewFeature\x12).polterware.local.v1.ReviewFeatureRequest\x1a*.polterware.local.v1.ReviewFeatureResponse\x12f\n" +
 	"\rCreateFeature\x12).polterware.local.v1.CreateFeatureRequest\x1a*.polterware.local.v1.CreateFeatureResponse\x12i\n" +
 	"\x0eAdvanceFeature\x12*.polterware.local.v1.AdvanceFeatureRequest\x1a+.polterware.local.v1.AdvanceFeatureResponse\x12f\n" +
-	"\rVerifyFeature\x12).polterware.local.v1.VerifyFeatureRequest\x1a*.polterware.local.v1.VerifyFeatureResponse\x12i\n" +
+	"\rVerifyFeature\x12).polterware.local.v1.VerifyFeatureRequest\x1a*.polterware.local.v1.VerifyFeatureResponse\x12l\n" +
+	"\x0fListCardCommits\x12+.polterware.local.v1.ListCardCommitsRequest\x1a,.polterware.local.v1.ListCardCommitsResponse\x12i\n" +
+	"\x0eLinkTaskCommit\x12*.polterware.local.v1.LinkTaskCommitRequest\x1a+.polterware.local.v1.LinkTaskCommitResponse\x12o\n" +
+	"\x10UnlinkTaskCommit\x12,.polterware.local.v1.UnlinkTaskCommitRequest\x1a-.polterware.local.v1.UnlinkTaskCommitResponse\x12i\n" +
 	"\x0eListMilestones\x12*.polterware.local.v1.ListMilestonesRequest\x1a+.polterware.local.v1.ListMilestonesResponse\x12l\n" +
 	"\x0fCreateMilestone\x12+.polterware.local.v1.CreateMilestoneRequest\x1a,.polterware.local.v1.CreateMilestoneResponse\x12l\n" +
 	"\x0fUpdateMilestone\x12+.polterware.local.v1.UpdateMilestoneRequest\x1a,.polterware.local.v1.UpdateMilestoneResponse\x12o\n" +
@@ -5581,7 +6006,7 @@ func file_polterware_local_v1_work_proto_rawDescGZIP() []byte {
 	return file_polterware_local_v1_work_proto_rawDescData
 }
 
-var file_polterware_local_v1_work_proto_msgTypes = make([]protoimpl.MessageInfo, 74)
+var file_polterware_local_v1_work_proto_msgTypes = make([]protoimpl.MessageInfo, 81)
 var file_polterware_local_v1_work_proto_goTypes = []any{
 	(*WorkTask)(nil),                     // 0: polterware.local.v1.WorkTask
 	(*WorkQuestion)(nil),                 // 1: polterware.local.v1.WorkQuestion
@@ -5656,20 +6081,27 @@ var file_polterware_local_v1_work_proto_goTypes = []any{
 	(*Rule)(nil),                         // 70: polterware.local.v1.Rule
 	(*ListRulesRequest)(nil),             // 71: polterware.local.v1.ListRulesRequest
 	(*ListRulesResponse)(nil),            // 72: polterware.local.v1.ListRulesResponse
-	nil,                                  // 73: polterware.local.v1.InboxItem.DetailsEntry
-	(*ChangeEnvelope)(nil),               // 74: polterware.local.v1.ChangeEnvelope
+	(*CardCommit)(nil),                   // 73: polterware.local.v1.CardCommit
+	(*ListCardCommitsRequest)(nil),       // 74: polterware.local.v1.ListCardCommitsRequest
+	(*ListCardCommitsResponse)(nil),      // 75: polterware.local.v1.ListCardCommitsResponse
+	(*LinkTaskCommitRequest)(nil),        // 76: polterware.local.v1.LinkTaskCommitRequest
+	(*LinkTaskCommitResponse)(nil),       // 77: polterware.local.v1.LinkTaskCommitResponse
+	(*UnlinkTaskCommitRequest)(nil),      // 78: polterware.local.v1.UnlinkTaskCommitRequest
+	(*UnlinkTaskCommitResponse)(nil),     // 79: polterware.local.v1.UnlinkTaskCommitResponse
+	nil,                                  // 80: polterware.local.v1.InboxItem.DetailsEntry
+	(*ChangeEnvelope)(nil),               // 81: polterware.local.v1.ChangeEnvelope
 }
 var file_polterware_local_v1_work_proto_depIdxs = []int32{
 	0,  // 0: polterware.local.v1.WorkCard.tasks:type_name -> polterware.local.v1.WorkTask
 	1,  // 1: polterware.local.v1.WorkCard.questions:type_name -> polterware.local.v1.WorkQuestion
 	2,  // 2: polterware.local.v1.WorkCard.invariants:type_name -> polterware.local.v1.WorkInvariant
 	3,  // 3: polterware.local.v1.ListWorkCardsResponse.cards:type_name -> polterware.local.v1.WorkCard
-	74, // 4: polterware.local.v1.ApplyPolterRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	81, // 4: polterware.local.v1.ApplyPolterRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	4,  // 5: polterware.local.v1.ApplyPolterResponse.diagnostics:type_name -> polterware.local.v1.PolterDiagnostic
 	4,  // 6: polterware.local.v1.LintPolterResponse.diagnostics:type_name -> polterware.local.v1.PolterDiagnostic
-	74, // 7: polterware.local.v1.WriteHandoffRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	81, // 7: polterware.local.v1.WriteHandoffRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	4,  // 8: polterware.local.v1.WriteHandoffResponse.diagnostics:type_name -> polterware.local.v1.PolterDiagnostic
-	73, // 9: polterware.local.v1.InboxItem.details:type_name -> polterware.local.v1.InboxItem.DetailsEntry
+	80, // 9: polterware.local.v1.InboxItem.details:type_name -> polterware.local.v1.InboxItem.DetailsEntry
 	17, // 10: polterware.local.v1.RoutedInboxItem.item:type_name -> polterware.local.v1.InboxItem
 	17, // 11: polterware.local.v1.ListInboxResponse.items:type_name -> polterware.local.v1.InboxItem
 	18, // 12: polterware.local.v1.ListInboxResponse.routed:type_name -> polterware.local.v1.RoutedInboxItem
@@ -5690,78 +6122,86 @@ var file_polterware_local_v1_work_proto_depIdxs = []int32{
 	47, // 27: polterware.local.v1.FeatureReview.questions:type_name -> polterware.local.v1.FeatureQuestion
 	48, // 28: polterware.local.v1.FeatureReview.checks:type_name -> polterware.local.v1.FeatureCheck
 	49, // 29: polterware.local.v1.ReviewFeatureResponse.review:type_name -> polterware.local.v1.FeatureReview
-	74, // 30: polterware.local.v1.CreateFeatureRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	81, // 30: polterware.local.v1.CreateFeatureRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	8,  // 31: polterware.local.v1.CreateFeatureResponse.apply:type_name -> polterware.local.v1.ApplyPolterResponse
 	49, // 32: polterware.local.v1.CreateFeatureResponse.review:type_name -> polterware.local.v1.FeatureReview
-	74, // 33: polterware.local.v1.AdvanceFeatureRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	81, // 33: polterware.local.v1.AdvanceFeatureRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	8,  // 34: polterware.local.v1.AdvanceFeatureResponse.apply:type_name -> polterware.local.v1.ApplyPolterResponse
 	49, // 35: polterware.local.v1.AdvanceFeatureResponse.review:type_name -> polterware.local.v1.FeatureReview
 	57, // 36: polterware.local.v1.VerifyFeatureResponse.checks:type_name -> polterware.local.v1.VerifyCheck
 	59, // 37: polterware.local.v1.ListMilestonesResponse.milestones:type_name -> polterware.local.v1.Milestone
-	74, // 38: polterware.local.v1.CreateMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	81, // 38: polterware.local.v1.CreateMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	59, // 39: polterware.local.v1.CreateMilestoneResponse.milestone:type_name -> polterware.local.v1.Milestone
-	74, // 40: polterware.local.v1.UpdateMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	81, // 40: polterware.local.v1.UpdateMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	59, // 41: polterware.local.v1.UpdateMilestoneResponse.milestone:type_name -> polterware.local.v1.Milestone
-	74, // 42: polterware.local.v1.ArchiveMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	81, // 42: polterware.local.v1.ArchiveMilestoneRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	59, // 43: polterware.local.v1.ArchiveMilestoneResponse.milestone:type_name -> polterware.local.v1.Milestone
-	74, // 44: polterware.local.v1.ReorderMilestonesRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
+	81, // 44: polterware.local.v1.ReorderMilestonesRequest.change:type_name -> polterware.local.v1.ChangeEnvelope
 	59, // 45: polterware.local.v1.ReorderMilestonesResponse.milestones:type_name -> polterware.local.v1.Milestone
 	70, // 46: polterware.local.v1.ListRulesResponse.rules:type_name -> polterware.local.v1.Rule
-	71, // 47: polterware.local.v1.WorkService.ListRules:input_type -> polterware.local.v1.ListRulesRequest
-	5,  // 48: polterware.local.v1.WorkService.ListWorkCards:input_type -> polterware.local.v1.ListWorkCardsRequest
-	27, // 49: polterware.local.v1.WorkService.ListStructure:input_type -> polterware.local.v1.ListStructureRequest
-	35, // 50: polterware.local.v1.WorkService.ListStructureHistory:input_type -> polterware.local.v1.ListStructureHistoryRequest
-	33, // 51: polterware.local.v1.WorkService.ListAgentSessions:input_type -> polterware.local.v1.ListAgentSessionsRequest
-	7,  // 52: polterware.local.v1.WorkService.ApplyPolter:input_type -> polterware.local.v1.ApplyPolterRequest
-	9,  // 53: polterware.local.v1.WorkService.LintPolter:input_type -> polterware.local.v1.LintPolterRequest
-	11, // 54: polterware.local.v1.WorkService.QueryPolter:input_type -> polterware.local.v1.QueryPolterRequest
-	13, // 55: polterware.local.v1.WorkService.WriteHandoff:input_type -> polterware.local.v1.WriteHandoffRequest
-	15, // 56: polterware.local.v1.WorkService.EndSession:input_type -> polterware.local.v1.EndSessionRequest
-	19, // 57: polterware.local.v1.WorkService.ListInbox:input_type -> polterware.local.v1.ListInboxRequest
-	23, // 58: polterware.local.v1.WorkService.ResolveInboxItem:input_type -> polterware.local.v1.ResolveInboxItemRequest
-	20, // 59: polterware.local.v1.WorkService.SetScope:input_type -> polterware.local.v1.SetScopeRequest
-	37, // 60: polterware.local.v1.WorkService.ExportProjections:input_type -> polterware.local.v1.ExportProjectionsRequest
-	42, // 61: polterware.local.v1.WorkService.SetAgentsSync:input_type -> polterware.local.v1.SetAgentsSyncRequest
-	40, // 62: polterware.local.v1.WorkService.FileContext:input_type -> polterware.local.v1.FileContextRequest
-	50, // 63: polterware.local.v1.WorkService.ReviewFeature:input_type -> polterware.local.v1.ReviewFeatureRequest
-	52, // 64: polterware.local.v1.WorkService.CreateFeature:input_type -> polterware.local.v1.CreateFeatureRequest
-	54, // 65: polterware.local.v1.WorkService.AdvanceFeature:input_type -> polterware.local.v1.AdvanceFeatureRequest
-	56, // 66: polterware.local.v1.WorkService.VerifyFeature:input_type -> polterware.local.v1.VerifyFeatureRequest
-	60, // 67: polterware.local.v1.WorkService.ListMilestones:input_type -> polterware.local.v1.ListMilestonesRequest
-	62, // 68: polterware.local.v1.WorkService.CreateMilestone:input_type -> polterware.local.v1.CreateMilestoneRequest
-	64, // 69: polterware.local.v1.WorkService.UpdateMilestone:input_type -> polterware.local.v1.UpdateMilestoneRequest
-	66, // 70: polterware.local.v1.WorkService.ArchiveMilestone:input_type -> polterware.local.v1.ArchiveMilestoneRequest
-	68, // 71: polterware.local.v1.WorkService.ReorderMilestones:input_type -> polterware.local.v1.ReorderMilestonesRequest
-	72, // 72: polterware.local.v1.WorkService.ListRules:output_type -> polterware.local.v1.ListRulesResponse
-	6,  // 73: polterware.local.v1.WorkService.ListWorkCards:output_type -> polterware.local.v1.ListWorkCardsResponse
-	28, // 74: polterware.local.v1.WorkService.ListStructure:output_type -> polterware.local.v1.ListStructureResponse
-	36, // 75: polterware.local.v1.WorkService.ListStructureHistory:output_type -> polterware.local.v1.ListStructureHistoryResponse
-	34, // 76: polterware.local.v1.WorkService.ListAgentSessions:output_type -> polterware.local.v1.ListAgentSessionsResponse
-	8,  // 77: polterware.local.v1.WorkService.ApplyPolter:output_type -> polterware.local.v1.ApplyPolterResponse
-	10, // 78: polterware.local.v1.WorkService.LintPolter:output_type -> polterware.local.v1.LintPolterResponse
-	12, // 79: polterware.local.v1.WorkService.QueryPolter:output_type -> polterware.local.v1.QueryPolterResponse
-	14, // 80: polterware.local.v1.WorkService.WriteHandoff:output_type -> polterware.local.v1.WriteHandoffResponse
-	16, // 81: polterware.local.v1.WorkService.EndSession:output_type -> polterware.local.v1.EndSessionResponse
-	22, // 82: polterware.local.v1.WorkService.ListInbox:output_type -> polterware.local.v1.ListInboxResponse
-	24, // 83: polterware.local.v1.WorkService.ResolveInboxItem:output_type -> polterware.local.v1.ResolveInboxItemResponse
-	21, // 84: polterware.local.v1.WorkService.SetScope:output_type -> polterware.local.v1.SetScopeResponse
-	39, // 85: polterware.local.v1.WorkService.ExportProjections:output_type -> polterware.local.v1.ExportProjectionsResponse
-	43, // 86: polterware.local.v1.WorkService.SetAgentsSync:output_type -> polterware.local.v1.SetAgentsSyncResponse
-	41, // 87: polterware.local.v1.WorkService.FileContext:output_type -> polterware.local.v1.FileContextResponse
-	51, // 88: polterware.local.v1.WorkService.ReviewFeature:output_type -> polterware.local.v1.ReviewFeatureResponse
-	53, // 89: polterware.local.v1.WorkService.CreateFeature:output_type -> polterware.local.v1.CreateFeatureResponse
-	55, // 90: polterware.local.v1.WorkService.AdvanceFeature:output_type -> polterware.local.v1.AdvanceFeatureResponse
-	58, // 91: polterware.local.v1.WorkService.VerifyFeature:output_type -> polterware.local.v1.VerifyFeatureResponse
-	61, // 92: polterware.local.v1.WorkService.ListMilestones:output_type -> polterware.local.v1.ListMilestonesResponse
-	63, // 93: polterware.local.v1.WorkService.CreateMilestone:output_type -> polterware.local.v1.CreateMilestoneResponse
-	65, // 94: polterware.local.v1.WorkService.UpdateMilestone:output_type -> polterware.local.v1.UpdateMilestoneResponse
-	67, // 95: polterware.local.v1.WorkService.ArchiveMilestone:output_type -> polterware.local.v1.ArchiveMilestoneResponse
-	69, // 96: polterware.local.v1.WorkService.ReorderMilestones:output_type -> polterware.local.v1.ReorderMilestonesResponse
-	72, // [72:97] is the sub-list for method output_type
-	47, // [47:72] is the sub-list for method input_type
-	47, // [47:47] is the sub-list for extension type_name
-	47, // [47:47] is the sub-list for extension extendee
-	0,  // [0:47] is the sub-list for field type_name
+	73, // 47: polterware.local.v1.ListCardCommitsResponse.commits:type_name -> polterware.local.v1.CardCommit
+	73, // 48: polterware.local.v1.LinkTaskCommitResponse.commit:type_name -> polterware.local.v1.CardCommit
+	71, // 49: polterware.local.v1.WorkService.ListRules:input_type -> polterware.local.v1.ListRulesRequest
+	5,  // 50: polterware.local.v1.WorkService.ListWorkCards:input_type -> polterware.local.v1.ListWorkCardsRequest
+	27, // 51: polterware.local.v1.WorkService.ListStructure:input_type -> polterware.local.v1.ListStructureRequest
+	35, // 52: polterware.local.v1.WorkService.ListStructureHistory:input_type -> polterware.local.v1.ListStructureHistoryRequest
+	33, // 53: polterware.local.v1.WorkService.ListAgentSessions:input_type -> polterware.local.v1.ListAgentSessionsRequest
+	7,  // 54: polterware.local.v1.WorkService.ApplyPolter:input_type -> polterware.local.v1.ApplyPolterRequest
+	9,  // 55: polterware.local.v1.WorkService.LintPolter:input_type -> polterware.local.v1.LintPolterRequest
+	11, // 56: polterware.local.v1.WorkService.QueryPolter:input_type -> polterware.local.v1.QueryPolterRequest
+	13, // 57: polterware.local.v1.WorkService.WriteHandoff:input_type -> polterware.local.v1.WriteHandoffRequest
+	15, // 58: polterware.local.v1.WorkService.EndSession:input_type -> polterware.local.v1.EndSessionRequest
+	19, // 59: polterware.local.v1.WorkService.ListInbox:input_type -> polterware.local.v1.ListInboxRequest
+	23, // 60: polterware.local.v1.WorkService.ResolveInboxItem:input_type -> polterware.local.v1.ResolveInboxItemRequest
+	20, // 61: polterware.local.v1.WorkService.SetScope:input_type -> polterware.local.v1.SetScopeRequest
+	37, // 62: polterware.local.v1.WorkService.ExportProjections:input_type -> polterware.local.v1.ExportProjectionsRequest
+	42, // 63: polterware.local.v1.WorkService.SetAgentsSync:input_type -> polterware.local.v1.SetAgentsSyncRequest
+	40, // 64: polterware.local.v1.WorkService.FileContext:input_type -> polterware.local.v1.FileContextRequest
+	50, // 65: polterware.local.v1.WorkService.ReviewFeature:input_type -> polterware.local.v1.ReviewFeatureRequest
+	52, // 66: polterware.local.v1.WorkService.CreateFeature:input_type -> polterware.local.v1.CreateFeatureRequest
+	54, // 67: polterware.local.v1.WorkService.AdvanceFeature:input_type -> polterware.local.v1.AdvanceFeatureRequest
+	56, // 68: polterware.local.v1.WorkService.VerifyFeature:input_type -> polterware.local.v1.VerifyFeatureRequest
+	74, // 69: polterware.local.v1.WorkService.ListCardCommits:input_type -> polterware.local.v1.ListCardCommitsRequest
+	76, // 70: polterware.local.v1.WorkService.LinkTaskCommit:input_type -> polterware.local.v1.LinkTaskCommitRequest
+	78, // 71: polterware.local.v1.WorkService.UnlinkTaskCommit:input_type -> polterware.local.v1.UnlinkTaskCommitRequest
+	60, // 72: polterware.local.v1.WorkService.ListMilestones:input_type -> polterware.local.v1.ListMilestonesRequest
+	62, // 73: polterware.local.v1.WorkService.CreateMilestone:input_type -> polterware.local.v1.CreateMilestoneRequest
+	64, // 74: polterware.local.v1.WorkService.UpdateMilestone:input_type -> polterware.local.v1.UpdateMilestoneRequest
+	66, // 75: polterware.local.v1.WorkService.ArchiveMilestone:input_type -> polterware.local.v1.ArchiveMilestoneRequest
+	68, // 76: polterware.local.v1.WorkService.ReorderMilestones:input_type -> polterware.local.v1.ReorderMilestonesRequest
+	72, // 77: polterware.local.v1.WorkService.ListRules:output_type -> polterware.local.v1.ListRulesResponse
+	6,  // 78: polterware.local.v1.WorkService.ListWorkCards:output_type -> polterware.local.v1.ListWorkCardsResponse
+	28, // 79: polterware.local.v1.WorkService.ListStructure:output_type -> polterware.local.v1.ListStructureResponse
+	36, // 80: polterware.local.v1.WorkService.ListStructureHistory:output_type -> polterware.local.v1.ListStructureHistoryResponse
+	34, // 81: polterware.local.v1.WorkService.ListAgentSessions:output_type -> polterware.local.v1.ListAgentSessionsResponse
+	8,  // 82: polterware.local.v1.WorkService.ApplyPolter:output_type -> polterware.local.v1.ApplyPolterResponse
+	10, // 83: polterware.local.v1.WorkService.LintPolter:output_type -> polterware.local.v1.LintPolterResponse
+	12, // 84: polterware.local.v1.WorkService.QueryPolter:output_type -> polterware.local.v1.QueryPolterResponse
+	14, // 85: polterware.local.v1.WorkService.WriteHandoff:output_type -> polterware.local.v1.WriteHandoffResponse
+	16, // 86: polterware.local.v1.WorkService.EndSession:output_type -> polterware.local.v1.EndSessionResponse
+	22, // 87: polterware.local.v1.WorkService.ListInbox:output_type -> polterware.local.v1.ListInboxResponse
+	24, // 88: polterware.local.v1.WorkService.ResolveInboxItem:output_type -> polterware.local.v1.ResolveInboxItemResponse
+	21, // 89: polterware.local.v1.WorkService.SetScope:output_type -> polterware.local.v1.SetScopeResponse
+	39, // 90: polterware.local.v1.WorkService.ExportProjections:output_type -> polterware.local.v1.ExportProjectionsResponse
+	43, // 91: polterware.local.v1.WorkService.SetAgentsSync:output_type -> polterware.local.v1.SetAgentsSyncResponse
+	41, // 92: polterware.local.v1.WorkService.FileContext:output_type -> polterware.local.v1.FileContextResponse
+	51, // 93: polterware.local.v1.WorkService.ReviewFeature:output_type -> polterware.local.v1.ReviewFeatureResponse
+	53, // 94: polterware.local.v1.WorkService.CreateFeature:output_type -> polterware.local.v1.CreateFeatureResponse
+	55, // 95: polterware.local.v1.WorkService.AdvanceFeature:output_type -> polterware.local.v1.AdvanceFeatureResponse
+	58, // 96: polterware.local.v1.WorkService.VerifyFeature:output_type -> polterware.local.v1.VerifyFeatureResponse
+	75, // 97: polterware.local.v1.WorkService.ListCardCommits:output_type -> polterware.local.v1.ListCardCommitsResponse
+	77, // 98: polterware.local.v1.WorkService.LinkTaskCommit:output_type -> polterware.local.v1.LinkTaskCommitResponse
+	79, // 99: polterware.local.v1.WorkService.UnlinkTaskCommit:output_type -> polterware.local.v1.UnlinkTaskCommitResponse
+	61, // 100: polterware.local.v1.WorkService.ListMilestones:output_type -> polterware.local.v1.ListMilestonesResponse
+	63, // 101: polterware.local.v1.WorkService.CreateMilestone:output_type -> polterware.local.v1.CreateMilestoneResponse
+	65, // 102: polterware.local.v1.WorkService.UpdateMilestone:output_type -> polterware.local.v1.UpdateMilestoneResponse
+	67, // 103: polterware.local.v1.WorkService.ArchiveMilestone:output_type -> polterware.local.v1.ArchiveMilestoneResponse
+	69, // 104: polterware.local.v1.WorkService.ReorderMilestones:output_type -> polterware.local.v1.ReorderMilestonesResponse
+	77, // [77:105] is the sub-list for method output_type
+	49, // [49:77] is the sub-list for method input_type
+	49, // [49:49] is the sub-list for extension type_name
+	49, // [49:49] is the sub-list for extension extendee
+	0,  // [0:49] is the sub-list for field type_name
 }
 
 func init() { file_polterware_local_v1_work_proto_init() }
@@ -5776,7 +6216,7 @@ func file_polterware_local_v1_work_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_polterware_local_v1_work_proto_rawDesc), len(file_polterware_local_v1_work_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   74,
+			NumMessages:   81,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/polterware/polterware/backend/domains/agentrun"
 	"github.com/polterware/polterware/backend/domains/decision"
@@ -43,19 +44,23 @@ func ResolveProject(store *storepkg.Store, id, dir string) (projects.Project, er
 	if err != nil {
 		return projects.Project{}, err
 	}
+	// The project whose repository clone holds dir most deeply wins.
 	var best projects.Project
 	bestLen := -1
 	for _, item := range items {
-		if item.RootPath == "" {
-			continue
+		checkouts, err := projectCheckouts(store, item.ID)
+		if err != nil {
+			return projects.Project{}, err
 		}
-		root := filepath.Clean(ExpandRootPath(item.RootPath))
-		rel, err := filepath.Rel(root, dir)
-		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-			continue
-		}
-		if len(root) > bestLen {
-			best, bestLen = item, len(root)
+		for _, co := range checkouts {
+			root := filepath.Clean(co.root)
+			rel, err := filepath.Rel(root, dir)
+			if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+				continue
+			}
+			if len(root) > bestLen {
+				best, bestLen = item, len(root)
+			}
 		}
 	}
 	if bestLen < 0 {
@@ -87,14 +92,15 @@ func polterReferences(store *storepkg.Store, snapshot work.Snapshot) (*polter.Re
 	return refs, nil
 }
 
-// ProjectGit reads the project's repository from its root. A missing
-// repository returns an empty view; callers still answer.
+// ProjectGit reads the project's first repository clone (by name). None
+// returns an empty view; callers still answer.
 func ProjectGit(store *storepkg.Store, projectID string) polter.GitView {
-	project, err := store.GetProject(projectID)
-	if err != nil {
+	checkouts, err := projectCheckouts(store, projectID)
+	if err != nil || len(checkouts) == 0 {
 		return polter.GitView{}
 	}
-	obs := gitpkg.Observe(context.Background(), ExpandRootPath(project.RootPath))
+	root := checkouts[0].root
+	obs := gitpkg.Observe(context.Background(), root)
 	return polter.GitView{Available: obs.Available, Branch: obs.Branch, Files: obs.Files, Delivered: obs.Delivered}
 }
 
@@ -135,15 +141,20 @@ type ApplyResult struct {
 // one audited write. On ErrPolterInvalid the result carries the diagnostics.
 func ApplyPolter(store *storepkg.Store, in ApplyInput) (ApplyResult, error) {
 	result := ApplyResult{ProjectID: in.ProjectID}
+	text, proposed, err := resolveNodeDirs(store, in.ProjectID, in.Text, in.DryRun)
+	if err != nil {
+		return result, err
+	}
 	snapshot, err := store.LoadWorkSnapshot(in.ProjectID)
 	if err != nil {
 		return result, err
 	}
+	snapshot.Repos = append(snapshot.Repos, proposed...)
 	refs, err := polterReferences(store, snapshot)
 	if err != nil {
 		return result, err
 	}
-	doc, diags := polter.Lint(in.Text, refs)
+	doc, diags := polter.Lint(text, refs)
 	ops, planDiags := polter.PlanAs(doc, snapshot, in.Agent)
 	result.Diagnostics = mergeDiagnostics(diags, planDiags)
 	if polter.HasErrors(result.Diagnostics) {
@@ -190,7 +201,7 @@ func ApplyPolter(store *storepkg.Store, in ApplyInput) (ApplyResult, error) {
 	}
 	result.Applied = true
 	result.AgentRunID = written.AgentRunID
-	return result, nil
+	return result, pruneRepositories(store, in.ProjectID, ops)
 }
 
 // QueryPolter answers a v1 query ("cards", "card <slug>", "status", "inbox",
@@ -238,8 +249,16 @@ func QueryPolterScoped(store *storepkg.Store, projectID, text string, scope stru
 		return querySearch(store, snapshot, scope, query.Slug, query.Budget)
 	case polter.QueryShow:
 		return queryShow(store, snapshot, query.Slug)
-	case polter.QueryDrift:
-		return queryDrift(store, projectID)
+	case polter.QueryCommits:
+		return queryCommits(store, projectID, query.Slug)
+	case polter.QueryConflicts:
+		return polter.EncodeConflicts(snapshot), nil
+	case polter.QueryConflict:
+		conflict, ok := snapshot.Conflict(query.Slug)
+		if !ok {
+			return "", fmt.Errorf("unknown conflict %q: list them with polterware query conflicts", query.Slug)
+		}
+		return polter.EncodeConflict(conflict, snapshot), nil
 	case polter.QueryDecisions:
 		return polter.EncodeDecisions(snapshot.Decisions, query.Slug), nil
 	case polter.QueryDecision:
@@ -273,7 +292,7 @@ func QueryPolterScoped(store *storepkg.Store, projectID, text string, scope stru
 			if err != nil {
 				return "", err
 			}
-			return "Structure at " + query.At + " (structure only: status, features, and drift are live)\n" +
+			return "Structure at " + query.At + " (structure only: status and features are live)\n" +
 				polter.EncodeStructure(project.Name, rows, nil, nil, query.Slug), nil
 		}
 		return polter.EncodeStructure(project.Name, structureRows(store, snapshot), snapshot.Cards, snapshot.Rules, query.Slug), nil
@@ -299,12 +318,13 @@ func queryHandoff(store *storepkg.Store, snapshot work.Snapshot, slug string) (s
 }
 
 func queryStatus(store *storepkg.Store, snapshot work.Snapshot, scope structure.MultiScope) string {
-	// The Inbox is a best-effort addition: a drift read that fails leaves
+	// The Inbox is a best-effort addition: a read that fails leaves
 	// status without its inbox lines rather than failing the session start.
 	inboxLines := ""
 	if result, err := inboxScoped(store, snapshot, scope); err == nil {
 		inboxLines = inbox.StatusLines(result)
 	}
+	inboxLines += polter.EncodeStatusConflicts(snapshot, time.Now().UTC().Add(-24*time.Hour).Format(time.RFC3339))
 	view := ProjectGit(store, snapshot.ProjectID)
 	card, slugs, err := SelectWorkCard(snapshot, "", view.Branch)
 	if err != nil {

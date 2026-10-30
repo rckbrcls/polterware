@@ -46,7 +46,7 @@ func TestDecodeDeploysAndRejectsProvider(t *testing.T) {
 }
 
 func TestPlanDeploysRoundTrip(t *testing.T) {
-	text := "---\npolter: 1\n---\n# app: App\nlevel: system\n\n# app/web: Web\nlevel: component\nunder: app\ndeploys: production=vercel:web, local=docker:api\n"
+	text := "---\npolter: 1\n---\n# app: App\nlevel: domain\n\n# app/web: Web\nlevel: component\nunder: app\ndeploys: production=vercel:web, local=docker:api\n"
 	doc := mustDecode(t, text)
 	snapshot := work.Snapshot{Environments: deployEnvs()}
 	ops, diags := Plan(doc, snapshot)
@@ -81,7 +81,7 @@ func TestPlanDeploysRoundTrip(t *testing.T) {
 	}
 
 	snapshot.Nodes = []structure.Node{
-		{ID: systemID, Path: "app", Slug: "app", Title: "App", Level: structure.LevelSystem, Status: structure.NodeActive},
+		{ID: systemID, Path: "app", Slug: "app", Title: "App", Level: structure.LevelDomain, Status: structure.NodeActive},
 		{ID: webID, Path: "app/web", Slug: "web", Title: "Web", Level: structure.LevelComponent, Status: structure.NodeActive, ParentID: systemID, Deploys: deploys},
 	}
 	if ops, diags = Plan(doc, snapshot); HasErrors(diags) || len(ops) != 0 {
@@ -113,12 +113,12 @@ func TestPlanDeploysRoundTrip(t *testing.T) {
 }
 
 func TestLintUnknownDeployEnvironment(t *testing.T) {
-	text := "---\npolter: 1\n---\n# app: App\nlevel: system\ndeploys: staging=aws:api\n"
+	text := "---\npolter: 1\n---\n# app: App\nlevel: domain\ndeploys: staging=aws:api\n"
 	_, diags := Lint(text, &References{Environments: deployEnvs()})
 	if !hasDiag(diags, 4, `unknown environment "staging"`) {
 		t.Fatalf("diags = %+v", diags)
 	}
-	ok := "---\npolter: 1\n---\n# app: App\nlevel: system\ndeploys: local=docker:api\n"
+	ok := "---\npolter: 1\n---\n# app: App\nlevel: domain\ndeploys: local=docker:api\n"
 	if _, diags = Lint(ok, &References{Environments: deployEnvs()}); HasErrors(diags) {
 		t.Fatalf("known environment: %+v", diags)
 	}

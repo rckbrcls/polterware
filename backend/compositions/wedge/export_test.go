@@ -22,12 +22,12 @@ summary: Shop graph
 rationale: Export test
 ---
 # shop: Shop
-level: system · decisions: Decision 0001
+level: domain · dir: {root} · decisions: Decision 0001
 
 ! Money is integer cents
 
 # shop/auth: Auth
-level: domain · repo: api · path: src/auth · decisions: Decision 0002
+level: component · repo: api · path: src/auth · decisions: Decision 0002
 
 ! Tokens expire in 15 minutes
 `
@@ -38,12 +38,17 @@ func TestExportProjections(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer store.Close()
-	root, apiDir := t.TempDir(), t.TempDir()
-	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Shop", RootPath: root})
+	root, apiDir := filepath.Join(t.TempDir(), "shop"), filepath.Join(t.TempDir(), "api")
+	for _, dir := range []string{root, apiDir} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	project, err := initWithRepo(store, "Shop", root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := wedge.AddProjectRepo(store, project.ID, "api", apiDir); err != nil {
+	if _, err := wedge.EnsureRepository(store, project.ID, apiDir); err != nil {
 		t.Fatal(err)
 	}
 	now := time.Now().UTC()
@@ -57,7 +62,7 @@ func TestExportProjections(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if _, err := wedge.ApplyPolter(store, wedge.ApplyInput{ProjectID: project.ID, Text: exportGraph, AutoStartLabel: "cli"}); err != nil {
+	if _, err := wedge.ApplyPolter(store, wedge.ApplyInput{ProjectID: project.ID, Text: strings.ReplaceAll(exportGraph, "{root}", root), AutoStartLabel: "cli"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -90,7 +95,7 @@ func TestExportProjections(t *testing.T) {
 	if got := readFile(t, handDecision); got != "# Decision 0003: Hand written\n\nOriginal.\n" {
 		t.Fatalf("hand-written Decision changed: %q", got)
 	}
-	if !hasProjection(files, "", "docs/decision/0003-hand-written.md", wedge.ProjectionSkip) {
+	if !hasProjection(files, "shop", "docs/decision/0003-hand-written.md", wedge.ProjectionSkip) {
 		t.Fatalf("hand-written Decision should be skipped: %+v", files)
 	}
 	if !strings.Contains(readFile(t, filepath.Join(root, "docs", "decision", "0001-integer-cents.md")), "Store cents.") {

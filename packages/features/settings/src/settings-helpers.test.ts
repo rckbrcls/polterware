@@ -14,7 +14,6 @@ describe("settings helpers", () => {
   it("groups the tabs as Project · Platforms · Agents · App", () => {
     expect(SETTINGS_TABS.map((tab) => tab.id)).toEqual([
       "general",
-      "repositories",
       "environments",
       "project-danger",
       "platforms-connected",
@@ -45,7 +44,6 @@ describe("settings helpers", () => {
   it("splits project settings from app settings", () => {
     expect(settingsTabsFor("project").map((tab) => tab.id)).toEqual([
       "general",
-      "repositories",
       "environments",
       "project-danger",
       "platforms-connected",
@@ -78,7 +76,7 @@ describe("settings helpers", () => {
     expect(normalizeSettingsTab("agents-context")).toBe("agents-mcp");
     expect(normalizeSettingsTab("agents-oracle")).toBe("agents-mcp");
     expect(normalizeSettingsTab("advanced")).toBe("appearance");
-    expect(normalizeSettingsTab("repositories")).toBe("repositories");
+    expect(normalizeSettingsTab("repositories")).toBe("general");
     expect(normalizeSettingsTab("integrations-catalog")).toBe("agents-mcp");
     expect(normalizeSettingsTab("agents")).toBe("agents-mcp");
     expect(normalizeSettingsTab(undefined)).toBe("agents-mcp");

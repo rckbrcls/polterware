@@ -1,9 +1,9 @@
 import { For, Index, Show, createEffect, createMemo, createSignal, onCleanup, untrack, type JSX } from "solid-js";
 import {
-  A11yDialog, Boxes, Button, Card, Cpu, EntityMenuButton, PromptCardGrid, Field, Folder, FormStack, Input,
+  A11yDialog, Boxes, Button, Card, Composer, Cpu, EntityMenuButton, PromptCardGrid, Field, Folder, FormStack, Input,
   CollapsibleSection, DataTable, IconTile, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
-  Cloud, Delete, DetailPanel, Link2, Package, Pencil, PropertyPicker, Route, Textarea, XIcon,
-  House, Scale, SchemeIcon, ShieldCheck, FileText, GitBranch, Select, SidebarLeftIcon, FolderKanban, StatusChip, TreeView, pushToast,
+  Cloud, Delete, DetailPanel, Link2, Package, PropertyPicker, Route, Textarea, XIcon,
+  House, Scale, SchemeIcon, ShieldCheck, FileText, GitBranch, Github, Select, SidebarLeftIcon, FolderKanban, StatusChip, TreeView, pushToast,
   ActiveFilterBar, FilterPopover, SearchBar, matchClauses,
   type EntityAction, type FilterClause, type FilterField, type TreeViewNode,
 } from "@polterware/frontend-design-system";
@@ -26,12 +26,21 @@ const PROJECT_ID = "structure:project";
 /** `direct` marks a link the node owns (a card under it, a record scoped to it), which its document can remove. */
 export type StructureRecord = { id: string; title: string; caption?: string; direct?: boolean };
 /** The fields of a node its document edits in place; a field left out is unchanged, and an empty value clears it. */
-export type StructureNodePatch = { title?: string; intent?: string; level?: StructureKind; repo?: string; folder?: string; kind?: string; tech?: string };
+/** `dir` links the local clone at that folder: the core creates or reuses its repository. */
+export type StructureNodePatch = { title?: string; intent?: string; level?: StructureKind; repo?: string; dir?: string; folder?: string; kind?: string; tech?: string };
+/** A repository a component can link: its GitHub identity (github.com/owner/repo) and this machine's clone. */
+export type StructureRepository = { name: string; remote: string; localPath: string };
+/** The repository's label: owner/repo for a GitHub remote, else its name. */
+export function repositoryLabel(repo: StructureRepository): string {
+  return repo.remote.startsWith("github.com/") ? repo.remote.slice("github.com/".length) : repo.name;
+}
+const CHOOSE_FOLDER = "\u0000choose-folder";
 export type StructureRecordKind = "card" | "decision" | "rule" | "doc";
 /** `rules` holds every Rule that holds for the node: its own (direct) and those of its ancestors and the whole project. */
 export type StructureRecords = { cards: readonly StructureRecord[]; decisions: readonly StructureRecord[]; rules: readonly StructureRecord[]; docs: readonly StructureRecord[] };
 const NO_RECORDS: StructureRecords = { cards: [], decisions: [], rules: [], docs: [] };
-export type StructureDraft = { title: string; level: StructureKind; parentId: string };
+/** A new node: a domain under the project, or a component under a domain; `why` is the optional reason. */
+export type StructureDraft = { title: string; intent: string; why: string; level: StructureKind; parentId: string };
 
 // Nine catalog providers from the integrations catalog
 const CATALOG_PROVIDERS = [
@@ -49,11 +58,11 @@ const CATALOG_PROVIDERS = [
 function KindIcon(props: { kind: StructureKind | "project"; size?: number }) {
   const size = () => props.size ?? 16;
   return <Show when={props.kind !== "project"} fallback={<House size={size()} aria-hidden />}>
-    <Show when={props.kind === "component"} fallback={<Show when={props.kind === "domain"} fallback={<Layers size={size()} aria-hidden />}><Folder size={size()} aria-hidden /></Show>}><Boxes size={size()} aria-hidden /></Show>
+    <Show when={props.kind === "component"} fallback={<Folder size={size()} aria-hidden />}><Boxes size={size()} aria-hidden /></Show>
   </Show>;
 }
 const kindLabel = (kind: string) => kind.charAt(0).toUpperCase() + kind.slice(1);
-/** A tree row's 20px tile: the level's glyph, so a row reads as a system, domain, or component at a glance. */
+/** A tree row's 20px tile: the level's glyph, so a row reads as the project, a domain, or a component at a glance. */
 function LevelTile(props: { level: StructureKind | "project"; seed: string }) {
   return <IconTile size={20} tone="neutral" class="pw-structure__level" seed={`structure-level-${props.seed}`}><KindIcon kind={props.level} size={12} /></IconTile>;
 }
@@ -82,20 +91,17 @@ function DocumentSection(props: { title: string; count?: number; actions?: JSX.E
   </div>;
 }
 
-/** A table row: a record, a dependency, or a deploy target, with an optional warning chip before its end. */
-type TableRecord = StructureRecord & { warn?: string };
 
-/** The cards, Rules, decisions, or docs that cite a node (or its dependencies and deploys), one row each with its status on the right; a row opens its page, and a direct link can be removed. */
-function RecordTable(props: { label: string; rows: readonly TableRecord[]; icon: JSX.Element; unlinkLabel?: string; onOpen?: (id: string) => void; onUnlink?: (id: string) => void }) {
+/** The cards, Rules, decisions, or docs that cite a node, one row each with its status on the right; a row opens its page, and a direct link can be removed. */
+function RecordTable(props: { label: string; rows: readonly StructureRecord[]; icon: JSX.Element; unlinkLabel?: string; onOpen?: (id: string) => void; onUnlink?: (id: string) => void }) {
   return <DataTable.Root rows={props.rows} getRowId={(row) => row.id} density="list">
     <DataTable.Table aria-label={props.label}>
-      <DataTable.Body<TableRecord>>
+      <DataTable.Body<StructureRecord>>
         {(row) => <DataTable.Row row={row} rowId={row.id} aria-label={row.title} onActivate={props.onOpen ? () => props.onOpen!(row.id) : undefined}>
           <DataTable.PrimaryCell icon={props.icon} iconTone="neutral" iconSeed={row.id} title={row.title} />
           <DataTable.Cell align="right">
             <span class="pw-structure__row-end">
               <span class="text-[var(--color-text-muted)]">{row.caption}</span>
-              <Show when={row.warn}>{(warn) => <StatusChip tone="warn" label={warn()} />}</Show>
               <Show when={props.onUnlink && row.direct}>
                 <span class="pw-structure__row-unlink">
                   <Button size="icon" variant="ghost" aria-label={`${props.unlinkLabel ?? "Unlink"} ${row.title}`} onClick={(event) => { event.stopPropagation(); props.onUnlink!(row.id); }}><XIcon size={14} /></Button>
@@ -115,6 +121,11 @@ const RECORD_SECTIONS = [
   { key: "decisions", kind: "decision", title: "Decisions", Icon: Scale },
   { key: "docs", kind: "doc", title: "Docs", Icon: FileText },
 ] as const;
+
+const providerName = (id: string) => CATALOG_PROVIDERS.find((provider) => provider.id === id)?.name ?? id;
+/** A deploy as the head shows it: the platform, then the environment. */
+const deployLabel = (deploy: { provider: string; environment?: string; environmentId: string }) =>
+  `${providerName(deploy.provider)} · ${deploy.environment || deploy.environmentId}`;
 
 /** One labeled line of the document head: a muted label column, then the values inline. */
 function HeadRow(props: { label: string; children: JSX.Element }) {
@@ -152,6 +163,10 @@ function InlineText(props: { label: string; value: string; placeholder: string; 
 }
 
 /** A head value set from a short list: a ghost button with the value (or a muted placeholder) that opens the shared PropertyPicker. */
+function openExternal(url: string) {
+  void (globalThis as { polterware?: { app?: { openExternal?: (target: string) => Promise<unknown> } } }).polterware?.app?.openExternal?.(url);
+}
+
 function PickerValue(props: { label: string; icon: JSX.Element; value?: string; placeholder: string; options: readonly PickOption[]; mono?: boolean; onChange: (value: string) => void }) {
   const [open, setOpen] = createSignal(false);
   let trigger: HTMLButtonElement | undefined;
@@ -194,7 +209,9 @@ type NodeDocumentEdits = {
   /** The nodes it may move under; picking one moves it. */
   parentOptions?: readonly PickOption[];
   move?: (parentId: string) => void;
-  repositories?: readonly string[];
+  repositories?: readonly StructureRepository[];
+  /** Picks a local clone to link; resolves with its folder, or nothing when cancelled. */
+  pickFolder?: () => Promise<string | null | undefined>;
   editDeploys?: () => void;
   /** What each record section can still link, by kind; a kind left out has no add button. */
   linkOptions?: Partial<Record<StructureRecordKind, readonly PickOption[]>>;
@@ -206,14 +223,34 @@ type NodeDocumentEdits = {
  * The selected node as a document beside the tree, laid out like a Linear project overview
  * and edited in place: a 36px kind tile, the title, and the description as its summary; then
  * the node's actions in the header's top right; labeled lines (Properties with the level, kind, and technology;
- * Checkout with the repository and folder); then, set well apart, collapsible table sections:
- * Deploys, and one per kind of record that cites the node, where a + links one more and a row's × unlinks
+ * Checkout with the repository and folder; Deploys with the platform it runs on per environment);
+ * then, set well apart, one collapsible table section per kind of record that cites the node, where a + links one more and a row's × unlinks
  * a direct link. Read-only values and empty sections that cannot be linked are left out.
  */
 function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityAction[]; edits: NodeDocumentEdits; isProviderConnected: (provider: string) => boolean; onOpenRecord?: (kind: StructureRecordKind, id: string) => void; onOpenNode?: (id: string) => void; activity?: JSX.Element }) {
   const doc = () => props.doc;
   const component = () => doc().level === "component";
-  const repositoryOptions = () => [{ value: "", label: "None", icon: <XIcon size={12} /> }, ...(props.edits.repositories ?? []).map((name) => ({ value: name, label: name, icon: <GitBranch size={12} /> }))];
+  // Where the component runs, one platform per environment; editing them opens the deploys editor.
+  const deploysLabel = () => (doc().deploys ?? []).map(deployLabel).join(", ");
+  const unconnectedProviders = () => [...new Set((doc().deploys ?? []).map((deploy) => deploy.provider))].filter((provider) => !props.isProviderConnected(provider));
+  // The node's repositories: None, each one (owner/repo when it has a GitHub remote), and a local clone to link.
+  const repositoryOptions = () => [
+    { value: "", label: "None", icon: <XIcon size={12} /> },
+    ...(props.edits.repositories ?? []).map((repo) => ({ value: repo.name, label: repositoryLabel(repo), icon: repo.remote ? <Github size={12} /> : <GitBranch size={12} /> })),
+    ...(props.edits.pickFolder ? [{ value: CHOOSE_FOLDER, label: "Choose folder…", icon: <Folder size={12} /> }] : []),
+  ];
+  const repository = () => (props.edits.repositories ?? []).find((repo) => repo.name === doc().repo);
+  const githubLink = () => {
+    const remote = repository()?.remote ?? "";
+    return remote.startsWith("github.com/") ? `https://${remote}` : "";
+  };
+  async function pickRepository(value: string) {
+    if (value !== CHOOSE_FOLDER) return props.edits.patch!({ repo: value });
+    const dir = await props.edits.pickFolder?.();
+    if (dir) props.edits.patch!({ dir });
+  }
+  const GithubLink = () => <Show when={githubLink()}>{(href) =>
+    <Button size="icon" variant="ghost" aria-label={`Open ${repositoryLabel(repository()!)} on GitHub`} onClick={() => openExternal(href())}><Github size={14} /></Button>}</Show>;
   return <article class="pw-document__column pw-structure__document" aria-label={doc().title}>
     <div class="pw-structure__hero">
       <div class="pw-structure__hero-top">
@@ -252,13 +289,15 @@ function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityA
       </HeadRow>
       <Show when={props.edits.patch} fallback={<Show when={doc().repo || doc().folder || doc().path}>
         <HeadRow label="Checkout">
-          <Show when={checkoutLabel(doc().repo, doc().folder)}>{(label) => <HeadValue icon={<Folder size={14} />} mono>{label()}</HeadValue>}</Show>
+          <Show when={checkoutLabel(repository() ? repositoryLabel(repository()!) : doc().repo, doc().folder)}>{(label) => <HeadValue icon={<Folder size={14} />} mono>{label()}</HeadValue>}</Show>
+          <GithubLink />
           <Show when={doc().path}><HeadValue icon={<Route size={14} />} mono>{doc().path}</HeadValue></Show>
         </HeadRow>
       </Show>}>
         <HeadRow label="Checkout">
-          <PickerValue label="Repository" icon={<GitBranch size={14} />} value={doc().repo} placeholder="Repository" options={repositoryOptions()} mono
-            onChange={(repo) => props.edits.patch!({ repo })} />
+          <PickerValue label="Repository" icon={repository()?.remote ? <Github size={14} /> : <GitBranch size={14} />} value={doc().repo} placeholder="Repository" options={repositoryOptions()} mono
+            onChange={(value) => void pickRepository(value)} />
+          <GithubLink />
           <span class="pw-structure__pick-field">
             <span class="pw-structure__value-icon" aria-hidden><Folder size={14} /></span>
             <InlineText label="Folder" class="font-mono" value={doc().folder ?? ""} placeholder="Folder" onCommit={(folder) => props.edits.patch!({ folder })} />
@@ -266,16 +305,18 @@ function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityA
           <Show when={doc().path}><HeadValue icon={<Route size={14} />} mono>{doc().path}</HeadValue></Show>
         </HeadRow>
       </Show>
+      <Show when={component() && (doc().deploys?.length || props.edits.editDeploys)}>
+        <HeadRow label="Deploys">
+          <Show when={props.edits.editDeploys} fallback={<For each={doc().deploys}>{(deploy) => <HeadValue icon={<Cloud size={14} />}>{deployLabel(deploy)}</HeadValue>}</For>}>
+            <Button variant="ghost" size="sm" class="pw-structure__pick" aria-label={`Deploys: ${deploysLabel() || "none"}`} onClick={() => props.edits.editDeploys!()}>
+              <span class="pw-structure__value-icon" aria-hidden><Cloud size={14} /></span>
+              <span classList={{ "pw-structure__value-muted": !deploysLabel() }}>{deploysLabel() || "Where it runs"}</span>
+            </Button>
+          </Show>
+          <For each={unconnectedProviders()}>{(provider) => <StatusChip tone="warn" label={`${providerName(provider)} CLI not connected`} />}</For>
+        </HeadRow>
+      </Show>
     </dl>
-    <Show when={doc().deploys?.length || props.edits.editDeploys}>
-      <DocumentSection title="Deploys" count={doc().deploys?.length ?? 0}
-        actions={props.edits.editDeploys ? <Button size="icon" variant="ghost" aria-label="Edit deploys" onClick={() => props.edits.editDeploys!()}><Pencil size={14} /></Button> : undefined}>
-        <Show when={doc().deploys?.length} fallback={<PageEmpty title="No deploys yet" mood="sleeping"><p class="pw-structure__empty">Add one with the pencil to show it here.</p></PageEmpty>}>
-          <RecordTable label="Deploys" icon={<Cloud size={14} />}
-            rows={(doc().deploys ?? []).map((deploy) => ({ id: `${deploy.provider}:${deploy.environmentId}:${deploy.resource}`, title: deploy.resource, caption: `${deploy.provider} / ${deploy.environment || deploy.environmentId}`, warn: props.isProviderConnected(deploy.provider) ? undefined : "CLI not connected" }))} />
-        </Show>
-      </DocumentSection>
-    </Show>
     <For each={RECORD_SECTIONS}>{(section) => {
       const options = () => props.edits.linkOptions?.[section.kind];
       return <Show when={doc().records[section.key].length || options()}>
@@ -313,7 +354,6 @@ const kindOptions = (): PickOption[] => [{ value: NO_KIND, label: "None", icon: 
 export function StructureView(props: {
   projectName: string;
   projectDescription?: string;
-  projectRepository?: string;
   nodes: readonly StructureNode[];
   /** Full registry for parent and dependency choices under a collection scope filter. */
   registryNodes?: readonly StructureNode[];
@@ -347,8 +387,10 @@ export function StructureView(props: {
    * gains or loses only this node among its contexts; a card moves under it or out of any component.
    */
   onLinkRecord?: (kind: StructureRecordKind, recordId: string, nodeId: string, linked: boolean) => Promise<void>;
-  /** Checkout names a node's repository can be set to. */
-  repositories?: readonly string[];
+  /** The repositories a node can link. */
+  repositories?: readonly StructureRepository[];
+  /** Picks a local clone folder for a node's repository (`dir:`), from the Desktop's folder dialog. */
+  onPickFolder?: () => Promise<string | null | undefined>;
   /** A node's Activity at the end of its document: its edits and the relations drawn to it. */
   renderActivity?: (nodeId: string) => JSX.Element;
   /** Draws the tree on the Structure canvas, the same way every time, and offers to open it. */
@@ -363,8 +405,9 @@ export function StructureView(props: {
   const [treePane, setTreePane] = createSignal<HTMLElement>();
   createTreePane(treePane, treeOpen);
   const [busy, setBusy] = createSignal(false);
-  const [title, setTitle] = createSignal("");
-  const [kind, setKind] = createSignal<StructureKind>("system");
+  // The node a new one goes under: the project takes a domain, a domain takes a component.
+  const [createUnder, setCreateUnder] = createSignal(PROJECT_ID);
+  const createLevel = (): StructureKind => (createUnder() === PROJECT_ID ? "domain" : "component");
   const [parent, setParent] = createSignal("");
   const [moveOpen, setMoveOpen] = createSignal(false);
   const [formError, setFormError] = createSignal("");
@@ -380,7 +423,7 @@ export function StructureView(props: {
     const kinds = [...new Set(props.nodes.flatMap((node) => node.kind ? [node.kind] : []))].sort();
     return [
       { id: "level", label: "Level", icon: () => <Layers size={14} />, kind: "multi",
-        options: (["system", "domain", "component"] as const).map((level) => ({ id: level, label: kindLabel(level), icon: () => <KindIcon kind={level} size={14} /> })) },
+        options: (["domain", "component"] as const).map((level) => ({ id: level, label: kindLabel(level), icon: () => <KindIcon kind={level} size={14} /> })) },
       ...(kinds.length ? [{ id: "kind", label: "Kind", icon: () => <Boxes size={14} />, kind: "multi" as const,
         options: kinds.map((value) => ({ id: value, label: componentKindLabel(value), icon: () => <ComponentKindIcon kind={value} size={14} /> })) }] : []),
     ];
@@ -394,8 +437,13 @@ export function StructureView(props: {
   const selectedId = () => target()?.scopeId === STRUCTURE_SCOPE ? target()?.entityId : undefined;
   const selected = createMemo(() => props.nodes.find((node) => node.id === selectedId()));
   const registry = () => props.registryNodes ?? props.nodes;
-  const parents = () => structureParents(registry(), moveOpen() ? selected()?.level ?? kind() : kind(), moveOpen() ? selected()?.id : undefined);
-  const parentOptions = () => parents().map((node) => ({ value: node.id, label: `${node.title} (${kindLabel(node.level)})`, icon: <KindIcon kind={node.level} size={12} /> }));
+  const parents = () => structureParents(registry(), selected()?.level ?? "component", selected()?.id);
+  // A component may sit loose under the project (PROJECT_ID) or under a domain.
+  const parentOptions = () => [
+    { value: PROJECT_ID, label: `${props.projectName} (Project)`, icon: <KindIcon kind="project" size={12} /> },
+    ...parents().map((node) => ({ value: node.id, label: `${node.title} (${kindLabel(node.level)})`, icon: <KindIcon kind={node.level} size={12} /> })),
+  ];
+  const parentId = (value: string) => (value === PROJECT_ID ? "" : value);
   const open = (id: string) => props.onOpenNode(id);
 
   // Environment options for the deploys dialog
@@ -452,21 +500,21 @@ export function StructureView(props: {
 
   // Actions select their node first: the dialogs below act on the selection.
   const nodeActions = (node: StructureNode): EntityAction[] => [
-    ...(node.level === "component" ? [] : [{ id: "add-child", label: node.level === "system" ? "Add domain" : "Add component", icon: Plus, onSelect: () => { open(node.id); props.onOpenCreate(); } }]),
-    { id: "move", label: "Move", icon: Route, disabled: node.level === "system", onSelect: () => { open(node.id); setParent(node.parentId); setFormError(""); setMoveOpen(true); } },
+    ...(node.level === "component" ? [] : [{ id: "add-child", label: "Add component", icon: Plus, onSelect: () => { open(node.id); props.onOpenCreate(); } }]),
+    { id: "move", label: "Move", icon: Route, disabled: node.level === "domain", onSelect: () => { open(node.id); setParent(node.parentId || PROJECT_ID); setFormError(""); setMoveOpen(true); } },
   ];
-  const projectActions = (): EntityAction[] => [{ id: "add-system", label: "Add system", icon: Plus, disabled: !!props.loading || !!props.error, onSelect: () => { open(PROJECT_ID); props.onOpenCreate(); } }];
+  const projectActions = (): EntityAction[] => [{ id: "add-domain", label: "Add domain", icon: Plus, disabled: !!props.loading || !!props.error, onSelect: () => { open(PROJECT_ID); props.onOpenCreate(); } }];
   const addChild = (id: string) => { open(id); props.onOpenCreate(); };
   const toTreeNode = (item: StructureTreeItem): TreeViewNode => ({
     id: item.node.id, label: item.node.title, icon: <LevelTile level={item.node.level} seed={item.node.id} />,
     trailing: <NodeLine
-      onAdd={item.node.level === "component" ? undefined : () => addChild(item.node.id)} addLabel={`Add child to ${item.node.title}`} />,
+      onAdd={item.node.level === "component" ? undefined : () => addChild(item.node.id)} addLabel={`Add component to ${item.node.title}`} />,
     children: item.children.map(toTreeNode),
   });
   const treeNodes = createMemo<TreeViewNode[]>(() => props.loading || props.error ? [] : [{
     id: PROJECT_ID, label: props.projectName, icon: <LevelTile level="project" seed={PROJECT_ID} />,
     trailing: <NodeLine
-      onAdd={props.loading || props.error ? undefined : () => addChild(PROJECT_ID)} addLabel="Add system" />,
+      onAdd={props.loading || props.error ? undefined : () => addChild(PROJECT_ID)} addLabel="Add domain" />,
     children: shownTree().map(toTreeNode),
   }]);
 
@@ -476,21 +524,19 @@ export function StructureView(props: {
   const write = (action: Promise<void> | undefined, failure: string) => {
     void action?.catch((error: unknown) => pushToast(error instanceof Error ? error.message : failure, "danger"));
   };
-  // A domain sits under a system; a component under a domain or a system. A node right under a
-  // system can switch between the two, but only a node with no children can become a component.
+  // A domain sits under the project; a component under a domain or loose under the project. A node
+  // right under the project can switch between the two, but only one with no children becomes a component.
   const levelOptions = (node: StructureNode): PickOption[] => {
-    const parentLevel = registry().find((item) => item.id === node.parentId)?.level;
-    if (parentLevel !== "system") return [];
-    const childless = !registry().some((item) => item.parentId === node.id);
-    return (["domain", ...(childless ? ["component"] : [])] as StructureKind[])
+    if (node.parentId || registry().some((item) => item.parentId === node.id)) return [];
+    return (["domain", "component"] as StructureKind[])
       .map((level) => ({ value: level, label: kindLabel(level), icon: <KindIcon kind={level} size={12} /> }));
   };
   const detail = createMemo<NodeDocumentModel | undefined>(() => {
     const id = selectedId() ?? PROJECT_ID;
-    if (id === PROJECT_ID) return { id, project: true, title: props.projectName, level: "project", description: props.projectDescription, repo: props.projectRepository, records: props.projectRecords };
+    if (id === PROJECT_ID) return { id, project: true, title: props.projectName, level: "project", description: props.projectDescription, records: props.projectRecords };
     const node = selected();
     if (!node) return undefined;
-    return { id: node.id, project: false, title: node.title, level: node.level, parentId: node.parentId, description: node.intent, kind: node.kind, tech: node.tech, repo: node.repo, folder: node.folder, path: node.path,
+    return { id: node.id, project: false, title: node.title, level: node.level, parentId: node.parentId || PROJECT_ID, description: node.intent, kind: node.kind, tech: node.tech, repo: node.repo, folder: node.folder, path: node.path,
       deploys: node.level === "component" ? node.deploys : undefined, records: props.records[node.id] ?? NO_RECORDS };
   });
   const edits = createMemo<NodeDocumentEdits>(() => {
@@ -512,9 +558,13 @@ export function StructureView(props: {
       description: props.onEditNode ? (intent) => write(props.onEditNode!(node.id, { intent }), "Could not save the description.") : undefined,
       patch: props.onEditNode ? (patch) => write(props.onEditNode!(node.id, patch), "Could not save the node.") : undefined,
       repositories: props.repositories,
+      pickFolder: props.onPickFolder,
       levelOptions: levelOptions(node),
-      parentOptions: node.level === "system" ? undefined : structureParents(registry(), node.level, node.id).map((item) => ({ value: item.id, label: item.title, icon: <KindIcon kind={item.level} size={12} /> })),
-      move: node.level === "system" ? undefined : (parentId) => write(props.onMove(node.id, parentId), "Could not move the node."),
+      parentOptions: node.level === "domain" ? undefined : [
+        { value: PROJECT_ID, label: props.projectName, icon: <KindIcon kind="project" size={12} /> },
+        ...structureParents(registry(), node.level, node.id).map((item) => ({ value: item.id, label: item.title, icon: <KindIcon kind={item.level} size={12} /> })),
+      ],
+      move: node.level === "domain" ? undefined : (target) => write(props.onMove(node.id, parentId(target)), "Could not move the node."),
       editDeploys: node.level === "component" && props.onDeploysChange ? () => openDeploysDialog(node) : undefined,
       linkOptions: props.onLinkRecord ? {
         ...(node.level === "component" ? { card: candidates("cards") } : {}),
@@ -541,11 +591,10 @@ export function StructureView(props: {
   });
   createEffect(() => {
     if (!props.createDialogOpen) return;
-    setTitle(""); setKind("system"); setParent(""); setFormError("");
+    // From a component, the next one goes beside it, under its domain.
     const node = untrack(selected);
-    if (node?.level === "system" || node?.level === "domain") {
-      setKind(node.level === "system" ? "domain" : "component"); setParent(node.id);
-    }
+    const domain = node?.level === "domain" ? node : registry().find((item) => item.id === node?.parentId && item.level === "domain");
+    setCreateUnder(domain?.id ?? PROJECT_ID);
   });
   const [drawing, setDrawing] = createSignal(false);
   async function drawCanvas() {
@@ -555,12 +604,13 @@ export function StructureView(props: {
     finally { setDrawing(false); }
   }
 
-  async function save(action: () => Promise<void>, close: () => void) {
-    setBusy(true); setFormError("");
-    try { await action(); close(); }
-    catch (error) { const message = error instanceof Error ? error.message : "Could not save structure."; setFormError(message); pushToast(message, "danger"); }
-    finally { setBusy(false); }
+  /** Runs a Composer write; a refusal is a toast, and resolving false keeps the draft. */
+  async function compose(action: () => Promise<void>): Promise<boolean> {
+    try { await action(); return true; }
+    catch (error) { pushToast(error instanceof Error ? error.message : "Could not save structure.", "danger"); return false; }
   }
+  const domainOptions = () => registry().filter((node) => node.level === "domain")
+    .map((node) => ({ value: node.id, label: node.title, get icon() { return <KindIcon kind="domain" size={12} />; } }));
 
 
   return <div class="flex min-h-0 flex-1 flex-col">
@@ -607,15 +657,34 @@ export function StructureView(props: {
           </div>
       </PageContent>
     }><PageError message={props.error!} /></Show>}><PageLoading label="Loading structure…" /></Show>
-    <A11yDialog open={!!props.createDialogOpen || moveOpen()} title={moveOpen() ? "Move node" : "Add structure node"} dismissible={!busy()} onClose={() => { if (!busy()) { setMoveOpen(false); props.onCloseCreate(); } }} footer={<>
-      <Button variant="ghost" disabled={busy()} onClick={() => { setMoveOpen(false); props.onCloseCreate(); }}>Cancel</Button>
-      <Button disabled={busy() || (!moveOpen() && !title().trim()) || ((moveOpen() || kind() !== "system") && !parents().some((node) => node.id === parent()))} onClick={() => void save(() => moveOpen() ? props.onMove(selected()!.id, parent()) : props.onCreate({ title: title().trim(), level: kind(), parentId: parent() }), () => { setMoveOpen(false); props.onCloseCreate(); })}>{busy() ? "Saving…" : "Save"}</Button>
-    </>}>
-      <FormStack><Show when={!moveOpen()}><Field label="Name"><Input value={title()} onInput={(event) => setTitle(event.currentTarget.value)} /></Field><Field label="Kind"><Select value={kind()} options={(["system", "domain", "component"] as const).map((level) => ({ value: level, label: kindLabel(level), icon: <KindIcon kind={level} size={12} /> }))} onChange={(value) => { setKind(value as StructureKind); setParent(""); }} /></Field></Show>
-        <Show when={moveOpen() || kind() !== "system"}><Field label="Parent"><Select value={parent()} options={parentOptions()} onChange={setParent} placeholder="Choose a parent" /></Field><Show when={!parents().length}><p class="text-sm text-[var(--color-text-muted)]">Add a system before adding domains or components.</p></Show></Show>
-        <Show when={formError()}><p role="alert" class="text-sm text-[var(--color-danger)]">{formError()}</p></Show>
-      </FormStack>
-    </A11yDialog>
+    <Composer
+      open={!!props.createDialogOpen}
+      crumbs={[props.projectName, ...(createLevel() === "component" ? [registry().find((node) => node.id === createUnder())?.title ?? ""] : []), createLevel() === "domain" ? "New domain" : "New component"]}
+      titlePlaceholder={createLevel() === "domain" ? "Domain name" : "Component name"}
+      descriptionPlaceholder="What it owns…"
+      properties={createLevel() === "component" ? [{ id: "domain", label: "Domain", get icon() { return <KindIcon kind="domain" size={14} />; }, options: domainOptions(), value: createUnder(), onChange: setCreateUnder }] : undefined}
+      whyPlaceholder="Optional. Recorded in Activity"
+      submitLabel={createLevel() === "domain" ? "Create domain" : "Create component"}
+      onClose={props.onCloseCreate}
+      onSubmit={(draft) => compose(() => props.onCreate({ title: draft.title.trim(), intent: draft.description.trim(), why: draft.why, level: createLevel(), parentId: parentId(createUnder()) }))}
+    />
+    <Composer
+      open={moveOpen()}
+      crumbs={[props.projectName, selected()?.title ?? "", "Move"]}
+      titlePlaceholder="Name"
+      properties={[{ id: "parent", label: "Under", get icon() { return <Route size={14} />; }, options: parentOptions(), value: parent(), onChange: setParent }]}
+      initial={{ title: selected()?.title ?? "" }}
+      createMore={false}
+      submitLabel="Save"
+      onClose={() => setMoveOpen(false)}
+      onSubmit={(draft) => compose(async () => {
+        const node = selected();
+        if (!node) return;
+        const title = draft.title.trim();
+        if (title && title !== node.title) await props.onEditNode?.(node.id, { title });
+        if (parentId(parent()) !== node.parentId) await props.onMove(node.id, parentId(parent()));
+      })}
+    />
     <A11yDialog open={deploysOpen()} title="Edit deploys" dismissible={!busy()} onClose={() => { if (!busy()) setDeploysOpen(false); }} footer={<>
       <Button variant="ghost" disabled={busy()} onClick={() => setDeploysOpen(false)}>Cancel</Button>
       <Button disabled={busy()} onClick={() => void saveDeploys()}>{busy() ? "Saving…" : "Save"}</Button>

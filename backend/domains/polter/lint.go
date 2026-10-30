@@ -116,7 +116,7 @@ func CheckRepos(doc Document, repos []string) []Diagnostic {
 	unknown := func(line int, repo string) Diagnostic {
 		return Diagnostic{
 			Line: line, Severity: SeverityError,
-			Message: fmt.Sprintf("unknown repo %q: register it with polterware repo add --name %s --path <dir>", repo, repo),
+			Message: fmt.Sprintf("unknown repo %q: link a local clone with dir: <folder>, or list repositories with polterware repo list", repo),
 		}
 	}
 	var diags []Diagnostic

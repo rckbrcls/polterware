@@ -15,7 +15,7 @@ export const HELP_GITHUB_URL = "https://github.com/polterware/polterware";
 export type HelpTopicId =
   | "what-its-for"
   | "agents-context"
-  | "drift-history"
+  | "commits-history"
   | "contribute";
 
 export type TopicIcon = Component<Omit<HugeiconsIconProps, "icon">>;
@@ -46,11 +46,11 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     body: [
       {
         icon: Bot,
-        text: "Polterware is Project Context & Change Intelligence for AI Coding. It gives every coding agent the same understanding of your project, with the Rules they must follow, and flags commits that drift from the work they claim.",
+        text: "Polterware is Project Context & Change Intelligence for AI Coding. It gives every coding agent the same understanding of your project, with the Rules they must follow, and shows on each card the commits that delivered it.",
       },
       {
         icon: Layers,
-        text: "Architecture and Knowledge are ways for people to inspect the project model. They are not the product category — the durable value is verifiable context for agents and drift checks when changes diverge from intent.",
+        text: "Architecture and Knowledge are ways for people to inspect the project model. They are not the product category — the durable value is verifiable context for agents.",
       },
     ],
   },
@@ -71,14 +71,14 @@ export const HELP_TOPICS: readonly HelpTopic[] = [
     ],
   },
   {
-    id: "drift-history",
-    label: "Drift & history",
-    title: "Drift & history",
+    id: "commits-history",
+    label: "Commits & history",
+    title: "Commits & history",
     icon: GitCompare,
     body: [
       {
         icon: GitCompare,
-        text: "Drift checks surface when changes disagree with architecture, decisions, or specs. A drift finding never overwrites your project automatically.",
+        text: "A card shows the commits that delivered its tasks: the ones an agent linked, and the ones whose subject cites a task as slug#T2, with a link to GitHub when the repository is there.",
       },
       {
         icon: History,

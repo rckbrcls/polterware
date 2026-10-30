@@ -63,6 +63,9 @@ func (s *Store) LoadWorkSnapshot(projectID string) (work.Snapshot, error) {
 	if snapshot.Rules, err = s.loadRules(projectID); err != nil {
 		return snapshot, err
 	}
+	if snapshot.Conflicts, err = s.loadConflicts(projectID); err != nil {
+		return snapshot, err
+	}
 	if len(snapshot.Cards) == 0 {
 		snapshot.Nodes, err = s.loadStructureNodes(projectID)
 		return snapshot, err
@@ -138,10 +141,10 @@ func (s *Store) LoadWorkSnapshot(projectID string) (work.Snapshot, error) {
 	return snapshot, err
 }
 
-// loadRepoNames lists the project's registered checkout names.
+// loadRepoNames lists the project's repository names.
 func (s *Store) loadRepoNames(projectID string) ([]string, error) {
 	var names []string
-	err := s.eachRow(`SELECT name FROM project_repos WHERE project_id=? ORDER BY name`, projectID, func(rows *sql.Rows) error {
+	err := s.eachRow(`SELECT name FROM repositories WHERE project_id=? ORDER BY name`, projectID, func(rows *sql.Rows) error {
 		var name string
 		if err := rows.Scan(&name); err != nil {
 			return err
@@ -283,6 +286,9 @@ func applyWorkOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 	}
 	if op.Entity == work.EntityRule {
 		return applyRuleOp(tx, projectID, op, now)
+	}
+	if op.Entity == work.EntityConflict {
+		return applyConflictOp(tx, projectID, op, now)
 	}
 	if op.Entity == work.EntityDecision {
 		return applyDecisionOp(tx, projectID, op, now)

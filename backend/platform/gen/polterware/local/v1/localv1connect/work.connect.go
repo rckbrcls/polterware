@@ -85,6 +85,15 @@ const (
 	// WorkServiceVerifyFeatureProcedure is the fully-qualified name of the WorkService's VerifyFeature
 	// RPC.
 	WorkServiceVerifyFeatureProcedure = "/polterware.local.v1.WorkService/VerifyFeature"
+	// WorkServiceListCardCommitsProcedure is the fully-qualified name of the WorkService's
+	// ListCardCommits RPC.
+	WorkServiceListCardCommitsProcedure = "/polterware.local.v1.WorkService/ListCardCommits"
+	// WorkServiceLinkTaskCommitProcedure is the fully-qualified name of the WorkService's
+	// LinkTaskCommit RPC.
+	WorkServiceLinkTaskCommitProcedure = "/polterware.local.v1.WorkService/LinkTaskCommit"
+	// WorkServiceUnlinkTaskCommitProcedure is the fully-qualified name of the WorkService's
+	// UnlinkTaskCommit RPC.
+	WorkServiceUnlinkTaskCommitProcedure = "/polterware.local.v1.WorkService/UnlinkTaskCommit"
 	// WorkServiceListMilestonesProcedure is the fully-qualified name of the WorkService's
 	// ListMilestones RPC.
 	WorkServiceListMilestonesProcedure = "/polterware.local.v1.WorkService/ListMilestones"
@@ -124,6 +133,9 @@ type WorkServiceClient interface {
 	CreateFeature(context.Context, *connect.Request[v1.CreateFeatureRequest]) (*connect.Response[v1.CreateFeatureResponse], error)
 	AdvanceFeature(context.Context, *connect.Request[v1.AdvanceFeatureRequest]) (*connect.Response[v1.AdvanceFeatureResponse], error)
 	VerifyFeature(context.Context, *connect.Request[v1.VerifyFeatureRequest]) (*connect.Response[v1.VerifyFeatureResponse], error)
+	ListCardCommits(context.Context, *connect.Request[v1.ListCardCommitsRequest]) (*connect.Response[v1.ListCardCommitsResponse], error)
+	LinkTaskCommit(context.Context, *connect.Request[v1.LinkTaskCommitRequest]) (*connect.Response[v1.LinkTaskCommitResponse], error)
+	UnlinkTaskCommit(context.Context, *connect.Request[v1.UnlinkTaskCommitRequest]) (*connect.Response[v1.UnlinkTaskCommitResponse], error)
 	ListMilestones(context.Context, *connect.Request[v1.ListMilestonesRequest]) (*connect.Response[v1.ListMilestonesResponse], error)
 	CreateMilestone(context.Context, *connect.Request[v1.CreateMilestoneRequest]) (*connect.Response[v1.CreateMilestoneResponse], error)
 	UpdateMilestone(context.Context, *connect.Request[v1.UpdateMilestoneRequest]) (*connect.Response[v1.UpdateMilestoneResponse], error)
@@ -262,6 +274,24 @@ func NewWorkServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(workServiceMethods.ByName("VerifyFeature")),
 			connect.WithClientOptions(opts...),
 		),
+		listCardCommits: connect.NewClient[v1.ListCardCommitsRequest, v1.ListCardCommitsResponse](
+			httpClient,
+			baseURL+WorkServiceListCardCommitsProcedure,
+			connect.WithSchema(workServiceMethods.ByName("ListCardCommits")),
+			connect.WithClientOptions(opts...),
+		),
+		linkTaskCommit: connect.NewClient[v1.LinkTaskCommitRequest, v1.LinkTaskCommitResponse](
+			httpClient,
+			baseURL+WorkServiceLinkTaskCommitProcedure,
+			connect.WithSchema(workServiceMethods.ByName("LinkTaskCommit")),
+			connect.WithClientOptions(opts...),
+		),
+		unlinkTaskCommit: connect.NewClient[v1.UnlinkTaskCommitRequest, v1.UnlinkTaskCommitResponse](
+			httpClient,
+			baseURL+WorkServiceUnlinkTaskCommitProcedure,
+			connect.WithSchema(workServiceMethods.ByName("UnlinkTaskCommit")),
+			connect.WithClientOptions(opts...),
+		),
 		listMilestones: connect.NewClient[v1.ListMilestonesRequest, v1.ListMilestonesResponse](
 			httpClient,
 			baseURL+WorkServiceListMilestonesProcedure,
@@ -317,6 +347,9 @@ type workServiceClient struct {
 	createFeature        *connect.Client[v1.CreateFeatureRequest, v1.CreateFeatureResponse]
 	advanceFeature       *connect.Client[v1.AdvanceFeatureRequest, v1.AdvanceFeatureResponse]
 	verifyFeature        *connect.Client[v1.VerifyFeatureRequest, v1.VerifyFeatureResponse]
+	listCardCommits      *connect.Client[v1.ListCardCommitsRequest, v1.ListCardCommitsResponse]
+	linkTaskCommit       *connect.Client[v1.LinkTaskCommitRequest, v1.LinkTaskCommitResponse]
+	unlinkTaskCommit     *connect.Client[v1.UnlinkTaskCommitRequest, v1.UnlinkTaskCommitResponse]
 	listMilestones       *connect.Client[v1.ListMilestonesRequest, v1.ListMilestonesResponse]
 	createMilestone      *connect.Client[v1.CreateMilestoneRequest, v1.CreateMilestoneResponse]
 	updateMilestone      *connect.Client[v1.UpdateMilestoneRequest, v1.UpdateMilestoneResponse]
@@ -424,6 +457,21 @@ func (c *workServiceClient) VerifyFeature(ctx context.Context, req *connect.Requ
 	return c.verifyFeature.CallUnary(ctx, req)
 }
 
+// ListCardCommits calls polterware.local.v1.WorkService.ListCardCommits.
+func (c *workServiceClient) ListCardCommits(ctx context.Context, req *connect.Request[v1.ListCardCommitsRequest]) (*connect.Response[v1.ListCardCommitsResponse], error) {
+	return c.listCardCommits.CallUnary(ctx, req)
+}
+
+// LinkTaskCommit calls polterware.local.v1.WorkService.LinkTaskCommit.
+func (c *workServiceClient) LinkTaskCommit(ctx context.Context, req *connect.Request[v1.LinkTaskCommitRequest]) (*connect.Response[v1.LinkTaskCommitResponse], error) {
+	return c.linkTaskCommit.CallUnary(ctx, req)
+}
+
+// UnlinkTaskCommit calls polterware.local.v1.WorkService.UnlinkTaskCommit.
+func (c *workServiceClient) UnlinkTaskCommit(ctx context.Context, req *connect.Request[v1.UnlinkTaskCommitRequest]) (*connect.Response[v1.UnlinkTaskCommitResponse], error) {
+	return c.unlinkTaskCommit.CallUnary(ctx, req)
+}
+
 // ListMilestones calls polterware.local.v1.WorkService.ListMilestones.
 func (c *workServiceClient) ListMilestones(ctx context.Context, req *connect.Request[v1.ListMilestonesRequest]) (*connect.Response[v1.ListMilestonesResponse], error) {
 	return c.listMilestones.CallUnary(ctx, req)
@@ -471,6 +519,9 @@ type WorkServiceHandler interface {
 	CreateFeature(context.Context, *connect.Request[v1.CreateFeatureRequest]) (*connect.Response[v1.CreateFeatureResponse], error)
 	AdvanceFeature(context.Context, *connect.Request[v1.AdvanceFeatureRequest]) (*connect.Response[v1.AdvanceFeatureResponse], error)
 	VerifyFeature(context.Context, *connect.Request[v1.VerifyFeatureRequest]) (*connect.Response[v1.VerifyFeatureResponse], error)
+	ListCardCommits(context.Context, *connect.Request[v1.ListCardCommitsRequest]) (*connect.Response[v1.ListCardCommitsResponse], error)
+	LinkTaskCommit(context.Context, *connect.Request[v1.LinkTaskCommitRequest]) (*connect.Response[v1.LinkTaskCommitResponse], error)
+	UnlinkTaskCommit(context.Context, *connect.Request[v1.UnlinkTaskCommitRequest]) (*connect.Response[v1.UnlinkTaskCommitResponse], error)
 	ListMilestones(context.Context, *connect.Request[v1.ListMilestonesRequest]) (*connect.Response[v1.ListMilestonesResponse], error)
 	CreateMilestone(context.Context, *connect.Request[v1.CreateMilestoneRequest]) (*connect.Response[v1.CreateMilestoneResponse], error)
 	UpdateMilestone(context.Context, *connect.Request[v1.UpdateMilestoneRequest]) (*connect.Response[v1.UpdateMilestoneResponse], error)
@@ -605,6 +656,24 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(workServiceMethods.ByName("VerifyFeature")),
 		connect.WithHandlerOptions(opts...),
 	)
+	workServiceListCardCommitsHandler := connect.NewUnaryHandler(
+		WorkServiceListCardCommitsProcedure,
+		svc.ListCardCommits,
+		connect.WithSchema(workServiceMethods.ByName("ListCardCommits")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workServiceLinkTaskCommitHandler := connect.NewUnaryHandler(
+		WorkServiceLinkTaskCommitProcedure,
+		svc.LinkTaskCommit,
+		connect.WithSchema(workServiceMethods.ByName("LinkTaskCommit")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workServiceUnlinkTaskCommitHandler := connect.NewUnaryHandler(
+		WorkServiceUnlinkTaskCommitProcedure,
+		svc.UnlinkTaskCommit,
+		connect.WithSchema(workServiceMethods.ByName("UnlinkTaskCommit")),
+		connect.WithHandlerOptions(opts...),
+	)
 	workServiceListMilestonesHandler := connect.NewUnaryHandler(
 		WorkServiceListMilestonesProcedure,
 		svc.ListMilestones,
@@ -677,6 +746,12 @@ func NewWorkServiceHandler(svc WorkServiceHandler, opts ...connect.HandlerOption
 			workServiceAdvanceFeatureHandler.ServeHTTP(w, r)
 		case WorkServiceVerifyFeatureProcedure:
 			workServiceVerifyFeatureHandler.ServeHTTP(w, r)
+		case WorkServiceListCardCommitsProcedure:
+			workServiceListCardCommitsHandler.ServeHTTP(w, r)
+		case WorkServiceLinkTaskCommitProcedure:
+			workServiceLinkTaskCommitHandler.ServeHTTP(w, r)
+		case WorkServiceUnlinkTaskCommitProcedure:
+			workServiceUnlinkTaskCommitHandler.ServeHTTP(w, r)
 		case WorkServiceListMilestonesProcedure:
 			workServiceListMilestonesHandler.ServeHTTP(w, r)
 		case WorkServiceCreateMilestoneProcedure:
@@ -774,6 +849,18 @@ func (UnimplementedWorkServiceHandler) AdvanceFeature(context.Context, *connect.
 
 func (UnimplementedWorkServiceHandler) VerifyFeature(context.Context, *connect.Request[v1.VerifyFeatureRequest]) (*connect.Response[v1.VerifyFeatureResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.VerifyFeature is not implemented"))
+}
+
+func (UnimplementedWorkServiceHandler) ListCardCommits(context.Context, *connect.Request[v1.ListCardCommitsRequest]) (*connect.Response[v1.ListCardCommitsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.ListCardCommits is not implemented"))
+}
+
+func (UnimplementedWorkServiceHandler) LinkTaskCommit(context.Context, *connect.Request[v1.LinkTaskCommitRequest]) (*connect.Response[v1.LinkTaskCommitResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.LinkTaskCommit is not implemented"))
+}
+
+func (UnimplementedWorkServiceHandler) UnlinkTaskCommit(context.Context, *connect.Request[v1.UnlinkTaskCommitRequest]) (*connect.Response[v1.UnlinkTaskCommitResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.WorkService.UnlinkTaskCommit is not implemented"))
 }
 
 func (UnimplementedWorkServiceHandler) ListMilestones(context.Context, *connect.Request[v1.ListMilestonesRequest]) (*connect.Response[v1.ListMilestonesResponse], error) {

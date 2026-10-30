@@ -23,7 +23,7 @@ polterware-web remains an active product repository and owns both the public Pol
 
 ### new: Product positioning and wedge
 
-Category: Project Context and Change Intelligence for AI Coding. Stack: Desktop Electron and Solid, Go core, SQLite. The wedge is the Polterware Project Model with facts, the Rules agents follow, the Context Compiler, stable MCP reads, a narrow Drift Checker, AgentRun audit, audited MCP writes, and the CLI. Not the product: an IDP or software catalog, AI memory as positioning, the architecture canvas as the thesis, generic RAG marketing, an Operations control plane.
+Category: Project Context and Change Intelligence for AI Coding. Stack: Desktop Electron and Solid, Go core, SQLite. The wedge is the Polterware Project Model with facts, the Rules agents follow, the Context Compiler, stable MCP reads, card commits, AgentRun audit, audited MCP writes, and the CLI. Not the product: an IDP or software catalog, AI memory as positioning, the architecture canvas as the thesis, generic RAG marketing, an Operations control plane.
 
 ### new: Post-wedge Cloud and enrichment boundary
 
@@ -39,7 +39,7 @@ The core, polterware serve, is the only process that opens the SQLite store. One
 
 ### new: Structure nodes above Work cards
 
-System, domain, and component are Structure nodes with contract lines. A feature stays a Work card and a task stays a Work task. A node parent is named by under. Status is derived on read: proposed, in progress, delivered, or drift, and Git does not move the stored card stage. Oracle is a deterministic packing of the graph to a token budget, with no model on the path. The Structure canvas shows this graph.
+Domain and component are Structure nodes with contract lines. A feature stays a Work card and a task stays a Work task. A node parent is named by under. Status is derived on read: proposed, in progress, or delivered, and Git does not move the stored card stage. Oracle is a deterministic packing of the graph to a token budget, with no model on the path. The Structure canvas shows this graph.
 
 ### new: Checkouts on Structure nodes and projections into checkouts
 
@@ -47,7 +47,7 @@ A node names its checkout and folder. A task may name its checkout, and a claim 
 
 ### new: Decision lifecycle
 
-Four states: proposed, active, challenged, then active or superseded. History is never deleted; a newer decision supersedes an older one. Lifecycle data stays in extra_json and every move is audited in change_ops. Moves are Polter blocks. A challenge is a person or agent call, never automatic. Active and challenged decisions govern drift checks and AGENTS.md blocks. Governed nodes are derived from decisions citations.
+Four states: proposed, active, challenged, then active or superseded. History is never deleted; a newer decision supersedes an older one. Lifecycle data stays in extra_json and every move is audited in change_ops. Moves are Polter blocks. A challenge is a person or agent call, never automatic. Active and challenged decisions govern briefs and AGENTS.md blocks. Governed nodes are derived from decisions citations.
 `
 
 // decisionStatusPolter moves the accepted Decisions to active. Decision-0006 through
@@ -84,29 +84,29 @@ rationale: A decision with no contexts is a principle, so each one names the Str
 ---
 
 ### Decision-0001:
-scope: polterware/cloud
+scope: cloud
 
 ### Decision-0002:
-scope: polterware/desktop, polterware/cloud
+scope: desktop, cloud
 
 ### Decision-0003:
-scope: polterware/web
+scope: web
 
 ### Decision-0005:
-scope: polterware/cloud
+scope: cloud
 
 ### Decision-0006:
-scope: polterware/core/work
+scope: core/work
 
 ### Decision-0007:
-scope: polterware/core
+scope: core
 
 ### Decision-0008:
-scope: polterware/core/structure
+scope: core/structure
 
 ### Decision-0009:
-scope: polterware/core/structure
+scope: core/structure
 
 ### Decision-0010:
-scope: polterware/core/decisions
+scope: core/decisions
 `

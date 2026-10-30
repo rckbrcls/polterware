@@ -8,7 +8,7 @@ describe("mapStructure", () => {
         {
           id: "n1",
           parentId: "",
-          level: "system",
+          level: "domain",
           slug: "core",
           path: "core",
           title: "Core",
@@ -28,7 +28,6 @@ describe("mapStructure", () => {
         { id: "n2", level: "folder", status: "proposed", title: "Dropped" },
         { id: "n3", level: "domain", status: "mystery", title: "Dropped" },
       ],
-      driftSlugs: ["git-import"],
     });
 
     expect(structure.nodes).toHaveLength(1);
@@ -46,11 +45,10 @@ describe("mapStructure", () => {
     });
     expect(structure.nodes[0]?.invariants).toEqual([{ id: "i1", text: "One core process" }]);
     expect(structure.nodes[0]?.deploys).toEqual([{ id: "deploy-1", environmentId: "prod", environment: "Production", provider: "aws", resource: "api-prod" }]);
-    expect(structure.driftSlugs).toEqual(["git-import"]);
   });
 
   it("returns an empty structure for an empty response", () => {
-    expect(mapStructure({})).toEqual({ nodes: [], driftSlugs: [], historical: false });
+    expect(mapStructure({})).toEqual({ nodes: [], historical: false });
   });
 
   it("flags a replayed past graph", () => {

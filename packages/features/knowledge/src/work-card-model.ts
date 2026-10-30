@@ -49,6 +49,23 @@ export function latestHandoff(raw: unknown, slug: string): CardHandoff | undefin
   };
 }
 
+export type CardCommit = {
+  task: number; sha: string; shortSha: string; subject: string; url: string; at: string;
+  /** True when the commit's message cites the task; only a linked one can be unlinked. */
+  cited: boolean;
+};
+
+/** The card's commits as the core lists them, newest first. */
+export function cardCommits(raw: unknown): CardCommit[] {
+  return list(obj(raw).commits).map((commit) => {
+    const sha = text(commit.sha);
+    return {
+      task: Number(commit.taskNumber) || 0, sha, shortSha: text(commit.shortSha) || sha.slice(0, 7),
+      subject: text(commit.subject), url: text(commit.url), at: text(commit.committedAt), cited: commit.cited === true,
+    };
+  });
+}
+
 /** The dispatch runs that name this card, newest first. */
 export function cardRuns(raw: unknown, slug: string): CardRun[] {
   return list(obj(raw).runs)

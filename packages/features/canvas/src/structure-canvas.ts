@@ -17,7 +17,6 @@ const EMPTY_GROUP = { width: 260, height: 120 };
 const PAD = { top: 64, side: 20, bottom: 20 };
 const GAP = 16;
 const COLUMNS = 3;
-const SYSTEM_GAP = 48;
 
 const canvasId = (nodeId: string) => `structure-${nodeId}`;
 
@@ -62,9 +61,9 @@ export function isStructureCanvas(canvas: Pick<CanvasRecord, "layoutJson">): boo
 }
 
 /**
- * Draws the Structure tree as a canvas, the same way every time: each system is a group stacked
- * under the last, its loose components and domains inside it in rows of three, and each domain's
- * components inside the domain. Every drawn node cites its Structure node, so its title, kind,
+ * Draws the Structure tree as a canvas, the same way every time: the project's loose components
+ * and then its domains in rows of three, and each domain as a group holding its components in rows
+ * of three. Every drawn node cites its Structure node, so its title, kind,
  * and technology follow the tree. Redrawing keeps the edges between nodes that are still drawn and
  * every item someone added by hand; nodes that left the tree leave the drawing.
  */
@@ -72,19 +71,15 @@ export function drawStructure(nodes: readonly StructureSource[], previous?: Pick
   const live = nodes.filter((node) => node.status !== "removed");
   const known = new Set(live.map((node) => node.id));
   const children = new Map<string, StructureSource[]>();
-  const roots: StructureSource[] = [];
   for (const node of live) {
     if (node.parentId && known.has(node.parentId)) children.set(node.parentId, [...(children.get(node.parentId) ?? []), node]);
-    else if (!node.parentId) roots.push(node);
+    else if (!node.parentId) children.set("", [...(children.get("") ?? []), node]);
   }
 
   const drawn: Array<{ node: StructureSource; rect: Rect }> = [];
-  let y = 0;
-  for (const root of roots) {
-    const box = measure(root, children);
-    flatten(box, 0, y, drawn);
-    y += box.height + SYSTEM_GAP;
-  }
+  // The project is not drawn: its children sit where a group's would, moved to the origin.
+  const project = measure({ id: "", parentId: "", level: "project", title: "" }, children);
+  for (const child of project.children) flatten(child.box, child.x - PAD.side, child.y - PAD.top, drawn);
 
   const drawnIds = new Set(drawn.map((item) => canvasId(item.node.id)));
   const layout = previousLayout(previous?.layoutJson);

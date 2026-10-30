@@ -12,7 +12,7 @@ import (
 
 func decisionSnapshot() work.Snapshot {
 	return work.Snapshot{ProjectID: "p1", Nodes: []structure.Node{
-		{ID: "n-core", Path: "core", Level: structure.LevelSystem, Status: structure.NodeActive},
+		{ID: "n-core", Path: "core", Level: structure.LevelDomain, Status: structure.NodeActive},
 		{ID: "n-api", ParentID: "n-core", Path: "core/api", Level: structure.LevelComponent, Status: structure.NodeActive},
 	}, Decisions: []decision.Decision{
 		{ID: "a1", Title: "Decision 0001: SQLite", Status: "accepted"},

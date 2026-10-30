@@ -19,7 +19,7 @@ describe("searchSettings", () => {
 
   it("opens the focused page for moved sections", () => {
     for (const [query, tab, section] of [
-      ["checkout", "repositories", "Local repositories"],
+      ["sync", "general", "AGENTS.md"],
       ["archive", "project-danger", "Danger zone"],
       ["hooks", "agents-hooks", "Hooks"],
       ["download", "agents-skill", "AI skill"],

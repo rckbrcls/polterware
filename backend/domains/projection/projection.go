@@ -53,9 +53,10 @@ var (
 const maxSlugRunes = 60
 
 // Govern assigns each Decision to the checkouts it governs: the repo of every
-// active node that cites it in decisions:. A Decision no active node cites
-// governs the project root (""). The result is keyed by checkout name.
-func Govern(nodes []structure.Node, decisions []Decision) map[string][]Decision {
+// active node that cites it in decisions: or names it in its contexts. A
+// Decision no active node cites governs every checkout. The result is keyed by
+// checkout name.
+func Govern(nodes []structure.Node, decisions []Decision, checkouts []string) map[string][]Decision {
 	out := map[string][]Decision{}
 	for _, decision := range decisions {
 		repos := map[string]bool{}
@@ -73,7 +74,9 @@ func Govern(nodes []structure.Node, decisions []Decision) map[string][]Decision 
 			}
 		}
 		if len(repos) == 0 {
-			repos[""] = true
+			for _, name := range checkouts {
+				repos[name] = true
+			}
 		}
 		for repo := range repos {
 			out[repo] = append(out[repo], decision)

@@ -46,13 +46,13 @@ describe("mapProjects", () => {
   it("summarizes the production environment and flags the current project", () => {
     const [first, second] = mapProjects(
       [
-        { id: "p1", name: "Alpha", rootPath: "/work/alpha", createdAt: "2026-01-01T00:00:00Z" },
-        { id: "p3", rootPath: "/work/none" },
+        { id: "p1", name: "Alpha", createdAt: "2026-01-01T00:00:00Z" },
+        { id: "p3" },
       ],
       environments,
       "p1",
     );
-    expect(first).toMatchObject({ projectId: "p1", name: "Alpha", directory: "/work/alpha", environmentSummary: "Production", isCurrent: true });
+    expect(first).toMatchObject({ projectId: "p1", name: "Alpha", environmentSummary: "Production", isCurrent: true });
     expect(second).toMatchObject({ projectId: "p3", name: "p3", environmentSummary: "No environments", isCurrent: false });
   });
 
@@ -66,7 +66,6 @@ describe("mapProjects", () => {
       [{
         id: "p1",
         name: "Alpha",
-        rootPath: "/work/alpha",
         description: "Workspace",
         status: "active",
         updatedAt: "2026-03-01T15:04:00Z",
@@ -116,15 +115,18 @@ describe("mapSettings", () => {
 });
 
 describe("mapProjectRepos", () => {
-  it("requires both a name and a path", () => {
+  it("keeps every named repository, with or without a remote and a clone here", () => {
     expect(
       mapProjectRepos([
-        { id: "1", name: "api", path: "/work/api" },
+        { id: "1", name: "api", remote: "github.com/acme/api", localPath: "/work/api" },
         { id: "2", name: "web" },
-        { id: "3", path: "/work/x" },
+        { id: "3", localPath: "/work/x" },
         {},
       ]),
-    ).toEqual([{ id: "1", name: "api", path: "/work/api" }]);
+    ).toEqual([
+      { id: "1", name: "api", remote: "github.com/acme/api", localPath: "/work/api" },
+      { id: "2", name: "web", remote: "", localPath: "" },
+    ]);
   });
 });
 

@@ -1,9 +1,8 @@
-// Package structure is the project graph above Work cards: system, domain, and
-// component nodes. Features stay cards. Status is derived when the graph is read.
+// Package structure is the project graph above Work cards: the project is the
+// root, with domains under it and components under a domain or loose. Features stay cards. Status is derived when the graph is read.
 package structure
 
 const (
-	LevelSystem    = "system"
 	LevelDomain    = "domain"
 	LevelComponent = "component"
 
@@ -13,13 +12,12 @@ const (
 	StatusProposed   = "proposed"
 	StatusInProgress = "in_progress"
 	StatusDelivered  = "delivered"
-	StatusDrift      = "drift"
 )
 
 // Levels lists node levels from the top of the graph down to a component.
-var Levels = []string{LevelSystem, LevelDomain, LevelComponent}
+var Levels = []string{LevelDomain, LevelComponent}
 
-// ValidLevel reports whether level is system, domain, or component.
+// ValidLevel reports whether level is domain or component.
 func ValidLevel(level string) bool {
 	for _, item := range Levels {
 		if item == level {
@@ -29,11 +27,10 @@ func ValidLevel(level string) bool {
 	return false
 }
 
-// ParentLevel is the level a node's parent usually has. A system has none.
+// ParentLevel is the level a node's parent has. A domain has none: it sits
+// under the project.
 func ParentLevel(level string) (string, bool) {
 	switch level {
-	case LevelDomain:
-		return LevelSystem, true
 	case LevelComponent:
 		return LevelDomain, true
 	default:
@@ -42,12 +39,11 @@ func ParentLevel(level string) (string, bool) {
 }
 
 // AllowedParent reports whether a node at level may sit under a parent at
-// parentLevel. A component sits under a domain, or loose under its system.
+// parentLevel. Only a component has a parent: a domain. With none, it sits
+// loose under the project.
 func AllowedParent(level, parentLevel string) bool {
-	if want, ok := ParentLevel(level); ok && want == parentLevel {
-		return true
-	}
-	return level == LevelComponent && parentLevel == LevelSystem
+	want, ok := ParentLevel(level)
+	return ok && want == parentLevel
 }
 
 // Node is one Structure node. The Rules that hold for it live apart, with the
@@ -90,7 +86,6 @@ type Feature struct {
 	Under         string
 	Stage         string
 	OpenQuestions int
-	Drift         bool
 }
 
 // Row is a node plus the status and counts derived from its descendants.
@@ -102,12 +97,9 @@ type Row struct {
 	OpenQuestions int
 }
 
-// DeriveStatus reports proposed, in_progress, delivered, or drift.
-// Drift wins. No features is proposed. Every feature delivered is delivered.
-func DeriveStatus(stages []string, drifted bool) string {
-	if drifted {
-		return StatusDrift
-	}
+// DeriveStatus reports proposed, in_progress, or delivered. No features is
+// proposed. Every feature delivered is delivered.
+func DeriveStatus(stages []string) string {
 	if len(stages) == 0 {
 		return StatusProposed
 	}
@@ -154,7 +146,6 @@ func Decorate(nodes []Node, features []Feature) []Row {
 	for _, node := range active {
 		paths := walk(node)
 		var stages []string
-		drift := false
 		questions := 0
 		count := 0
 		for _, feature := range features {
@@ -164,13 +155,10 @@ func Decorate(nodes []Node, features []Feature) []Row {
 			count++
 			stages = append(stages, feature.Stage)
 			questions += feature.OpenQuestions
-			if feature.Drift {
-				drift = true
-			}
 		}
 		rows = append(rows, Row{
 			Node:          node,
-			Derived:       DeriveStatus(stages, drift),
+			Derived:       DeriveStatus(stages),
 			ChildCount:    len(children[node.ID]),
 			FeatureCount:  count,
 			OpenQuestions: questions,

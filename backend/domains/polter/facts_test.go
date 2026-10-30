@@ -10,7 +10,7 @@ import (
 )
 
 func TestFactDecodeAndFormat(t *testing.T) {
-	text := Header + "\n## work: Work\nstage: plan\n### new: Decision\nstatus: proposed\n\nDecision body.\n#### local-core: One process owns SQLite.\nkind: inferred · scope: core\n#### rule no-network: Never call the network.\nscope: core\n# core: Core\nlevel: system\n"
+	text := Header + "\n## work: Work\nstage: plan\n### new: Decision\nstatus: proposed\n\nDecision body.\n#### local-core: One process owns SQLite.\nkind: inferred · scope: core\n#### rule no-network: Never call the network.\nscope: core\n# core: Core\nlevel: domain\n"
 	doc, diags := Decode(text)
 	if HasErrors(diags) || len(doc.Facts) != 1 || len(doc.Rules) != 1 || len(doc.Cards) != 1 || len(doc.Decisions) != 1 || len(doc.Nodes) != 1 {
 		t.Fatalf("doc=%+v diags=%+v", doc, diags)
@@ -51,7 +51,7 @@ func TestFactLintLineNumbers(t *testing.T) {
 }
 
 func TestFactPlanCreateUpdateAndOmission(t *testing.T) {
-	snapshot := work.Snapshot{ProjectID: "p", Nodes: []structure.Node{{ID: "n", Path: "core", Level: "system", Status: structure.NodeActive}}}
+	snapshot := work.Snapshot{ProjectID: "p", Nodes: []structure.Node{{ID: "n", Path: "core", Level: "domain", Status: structure.NodeActive}}}
 	for _, kind := range []string{"", "declared", "inferred", "verified"} {
 		text := Header + "#### local-core: Local core\nscope: core\n"
 		if kind != "" {
@@ -99,7 +99,7 @@ func TestFactPlanCreateUpdateAndOmission(t *testing.T) {
 }
 
 func TestRulePlanCreateUpdateRemoveAndNodeLines(t *testing.T) {
-	snapshot := work.Snapshot{ProjectID: "p", Nodes: []structure.Node{{ID: "n", Slug: "core", Path: "core", Title: "Core", Level: "system", Status: structure.NodeActive}}}
+	snapshot := work.Snapshot{ProjectID: "p", Nodes: []structure.Node{{ID: "n", Slug: "core", Path: "core", Title: "Core", Level: "domain", Status: structure.NodeActive}}}
 	doc, diags := Decode(Header + "#### rule no-network: Never call the network.\nscope: core\n#### rule small-prs: Keep changes small.\n")
 	if HasErrors(diags) {
 		t.Fatal(diags)
@@ -127,7 +127,7 @@ func TestRulePlanCreateUpdateRemoveAndNodeLines(t *testing.T) {
 	}
 
 	// A node's ! line is a Rule for that node; the same text is the same Rule.
-	doc, _ = Decode(Header + "# core: Core\nlevel: system\n\n! Never call the network.\n! Log every write\n")
+	doc, _ = Decode(Header + "# core: Core\nlevel: domain\n\n! Never call the network.\n! Log every write\n")
 	ops, diags = Plan(doc, snapshot)
 	if HasErrors(diags) || len(ops) != 1 || ops[0].Entity != work.EntityRule || ops[0].Label != "Log every write" {
 		t.Fatalf("node lines: %+v %+v", ops, diags)

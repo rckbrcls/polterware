@@ -56,6 +56,7 @@ func PlanAs(doc Document, snapshot work.Snapshot, holder string) ([]work.Op, []D
 	p.planDecisions(doc)
 	p.planFacts(doc)
 	p.planRules(doc)
+	p.planConflicts(doc)
 	return p.ops, p.diags
 }
 

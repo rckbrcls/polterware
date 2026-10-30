@@ -23,12 +23,13 @@ func ResolveNode(headingPath, under string, hasUnder bool) (path, parent, fromPa
 		slash := strings.LastIndex(headingPath, "/")
 		parent = headingPath[:slash]
 		path = headingPath
-		if hasUnder && under != "" && under != parent {
-			slug := headingPath[slash+1:]
-			return under + "/" + slug, under, headingPath, ""
-		}
+		// A different under: moves the node; an empty one moves it to the project.
 		if hasUnder && under != parent {
-			return "", "", "", fmt.Sprintf("under %q does not match path %q: use under: %s", under, headingPath, parent)
+			slug := headingPath[slash+1:]
+			if under == "" {
+				return slug, "", headingPath, ""
+			}
+			return under + "/" + slug, under, headingPath, ""
 		}
 		return path, parent, "", ""
 	}
@@ -45,11 +46,8 @@ func checkPlacement(path, parent, level string) string {
 	if !structure.ValidLevel(level) {
 		return fmt.Sprintf("unknown level %q: use %s", level, strings.Join(structure.Levels, "|"))
 	}
-	if level == structure.LevelSystem && parent != "" {
-		return fmt.Sprintf("system %q has no parent: remove under:", path)
-	}
-	if level != structure.LevelSystem && parent == "" {
-		return fmt.Sprintf("%s %q needs under: name its parent", level, path)
+	if level == structure.LevelDomain && parent != "" {
+		return fmt.Sprintf("domain %q sits under the project: remove under:", path)
 	}
 	return ""
 }
@@ -119,9 +117,6 @@ func CheckGraph(doc Document, stored []structure.Node, cards []work.Card) []Diag
 		if parent != "" && status != structure.NodeRemoved {
 			prev, ok := known[parent]
 			want, _ := structure.ParentLevel(level)
-			if level == structure.LevelComponent {
-				want = "domain or a system"
-			}
 			switch {
 			case !ok || prev.status == structure.NodeRemoved:
 				diags = append(diags, Diagnostic{

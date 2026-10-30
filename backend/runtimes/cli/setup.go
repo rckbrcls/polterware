@@ -89,7 +89,7 @@ func setupCodex(dbPath string, args []string) error {
 	root := ""
 	if c, err := dial(dbPath); err == nil {
 		if project, err := resolveProject(c, *projectID); err == nil {
-			root = expandHome(project.RootPath)
+			root = cwdRepository(c, project.Id)
 		}
 	}
 	if *uninstall {

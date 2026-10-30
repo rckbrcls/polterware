@@ -39,16 +39,12 @@ const (
 	// ContextServiceListAgentToolCallsProcedure is the fully-qualified name of the ContextService's
 	// ListAgentToolCalls RPC.
 	ContextServiceListAgentToolCallsProcedure = "/polterware.local.v1.ContextService/ListAgentToolCalls"
-	// ContextServiceCheckDriftProcedure is the fully-qualified name of the ContextService's CheckDrift
-	// RPC.
-	ContextServiceCheckDriftProcedure = "/polterware.local.v1.ContextService/CheckDrift"
 )
 
 // ContextServiceClient is a client for the polterware.local.v1.ContextService service.
 type ContextServiceClient interface {
 	CompileContext(context.Context, *connect.Request[v1.CompileContextRequest]) (*connect.Response[v1.CompileContextResponse], error)
 	ListAgentToolCalls(context.Context, *connect.Request[v1.ListAgentToolCallsRequest]) (*connect.Response[v1.ListAgentToolCallsResponse], error)
-	CheckDrift(context.Context, *connect.Request[v1.CheckDriftRequest]) (*connect.Response[v1.CheckDriftResponse], error)
 }
 
 // NewContextServiceClient constructs a client for the polterware.local.v1.ContextService service.
@@ -74,12 +70,6 @@ func NewContextServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(contextServiceMethods.ByName("ListAgentToolCalls")),
 			connect.WithClientOptions(opts...),
 		),
-		checkDrift: connect.NewClient[v1.CheckDriftRequest, v1.CheckDriftResponse](
-			httpClient,
-			baseURL+ContextServiceCheckDriftProcedure,
-			connect.WithSchema(contextServiceMethods.ByName("CheckDrift")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
@@ -87,7 +77,6 @@ func NewContextServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 type contextServiceClient struct {
 	compileContext     *connect.Client[v1.CompileContextRequest, v1.CompileContextResponse]
 	listAgentToolCalls *connect.Client[v1.ListAgentToolCallsRequest, v1.ListAgentToolCallsResponse]
-	checkDrift         *connect.Client[v1.CheckDriftRequest, v1.CheckDriftResponse]
 }
 
 // CompileContext calls polterware.local.v1.ContextService.CompileContext.
@@ -100,16 +89,10 @@ func (c *contextServiceClient) ListAgentToolCalls(ctx context.Context, req *conn
 	return c.listAgentToolCalls.CallUnary(ctx, req)
 }
 
-// CheckDrift calls polterware.local.v1.ContextService.CheckDrift.
-func (c *contextServiceClient) CheckDrift(ctx context.Context, req *connect.Request[v1.CheckDriftRequest]) (*connect.Response[v1.CheckDriftResponse], error) {
-	return c.checkDrift.CallUnary(ctx, req)
-}
-
 // ContextServiceHandler is an implementation of the polterware.local.v1.ContextService service.
 type ContextServiceHandler interface {
 	CompileContext(context.Context, *connect.Request[v1.CompileContextRequest]) (*connect.Response[v1.CompileContextResponse], error)
 	ListAgentToolCalls(context.Context, *connect.Request[v1.ListAgentToolCallsRequest]) (*connect.Response[v1.ListAgentToolCallsResponse], error)
-	CheckDrift(context.Context, *connect.Request[v1.CheckDriftRequest]) (*connect.Response[v1.CheckDriftResponse], error)
 }
 
 // NewContextServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -131,20 +114,12 @@ func NewContextServiceHandler(svc ContextServiceHandler, opts ...connect.Handler
 		connect.WithSchema(contextServiceMethods.ByName("ListAgentToolCalls")),
 		connect.WithHandlerOptions(opts...),
 	)
-	contextServiceCheckDriftHandler := connect.NewUnaryHandler(
-		ContextServiceCheckDriftProcedure,
-		svc.CheckDrift,
-		connect.WithSchema(contextServiceMethods.ByName("CheckDrift")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/polterware.local.v1.ContextService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ContextServiceCompileContextProcedure:
 			contextServiceCompileContextHandler.ServeHTTP(w, r)
 		case ContextServiceListAgentToolCallsProcedure:
 			contextServiceListAgentToolCallsHandler.ServeHTTP(w, r)
-		case ContextServiceCheckDriftProcedure:
-			contextServiceCheckDriftHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -160,8 +135,4 @@ func (UnimplementedContextServiceHandler) CompileContext(context.Context, *conne
 
 func (UnimplementedContextServiceHandler) ListAgentToolCalls(context.Context, *connect.Request[v1.ListAgentToolCallsRequest]) (*connect.Response[v1.ListAgentToolCallsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.ContextService.ListAgentToolCalls is not implemented"))
-}
-
-func (UnimplementedContextServiceHandler) CheckDrift(context.Context, *connect.Request[v1.CheckDriftRequest]) (*connect.Response[v1.CheckDriftResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("polterware.local.v1.ContextService.CheckDrift is not implemented"))
 }

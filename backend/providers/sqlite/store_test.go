@@ -41,7 +41,7 @@ func TestStorePersistsAcrossReopen(t *testing.T) {
 		t.Fatal(err)
 	}
 	now := time.Now().UTC().Truncate(time.Second)
-	project := projects.Project{ID: "proj-a", Name: "Alpha", RootPath: "/work/alpha", CreatedAt: now, UpdatedAt: now}
+	project := projects.Project{ID: "proj-a", Name: "Alpha", CreatedAt: now, UpdatedAt: now}
 	if err := first.SaveProject(project); err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +61,7 @@ func TestStorePersistsAcrossReopen(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Name != "Alpha" || got.RootPath != "/work/alpha" || got.Status != projects.StatusActive {
+	if got.Name != "Alpha" || got.Status != projects.StatusActive {
 		t.Fatalf("project = %+v", got)
 	}
 	switches, err := second.HookSwitches()
@@ -74,7 +74,7 @@ func TestProjectArchiveHidesFromDefaultList(t *testing.T) {
 	store := newStore(t)
 	now := time.Now().UTC()
 	for _, id := range []string{"proj-a", "proj-b"} {
-		if err := store.SaveProject(projects.Project{ID: id, Name: id, RootPath: "/" + id, CreatedAt: now, UpdatedAt: now}); err != nil {
+		if err := store.SaveProject(projects.Project{ID: id, Name: id, CreatedAt: now, UpdatedAt: now}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -132,50 +132,51 @@ func TestHookSwitchesDefaultOnAndRoundTrip(t *testing.T) {
 	}
 }
 
-func TestProjectReposCRUD(t *testing.T) {
+func TestRepositoriesSaveListAndPrune(t *testing.T) {
 	store := seededStore(t)
 	now := time.Now().UTC().Truncate(time.Second)
-	repo := projects.Repository{ID: "repo-api", ProjectID: demoseed.ProjectID, Name: "api", Path: "/work/api", CreatedAt: now, UpdatedAt: now}
-	other := projects.Repository{ID: "repo-web", ProjectID: demoseed.ProjectID, Name: "web", Path: "/work/web", CreatedAt: now, UpdatedAt: now}
+	repo := projects.Repository{ID: "repo-api", ProjectID: demoseed.ProjectID, Name: "api", Remote: "github.com/acme/api", LocalPath: "/work/api", CreatedAt: now, UpdatedAt: now}
+	other := projects.Repository{ID: "repo-web", ProjectID: demoseed.ProjectID, Name: "web", LocalPath: "/work/web", CreatedAt: now, UpdatedAt: now}
 	for _, item := range []projects.Repository{other, repo} {
-		if err := store.SaveProjectRepo(item); err != nil {
+		if err := store.SaveRepository(item); err != nil {
 			t.Fatal(err)
 		}
 	}
-	listed, err := store.ListProjectRepos(demoseed.ProjectID)
+	listed, err := store.ListRepositories(demoseed.ProjectID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(listed) != 2 || listed[0].Name != "api" || listed[1].Name != "web" {
-		t.Fatalf("repos must be ordered by name: %+v", listed)
+	if len(listed) != 2 || listed[0].Name != "api" || listed[0].Remote != "github.com/acme/api" || listed[1].Name != "web" {
+		t.Fatalf("repositories must be ordered by name: %+v", listed)
 	}
 
-	repo.Path = "/moved/api"
+	repo.LocalPath = "/moved/api"
 	repo.UpdatedAt = now.Add(time.Minute)
-	if err := store.SaveProjectRepo(repo); err != nil {
+	if err := store.SaveRepository(repo); err != nil {
 		t.Fatal(err)
 	}
-	listed, _ = store.ListProjectRepos(demoseed.ProjectID)
-	if len(listed) != 2 || listed[0].Path != "/moved/api" {
-		t.Fatalf("upsert did not update the path: %+v", listed)
+	listed, _ = store.ListRepositories(demoseed.ProjectID)
+	if len(listed) != 2 || listed[0].LocalPath != "/moved/api" {
+		t.Fatalf("upsert did not update the clone path: %+v", listed)
 	}
 
-	if err := store.DeleteProjectRepo(demoseed.ProjectID, "api"); err != nil {
-		t.Fatal(err)
+	// No node or task names either repository, so both go.
+	if removed, err := store.DeleteUnusedRepository(demoseed.ProjectID, "api"); err != nil || !removed {
+		t.Fatalf("unused repository stays: %v %v", removed, err)
 	}
-	if err := store.DeleteProjectRepo(demoseed.ProjectID, "api"); !errors.Is(err, sql.ErrNoRows) {
-		t.Fatalf("deleting twice: err = %v; want sql.ErrNoRows", err)
+	if removed, _ := store.DeleteUnusedRepository(demoseed.ProjectID, "api"); removed {
+		t.Fatal("deleting twice removed something")
 	}
-	listed, _ = store.ListProjectRepos(demoseed.ProjectID)
+	listed, _ = store.ListRepositories(demoseed.ProjectID)
 	if len(listed) != 1 || listed[0].Name != "web" {
 		t.Fatalf("after delete: %+v", listed)
 	}
 }
 
-func TestProjectReposRejectUnknownProject(t *testing.T) {
+func TestRepositoriesRejectUnknownProject(t *testing.T) {
 	store := newStore(t)
 	now := time.Now().UTC()
-	err := store.SaveProjectRepo(projects.Repository{ID: "r", ProjectID: "ghost", Name: "api", Path: "/x", CreatedAt: now, UpdatedAt: now})
+	err := store.SaveRepository(projects.Repository{ID: "r", ProjectID: "ghost", Name: "api", LocalPath: "/x", CreatedAt: now, UpdatedAt: now})
 	if err == nil {
 		t.Fatal("foreign keys must reject a repo for an unknown project")
 	}
@@ -245,7 +246,7 @@ func TestAgentRunStepsAreOrderedAndValidated(t *testing.T) {
 		t.Fatal(err)
 	}
 	base := time.Now().UTC()
-	for i, kind := range []string{agentrun.KindContext, agentrun.KindChange, agentrun.KindDrift} {
+	for i, kind := range []string{agentrun.KindContext, agentrun.KindChange, agentrun.KindContext} {
 		step := agentrun.Step{AgentRunID: run.ID, Kind: kind, Summary: kind, CreatedAt: base.Add(time.Duration(i) * time.Second)}
 		if err := store.AppendAgentRunStep(step); err != nil {
 			t.Fatal(err)
@@ -255,7 +256,7 @@ func TestAgentRunStepsAreOrderedAndValidated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(steps) != 3 || steps[0].Kind != agentrun.KindContext || steps[2].Kind != agentrun.KindDrift {
+	if len(steps) != 3 || steps[0].Kind != agentrun.KindContext || steps[2].Kind != agentrun.KindContext {
 		t.Fatalf("steps must come back oldest first: %+v", steps)
 	}
 	if steps[0].PayloadJSON != "{}" {

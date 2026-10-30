@@ -56,7 +56,6 @@ export function mapProjects(
     return {
       projectId,
       name: asString(project.name, projectId),
-      directory: asString(project.rootPath),
       environmentSummary: defaultEnv?.name ?? "No environments",
       isCurrent: projectId === currentProjectId,
       ...(description ? { description } : {}),
@@ -116,12 +115,12 @@ export function mapSettings(
   };
 }
 
+/** Repositories from ProjectService.ListProjectRepos: GitHub identity and this machine's clone. */
 export function mapProjectRepos(records: Record<string, unknown>[]): ProjectRepository[] {
   return records.flatMap((item) => {
     const name = asString(item.name);
-    const path = asString(item.path);
-    if (!name || !path) return [];
-    return [{ id: asString(item.id), name, path }];
+    if (!name) return [];
+    return [{ id: asString(item.id), name, remote: asString(item.remote), localPath: asString(item.localPath) }];
   });
 }
 
@@ -297,8 +296,8 @@ export function mapWorkCards(items: Record<string, unknown>[]): WorkspaceWorkCar
   }));
 }
 
-const STRUCTURE_LEVELS: StructureLevel[] = ["system", "domain", "component"];
-const STRUCTURE_STATUSES: StructureStatus[] = ["proposed", "in_progress", "delivered", "drift"];
+const STRUCTURE_LEVELS: StructureLevel[] = ["domain", "component"];
+const STRUCTURE_STATUSES: StructureStatus[] = ["proposed", "in_progress", "delivered"];
 
 /** Structure hierarchy from WorkService.ListStructure. Unknown levels and statuses are dropped. */
 export function mapStructure(raw: Record<string, unknown>): WorkspaceStructure {
@@ -338,7 +337,7 @@ export function mapStructure(raw: Record<string, unknown>): WorkspaceStructure {
       })),
     });
   }
-  return { nodes, driftSlugs: asStringArray(raw.driftSlugs), historical: asBoolean(raw.historical) };
+  return { nodes, historical: asBoolean(raw.historical) };
 }
 
 /** Change batches that touched the Structure, newest first. */
@@ -351,13 +350,11 @@ export function mapStructureHistory(raw: Record<string, unknown>): WorkspaceStru
   }));
 }
 
-const INBOX_KINDS: WorkspaceInboxKind[] = ["decision", "drift", "setup"];
+const INBOX_KINDS: WorkspaceInboxKind[] = ["conflict", "decision", "setup"];
 const INBOX_ACTIONS: WorkspaceInboxAction[] = [
   "decide",
   "delegate",
   "defer",
-  "link",
-  "reopen",
   "ignore",
 ];
 

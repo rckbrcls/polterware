@@ -26,7 +26,6 @@ describe("installBrowserDevBridge", () => {
       expect.objectContaining({
         id: "browser-preview",
         name: "Browser preview",
-        rootPath: "/preview",
         description: "Sample project with data in every surface.",
         status: "active",
         updatedAt: "2026-09-20T12:00:00.000Z",
@@ -34,7 +33,6 @@ describe("installBrowserDevBridge", () => {
       expect.objectContaining({
         id: "browser-empty",
         name: "Empty project",
-        rootPath: "/empty",
         status: "active",
         updatedAt: "2026-01-02T00:00:00.000Z",
       }),
@@ -55,7 +53,7 @@ describe("installBrowserDevBridge", () => {
     const structure = (await work.listStructure({ projectId })) as unknown as { nodes: TestNode[] };
     const cardsBefore = before.cards as unknown as TestCard[];
     const component = structure.nodes.find((node) => node.level === "component" && cardsBefore.some((card) => card.under === node.path))!;
-    const destination = structure.nodes.find((node) => node.level === "system")!;
+    const destination = structure.nodes.find((node) => node.level === "domain" && node.path !== component.path.split("/")[0])!;
     const linked = cardsBefore.filter((card) => card.under === component.path);
     await work.apply({ projectId, text: `---\npolter: 1\nsummary: Move component\nrationale: Organize structure\n---\n\n# ${component.path}: ${component.title}\nlevel: component · under: ${destination.path}\n` });
     const moved = ((await work.listStructure({ projectId })) as unknown as { nodes: TestNode[] }).nodes.find((node) => node.id === component.id)!;

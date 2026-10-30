@@ -20,7 +20,6 @@ const (
 	KindText = "text"
 
 	// Structure kinds cite a Structure node.
-	KindSystem    = "system"
 	KindDomain    = "domain"
 	KindComponent = "component"
 
@@ -66,7 +65,7 @@ var (
 	ComponentKinds = structure.ComponentKinds
 
 	// StructureKinds mirror Structure levels and always ref a Structure node.
-	StructureKinds = []string{KindSystem, KindDomain, KindComponent}
+	StructureKinds = []string{KindDomain, KindComponent}
 
 	// EdgeKinds are the connection kinds, in palette order.
 	EdgeKinds = []string{

@@ -9,7 +9,7 @@ import (
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
 
-func TestInitScanContextDrift(t *testing.T) {
+func TestInitScanContext(t *testing.T) {
 	root := t.TempDir()
 	write := func(name, body string) {
 		if err := os.WriteFile(filepath.Join(root, name), []byte(body), 0o644); err != nil {
@@ -26,15 +26,17 @@ func TestInitScanContextDrift(t *testing.T) {
 	}
 	defer store.Close()
 
-	project, err := wedge.InitProject(store, wedge.InitInput{
-		Name:     "Demo",
-		RootPath: root,
-	})
+	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", Dir: root})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if project.ID == "" || project.RootPath == "" {
-		t.Fatalf("init incomplete: %+v", project)
+	repos, err := store.ListRepositories(project.ID)
+	if err != nil || len(repos) != 1 || repos[0].LocalPath != root {
+		t.Fatalf("init links the folder as the only repository: %+v %v", repos, err)
+	}
+	snapshot, err := store.LoadWorkSnapshot(project.ID)
+	if err != nil || len(snapshot.Nodes) != 1 || snapshot.Nodes[0].Level != "component" || snapshot.Nodes[0].Repo != repos[0].Name {
+		t.Fatalf("init creates one component on the repository: %+v %v", snapshot.Nodes, err)
 	}
 	envs, err := store.ListEnvironments(project.ID)
 	if err != nil {
@@ -52,14 +54,4 @@ func TestInitScanContextDrift(t *testing.T) {
 		t.Fatalf("context project mismatch: %s", pkg.ProjectID)
 	}
 
-	drift, err := wedge.CheckDrift(store, wedge.DriftInput{ProjectID: project.ID})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if drift.Checker != "narrow" || drift.Status != "ok" {
-		t.Fatalf("unexpected drift result: %+v", drift)
-	}
-	if drift.Findings == nil {
-		t.Fatal("findings must be non-nil slice")
-	}
 }

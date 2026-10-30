@@ -19,7 +19,7 @@ func TestWorkServiceApplyAndList(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = store.Close() })
-	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", RootPath: t.TempDir()})
+	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +92,7 @@ func TestMilestoneHandlersAuditWrites(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = store.Close() })
-	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo", RootPath: t.TempDir()})
+	project, err := wedge.InitProject(store, wedge.InitInput{Name: "Demo"})
 	if err != nil {
 		t.Fatal(err)
 	}

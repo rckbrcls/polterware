@@ -43,7 +43,7 @@ const JSON_FLAG: CliFlag = {
 const PROJECT_FLAG: CliFlag = {
   name: "--project",
   value: "id",
-  description: "Project id. Defaults to the project whose root contains the current directory.",
+  description: "Project id. Defaults to the project with a repository cloned at the current directory.",
 };
 
 const SCOPE_FLAGS: readonly CliFlag[] = [
@@ -96,15 +96,17 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
   {
     id: "init",
     name: "polterware init",
-    synopsis: "polterware init --name <name> [--path <root>] [--id <id>] [--json]",
-    summary: "Register a project rooted at a local directory.",
+    synopsis: "polterware init [--name <name>] [--dir <clone> | --no-dir] [--id <id>] [--json]",
+    summary:
+      "Create a project. A project has no folder: given one, its first component links the repository cloned there.",
     flags: [
-      { name: "--name", value: "name", required: true, description: "Project name." },
+      { name: "--name", value: "name", description: "Project name. Defaults to the folder's name." },
       {
-        name: "--path",
-        value: "root",
-        description: "Project root path. Defaults to the current directory.",
+        name: "--dir",
+        value: "clone",
+        description: "Local clone the first component links (alias --path). Defaults to the current directory.",
       },
+      { name: "--no-dir", description: "Start with no repository and no component." },
       { name: "--id", value: "id", description: "Optional explicit project id." },
       JSON_FLAG,
     ],
@@ -113,17 +115,14 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
   {
     id: "repo",
     name: "polterware repo",
-    synopsis:
-      "polterware repo list --project <id> [--json] | add --project <id> --name <name> --path <dir> [--json] | remove --project <id> --name <name>",
+    synopsis: "polterware repo list --project <id> [--json]",
     summary:
-      "Manage extra local checkouts of one project. The project directory stays the primary checkout; drift reads the Git history of each.",
+      "List the project's repositories: name, GitHub identity, and this machine's clone. Components create them with `dir:` and the last one to unlink a repository removes it.",
     flags: [
       { name: "--project", value: "id", required: true, description: "Project id." },
-      { name: "--name", value: "name", description: "add, remove: short lowercase checkout name." },
-      { name: "--path", value: "dir", description: "add: absolute directory of the checkout." },
       JSON_FLAG,
     ],
-    example: "polterware repo add --project <project-id> --name api --path /path/to/api",
+    example: "polterware repo list --project <project-id>",
   },
   {
     id: "brief",
@@ -148,7 +147,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
       ...SCOPE_FLAGS,
       PROJECT_FLAG,
     ],
-    example: 'polterware search "drift"',
+    example: 'polterware search "commits"',
   },
   {
     id: "structure",
@@ -197,21 +196,6 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     example: "polterware export --dry-run",
   },
   {
-    id: "drift",
-    name: "polterware drift",
-    synopsis:
-      "polterware drift --project <id> [--entity <id>] [--agent-run-id <id>] [--json]",
-    summary:
-      "Check for drift between the project and its architecture, decisions, or specs. Findings are reported, never applied.",
-    flags: [
-      { name: "--project", value: "id", required: true, description: "Project id." },
-      { name: "--entity", value: "id", description: "Optional entity id to check." },
-      AGENT_RUN_FLAG,
-      JSON_FLAG,
-    ],
-    example: "polterware drift --project <project-id>",
-  },
-  {
     id: "apply",
     name: "polterware apply",
     synopsis:
@@ -223,7 +207,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
       {
         name: "--project",
         value: "id",
-        description: "Project id. Defaults to the project whose root contains the current directory.",
+        description: "Project id. Defaults to the project with a repository cloned at the current directory.",
       },
       { name: "--summary", value: "text", description: "Change summary. Overrides the frontmatter." },
       { name: "--rationale", value: "text", description: "Change rationale. Overrides the frontmatter." },
@@ -259,15 +243,15 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "query",
     name: "polterware query",
     synopsis:
-      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "brief <target>" | "search <terms>" | "show <id>" | "drift" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <decision>" | "feature <slug> [step]" | "verify <slug>" | "milestones" | "roadmap" | "canvas [<name|id>]" [--scope <node>] [--exact] [--project <id>]',
+      'polterware query "cards" | "card <slug>" | "status" | "inbox" | "handoff <slug>" | "brief <target>" | "search <terms>" | "show <id>" | "commits <slug>" | "conflicts" | "conflict <slug>" | "structure [<path>] [at <point>]" | "structure history" | "decisions [state]" | "decision <decision>" | "feature <slug> [step]" | "verify <slug>" | "milestones" | "roadmap" | "canvas [<name|id>]" [--scope <node>] [--exact] [--project <id>]',
     summary:
-      "Read project state in Polter format: briefs, search, one record by id, drift findings, cards, one card, status, inbox, handoffs, Structure, decisions, feature steps, verification, milestones, the roadmap, or a shared canvas.",
+      "Read project state in Polter format: briefs, search, one record by id, a card's commits, Conflicts and one Conflict's answer, cards, one card, status, inbox, handoffs, Structure, decisions, feature steps, verification, milestones, the roadmap, or a shared canvas.",
     flags: [
       ...SCOPE_FLAGS,
       {
         name: "--project",
         value: "id",
-        description: "Project id. Defaults to the project whose root contains the current directory.",
+        description: "Project id. Defaults to the project with a repository cloned at the current directory.",
       },
     ],
     example: "polterware query cards",
@@ -305,9 +289,9 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
   {
     id: "task",
     name: "polterware task",
-    synopsis: "polterware task claim|done|release <slug>#T2 [--agent <name>] [--project <id>]",
-    summary: "Claim, finish, or release one task of a Work card for the session agent.",
-    flags: [AGENT_FLAG, PROJECT_FLAG],
+    synopsis: "polterware task claim|done|release <slug>#T2 [--agent <name>] [--commit <sha>] [--project <id>]",
+    summary: "Claim, finish, or release one task of a Work card for the session agent. done --commit links the commit that finished it, shown on the card.",
+    flags: [AGENT_FLAG, { name: "--commit", value: "sha", description: "done: the commit that finished the task." }, PROJECT_FLAG],
     example: "polterware task claim my-card#T2",
   },
   {
@@ -356,10 +340,27 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "inbox",
     name: "polterware inbox",
     synopsis:
-      'polterware inbox [<id> decide "<answer>" | delegate | link <slug#T2|sha> | reopen | defer | ignore] [--agent <name>] [--scope <node>] [--exact] [--project <id>]',
-    summary: "List the Inbox, or apply one action to one item: link a commit to a task (a task ref for a commit, a sha for a task), or open a done task again.",
+      'polterware inbox [<id> decide "<answer>" | delegate | defer | ignore] [--agent <name>] [--scope <node>] [--exact] [--project <id>]',
+    summary: "List the Inbox, or apply one action to one item: decide a question, delegate it, set it aside, or dismiss it.",
     flags: [...SCOPE_FLAGS, AGENT_FLAG, PROJECT_FLAG],
     example: "polterware inbox",
+  },
+  {
+    id: "conflict",
+    name: "polterware conflict",
+    synopsis:
+      'polterware conflict raise <slug> "<request>" (--rule <slug> | --decision <Decision-0003>) [--card <slug>] [--option "<text>"]... | decide <slug> "<answer>" | wait <slug> [--timeout 30m] | withdraw <slug> | list [--project <id>]',
+    summary:
+      "Raise a Conflict when a request goes against a Rule or a Decision, instead of acting on it: a person decides it in the Inbox, and wait blocks until the answer arrives.",
+    flags: [
+      { name: "--rule", value: "slug", description: "raise: the Rule the request goes against." },
+      { name: "--decision", value: "ref", description: "raise: the Decision the request goes against." },
+      { name: "--card", value: "slug", description: "raise: the card the work belongs to." },
+      { name: "--option", value: "text", description: "raise: an answer to offer. Repeatable." },
+      { name: "--timeout", value: "duration", description: "wait: give up after this long." },
+      PROJECT_FLAG,
+    ],
+    example: 'polterware conflict raise use-floats "Store prices as floats" --rule money-in-cents --option "Keep cents" --option "Allow floats"',
   },
   {
     id: "scope",
@@ -668,8 +669,8 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
 /** Sidebar and page sections: every command id appears in exactly one group. */
 export const CLI_COMMAND_GROUPS: readonly { id: string; label: string; commands: readonly string[] }[] = [
   { id: "setup", label: "Setup", commands: ["tui", "init", "repo", "setup", "hooks", "hook", "serve", "mcp", "help"] },
-  { id: "read", label: "Read", commands: ["brief", "search", "structure", "canvas", "query", "status", "inbox", "export", "drift"] },
-  { id: "write", label: "Write", commands: ["apply", "lint", "format", "handoff", "task", "decision", "feature", "verify", "scope"] },
+  { id: "read", label: "Read", commands: ["brief", "search", "structure", "canvas", "query", "status", "inbox", "export"] },
+  { id: "write", label: "Write", commands: ["apply", "lint", "format", "handoff", "task", "decision", "feature", "verify", "scope", "conflict"] },
   {
     id: "delegation",
     label: "Delegation",

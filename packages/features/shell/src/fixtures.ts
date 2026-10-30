@@ -7,7 +7,6 @@ export const PROJECT_SWITCHER_FIXTURES: ProjectSwitcherItem[] = [
   {
     projectId: "proj-polter",
     name: "Polter",
-    directory: "~/projects/polter",
     environmentSummary: "Production",
     isCurrent: true,
     status: "active",
@@ -19,7 +18,6 @@ export const PROJECT_SWITCHER_FIXTURES: ProjectSwitcherItem[] = [
   {
     projectId: "proj-notes",
     name: "Polterware Notes",
-    directory: "~/projects/notes",
     environmentSummary: "Development",
     isCurrent: false,
     status: "active",
@@ -31,7 +29,6 @@ export const PROJECT_SWITCHER_FIXTURES: ProjectSwitcherItem[] = [
   {
     projectId: "proj-converge",
     name: "Converge",
-    directory: "~/projects/converge",
     environmentSummary: "Production",
     isCurrent: false,
     status: "paused",
@@ -43,7 +40,6 @@ export const PROJECT_SWITCHER_FIXTURES: ProjectSwitcherItem[] = [
   {
     projectId: "proj-local",
     name: "Local playground",
-    directory: "~/projects/playground",
     environmentSummary: "Local only",
     isCurrent: false,
     status: "active",

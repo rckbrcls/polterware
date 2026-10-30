@@ -71,16 +71,15 @@ func TestPlanMoveNode(t *testing.T) {
 	snapshot := work.Snapshot{
 		ProjectID: "p1",
 		Nodes: []structure.Node{
-			{ID: "desktop", Path: "desktop", Level: structure.LevelSystem, Title: "Desktop", Status: structure.NodeActive},
-			{ID: "mobile", Path: "mobile", Level: structure.LevelSystem, Title: "Mobile", Status: structure.NodeActive},
-			{ID: "core", ParentID: "desktop", Path: "desktop/core", Level: structure.LevelDomain, Title: "Core", Status: structure.NodeActive},
-			{ID: "api", ParentID: "core", Path: "desktop/core/api", Level: structure.LevelComponent, Title: "API", Status: structure.NodeActive},
+			{ID: "desktop", Path: "desktop", Level: structure.LevelDomain, Title: "Desktop", Status: structure.NodeActive},
+			{ID: "mobile", Path: "mobile", Level: structure.LevelDomain, Title: "Mobile", Status: structure.NodeActive},
+			{ID: "core", ParentID: "desktop", Path: "desktop/core", Level: structure.LevelComponent, Title: "Core", Status: structure.NodeActive},
 		},
 		Cards: []work.Card{{
-			ID: "card-1", Slug: "import", Title: "Import", Under: "desktop/core/api", Status: work.CardActive,
+			ID: "card-1", Slug: "import", Title: "Import", Under: "desktop/core", Status: work.CardActive,
 		}},
 	}
-	text := "---\npolter: 1\n---\n# desktop/core: Core\nlevel: domain\nunder: mobile\n"
+	text := "---\npolter: 1\n---\n# desktop/core: Core\nlevel: component\nunder: mobile\n"
 	doc, diags := Decode(text)
 	if HasErrors(diags) {
 		t.Fatalf("decode: %+v", diags)
@@ -104,7 +103,7 @@ func TestPlanMoveNode(t *testing.T) {
 			t.Fatalf("parent = %s", parent)
 		}
 	}
-	if moved["core"] != "mobile/core" || moved["api"] != "mobile/core/api" || moved["card-1"] != "mobile/core/api" {
+	if moved["core"] != "mobile/core" || moved["card-1"] != "mobile/core" {
 		t.Fatalf("moved = %+v ops = %+v", moved, ops)
 	}
 }
@@ -124,7 +123,7 @@ under: core
 }
 
 func TestBriefBudgetCutsFromTheEnd(t *testing.T) {
-	system := structure.Node{ID: "s", Path: "polterware", Level: structure.LevelSystem, Title: "Polterware", Status: structure.NodeActive}
+	system := structure.Node{ID: "s", Path: "polterware", Level: structure.LevelDomain, Title: "Polterware", Status: structure.NodeActive}
 	domain := structure.Node{
 		ID: "d", ParentID: "s", Path: "core", Level: structure.LevelDomain, Title: "Core", Status: structure.NodeActive,
 	}
@@ -153,5 +152,41 @@ func TestBriefBudgetCutsFromTheEnd(t *testing.T) {
 	}
 	if !strings.Contains(tight, "(from core)") || strings.Contains(tight, "Include merge commits") || !strings.HasPrefix(tight, "## git-import: Git import\nstage: build · under: core/import\n") || !strings.Contains(tight, "lines cut to fit budget:30") {
 		t.Fatalf("a tight budget keeps the heading and the Rules and cuts the rest: %s", tight)
+	}
+}
+
+func TestPlanMovesComponentToTheProjectRoot(t *testing.T) {
+	snapshot := work.Snapshot{
+		ProjectID: "p1",
+		Nodes: []structure.Node{
+			{ID: "desktop", Path: "desktop", Level: structure.LevelDomain, Title: "Desktop", Status: structure.NodeActive},
+			{ID: "core", ParentID: "desktop", Path: "desktop/core", Level: structure.LevelComponent, Title: "Core", Status: structure.NodeActive},
+		},
+	}
+	doc, diags := Decode("---\npolter: 1\n---\n# desktop/core: Core\nlevel: component\nunder:\n")
+	if HasErrors(diags) {
+		t.Fatalf("decode: %+v", diags)
+	}
+	ops, diags := Plan(doc, snapshot)
+	if HasErrors(diags) || len(ops) != 1 || ops[0].Fields["path"] != "core" || ops[0].Fields["parent_id"] != "" {
+		t.Fatalf("ops = %+v diags = %+v", ops, diags)
+	}
+}
+
+func TestPlanRefusesSystemAndNestedDomains(t *testing.T) {
+	snapshot := work.Snapshot{ProjectID: "p1", Nodes: []structure.Node{
+		{ID: "core", Path: "core", Level: structure.LevelDomain, Title: "Core", Status: structure.NodeActive},
+	}}
+	for text, want := range map[string]string{
+		"# app: App\nlevel: system\n":                   "level",
+		"# core/sub: Sub\nlevel: domain\nunder: core\n": "sits under the project",
+	} {
+		doc, diags := Decode("---\npolter: 1\n---\n" + text)
+		if !HasErrors(diags) {
+			_, diags = Plan(doc, snapshot)
+		}
+		if !HasErrors(diags) || !strings.Contains(diags[0].Message, want) {
+			t.Fatalf("%q: diags = %+v", text, diags)
+		}
 	}
 }

@@ -20,12 +20,6 @@ const (
 type VerifyInput struct {
 	Card work.Card
 	Task int
-	// Unmatched holds task numbers drift reports as done with no commit on
-	// main (task_done_unmatched).
-	Unmatched map[int]bool
-	// GitReady is true when a checkout has local main or master, so a done
-	// task without an unmatched finding has its commit.
-	GitReady bool
 	// Delivered is true when HEAD is an ancestor of local main or master.
 	Delivered bool
 	// Contract is the card's own and inherited invariants.
@@ -44,7 +38,7 @@ type VerifyResult struct {
 }
 
 // VerifyFeature reports whether a card (or one task) is finished: tasks done
-// or dropped, Git agrees with done tasks, no blocking question open. It is a
+// or dropped, no blocking question open. It is a
 // read; it never moves the stored stage.
 func VerifyFeature(in VerifyInput) (VerifyResult, error) {
 	card := in.Card
@@ -75,14 +69,7 @@ func VerifyFeature(in VerifyInput) (VerifyResult, error) {
 		case work.TaskDropped:
 			add(VerifyInfo, "T%d dropped: %s", task.Number, task.Title)
 		case work.TaskDone:
-			switch {
-			case in.Unmatched[task.Number]:
-				add(VerifyFail, "T%d is done with no commit on main: cite `%s T%d` in the commit subject", task.Number, card.Slug, task.Number)
-			case in.GitReady:
-				add(VerifyPass, "T%d done: %s", task.Number, task.Title)
-			default:
-				add(VerifyPass, "T%d done (declared; no local main or master to confirm): %s", task.Number, task.Title)
-			}
+			add(VerifyPass, "T%d done: %s", task.Number, task.Title)
 		}
 	}
 

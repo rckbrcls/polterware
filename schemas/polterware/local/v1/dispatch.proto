@@ -141,6 +141,9 @@ message StartRunRequest {
   bool no_verify = 14;
   int32 timeout_sec = 15;
   string profile = 16;
+  // repo runs in that repository's clone. Without dir or repo, the run uses
+  // the card's component repository, else the project's only repository.
+  string repo = 17;
 }
 
 message StartRunResponse {

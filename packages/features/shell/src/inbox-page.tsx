@@ -9,16 +9,13 @@ import {
   PageEmpty,
   PageLoading,
   PageToolbar,
-  RefreshCw,
   SearchBar,
   StatusDot,
+  AlertDiamond,
   Bot,
   Check,
   Clock,
   Eye,
-  GitCompare,
-  Link,
-  Undo2,
   ShieldCheck,
   StatusChip,
   Scale,
@@ -45,14 +42,14 @@ import "./inbox-page.css";
 const INBOX_SCOPE = "inbox:items";
 
 const TYPE_FILTERS: { id: WorkspaceInboxKind; label: string }[] = [
+  { id: "conflict", label: "Conflicts" },
   { id: "decision", label: "Questions" },
-  { id: "drift", label: "Commits" },
   { id: "setup", label: "Setup" },
 ];
 
 const KIND_LABEL: Record<WorkspaceInboxKind, string> = {
+  conflict: "Conflict",
   decision: "Question",
-  drift: "Commit",
   setup: "Setup",
 };
 
@@ -60,8 +57,6 @@ const ACTION_LABEL: Record<WorkspaceInboxAction, string> = {
   decide: "Decide",
   delegate: "Delegate",
   defer: "Later",
-  link: "Link",
-  reopen: "Reopen",
   ignore: "Dismiss",
 };
 
@@ -69,12 +64,10 @@ const ACTION_ICON = {
   decide: Check,
   delegate: Bot,
   defer: Clock,
-  link: Link,
-  reopen: Undo2,
   ignore: Eye,
 } as const;
 
-const KIND_ICON = { decision: Scale, drift: GitCompare, setup: ShieldCheck } as const;
+const KIND_ICON = { conflict: AlertDiamond, decision: Scale, setup: ShieldCheck } as const;
 
 function statusLabel(item: WorkspaceInboxItem): string {
   const kind = KIND_LABEL[item.kind];
@@ -89,7 +82,7 @@ const KIND_GROUPS = TYPE_FILTERS.map((option) => {
 });
 
 /**
- * Inbox — master/detail, as in Linear: Question, Commit, and Setup items grouped by kind on
+ * Inbox — master/detail, as in Linear: Conflict, Question, and Setup items grouped by kind on
  * the left, the active item's detail on the right (it closes, and a row opens it again). H defers and D dismisses the active
  * item (or the selection), and the next item takes its place.
  */
@@ -103,20 +96,8 @@ export function InboxPage(props: {
   scopeNodes?: readonly ScopeNodeItem[];
   scopeEnvironments?: readonly EnvironmentItem[];
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
-  /** Re-reads the checkout so Drift items reflect files changed outside Polterware. */
-  onCheckDrift?: () => Promise<void>;
 }) {
   const [pending, setPending] = createSignal("");
-  const [checking, setChecking] = createSignal(false);
-  async function checkDrift() {
-    if (!props.onCheckDrift || checking()) return;
-    setChecking(true);
-    try {
-      await props.onCheckDrift();
-    } finally {
-      setChecking(false);
-    }
-  }
   // The row menu opens an action's confirm in the detail instead of running it.
   const [request, setRequest] = createSignal<InboxActionRequest | null>(null);
   let requests = 0;
@@ -330,11 +311,6 @@ export function InboxPage(props: {
             onClausesChange={filters.onClausesChange}
             saved={filters.saved()}
           />
-          <Show when={props.onCheckDrift}>
-            <Button variant="texture" size="icon" aria-label={checking() ? "Checking commits…" : "Check commits"} disabled={checking()} onClick={() => void checkDrift()}>
-              <RefreshCw size={14} />
-            </Button>
-          </Show>
         </PageToolbar.Actions>
       </PageToolbar.Root>
       <ActiveFilterBar

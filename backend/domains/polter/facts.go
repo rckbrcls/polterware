@@ -34,6 +34,7 @@ func (d *decoder) factHeading(n int, body string) {
 	d.closeDecision()
 	d.closeFact()
 	d.closeRule()
+	d.closeConflict()
 	ref, statement, _ := strings.Cut(body, ":")
 	ref, statement = strings.TrimSpace(ref), strings.TrimSpace(statement)
 	if !work.ValidSlug(ref) {

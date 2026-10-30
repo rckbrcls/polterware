@@ -167,7 +167,7 @@ func (core *Core) SaveProject(_ context.Context, request *connect.Request[localv
 	if item == nil {
 		return nil, invalid("project is required")
 	}
-	project, err := projects.NewProject(item.Id, item.Name, item.RootPath)
+	project, err := projects.NewProject(item.Id, item.Name)
 	if err != nil {
 		return nil, invalid(err.Error())
 	}
@@ -416,7 +416,6 @@ func projectProto(item projects.Project) *localv1.Project {
 	return &localv1.Project{
 		Id:         item.ID,
 		Name:       item.Name,
-		RootPath:   item.RootPath,
 		CreatedAt:  item.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:  item.UpdatedAt.Format(time.RFC3339),
 		Status:     status,

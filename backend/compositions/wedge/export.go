@@ -45,7 +45,7 @@ func ExportProjections(store *storepkg.Store, projectID string, dryRun bool) ([]
 	if err != nil {
 		return nil, err
 	}
-	governed := projection.Govern(in.nodes, in.decisions)
+	governed := projection.Govern(in.nodes, in.decisions, in.checkoutNames())
 	var out []ProjectionFile
 	for _, co := range in.checkouts {
 		if info, err := os.Stat(co.dir); err != nil || !info.IsDir() {
@@ -109,8 +109,7 @@ func (p projections) block(checkout string) string {
 }
 
 func loadProjections(store *storepkg.Store, projectID string) (projections, error) {
-	project, err := store.GetProject(projectID)
-	if err != nil {
+	if _, err := store.GetProject(projectID); err != nil {
 		return projections{}, fmt.Errorf("unknown project %q", projectID)
 	}
 	snapshot, err := store.LoadWorkSnapshot(projectID)
@@ -125,7 +124,11 @@ func loadProjections(store *storepkg.Store, projectID string) (projections, erro
 	if err != nil {
 		return projections{}, err
 	}
-	in := projections{nodes: snapshot.Nodes, rules: snapshot.Rules}
+	repos, err := projectCheckouts(store, projectID)
+	if err != nil {
+		return projections{}, err
+	}
+	in := projections{nodes: withDefaultRepo(snapshot.Nodes, repos), rules: snapshot.Rules}
 	for _, item := range items {
 		record := projection.Decision{ID: item.ID, Title: item.Title, Body: item.Body, Status: decision.Normalize(item.Status), Contexts: contexts[item.ID], Principle: len(contexts[item.ID]) == 0}
 		in.decisions = append(in.decisions, record)
@@ -133,16 +136,19 @@ func loadProjections(store *storepkg.Store, projectID string) (projections, erro
 			in.binding = append(in.binding, record)
 		}
 	}
-	in.governed = projection.Govern(in.nodes, in.binding)
-	repos, err := store.ListProjectRepos(projectID)
-	if err != nil {
-		return projections{}, err
-	}
-	in.checkouts = []checkout{{name: "", dir: ExpandRootPath(project.RootPath)}}
 	for _, repo := range repos {
-		in.checkouts = append(in.checkouts, checkout{name: repo.Name, dir: ExpandRootPath(repo.Path)})
+		in.checkouts = append(in.checkouts, checkout{name: repo.name, dir: repo.root})
 	}
+	in.governed = projection.Govern(in.nodes, in.binding, in.checkoutNames())
 	return in, nil
+}
+
+func (p projections) checkoutNames() []string {
+	names := make([]string, 0, len(p.checkouts))
+	for _, co := range p.checkouts {
+		names = append(names, co.name)
+	}
+	return names
 }
 
 func exportDecisions(co checkout, decisions []projection.Decision, dryRun bool) ([]ProjectionFile, error) {

@@ -47,7 +47,7 @@ func TestDispatchTiersStatsResultAndWatch(t *testing.T) {
 	_ = checkRes.Msg.Problems
 
 	projRoot := t.TempDir()
-	proj, err := projects.NewProject("proj-dispatch", "Dispatch Test", projRoot)
+	proj, err := projects.NewProject("proj-dispatch", "Dispatch Test")
 	if err != nil {
 		t.Fatal(err)
 	}

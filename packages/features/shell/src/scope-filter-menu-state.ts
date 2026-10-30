@@ -1,7 +1,6 @@
 import { dedupeScopeTokens, type ScopeFilterEnvironment, type ScopeFilterKey, type ScopeFilterNode, type ScopeFilterToken } from "./scope-filter";
 
 export const SCOPE_FILTER_MENU_LABELS: Record<ScopeFilterKey, string> = {
-  system: "System",
   domain: "Domain",
   component: "Component",
   env: "Environment",
@@ -19,7 +18,7 @@ export function scopeFilterMenuSections(input: {
   environments: readonly ScopeFilterEnvironment[];
   allowEnv: boolean;
 }): ScopeFilterMenuSection[] {
-  const sections: ScopeFilterMenuSection[] = (["system", "domain", "component"] as const).map((key) => ({
+  const sections: ScopeFilterMenuSection[] = (["domain", "component"] as const).map((key) => ({
     key,
     label: SCOPE_FILTER_MENU_LABELS[key],
     options: input.nodes.filter((node) => node.level === key).map((node) => ({ id: node.id, label: node.title })),

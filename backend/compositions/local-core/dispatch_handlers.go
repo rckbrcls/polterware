@@ -158,22 +158,26 @@ func (core *Core) StartRun(ctx context.Context, request *connect.Request[localv1
 	if prompt == "" {
 		return nil, invalid("prompt is required")
 	}
-	project, err := core.Store.GetProject(projectID)
-	if errors.Is(err, sql.ErrNoRows) {
+	if _, err := core.Store.GetProject(projectID); errors.Is(err, sql.ErrNoRows) {
 		return nil, invalid("unknown project " + projectID)
-	}
-	if err != nil {
+	} else if err != nil {
 		return nil, internal(err)
 	}
 
-	dir := wedge.ExpandRootPath(project.RootPath)
-	if reqDir := strings.TrimSpace(request.Msg.GetDir()); reqDir != "" {
-		dir = wedge.ExpandRootPath(reqDir)
+	// The run directory: the request's dir, else its repository, else the
+	// card's component repository, else the project's only repository.
+	dir := wedge.ExpandPath(request.Msg.GetDir())
+	if dir == "" && strings.TrimSpace(request.Msg.GetWorktree()) == "" {
+		picked, err := wedge.RunDir(core.Store, projectID, request.Msg.GetRepo(), request.Msg.GetCardSlug())
+		if err != nil {
+			return nil, invalid(err.Error())
+		}
+		dir = picked
 	}
 	noWorktree := false
 	reqWorktree := strings.TrimSpace(request.Msg.GetWorktree())
 	if reqWorktree != "" {
-		dir = wedge.ExpandRootPath(reqWorktree)
+		dir = wedge.ExpandPath(reqWorktree)
 		noWorktree = true
 	}
 	if abs, err := filepath.Abs(dir); err == nil {

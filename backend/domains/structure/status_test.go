@@ -3,23 +3,20 @@ package structure
 import "testing"
 
 func TestDeriveStatus(t *testing.T) {
-	if got := DeriveStatus(nil, false); got != StatusProposed {
+	if got := DeriveStatus(nil); got != StatusProposed {
 		t.Fatalf("empty = %s", got)
 	}
-	if got := DeriveStatus([]string{"delivered", "delivered"}, false); got != StatusDelivered {
+	if got := DeriveStatus([]string{"delivered", "delivered"}); got != StatusDelivered {
 		t.Fatalf("delivered = %s", got)
 	}
-	if got := DeriveStatus([]string{"build"}, false); got != StatusInProgress {
+	if got := DeriveStatus([]string{"build"}); got != StatusInProgress {
 		t.Fatalf("progress = %s", got)
-	}
-	if got := DeriveStatus([]string{"delivered"}, true); got != StatusDrift {
-		t.Fatalf("drift = %s", got)
 	}
 }
 
 func TestDecorateCountsDescendantFeatures(t *testing.T) {
 	nodes := []Node{
-		{ID: "s", Path: "app", Level: LevelSystem, Title: "App", Status: NodeActive},
+		{ID: "s", Path: "app", Level: LevelDomain, Title: "App", Status: NodeActive},
 		{ID: "d", ParentID: "s", Path: "app/core", Level: LevelDomain, Title: "Core", Status: NodeActive},
 		{ID: "c", ParentID: "d", Path: "app/core/import", Level: LevelComponent, Title: "Import", Status: NodeActive},
 	}

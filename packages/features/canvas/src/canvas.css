@@ -487,7 +487,7 @@
   user-select: none;
 }
 
-/* Systems and domains hold other nodes: their tile and title head the group from its top. */
+/* Domains hold other nodes: their tile and title head the group from its top. */
 .pw-canvas-node-card[data-group] {
   align-items: flex-start;
   padding-top: 18px;

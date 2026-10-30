@@ -208,8 +208,8 @@ export type WorkspaceFeatureReview = {
   checks: { step: "shape" | "contract" | "plan"; severity: "error" | "hint"; message: string }[];
 };
 
-export type StructureLevel = "system" | "domain" | "component";
-export type StructureStatus = "proposed" | "in_progress" | "delivered" | "drift";
+export type StructureLevel = "domain" | "component";
+export type StructureStatus = "proposed" | "in_progress" | "delivered";
 
 /** Structure node from WorkService.ListStructure. Status is derived on read. */
 export type WorkspaceStructureNode = {
@@ -242,8 +242,7 @@ export type WorkspaceStructureNode = {
 
 export type WorkspaceStructure = {
   nodes: WorkspaceStructureNode[];
-  driftSlugs: string[];
-  /** True for a replayed past graph: status, feature counts, and drift are live-only. */
+  /** True for a replayed past graph: status and feature counts are live-only. */
   historical: boolean;
 };
 
@@ -255,15 +254,13 @@ export type WorkspaceStructureHistoryEntry = {
   summary: string;
 };
 
-export type WorkspaceInboxKind = "decision" | "drift" | "setup";
+export type WorkspaceInboxKind = "conflict" | "decision" | "setup";
 
 /** Inbox action ids from WorkService.ListInbox, primary first per kind. */
 export type WorkspaceInboxAction =
   | "decide"
   | "delegate"
   | "defer"
-  | "link"
-  | "reopen"
   | "ignore";
 
 /** One derived item that needs a person (WorkService.ListInbox). */
@@ -278,7 +275,7 @@ export type WorkspaceInboxItem = {
   source: string;
   state: "open" | "deferred";
   actions: WorkspaceInboxAction[];
-  /** Commit items: repo, sha, subject; done-task items: slug, task (T2), task_id, title. */
+  /** Conflict items: conflict (slug), rule and rule_id, decision and decision_id; Setup items: the provider. */
   details: Record<string, string>;
 };
 

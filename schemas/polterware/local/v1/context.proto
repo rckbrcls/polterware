@@ -57,34 +57,7 @@ message ListAgentToolCallsResponse {
   repeated AgentToolCall calls = 1;
 }
 
-message DriftFinding {
-  string type = 1;
-  string severity = 2;
-  string summary = 3;
-  repeated string subject_ids = 4;
-  reserved 5;
-  reserved "evidence_ids";
-  // details are the finding's facts: slug, task, task_id for a done task;
-  // repo, sha, subject for a commit.
-  map<string, string> details = 6;
-}
-
-message CheckDriftRequest {
-  string project_id = 1;
-  string entity_id = 2;
-  string agent_run_id = 3;
-}
-
-message CheckDriftResponse {
-  string project_id = 1;
-  string entity_id = 2;
-  string status = 3;
-  string checker = 4;
-  repeated DriftFinding findings = 5;
-}
-
 service ContextService {
   rpc CompileContext(CompileContextRequest) returns (CompileContextResponse);
   rpc ListAgentToolCalls(ListAgentToolCallsRequest) returns (ListAgentToolCallsResponse);
-  rpc CheckDrift(CheckDriftRequest) returns (CheckDriftResponse);
 }

@@ -1,15 +1,13 @@
 import { For, Show, createEffect, createSignal, on } from "solid-js";
-import { Button, DetailPanel, Input, Morph, RadioGroup, StatusChip, FileText, ListFilter, Network, Check, Bot, Clock, Link, Undo2, Eye } from "@polterware/frontend-design-system";
+import { Button, DetailPanel, Input, Morph, RadioGroup, StatusChip, AlertDiamond, FileText, ListFilter, Network, Check, Bot, Clock, Eye } from "@polterware/frontend-design-system";
 import type { WorkspaceInboxAction, WorkspaceInboxItem } from "./workspace-mocks";
 
-const KIND_LABEL = { decision: "Question", drift: "Commit", setup: "Setup" } as const;
+const KIND_LABEL = { conflict: "Conflict", decision: "Question", setup: "Setup" } as const;
 
 const ACTION_LABEL: Record<WorkspaceInboxAction, string> = {
   decide: "Decide",
   delegate: "Delegate",
   defer: "Later",
-  link: "Link",
-  reopen: "Reopen",
   ignore: "Dismiss",
 };
 
@@ -17,8 +15,6 @@ const ACTION_ICON = {
   decide: Check,
   delegate: Bot,
   defer: Clock,
-  link: Link,
-  reopen: Undo2,
   ignore: Eye,
 } as const;
 
@@ -27,13 +23,14 @@ const ACTION_HINT: Record<WorkspaceInboxAction, string> = {
   decide: "Answer this question. The answer is written on the card and the item leaves the Inbox.",
   delegate: "Hand this question to an agent. It leaves your Inbox and shows up in polterware status for the next agent session.",
   defer: "Set this aside. It stays in the Inbox, dimmed under Later, until you come back to it.",
-  link: "Name what this delivered: the task for a commit, or the commit for a done task. The link is stored and the item leaves the Inbox.",
-  reopen: "The task is not done after all. It goes back to open on its card and the item leaves the Inbox.",
   ignore: "This needs no action. The item leaves the Inbox.",
 };
 
+/** A Conflict's Decide hint: the answer goes to the agent that raised it. */
+const CONFLICT_DECIDE_HINT = "Decide this conflict. The agent that raised it reads the answer and goes on.";
+
 /** The confirm each action opens: its question, what happens, and the button that does it. */
-const ACTION_CONFIRM: Record<Exclude<WorkspaceInboxAction, "decide" | "link">, { title: string; body: string; confirm: string }> = {
+const ACTION_CONFIRM: Record<Exclude<WorkspaceInboxAction, "decide">, { title: string; body: string; confirm: string }> = {
   delegate: {
     title: "Delegate to an agent?",
     body: "The question leaves your Inbox. The next agent session sees it in polterware status and answers it.",
@@ -43,11 +40,6 @@ const ACTION_CONFIRM: Record<Exclude<WorkspaceInboxAction, "decide" | "link">, {
     title: "Move to Later?",
     body: "The item stays in the Inbox, dimmed under Later, until you come back to it.",
     confirm: "Move to Later",
-  },
-  reopen: {
-    title: "Reopen the task?",
-    body: "The task goes back to open on its card, so it is no longer claimed as done. The item leaves the Inbox.",
-    confirm: "Reopen task",
   },
   ignore: {
     title: "Dismiss this item?",
@@ -79,16 +71,13 @@ export function InboxItemDetail(props: {
   }));
   createEffect(on(opened, (action) => {
     if (action === "decide") setAnswer(props.item.options.length === 1 ? props.item.options[0]! : "");
-    if (action === "link") setAnswer("");
   }));
-  /** A commit item links to a task; a done-task item links to a commit. */
-  const linksCommit = () => Boolean(props.item.details.sha);
 
   async function confirm(action: WorkspaceInboxAction) {
     if (!props.onAction || saving()) return;
     setSaving(true);
     try {
-      await props.onAction(action, action === "decide" || action === "link" ? answer().trim() : undefined);
+      await props.onAction(action, action === "decide" ? answer().trim() : undefined);
       setOpened(null);
     } catch {
       // The host reports the failure; the confirm stays open to retry.
@@ -105,7 +94,19 @@ export function InboxItemDetail(props: {
       </>} />
       <DetailPanel.Body>
         <DetailPanel.Main>
-          <Show when={props.item.detail}>
+          <Show when={props.item.kind === "conflict" && (props.item.details.rule || props.item.details.decision)}>
+            <DetailPanel.Section title="Goes against" icon={<AlertDiamond size={14} />}>
+              <DetailPanel.Properties>
+                <Show when={props.item.details.rule}>
+                  <DetailPanel.Property label="Rule" value={props.item.details.rule} />
+                </Show>
+                <Show when={props.item.details.decision}>
+                  <DetailPanel.Property label="Decision" value={props.item.details.decision} />
+                </Show>
+              </DetailPanel.Properties>
+            </DetailPanel.Section>
+          </Show>
+          <Show when={props.item.detail && props.item.kind !== "conflict"}>
             <DetailPanel.Section title="Detail" icon={<FileText size={14} />}>
               <p class="m-0 whitespace-pre-wrap">{props.item.detail}</p>
             </DetailPanel.Section>
@@ -142,43 +143,16 @@ export function InboxItemDetail(props: {
                   <Morph.Trigger
                     size="sm"
                     class="flex-1"
-                    variant={action === "decide" || action === "link" ? "primary" : "ghost"}
+                    variant={action === "decide" ? "primary" : "ghost"}
                     disabled={props.disabled}
-                    hint={ACTION_HINT[action]}
+                    hint={action === "decide" && props.item.kind === "conflict" ? CONFLICT_DECIDE_HINT : ACTION_HINT[action]}
                   >
                     <Icon size={14} />
                     {ACTION_LABEL[action]}
                   </Morph.Trigger>
-                  <Show when={action === "link"}>
-                    <Morph.Panel title={linksCommit() ? "Link to a task" : "Link a commit"}>
-                      <Morph.Body>
-                        <p class="m-0 mb-2">
-                          {linksCommit()
-                            ? "The task this commit delivers, as card-slug#T2."
-                            : "The commit that delivered this task: its sha, or a ref such as HEAD."}
-                        </p>
-                        <Input
-                          aria-label={linksCommit() ? "Task" : "Commit"}
-                          placeholder={linksCommit() ? "card-slug#T2" : "a1b2c3d"}
-                          class="font-mono"
-                          data-autofocus
-                          value={answer()}
-                          onInput={(event) => setAnswer(event.currentTarget.value)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" && answer().trim()) void confirm("link");
-                          }}
-                        />
-                      </Morph.Body>
-                      <Morph.Footer>
-                        <Button size="sm" variant="primary" disabled={!answer().trim() || saving()} onClick={() => void confirm("link")}>
-                          {saving() ? "Saving…" : "Link"}
-                        </Button>
-                      </Morph.Footer>
-                    </Morph.Panel>
-                  </Show>
                   <Show
-                    when={action !== "decide" && action !== "link"}
-                    fallback={action === "link" ? undefined :
+                    when={action !== "decide"}
+                    fallback={
                       <Morph.Panel title={props.item.title}>
                         <Morph.Body>
                           <Show
@@ -198,10 +172,22 @@ export function InboxItemDetail(props: {
                           >
                             <RadioGroup
                               aria-label="Answer"
-                              value={answer()}
+                              value={props.item.options.includes(answer()) ? answer() : ""}
                               onValueChange={setAnswer}
                               options={props.item.options.map((option) => ({ value: option, label: option }))}
                             />
+                            <Show when={props.item.kind === "conflict"}>
+                              <Input
+                                aria-label="Another answer"
+                                placeholder="Another answer"
+                                class="mt-2"
+                                value={props.item.options.includes(answer()) ? "" : answer()}
+                                onInput={(event) => setAnswer(event.currentTarget.value)}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter" && answer().trim()) void confirm("decide");
+                                }}
+                              />
+                            </Show>
                           </Show>
                         </Morph.Body>
                         <Morph.Footer>
@@ -213,7 +199,7 @@ export function InboxItemDetail(props: {
                     }
                   >
                     {(() => {
-                      const copy = ACTION_CONFIRM[action as Exclude<WorkspaceInboxAction, "decide" | "link">];
+                      const copy = ACTION_CONFIRM[action as Exclude<WorkspaceInboxAction, "decide">];
                       return (
                         <Morph.Panel title={copy.title}>
                           <Morph.Body>{copy.body}</Morph.Body>

@@ -1130,23 +1130,26 @@ func (x *GetRunResponse) GetRun() *DispatchRun {
 }
 
 type StartRunRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Tier          string                 `protobuf:"bytes,2,opt,name=tier,proto3" json:"tier,omitempty"`
-	Prompt        string                 `protobuf:"bytes,3,opt,name=prompt,proto3" json:"prompt,omitempty"`
-	CardSlug      string                 `protobuf:"bytes,4,opt,name=card_slug,json=cardSlug,proto3" json:"card_slug,omitempty"`
-	Agent         string                 `protobuf:"bytes,5,opt,name=agent,proto3" json:"agent,omitempty"`
-	Worktree      string                 `protobuf:"bytes,6,opt,name=worktree,proto3" json:"worktree,omitempty"`
-	Dir           string                 `protobuf:"bytes,7,opt,name=dir,proto3" json:"dir,omitempty"`
-	ReadOnly      bool                   `protobuf:"varint,8,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
-	Provider      string                 `protobuf:"bytes,9,opt,name=provider,proto3" json:"provider,omitempty"`
-	Model         string                 `protobuf:"bytes,10,opt,name=model,proto3" json:"model,omitempty"`
-	Effort        string                 `protobuf:"bytes,11,opt,name=effort,proto3" json:"effort,omitempty"`
-	Priority      string                 `protobuf:"bytes,12,opt,name=priority,proto3" json:"priority,omitempty"`
-	Relax         bool                   `protobuf:"varint,13,opt,name=relax,proto3" json:"relax,omitempty"`
-	NoVerify      bool                   `protobuf:"varint,14,opt,name=no_verify,json=noVerify,proto3" json:"no_verify,omitempty"`
-	TimeoutSec    int32                  `protobuf:"varint,15,opt,name=timeout_sec,json=timeoutSec,proto3" json:"timeout_sec,omitempty"`
-	Profile       string                 `protobuf:"bytes,16,opt,name=profile,proto3" json:"profile,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId  string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Tier       string                 `protobuf:"bytes,2,opt,name=tier,proto3" json:"tier,omitempty"`
+	Prompt     string                 `protobuf:"bytes,3,opt,name=prompt,proto3" json:"prompt,omitempty"`
+	CardSlug   string                 `protobuf:"bytes,4,opt,name=card_slug,json=cardSlug,proto3" json:"card_slug,omitempty"`
+	Agent      string                 `protobuf:"bytes,5,opt,name=agent,proto3" json:"agent,omitempty"`
+	Worktree   string                 `protobuf:"bytes,6,opt,name=worktree,proto3" json:"worktree,omitempty"`
+	Dir        string                 `protobuf:"bytes,7,opt,name=dir,proto3" json:"dir,omitempty"`
+	ReadOnly   bool                   `protobuf:"varint,8,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
+	Provider   string                 `protobuf:"bytes,9,opt,name=provider,proto3" json:"provider,omitempty"`
+	Model      string                 `protobuf:"bytes,10,opt,name=model,proto3" json:"model,omitempty"`
+	Effort     string                 `protobuf:"bytes,11,opt,name=effort,proto3" json:"effort,omitempty"`
+	Priority   string                 `protobuf:"bytes,12,opt,name=priority,proto3" json:"priority,omitempty"`
+	Relax      bool                   `protobuf:"varint,13,opt,name=relax,proto3" json:"relax,omitempty"`
+	NoVerify   bool                   `protobuf:"varint,14,opt,name=no_verify,json=noVerify,proto3" json:"no_verify,omitempty"`
+	TimeoutSec int32                  `protobuf:"varint,15,opt,name=timeout_sec,json=timeoutSec,proto3" json:"timeout_sec,omitempty"`
+	Profile    string                 `protobuf:"bytes,16,opt,name=profile,proto3" json:"profile,omitempty"`
+	// repo runs in that repository's clone. Without dir or repo, the run uses
+	// the card's component repository, else the project's only repository.
+	Repo          string `protobuf:"bytes,17,opt,name=repo,proto3" json:"repo,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1289,6 +1292,13 @@ func (x *StartRunRequest) GetTimeoutSec() int32 {
 func (x *StartRunRequest) GetProfile() string {
 	if x != nil {
 		return x.Profile
+	}
+	return ""
+}
+
+func (x *StartRunRequest) GetRepo() string {
+	if x != nil {
+		return x.Repo
 	}
 	return ""
 }
@@ -4518,7 +4528,7 @@ const file_polterware_local_v1_dispatch_proto_rawDesc = "" +
 	"\rGetRunRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"D\n" +
 	"\x0eGetRunResponse\x122\n" +
-	"\x03run\x18\x01 \x01(\v2 .polterware.local.v1.DispatchRunR\x03run\"\xae\x03\n" +
+	"\x03run\x18\x01 \x01(\v2 .polterware.local.v1.DispatchRunR\x03run\"\xc2\x03\n" +
 	"\x0fStartRunRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x12\n" +
@@ -4538,7 +4548,8 @@ const file_polterware_local_v1_dispatch_proto_rawDesc = "" +
 	"\tno_verify\x18\x0e \x01(\bR\bnoVerify\x12\x1f\n" +
 	"\vtimeout_sec\x18\x0f \x01(\x05R\n" +
 	"timeoutSec\x12\x18\n" +
-	"\aprofile\x18\x10 \x01(\tR\aprofile\"F\n" +
+	"\aprofile\x18\x10 \x01(\tR\aprofile\x12\x12\n" +
+	"\x04repo\x18\x11 \x01(\tR\x04repo\"F\n" +
 	"\x10StartRunResponse\x122\n" +
 	"\x03run\x18\x01 \x01(\v2 .polterware.local.v1.DispatchRunR\x03run\"\"\n" +
 	"\x10CancelRunRequest\x12\x0e\n" +

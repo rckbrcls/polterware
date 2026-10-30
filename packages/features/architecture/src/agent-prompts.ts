@@ -5,7 +5,7 @@ export type StructureAgentPrompt = {
   title: string;
   description: string;
   tone: IconTileTone;
-  level: "system" | "domain" | "component";
+  level: "domain" | "component";
   prompt: string;
 };
 
@@ -18,12 +18,12 @@ export const STRUCTURE_AGENT_PROMPTS: StructureAgentPrompt[] = [
   {
     id: "prompt-structure-map",
     title: "Map the project",
-    description: "Propose systems, domains, and components from the repo.",
+    description: "Propose domains and components from the repo.",
     tone: "architecture",
-    level: "system",
+    level: "domain",
     prompt: `${PREAMBLE}
 
-Read this repository and propose its Structure: the top-level systems, the domains inside them, and the components that make them up (\`# path: Title\` with \`level:\` and \`under:\`). Point each node's \`path:\` at the folder that holds it and add a one-line intent. Check \`polterware query structure\` first and do not repeat a node that exists.
+Read this repository and propose its Structure: the domains under the project and the components that make them up (\`# path: Title\` with \`level:\` and \`under:\`; a domain has no \`under:\`). Link each component to this clone with \`dir:\` and point its \`path:\` at the folder that holds it, and add a one-line intent. Check \`polterware query structure\` first and do not repeat a node that exists.
 
 ${CLOSING}`,
   },

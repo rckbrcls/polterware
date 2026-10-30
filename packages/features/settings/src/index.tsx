@@ -39,7 +39,7 @@ export { PrivacyCard } from "./privacy-card";
 export { ProjectSettingsDialog } from "./project-settings-dialog";
 
 /**
- * Project settings (project, repositories, environments, agent context, platforms) or app settings
+ * Project settings (project, environments, agent context, platforms) or app settings
  * (agent tooling, the CLI reference, shortcuts, appearance, the local core); the tab picks which one opens.
  */
 export function SettingsView(props: {

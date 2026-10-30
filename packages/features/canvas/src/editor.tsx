@@ -155,7 +155,7 @@ export function CanvasEditor(props: {
     change(setNodePositions(doc(), new Map(layout.nodes.map((n) => [n.id, n]))));
     fit();
   }
-  /** System, domain and component shapes need a Structure node; the picker supplies it before insertion. */
+  /** Domain and component shapes need a Structure node; the picker supplies it before insertion. */
   function add(kind: string, at?: Point) {
     if (behavior.structureReferences && structureKind(kind)) { setStructurePick({ kind, at }); return; }
     insert(kind, at);
