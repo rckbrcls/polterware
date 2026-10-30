@@ -266,7 +266,9 @@ function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityA
       return <Show when={doc().records[section.key].length || options()}>
         <DocumentSection title={section.title} icon={<section.Icon size={14} />} count={doc().records[section.key].length}
           actions={options() && props.edits.link ? <LinkButton label={`Link ${section.title.toLowerCase().replace(/s$/, "")}`} options={options()!} onPick={(id) => props.edits.link!(section.kind, id)} /> : undefined}>
-          <Show when={doc().records[section.key].length} fallback={<p class="pw-structure__empty">Nothing linked yet.</p>}>
+          <Show when={doc().records[section.key].length} fallback={<PageEmpty title={`No ${section.title.toLowerCase()} yet`} mood="sleeping">
+            <p class="pw-structure__empty">Link one with + to show it here.</p>
+          </PageEmpty>}>
             <RecordTable label={section.title} rows={doc().records[section.key]} icon={<section.Icon size={14} />}
               onOpen={props.onOpenRecord ? (id) => props.onOpenRecord!(section.kind, id) : undefined}
               onUnlink={props.edits.unlink ? (id) => props.edits.unlink!(section.kind, id) : undefined} />
