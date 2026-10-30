@@ -4,7 +4,7 @@ import {
   A11yDialog, Boxes, Button, PromptCardGrid, Checkbox, Field, Folder, FormStack, Input,
   ActiveFilterBar, FilterPopover, IconTile, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
   Cloud, Delete, EntityContextMenu, EntityMenuButton, Link2, Package, Route,
-  SearchBar, Select, StatusChip, TreeView, animateCollapse, createEntityContextMenu, pushToast,
+  GitBranch, InformationCircle, RailGroup, SearchBar, Select, StatusChip, TreeView, animateCollapse, createEntityContextMenu, pushToast,
   type CollapseControls,
   type EntityAction, type TreeViewNode,
   ToolbarIconButton,
@@ -90,25 +90,39 @@ function NodeExpand(props: { open: boolean; children: JSX.Element }) {
   </div>;
 }
 
-/** What a card shows when it expands: its description, checkout, path, dependencies, and deploys; empty values are left out. */
+/**
+ * What a card shows when it expands, in groups titled with a 24px icon tile as on every
+ * other page (`RailGroup`): About, Checkout (repo/folder and path), Uses, and Deploys.
+ * Empty groups are left out.
+ */
 function NodeInfo(props: { description?: string; checkout?: string; path?: string; uses?: readonly string[]; deploys?: StructureNode["deploys"]; isProviderConnected: (provider: string) => boolean }) {
-  const rows = () => [["Checkout", props.checkout], ["Path", props.path], ["Uses", (props.uses ?? []).join(" / ")]].filter(([, value]) => value) as [string, string][];
   return <div class="pw-structure-info">
-    <Show when={props.description} fallback={<p class="pw-structure-info__empty">No description yet.</p>}>{(text) => <p class="pw-structure-info__description">{text()}</p>}</Show>
-    <Show when={rows().length > 0}>
-      <dl class="pw-structure-info__rows">
-        <For each={rows()}>{([label, value]) => <><dt>{label}</dt><dd class="pw-selectable" classList={{ "font-mono": label !== "Uses" }}>{value}</dd></>}</For>
-      </dl>
+    <RailGroup title="About" icon={<InformationCircle size={14} />}>
+      <Show when={props.description} fallback={<p class="pw-structure-info__empty">No description yet.</p>}>{(text) => <p class="pw-structure-info__text">{text()}</p>}</Show>
+    </RailGroup>
+    <Show when={props.checkout || props.path}>
+      <RailGroup title="Checkout" icon={<GitBranch size={14} />}>
+        <dl class="pw-structure-info__rows">
+          <Show when={props.checkout}><dt>Folder</dt><dd class="pw-selectable font-mono">{props.checkout}</dd></Show>
+          <Show when={props.path}><dt>Path</dt><dd class="pw-selectable font-mono">{props.path}</dd></Show>
+        </dl>
+      </RailGroup>
+    </Show>
+    <Show when={props.uses?.length}>
+      <RailGroup title="Uses" icon={<Link2 size={14} />}>
+        <p class="pw-structure-info__text">{props.uses!.join(" / ")}</p>
+      </RailGroup>
     </Show>
     <Show when={props.deploys?.length}>
-      <ul class="pw-structure-info__deploys" aria-label="Deploys">
-        <For each={props.deploys!}>{(deploy) => <li>
-          <Cloud size={14} aria-hidden="true" />
-          <span class="truncate text-[var(--color-text-primary)]">{deploy.resource}</span>
-          <span class="truncate text-[var(--color-text-muted)]">{deploy.provider} / {deploy.environment || deploy.environmentId}</span>
-          <Show when={!props.isProviderConnected(deploy.provider)}><StatusChip tone="warn" label="CLI not connected" /></Show>
-        </li>}</For>
-      </ul>
+      <RailGroup title="Deploys" icon={<Cloud size={14} />}>
+        <ul class="pw-structure-info__deploys" aria-label="Deploys">
+          <For each={props.deploys!}>{(deploy) => <li>
+            <span class="truncate text-[var(--color-text-primary)]">{deploy.resource}</span>
+            <span class="truncate">{deploy.provider} / {deploy.environment || deploy.environmentId}</span>
+            <Show when={!props.isProviderConnected(deploy.provider)}><StatusChip tone="warn" label="CLI not connected" /></Show>
+          </li>}</For>
+        </ul>
+      </RailGroup>
     </Show>
   </div>;
 }
@@ -354,7 +368,7 @@ export function StructureView(props: {
       <PageContent class="pw-scroll-fade overflow-auto p-4">
                 <Show when={visible().length} fallback={<PageEmpty title={query().trim() ? "No matches" : "No structure yet"} mood={query().trim() ? "lost" : "sleeping"} >{!query().trim() ? <PromptCardGrid items={STRUCTURE_AGENT_PROMPTS.map((item) => ({ id: item.id, title: item.title, description: item.description, tone: item.tone, icon: <KindIcon kind={item.level} size={16} />, prompt: item.prompt }))} /> : undefined}</PageEmpty>}>
           <EntityContextMenu menu={rowMenu} />
-          <TreeView label="Project structure" branches expandOnClick={false} class="[&_h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)} selectedValue={NO_SELECTION} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) { open(id); toggleDetails(id); } }} />
+          <TreeView label="Project structure" branches expandOnClick={false} class="[&>h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)} selectedValue={NO_SELECTION} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) { open(id); toggleDetails(id); } }} />
         </Show>
       </PageContent>
     }><PageError message={props.error!} /></Show>}><PageLoading label="Loading structure…" /></Show>

@@ -1,5 +1,8 @@
-import { TreeView as ArkTreeView, createTreeCollection, type TreeViewRootProps } from "@ark-ui/solid/tree-view";
-import { For, Show, createEffect, createMemo, onCleanup, splitProps, type JSX } from "solid-js";
+import { TreeView as ArkTreeView, createTreeCollection, useTreeViewNodeContext, type TreeViewRootProps } from "@ark-ui/solid/tree-view";
+import { For, Show, createEffect, createMemo, on, onCleanup, splitProps, type JSX } from "solid-js";
+import { animate, type AnimationPlaybackControls } from "motion";
+import { prefersReducedMotion } from "./reduced-motion";
+import { spring } from "./springs";
 import { createFluidHover, FluidHoverHighlight, type FluidHover } from "./fluid-hover";
 import { ChevronRight, MinusSignIcon, Plus } from "./hugeicons";
 import "./tree-view.css";
@@ -142,9 +145,61 @@ function TreeChildren(props: TreeNodeProps) {
       {(node, index) => <TreeNode node={node} indexPath={[...props.indexPath, index()]} indicator={props.indicator} toggleButton={props.toggleButton} guides={props.guides} branches={props.branches} fluidHover={props.fluidHover} hover={hover} />}
     </For>
   </>;
-  return <Show when={props.fluidHover} fallback={<ArkTreeView.BranchContent class="pw-tree__children">{rows()}</ArkTreeView.BranchContent>}>
+  const growth = props.branches ? createBranchGrowth() : undefined;
+  return <Show when={props.fluidHover} fallback={<ArkTreeView.BranchContent ref={growth} class="pw-tree__children">{rows()}</ArkTreeView.BranchContent>}>
     <FluidTreeList>{(hover, attach) => <ArkTreeView.BranchContent ref={attach} class="pw-tree__children" data-fluid-hover=""><TreeHoverHighlight hover={hover} />{rows(hover)}</ArkTreeView.BranchContent>}</FluidTreeList>
   </Show>;
+}
+
+/**
+ * Branch cards open and close like the shared collapse: the children (and the elbows they
+ * carry) grow from 0 to their measured height on `spring.moderate` and fold on its quicker
+ * exit tween, interruptible from the height on screen. Snaps on first paint and under
+ * reduced motion.
+ */
+function createBranchGrowth() {
+  const node = useTreeViewNodeContext();
+  let element: HTMLElement | undefined;
+  let controls: AnimationPlaybackControls | undefined;
+  let first = true;
+  const settle = (open: boolean) => {
+    if (!element) return;
+    element.style.height = open ? "" : "0px";
+    element.style.marginTop = open ? "" : "0px";
+    element.style.overflow = open ? "" : "hidden";
+    element.style.visibility = open ? "" : "hidden";
+  };
+  createEffect(on(() => node().expanded, (open) => {
+    if (!element) return;
+    controls?.stop();
+    if (first || prefersReducedMotion()) {
+      first = false;
+      settle(open);
+      return;
+    }
+    const from = element.getBoundingClientRect().height;
+    element.style.visibility = "";
+    element.style.overflow = "hidden";
+    element.style.height = "auto";
+    element.style.marginTop = "";
+    const gap = getComputedStyle(element).marginTop;
+    const to = open ? element.scrollHeight : 0;
+    element.style.height = `${from}px`;
+    const transition = open ? spring.moderate : ({ type: "tween", ...spring.moderate.exit, ease: "easeIn" } as const);
+    const run = animate(element, { height: [`${from}px`, `${to}px`], marginTop: open ? [from ? gap : "0px", gap] : [gap, "0px"] }, transition);
+    controls = run;
+    void run.finished.then(() => { if (controls === run) settle(open); });
+  }));
+  onCleanup(() => controls?.stop());
+  return (el: HTMLElement) => {
+    element = el;
+    // Ark hides closed content at once, and Tailwind's layered `[hidden]` rule wins over any
+    // class, so the attribute is lifted: height 0 and visibility hide it after the fold.
+    const observer = new MutationObserver(() => { if (el.hidden) el.hidden = false; });
+    observer.observe(el, { attributes: true, attributeFilter: ["hidden"] });
+    if (el.hidden) el.hidden = false;
+    onCleanup(() => observer.disconnect());
+  };
 }
 
 /** One gliding highlight per tree level; the root list and each open branch each own one. */

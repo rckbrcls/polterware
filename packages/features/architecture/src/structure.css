@@ -26,18 +26,31 @@
   visibility: visible;
 }
 
-/* A card's expanded details, under its title line: description, a label/value list, and deploys. */
+/* A card's expanded details, under its title line: icon-tile groups separated by space alone. */
 .pw-structure-info {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 10px;
-  padding: 10px 0 4px;
+  gap: 14px;
+  padding: 14px 0 6px;
 }
 
-.pw-structure-info__description,
-.pw-structure-info__empty {
+.pw-structure-info .pw-document__group {
+  margin-bottom: 0;
+  padding: 0;
+}
+
+/* Group content lines up with the group title, past its tile. */
+.pw-structure-info__text,
+.pw-structure-info__empty,
+.pw-structure-info__rows,
+.pw-structure-info__deploys {
   margin: 0;
+  padding-left: 36px;
+}
+
+.pw-structure-info__text,
+.pw-structure-info__empty {
   color: var(--color-text-secondary);
   font-size: 13px;
   line-height: 20px;
@@ -49,9 +62,8 @@
 
 .pw-structure-info__rows {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: 56px minmax(0, 1fr);
   gap: 4px 12px;
-  margin: 0;
   font-size: 12px;
   line-height: 18px;
 }
@@ -70,8 +82,6 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin: 0;
-  padding: 0;
   list-style: none;
 }
 
