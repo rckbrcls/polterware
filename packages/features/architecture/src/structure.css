@@ -26,12 +26,13 @@
   visibility: visible;
 }
 
-/* A card's expanded details, under its title line: icon-tile groups separated by space alone. */
+/* A card's expanded details, under its title line: icon-tile groups side by side in columns that wrap, separated by space alone. */
 .pw-structure-info {
-  display: flex;
+  display: grid;
   min-width: 0;
-  flex-direction: column;
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: start;
+  gap: 16px 32px;
   padding: 14px 0 6px;
 }
 

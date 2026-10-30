@@ -92,8 +92,8 @@ function NodeExpand(props: { open: boolean; children: JSX.Element }) {
 
 /**
  * What a card shows when it expands, in groups titled with a 24px icon tile as on every
- * other page (`RailGroup`): About, Checkout (repo/folder and path), Uses, and Deploys.
- * Empty groups are left out.
+ * other page (`RailGroup`), side by side in columns that wrap: About, Checkout (repo/folder
+ * and path), Uses, and Deploys. Empty groups are left out.
  */
 function NodeInfo(props: { description?: string; checkout?: string; path?: string; uses?: readonly string[]; deploys?: StructureNode["deploys"]; isProviderConnected: (provider: string) => boolean }) {
   return <div class="pw-structure-info">
