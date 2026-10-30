@@ -17,92 +17,33 @@
   visibility: visible;
 }
 
-/* A card's expanded details, under its title line: icon-tile groups side by side in columns that wrap, separated by space alone. */
-.pw-structure-info {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  align-items: start;
-  gap: 16px 32px;
-  padding: 14px 0 6px;
-}
-
-.pw-structure-info .pw-document__group {
-  margin-bottom: 0;
-  padding: 0;
-}
-
-/* The groups' tiles line up with the card's own tile, at the card's left padding. */
-.pw-structure-info .pw-document__group-heading {
-  padding: 0;
-}
-
-/* A folded card keeps its title line centered: no gap or indent waits for the details. */
-.pw-structure-tree .pw-tree__row--details {
-  row-gap: 0;
-}
-
-.pw-structure-tree .pw-tree__details {
-  padding-left: 0;
-}
-
-/* Group content lines up with the group title, past its tile. */
-.pw-structure-info__text,
-.pw-structure-info__empty,
-.pw-structure-info__rows,
-.pw-structure-info__deploys {
+/* A card's content in the detail panel. */
+.pw-structure-detail__text,
+.pw-structure-detail__empty {
   margin: 0;
-  padding-left: 32px;
-}
-
-.pw-structure-info__text,
-.pw-structure-info__empty {
   color: var(--color-text-secondary);
   font-size: 13px;
   line-height: 20px;
 }
 
-.pw-structure-info__empty {
+.pw-structure-detail__empty {
   color: var(--color-text-muted);
 }
 
-.pw-structure-info__rows {
-  display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: 4px 12px;
-  font-size: 12px;
-  line-height: 18px;
-}
-
-.pw-structure-info__rows dt {
-  color: var(--color-text-muted);
-}
-
-.pw-structure-info__rows dd {
-  overflow-wrap: anywhere;
-  margin: 0;
-  color: var(--color-text-secondary);
-}
-
-.pw-structure-info__deploys {
+.pw-structure-detail__deploys {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin: 0;
+  padding: 0;
   list-style: none;
 }
 
-.pw-structure-info__deploys li {
+.pw-structure-detail__deploys li {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 8px;
   color: var(--color-text-muted);
   font-size: 12px;
-}
-
-/* The tree keeps the wide page measure (880px, like a run's log), centered on wide windows. */
-.pw-structure-tree {
-  width: 100%;
-  max-width: 880px;
-  margin-inline: auto;
 }

@@ -10,7 +10,7 @@ describe("detailDisplayFor", () => {
     expect(detailDisplayFor("fact")).toBe("page");
     expect(detailDisplayFor("decision")).toBe("page");
     expect(detailDisplayFor("card")).toBe("page");
-    expect(detailDisplayFor("arch-node")).toBe("both");
+    expect(detailDisplayFor("arch-node")).toBe("peek");
   });
 
   it("defaults unknown kinds to both", () => {

@@ -13,7 +13,7 @@ const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 function mount(options: { error?: string; loading?: boolean } = {}) {
   const host = document.createElement("div");
   document.body.append(host);
-  const open = vi.fn((entityId: string) => detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId, entityKind: "arch-node" }));
+  const open = vi.fn((entityId: string) => { detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId, entityKind: "arch-node" }); detailPanelStore.getState().show(); });
   dispose = render(() => <StructureView projectName="Project" nodes={nodes} counts={{ api: { work: 2, decisions: 1, facts: 3 } }} projectCounts={{ work: 2, decisions: 1, facts: 3 }}
     onOpenNode={open} onSelect={() => {}} onOpenCreate={() => {}} onCloseCreate={() => {}} onCreate={async () => {}} onMove={async () => {}} onUses={async () => {}} {...options} />, host);
   return { host, open };
@@ -22,23 +22,18 @@ beforeEach(() => detailPanelStore.setState(detailPanelDefaultState));
 afterEach(() => { dispose?.(); document.body.replaceChildren(); });
 
 describe("Structure collection", () => {
-  it("keeps the branch tree with one compact line per card that expands in place", async () => {
+  it("keeps the branch tree with one line per card and opens its content in the detail panel", async () => {
     const { host, open } = mount();
     await tick();
     expect(detailPanelStore.getState().open).toBe(false);
-    expect(detailPanelStore.getState().available).toBe(false);
+    expect(detailPanelStore.getState().available).toBe(true);
     const search = host.querySelector<HTMLInputElement>('[role="searchbox"]')!;
     search.value = "api";
     search.dispatchEvent(new Event("input", { bubbles: true }));
     await tick();
     const api = host.querySelector<HTMLElement>('[data-part="item"][data-value="api"]')!;
-    // One line with the title alone; kind, technology, and the record counts live in the folded details.
-    const details = api.querySelector<HTMLElement>(".pw-structure-expand")!;
-    expect(api.textContent!.replace(details.textContent!, "")).not.toContain("Go");
-    expect(details.hidden).toBe(true);
-    expect(details.textContent).toContain("Technology");
-    expect(details.textContent).toContain("Go");
-    expect(details.textContent).toContain("Decisions");
+    // One line with the title alone; the card's content lives in the panel.
+    expect(api.textContent).not.toContain("Go");
     expect(api.querySelector('[aria-label="Actions for API"]')).not.toBeNull();
     // A component has no children, so its card offers no Add child; its system does.
     expect(api.querySelector('[aria-label^="Add child"]')).toBeNull();
@@ -51,17 +46,9 @@ describe("Structure collection", () => {
     api.click();
     await tick();
     expect(open).toHaveBeenCalledWith("api");
-    expect(details.hidden).toBe(false);
-    expect(details.textContent).toContain("Serves the project");
-    expect(details.textContent).toContain("backend/src/api");
-    expect(details.textContent).toContain("app/api");
-    // A click inside the details keeps them open; a click on the card folds them again.
-    details.querySelector<HTMLElement>("dd")!.click();
-    await tick();
-    expect(details.hidden).toBe(false);
-    api.click();
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    expect(details.hidden).toBe(true);
+    expect(detailPanelStore.getState().open).toBe(true);
+    const panel = document.body.textContent ?? "";
+    for (const text of ["Serves the project", "Technology", "Go", "Decisions", "backend/src/api", "app/api"]) expect(panel).toContain(text);
   });
   it("retains the toolbar and exposes a collection error", async () => {
     const { host } = mount({ error: "Core unavailable" });

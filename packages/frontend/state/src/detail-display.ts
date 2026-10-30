@@ -15,7 +15,7 @@ export const DETAIL_DISPLAY: Readonly<Record<string, DetailDisplay>> = {
   "arch-view": "page",
   decision: "page",
   card: "page",
-  "arch-node": "both",
+  "arch-node": "peek",
   "structure-node": "both",
   "structure-card": "both",
 };
