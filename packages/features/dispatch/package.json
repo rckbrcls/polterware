@@ -18,7 +18,8 @@
     "@polterware/bot-avatars": "workspace:*",
     "@polterware/feature-shell": "workspace:*",
     "@polterware/frontend-design-system": "workspace:*",
-    "@polterware/frontend-state": "workspace:*"
+    "@polterware/frontend-state": "workspace:*",
+    "highlight.js": "11.11.1"
   },
   "devDependencies": {
     "@types/node": "^24.13.6",

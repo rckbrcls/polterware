@@ -1,5 +1,7 @@
 import { createMemo, createSignal, createUniqueId, For, Show, type JSX } from "solid-js";
-import { Check, PlusIcon } from "./hugeicons";
+import { PlusIcon } from "./hugeicons";
+import { OptionTile } from "./option-tile";
+import { RadioMark } from "./radio-group";
 import { Popover, type PopoverProps } from "./popover";
 import "./property-picker.css";
 
@@ -101,11 +103,11 @@ export function PropertyPicker(props: PropertyPickerProps) {
                 onMouseEnter={() => setActive(index())}
                 onClick={() => void choose(index())}
               >
-                <span class="pw-property-picker__icon">{row.create ? <PlusIcon size={12} /> : row.icon}</span>
-                <span class="min-w-0 flex-1 truncate">{row.label}</span>
-                <Show when={row.key === props.value}>
-                  <Check size={12} aria-hidden="true" />
+                <Show when={!row.create} fallback={<span class="pw-property-picker__mark" aria-hidden="true" />}>
+                  <RadioMark class="pw-property-picker__mark" checked={row.key === props.value} />
                 </Show>
+                {row.create ? <span class="pw-property-picker__icon"><PlusIcon size={12} /></span> : <OptionTile label={row.label} seed={row.key}>{row.icon}</OptionTile>}
+                <span class="min-w-0 flex-1 truncate">{row.label}</span>
                 <Show when={!row.create && query() === "" && index() < 9}>
                   <kbd class="pw-property-picker__digit">{index() + 1}</kbd>
                 </Show>

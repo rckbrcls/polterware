@@ -20,6 +20,8 @@ export type TitleBarProps = {
   onOpenAppSettings?: () => void;
   /** True while App settings is open. */
   appSettingsOpen?: boolean;
+  /** The sidebar's width; history and Home end on its right edge, never before the window controls. */
+  sidebarWidth?: number;
 };
 
 export function TitleBar(props: TitleBarProps) {
@@ -27,7 +29,10 @@ export function TitleBar(props: TitleBarProps) {
 
   return (
     <TitleBarFrame>
-        <div class="ml-2 flex shrink-0 items-center gap-1 [-webkit-app-region:no-drag]">
+        <div
+          class="ml-2 flex shrink-0 items-center justify-end gap-1 [-webkit-app-region:no-drag]"
+          style={{ "min-width": props.sidebarWidth ? `calc(${props.sidebarWidth}px - var(--titlebar-traffic-inset, 78px) - 0.5rem)` : undefined }}
+        >
           <TextureButtonGroup
             label="History"
             items={[

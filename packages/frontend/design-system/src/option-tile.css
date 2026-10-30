@@ -1,0 +1,4 @@
+.pw-option-tile { flex: none; }
+.pw-option-tile svg { width: 12px; height: 12px; }
+/* Drawn from the attribute, so the initial never joins the option's text. */
+.pw-option-tile__initial::before { content: attr(data-initial); font-size: 10px; font-weight: 600; line-height: 1; }

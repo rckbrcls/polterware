@@ -18,8 +18,11 @@ export type StructureNode = {
 };
 export type StructureTreeItem = { node: StructureNode; children: StructureTreeItem[] };
 
-/** Preserve input order and orphan records. A malformed cycle is shown once, never recursed forever. */
-export function buildStructureTree(nodes: readonly StructureNode[], query = ""): StructureTreeItem[] {
+/**
+ * Preserve input order and orphan records. A malformed cycle is shown once, never recursed forever.
+ * A query or `match` keeps the nodes that pass both, with the ancestors that lead to them.
+ */
+export function buildStructureTree(nodes: readonly StructureNode[], query = "", match?: (node: StructureNode) => boolean): StructureTreeItem[] {
   const ids = new Set(nodes.map((node) => node.id));
   const children = new Map<string, StructureNode[]>();
   for (const node of nodes) {
@@ -35,11 +38,14 @@ export function buildStructureTree(nodes: readonly StructureNode[], query = ""):
   const roots = (children.get("") ?? []).flatMap(build);
   for (const node of nodes) roots.push(...build(node));
   const term = query.trim().toLowerCase();
-  if (!term) return roots;
+  if (!term && !match) return roots;
+  const passes = (node: StructureNode) =>
+    (!term || `${node.title} ${node.level} ${node.path} ${node.kind ?? ""} ${node.tech ?? ""}`.toLowerCase().includes(term)) && (!match || match(node));
   const filter = (items: StructureTreeItem[]): StructureTreeItem[] => items.flatMap((item) => {
     const descendants = filter(item.children);
-    return `${item.node.title} ${item.node.level} ${item.node.path}`.toLowerCase().includes(term)
-      ? [item]
+    // A text match keeps its whole branch; a `match` filter keeps only the nodes that pass it.
+    return passes(item.node)
+      ? [{ ...item, children: match ? descendants : item.children }]
       : descendants.length ? [{ ...item, children: descendants }] : [];
   });
   return filter(roots);

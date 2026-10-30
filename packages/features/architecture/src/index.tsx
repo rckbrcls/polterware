@@ -3,8 +3,9 @@ import {
   A11yDialog, Boxes, Button, Card, Cpu, EntityMenuButton, PromptCardGrid, Field, Folder, FormStack, Input,
   CollapsibleSection, DataTable, IconTile, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
   Cloud, Delete, DetailPanel, Link2, Package, Pencil, PropertyPicker, Route, Textarea, XIcon,
-  Scale, SchemeIcon, ShieldCheck, FileText, GitBranch, Select, SidebarLeftIcon, FolderKanban, StatusChip, TreeView, pushToast,
-  type EntityAction, type TreeViewNode,
+  House, Scale, SchemeIcon, ShieldCheck, FileText, GitBranch, Select, SidebarLeftIcon, FolderKanban, StatusChip, TreeView, pushToast,
+  ActiveFilterBar, FilterPopover, SearchBar, matchClauses,
+  type EntityAction, type FilterClause, type FilterField, type TreeViewNode,
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore, readRemembered, writeRemembered } from "@polterware/frontend-state";
 import { COMPONENTS, component } from "@polterware/feature-canvas/components";
@@ -46,15 +47,17 @@ const CATALOG_PROVIDERS = [
 
 function KindIcon(props: { kind: StructureKind | "project"; size?: number }) {
   const size = () => props.size ?? 16;
-  return <Show when={props.kind === "component"} fallback={<Show when={props.kind === "domain"} fallback={<Layers size={size()} aria-hidden />}><Folder size={size()} aria-hidden /></Show>}><Boxes size={size()} aria-hidden /></Show>;
+  return <Show when={props.kind !== "project"} fallback={<House size={size()} aria-hidden />}>
+    <Show when={props.kind === "component"} fallback={<Show when={props.kind === "domain"} fallback={<Layers size={size()} aria-hidden />}><Folder size={size()} aria-hidden /></Show>}><Boxes size={size()} aria-hidden /></Show>
+  </Show>;
 }
 const kindLabel = (kind: string) => kind.charAt(0).toUpperCase() + kind.slice(1);
+/** A tree row's 20px tile: the level's glyph, so a row reads as a system, domain, or component at a glance. */
+function LevelTile(props: { level: StructureKind | "project"; seed: string }) {
+  return <IconTile size={20} tone="neutral" class="pw-structure__level" seed={`structure-level-${props.seed}`}><KindIcon kind={props.level} size={12} /></IconTile>;
+}
 
 type PickOption = { value: string; label: string; icon?: JSX.Element };
-/** A picker option's 20px icon tile, so every dropdown on the page reads like its rows. */
-function OptionTile(props: { seed: string; children: JSX.Element }) {
-  return <IconTile size={20} tone="neutral" seed={`structure-option-${props.seed}`}>{props.children}</IconTile>;
-}
 /** The canvas kind's icon, or the component glyph for an unknown kind. */
 function ComponentKindIcon(props: { kind: string; size?: number }) {
   const Icon = () => componentIcons[props.kind];
@@ -71,11 +74,11 @@ export function checkoutLabel(repo = "", folder = ""): string {
   return repo && folder ? `${repo}/${folder}` : repo || folder;
 }
 
-/** A titled block of the document on the ring Card, from its heading (a 24px icon tile lined up with the rows' tiles, the title, a count, a fold chevron, and its actions) to its rows. */
-function DocumentSection(props: { title: string; icon: JSX.Element; count?: number; actions?: JSX.Element; children: JSX.Element }) {
-  return <Card class="pw-structure__section">
-    <CollapsibleSection title={props.title} icon={<IconTile size={24} tone="neutral" seed={`structure-section-${props.title}`}>{props.icon}</IconTile>} aside={props.count === undefined ? undefined : String(props.count)} actions={props.actions}>{props.children}</CollapsibleSection>
-  </Card>;
+/** A titled block of the document, flat on the page: its heading (a larger title with no icon, a count, a fold chevron, and its actions), then its rows. */
+function DocumentSection(props: { title: string; count?: number; actions?: JSX.Element; children: JSX.Element }) {
+  return <div class="pw-structure__section">
+    <CollapsibleSection title={props.title} aside={props.count === undefined ? undefined : String(props.count)} actions={props.actions}>{props.children}</CollapsibleSection>
+  </div>;
 }
 
 /** A table row: a record, a dependency, or a deploy target, with an optional warning chip before its end. */
@@ -209,7 +212,7 @@ type NodeDocumentEdits = {
 function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityAction[]; edits: NodeDocumentEdits; isProviderConnected: (provider: string) => boolean; onOpenRecord?: (kind: StructureRecordKind, id: string) => void; onOpenNode?: (id: string) => void; activity?: JSX.Element }) {
   const doc = () => props.doc;
   const component = () => doc().level === "component";
-  const repositoryOptions = () => [{ value: "", label: "None", icon: <OptionTile seed="repo-none"><XIcon size={12} /></OptionTile> }, ...(props.edits.repositories ?? []).map((name) => ({ value: name, label: name, icon: <OptionTile seed={`repo-${name}`}><GitBranch size={12} /></OptionTile> }))];
+  const repositoryOptions = () => [{ value: "", label: "None", icon: <XIcon size={12} /> }, ...(props.edits.repositories ?? []).map((name) => ({ value: name, label: name, icon: <GitBranch size={12} /> }))];
   return <article class="pw-document__column pw-structure__document" aria-label={doc().title}>
     <div class="pw-structure__hero">
       <div class="pw-structure__hero-top">
@@ -264,7 +267,7 @@ function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityA
       </Show>
     </dl>
     <Show when={doc().deploys?.length || props.edits.editDeploys}>
-      <DocumentSection title="Deploys" icon={<Cloud size={14} />} count={doc().deploys?.length ?? 0}
+      <DocumentSection title="Deploys" count={doc().deploys?.length ?? 0}
         actions={props.edits.editDeploys ? <Button size="icon" variant="ghost" aria-label="Edit deploys" onClick={() => props.edits.editDeploys!()}><Pencil size={14} /></Button> : undefined}>
         <Show when={doc().deploys?.length} fallback={<PageEmpty title="No deploys yet" mood="sleeping"><p class="pw-structure__empty">Add one with the pencil to show it here.</p></PageEmpty>}>
           <RecordTable label="Deploys" icon={<Cloud size={14} />}
@@ -275,7 +278,7 @@ function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityA
     <For each={RECORD_SECTIONS}>{(section) => {
       const options = () => props.edits.linkOptions?.[section.kind];
       return <Show when={doc().records[section.key].length || options()}>
-        <DocumentSection title={section.title} icon={<section.Icon size={14} />} count={doc().records[section.key].length}
+        <DocumentSection title={section.title} count={doc().records[section.key].length}
           actions={options() && props.edits.link ? <LinkButton label={`Link ${section.title.toLowerCase().replace(/s$/, "")}`} options={options()!} onPick={(id) => props.edits.link!(section.kind, id)} /> : undefined}>
           <Show when={doc().records[section.key].length} fallback={<PageEmpty title={`No ${section.title.toLowerCase()} yet`} mood="sleeping">
             <p class="pw-structure__empty">Link one with + to show it here.</p>
@@ -304,7 +307,7 @@ function NodeLine(props: { addLabel?: string; onAdd?: () => void }) {
 
 const NO_KIND = "none";
 /** Built per use: an option icon is a DOM node, so each picker gets its own. */
-const kindOptions = (): PickOption[] => [{ value: NO_KIND, label: "None", icon: <OptionTile seed="kind-none"><XIcon size={12} /></OptionTile> }, ...COMPONENTS.map((item) => ({ value: item.kind, label: item.label, icon: <OptionTile seed={`kind-${item.kind}`}><ComponentKindIcon kind={item.kind} size={12} /></OptionTile> }))];
+const kindOptions = (): PickOption[] => [{ value: NO_KIND, label: "None", icon: <XIcon size={12} /> }, ...COMPONENTS.map((item) => ({ value: item.kind, label: item.label, icon: <ComponentKindIcon kind={item.kind} size={12} /> }))];
 
 export function StructureView(props: {
   projectName: string;
@@ -369,17 +372,35 @@ export function StructureView(props: {
   const target = createDetailPanelSelector((state) => state.activeTarget);
   const tree = createMemo(() => buildStructureTree(props.nodes, ""));
   const visible = createMemo(() => flattenStructureTree(tree()));
+  // The tree's own search and filter (level, component kind): matches keep the ancestors that lead to them.
+  const [treeQuery, setTreeQuery] = createSignal("");
+  const [treeClauses, setTreeClauses] = createSignal<FilterClause[]>([]);
+  const treeFields = createMemo<FilterField[]>(() => {
+    const kinds = [...new Set(props.nodes.flatMap((node) => node.kind ? [node.kind] : []))].sort();
+    return [
+      { id: "level", label: "Level", icon: () => <Layers size={14} />, kind: "multi",
+        options: (["system", "domain", "component"] as const).map((level) => ({ id: level, label: kindLabel(level), icon: () => <KindIcon kind={level} size={14} /> })) },
+      ...(kinds.length ? [{ id: "kind", label: "Kind", icon: () => <Boxes size={14} />, kind: "multi" as const,
+        options: kinds.map((value) => ({ id: value, label: componentKindLabel(value), icon: () => <ComponentKindIcon kind={value} size={14} /> })) }] : []),
+    ];
+  });
+  const filtering = () => treeQuery().trim() !== "" || treeClauses().length > 0;
+  const shownTree = createMemo(() => !filtering() ? tree() : buildStructureTree(props.nodes, treeQuery(), treeClauses().length
+    ? (node) => matchClauses(node, treeClauses(), { level: (item) => item.level, kind: (item) => item.kind ?? "" })
+    : undefined));
+  // While filtering, every branch that leads to a match stays open.
+  const treeExpanded = createMemo(() => filtering() ? [PROJECT_ID, ...flattenStructureTree(shownTree()).map((node) => node.id)] : expanded());
   const selectedId = () => target()?.scopeId === STRUCTURE_SCOPE ? target()?.entityId : undefined;
   const selected = createMemo(() => props.nodes.find((node) => node.id === selectedId()));
   const registry = () => props.registryNodes ?? props.nodes;
   const parents = () => structureParents(registry(), moveOpen() ? selected()?.level ?? kind() : kind(), moveOpen() ? selected()?.id : undefined);
-  const parentOptions = () => parents().map((node) => ({ value: node.id, label: `${node.title} (${kindLabel(node.level)})`, icon: <OptionTile seed={node.id}><KindIcon kind={node.level} size={12} /></OptionTile> }));
+  const parentOptions = () => parents().map((node) => ({ value: node.id, label: `${node.title} (${kindLabel(node.level)})`, icon: <KindIcon kind={node.level} size={12} /> }));
   const open = (id: string) => props.onOpenNode(id);
 
   // Environment options for the deploys dialog
-  const environmentOptions = () => (props.environments ?? []).map((env) => ({ value: env.id, label: env.label, icon: <OptionTile seed={`env-${env.id}`}><Layers size={12} /></OptionTile> }));
+  const environmentOptions = () => (props.environments ?? []).map((env) => ({ value: env.id, label: env.label, icon: <Layers size={12} /> }));
   // Provider options from the catalog
-  const providerOptions = () => CATALOG_PROVIDERS.map((p) => ({ value: p.id, label: p.name, icon: <OptionTile seed={`provider-${p.id}`}><Cloud size={12} /></OptionTile> }));
+  const providerOptions = () => CATALOG_PROVIDERS.map((p) => ({ value: p.id, label: p.name, icon: <Cloud size={12} /> }));
   // Check if a provider is connected (status !== "connected" means not connected)
   const isProviderConnected = (providerId: string) => {
     const integration = props.integrations?.find((i) => i.providerId === providerId);
@@ -436,16 +457,16 @@ export function StructureView(props: {
   const projectActions = (): EntityAction[] => [{ id: "add-system", label: "Add system", icon: Plus, disabled: !!props.loading || !!props.error, onSelect: () => { open(PROJECT_ID); props.onOpenCreate(); } }];
   const addChild = (id: string) => { open(id); props.onOpenCreate(); };
   const toTreeNode = (item: StructureTreeItem): TreeViewNode => ({
-    id: item.node.id, label: item.node.title,
+    id: item.node.id, label: item.node.title, icon: <LevelTile level={item.node.level} seed={item.node.id} />,
     trailing: <NodeLine
       onAdd={item.node.level === "component" ? undefined : () => addChild(item.node.id)} addLabel={`Add child to ${item.node.title}`} />,
     children: item.children.map(toTreeNode),
   });
   const treeNodes = createMemo<TreeViewNode[]>(() => props.loading || props.error ? [] : [{
-    id: PROJECT_ID, label: props.projectName,
+    id: PROJECT_ID, label: props.projectName, icon: <LevelTile level="project" seed={PROJECT_ID} />,
     trailing: <NodeLine
       onAdd={props.loading || props.error ? undefined : () => addChild(PROJECT_ID)} addLabel="Add system" />,
-    children: tree().map(toTreeNode),
+    children: shownTree().map(toTreeNode),
   }]);
 
   // A click or the arrow keys select a node; its document shows beside the tree and the row stays selected.
@@ -461,7 +482,7 @@ export function StructureView(props: {
     if (parentLevel !== "system") return [];
     const childless = !registry().some((item) => item.parentId === node.id);
     return (["domain", ...(childless ? ["component"] : [])] as StructureKind[])
-      .map((level) => ({ value: level, label: kindLabel(level), icon: <OptionTile seed={`level-${level}`}><KindIcon kind={level} size={12} /></OptionTile> }));
+      .map((level) => ({ value: level, label: kindLabel(level), icon: <KindIcon kind={level} size={12} /> }));
   };
   const detail = createMemo<NodeDocumentModel | undefined>(() => {
     const id = selectedId() ?? PROJECT_ID;
@@ -483,7 +504,7 @@ export function StructureView(props: {
     const candidates = (kind: keyof StructureRecords) => {
       const section = RECORD_SECTIONS.find((item) => item.key === kind)!;
       return props.projectRecords[kind].filter((record) => !linked(kind).has(record.id))
-        .map((record) => ({ value: record.id, label: record.title, icon: <OptionTile seed={record.id}><section.Icon size={12} /></OptionTile> }));
+        .map((record) => ({ value: record.id, label: record.title, icon: <section.Icon size={12} /> }));
     };
     return {
       title: props.onEditNode ? (title) => write(props.onEditNode!(node.id, { title }), "Could not rename the node.") : undefined,
@@ -491,7 +512,7 @@ export function StructureView(props: {
       patch: props.onEditNode ? (patch) => write(props.onEditNode!(node.id, patch), "Could not save the node.") : undefined,
       repositories: props.repositories,
       levelOptions: levelOptions(node),
-      parentOptions: node.level === "system" ? undefined : structureParents(registry(), node.level, node.id).map((item) => ({ value: item.id, label: item.title, icon: <OptionTile seed={item.id}><KindIcon kind={item.level} size={12} /></OptionTile> })),
+      parentOptions: node.level === "system" ? undefined : structureParents(registry(), node.level, node.id).map((item) => ({ value: item.id, label: item.title, icon: <KindIcon kind={item.level} size={12} /> })),
       move: node.level === "system" ? undefined : (parentId) => write(props.onMove(node.id, parentId), "Could not move the node."),
       editDeploys: node.level === "component" && props.onDeploysChange ? () => openDeploysDialog(node) : undefined,
       linkOptions: props.onLinkRecord ? {
@@ -554,13 +575,23 @@ export function StructureView(props: {
         </Show>
       </PageToolbar.Actions>
     </PageToolbar.Root>
+    {/* The tree's filters show under the toolbar, across the page, like every other list's. */}
+    <Show when={treeClauses().length > 0}>
+      <ActiveFilterBar fields={treeFields()} clauses={treeClauses()} onClausesChange={setTreeClauses} />
+    </Show>
     <Show when={props.loading} fallback={<Show when={props.error} fallback={
       <PageContent class="flex flex-col overflow-hidden">
           <div class="pw-structure">
           <nav ref={setTreePane} class="pw-structure__tree" aria-label="Structure tree">
             <Card class="pw-structure__tree-card pw-scroll-fade">
-            <TreeView label="Project structure" branches compact expandOnClick={false} class="[&>h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)}
-              selectedValue={treeSelection()} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} onFocusChange={(event) => { if (event.focusedValue && event.focusedValue !== selectedId()) open(event.focusedValue); }} />
+            <div class="pw-structure__tree-tools">
+              <SearchBar class="pw-structure__tree-search" placeholder="Search structure" value={treeQuery()} onInput={setTreeQuery} />
+              <FilterPopover fields={treeFields()} clauses={treeClauses()} onClausesChange={setTreeClauses} ariaLabel="Filter structure" shortcut />
+            </div>
+            <Show when={!filtering() || shownTree().length > 0} fallback={<p class="pw-structure__tree-empty">No matching nodes</p>}>
+              <TreeView label="Project structure" branches compact expandOnClick={false} class="[&>h3]:sr-only" nodes={treeNodes()} expandedValue={treeExpanded()} onExpandedChange={(event) => { if (!filtering()) setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue); }}
+                selectedValue={treeSelection()} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} onFocusChange={(event) => { if (event.focusedValue && event.focusedValue !== selectedId()) open(event.focusedValue); }} />
+            </Show>
             </Card>
           </nav>
           <div class="pw-structure__pane">
@@ -579,7 +610,7 @@ export function StructureView(props: {
       <Button variant="ghost" disabled={busy()} onClick={() => { setMoveOpen(false); props.onCloseCreate(); }}>Cancel</Button>
       <Button disabled={busy() || (!moveOpen() && !title().trim()) || ((moveOpen() || kind() !== "system") && !parents().some((node) => node.id === parent()))} onClick={() => void save(() => moveOpen() ? props.onMove(selected()!.id, parent()) : props.onCreate({ title: title().trim(), level: kind(), parentId: parent() }), () => { setMoveOpen(false); props.onCloseCreate(); })}>{busy() ? "Saving…" : "Save"}</Button>
     </>}>
-      <FormStack><Show when={!moveOpen()}><Field label="Name"><Input value={title()} onInput={(event) => setTitle(event.currentTarget.value)} /></Field><Field label="Kind"><Select value={kind()} options={(["system", "domain", "component"] as const).map((level) => ({ value: level, label: kindLabel(level), icon: <OptionTile seed={`level-${level}`}><KindIcon kind={level} size={12} /></OptionTile> }))} onChange={(value) => { setKind(value as StructureKind); setParent(""); }} /></Field></Show>
+      <FormStack><Show when={!moveOpen()}><Field label="Name"><Input value={title()} onInput={(event) => setTitle(event.currentTarget.value)} /></Field><Field label="Kind"><Select value={kind()} options={(["system", "domain", "component"] as const).map((level) => ({ value: level, label: kindLabel(level), icon: <KindIcon kind={level} size={12} /> }))} onChange={(value) => { setKind(value as StructureKind); setParent(""); }} /></Field></Show>
         <Show when={moveOpen() || kind() !== "system"}><Field label="Parent"><Select value={parent()} options={parentOptions()} onChange={setParent} placeholder="Choose a parent" /></Field><Show when={!parents().length}><p class="text-sm text-[var(--color-text-muted)]">Add a system before adding domains or components.</p></Show></Show>
         <Show when={formError()}><p role="alert" class="text-sm text-[var(--color-danger)]">{formError()}</p></Show>
       </FormStack>

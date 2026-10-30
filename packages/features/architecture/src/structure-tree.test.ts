@@ -17,6 +17,13 @@ describe("Structure tree", () => {
     expect(flattenStructureTree(buildStructureTree(nodes, "domain")).map((item) => item.id)).toEqual(["system", "domain", "api"]);
     expect(buildStructureTree(nodes, "missing")).toEqual([]);
   });
+  it("filters to the nodes that match, with only the ancestors that lead to them", () => {
+    const components = buildStructureTree(nodes, "", (item) => item.level === "component");
+    expect(flattenStructureTree(components).map((item) => item.id)).toEqual(["system", "domain", "api", "cli"]);
+    const systems = buildStructureTree(nodes, "", (item) => item.level === "system");
+    expect(flattenStructureTree(systems).map((item) => item.id)).toEqual(["system"]);
+    expect(flattenStructureTree(buildStructureTree(nodes, "cli", (item) => item.level === "component")).map((item) => item.id)).toEqual(["system", "cli"]);
+  });
   it("preserves orphan nodes and handles malformed cycles without dropping or duplicating records", () => {
     const malformed = [node("orphan", "component", "gone"), node("a", "domain", "b"), node("b", "domain", "a"), node("self", "system", "self")];
     expect(flattenStructureTree(buildStructureTree(malformed)).map((item) => item.id)).toEqual(["orphan", "a", "b", "self"]);

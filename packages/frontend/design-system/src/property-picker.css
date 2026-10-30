@@ -13,5 +13,8 @@
 }
 .pw-property-picker__option[data-active="true"] { background: var(--color-surface-hover); color: var(--color-text-primary); }
 .pw-property-picker__icon { display: inline-flex; min-width: 14px; flex: none; justify-content: center; color: var(--color-text-muted); }
+.pw-property-picker__icon:empty { display: none; }
+/* One choice: each option leads with a radio (RadioMark); a create row keeps the slot empty. */
+.pw-property-picker__mark { width: 14px; height: 14px; flex: none; }
 .pw-property-picker__digit { color: var(--color-text-muted); font-family: inherit; font-size: 11px; }
 .pw-property-picker__empty { padding: 8px 10px; color: var(--color-text-muted); font-size: 12px; }

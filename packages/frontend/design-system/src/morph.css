@@ -24,21 +24,52 @@
   text-align: left;
 }
 
+/* The layer only groups the card and Cancel for keys and focus; both are placed fixed. */
+.pw-morph-layer {
+  position: fixed;
+  z-index: var(--z-dropdown, 105);
+  top: 0;
+  left: 0;
+}
+
+/* Cancel sits on the trigger's rect (set in JS), outside the card. */
+.pw-morph-cancel {
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  white-space: nowrap;
+}
+
 .pw-morph-panel {
   --pw-morph-radius: var(--radius-menu);
   position: fixed;
-  z-index: var(--z-dropdown, 105);
   top: 0;
   left: 0;
   overflow: hidden;
   will-change: transform, width, height;
 }
 
+/* The surface holds the card on top and, under it, the trigger's slot where Cancel sits. */
 .pw-morph-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+}
+
+.pw-morph-card {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 14px 14px 12px;
+  border-radius: calc(var(--radius-menu) - 6px);
+  background: var(--color-surface-subtle);
+  box-shadow: var(--card-rings);
+}
+
+.pw-morph-slot {
+  flex: none;
 }
 
 .pw-morph-title {
@@ -55,9 +86,15 @@
   line-height: 1.45;
 }
 
+/* The confirm closes the card, full width under the content; Cancel is outside, below. */
 .pw-morph-footer {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: stretch;
   gap: 6px;
-  padding-top: 4px;
+  padding-top: 6px;
+}
+
+.pw-morph-footer > * {
+  width: 100%;
 }

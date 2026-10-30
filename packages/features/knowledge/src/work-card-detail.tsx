@@ -1,5 +1,5 @@
 import { For, Show, createMemo } from "solid-js";
-import {
+import { StatusDot,
   Check,
   DetailPanel,
   ListChecks,
@@ -14,7 +14,7 @@ import {
 } from "@polterware/frontend-design-system";
 import type { WorkStage, WorkspaceWorkCard, WorkspaceWorkTask } from "@polterware/feature-shell";
 import { KnowledgeDocumentNotFound, KnowledgeDocumentShell } from "./knowledge-document-shell";
-import { WORK_STAGES, cardTaskProgress, isWorkStage } from "./work-stage";
+import { WORK_STAGES, cardTaskProgress, isWorkStage, workStageTone } from "./work-stage";
 import { WorkCardWork } from "./work-card-work";
 
 function TaskStateIcon(props: { state: WorkspaceWorkTask["state"] }) {
@@ -52,7 +52,7 @@ export function WorkCardDetail(props: {
               <>
                 <DetailPanel.Property label="Stage" value={
                   <Select aria-label="Work stage" size="sm" class="w-full"
-                    options={WORK_STAGES.map(stage => ({ value: stage.id, label: stage.label }))}
+                    options={WORK_STAGES.map(stage => ({ value: stage.id, label: stage.label, icon: <StatusDot tone={workStageTone(stage.id)} showLabel={false} /> }))}
                     value={card().stage} disabled={!props.onSetStage}
                     onChange={next => { if (isWorkStage(next) && next !== card().stage) props.onSetStage?.(next); }} />
                 } />

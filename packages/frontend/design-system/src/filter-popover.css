@@ -40,6 +40,11 @@
   padding: 0 2px 0 8px;
 }
 
+/* A single field's options lead with a radio, where a multi field's lead with a checkbox. */
+.pw-filter-option__radio {
+  flex: none;
+}
+
 .pw-filter-option__check .pw-checkbox__control {
   width: 14px;
   height: 14px;

@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createMemo, createResource, createSignal, onCleanup, onMount } from "solid-js";
+import { For, Show, createEffect, createMemo, createResource, createSignal, on, onCleanup, onMount } from "solid-js";
 import {
   Archive, ArchivedList, Button, Card, Composer, DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuTrigger, Eye, IconTile,
@@ -17,10 +17,15 @@ export type { StoreEntity } from "./references";
 import type { StoreEntity } from "./references";
 
 /** `openCanvasId` reopens the canvas the user last had open; `onOpenCanvasChange` reports opening and closing. */
-export type CanvasNavigation = { openCanvasId?: string; onOpenCanvasChange?: (canvasId: string | undefined) => void };
+export type CanvasNavigation = {
+  openCanvasId?: string;
+  onOpenCanvasChange?: (canvasId: string | undefined) => void;
+  /** A new value closes the open canvas and shows the list (the Canvas item chosen again). */
+  homeKey?: number;
+};
 
 export function CanvasView(props: { projectId: string; port: CanvasPort; entities?: readonly StoreEntity[] } & CanvasNavigation) {
-  return <Show when={props.projectId} keyed>{(projectId) => <CanvasProject projectId={projectId} port={props.port} entities={props.entities} openCanvasId={props.openCanvasId} onOpenCanvasChange={props.onOpenCanvasChange} />}</Show>;
+  return <Show when={props.projectId} keyed>{(projectId) => <CanvasProject projectId={projectId} port={props.port} entities={props.entities} openCanvasId={props.openCanvasId} onOpenCanvasChange={props.onOpenCanvasChange} homeKey={props.homeKey} />}</Show>;
 }
 
 function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: readonly StoreEntity[] } & CanvasNavigation) {
@@ -46,6 +51,12 @@ function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: 
     const id = props.openCanvasId;
     if (id && loaded.canvases.some((canvas) => canvas.id === id)) void open(id);
   });
+  // The editor saves as it unmounts, so closing it from outside keeps every edit.
+  createEffect(on(() => props.homeKey, () => {
+    if (!selected()) return;
+    setSelected(undefined);
+    void refetch();
+  }, { defer: true }));
   const [dialog, setDialog] = createSignal<"create" | "rename">();
   const [showArchived, setShowArchived] = createSignal(false);
   const [archived, { refetch: refetchArchived }] = createResource(

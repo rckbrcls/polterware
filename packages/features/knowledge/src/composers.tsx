@@ -1,5 +1,5 @@
 import { createEffect, createMemo, createSignal, on, type JSX } from "solid-js";
-import {
+import { FolderKanban, Inbox, SchemeIcon, XIcon,
   Boxes,
   Button,
   Composer,
@@ -91,7 +91,7 @@ function CardComposer(props: {
       id: "milestone",
       label: "Milestone",
       icon: <Folder size={14} />,
-      options: [{ value: "", label: "Backlog" }, ...milestones().map((item) => ({ value: item.id, label: item.name }))],
+      options: [{ value: "", label: "Backlog", icon: <Inbox size={12} /> }, ...milestones().map((item) => ({ value: item.id, label: item.name, icon: <Folder size={12} /> }))],
       value: milestoneId(),
       onChange: setMilestoneId,
     },
@@ -100,7 +100,7 @@ function CardComposer(props: {
           id: "under",
           label: "Component",
           icon: <Boxes size={14} />,
-          options: [{ value: "", label: "No component" }, ...props.components.map((item) => ({ value: item.path, label: item.path }))],
+          options: [{ value: "", label: "No component", icon: <XIcon size={12} /> }, ...props.components.map((item) => ({ value: item.path, label: item.path, icon: <Boxes size={12} /> }))],
           value: under(),
           onChange: setUnder,
         }]
@@ -108,7 +108,7 @@ function CardComposer(props: {
     {
       id: "kind",
       label: "Kind",
-      options: [{ value: "feature", label: "Feature" }, { value: "architecture", label: "Architecture change" }],
+      options: [{ value: "feature", label: "Feature", icon: <FolderKanban size={12} /> }, { value: "architecture", label: "Architecture change", icon: <SchemeIcon size={12} /> }],
       value: kind(),
       onChange: (value) => setKind(value === "architecture" ? "architecture" : "feature"),
     },

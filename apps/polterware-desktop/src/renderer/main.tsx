@@ -9,6 +9,9 @@ import { hideBootSplash } from "./boot-splash.js";
 import { applyShellChromeFromBootQuery } from "./shell-chrome-boot.js";
 // Inter with wght + opsz axes: weight changes without reflow (--font-variation-*).
 import "@fontsource-variable/inter/opsz.css";
+// JetBrains Mono for run transcripts, set the way a terminal prints them (--font-terminal).
+import "@fontsource-variable/jetbrains-mono/index.css";
+import "@fontsource-variable/jetbrains-mono/wght-italic.css";
 import "./styles.css";
 
 attachDesktopDropGuards();

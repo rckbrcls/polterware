@@ -1,5 +1,5 @@
 import { Show, type JSX } from "solid-js";
-import {
+import { Scale,
   Button,
   Select,
   StatusChip,
@@ -91,7 +91,7 @@ export function DecisionDetail(props: {
               size="sm"
               class="w-full min-w-0 max-w-[20rem]"
               placeholder="Choose a decision…"
-              options={successors().map((other) => ({ value: other.id, label: other.title }))}
+              options={successors().map((other) => ({ value: other.id, label: other.title, icon: <Scale size={12} /> }))}
               value=""
               onChange={(next) => {
                 if (next) props.onAction?.({ kind: "supersede", byId: next });

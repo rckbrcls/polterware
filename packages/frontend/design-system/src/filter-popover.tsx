@@ -17,7 +17,8 @@ import {
 } from "./filter-model";
 import { FilterOptionsPanel } from "./filter-options-panel";
 import { MenuItem, MenuList } from "./menu";
-import { SelectionCheck } from "./menu-highlight";
+import { OptionTile } from "./option-tile";
+import { RadioMark } from "./radio-group";
 import { Popover } from "./popover";
 import "./filter-popover.css";
 
@@ -223,9 +224,7 @@ export function FilterPopover(props: FilterPopoverProps) {
     if (field.kind === "boolean") {
       return (
         <MenuItem onClick={() => addValue(field, field.options[0]?.id ?? "")}>
-          <Show when={field.options[0]?.icon ?? field.icon}>
-            {(icon) => <span class="inline-flex shrink-0 text-[var(--color-text-muted)] [&_svg]:size-3.5">{icon()()}</span>}
-          </Show>
+          <OptionTile label={rootLabel(field)} seed={field.id}>{(field.options[0]?.icon ?? field.icon)?.()}</OptionTile>
           <span class="min-w-0 flex-1 truncate">{rootLabel(field)}</span>
         </MenuItem>
       );
@@ -246,9 +245,7 @@ export function FilterPopover(props: FilterPopoverProps) {
           }
         }}
       >
-        <Show when={field.icon}>
-          {(icon) => <span class="inline-flex shrink-0 text-[var(--color-text-muted)] [&_svg]:size-3.5">{icon()()}</span>}
-        </Show>
+        <OptionTile label={field.label} seed={field.id}>{field.icon?.()}</OptionTile>
         <span class="min-w-0 flex-1 truncate">{field.label}</span>
         <ChevronRight size={14} class="shrink-0 text-[var(--color-text-muted)]" aria-hidden />
       </MenuItem>
@@ -258,9 +255,9 @@ export function FilterPopover(props: FilterPopoverProps) {
   const SavedRow = (rowProps: { filter: SavedFilter }) => (
     <div class="pw-saved-filter-row relative">
       <MenuItem onClick={() => applySaved(rowProps.filter)} class="pr-8">
-        <span class="inline-flex shrink-0 text-[var(--color-text-muted)]"><Bookmark size={14} aria-hidden /></span>
+        <RadioMark checked={currentSaved()?.id === rowProps.filter.id} />
+        <OptionTile label={rowProps.filter.name} seed={`saved-${rowProps.filter.id}`}><Bookmark size={12} aria-hidden /></OptionTile>
         <span class="min-w-0 flex-1 truncate">{rowProps.filter.name}</span>
-        <SelectionCheck checked={currentSaved()?.id === rowProps.filter.id} size={12} />
       </MenuItem>
       <Show when={props.saved?.onDelete}>
         <button
@@ -398,9 +395,7 @@ export function FilterPopover(props: FilterPopoverProps) {
                       if (row.kind === "saved") return <SavedRow filter={row.filter} />;
                       return (
                         <MenuItem selected={index() === 0} onClick={() => addValue(row.field, row.option.id)}>
-                          <Show when={row.option.icon ?? row.field.icon}>
-                            {(icon) => <span class="inline-flex shrink-0 text-[var(--color-text-muted)] [&_svg]:size-3.5">{icon()()}</span>}
-                          </Show>
+                          <OptionTile label={row.option.label} seed={`${row.field.id}-${row.option.id}`}>{(row.option.icon ?? row.field.icon)?.()}</OptionTile>
                           <span class="min-w-0 flex-1 truncate">
                             <span class="pw-filter-path">{row.field.label} › </span>
                             {row.option.label}

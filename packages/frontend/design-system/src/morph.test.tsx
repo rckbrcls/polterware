@@ -14,7 +14,6 @@ function mount(onConfirm = vi.fn()) {
       <Morph.Panel title="Move to Later?">
         <Morph.Body>It stays in the Inbox.</Morph.Body>
         <Morph.Footer>
-          <Morph.Close />
           <Button size="sm" variant="primary" data-autofocus onClick={onConfirm}>Move to Later</Button>
         </Morph.Footer>
       </Morph.Panel>
@@ -65,6 +64,17 @@ describe("Morph", () => {
     await vi.waitFor(() => expect(panel()).toBeNull());
   });
 
+  it("puts Cancel outside the card, where the trigger was, and the confirm inside it", async () => {
+    const mounted = mount();
+    dispose = mounted.dispose;
+    mounted.trigger.click();
+    await vi.waitFor(() => expect(button("Cancel")).toBeDefined());
+    const card = document.body.querySelector(".pw-morph-panel")!;
+    expect(card.contains(button("Cancel")!)).toBe(false);
+    expect(card.contains(button("Move to Later")!)).toBe(true);
+    expect(panel()!.contains(button("Cancel")!)).toBe(true);
+  });
+
   it("keeps keys inside the panel so page shortcuts do not fire", async () => {
     const mounted = mount();
     dispose = mounted.dispose;
@@ -83,7 +93,7 @@ describe("Morph", () => {
     dispose = render(() => (
       <Morph.Root open={open()} onOpenChange={setOpen}>
         <Morph.Trigger>Dismiss</Morph.Trigger>
-        <Morph.Panel title="Dismiss this item?"><Morph.Footer><Morph.Close /></Morph.Footer></Morph.Panel>
+        <Morph.Panel title="Dismiss this item?"><Morph.Body>It leaves the Inbox.</Morph.Body></Morph.Panel>
       </Morph.Root>
     ), host);
     setOpen(true);

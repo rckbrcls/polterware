@@ -8,7 +8,9 @@ import {
   DropdownMenuTrigger,
 } from "./dropdown-menu";
 import type { ControlFieldSize } from "./input";
-import { SELECTION_ACK_MS, SelectionCheck } from "./menu-highlight";
+import { SELECTION_ACK_MS } from "./menu-highlight";
+import { OptionTile } from "./option-tile";
+import { RadioMark } from "./radio-group";
 
 function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -131,12 +133,10 @@ export function Select(props: SelectProps) {
                 onSelect={() => select(option().value)}
               >
                 <span class="flex min-w-0 items-center gap-2">
-                  <Show when={option().icon}>
-                    <span class="inline-flex shrink-0 items-center" aria-hidden>{option().icon}</span>
-                  </Show>
+                  <RadioMark checked={option().value === value()} />
+                  <OptionTile label={option().label} seed={option().value}>{option().icon}</OptionTile>
                   <span class="min-w-0 truncate">{option().label}</span>
                 </span>
-                <SelectionCheck checked={option().value === value()} />
               </DropdownMenuItem>
             </>
           )}

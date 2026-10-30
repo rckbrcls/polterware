@@ -1,5 +1,5 @@
 import type { JSX } from "solid-js";
-import { Show, createEffect, createMemo, createSignal } from "solid-js";
+import { Show, createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import { ConfirmRegion, ResizableSidebar, ToastRegion } from "@polterware/frontend-design-system";
 import type { PlatformContext } from "@polterware/frontend-platform";
 import { MainFrame, ShellRoot } from "@polterware/frontend-shell";
@@ -193,6 +193,20 @@ export function Shell(props: {
     if (atHome()) setLocalWorkspace(null);
   });
 
+  // The title bar's history group follows the sidebar's right edge as it resizes or collapses.
+  const [sidebarWidth, setSidebarWidth] = createSignal(0);
+  createEffect(() => {
+    if (atHome()) { setSidebarWidth(0); return; }
+    let observer: ResizeObserver | undefined;
+    const frame = requestAnimationFrame(() => {
+      const sidebar = document.querySelector<HTMLElement>(".pw-shell-sidebar");
+      if (!sidebar || typeof ResizeObserver === "undefined") return;
+      observer = new ResizeObserver(() => setSidebarWidth(sidebar.getBoundingClientRect().width));
+      observer.observe(sidebar);
+    });
+    onCleanup(() => { cancelAnimationFrame(frame); observer?.disconnect(); });
+  });
+
   const currentSection = () => props.route?.().section ?? props.panel?.() ?? "inbox";
   const items = () => props.navItems ?? DEFAULT_NAV;
   const workspace = createMemo(
@@ -240,6 +254,7 @@ export function Shell(props: {
         onOpenCommander={() => props.onOpenCommander?.()}
         onOpenAppSettings={() => props.onOpenAppSettings?.()}
         appSettingsOpen={props.appSettingsOpen}
+        sidebarWidth={sidebarWidth()}
       />
 
       <div class="flex min-h-0 flex-1">

@@ -1,5 +1,5 @@
 import { Show, createEffect, createMemo, createResource, createSignal, on, onCleanup, onMount } from "solid-js";
-import {
+import { Folder, Inbox,
   ActiveFilterBar,
   Archive,
   ArchivedList,
@@ -644,8 +644,8 @@ export function KnowledgeView(props: {
     return target?.entityKind === "card" && (target.scopeId === "knowledge:board" || target.scopeId === "knowledge:specs") ? target.entityId : null;
   };
   const milestoneOptions = () => [
-    { value: "", label: BACKLOG.name },
-    ...listedMilestones(props.milestones ?? []).map((item) => ({ value: item.slug, label: item.name })),
+    { value: "", label: BACKLOG.name, icon: <Inbox size={12} /> },
+    ...listedMilestones(props.milestones ?? []).map((item) => ({ value: item.slug, label: item.name, icon: <Folder size={12} /> })),
   ];
   /** The milestone slug every picked card shares, so the picker can mark it. */
   const pickedMilestone = () => {

@@ -2,7 +2,8 @@ import type { JSX } from "solid-js";
 import { For, Show, createMemo, createSignal, onMount, untrack } from "solid-js";
 import { Checkbox } from "./checkbox";
 import type { FilterField, FilterFieldOption } from "./filter-model";
-import { SelectionCheck } from "./menu-highlight";
+import { OptionTile } from "./option-tile";
+import { RadioMark } from "./radio-group";
 
 export type FilterOptionsPanelProps = {
   field: FilterField;
@@ -136,15 +137,13 @@ export function FilterOptionsPanel(props: FilterOptionsPanelProps) {
                           }
                         }}
                       >
-                        <Show when={option.icon}>
-                          {(icon) => <span class="pw-filter-option__icon">{icon()()}</span>}
+                        <Show when={!multi()}>
+                          <RadioMark class="pw-filter-option__radio" checked={checked(option)} />
                         </Show>
+                        <OptionTile label={option.label} seed={option.id}>{option.icon?.()}</OptionTile>
                         <span class="pw-filter-option__label">{option.label}</span>
                         <Show when={option.trailing}>
                           <span class="pw-filter-option__trailing">{option.trailing}</span>
-                        </Show>
-                        <Show when={!multi()}>
-                          <SelectionCheck checked={checked(option)} size={12} />
                         </Show>
                       </button>
                     </div>

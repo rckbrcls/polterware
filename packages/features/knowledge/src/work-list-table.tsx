@@ -1,5 +1,5 @@
 import { Show, createEffect, createMemo, createSignal, type JSX } from "solid-js";
-import {
+import { Folder, Inbox, StatusDot,
   Archive,
   Button,
   DataTable,
@@ -127,8 +127,8 @@ export function WorkListTable(props: {
     }
   }
   const milestoneOptions = (): PropertyOption[] => [
-    { value: "", label: "Backlog" },
-    ...listedMilestones(props.milestones).map((milestone) => ({ value: milestone.slug, label: milestone.name })),
+    { value: "", label: "Backlog", icon: <Inbox size={12} /> },
+    ...listedMilestones(props.milestones).map((milestone) => ({ value: milestone.slug, label: milestone.name, icon: <Folder size={12} /> })),
   ];
 
   async function archiveSelected(clear: () => void) {
@@ -193,7 +193,7 @@ export function WorkListTable(props: {
                 <PickFor
                   label="Move to…"
                   property="Stage"
-                  options={WORK_STAGES.map((stage) => ({ value: stage.id, label: stage.label }))}
+                  options={WORK_STAGES.map((stage) => ({ value: stage.id, label: stage.label, icon: <StatusDot tone={workStageTone(stage.id)} showLabel={false} /> }))}
                   disabled={busy()}
                   onPick={(stage) => void writeSelected((slugs) => props.onSetCardsStage?.(slugs, stage as WorkStage), selection.clearSelection)}
                 />

@@ -39,3 +39,19 @@
 .pw-checkbox-row__side { display: inline-flex; flex-shrink: 0; align-items: center; color: var(--color-text-muted); }
 .pw-checkbox-row__trailing { display: inline-flex; flex-shrink: 0; align-items: center; color: var(--color-text-muted); font-size: 11px; }
 @media (prefers-reduced-motion: reduce) { .pw-checkbox-row { transition: none; } }
+/* RadioGroup: rows like CheckboxRow with a round field control; picked fills with the control material and a dot. */
+.pw-radio-group { display: flex; flex-direction: column; gap: 2px; }
+.pw-radio-row { position: relative; display: flex; width: 100%; box-sizing: border-box; align-items: center; gap: 10px; padding: 7px 8px; border-radius: var(--radius-item); color: var(--color-text-secondary); cursor: pointer; user-select: none; transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard); }
+.pw-radio-row:not([data-disabled]):hover { background: var(--color-surface-hover); }
+.pw-radio-row[data-state="checked"] { color: var(--color-text-primary); }
+.pw-radio-row[data-disabled] { cursor: default; color: var(--color-text-disabled); }
+.pw-radio__control { position: relative; display: grid; flex-shrink: 0; place-items: center; width: 16px; height: 16px; box-sizing: border-box; border: 0 solid var(--field-frame); border-radius: 9999px; background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom)); box-shadow: var(--field-rings); transition: background-color var(--duration-fast) var(--ease-standard); }
+.pw-radio__control[data-state="checked"] { background: linear-gradient(to bottom, var(--material-face-top), var(--material-face-bottom)); box-shadow: var(--material-control); }
+.pw-radio__control[data-state="checked"]::after { content: ""; width: 6px; height: 6px; border-radius: 9999px; background: var(--color-text-primary); }
+.pw-radio__control[data-focus-visible] { outline: 2px solid var(--color-border-strong); outline-offset: 2px; }
+.pw-radio-row__label { min-width: 0; flex: 1 1 0%; overflow-wrap: anywhere; font-size: 12.5px; }
+.pw-radio-row__trailing { display: inline-flex; flex-shrink: 0; align-items: center; color: var(--color-text-muted); font-size: 11px; }
+/* RadioMark: the control alone in a menu row, at the menu checkboxes' 14px. */
+.pw-radio-mark { width: 14px; height: 14px; }
+.pw-radio-mark[data-state="checked"]::after { width: 5px; height: 5px; }
+@media (prefers-reduced-motion: reduce) { .pw-radio-row, .pw-radio__control { transition: none; } }

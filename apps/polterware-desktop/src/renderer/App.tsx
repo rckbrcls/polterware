@@ -548,8 +548,14 @@ export function App() {
   });
   onCleanup(() => setDetailExpandHandler(undefined));
   // A page's Back goes back in history, to wherever it was opened from.
+  /** The history entry of the page `navigateToDetail` opened last; its Back returns to the entry before. */
+  const [detailOpenedAt, setDetailOpenedAt] = createSignal(-1);
+
+  // A page's Back returns to the place that opened it (a Structure node's peek, a link elsewhere)
+  // while that entry is still the one before it. A page restored by the section's memory, or
+  // reached through other steps, closes to its own list instead.
   setPageBackHandler(() => {
-    if (historyIndex() <= 0) return false;
+    if (historyIndex() <= 0 || historyIndex() !== detailOpenedAt()) return false;
     goBack();
     return true;
   });
@@ -590,11 +596,17 @@ export function App() {
     return withSectionMemory(next, readRemembered(sectionMemoryKey(next.projectId, next.section), undefined), PLATFORM_CONTEXT);
   }
 
+  const [sectionHomeKey, setSectionHomeKey] = createSignal(0);
   function navigateSection(section: string, tab?: string) {
     const base = routeWithProject(route());
     if (!base) return;
     const next = goSection(base, section);
-    applyRoute(tab ? setTab(next, tab) : rememberedSection(next));
+    // Selecting the section you are already in returns to its main view (its first tab, no open
+    // page or milestone) instead of the place the section remembers.
+    const again = !base.home && base.section === section && (!tab || base.tab === tab);
+    applyRoute(tab ? setTab(next, tab) : again ? next : rememberedSection(next));
+    // A surface that keeps its open item outside the route (a canvas, a run) closes it too.
+    if (again) setSectionHomeKey((key) => key + 1);
   }
 
   function goProjectsHome() {
@@ -619,7 +631,9 @@ export function App() {
     const target = { scopeId, entityId, entityKind };
     detailPanelStore.getState().requestTarget(target);
     // Page-only kinds land on their full page; the others open the lateral panel.
-    applyRoute(detailDisplayFor(entityKind) === "page" ? setExpandedDetail(nextRoute, target) : nextRoute);
+    const page = detailDisplayFor(entityKind) === "page";
+    applyRoute(page ? setExpandedDetail(nextRoute, target) : nextRoute);
+    if (page) setDetailOpenedAt(historyIndex());
   }
 
   function goBack() {
@@ -1498,7 +1512,7 @@ export function App() {
         </Match>
 
         <Match when={route().section === "canvas"}>
-          <Show when={currentProjectId()} keyed>{(projectId) => <CanvasWorkspace projectId={projectId} workspace={workspace()} onReload={() => refreshWorkspace(projectId)} />}</Show>
+          <Show when={currentProjectId()} keyed>{(projectId) => <CanvasWorkspace projectId={projectId} homeKey={sectionHomeKey()} workspace={workspace()} onReload={() => refreshWorkspace(projectId)} />}</Show>
         </Match>
 
         <Match when={route().section === "structure"}>
@@ -1673,6 +1687,7 @@ export function App() {
             onTabChange={(tab) => applyRoute(setTab(route(), tab))}
             startDraft={dispatchDraft()}
             onStartDraftUsed={() => setDispatchDraft(undefined)}
+            homeKey={sectionHomeKey()}
           />
         </Match>
 

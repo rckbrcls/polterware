@@ -4,7 +4,7 @@
  * (`output`), and the lines the core recorded between them (`event`, from `[kind] text`).
  */
 export type TranscriptEntry =
-  | { kind: "step"; text: string; detail?: string; failed?: boolean }
+  | { kind: "step"; text: string; detail?: string; failed?: boolean; output?: string }
   | { kind: "thinking"; text: string }
   | { kind: "message"; text: string }
   | { kind: "output"; text: string }
@@ -42,6 +42,12 @@ function target(args: Json): string {
     if (Array.isArray(value) && value.every((part) => typeof part === "string")) return value.join(" ");
   }
   return "";
+}
+
+/** `bash -lc 'go test ./...'` reads as `go test ./...`, the way the agent's terminal shows it. */
+export function unwrapShell(command: string): string {
+  const wrapped = /^(?:\S*\/)?(?:ba|z)?sh -l?c (['"])([\s\S]*)\1$/.exec(command.trim());
+  return wrapped ? wrapped[2]! : command;
 }
 
 /** "Reading a.txt", "Running go test": the verb a terminal agent prints for a tool. */
@@ -163,7 +169,8 @@ export function buildTranscript(log: string, answer = ""): TranscriptEntry[] {
         if (done) complete("thinking", str(item.text));
       } else if (itemType === "command_execution") {
         const exit = typeof item.exit_code === "number" ? item.exit_code : undefined;
-        step(id, { kind: "step", text: `Running ${str(item.command)}`, failed: exit !== undefined && exit !== 0, detail: exit ? `exit ${exit}` : undefined });
+        const output = stripAnsi(str(item.aggregated_output)).replace(/\s+$/, "");
+        step(id, { kind: "step", text: `Running ${unwrapShell(str(item.command))}`, failed: exit !== undefined && exit !== 0, detail: exit ? `exit ${exit}` : undefined, output: output || undefined });
       } else if (itemType === "file_change") {
         const changes = arr(item.changes).map(obj);
         step(id, { kind: "step", text: `Edited ${changes.map((change) => str(change.path)).filter(Boolean).join(", ") || "files"}` });

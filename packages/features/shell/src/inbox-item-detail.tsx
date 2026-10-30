@@ -1,5 +1,5 @@
 import { For, Show, createEffect, createSignal, on } from "solid-js";
-import { Button, DetailPanel, Input, Morph, StatusChip, FileText, ListFilter, Network, Check, Bot, Clock, Hammer, Pencil, Eye } from "@polterware/frontend-design-system";
+import { Button, DetailPanel, Input, Morph, RadioGroup, StatusChip, FileText, ListFilter, Network, Check, Bot, Clock, Hammer, Pencil, Eye } from "@polterware/frontend-design-system";
 import type { WorkspaceInboxAction, WorkspaceInboxItem } from "./workspace-mocks";
 
 const KIND_LABEL = { decision: "Question", drift: "Conflict", setup: "Setup" } as const;
@@ -171,32 +171,15 @@ export function InboxItemDetail(props: {
                               />
                             }
                           >
-                            <div role="radiogroup" aria-label="Answer" class="grid gap-1">
-                              <For each={props.item.options}>
-                                {(option, index) => (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    keepVariant
-                                    class="justify-start"
-                                    role="radio"
-                                    aria-checked={answer() === option}
-                                    selected={answer() === option}
-                                    data-autofocus={index() === 0 ? "" : undefined}
-                                    onClick={() => setAnswer(option)}
-                                  >
-                                    <Show when={answer() === option} fallback={<span class="inline-block w-3.5" aria-hidden="true" />}>
-                                      <Check size={14} />
-                                    </Show>
-                                    {option}
-                                  </Button>
-                                )}
-                              </For>
-                            </div>
+                            <RadioGroup
+                              aria-label="Answer"
+                              value={answer()}
+                              onValueChange={setAnswer}
+                              options={props.item.options.map((option) => ({ value: option, label: option }))}
+                            />
                           </Show>
                         </Morph.Body>
                         <Morph.Footer>
-                          <Morph.Close />
                           <Button size="sm" variant="primary" disabled={!answer().trim() || saving()} onClick={() => void confirm("decide")}>
                             {saving() ? "Saving…" : "Record decision"}
                           </Button>
@@ -210,7 +193,6 @@ export function InboxItemDetail(props: {
                         <Morph.Panel title={copy.title}>
                           <Morph.Body>{copy.body}</Morph.Body>
                           <Morph.Footer>
-                            <Morph.Close />
                             <Button size="sm" variant="primary" data-autofocus disabled={saving()} onClick={() => void confirm(action)}>
                               {saving() ? "Saving…" : copy.confirm}
                             </Button>

@@ -286,6 +286,8 @@ export { registerIconTileAccents } from "./icon-tile";
 export { CHROME_PRESETS, CHROME_VARIANTS, chromeStopsFromTint, chromeVariant, chromeVariantIndex, type ChromePreset, type ChromeStop } from "./chrome-finish";
 export { EmptyIllustration } from "./feedback";
 export { Checkbox, CheckboxRow, type CheckboxProps, type CheckboxRowProps } from "./checkbox";
+export { RadioGroup, RadioMark, type RadioGroupProps, type RadioOption } from "./radio-group";
+export { OptionTile } from "./option-tile";
 export { SegmentedControl, type SegmentedControlProps, type SegmentOption } from "./segmented-control";
 export { NumberStepper, type NumberStepperProps } from "./number-stepper";
 export { Slider, type SliderProps } from "./slider";

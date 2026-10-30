@@ -25,6 +25,22 @@ beforeEach(() => detailPanelStore.setState(detailPanelDefaultState));
 afterEach(() => { dispose?.(); document.body.replaceChildren(); });
 
 describe("Structure collection", () => {
+  it("searches the tree, keeping the ancestors of each match", async () => {
+    const { host } = mount();
+    await tick();
+    const search = host.querySelector<HTMLInputElement>('.pw-structure__tree [role="searchbox"]')!;
+    search.value = "web";
+    search.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await tick();
+    const labels = () => [...host.querySelectorAll('.pw-structure__tree [data-part="item"], .pw-structure__tree [data-part="branch"]')].map((item) => item.getAttribute("data-value"));
+    expect(labels()).toContain("web");
+    expect(labels()).toContain("sys");
+    expect(labels()).not.toContain("api");
+    search.value = "nothing here";
+    search.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await tick();
+    expect(host.querySelector(".pw-structure__tree-empty")?.textContent).toBe("No matching nodes");
+  });
   it("keeps a compact branch tree with one line per node and shows the selected node's document beside it", async () => {
     const { host, open, openRecord } = mount();
     await tick();
@@ -33,8 +49,9 @@ describe("Structure collection", () => {
     expect(host.querySelector(".pw-tree--compact")).not.toBeNull();
     expect(host.querySelector(".pw-tree__row.card-panel")).toBeNull();
     expect(host.querySelector(".pw-structure__document h1")?.textContent).toBe("Project");
-    // The toolbar holds only the tree toggle: no search, filters, or add button.
-    expect(host.querySelector('[role="searchbox"]')).toBeNull();
+    // The toolbar holds only the tree toggle and Draw as canvas; search and filter live in the tree card.
+    expect(host.querySelector('.pw-page-toolbar [role="searchbox"]')).toBeNull();
+    expect(host.querySelector('.pw-structure__tree [role="searchbox"]')).not.toBeNull();
     expect(host.querySelector('button[aria-label="Add node"]')).toBeNull();
     detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId: "web", entityKind: "arch-node" });
     await tick();
@@ -51,6 +68,9 @@ describe("Structure collection", () => {
     expect(key.classList.contains("pw-texture-button")).toBe(true);
     expect(key.dataset.state).toBe("open");
     expect(api.closest(".pw-tree__line")?.querySelector(".pw-tree__key--leaf")).not.toBeNull();
+    // Every row leads with its level's tile.
+    expect(api.querySelector(".pw-structure__level")).not.toBeNull();
+    expect(host.querySelector('[data-value="sys"] .pw-structure__level')).not.toBeNull();
     api.click();
     await tick();
     expect(open).toHaveBeenCalledWith("api");

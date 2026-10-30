@@ -1,6 +1,6 @@
 import { Button } from "./button";
 import { DisclosureButton } from "./disclosure-button";
-import { ArrowDown, ArrowUp, Plus, X } from "./hugeicons";
+import { ArrowDown, ArrowUp, Check, MinusSignIcon, Plus, X } from "./hugeicons";
 import { IconTile, type IconTileTone } from "./icon-tile";
 import { useDesignSystem } from "./provider";
 import {
@@ -21,6 +21,7 @@ import { createVirtualizer } from "@tanstack/solid-virtual";
 import { createFluidHover, FluidHoverHighlight, type FluidHover } from "./fluid-hover";
 import { spring } from "./springs";
 import { Tooltip } from "./tooltip";
+import "./form-primitives.css";
 import "./table.css";
 
 export type DataTableSortDirection = "ascending" | "descending";
@@ -1445,10 +1446,8 @@ function DataTableSelectionCell(props: {
         when={header()}
         fallback={
           <td class={`pw-data-table-selection-cell ${props.class ?? ""}`}>
-            <input
+            <SelectionBox
               ref={(el) => { input = el; }}
-              class="pw-data-table-selection-input"
-              type="checkbox"
               checked={checked()}
               aria-label={props.label ?? `Select row ${props.rowId}`}
               onClick={(event) => event.stopPropagation()}
@@ -1463,11 +1462,10 @@ function DataTableSelectionCell(props: {
           aria-label={context.selectionMode() === "single" ? "Selection" : undefined}
         >
           <Show when={context.selectionMode() === "multiple"}>
-            <input
+            <SelectionBox
               ref={(el) => { input = el; }}
-              class="pw-data-table-selection-input"
-              type="checkbox"
               checked={checked()}
+              indeterminate={context.someVisibleSelected() && !checked()}
               aria-label={props.label ?? "Select all visible rows"}
               onChange={() => context.toggleAll()}
             />
@@ -1478,6 +1476,41 @@ function DataTableSelectionCell(props: {
   );
 }
 
+/**
+ * A native checkbox (no per-row state machine, for dense rows) drawn like `Checkbox`: the shared
+ * `pw-checkbox__control` well with the same Check and minus marks the filter menus use.
+ */
+function SelectionBox(props: {
+  ref?: (element: HTMLInputElement) => void;
+  checked: boolean;
+  indeterminate?: boolean;
+  "aria-label": string;
+  disabled?: boolean;
+  class?: string;
+  onClick?: (event: MouseEvent) => void;
+  onChange: (event: Event & { currentTarget: HTMLInputElement }) => void;
+}) {
+  const state = () => (props.checked ? "checked" : props.indeterminate ? "indeterminate" : "unchecked");
+  return (
+    <span class="pw-data-table-check" data-state={state()}>
+      <input
+        ref={props.ref}
+        type="checkbox"
+        class={`pw-data-table-selection-input ${props.class ?? ""}`}
+        checked={props.checked}
+        disabled={props.disabled}
+        aria-label={props["aria-label"]}
+        onClick={(event) => props.onClick?.(event)}
+        onChange={(event) => props.onChange(event)}
+      />
+      <span class="pw-checkbox__control pw-data-table-check__control" data-state={state()} data-disabled={props.disabled ? "" : undefined} aria-hidden="true">
+        <Show when={state() === "checked"}><Check size={12} /></Show>
+        <Show when={state() === "indeterminate"}><MinusSignIcon size={12} /></Show>
+      </span>
+    </span>
+  );
+}
+
 /** Native binary checkbox for dense rows; no per-row form state machine. */
 function DataTableCheckbox(props: {
   checked: boolean;
@@ -1485,9 +1518,8 @@ function DataTableCheckbox(props: {
   "aria-label": string;
   disabled?: boolean;
 }) {
-  return <input
-    type="checkbox"
-    class="pw-data-table-selection-input pw-data-table-checkbox"
+  return <SelectionBox
+    class="pw-data-table-checkbox"
     checked={props.checked}
     disabled={props.disabled}
     aria-label={props["aria-label"]}

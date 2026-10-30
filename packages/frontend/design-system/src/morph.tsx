@@ -29,19 +29,22 @@ import "./morph.css";
  *     <Morph.Trigger hint="What the button does">Later</Morph.Trigger>
  *     <Morph.Panel title="Move to Later?">
  *       <Morph.Body>What happens.</Morph.Body>
- *       <Morph.Footer><Morph.Close /><Button variant="primary">Move to Later</Button></Morph.Footer>
+ *       <Morph.Footer><Button variant="primary">Move to Later</Button></Morph.Footer>
  *     </Morph.Panel>
  *   </Morph.Root>
  *
- * The panel grows from the trigger's rect to its own on `spring.slow` and plays back on the
- * exit tween; the trigger hides while the panel stands in for it. The panel opens upward from
- * the trigger's bottom edge (triggers live in footers). Escape, a pointerdown outside, and
- * Close dismiss it; focus moves into the panel and returns to the trigger.
+ * The trigger itself grows upward into a tall surface (on `spring.slow`, back on the exit
+ * tween): a card with the title, the content, and the confirm on top, and Cancel at the
+ * bottom on the trigger's exact rect, outside the card, so dismissing needs no travel. The
+ * trigger hides while the panel stands in for it. Escape, a pointerdown
+ * outside, and Cancel dismiss it; focus moves into the panel and returns to the trigger.
  */
 
 /** Gap (px) the panel keeps from the window edges. */
 const EDGE = 8;
-const DEFAULT_WIDTH = 320;
+/** Inset (px) of the surface around the card and Cancel. */
+const INSET = 6;
+const DEFAULT_WIDTH = 260;
 
 type MorphContextValue = {
   open: Accessor<boolean>;
@@ -133,8 +136,15 @@ function MorphTrigger(props: MorphTriggerProps) {
 export type MorphPanelProps = {
   title: JSX.Element;
   children: JSX.Element;
-  /** Panel width in px (default 320), clamped to the window. */
+  /** Card width in px (default 280), clamped to the window. */
   width?: number;
+  /** The label of the button that takes the trigger's place and closes the panel. */
+  cancelLabel?: string;
+  /**
+   * Which edge of the trigger the surface lines up with. By default it follows the trigger's
+   * place in its row: the first lines up on the start, the last on the end, any other on center.
+   */
+  align?: "start" | "center" | "end";
   class?: string;
 };
 
@@ -143,8 +153,12 @@ type Rect = { x: number; y: number; width: number; height: number; radius: numbe
 function MorphPanel(props: MorphPanelProps) {
   const context = useMorphContext("Panel");
   const [mounted, setMounted] = createSignal(false);
+  let layer: HTMLDivElement | undefined;
   let panel: HTMLDivElement | undefined;
   let content: HTMLDivElement | undefined;
+  let cancel: HTMLButtonElement | undefined;
+  /** Keeps the trigger's height free under the card, where Cancel sits. */
+  let slot: HTMLDivElement | undefined;
   const x = motionValue(0);
   const y = motionValue(0);
   const width = motionValue(0);
@@ -175,13 +189,31 @@ function MorphPanel(props: MorphPanelProps) {
     return { x: box.left, y: box.top, width: box.width, height: box.height, radius: Number.isFinite(corner) ? corner : 0 };
   };
 
-  /** The panel's own rect: its width, its content's height, bottom-aligned to the trigger and kept on screen. */
+  /** The trigger's place among its siblings: first on the start, last on the end, any other on center. */
+  const rowAlign = (): "start" | "center" | "end" => {
+    const anchor = context.anchor();
+    const row = anchor?.parentElement ? [...anchor.parentElement.children] : [];
+    const index = anchor ? row.indexOf(anchor) : -1;
+    if (row.length < 2 || index <= 0) return "start";
+    return index === row.length - 1 ? "end" : "center";
+  };
+
+  /**
+   * The surface's rect: it wraps the card and the trigger's rect (where Cancel sits) with its
+   * inset, so it grows upward out of the trigger; kept on screen.
+   */
   const targetRect = (from: Rect): Rect => {
-    const panelWidth = Math.min(props.width ?? DEFAULT_WIDTH, window.innerWidth - EDGE * 2);
+    const panelWidth = Math.min(Math.max(props.width ?? DEFAULT_WIDTH, from.width + INSET * 2), window.innerWidth - EDGE * 2);
     if (content) content.style.width = `${panelWidth}px`;
-    const panelHeight = Math.min(content?.scrollHeight ?? 0, window.innerHeight - EDGE * 2);
-    const left = Math.min(Math.max(from.x, EDGE), window.innerWidth - panelWidth - EDGE);
-    const top = Math.max(from.y + from.height - panelHeight, EDGE);
+    if (slot) slot.style.height = `${from.height}px`;
+    const bottom = from.y + from.height + INSET;
+    const panelHeight = Math.min(content?.scrollHeight ?? 0, bottom - EDGE);
+    const align = props.align ?? rowAlign();
+    const wanted = align === "start" ? from.x - INSET
+      : align === "end" ? from.x + from.width + INSET - panelWidth
+        : from.x + from.width / 2 - panelWidth / 2;
+    const left = Math.min(Math.max(wanted, EDGE), window.innerWidth - panelWidth - EDGE);
+    const top = bottom - panelHeight;
     const corner = panel ? Number.parseFloat(getComputedStyle(panel).getPropertyValue("--pw-morph-radius")) : NaN;
     return { x: left, y: top, width: panelWidth, height: panelHeight, radius: Number.isFinite(corner) ? corner : 12 };
   };
@@ -206,13 +238,23 @@ function MorphPanel(props: MorphPanelProps) {
 
   const focusInside = () => {
     const target = panel?.querySelector<HTMLElement>("[data-autofocus]")
-      ?? panel?.querySelector<HTMLElement>("button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex='-1'])");
+      ?? panel?.querySelector<HTMLElement>("button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex='-1'])")
+      ?? cancel;
     target?.focus();
+  };
+
+  /** Cancel takes the trigger's exact rect, so the pointer that opened the panel is already on it. */
+  const placeCancel = (from: Rect) => {
+    if (!cancel) return;
+    cancel.style.transform = `translate3d(${from.x}px, ${from.y}px, 0)`;
+    cancel.style.width = `${from.width}px`;
+    cancel.style.height = `${from.height}px`;
   };
 
   const enter = () => {
     if (!panel) return;
     const from = anchorRect();
+    placeCancel(from);
     if (alpha.get() === 0) {
       x.jump(from.x);
       y.jump(from.y);
@@ -226,7 +268,7 @@ function MorphPanel(props: MorphPanelProps) {
   };
 
   const leave = () => {
-    const hadFocus = panel?.contains(document.activeElement) ?? false;
+    const hadFocus = layer?.contains(document.activeElement) ?? false;
     const controls = play(anchorRect(), false);
     void controls.finished.catch(() => undefined).then(() => {
       if (context.open()) return;
@@ -249,7 +291,7 @@ function MorphPanel(props: MorphPanelProps) {
     if (!context.open()) return;
     const outside = (event: PointerEvent) => {
       const target = event.target as Node | null;
-      if (target && (panel?.contains(target) || context.anchor()?.contains(target))) return;
+      if (target && (layer?.contains(target) || context.anchor()?.contains(target))) return;
       context.setOpen(false);
     };
     const resize = () => context.setOpen(false);
@@ -266,12 +308,12 @@ function MorphPanel(props: MorphPanelProps) {
       <Portal>
         <div
           ref={(element) => {
-            panel = element;
+            layer = element;
             queueMicrotask(enter);
           }}
           role="dialog"
           aria-labelledby={context.titleId}
-          class={`pw-morph-panel surface-panel-float ${props.class ?? ""}`}
+          class="pw-morph-layer"
           // Keys stay inside the panel, so page shortcuts (H, D, J/K) do not act behind it.
           onKeyDown={(event) => {
             event.stopPropagation();
@@ -281,12 +323,20 @@ function MorphPanel(props: MorphPanelProps) {
             }
           }}
         >
-          <FloatingSurfaceProvider>
-            <div ref={content} class="pw-morph-content">
-              <h2 id={context.titleId} class="pw-morph-title">{props.title}</h2>
-              {props.children}
-            </div>
-          </FloatingSurfaceProvider>
+          <div ref={panel} class={`pw-morph-panel surface-panel-float ${props.class ?? ""}`}>
+            <FloatingSurfaceProvider>
+              <div ref={content} class="pw-morph-content">
+                <div class="pw-morph-card">
+                  <h2 id={context.titleId} class="pw-morph-title">{props.title}</h2>
+                  {props.children}
+                </div>
+                <div ref={slot} class="pw-morph-slot" aria-hidden="true" />
+              </div>
+            </FloatingSurfaceProvider>
+          </div>
+          <Button ref={cancel} size="sm" variant="texture" class="pw-morph-cancel" onClick={() => context.setOpen(false)}>
+            {props.cancelLabel ?? "Cancel"}
+          </Button>
         </div>
       </Portal>
     </Show>
@@ -301,21 +351,10 @@ function MorphFooter(props: { children: JSX.Element; class?: string }) {
   return <div class={`pw-morph-footer ${props.class ?? ""}`}>{props.children}</div>;
 }
 
-/** Closes the panel without acting. */
-function MorphClose(props: { children?: JSX.Element }) {
-  const context = useMorphContext("Close");
-  return (
-    <Button size="sm" variant="texture" onClick={() => context.setOpen(false)}>
-      {props.children ?? "Cancel"}
-    </Button>
-  );
-}
-
 export const Morph = {
   Root: MorphRoot,
   Trigger: MorphTrigger,
   Panel: MorphPanel,
   Body: MorphBody,
   Footer: MorphFooter,
-  Close: MorphClose,
 };

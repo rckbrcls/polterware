@@ -30,7 +30,6 @@ function AnswerPicker() {
         </div>
       </Morph.Body>
       <Morph.Footer>
-        <Morph.Close />
         <Button size="sm" variant="primary" disabled={!answer()} onClick={() => { morph.close(); pushToast(`Decided: ${answer()}`); }}>
           Record decision
         </Button>
@@ -42,7 +41,7 @@ function AnswerPicker() {
 export default {
   name: "Morph",
   group: "Overlays",
-  summary: "A button that turns into a small panel in place, for a confirm or a short input that belongs to that one button. The panel grows from the button on the slow spring, opens upward from its bottom edge, and closes on Escape, a click outside, or Cancel. The trigger's hint is a tooltip that says what the action does. App-level destructive confirms stay on requestConfirm.",
+  summary: "A button that turns into a small panel in place, for a confirm or a short input that belongs to that one button. The button itself grows upward into a tall surface: a card with the title, the content, and the confirm (full width, in Morph.Footer) on top, and Cancel under it on the button's exact place, outside the card, so dismissing needs no travel. It closes on Escape, a click outside, or Cancel. The trigger's hint is a tooltip that says what the action does. App-level destructive confirms stay on requestConfirm.",
   exports: ["Morph", "useMorph"],
   examples: [
     {
@@ -57,7 +56,6 @@ export default {
           <Morph.Panel title="Move to Later?">
             <Morph.Body>The item stays in the Inbox, dimmed under Later, until you come back to it.</Morph.Body>
             <Morph.Footer>
-              <Morph.Close />
               <LaterConfirm />
             </Morph.Footer>
           </Morph.Panel>

@@ -170,63 +170,52 @@
   outline: none;
 }
 
-.pw-data-table-selection-input {
-  display: block;
-  appearance: none;
-  box-sizing: border-box;
-  width: 18px;
-  height: 18px;
+/* Selection checkboxes: a native input over the shared .pw-checkbox__control well (form-primitives.css),
+ * at the filter menus' size, with the same Check and minus marks. */
+.pw-data-table-check {
+  position: relative;
+  display: grid;
+  width: 14px;
+  height: 14px;
   margin: 0 auto;
-  /* Same texture as .pw-checkbox__control: a recessed well that raises when checked. */
-  border: 0 solid var(--field-frame);
-  border-radius: 5px;
-  background: linear-gradient(to bottom, var(--field-fill-top), var(--field-fill-bottom));
-  box-shadow: var(--field-rings);
-  clip-path: inset(50%);
+  place-items: center;
+}
+
+.pw-data-table-selection-input {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  /* Drawn by the control under it: the input keeps only its hit area and focus. */
+  appearance: none;
+  border: 0;
+  background: transparent;
+  outline: none;
   cursor: pointer;
 }
 
-.pw-data-table-selection-input::before {
-  display: block;
-  width: 8px;
-  height: 8px;
-  margin: 4px;
-  background: var(--color-text-primary);
-  clip-path: polygon(0 48%, 18% 30%, 40% 52%, 82% 8%, 100% 26%, 40% 88%);
-  content: "";
-  transform: scale(0);
+/* Scoped under the box so the shared 18px control rule cannot win by load order. */
+.pw-data-table-check .pw-data-table-check__control {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
 }
 
-.pw-data-table-selection-input:checked,
-.pw-data-table-selection-input:indeterminate {
-  background: linear-gradient(to bottom, var(--material-face-top), var(--material-face-bottom));
-  box-shadow: var(--material-control);
-}
-
-.pw-data-table-selection-input:checked::before {
-  transform: scale(1);
-}
-
-.pw-data-table-selection-input:indeterminate::before {
-  height: 2px;
-  margin-block: 7px;
-  clip-path: none;
-  transform: scale(1);
-}
-
-.pw-data-table-selection-input:focus-visible {
+.pw-data-table-check:has(.pw-data-table-selection-input:focus-visible) .pw-data-table-check__control {
   outline: 2px solid var(--color-border-focus);
   outline-offset: 1px;
 }
 
-.pw-data-table-selection-header .pw-data-table-selection-input {
-  clip-path: none;
+/* An unpicked row's box shows on hover, focus, or selection; the header's always shows. */
+.pw-data-table-selection-cell .pw-data-table-check[data-state="unchecked"] {
+  clip-path: inset(50%);
 }
 
-.pw-data-table-row:hover .pw-data-table-selection-input,
-.pw-data-table-row:focus-within .pw-data-table-selection-input,
-.pw-data-table-row--selected .pw-data-table-selection-input,
-.pw-data-table-selection-input:focus-visible {
+.pw-data-table-row:hover .pw-data-table-check,
+.pw-data-table-row:focus-within .pw-data-table-check,
+.pw-data-table-row--selected .pw-data-table-check {
   clip-path: none;
 }
 
@@ -411,17 +400,8 @@
   white-space: nowrap;
 }
 
-.pw-data-table-checkbox {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 auto;
-  margin: 0;
-  clip-path: none;
-}
-
+/* DataTable.Checkbox: the same box as a cell's own control; its disabled look is .pw-checkbox__control[data-disabled]. */
 .pw-data-table-checkbox:disabled {
-  background: #242424;
-  box-shadow: none;
   cursor: not-allowed;
 }
 

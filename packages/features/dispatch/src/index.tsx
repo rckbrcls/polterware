@@ -21,7 +21,6 @@ import {
   PageToolbar,
   SearchBar,
   Tabs,
-  MarkdownEditor,
   RailGroup,
   RailPage,
   InformationCircle,
@@ -73,7 +72,8 @@ import type {
   DispatchWorktreeView,
 } from "./dispatch-types";
 import { runReviewAction } from "./dispatch-bridge";
-import { buildTranscript, type TranscriptEntry } from "./run-log";
+import { buildTranscript } from "./run-log";
+import { RunTerminal } from "./run-terminal";
 import { DispatchLearningPage } from "./learning-page";
 import { TierBoard } from "./tier-board";
 import { DISPATCH_STATS_BY_OPTIONS, DISPATCH_STATS_SINCE_OPTIONS, DispatchStatsPage } from "./stats-page";
@@ -146,11 +146,6 @@ function timingLabel(run: DispatchRunView): string | undefined {
   if (run.queuedMs !== undefined) parts.push(`queue ${formatDuration(run.queuedMs)}`);
   if (run.runMs !== undefined) parts.push(`exec ${formatDuration(run.runMs)}`);
   return parts.length > 0 ? parts.join(" / ") : undefined;
-}
-
-function modelLabel(run: DispatchRunView): string | undefined {
-  const text = dotted(run.agent, run.model, run.provider);
-  return text === "—" ? undefined : text;
 }
 
 type AgentAttemptCard = {
@@ -445,6 +440,8 @@ export function DispatchPage(props: {
   startDraft?: { key: number; cardSlug: string; prompt: string };
   /** Called once New run has taken the draft, so it does not open again on the next visit. */
   onStartDraftUsed?: () => void;
+  /** A new value closes the open run and shows the list (the sidebar item chosen again). */
+  homeKey?: number;
 }) {
   const [localTab, setLocalTab] = createSignal<DispatchTab>(normalizeDispatchTab(props.tab));
   const activeTab = () => (props.tab ? normalizeDispatchTab(props.tab) : localTab());
@@ -618,6 +615,7 @@ export function DispatchPage(props: {
 
   onMount(() => void refresh());
 
+  createEffect(on(() => props.homeKey, () => { if (openedRunId()) closeRun(); }, { defer: true }));
   createEffect(on(() => props.startDraft, (draft) => {
     if (!draft) return;
     setDraftCard(draft.cardSlug);
@@ -1321,72 +1319,14 @@ function DispatchRunRow(props: {
   );
 }
 
-/**
- * A run's output as its agent's CLI prints it, under the pinned agent bar: what the agent
- * did as `›` steps, its reasoning dimmed, its reply in compact Markdown, the CLI's raw output in
- * mono, and the lines the core recorded (`✓ verified …`). No title or frame: it is the page's content.
- */
+/** A run's output as its agent's CLI prints it (`RunTerminal`); it is the page's content, with no title or frame. */
 function RunTranscript(props: { log: string; answer: string; live: boolean }) {
   const entries = createMemo(() => buildTranscript(props.log, props.answer));
-  return (
-    <div class="pw-run-transcript flex min-w-0 flex-col gap-2 font-mono text-[12px] leading-5">
-      <Show
-        when={entries().length > 0}
-        fallback={<div class="text-[var(--color-text-muted)]">{props.live ? "Waiting for agent output…" : "No agent output recorded."}</div>}
-      >
-        <Index each={entries()}>{(entry) => <TranscriptLine entry={entry()} />}</Index>
-      </Show>
-      <Show when={props.live}>
-        <div class="inline-flex items-center gap-2 text-[var(--color-text-muted)]">
-          <StatusChip tone="syncing" label="Live" />
-          The agent is still writing.
-        </div>
-      </Show>
-    </div>
-  );
-}
-
-function TranscriptLine(props: { entry: TranscriptEntry }) {
-  return (
-    <Switch>
-      <Match when={props.entry.kind === "step" && props.entry}>
-        {(step) => (
-          <div class={`flex min-w-0 gap-2 ${step().failed ? "text-[var(--color-danger)]" : "text-[var(--color-text-secondary)]"}`}>
-            <span aria-hidden="true" class="shrink-0 text-[var(--color-text-muted)]">›</span>
-            <span class="min-w-0 break-words">{step().text}</span>
-            <Show when={step().detail}>
-              <span class="shrink-0 text-[var(--color-text-muted)]">{step().detail}</span>
-            </Show>
-          </div>
-        )}
-      </Match>
-      <Match when={props.entry.kind === "thinking" && props.entry}>
-        {(thinking) => <div class="whitespace-pre-wrap break-words italic text-[var(--color-text-muted)]">{thinking().text.replace(/\*\*(.+?)\*\*/g, "$1")}</div>}
-      </Match>
-      <Match when={props.entry.kind === "message" && props.entry}>
-        {(message) => (
-          <div class="py-2 font-sans">
-            <MarkdownEditor class="pw-md-editor--transcript" value={message().text} editable={false} aria-label="Agent response" />
-          </div>
-        )}
-      </Match>
-      <Match when={props.entry.kind === "output" && props.entry}>
-        {(output) => <pre class="m-0 whitespace-pre-wrap break-words font-mono text-[var(--color-text-muted)]">{output().text}</pre>}
-      </Match>
-      <Match when={props.entry.kind === "event" && props.entry}>
-        {(event) => (
-          <div class="flex min-w-0 items-center gap-2 text-[var(--color-text-muted)]">
-            <StatusChip tone={dispatchStatusTone(event().event)} label={event().event} />
-            <span class="min-w-0 truncate">{event().text}</span>
-          </div>
-        )}
-      </Match>
-    </Switch>
-  );
+  return <RunTerminal entries={entries()} live={props.live} empty={props.live ? "Waiting for agent output…" : "No agent output recorded."} />;
 }
 
 /**
- * The agent that runs (or ran) the job, pinned above the transcript: its bot, animated while
+ * The agent that runs (or ran) the job, first in the rail: its bot, animated while
  * it works, and agent / model / provider. Failed attempts before it show as quiet bots and a
  * line each with their error.
  */
@@ -1500,10 +1440,19 @@ function DispatchRunDetail(props: {
   );
   const rail = () => (
     <>
+      <RailGroup title="Agent" icon={<Bot size={14} />}>
+        <div class="px-1"><RunAgentBar run={props.run} attempts={attempts()} /></div>
+      </RailGroup>
+      <Show when={promptRest()}>
+        {(rest) => (
+          <RailGroup title="Prompt" icon={<FileText size={14} />}>
+            <p class="m-0 whitespace-pre-wrap px-1 text-[13px] leading-5 text-[var(--color-text-secondary)]">{rest()}</p>
+          </RailGroup>
+        )}
+      </Show>
       <RailGroup title="Run" icon={<InformationCircle size={14} />}>
         <DetailPanel.Properties variant="rail">
           <DetailPanel.Property label="Run" mono value={props.run.id} />
-          <DetailPanel.Property label="Model" value={modelLabel(props.run)} />
           <DetailPanel.Property label="Route" value={routeLabel(props.run)} />
           <DetailPanel.Property label="Duration" value={duration() === "—" ? undefined : duration()} />
           <DetailPanel.Property label="Timing" value={timingLabel(props.run)} />
@@ -1549,17 +1498,9 @@ function DispatchRunDetail(props: {
         actions={actions()}
         rail={rail()}
         railStorageKey="polterware.run.rail"
-        lead={<RunAgentBar run={props.run} attempts={attempts()} />}
         wide
       >
         <div class="flex min-w-0 flex-col gap-6 pt-2">
-          <Show when={promptRest()}>
-            {(rest) => (
-              <RailGroup title="Prompt" icon={<FileText size={14} />}>
-                <p class="m-0 whitespace-pre-wrap px-1 text-[13px] leading-5 text-[var(--color-text-secondary)]">{rest()}</p>
-              </RailGroup>
-            )}
-          </Show>
           <RunTranscript log={props.log} answer={props.answer} live={props.live} />
           <div ref={logEnd} />
         </div>
