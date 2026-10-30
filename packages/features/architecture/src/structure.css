@@ -1,9 +1,40 @@
-/* A Structure tree card's one line after its title: Add child and the actions. */
+/* Structure: a plain file tree on the left and the selected node's document on the right, both flat; each pane scrolls on its own. */
+.pw-structure {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: 280px minmax(0, 1fr);
+}
+
+.pw-structure__tree {
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+  box-shadow: inset -0.5px 0 0 0 var(--color-border-default);
+}
+
+.pw-structure__pane {
+  min-height: 0;
+  overflow: auto;
+  padding: 0 48px 64px;
+}
+
+.pw-structure__icon {
+  display: flex;
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.pw-tree__row[data-selected] .pw-structure__icon {
+  color: var(--color-text-primary);
+}
+
+/* A tree row's line after its title: Add child and the actions. */
 .pw-structure-line {
   display: inline-flex;
   min-width: 0;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 /* Add child shows while the row is hovered or holds focus, like Linear's row actions. */
@@ -17,20 +48,37 @@
   visibility: visible;
 }
 
-/* A card's content in the detail panel. */
-.pw-structure-detail__text,
-.pw-structure-detail__empty {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: 13px;
-  line-height: 20px;
+/* The document: metadata under the title, then the description and the longer sections. */
+.pw-structure__meta {
+  margin-bottom: 24px;
 }
 
-.pw-structure-detail__empty {
+.pw-structure__text {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  line-height: 24px;
+}
+
+.pw-structure__text--empty {
   color: var(--color-text-muted);
 }
 
-.pw-structure-detail__deploys {
+.pw-structure__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.pw-structure__heading {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pw-structure__deploys {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -39,11 +87,11 @@
   list-style: none;
 }
 
-.pw-structure-detail__deploys li {
+.pw-structure__deploys li {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 8px;
   color: var(--color-text-muted);
-  font-size: 12px;
+  font-size: 13px;
 }

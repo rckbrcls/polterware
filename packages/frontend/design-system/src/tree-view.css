@@ -43,3 +43,11 @@
 .pw-tree--branches .pw-tree__children .pw-tree__line::before { content: ""; position: absolute; z-index: 0; bottom: calc(100% - var(--pw-tree-row-mid)); left: calc(var(--pw-tree-key) / 2 - 0.5px - var(--pw-tree-indent)); width: calc(var(--pw-tree-indent) - var(--pw-tree-key) / 2 + 0.5px); height: 4000px; border-left: 1px solid var(--pw-tree-line); border-bottom: 1px solid var(--pw-tree-line); border-bottom-left-radius: var(--radius-item); pointer-events: none; }
 .pw-tree__toggle { display: flex; flex: none; align-items: center; justify-content: center; width: 24px; height: 24px; margin: -4px -4px -4px 0; color: var(--color-text-muted); cursor: pointer; }
 .pw-tree__toggle:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+
+/* Compact branches: a plain file tree. Flat 28px ghost rows with no card material, 16px keys, and the same elbows at the smaller measure. */
+.pw-tree--compact { --pw-tree-key: 16px; --pw-tree-indent: 22px; --pw-tree-row-mid: 14px; --pw-tree-gap: 2px; }
+.pw-tree--compact .pw-tree__row { min-height: 28px; padding: 4px 6px; gap: 6px; }
+.pw-tree--compact .pw-tree__trailing { margin-block: -4px; }
+.pw-tree--compact .pw-tree__row:hover { background: var(--color-surface-hover); }
+.pw-tree--compact .pw-tree__row[data-selected] { background: var(--color-surface-selected); color: var(--color-text-primary); }
+.pw-tree--compact .pw-tree__dot { width: 6px; height: 6px; }

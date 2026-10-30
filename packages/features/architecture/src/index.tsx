@@ -1,10 +1,10 @@
 import { For, Index, Show, createEffect, createMemo, createSignal, onCleanup, untrack, type JSX } from "solid-js";
-import { EntityDetailHost, createPageFilters, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
+import { createPageFilters, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
 import {
   A11yDialog, Boxes, Button, PromptCardGrid, Checkbox, Field, Folder, FormStack, Input,
-  ActiveFilterBar, FilterPopover, IconTile, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
+  ActiveFilterBar, FilterPopover, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
   Cloud, Delete, DetailPanel, EntityContextMenu, EntityMenuButton, Link2, Package, Route,
-  GitBranch, InformationCircle, SearchBar, Select, StatusChip, TreeView, createEntityContextMenu, pushToast,
+  SearchBar, Select, StatusChip, TreeView, createEntityContextMenu, pushToast,
   type EntityAction, type TreeViewNode,
   ToolbarIconButton,
 } from "@polterware/frontend-design-system";
@@ -53,69 +53,53 @@ export function checkoutLabel(repo = "", folder = ""): string {
   return repo && folder ? `${repo}/${folder}` : repo || folder;
 }
 
-/** The level, and a component's kind and technology, for the expanded card's About. */
+/** The level, and a component's kind and technology, for the document's metadata. */
 function nodeProperties(node: Pick<StructureNode, "level" | "kind" | "tech">): readonly (readonly [string, string | undefined])[] {
   if (node.level !== "component") return [["Level", kindLabel(node.level)]];
   return [["Level", kindLabel(node.level)], ["Kind", node.kind ? componentKindLabel(node.kind) : undefined], ["Technology", node.tech || undefined]];
 }
 
 /**
- * A card's content in the global detail panel, on the right of the tree: everything the
- * card knows, in sections titled with a 24px icon tile: About (description, level, kind,
- * technology), Records (cards, decisions, facts), Checkout (repo/folder and path), Uses,
- * and Deploys. Empty sections are left out.
+ * The selected node as a document beside the tree: the central column of a docs page with
+ * no rail. The title, then every metadata value in one wrapping row (level, kind, technology,
+ * checkout, path, and record counts; empty values are left out), then the description, Uses,
+ * and Deploys.
  */
-function NodeDetail(props: { title: string; level: string; description?: string; properties: readonly (readonly [string, string | undefined])[]; counts?: Counts; checkout?: string; path?: string; uses?: readonly string[]; deploys?: StructureNode["deploys"]; isProviderConnected: (provider: string) => boolean }) {
-  const hasRecords = () => Boolean(props.counts && (props.counts.work || props.counts.decisions || props.counts.facts));
-  return <DetailPanel.Content>
-    <DetailPanel.Header title={props.title} aside={<StatusChip tone="muted" label={props.level} />} />
-    <DetailPanel.Body>
-      <DetailPanel.Main>
-        <DetailPanel.Section title="About" icon={<InformationCircle size={14} />}>
-          <Show when={props.description} fallback={<p class="pw-structure-detail__empty">No description yet.</p>}>{(text) => <p class="pw-structure-detail__text">{text()}</p>}</Show>
-          <DetailPanel.Properties>
-            <For each={props.properties}>{([label, value]) => <DetailPanel.Property label={label} value={value} />}</For>
-          </DetailPanel.Properties>
-        </DetailPanel.Section>
-        <Show when={hasRecords()}>
-          <DetailPanel.Section title="Records" icon={<Layers size={14} />}>
-            <DetailPanel.Properties>
-              <DetailPanel.Property label="Cards" value={String(props.counts!.work)} />
-              <DetailPanel.Property label="Decisions" value={String(props.counts!.decisions)} />
-              <DetailPanel.Property label="Facts" value={String(props.counts!.facts)} />
-            </DetailPanel.Properties>
-          </DetailPanel.Section>
-        </Show>
-        <Show when={props.checkout || props.path}>
-          <DetailPanel.Section title="Checkout" icon={<GitBranch size={14} />}>
-            <DetailPanel.Properties>
-              <DetailPanel.Property label="Folder" value={props.checkout} mono />
-              <DetailPanel.Property label="Path" value={props.path} mono />
-            </DetailPanel.Properties>
-          </DetailPanel.Section>
-        </Show>
-        <Show when={props.uses?.length}>
-          <DetailPanel.Section title="Uses" icon={<Link2 size={14} />}>
-            <p class="pw-structure-detail__text">{props.uses!.join(" / ")}</p>
-          </DetailPanel.Section>
-        </Show>
-        <Show when={props.deploys?.length}>
-          <DetailPanel.Section title="Deploys" icon={<Cloud size={14} />}>
-            <ul class="pw-structure-detail__deploys" aria-label="Deploys">
-              <For each={props.deploys!}>{(deploy) => <li>
-                <span class="truncate text-[var(--color-text-primary)]">{deploy.resource}</span>
-                <span class="truncate">{deploy.provider} / {deploy.environment || deploy.environmentId}</span>
-                <Show when={!props.isProviderConnected(deploy.provider)}><StatusChip tone="warn" label="CLI not connected" /></Show>
-              </li>}</For>
-            </ul>
-          </DetailPanel.Section>
-        </Show>
-      </DetailPanel.Main>
-    </DetailPanel.Body>
-  </DetailPanel.Content>;
+function NodeDocument(props: { title: string; description?: string; properties: readonly (readonly [string, string | undefined])[]; counts?: Counts; checkout?: string; path?: string; uses?: readonly string[]; deploys?: StructureNode["deploys"]; isProviderConnected: (provider: string) => boolean }) {
+  const count = (value: number | undefined) => value ? String(value) : undefined;
+  return <article class="pw-document__column pw-structure__document" aria-label={props.title}>
+    <h1 class="pw-document__title">{props.title}</h1>
+    <DetailPanel.Properties variant="inline" class="pw-structure__meta">
+      <For each={props.properties}>{([label, value]) => <DetailPanel.Property label={label} value={value} />}</For>
+      <DetailPanel.Property label="Folder" value={props.checkout} mono />
+      <DetailPanel.Property label="Path" value={props.path} mono />
+      <DetailPanel.Property label="Cards" value={count(props.counts?.work)} />
+      <DetailPanel.Property label="Decisions" value={count(props.counts?.decisions)} />
+      <DetailPanel.Property label="Facts" value={count(props.counts?.facts)} />
+    </DetailPanel.Properties>
+    <Show when={props.description} fallback={<p class="pw-structure__text pw-structure__text--empty">No description yet.</p>}>{(text) => <p class="pw-structure__text">{text()}</p>}</Show>
+    <Show when={props.uses?.length}>
+      <section class="pw-structure__section">
+        <h2 class="pw-structure__heading">Uses</h2>
+        <p class="pw-structure__text">{props.uses!.join(" / ")}</p>
+      </section>
+    </Show>
+    <Show when={props.deploys?.length}>
+      <section class="pw-structure__section">
+        <h2 class="pw-structure__heading">Deploys</h2>
+        <ul class="pw-structure__deploys" aria-label="Deploys">
+          <For each={props.deploys!}>{(deploy) => <li>
+            <span class="truncate text-[var(--color-text-primary)]">{deploy.resource}</span>
+            <span class="truncate">{deploy.provider} / {deploy.environment || deploy.environmentId}</span>
+            <Show when={!props.isProviderConnected(deploy.provider)}><StatusChip tone="warn" label="CLI not connected" /></Show>
+          </li>}</For>
+        </ul>
+      </section>
+    </Show>
+  </article>;
 }
 
-/** A tree card's one line after its title: Add child and the actions; everything else is in the detail panel. */
+/** A tree row's line after its title: Add child and the actions; everything else is in the document beside the tree. */
 function NodeLine(props: { addLabel?: string; onAdd?: () => void; title: string; actions: readonly EntityAction[] }) {
   return <span class="pw-structure-line" onKeyDown={(event) => event.stopPropagation()}>
     <Show when={props.onAdd}>
@@ -127,7 +111,6 @@ function NodeLine(props: { addLabel?: string; onAdd?: () => void; title: string;
   </span>;
 }
 
-const NO_SELECTION: string[] = [];
 const NO_KIND = "none";
 const KIND_OPTIONS = [{ value: NO_KIND, label: "None" }, ...COMPONENTS.map((item) => ({ value: item.kind, label: item.label }))];
 
@@ -259,35 +242,34 @@ export function StructureView(props: {
   const rowMenu = createEntityContextMenu();
   const addChild = (id: string) => { open(id); props.onOpenCreate(); };
   const toTreeNode = (item: StructureTreeItem): TreeViewNode => ({
-    id: item.node.id, label: item.node.title, icon: <IconTile size={24} tone="neutral" seed={item.node.id}><KindIcon kind={item.node.level} size={14} /></IconTile>,
+    id: item.node.id, label: item.node.title, icon: <span class="pw-structure__icon"><KindIcon kind={item.node.level} size={14} /></span>,
     trailing: <NodeLine title={item.node.title} actions={nodeActions(item.node)}
       onAdd={item.node.level === "component" ? undefined : () => addChild(item.node.id)} addLabel={`Add child to ${item.node.title}`} />,
     onContextMenu: (event) => rowMenu.open(event, nodeActions(item.node)),
     children: item.children.map(toTreeNode),
   });
   const treeNodes = createMemo<TreeViewNode[]>(() => props.loading || props.error ? [] : [{
-    id: PROJECT_ID, label: props.projectName, icon: <IconTile size={24} tone="neutral" seed={PROJECT_ID}><KindIcon kind="project" size={14} /></IconTile>,
+    id: PROJECT_ID, label: props.projectName, icon: <span class="pw-structure__icon"><KindIcon kind="project" size={14} /></span>,
     trailing: <NodeLine title={props.projectName} actions={projectActions()}
       onAdd={props.loading || props.error ? undefined : () => addChild(PROJECT_ID)} addLabel="Add system" />,
     onContextMenu: (event) => rowMenu.open(event, projectActions()),
     children: tree().map(toTreeNode),
   }]);
 
-  // A click opens the card's content in the detail panel on the right; the open card stays selected.
-  const panelOpen = createDetailPanelSelector((state) => state.open);
-  const treeSelection = createMemo(() => { const id = selectedId(); return panelOpen() && id ? [id] : NO_SELECTION; });
+  // A click or the arrow keys select a node; its document shows beside the tree and the row stays selected.
+  const treeSelection = createMemo(() => [selectedId() ?? PROJECT_ID]);
   const detail = createMemo(() => {
-    const id = selectedId();
-    if (id === PROJECT_ID) return { title: props.projectName, level: "Project", description: props.projectDescription, properties: [] as const, counts: props.projectCounts, checkout: props.projectRepository };
+    const id = selectedId() ?? PROJECT_ID;
+    if (id === PROJECT_ID) return { title: props.projectName, description: props.projectDescription, properties: [["Level", "Project"]] as const, counts: props.projectCounts, checkout: props.projectRepository };
     const node = selected();
     if (!node) return undefined;
-    return { title: node.title, level: kindLabel(node.level), description: node.intent, properties: nodeProperties(node), counts: props.counts[node.id], checkout: checkoutLabel(node.repo, node.folder), path: node.path,
+    return { title: node.title, description: node.intent, properties: nodeProperties(node), counts: props.counts[node.id], checkout: checkoutLabel(node.repo, node.folder), path: node.path,
       uses: usesTitles(node), deploys: node.level === "component" ? node.deploys : undefined };
   });
 
   createEffect(() => {
     const targets = [PROJECT_ID, ...visible().map((node) => node.id)].map((entityId) => ({ scopeId: STRUCTURE_SCOPE, entityId, entityKind: "arch-node" }));
-    detailPanelStore.getState().registerCollection({ scopeId: STRUCTURE_SCOPE, status: props.loading ? "loading" : props.error ? "error" : "ready", targets, selectFirst: false });
+    detailPanelStore.getState().registerCollection({ scopeId: STRUCTURE_SCOPE, status: props.loading ? "loading" : props.error ? "error" : "ready", targets, details: false, selectFirst: false });
   });
   onCleanup(() => detailPanelStore.getState().unregisterCollection(STRUCTURE_SCOPE));
   createEffect(() => { const id = selectedId(); if (id) untrack(() => props.onSelect(id)); });
@@ -329,7 +311,7 @@ export function StructureView(props: {
     },
   });
 
-  return <EntityDetailHost>
+  return <div class="flex min-h-0 flex-1 flex-col">
     <PageToolbar.Root>
       <PageToolbar.Leading>{null}</PageToolbar.Leading>
       <PageToolbar.Actions>
@@ -353,10 +335,18 @@ export function StructureView(props: {
       saved={filters.saved()}
     />
     <Show when={props.loading} fallback={<Show when={props.error} fallback={
-      <PageContent class="pw-scroll-fade overflow-auto p-4">
-                <Show when={visible().length} fallback={<PageEmpty title={query().trim() ? "No matches" : "No structure yet"} mood={query().trim() ? "lost" : "sleeping"} >{!query().trim() ? <PromptCardGrid items={STRUCTURE_AGENT_PROMPTS.map((item) => ({ id: item.id, title: item.title, description: item.description, tone: item.tone, icon: <KindIcon kind={item.level} size={16} />, prompt: item.prompt }))} /> : undefined}</PageEmpty>}>
+      <PageContent class="flex flex-col overflow-hidden">
+        <Show when={visible().length} fallback={<PageEmpty title={query().trim() ? "No matches" : "No structure yet"} mood={query().trim() ? "lost" : "sleeping"} >{!query().trim() ? <PromptCardGrid items={STRUCTURE_AGENT_PROMPTS.map((item) => ({ id: item.id, title: item.title, description: item.description, tone: item.tone, icon: <KindIcon kind={item.level} size={16} />, prompt: item.prompt }))} /> : undefined}</PageEmpty>}>
+          <div class="pw-structure">
           <EntityContextMenu menu={rowMenu} />
-          <TreeView label="Project structure" branches expandOnClick={false} class="pw-structure-tree [&>h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)} selectedValue={treeSelection()} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} />
+          <nav class="pw-structure__tree pw-scroll-fade" aria-label="Structure tree">
+            <TreeView label="Project structure" branches compact expandOnClick={false} class="[&>h3]:sr-only" nodes={treeNodes()} expandedValue={expanded()} onExpandedChange={(event) => setExpanded((current) => sameIds(current, event.expandedValue) ? current : event.expandedValue)}
+              selectedValue={treeSelection()} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} onFocusChange={(event) => { if (event.focusedValue && event.focusedValue !== selectedId()) open(event.focusedValue); }} />
+          </nav>
+          <div class="pw-structure__pane pw-scroll-fade">
+            <Show when={detail()}>{(item) => <NodeDocument {...item()} isProviderConnected={isProviderConnected} />}</Show>
+          </div>
+          </div>
         </Show>
       </PageContent>
     }><PageError message={props.error!} /></Show>}><PageLoading label="Loading structure…" /></Show>
@@ -416,8 +406,7 @@ export function StructureView(props: {
         <Show when={formError()}><p role="alert" class="text-sm text-[var(--color-danger)]">{formError()}</p></Show>
       </FormStack>
     </A11yDialog>
-    <Show when={detail()}>{(item) => <NodeDetail {...item()} isProviderConnected={isProviderConnected} />}</Show>
-  </EntityDetailHost>;
+  </div>;
 }
 
 function sameIds(a: readonly string[], b: readonly string[]) {

@@ -35,6 +35,16 @@ export default {
       ]} label="Project files" defaultExpandedValue={["project", "app", "src"]} />
       // #endregion
     ) },
+    { id: "compact-branches", title: "Compact branches", render: () => (
+      // #region compact-branches
+      <TreeView branches compact nodes={[
+        { id: "project", label: "Project", icon: <Folder size={14} />, children: [
+          { id: "app", label: "app", icon: <Folder size={14} />, children: [{ id: "main", label: "main.ts", icon: <File size={14} /> }] },
+          { id: "readme", label: "README.md", icon: <File size={14} /> },
+        ] },
+      ]} label="Project files" defaultExpandedValue={["project", "app"]} />
+      // #endregion
+    ) },
     { id: "minimal", title: "Without guides", render: () => (
       // #region minimal
       <TreeView nodes={nodes} label="Project files" defaultExpandedValue={["project"]} indicator={false} guides={false} />

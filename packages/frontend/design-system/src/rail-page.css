@@ -102,6 +102,24 @@
   flex-basis: 880px;
 }
 
+/* Title: 24/32/600 with no field chrome. */
+.pw-document__title {
+  width: 100%;
+  margin: 32px 0 8px;
+  padding: 0;
+  color: var(--color-text-primary);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.16px;
+  line-height: 32px;
+}
+
+.pw-document__body {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24px;
+}
+
 /* Rail: no frame or fill, sticky beside the text. */
 .pw-document__rail {
   position: sticky;

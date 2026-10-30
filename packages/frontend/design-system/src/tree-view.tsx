@@ -29,12 +29,14 @@ export type TreeViewProps = Omit<TreeViewRootProps<TreeViewNode>, "children" | "
   guides?: boolean;
   /** Card rows with a texture +/- key in front of each branch card; curved elbows run from each open key into its children's keys. Replaces the plain guide line and chevron. */
   branches?: boolean;
+  /** With `branches`: a small, flat file tree (28px ghost rows, 16px keys) instead of ring cards. */
+  compact?: boolean;
   /** Glide one hover highlight between the rows of each level (Spaces and their notes alike). */
   fluidHover?: boolean;
 };
 
 export function TreeView(props: TreeViewProps) {
-  const [local, rest] = splitProps(props, ["nodes", "label", "class", "indicator", "guides", "fluidHover", "branches", "expandOnClick"]);
+  const [local, rest] = splitProps(props, ["nodes", "label", "class", "indicator", "guides", "fluidHover", "branches", "compact", "expandOnClick"]);
   const collection = createMemo(() =>
     createTreeCollection<TreeViewNode>({
       rootNode: { id: "__root__", label: "", children: local.nodes },
@@ -43,10 +45,10 @@ export function TreeView(props: TreeViewProps) {
     }),
   );
   const rows = (hover?: FluidHover) => (
-    <For each={local.nodes}>{(node, index) => <TreeNode node={node} indexPath={[index()]} indicator={local.indicator !== false} toggleButton={local.expandOnClick === false} guides={local.guides !== false} branches={!!local.branches} fluidHover={local.fluidHover} hover={hover} />}</For>
+    <For each={local.nodes}>{(node, index) => <TreeNode node={node} indexPath={[index()]} indicator={local.indicator !== false} toggleButton={local.expandOnClick === false} guides={local.guides !== false} branches={!!local.branches} compact={!!local.compact} fluidHover={local.fluidHover} hover={hover} />}</For>
   );
   return (
-    <ArkTreeView.Root {...rest} expandOnClick={local.expandOnClick} collection={collection()} class={`pw-tree ${local.branches ? "pw-tree--branches" : ""} ${local.class ?? ""}`}>
+    <ArkTreeView.Root {...rest} expandOnClick={local.expandOnClick} collection={collection()} class={`pw-tree ${local.branches ? "pw-tree--branches" : ""} ${local.branches && local.compact ? "pw-tree--compact" : ""} ${local.class ?? ""}`}>
       <ArkTreeView.Label>{local.label}</ArkTreeView.Label>
       <Show when={local.fluidHover} fallback={<ArkTreeView.Tree>{rows()}</ArkTreeView.Tree>}>
         <FluidTreeList>{(hover, attach) => <ArkTreeView.Tree ref={attach} data-fluid-hover=""><TreeHoverHighlight hover={hover} />{rows(hover)}</ArkTreeView.Tree>}</FluidTreeList>
@@ -55,7 +57,7 @@ export function TreeView(props: TreeViewProps) {
   );
 }
 
-type TreeNodeProps = { node: TreeViewNode; indexPath: number[]; indicator: boolean; toggleButton: boolean; guides: boolean; branches: boolean; fluidHover?: boolean; hover?: FluidHover };
+type TreeNodeProps = { node: TreeViewNode; indexPath: number[]; indicator: boolean; toggleButton: boolean; guides: boolean; branches: boolean; compact?: boolean; fluidHover?: boolean; hover?: FluidHover };
 
 function TreeNode(props: TreeNodeProps) {
   // For can reorder or recreate rows; registration follows the live index and owner.
@@ -102,8 +104,10 @@ function TreeNode(props: TreeNodeProps) {
   );
 }
 
-/** Branches mode: ring cards (the shared Card material), each led by a texture key (+ closed, - open; a dot on leaves) where the elbows land. */
+/** Branches mode: ring cards (the shared Card material), or flat ghost rows when compact, each led by a texture key (+ closed, - open; a dot on leaves) where the elbows land. */
 function BranchCardNode(props: TreeNodeProps & { registerRow: (element: HTMLElement) => void }) {
+  const material = () => props.compact ? "" : " card-panel";
+  const keyIcon = () => props.compact ? 10 : 12;
   const content = (Text: typeof ArkTreeView.ItemText | typeof ArkTreeView.BranchText) => <>
     {props.node.icon}
     <Text class="pw-tree__text">{props.node.label}</Text>
@@ -116,17 +120,17 @@ function BranchCardNode(props: TreeNodeProps & { registerRow: (element: HTMLElem
       fallback={
         <div class="pw-tree__line">
           <span class="pw-tree__key pw-tree__key--leaf" aria-hidden="true"><span class="pw-tree__dot pw-texture-button rounded-full" /></span>
-          <ArkTreeView.Item class={`${rowClass(props.node)} card-panel`} ref={props.registerRow} onContextMenu={(event) => props.node.onContextMenu?.(event)}>{content(ArkTreeView.ItemText)}</ArkTreeView.Item>
+          <ArkTreeView.Item class={`${rowClass(props.node)}${material()}`} ref={props.registerRow} onContextMenu={(event) => props.node.onContextMenu?.(event)}>{content(ArkTreeView.ItemText)}</ArkTreeView.Item>
         </div>
       }
     >
       <ArkTreeView.Branch>
         <div class="pw-tree__line">
           <ArkTreeView.BranchTrigger class="pw-tree__key pw-texture-button rounded-full" aria-label={`Toggle ${props.node.label}`}>
-            <span class="pw-tree__key-expand"><Plus size={12} /></span>
-            <span class="pw-tree__key-collapse"><MinusSignIcon size={12} /></span>
+            <span class="pw-tree__key-expand"><Plus size={keyIcon()} /></span>
+            <span class="pw-tree__key-collapse"><MinusSignIcon size={keyIcon()} /></span>
           </ArkTreeView.BranchTrigger>
-          <ArkTreeView.BranchControl class={`${rowClass(props.node)} card-panel`} ref={props.registerRow} onContextMenu={(event) => props.node.onContextMenu?.(event)}>{content(ArkTreeView.BranchText)}</ArkTreeView.BranchControl>
+          <ArkTreeView.BranchControl class={`${rowClass(props.node)}${material()}`} ref={props.registerRow} onContextMenu={(event) => props.node.onContextMenu?.(event)}>{content(ArkTreeView.BranchText)}</ArkTreeView.BranchControl>
         </div>
         <TreeChildren {...props} />
       </ArkTreeView.Branch>
@@ -142,7 +146,7 @@ function TreeChildren(props: TreeNodeProps) {
   const rows = (hover?: FluidHover) => <>
     <Show when={props.guides}><ArkTreeView.BranchIndentGuide class="pw-tree__guide" /></Show>
     <For each={props.node.children}>
-      {(node, index) => <TreeNode node={node} indexPath={[...props.indexPath, index()]} indicator={props.indicator} toggleButton={props.toggleButton} guides={props.guides} branches={props.branches} fluidHover={props.fluidHover} hover={hover} />}
+      {(node, index) => <TreeNode node={node} indexPath={[...props.indexPath, index()]} indicator={props.indicator} toggleButton={props.toggleButton} guides={props.guides} branches={props.branches} compact={props.compact} fluidHover={props.fluidHover} hover={hover} />}
     </For>
   </>;
   const growth = props.branches ? createBranchGrowth() : undefined;

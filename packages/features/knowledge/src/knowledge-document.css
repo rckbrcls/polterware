@@ -33,8 +33,7 @@
   cursor: default;
 }
 
-/* Title: 24/32/600, no field chrome; the shared Input keeps focus and keyboard behaviour. */
-.pw-document__title,
+/* The title as an editable field: the shared title styles (rail-page.css) without the Input's chrome. */
 .pw-document__title.control-field {
   width: 100%;
   height: auto;
@@ -56,12 +55,6 @@
 .pw-document__title.control-field:focus-visible {
   background: transparent;
   box-shadow: none;
-}
-
-.pw-document__body {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 24px;
 }
 
 /* A Fact page lists the evidence that backs the statement under its title. */
