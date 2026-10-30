@@ -12,6 +12,6 @@
   transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .pw-property-picker__option[data-active="true"] { background: var(--color-surface-hover); color: var(--color-text-primary); }
-.pw-property-picker__icon { display: inline-flex; width: 14px; justify-content: center; color: var(--color-text-muted); }
+.pw-property-picker__icon { display: inline-flex; min-width: 14px; flex: none; justify-content: center; color: var(--color-text-muted); }
 .pw-property-picker__digit { color: var(--color-text-muted); font-family: inherit; font-size: 11px; }
 .pw-property-picker__empty { padding: 8px 10px; color: var(--color-text-muted); font-size: 12px; }

@@ -6,11 +6,12 @@ import { STRUCTURE_SCOPE, StructureView, checkoutLabel, componentKindLabel, type
 const nodes: StructureNode[] = [
   { id: "sys", parentId: "", level: "system", path: "app", title: "Application", intent: "", repo: "", decisions: [] },
   { id: "api", parentId: "sys", level: "component", path: "app/api", title: "API", intent: "Serves the project", repo: "backend", folder: "src/api", kind: "api", tech: "Go", decisions: [] },
+  { id: "core", parentId: "sys", level: "domain", path: "app/core", title: "Core", intent: "", repo: "", decisions: [] },
   { id: "web", parentId: "sys", level: "component", path: "app/web", title: "Web", intent: "", repo: "", uses: ["app/api"], decisions: [] },
 ];
 let dispose: (() => void) | undefined;
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
-function mount(options: { error?: string; loading?: boolean; onEditNode?: (nodeId: string, patch: StructureNodePatch) => Promise<void>; onLinkRecord?: (kind: string, id: string, nodeId: string) => Promise<void>; onUses?: (nodeId: string, ids: string[]) => Promise<void> } = {}) {
+function mount(options: { error?: string; loading?: boolean; onEditNode?: (nodeId: string, patch: StructureNodePatch) => Promise<void>; onLinkRecord?: (kind: string, id: string, nodeId: string) => Promise<void>; onUses?: (nodeId: string, ids: string[]) => Promise<void>; onMove?: (nodeId: string, parentId: string) => Promise<void> } = {}) {
   const host = document.createElement("div");
   document.body.append(host);
   const open = vi.fn((entityId: string) => { detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId, entityKind: "arch-node" }); });
@@ -119,6 +120,32 @@ describe("Structure collection", () => {
     expect(open).not.toHaveBeenCalledWith("api");
     row.click();
     expect(open).toHaveBeenCalledWith("api");
+  });
+  it("changes a node's level and parent from pickers with icon tiles", async () => {
+    const onEditNode = vi.fn(async () => {});
+    const onMove = vi.fn(async () => {});
+    const { host } = mount({ onEditNode, onMove });
+    await tick();
+    detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId: "api", entityKind: "arch-node" });
+    await tick();
+    const pick = async (trigger: string, option: string) => {
+      host.querySelector<HTMLButtonElement>(`button[aria-label="${trigger}"]`)!.click();
+      await tick();
+      const row = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((item) => item.textContent?.includes(option))!;
+      expect(row.querySelector(".pw-icon-tile, [data-icon-tile]") ?? row.querySelector(".pw-property-picker__icon > span")).not.toBeNull();
+      row.click();
+      await tick();
+    };
+    // Right under a system with no children, a component can become a domain; its kind is cleared.
+    await pick("Level: Component", "Domain");
+    expect(onEditNode).toHaveBeenLastCalledWith("api", { level: "domain", kind: "" });
+    await pick("Parent: Application", "Core");
+    expect(onMove).toHaveBeenLastCalledWith("api", "core");
+    // A system has no parent and keeps its level.
+    detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId: "sys", entityKind: "arch-node" });
+    await tick();
+    expect(host.querySelector('button[aria-label^="Level:"]')).toBeNull();
+    expect(host.querySelector('button[aria-label^="Parent:"]')).toBeNull();
   });
   it("exposes a collection error", async () => {
     const { host } = mount({ error: "Core unavailable" });

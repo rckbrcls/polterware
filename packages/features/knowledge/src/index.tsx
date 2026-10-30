@@ -628,7 +628,6 @@ export function KnowledgeView(props: {
 
   const createLabel = createMemo(() => {
     if (docsTab()) return "Add doc";
-    if (cardTab()) return "New card";
     return "New Decision";
   });
 
@@ -823,7 +822,8 @@ export function KnowledgeView(props: {
                   }}
                 />
               </Show>
-              <Show when={props.onCompose}>
+              {/* Cards are added from a column's or group's +, so a board has no toolbar +. */}
+              <Show when={props.onCompose && !cardTab()}>
                 <ToolbarIconButton label={createLabel()} onClick={composeHere}>
                   <Plus size={14} />
                 </ToolbarIconButton>

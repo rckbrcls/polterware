@@ -401,10 +401,10 @@ export async function persistStructureKindTech(input: {
 }
 
 /** The fields of a Structure node its document edits in place; a field left out is unchanged. */
-export type StructureNodePatch = { title?: string; intent?: string; repo?: string; folder?: string; kind?: string; tech?: string };
+export type StructureNodePatch = { title?: string; intent?: string; level?: string; repo?: string; folder?: string; kind?: string; tech?: string };
 
 /**
- * Edit a Structure node in place: the title in its heading, `repo:`, `path:` (the folder),
+ * Edit a Structure node in place: the title in its heading, `level:` (a domain clears `kind:` with it), `repo:`, `path:` (the folder),
  * `kind:`, and `tech:` lines (an empty value clears them), and the intent as the paragraph after
  * them. Polter keeps the stored intent when the paragraph is empty, so the intent cannot be cleared
  * here. The heading is the node's current path.
@@ -418,7 +418,7 @@ export async function persistStructureNode(input: {
   change: ChangeEnvelope;
 }): Promise<void> {
   const { patch } = input;
-  let text = structureNodeText({ heading: input.path, title: patch.title ?? input.title, level: input.level });
+  let text = structureNodeText({ heading: input.path, title: patch.title ?? input.title, level: patch.level ?? input.level });
   if (patch.repo !== undefined) text += `repo: ${patch.repo}\n`;
   if (patch.folder !== undefined) text += `path: ${patch.folder}\n`;
   if (patch.kind !== undefined) text += `kind: ${patch.kind}\n`;
@@ -955,9 +955,11 @@ export async function resetLocalStore(): Promise<void> {
   await core().health.resetLocalStore({});
 }
 
-/** Create a milestone; it starts planned and owns no cards. Returns its id. */
-export async function persistMilestoneCreate(projectId: string, name: string, change: ChangeEnvelope): Promise<string> {
-  const response = asRecord(await core().work.createMilestone({ projectId, name, change: changePayload(change) }));
+/** Create a milestone with its goal, state (planned when empty), and target date; it owns no cards. Returns its id. */
+export async function persistMilestoneCreate(projectId: string, input: { name: string; goal?: string; state?: string; targetDate?: string }, change: ChangeEnvelope): Promise<string> {
+  const response = asRecord(await core().work.createMilestone({
+    projectId, name: input.name, goal: input.goal ?? "", state: input.state ?? "", targetDate: input.targetDate ?? "", change: changePayload(change),
+  }));
   const id = asString(asRecord(response.milestone).id);
   if (!id) throw new Error("The core returned no milestone.");
   return id;

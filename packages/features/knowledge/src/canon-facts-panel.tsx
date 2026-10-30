@@ -9,7 +9,7 @@ import {
   matchClauses,
   type FilterClause,
 } from "@polterware/frontend-design-system";
-import { expandedDetail, openDetail, type ScopeNodeItem, type WorkspaceCanonEntity } from "@polterware/feature-shell";
+import { expandedDetail, openDetail, requestDetailExpanded, type ScopeNodeItem, type WorkspaceCanonEntity } from "@polterware/feature-shell";
 import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
 import { CanonFactFormDialog } from "./canon-fact-form-dialog";
 import { CanonLinkEvidenceDialog } from "./canon-link-evidence-dialog";
@@ -139,7 +139,7 @@ function changePayload(change: { summary: string; rationale: string; agentRunId?
 
 export const FACTS_SCOPE = "truth:facts";
 
-/** True while a Fact page fills the Facts surface. */
+/** True while a Fact is open in its dialog over the Facts list. */
 export function factPageOpen(): boolean {
   const target = expandedDetail();
   return target?.scopeId === FACTS_SCOPE && target.entityKind === "fact";
@@ -410,7 +410,6 @@ export function CanonFactsPanel(props: {
 
   return (
     <div class="flex h-full min-h-0 flex-col">
-      <Show when={!factPageOpen()}>
       <div class="min-h-0 flex-1 overflow-auto">
           <DataTable.Root
             rows={visibleFacts()}
@@ -487,11 +486,12 @@ export function CanonFactsPanel(props: {
             </DataTable.Table>
           </DataTable.Root>
       </div>
-      </Show>
 
-      <Show when={factPageOpen()}>
-        <FactDetail
-          detail={detail()?.fact.id === expandedDetail()?.entityId ? detail() : undefined}
+      <FactDetail
+          open={factPageOpen() && !factDialogOpen() && !linkDialogOpen()}
+          onClose={() => requestDetailExpanded(false)}
+          // While it closes, the dialog keeps the fact it showed.
+          detail={!factPageOpen() || detail()?.fact.id === expandedDetail()?.entityId ? detail() : undefined}
           subject={detail() ? subjectOf(detail()!.fact) : ""}
           scope={detail() ? scopeNodeOf(detail()!.fact)?.title ?? "" : ""}
           scopePath={detail() ? scopeNodeOf(detail()!.fact)?.path : undefined}
@@ -499,7 +499,6 @@ export function CanonFactsPanel(props: {
           onEdit={canonBridge() ? editFact : undefined}
           onLinkEvidence={canonBridge() ? () => setLinkDialogOpen(true) : undefined}
         />
-      </Show>
 
       <CanonFactFormDialog
         entities={props.entities}

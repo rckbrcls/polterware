@@ -24,7 +24,8 @@ export function createBrowserStructure(seedProjectId: string, seed: readonly Par
       const parent = under === undefined && existing ? nodes.find((node) => node.id === existing.parentId) : under ? nodes.find((node) => node.path === under) : undefined;
       if (under && !parent) throw new Error("Parent not found.");
       if (level === "system" && parent || level === "domain" && parent?.level !== "system" || level === "component" && parent?.level !== "system" && parent?.level !== "domain") throw new Error("Invalid parent kind.");
-      if (existing && existing.level !== level) throw new Error("A move cannot change kind.");
+      // Like the core, a node may change its level where it sits; a component cannot hold children.
+      if (existing && level === "component" && nodes.some((node) => node.parentId === existing.id)) throw new Error("A node with children cannot become a component.");
       const slug = existing?.slug ?? heading[1]!.split("/").at(-1)!;
       const nextPath = parent ? `${parent.path}/${slug}` : slug;
       if (nodes.some((node) => node !== existing && node.path === nextPath)) throw new Error("That structure path already exists.");
@@ -48,6 +49,7 @@ export function createBrowserStructure(seedProjectId: string, seed: readonly Par
       if (existing) {
         const oldPath = existing.path;
         existing.title = heading[2]!.trim();
+        existing.level = level;
         if (uses) existing.uses = uses;
         if (deploys !== undefined) existing.deploys = deploys;
         if (kind !== undefined) existing.kind = kind;

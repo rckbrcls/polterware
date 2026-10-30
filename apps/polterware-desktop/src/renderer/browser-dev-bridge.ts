@@ -1114,12 +1114,12 @@ function createBrowserDevBridge(): PolterwareBridge {
       }),
       work: browserDevApi({
         listMilestones: async ({ projectId }: { projectId: string }) => ({ milestones: milestones.filter((item) => item.projectId === projectId).sort((a, b) => a.position - b.position) }),
-        createMilestone: async ({ projectId, name }: { projectId: string; name: string }) => {
+        createMilestone: async ({ projectId, name, goal = "", state = "", targetDate = "" }: { projectId: string; name: string; goal?: string; state?: string; targetDate?: string }) => {
           const now = new Date().toISOString();
           const value = milestoneName(name, projectId);
           const milestone: PreviewMilestone = {
-            id: `preview-milestone-${nextMilestone++}`, projectId, slug: milestoneSlug(value, projectId), name: value, goal: "", exitCriteria: [], targetDate: "",
-            state: "planned", position: Math.max(-1, ...listedMilestones(projectId).map((item) => item.position)) + 1, archivedAt: "", createdAt: now, updatedAt: now,
+            id: `preview-milestone-${nextMilestone++}`, projectId, slug: milestoneSlug(value, projectId), name: value, goal, exitCriteria: [], targetDate,
+            state: (state || "planned") as PreviewMilestone["state"], position: Math.max(-1, ...listedMilestones(projectId).map((item) => item.position)) + 1, archivedAt: "", createdAt: now, updatedAt: now,
           };
           milestones.push(milestone);
           return { milestone };

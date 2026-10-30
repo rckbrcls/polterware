@@ -1,8 +1,8 @@
 import { For, Show, createEffect, createMemo, createResource, createSignal, onCleanup, onMount } from "solid-js";
 import {
-  A11yDialog, Archive, ArchivedList, Button, Card, DropdownMenu, DropdownMenuContent,
-  DropdownMenuItem, DropdownMenuTrigger, Eye, Field, FormStack, IconTile,
-  Input, MoreHorizontal, PageEmpty, PageError, PageLoading,
+  Archive, ArchivedList, Button, Card, Composer, DropdownMenu, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuTrigger, Eye, IconTile,
+  MoreHorizontal, PageEmpty, PageError, PageLoading,
   PageToolbar, Pencil, PinOff, Plus, SchemeIcon, SearchBar, buttonClassName,
   ToolbarIconButton, Blocks, pushToast, requestConfirm, type ArchivedListItem,
 } from "@polterware/frontend-design-system";
@@ -55,7 +55,6 @@ function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: 
   const archivedRows = createMemo<ArchivedListItem[]>(() =>
     (archived() ?? []).map((canvas) => ({ id: canvas.id, title: canvas.name, detail: "Canvas", archivedAt: formatArchived(canvas.archivedAt) })));
   const [target, setTarget] = createSignal<CanvasRecord>();
-  const [name, setName] = createSignal("");
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal("");
   const [query, setQuery] = createSignal("");
@@ -80,21 +79,31 @@ function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: 
     });
   }
   function showDialog(kind: "create" | "rename", canvas?: CanvasRecord) {
-    setTarget(canvas); setName(canvas?.name ?? ""); setError(""); setDialog(kind);
+    setTarget(canvas); setError(""); setDialog(kind);
   }
-  function submit() {
-    void run(async () => {
+  /** The composer's submit: false keeps it open with the name, and the refusal shows as a toast. */
+  async function submit(draft: { title: string }): Promise<boolean> {
+    const value = draft.title.trim();
+    if (!value) return false;
+    setBusy(true);
+    try {
       if (dialog() === "create") {
         // The core reports one generalist canvas type.
         const definition = data()?.types[0];
         if (!definition) throw new Error("The server reported no canvas type.");
-        const canvas = await props.port.create(props.projectId, name().trim(), definition.type);
+        const canvas = await props.port.create(props.projectId, value, definition.type);
         setSelected({ canvas, document: toDocument(canvas), definition });
       } else if (dialog() === "rename" && target()) {
-        await props.port.update(props.projectId, target()!.id, { name: name().trim() });
+        await props.port.update(props.projectId, target()!.id, { name: value });
       }
       setDialog(undefined); await refetch();
-    });
+      return true;
+    } catch (cause) {
+      pushToast(cause instanceof Error ? cause.message : String(cause), "danger");
+      return false;
+    } finally {
+      setBusy(false);
+    }
   }
   /** Archive at once and offer Undo: archiving is reversible, so it needs no confirm. */
   function archive(canvas: CanvasRecord) {
@@ -162,13 +171,17 @@ function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: 
         </Show>
       </Show>
     </div>}</Show>
-    <A11yDialog open={!!dialog()} title={dialog() === "create" ? "Create canvas" : "Rename canvas"} onClose={() => { if (!busy()) setDialog(undefined); }} dismissible={!busy()}
-      footer={<><Button variant="ghost" disabled={busy()} onClick={() => setDialog(undefined)}>Cancel</Button><Button variant="primary" disabled={busy() || !name().trim()} onClick={submit}>{busy() ? "Saving…" : "Save"}</Button></>}>
-      <FormStack>
-        <Field label="Name"><Input value={name()} onInput={(event) => setName(event.currentTarget.value)} /></Field>
-      </FormStack>
-      <Show when={error()}><p role="alert" class="mt-3 text-sm text-[var(--color-danger)]">{error()}</p></Show>
-    </A11yDialog>
+    {/* New canvas and Rename take the shared composer, with the name as its large title. */}
+    <Composer
+      open={!!dialog()}
+      crumbs={dialog() === "create" ? ["Canvas", "New canvas"] : ["Canvas", target()?.name ?? "", "Rename canvas"]}
+      titlePlaceholder="Canvas name"
+      initial={dialog() === "rename" ? { title: target()?.name ?? "" } : undefined}
+      createMore={false}
+      submitLabel={dialog() === "create" ? "Create canvas" : "Save"}
+      onClose={() => { if (!busy()) setDialog(undefined); }}
+      onSubmit={submit}
+    />
   </div></Show>}>{(value) => <CanvasEditor canvas={value.canvas} document={value.document} definition={value.definition} port={props.port} entities={props.entities} onBack={() => { setSelected(undefined); void refetch(); }} />}</Show>;
 }
 

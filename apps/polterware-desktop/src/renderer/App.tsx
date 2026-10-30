@@ -1035,7 +1035,7 @@ export function App() {
     if (!change) return null;
     let selectedId = action.kind === "create" ? "" : action.id;
     switch (action.kind) {
-      case "create": selectedId = await persistMilestoneCreate(projectId, action.name, change); break;
+      case "create": selectedId = await persistMilestoneCreate(projectId, { name: action.name, goal: action.goal, state: action.state, targetDate: action.targetDate }, change); break;
       case "rename": await persistMilestoneRename(projectId, milestone!, action.name, change); break;
       case "archive": await persistMilestoneArchive(projectId, action.id, true, change); selectedId = ""; break;
       case "reorder": await persistMilestonesReorder(projectId, action.milestoneIds, change); break;

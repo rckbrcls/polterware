@@ -5,6 +5,12 @@
   flex: 1 1 auto;
 }
 
+/* The toolbar floats over both panes with no band or fade of its own: they reach the top edge
+ * and the document scrolls up under it. Each pane starts below the toolbar by its own padding. */
+.pw-page-content > .pw-structure:first-child {
+  margin-top: 0;
+}
+
 /* The tree sits on the shared ring Card, as tall as its rows; past the pane's height the card scrolls.
  * The pane's width closes from the toolbar (tree-pane.ts); the card keeps its 280px so nothing rewraps. */
 .pw-structure__tree {
@@ -14,7 +20,7 @@
   flex: none;
   align-items: flex-start;
   overflow: hidden;
-  padding: 8px 0 8px 8px;
+  padding: calc(8px + var(--pw-toolbar-overlay, 0px)) 0 8px 8px;
 }
 
 .pw-structure__tree-card {
@@ -56,7 +62,7 @@
  * head lines, then record sections set well apart. Space alone separates the subjects.
  */
 .pw-structure__document {
-  padding-top: 48px;
+  padding-top: calc(48px + var(--pw-toolbar-overlay, 0px));
 }
 
 .pw-structure__hero {

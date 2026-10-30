@@ -33,7 +33,34 @@
   cursor: default;
 }
 
-/* A Fact page lists the evidence that backs the statement under its title. */
+/* A Fact's dialog: labeled property lines (a 96px muted label column), then its evidence. */
+.pw-fact-peek__properties {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.pw-fact-peek__row {
+  display: grid;
+  min-height: 24px;
+  align-items: center;
+  grid-template-columns: 96px minmax(0, 1fr);
+  font-size: 13px;
+}
+
+.pw-fact-peek__row dt {
+  color: var(--color-text-muted);
+}
+
+.pw-fact-peek__row dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* The evidence that backs the statement, under its properties. */
 .pw-fact-evidence {
   display: flex;
   flex-direction: column;

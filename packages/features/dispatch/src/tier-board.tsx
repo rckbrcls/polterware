@@ -5,6 +5,7 @@ import {
   Card,
   Input,
   PageEmpty,
+  Popover,
   ProgressBar,
   SearchBar,
   SegmentDisplay,
@@ -19,7 +20,7 @@ type DragPayload = { card: TierCardInput; from?: TierSlot };
 
 /*
  * Pointer drag instead of native HTML drag and drop: it behaves the same with a mouse, a trackpad and in
- * Electron, and it can carry a card from the palette window to the board. A press becomes a drag after a
+ * Electron. A press becomes a drag after a
  * few pixels of movement; the cell under the pointer is found by hit testing `[data-tier-slot]`.
  */
 const DRAG_THRESHOLD = 4;
@@ -32,8 +33,6 @@ const dragState = createRoot(() => {
   return { active, setActive, pointer, setPointer, over, setOver };
 });
 let dropHandler: ((payload: DragPayload, slot: TierSlot) => void) | undefined;
-// A press that turned into a drag must not also count as a click on the source.
-let suppressClick = false;
 
 function slotAt(x: number, y: number): TierSlot | undefined {
   const cell = document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-tier-slot]");
@@ -43,7 +42,7 @@ function slotAt(x: number, y: number): TierSlot | undefined {
 
 function beginPointerDrag(event: PointerEvent, payload: DragPayload) {
   if (event.button !== 0) return;
-  if (event.target instanceof Element && event.target.closest("button:not([data-tier-drag-source]), input")) return;
+  if (event.target instanceof Element && event.target.closest("button, input")) return;
   const startX = event.clientX;
   const startY = event.clientY;
   let dragging = false;
@@ -65,8 +64,6 @@ function beginPointerDrag(event: PointerEvent, payload: DragPayload) {
     window.removeEventListener("keydown", key);
     delete document.documentElement.dataset.tierDragging;
     if (dragging) {
-      suppressClick = true;
-      setTimeout(() => { suppressClick = false; }, 0);
       const slot = commit && at ? slotAt(at.clientX, at.clientY) : undefined;
       if (slot) dropHandler?.(payload, slot);
     }
@@ -156,7 +153,8 @@ function TierDragGhost(props: { avatar: (agent: string) => JSX.Element }) {
 
 /**
  * Routing tiers as a grid: each tier is a column and each row is an order position (row 1 runs
- * first, the rest are fallbacks). Cards move by dragging; new ones come from the model palette.
+ * first, the rest are fallbacks). Cards move by dragging; the first empty cell of each tier is
+ * Add model, which opens the model palette in a popover anchored to it.
  */
 export function TierBoard(props: {
   tiers: readonly DispatchTierView[];
@@ -165,8 +163,17 @@ export function TierBoard(props: {
   matches?: (tier: DispatchTierView) => boolean;
   avatar: (agent: string) => JSX.Element;
   onChange: (next: DispatchTierView[]) => void;
+  /** The models the installed agents report; `load` asks for them the first time a palette opens. */
+  palette?: { models: readonly DispatchModelView[]; loading: boolean; problems: readonly string[]; load: () => void };
 }) {
   const columns = createMemo(() => tierColumns(props.tiers));
+  // The cell whose palette is open, and the button it is anchored to.
+  const [adding, setAdding] = createSignal<{ slot: TierSlot; anchor: HTMLElement }>();
+  const openPalette = (slot: TierSlot, anchor: HTMLElement) => {
+    if (adding()?.anchor === anchor) { setAdding(undefined); return; }
+    props.palette?.load();
+    setAdding({ slot, anchor });
+  };
   // One extra row is always open, so a tier can grow by dropping below its last card.
   const rows = createMemo(() => Math.max(1, ...TIER_COLUMNS.map((column) => columns()[column.id]?.length ?? 0)) + (props.editable ? 1 : 0));
 
@@ -179,7 +186,7 @@ export function TierBoard(props: {
   onCleanup(() => { dropHandler = undefined; });
 
   return (
-    <div class="pw-tier-board" role="grid" data-floating-window-opener="" aria-label="Routing tiers" aria-rowcount={rows() + 1}>
+    <div class="pw-tier-board" role="grid" aria-label="Routing tiers" aria-rowcount={rows() + 1}>
       <div class="pw-tier-board__row" role="row">
         <span class="pw-tier-board__corner" role="columnheader"><span class="sr-only">Order</span></span>
         <For each={TIER_COLUMNS}>
@@ -215,9 +222,20 @@ export function TierBoard(props: {
                       when={tier()}
                       fallback={
                         <Show when={props.editable}>
-                          <div class="pw-tier-board__empty" data-next={isNext() ? "" : undefined}>
-                            <Show when={isNext()}>Drop a model</Show>
-                          </div>
+                          <Show when={isNext() && props.palette} fallback={<div class="pw-tier-board__empty" />}>
+                            <button
+                              type="button"
+                              class="pw-tier-board__empty pw-tier-board__add"
+                              data-next=""
+                              data-open={adding()?.slot.tier === column.id ? "" : undefined}
+                              aria-label={`Add model to ${column.label}`}
+                              aria-expanded={adding()?.slot.tier === column.id}
+                              onClick={(event) => openPalette(slot(), event.currentTarget)}
+                            >
+                              <Plus size={14} aria-hidden />
+                              Add model
+                            </button>
+                          </Show>
                         </Show>
                       }
                     >
@@ -240,19 +258,37 @@ export function TierBoard(props: {
         )}
       </Index>
       <TierDragGhost avatar={props.avatar} />
+      <Show when={props.palette}>
+        {(palette) => (
+          <Popover open={!!adding()} onClose={() => setAdding(undefined)} anchorRef={() => adding()?.anchor} placement="bottom-start" width={360} class="pw-tier-palette-popover">
+            <TierModelPalette
+              models={palette().models}
+              loading={palette().loading}
+              problems={palette().problems}
+              avatar={props.avatar}
+              onAdd={(card) => {
+                const target = adding();
+                if (!target) return;
+                setAdding(undefined);
+                props.onChange(placeTierCard(props.tiers, card, target.slot));
+              }}
+            />
+          </Popover>
+        )}
+      </Show>
     </div>
   );
 }
 
 /**
- * The model palette, shown inside the Tiers floating window: the models the installed agents report.
- * Rows drag onto the board; a click adds the model at the end of the tier the agent suggests.
+ * The model palette, in a popover from a tier's Add model cell: the models the installed agents
+ * report, grouped by agent; a click (or the custom Agent and Model pair) places one in that cell.
  */
 export function TierModelPalette(props: {
   models: readonly DispatchModelView[];
   loading: boolean;
   problems: readonly string[];
-  onAdd: (card: TierCardInput, tier: string) => void;
+  onAdd: (card: TierCardInput) => void;
   avatar: (agent: string) => JSX.Element;
 }) {
   const [query, setQuery] = createSignal("");
@@ -269,7 +305,6 @@ export function TierModelPalette(props: {
     return [...byAgent.entries()].sort(([a], [b]) => a.localeCompare(b));
   });
   const cardOf = (model: Pick<DispatchModelView, "agent" | "model" | "provider">): TierCardInput => ({ agent: model.agent, model: model.model, provider: model.provider, speed: 0, strength: 0 });
-  const suggestedTier = (tier: string) => (TIER_COLUMNS.some((column) => column.id === tier) ? tier : "normal");
 
   return (
     <div class="pw-tier-palette">
@@ -289,9 +324,7 @@ export function TierModelPalette(props: {
                       type="button"
                       role="listitem"
                       class="pw-tier-palette__item"
-                      data-tier-drag-source=""
-                      onPointerDown={(event) => beginPointerDrag(event, { card: cardOf(model) })}
-                      onClick={() => { if (!suppressClick) props.onAdd(cardOf(model), suggestedTier(model.tier)); }}
+                      onClick={() => props.onAdd(cardOf(model))}
                       title={`${model.agent} / ${model.model}`}
                     >
                       {props.avatar(model.agent)}
@@ -319,7 +352,7 @@ export function TierModelPalette(props: {
           const agent = customAgent().trim();
           const model = customModel().trim();
           if (!agent || !model) return;
-          props.onAdd(cardOf({ agent, model, provider: "" }), "normal");
+          props.onAdd(cardOf({ agent, model, provider: "" }));
           setCustomModel("");
         }}
       >

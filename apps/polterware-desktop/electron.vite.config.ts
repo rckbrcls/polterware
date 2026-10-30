@@ -73,6 +73,7 @@ export default defineConfig({
         "@polterware/contracts": resolve(rootDir, "../../packages/contracts/src/index.ts"),
         // Subpaths before package root alias so Vite does not treat them as file suffixes.
         "@polterware/feature-canvas/components": resolve(rootDir, "../../packages/features/canvas/src/components.ts"),
+        "@polterware/feature-canvas/component-icons": resolve(rootDir, "../../packages/features/canvas/src/component-icons.ts"),
         "@polterware/feature-canvas/model": resolve(rootDir, "../../packages/features/canvas/src/model.ts"),
         "@polterware/feature-canvas/promotion": resolve(rootDir, "../../packages/features/canvas/src/promotion.ts"),
         "@polterware/feature-canvas": resolve(rootDir, "../../packages/features/canvas/src/index.tsx"),

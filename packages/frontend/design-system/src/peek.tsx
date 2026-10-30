@@ -9,6 +9,8 @@ export type PeekProps = {
   onClose: () => void;
   /** Opens the entity's page; adds an "Open" action (Enter). */
   onOpen?: () => void;
+  /** Actions on the entity, before Close in the footer, such as Edit. */
+  actions?: JSX.Element;
   children: JSX.Element;
 };
 
@@ -25,9 +27,10 @@ export function Peek(props: PeekProps) {
       autoFocusField={false}
       onClose={props.onClose}
       footer={
-        <Show when={props.onOpen}>
+        <Show when={props.onOpen || props.actions}>
+          {props.actions}
           <Button variant="ghost" onClick={props.onClose}>Close</Button>
-          <Button variant="primary" onClick={() => props.onOpen?.()}>Open</Button>
+          <Show when={props.onOpen}><Button variant="primary" onClick={() => props.onOpen?.()}>Open</Button></Show>
         </Show>
       }
     >

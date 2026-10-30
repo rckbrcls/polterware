@@ -8,6 +8,7 @@ import {
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore, readRemembered, writeRemembered } from "@polterware/frontend-state";
 import { COMPONENTS, component } from "@polterware/feature-canvas/components";
+import { componentIcons } from "@polterware/feature-canvas/component-icons";
 import { STRUCTURE_AGENT_PROMPTS } from "./agent-prompts";
 import { buildStructureTree, flattenStructureTree, structureParents, type StructureKind, type StructureNode, type StructureTreeItem } from "./structure-tree";
 import type { ProjectEnvironment } from "./domain/project-environments";
@@ -24,7 +25,7 @@ const PROJECT_ID = "structure:project";
 /** `direct` marks a link the node owns (a card under it, a record scoped to it), which its document can remove. */
 export type StructureRecord = { id: string; title: string; caption?: string; direct?: boolean };
 /** The fields of a node its document edits in place; a field left out is unchanged, and an empty value clears it. */
-export type StructureNodePatch = { title?: string; intent?: string; repo?: string; folder?: string; kind?: string; tech?: string };
+export type StructureNodePatch = { title?: string; intent?: string; level?: StructureKind; repo?: string; folder?: string; kind?: string; tech?: string };
 export type StructureRecordKind = "card" | "decision" | "fact" | "doc";
 export type StructureRecords = { cards: readonly StructureRecord[]; decisions: readonly StructureRecord[]; facts: readonly StructureRecord[]; docs: readonly StructureRecord[] };
 const NO_RECORDS: StructureRecords = { cards: [], decisions: [], facts: [], docs: [] };
@@ -48,6 +49,17 @@ function KindIcon(props: { kind: StructureKind | "project"; size?: number }) {
   return <Show when={props.kind === "component"} fallback={<Show when={props.kind === "domain"} fallback={<Layers size={size()} aria-hidden />}><Folder size={size()} aria-hidden /></Show>}><Boxes size={size()} aria-hidden /></Show>;
 }
 const kindLabel = (kind: string) => kind.charAt(0).toUpperCase() + kind.slice(1);
+
+type PickOption = { value: string; label: string; icon?: JSX.Element };
+/** A picker option's 20px icon tile, so every dropdown on the page reads like its rows. */
+function OptionTile(props: { seed: string; children: JSX.Element }) {
+  return <IconTile size={20} tone="neutral" seed={`structure-option-${props.seed}`}>{props.children}</IconTile>;
+}
+/** The canvas kind's icon, or the component glyph for an unknown kind. */
+function ComponentKindIcon(props: { kind: string; size?: number }) {
+  const Icon = () => componentIcons[props.kind];
+  return <Show when={Icon()} fallback={<Boxes size={props.size ?? 14} aria-hidden />}>{(icon) => { const KindGlyph = icon(); return <KindGlyph size={props.size ?? 14} aria-hidden />; }}</Show>;
+}
 
 /** The component kind's palette label (`database` reads Database); unknown kinds read as written. */
 export function componentKindLabel(kind: string): string {
@@ -136,7 +148,7 @@ function InlineText(props: { label: string; value: string; placeholder: string; 
 }
 
 /** A head value set from a short list: a ghost button with the value (or a muted placeholder) that opens the shared PropertyPicker. */
-function PickerValue(props: { label: string; icon: JSX.Element; value?: string; placeholder: string; options: readonly { value: string; label: string }[]; mono?: boolean; onChange: (value: string) => void }) {
+function PickerValue(props: { label: string; icon: JSX.Element; value?: string; placeholder: string; options: readonly PickOption[]; mono?: boolean; onChange: (value: string) => void }) {
   const [open, setOpen] = createSignal(false);
   let trigger: HTMLButtonElement | undefined;
   const current = () => props.options.find((option) => option.value === props.value)?.label ?? props.value;
@@ -151,7 +163,7 @@ function PickerValue(props: { label: string; icon: JSX.Element; value?: string; 
 }
 
 /** A section heading's add button: opens the PropertyPicker of what can still be linked. */
-function LinkButton(props: { label: string; options: readonly { value: string; label: string }[]; onPick: (value: string) => void }) {
+function LinkButton(props: { label: string; options: readonly PickOption[]; onPick: (value: string) => void }) {
   const [open, setOpen] = createSignal(false);
   let trigger: HTMLButtonElement | undefined;
   return <>
@@ -164,7 +176,7 @@ function LinkButton(props: { label: string; options: readonly { value: string; l
 /** What a document shows and edits; `project` is the project's own document. */
 type NodeDocumentModel = {
   id: string; project: boolean; title: string; level: StructureKind | "project"; description?: string;
-  kind?: string; tech?: string; repo?: string; folder?: string; path?: string;
+  kind?: string; tech?: string; repo?: string; folder?: string; path?: string; parentId?: string;
   uses: readonly { id: string; title: string; level: StructureKind }[]; deploys?: StructureNode["deploys"]; records: StructureRecords;
 };
 
@@ -174,11 +186,16 @@ type NodeDocumentEdits = {
   description?: (value: string) => void;
   patch?: (patch: StructureNodePatch) => void;
   uses?: (ids: string[]) => void;
-  usesOptions?: readonly { value: string; label: string }[];
+  usesOptions?: readonly PickOption[];
+  /** The levels the node may take where it sits; one option or none keeps the level read-only. */
+  levelOptions?: readonly PickOption[];
+  /** The nodes it may move under; picking one moves it. */
+  parentOptions?: readonly PickOption[];
+  move?: (parentId: string) => void;
   repositories?: readonly string[];
   editDeploys?: () => void;
   /** What each record section can still link, by kind; a kind left out has no add button. */
-  linkOptions?: Partial<Record<StructureRecordKind, readonly { value: string; label: string }[]>>;
+  linkOptions?: Partial<Record<StructureRecordKind, readonly PickOption[]>>;
   link?: (kind: StructureRecordKind, id: string) => void;
   unlink?: (kind: StructureRecordKind, id: string) => void;
 };
@@ -194,7 +211,7 @@ type NodeDocumentEdits = {
 function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityAction[]; edits: NodeDocumentEdits; isProviderConnected: (provider: string) => boolean; onOpenRecord?: (kind: StructureRecordKind, id: string) => void; onOpenNode?: (id: string) => void }) {
   const doc = () => props.doc;
   const component = () => doc().level === "component";
-  const repositoryOptions = () => [{ value: "", label: "None" }, ...(props.edits.repositories ?? []).map((name) => ({ value: name, label: name }))];
+  const repositoryOptions = () => [{ value: "", label: "None", icon: <OptionTile seed="repo-none"><XIcon size={12} /></OptionTile> }, ...(props.edits.repositories ?? []).map((name) => ({ value: name, label: name, icon: <OptionTile seed={`repo-${name}`}><GitBranch size={12} /></OptionTile> }))];
   return <article class="pw-document__column pw-structure__document" aria-label={doc().title}>
     <div class="pw-structure__hero">
       <div class="pw-structure__hero-top">
@@ -210,13 +227,20 @@ function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityA
     </div>
     <dl class="pw-structure__head">
       <HeadRow label="Properties">
-        <HeadValue icon={<KindIcon kind={doc().level} size={14} />}>{kindLabel(doc().level)}</HeadValue>
+        <Show when={(props.edits.levelOptions?.length ?? 0) > 1 && props.edits.patch} fallback={<HeadValue icon={<KindIcon kind={doc().level} size={14} />}>{kindLabel(doc().level)}</HeadValue>}>
+          <PickerValue label="Level" icon={<KindIcon kind={doc().level} size={14} />} value={doc().level} placeholder="Level" options={props.edits.levelOptions!}
+            onChange={(value) => { if (value !== doc().level) props.edits.patch!(value === "component" ? { level: value } : { level: value as StructureKind, kind: "" }); }} />
+        </Show>
+        <Show when={props.edits.move && props.edits.parentOptions?.length}>
+          <PickerValue label="Parent" icon={<Route size={14} />} value={doc().parentId} placeholder="Parent" options={props.edits.parentOptions!}
+            onChange={(value) => { if (value !== doc().parentId) props.edits.move!(value); }} />
+        </Show>
         <Show when={component() && !props.edits.patch}>
           <Show when={doc().kind}><HeadValue icon={<Package size={14} />}>{componentKindLabel(doc().kind!)}</HeadValue></Show>
           <Show when={doc().tech}><HeadValue icon={<Cpu size={14} />}>{doc().tech}</HeadValue></Show>
         </Show>
         <Show when={component() && props.edits.patch}>
-          <PickerValue label="Kind" icon={<Package size={14} />} value={doc().kind} placeholder="Kind" options={KIND_OPTIONS}
+          <PickerValue label="Kind" icon={doc().kind ? <ComponentKindIcon kind={doc().kind!} /> : <Package size={14} />} value={doc().kind} placeholder="Kind" options={kindOptions()}
             onChange={(value) => props.edits.patch!({ kind: value === NO_KIND ? "" : value })} />
           <span class="pw-structure__pick-field">
             <span class="pw-structure__value-icon" aria-hidden><Cpu size={14} /></span>
@@ -291,7 +315,8 @@ function NodeLine(props: { addLabel?: string; onAdd?: () => void }) {
 }
 
 const NO_KIND = "none";
-const KIND_OPTIONS = [{ value: NO_KIND, label: "None" }, ...COMPONENTS.map((item) => ({ value: item.kind, label: item.label }))];
+/** Built per use: an option icon is a DOM node, so each picker gets its own. */
+const kindOptions = (): PickOption[] => [{ value: NO_KIND, label: "None", icon: <OptionTile seed="kind-none"><XIcon size={12} /></OptionTile> }, ...COMPONENTS.map((item) => ({ value: item.kind, label: item.label, icon: <OptionTile seed={`kind-${item.kind}`}><ComponentKindIcon kind={item.kind} size={12} /></OptionTile> }))];
 
 export function StructureView(props: {
   projectName: string;
@@ -354,13 +379,13 @@ export function StructureView(props: {
   const selected = createMemo(() => props.nodes.find((node) => node.id === selectedId()));
   const registry = () => props.registryNodes ?? props.nodes;
   const parents = () => structureParents(registry(), moveOpen() ? selected()?.level ?? kind() : kind(), moveOpen() ? selected()?.id : undefined);
-  const parentOptions = () => parents().map((node) => ({ value: node.id, label: `${node.title} (${kindLabel(node.level)})` }));
+  const parentOptions = () => parents().map((node) => ({ value: node.id, label: `${node.title} (${kindLabel(node.level)})`, icon: <OptionTile seed={node.id}><KindIcon kind={node.level} size={12} /></OptionTile> }));
   const open = (id: string) => props.onOpenNode(id);
 
   // Environment options for the deploys dialog
-  const environmentOptions = () => (props.environments ?? []).map((env) => ({ value: env.id, label: env.label }));
+  const environmentOptions = () => (props.environments ?? []).map((env) => ({ value: env.id, label: env.label, icon: <OptionTile seed={`env-${env.id}`}><Layers size={12} /></OptionTile> }));
   // Provider options from the catalog
-  const providerOptions = () => CATALOG_PROVIDERS.map((p) => ({ value: p.id, label: p.name }));
+  const providerOptions = () => CATALOG_PROVIDERS.map((p) => ({ value: p.id, label: p.name, icon: <OptionTile seed={`provider-${p.id}`}><Cloud size={12} /></OptionTile> }));
   // Check if a provider is connected (status !== "connected" means not connected)
   const isProviderConnected = (providerId: string) => {
     const integration = props.integrations?.find((i) => i.providerId === providerId);
@@ -435,12 +460,21 @@ export function StructureView(props: {
   const write = (action: Promise<void> | undefined, failure: string) => {
     void action?.catch((error: unknown) => pushToast(error instanceof Error ? error.message : failure, "danger"));
   };
+  // A domain sits under a system; a component under a domain or a system. A node right under a
+  // system can switch between the two, but only a node with no children can become a component.
+  const levelOptions = (node: StructureNode): PickOption[] => {
+    const parentLevel = registry().find((item) => item.id === node.parentId)?.level;
+    if (parentLevel !== "system") return [];
+    const childless = !registry().some((item) => item.parentId === node.id);
+    return (["domain", ...(childless ? ["component"] : [])] as StructureKind[])
+      .map((level) => ({ value: level, label: kindLabel(level), icon: <OptionTile seed={`level-${level}`}><KindIcon kind={level} size={12} /></OptionTile> }));
+  };
   const detail = createMemo<NodeDocumentModel | undefined>(() => {
     const id = selectedId() ?? PROJECT_ID;
     if (id === PROJECT_ID) return { id, project: true, title: props.projectName, level: "project", description: props.projectDescription, repo: props.projectRepository, uses: [], records: props.projectRecords };
     const node = selected();
     if (!node) return undefined;
-    return { id: node.id, project: false, title: node.title, level: node.level, description: node.intent, kind: node.kind, tech: node.tech, repo: node.repo, folder: node.folder, path: node.path,
+    return { id: node.id, project: false, title: node.title, level: node.level, parentId: node.parentId, description: node.intent, kind: node.kind, tech: node.tech, repo: node.repo, folder: node.folder, path: node.path,
       uses: registry().filter((item) => node.uses?.includes(item.path)).map((item) => ({ id: item.id, title: item.title, level: item.level })),
       deploys: node.level === "component" ? node.deploys : undefined, records: props.records[node.id] ?? NO_RECORDS };
   });
@@ -453,14 +487,21 @@ export function StructureView(props: {
     };
     const node = selected()!;
     const linked = (kind: keyof StructureRecords) => new Set(doc.records[kind].map((record) => record.id));
-    const candidates = (kind: keyof StructureRecords) => props.projectRecords[kind].filter((record) => !linked(kind).has(record.id)).map((record) => ({ value: record.id, label: record.title }));
+    const candidates = (kind: keyof StructureRecords) => {
+      const section = RECORD_SECTIONS.find((item) => item.key === kind)!;
+      return props.projectRecords[kind].filter((record) => !linked(kind).has(record.id))
+        .map((record) => ({ value: record.id, label: record.title, icon: <OptionTile seed={record.id}><section.Icon size={12} /></OptionTile> }));
+    };
     return {
       title: props.onEditNode ? (title) => write(props.onEditNode!(node.id, { title }), "Could not rename the node.") : undefined,
       description: props.onEditNode ? (intent) => write(props.onEditNode!(node.id, { intent }), "Could not save the description.") : undefined,
       patch: props.onEditNode ? (patch) => write(props.onEditNode!(node.id, patch), "Could not save the node.") : undefined,
       repositories: props.repositories,
       uses: (ids) => write(props.onUses(node.id, ids), "Could not save dependencies."),
-      usesOptions: registry().filter((item) => item.id !== node.id && !node.uses?.includes(item.path)).map((item) => ({ value: item.id, label: `${item.title} (${kindLabel(item.level)})` })),
+      usesOptions: registry().filter((item) => item.id !== node.id && !node.uses?.includes(item.path)).map((item) => ({ value: item.id, label: `${item.title} (${kindLabel(item.level)})`, icon: <OptionTile seed={item.id}><KindIcon kind={item.level} size={12} /></OptionTile> })),
+      levelOptions: levelOptions(node),
+      parentOptions: node.level === "system" ? undefined : structureParents(registry(), node.level, node.id).map((item) => ({ value: item.id, label: item.title, icon: <OptionTile seed={item.id}><KindIcon kind={item.level} size={12} /></OptionTile> })),
+      move: node.level === "system" ? undefined : (parentId) => write(props.onMove(node.id, parentId), "Could not move the node."),
       editDeploys: node.level === "component" && props.onDeploysChange ? () => openDeploysDialog(node) : undefined,
       linkOptions: props.onLinkRecord ? {
         ...(node.level === "component" ? { card: candidates("cards") } : {}),
@@ -518,7 +559,7 @@ export function StructureView(props: {
               selectedValue={treeSelection()} onSelectionChange={(event) => { const id = event.selectedValue[0]; if (id) open(id); }} onFocusChange={(event) => { if (event.focusedValue && event.focusedValue !== selectedId()) open(event.focusedValue); }} />
             </Card>
           </nav>
-          <div class="pw-structure__pane pw-scroll-fade">
+          <div class="pw-structure__pane">
             <Show when={detail()}>{(item) => <NodeDocument doc={item()} actions={item().project ? projectActions() : nodeActions(selected()!)} edits={edits()} isProviderConnected={isProviderConnected} onOpenRecord={props.onOpenRecord} onOpenNode={open} />}</Show>
             <Show when={!props.nodes.length}>
               <div class="pw-document__column pw-structure__start">
@@ -533,7 +574,7 @@ export function StructureView(props: {
       <Button variant="ghost" disabled={busy()} onClick={() => { setMoveOpen(false); props.onCloseCreate(); }}>Cancel</Button>
       <Button disabled={busy() || (!moveOpen() && !title().trim()) || ((moveOpen() || kind() !== "system") && !parents().some((node) => node.id === parent()))} onClick={() => void save(() => moveOpen() ? props.onMove(selected()!.id, parent()) : props.onCreate({ title: title().trim(), level: kind(), parentId: parent() }), () => { setMoveOpen(false); props.onCloseCreate(); })}>{busy() ? "Saving…" : "Save"}</Button>
     </>}>
-      <FormStack><Show when={!moveOpen()}><Field label="Name"><Input value={title()} onInput={(event) => setTitle(event.currentTarget.value)} /></Field><Field label="Kind"><Select value={kind()} options={[{ value: "system", label: "System" }, { value: "domain", label: "Domain" }, { value: "component", label: "Component" }]} onChange={(value) => { setKind(value as StructureKind); setParent(""); }} /></Field></Show>
+      <FormStack><Show when={!moveOpen()}><Field label="Name"><Input value={title()} onInput={(event) => setTitle(event.currentTarget.value)} /></Field><Field label="Kind"><Select value={kind()} options={(["system", "domain", "component"] as const).map((level) => ({ value: level, label: kindLabel(level), icon: <OptionTile seed={`level-${level}`}><KindIcon kind={level} size={12} /></OptionTile> }))} onChange={(value) => { setKind(value as StructureKind); setParent(""); }} /></Field></Show>
         <Show when={moveOpen() || kind() !== "system"}><Field label="Parent"><Select value={parent()} options={parentOptions()} onChange={setParent} placeholder="Choose a parent" /></Field><Show when={!parents().length}><p class="text-sm text-[var(--color-text-muted)]">Add a system before adding domains or components.</p></Show></Show>
         <Show when={formError()}><p role="alert" class="text-sm text-[var(--color-danger)]">{formError()}</p></Show>
       </FormStack>

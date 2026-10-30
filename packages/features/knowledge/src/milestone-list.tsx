@@ -1,16 +1,13 @@
 import { Show, createMemo, createSignal } from "solid-js";
 import {
-  A11yDialog,
   Archive,
   ArrowDown,
   ArrowUp,
-  Button,
+  Composer,
   DataTable,
   EntityContextMenu,
   EntityMenuButton,
-  Field,
   FolderKanban,
-  Input,
   Layers,
   PageContent,
   PageEmpty,
@@ -20,6 +17,7 @@ import {
   ProgressBar,
   SearchBar,
   StatusChip,
+  StatusDot,
   ToolbarIconButton,
   createEntityContextMenu,
   pushToast,
@@ -57,9 +55,9 @@ export function MilestoneList(props: {
 }) {
   const [dialog, setDialog] = createSignal<"create" | "rename" | null>(null);
   const [target, setTarget] = createSignal<WorkspaceMilestone>();
-  const [name, setName] = createSignal("");
   const [busy, setBusy] = createSignal(false);
-  const [error, setError] = createSignal("");
+  const [state, setState] = createSignal<MilestoneState>("planned");
+  const [targetDate, setTargetDate] = createSignal("");
   const [query, setQuery] = createSignal("");
   const listed = createMemo(() => listedMilestones(props.milestones));
   const rows = createMemo<RoadmapRow[]>(() => {
@@ -68,8 +66,8 @@ export function MilestoneList(props: {
       .filter((row) => !needle || row.name.toLowerCase().includes(needle));
   });
   const disabled = () => Boolean(props.disabled || busy());
-  const nameError = () => {
-    const value = name().trim();
+  const nameError = (name: string) => {
+    const value = name.trim();
     if (!value) return "Enter a milestone name.";
     if ([...value].length > 80) return "Use at most 80 characters.";
     if (listed().some((item) => item.id !== target()?.id && item.name.toLowerCase() === value.toLowerCase())) return "A milestone already uses this name.";
@@ -78,36 +76,37 @@ export function MilestoneList(props: {
 
   function openDialog(kind: "create" | "rename", milestone?: WorkspaceMilestone) {
     setTarget(milestone);
-    setName(kind === "create" ? "" : milestone?.name ?? "");
-    setError("");
+    setState("planned");
+    setTargetDate("");
     setDialog(kind);
   }
 
-  async function run(action: MilestoneAction) {
-    if (!props.onAction || disabled()) return;
+  /** Runs an action; false when it did not go through (cancelled or refused), so the composer keeps its draft. */
+  async function run(action: MilestoneAction): Promise<boolean> {
+    if (!props.onAction || disabled()) return false;
     setBusy(true);
-    setError("");
     try {
       const id = await props.onAction(action);
-      if (id === null) return;
+      if (id === null) return false;
       setDialog(null);
       if (action.kind === "create") props.onOpen(id);
       if (action.kind === "archive") props.onArchive();
+      return true;
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Could not save the milestone.";
-      setError(message);
-      pushToast(message, "danger");
+      pushToast(cause instanceof Error ? cause.message : "Could not save the milestone.", "danger");
+      return false;
     } finally {
       setBusy(false);
     }
   }
 
-  function submit() {
+  async function submit(draft: { title: string; description: string }): Promise<boolean> {
     const kind = dialog();
     const milestone = target();
-    if (!kind || nameError()) return;
-    if (kind === "create") void run({ kind, name: name().trim() });
-    else if (milestone) void run({ kind, id: milestone.id, name: name().trim() });
+    const problem = nameError(draft.title) || (targetDate().trim() && !/^\d{4}-\d{2}-\d{2}$/.test(targetDate().trim()) ? "Write the target date as YYYY-MM-DD." : "");
+    if (!kind || problem) { if (problem) pushToast(problem, "danger"); return false; }
+    if (kind === "create") return run({ kind, name: draft.title.trim(), goal: draft.description.trim(), state: state(), targetDate: targetDate().trim() });
+    return milestone ? run({ kind, id: milestone.id, name: draft.title.trim() }) : false;
   }
 
   function move(milestone: WorkspaceMilestone, direction: -1 | 1) {
@@ -225,26 +224,24 @@ export function MilestoneList(props: {
       </PageContent>
 
       <EntityContextMenu menu={rowMenu} />
-      <A11yDialog
+      {/* New milestone and Rename take the shared composer: the name as its title, then (on create) the goal, state, and target date. */}
+      <Composer
         open={dialog() !== null}
-        size="sm"
-        dismissible={!busy()}
-        title={dialog() === "create" ? "New milestone" : "Rename milestone"}
+        crumbs={dialog() === "create" ? ["Milestones", "New milestone"] : ["Milestones", target()?.name ?? "", "Rename milestone"]}
+        titlePlaceholder="Milestone name"
+        descriptionPlaceholder={dialog() === "create" ? "Goal: what this milestone delivers…" : undefined}
+        properties={dialog() === "create" ? [{
+          id: "state", label: "State",
+          options: (["planned", "active", "done"] as MilestoneState[]).map((value) => ({ value, label: STATE_LABEL[value], icon: <StatusDot tone={STATE_TONE[value]} showLabel={false} /> })),
+          value: state(), onChange: (value) => setState(value as MilestoneState),
+        }] : undefined}
+        fields={dialog() === "create" ? [{ id: "target", label: "Target date", placeholder: "YYYY-MM-DD", value: targetDate(), onChange: setTargetDate }] : undefined}
+        initial={dialog() === "rename" ? { title: target()?.name ?? "" } : undefined}
+        createMore={false}
+        submitLabel={dialog() === "create" ? "Create milestone" : "Save"}
         onClose={() => { if (!busy()) setDialog(null); }}
-        footer={<>
-          <Button size="sm" variant="ghost" disabled={busy()} onClick={() => setDialog(null)}>Cancel</Button>
-          <Button size="sm" variant="primary" disabled={busy() || Boolean(nameError())} onClick={submit}>
-            {busy() ? "Saving…" : dialog() === "create" ? "Create" : "Save"}
-          </Button>
-        </>}
-      >
-        <Field label="Milestone name" hint="A milestone owns its cards; cards with no milestone stay in the Backlog.">
-          <Input value={name()} disabled={busy()} onInput={(event) => setName(event.currentTarget.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); submit(); } }} />
-        </Field>
-        <Show when={error() || (name().trim() && nameError())}>
-          <p role="alert" class="text-sm text-[var(--color-danger)]">{error() || nameError()}</p>
-        </Show>
-      </A11yDialog>
+        onSubmit={submit}
+      />
     </div>
   );
 }

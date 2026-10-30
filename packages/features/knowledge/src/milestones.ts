@@ -1,4 +1,4 @@
-import type { WorkspaceMilestone, WorkspaceWorkCard } from "@polterware/feature-shell";
+import type { MilestoneState, WorkspaceMilestone, WorkspaceWorkCard } from "@polterware/feature-shell";
 
 /** Implicit views that are never stored: every card, and the cards with no milestone. */
 export const ALL_WORK = { id: "", name: "All cards" } as const;
@@ -7,7 +7,7 @@ export const BACKLOG = { id: "backlog", name: "Backlog" } as const;
 export type MilestoneView = Pick<WorkspaceMilestone, "id" | "name"> & { slug?: string };
 
 export type MilestoneAction =
-  | { kind: "create"; name: string }
+  | { kind: "create"; name: string; goal?: string; state?: MilestoneState; targetDate?: string }
   | { kind: "rename"; id: string; name: string }
   | { kind: "archive"; id: string }
   | { kind: "reorder"; id: string; milestoneIds: string[] };

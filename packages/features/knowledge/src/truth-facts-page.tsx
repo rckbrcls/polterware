@@ -1,4 +1,4 @@
-import { Show, createSignal, onCleanup, onMount } from "solid-js";
+import { createSignal, onCleanup, onMount } from "solid-js";
 import { EntityDetailHost, createPageFilters, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem, type WorkspaceCanonEntity } from "@polterware/feature-shell";
 import {
   FilterPopover,
@@ -14,7 +14,7 @@ import {
   type TabItem,
 } from "@polterware/frontend-design-system";
 import { isTypingTarget, matchesShortcut } from "@polterware/frontend-state";
-import { CanonFactsPanel, factPageOpen, type CanonJustifyChange } from "./canon-facts-panel";
+import { CanonFactsPanel, type CanonJustifyChange } from "./canon-facts-panel";
 import { FACT_KINDS } from "./fact-kind";
 
 /** Truth → Facts: statements about the project with their subject, scope, and evidence. */
@@ -78,7 +78,6 @@ export function TruthFactsPage(props: {
 
   return (
     <EntityDetailHost>
-      <Show when={!factPageOpen()}>
       <PageToolbar.Root>
         <PageToolbar.Tabs>
           <Tabs
@@ -119,9 +118,8 @@ export function TruthFactsPage(props: {
         onClausesChange={filters.onClausesChange}
         saved={filters.saved()}
       />
-      </Show>
-      {/* The panel stays mounted under a Fact page so its list and selection survive; its box must not cover the page. */}
-      <PageContent class={factPageOpen() ? "hidden" : "flex min-h-0 flex-1 flex-col p-0"}>
+      {/* A Fact opens in a dialog over the list, which stays in place. */}
+      <PageContent class="flex min-h-0 flex-1 flex-col p-0">
         <CanonFactsPanel
           projectId={props.projectId}
           scopeNodes={props.scopeNodes}

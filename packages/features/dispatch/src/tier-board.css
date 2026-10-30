@@ -139,17 +139,29 @@
   border: 1px dashed var(--color-border-strong);
 }
 
-/* The palette window covers the whole app; only its frame takes the pointer. */
-.pw-tier-palette-window.pw-floating-window-root {
-  position: fixed;
-  z-index: calc(var(--z-dropdown, 105) - 1);
-  inset: 0;
-  pointer-events: none;
+/* A tier's next cell is Add model: it opens the model palette anchored to itself. */
+.pw-tier-board__add {
+  gap: 6px;
+  width: 100%;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
 }
 
-/* Fills the floating window: search on top, the model list takes the rest, the custom pair at the bottom. */
+.pw-tier-board__add:hover,
+.pw-tier-board__add:focus-visible,
+.pw-tier-board__add[data-open] {
+  border-color: var(--color-border-default);
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+/* The popover's palette: search on top, a bounded model list, the custom pair at the bottom. */
 .pw-tier-palette {
   display: flex;
+  max-height: min(480px, 70vh);
   min-height: 0;
   flex: 1 1 auto;
   flex-direction: column;
@@ -167,14 +179,13 @@
 }
 
 .pw-tier-palette__item {
-  touch-action: none;
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
   border-radius: var(--radius-item);
-  cursor: grab;
+  cursor: pointer;
 }
 
 .pw-tier-palette__item:hover,

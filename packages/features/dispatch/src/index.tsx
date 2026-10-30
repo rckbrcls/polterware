@@ -1,5 +1,4 @@
 import { For, Index, Match, Show, Switch, createEffect, createMemo, createSignal, on, onCleanup, onMount, type JSX } from "solid-js";
-import { Portal } from "solid-js/web";
 import { BotAvatar, agentMarkFor, botAvatarTypes, type BotAvatarType } from "@polterware/bot-avatars";
 import { EntityDetailHost, createPageFilters, type PageFilters } from "@polterware/feature-shell";
 import {
@@ -12,7 +11,6 @@ import {
   Dialog,
   Field,
   FilterPopover,
-  FloatingWindow,
   FileDiff,
   FileText,
   Gauge,
@@ -28,7 +26,6 @@ import {
   RailPage,
   InformationCircle,
   Play,
-  Plus,
   Route,
   RefreshCw,
   Select,
@@ -78,8 +75,7 @@ import type {
 import { runReviewAction } from "./dispatch-bridge";
 import { buildTranscript, type TranscriptEntry } from "./run-log";
 import { DispatchLearningPage } from "./learning-page";
-import { TierBoard, TierModelPalette } from "./tier-board";
-import { placeTierCard } from "./tier-board-model";
+import { TierBoard } from "./tier-board";
 import { DISPATCH_STATS_BY_OPTIONS, DISPATCH_STATS_SINCE_OPTIONS, DispatchStatsPage } from "./stats-page";
 
 export * from "./dispatch-types";
@@ -831,7 +827,6 @@ export function DispatchPage(props: {
   const [paletteModels, setPaletteModels] = createSignal<DispatchModelView[]>([]);
   const [paletteProblems, setPaletteProblems] = createSignal<string[]>([]);
   const [paletteLoading, setPaletteLoading] = createSignal(false);
-  const [paletteOpen, setPaletteOpen] = createSignal(false);
   let paletteLoaded = false;
   const loadPaletteModels = async () => {
     const bridge = dispatchBridge();
@@ -929,20 +924,6 @@ export function DispatchPage(props: {
                   saved={toolbar().filters.saved()}
                 />
               )}
-            </Show>
-            <Show when={activeTab() === "tiers" && tiersEditable()}>
-              <span class="inline-flex" data-floating-window-opener="">
-                <ToolbarIconButton
-                  label={paletteOpen() ? "Close model palette" : "Add model"}
-                  onClick={() => {
-                    const next = !paletteOpen();
-                    setPaletteOpen(next);
-                    if (next) void loadPaletteModels();
-                  }}
-                >
-                  <Plus size={14} />
-                </ToolbarIconButton>
-              </span>
             </Show>
             <Show when={activeTab() === "runs"}>
               <ToolbarIconButton label="Start run" onClick={() => setStartOpen(true)}>
@@ -1214,35 +1195,9 @@ export function DispatchPage(props: {
               matches={tierMatches}
               avatar={(agent) => <DispatchAgentAvatar agent={agent} seed={agent} />}
               onChange={(next) => void saveTiers(next)}
+              palette={{ models: paletteModels(), loading: paletteLoading(), problems: paletteProblems(), load: () => void loadPaletteModels() }}
             />
           </PageContent>
-          {/* The model palette is a movable window over the whole app, so models drag straight from it onto cells. */}
-          <Portal>
-            <FloatingWindow.Root
-              class="pw-tier-palette-window"
-              open={paletteOpen()}
-              expanded={false}
-              minimized={false}
-              controls="close"
-              storageKey="polterware.dispatch.model-palette.window"
-              defaultGeometry={{ dock: "bottom-left", width: 360, height: 480 }}
-              aria-label="Add model"
-              onOpenChange={setPaletteOpen}
-              onExpandedChange={() => undefined}
-              onMinimizedChange={() => undefined}
-            >
-              <FloatingWindow.Workspace>{null}</FloatingWindow.Workspace>
-              <FloatingWindow.Content>
-                <TierModelPalette
-                  models={paletteModels()}
-                  loading={paletteLoading()}
-                  problems={paletteProblems()}
-                  onAdd={(card, tier) => void saveTiers(placeTierCard(tiers(), card, { tier, index: Number.MAX_SAFE_INTEGER }))}
-                  avatar={(agent) => <DispatchAgentAvatar agent={agent} seed={agent} />}
-                />
-              </FloatingWindow.Content>
-            </FloatingWindow.Root>
-          </Portal>
         </Match>
 
         <Match when={activeTab() === "stats"}>
