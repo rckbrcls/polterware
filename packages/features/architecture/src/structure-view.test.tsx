@@ -107,7 +107,7 @@ describe("Structure collection", () => {
       field.dispatchEvent(new Event("input", { bubbles: true }));
       field.dispatchEvent(new FocusEvent("blur"));
     };
-    commit(doc.querySelector<HTMLInputElement>('input[aria-label="Title"]')!, "Public API");
+    commit(doc.querySelector<HTMLInputElement>('[aria-label="Title"]')!, "Public API");
     expect(onEditNode).toHaveBeenLastCalledWith("api", { title: "Public API" });
     commit(doc.querySelector<HTMLTextAreaElement>('textarea[aria-label="Description"]')!, "Serves every client");
     expect(onEditNode).toHaveBeenLastCalledWith("api", { intent: "Serves every client" });
@@ -115,7 +115,7 @@ describe("Structure collection", () => {
     expect(onEditNode).toHaveBeenLastCalledWith("api", { tech: "Go 1.24" });
     // An empty title is refused and restored; an unchanged value writes nothing.
     const calls = onEditNode.mock.calls.length;
-    commit(doc.querySelector<HTMLInputElement>('input[aria-label="Title"]')!, " ");
+    commit(doc.querySelector<HTMLInputElement>('[aria-label="Title"]')!, " ");
     commit(doc.querySelector<HTMLInputElement>('input[aria-label="Folder"]')!, "src/api");
     expect(onEditNode.mock.calls.length).toBe(calls);
     // A direct link has Unlink; the section's + links what is not linked yet.

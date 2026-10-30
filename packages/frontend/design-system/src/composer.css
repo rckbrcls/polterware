@@ -38,9 +38,14 @@
 }
 
 .pw-composer__title {
+  /* Wraps instead of scrolling sideways, and keeps clear of Close at the top right. */
+  padding-right: 32px;
+  resize: none;
+  overflow: hidden;
   font-size: 18px;
   font-weight: 600;
   line-height: 1.35;
+  field-sizing: content;
 }
 
 .pw-composer__description {

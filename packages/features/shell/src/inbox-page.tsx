@@ -217,13 +217,7 @@ export function InboxPage(props: {
   });
   onCleanup(() => detailPanelStore.getState().unregisterCollection(INBOX_SCOPE));
 
-  // The detail opens beside the list on arrival, like a second pane; it closes like Activity's and a row opens it again.
-  let shownOnce = false;
-  createEffect(() => {
-    if (shownOnce || props.loading || rows().length === 0) return;
-    shownOnce = true;
-    detailPanelStore.getState().show();
-  });
+  // Like Activity, the detail stays closed until a row is opened (click, Enter, or J/K after one is open).
 
   // When the active item leaves (resolved, deferred out of a filter), the one now at its place takes over.
   let activeIndex = 0;

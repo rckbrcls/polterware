@@ -44,7 +44,7 @@ describe("RecordEditor", () => {
   it("edits a doc in its composer, with Expand to its page", async () => {
     const handlers = mount({ kind: "doc", id: "doc-1" });
     await tick();
-    expect(document.querySelector<HTMLInputElement>('input[aria-label="Title"]')!.value).toBe("Runbook");
+    expect(document.querySelector<HTMLInputElement>('[aria-label="Title"]')!.value).toBe("Runbook");
     expect(document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Description"]')!.value).toBe("Restart the core.");
     button("Expand")!.click();
     expect(handlers.onExpand).toHaveBeenCalledWith({ kind: "doc", id: "doc-1" });

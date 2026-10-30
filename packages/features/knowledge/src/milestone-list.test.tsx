@@ -23,7 +23,7 @@ describe("MilestoneList", () => {
     };
     // The shared composer: the name is its large title, then the goal and a target date.
     expect(document.querySelector(".pw-composer__title")).not.toBeNull();
-    type('input[aria-label="Title"]', "Beta");
+    type('[aria-label="Title"]', "Beta");
     type('textarea[aria-label="Description"]', "Ship the beta");
     type('input[aria-label="Target date"]', "2026-12-01");
     [...document.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent === "Create milestone")!.click();

@@ -60,7 +60,7 @@ export function Composer(props: ComposerProps) {
   const [why, setWhy] = createSignal("");
   const [createMore, setCreateMore] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
-  let titleInput: HTMLInputElement | undefined;
+  let titleInput: HTMLTextAreaElement | undefined;
   let descriptionInput: HTMLTextAreaElement | undefined;
 
   const heading = () => props.crumbs[props.crumbs.length - 1] ?? props.submitLabel;
@@ -134,15 +134,21 @@ export function Composer(props: ComposerProps) {
         </Button>
       </Show>
       <div class="pw-composer" classList={{ "pw-composer--expandable": Boolean(props.onExpand) }} onKeyDown={onKeyDown}>
-        <input
+        {/* A one-line value that wraps: Enter moves on, and pasted line breaks become spaces. */}
+        <textarea
           ref={titleInput}
+          rows={1}
           class="pw-composer__title"
           aria-label="Title"
           placeholder={props.titlePlaceholder}
           value={title()}
           spellcheck={false}
           autocomplete="off"
-          onInput={(event) => setTitle(event.currentTarget.value)}
+          onInput={(event) => {
+            const value = event.currentTarget.value;
+            if (value.includes("\n")) event.currentTarget.value = value.replace(/\s*\n+\s*/g, " ");
+            setTitle(event.currentTarget.value);
+          }}
           onKeyDown={(event) => {
             if (event.key !== "Enter" || event.metaKey || event.ctrlKey || event.isComposing) return;
             event.preventDefault();
