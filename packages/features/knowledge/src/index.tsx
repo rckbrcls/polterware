@@ -104,7 +104,8 @@ export type { KnowledgeAgentPrompt, KnowledgePromptKind } from "./agent-prompts"
 export type { MilestoneAction } from "./milestones";
 export type { DecisionAction } from "./decision-detail";
 export { KnowledgeComposer } from "./composers";
-export { RecordPeek, type RecordPeekTarget } from "./record-peek";
+export { RecordEditor, type KnowledgeEditDraft, type RecordEditTarget } from "./record-editor";
+export type { RuleDraft } from "./rule-form-dialog";
 export { DocumentActivity } from "./document-activity";
 export type { CardDraft, CardKind, ComposeRequest, DecisionDraft, DocDraft } from "./composers";
 export { WORK_STAGES, workStageLabel } from "./work-stage";

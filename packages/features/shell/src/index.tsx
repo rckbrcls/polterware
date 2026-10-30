@@ -83,7 +83,6 @@ export {
   requestSectionNavigate,
   setDetailExpandHandler,
   setExpandedDetailTarget,
-  setPageBackHandler,
   setSectionNavigateHandler,
 } from "./detail-expansion";
 export { ShortcutsPanel } from "./shortcuts-panel";

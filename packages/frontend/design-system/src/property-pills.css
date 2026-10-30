@@ -1,0 +1,13 @@
+/* A row of property pills (Composer, Commander's Run an agent). */
+.pw-property-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Holds one pill and its picker; PillPresence moves it on the compositor. */
+.pw-property-pills__pill {
+  display: inline-flex;
+  transform-origin: left center;
+  will-change: opacity, transform;
+}

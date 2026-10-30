@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createSignal, on } from "solid-js";
+import { For, Show, createEffect, createSignal, on, type JSX } from "solid-js";
 import {
   Button, Check, Copy, HelpCircle, History, Play, RailGroup, ShieldCheck, SourceCodeIcon, StatusChip, X, pushToast,
   type StatusTone,
@@ -41,6 +41,8 @@ export function WorkCardWork(props: {
   stage: string;
   /** Passes the gate; resolves with the refusal lines, empty when the card moved on. */
   onAdvance?: (step: "contract" | "plan") => Promise<string[]>;
+  /** Groups shown before the next steps, such as the card's Tasks and Invariants. */
+  leading?: JSX.Element;
 }) {
   const [checks, setChecks] = createSignal<CardGateCheck[]>([]);
   const [refusal, setRefusal] = createSignal<string[]>([]);
@@ -101,6 +103,7 @@ export function WorkCardWork(props: {
 
   return (
     <div class="pw-card-work">
+      {props.leading}
       <Show when={gate()}>
         {(next) => (
           <RailGroup title={next().step === "contract" ? "Contract gate" : "Plan gate"} icon={<ShieldCheck size={14} />}

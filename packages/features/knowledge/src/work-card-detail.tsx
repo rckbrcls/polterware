@@ -1,5 +1,6 @@
 import { For, Show, createMemo, createSignal } from "solid-js";
 import { StatusDot,
+  Checkbox,
   Check,
   DetailPanel,
   ListChecks,
@@ -86,6 +87,39 @@ export function WorkCardDetail(props: {
               </Show>
             }
             railGroups={<>
+            <Show when={card().questions.length > 0}>
+              <RailGroup title="Questions" icon={<HelpCircle size={14} />}>
+                <ul class="m-0 grid list-none gap-2 px-1 py-0" aria-label="Questions">
+                  <For each={card().questions}>
+                    {(question) => (
+                      <li class="grid gap-1 text-[12.5px] text-[var(--color-text-secondary)]">
+                        <span class="flex flex-wrap items-center gap-1.5">
+                          <span>{question.text}</span>
+                          <Show when={question.blocking && question.state === "open"}>
+                            <StatusChip tone="warn" label="Blocking" />
+                          </Show>
+                          <Show when={question.state === "answered"}>
+                            <StatusChip tone="healthy" label="Answered" />
+                          </Show>
+                        </span>
+                        <Show when={question.state === "answered" && question.answer}>
+                          <span class="text-[var(--color-text-muted)]">{question.answer}</span>
+                        </Show>
+                        <Show when={question.state === "open" && question.options.length > 0}>
+                          <span class="font-mono text-[11px] text-[var(--color-text-muted)]">
+                            {question.options.join(" | ")}
+                          </span>
+                        </Show>
+                      </li>
+                    )}
+                  </For>
+                </ul>
+              </RailGroup>
+            </Show>
+
+            </>}
+          >
+            <WorkCardWork slug={card().slug} stage={card().stage} onAdvance={props.onAdvance} leading={<>
             <RailGroup
               title="Tasks" icon={<ListChecks size={14} />}
               aside={
@@ -101,11 +135,11 @@ export function WorkCardDetail(props: {
                 when={card().tasks.length > 0}
                 fallback={<p class="pw-detail-panel__text px-1" data-empty>No tasks yet.</p>}
               >
-                <ul class="m-0 grid list-none gap-1.5 px-1 py-0" aria-label="Tasks">
+                <ul class="m-0 grid list-none gap-2 px-1 py-0" aria-label="Tasks">
                   <For each={card().tasks}>
                     {(task) => (
                       <li
-                        class="group flex items-start gap-2 text-[12.5px]"
+                        class="group flex items-start gap-2 text-[13px]"
                         classList={{
                           "text-[var(--color-text-secondary)]": task.state === "open",
                           "text-[var(--color-text-muted)]": task.state !== "open",
@@ -116,16 +150,13 @@ export function WorkCardDetail(props: {
                           fallback={<span class="mt-0.5 shrink-0"><TaskStateIcon state={task.state} /></span>}
                         >
                           {/* The box toggles done and open; a dropped task opens again. */}
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            class="-my-1 shrink-0"
-                            aria-label={task.state === "open" ? `Mark T${task.number} done` : `Reopen T${task.number}`}
+                          <Checkbox
+                            class="mt-px shrink-0"
+                            label={<span class="sr-only">{task.state === "open" ? `Mark T${task.number} done` : `Reopen T${task.number}`}</span>}
+                            checked={task.state === "done"}
                             disabled={savingTask() !== ""}
-                            onClick={() => void setTaskState(task, task.state === "open" ? "done" : "open")}
-                          >
-                            <TaskStateIcon state={task.state} />
-                          </Button>
+                            onCheckedChange={(details) => void setTaskState(task, task.state === "open" && details.checked === true ? "done" : "open")}
+                          />
                         </Show>
                         <span class="w-7 shrink-0 font-mono text-[11px] leading-5 text-[var(--color-text-muted)]">
                           T{task.number}
@@ -164,49 +195,17 @@ export function WorkCardDetail(props: {
               </Show>
             </RailGroup>
 
-            <Show when={card().questions.length > 0}>
-              <RailGroup title="Questions" icon={<HelpCircle size={14} />}>
-                <ul class="m-0 grid list-none gap-2 px-1 py-0" aria-label="Questions">
-                  <For each={card().questions}>
-                    {(question) => (
-                      <li class="grid gap-1 text-[12.5px] text-[var(--color-text-secondary)]">
-                        <span class="flex flex-wrap items-center gap-1.5">
-                          <span>{question.text}</span>
-                          <Show when={question.blocking && question.state === "open"}>
-                            <StatusChip tone="warn" label="Blocking" />
-                          </Show>
-                          <Show when={question.state === "answered"}>
-                            <StatusChip tone="healthy" label="Answered" />
-                          </Show>
-                        </span>
-                        <Show when={question.state === "answered" && question.answer}>
-                          <span class="text-[var(--color-text-muted)]">{question.answer}</span>
-                        </Show>
-                        <Show when={question.state === "open" && question.options.length > 0}>
-                          <span class="font-mono text-[11px] text-[var(--color-text-muted)]">
-                            {question.options.join(" | ")}
-                          </span>
-                        </Show>
-                      </li>
-                    )}
-                  </For>
-                </ul>
-              </RailGroup>
-            </Show>
-
             <Show when={card().invariants.length > 0}>
               <RailGroup title="Invariants" icon={<ShieldCheck size={14} />}>
                 <ul
-                  class="m-0 list-disc space-y-1 pl-5 pr-1 text-[12.5px] text-[var(--color-text-secondary)]"
+                  class="m-0 list-disc space-y-1 pl-5 pr-1 text-[13px] text-[var(--color-text-secondary)]"
                   aria-label="Invariants"
                 >
                   <For each={card().invariants}>{(invariant) => <li>{invariant.text}</li>}</For>
                 </ul>
               </RailGroup>
             </Show>
-            </>}
-          >
-            <WorkCardWork slug={card().slug} stage={card().stage} onAdvance={props.onAdvance} />
+            </>} />
           </KnowledgeDocumentShell>
         );
       }}

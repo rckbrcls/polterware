@@ -94,6 +94,7 @@ export function CommanderWindow(props: {
             items={props.items}
             platform={props.platform}
             onCommand={(id) => openDesktop(id)}
+            runAgent
             onQueryChange={(next) => {
               setQuery(next);
               if (next.trim().length > 0 && view().kind === "detail") {

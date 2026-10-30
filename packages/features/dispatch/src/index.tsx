@@ -1,5 +1,6 @@
 import { For, Index, Match, Show, Switch, createEffect, createMemo, createSignal, on, onCleanup, onMount, type JSX } from "solid-js";
-import { BotAvatar, agentMarkFor, botAvatarTypes, type BotAvatarType } from "@polterware/bot-avatars";
+import { DispatchAgentAvatar } from "./agent-avatar";
+import { createRunRoute, type RunRouteSelection } from "./run-route";
 import { EntityDetailHost, createPageFilters, type PageFilters } from "@polterware/feature-shell";
 import {
   Bot,
@@ -34,11 +35,7 @@ import {
   Stop,
   ToolbarIconButton,
   Composer,
-  FolderKanban,
-  Briefcase06Icon,
   EntityMenuButton,
-  type ComposerProperty,
-  type PropertyOption,
   Delete,
   Undo2,
   GitMerge,
@@ -89,15 +86,10 @@ export * from "./dispatch-types";
 export * from "./dispatch-bridge";
 export { DispatchLearningPage } from "./learning-page";
 export { DispatchPolicySettings } from "./policy-page";
+export { createRunRoute, createRunRouteSources, type RunRouteCard, type RunRouteSelection } from "./run-route";
 export { DispatchStatsPage } from "./stats-page";
 
 const DISPATCH_RUNS_SCOPE = "dispatch:runs";
-
-const DEFAULT_TIER_OPTIONS = [
-  { value: "easy", label: "Easy" },
-  { value: "normal", label: "Normal" },
-  { value: "hard", label: "Hard" },
-];
 
 function normalizeDispatchTab(tab?: string): DispatchTab {
   if (
@@ -251,49 +243,6 @@ function runLog(stored: string, events: readonly DispatchWatchEventView[]): stri
   return hasOutput ? streamed : `${stored}\n${streamed}`;
 }
 
-function hash32(id: string) {
-  let h = 2166136261;
-  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619);
-  return h >>> 0;
-}
-
-function botTypeFor(id: string): BotAvatarType {
-  return botAvatarTypes[hash32(id) % botAvatarTypes.length] ?? "clover";
-}
-
-function seedFor(id: string) {
-  return (hash32(id) % 1000) / 1000;
-}
-
-function dispatchBotState(status?: string): "working" | "sleeping" | "default" {
-  const value = status?.toLowerCase();
-  if (value === "pending" || value === "running") return "working";
-  if (value === "failed" || value === "cancelled" || value === "canceled" || value === "timed_out") return "sleeping";
-  return "default";
-}
-
-function DispatchAgentAvatar(props: { agent?: string; seed?: string; status?: string; size?: number }) {
-  const key = () => props.agent?.trim() || "agent";
-  const mark = () => agentMarkFor(key());
-  const state = () => dispatchBotState(props.status);
-  const working = () => state() === "working";
-  return (
-    <BotAvatar
-      type={mark()?.type ?? botTypeFor(key())}
-      color={mark()?.color}
-      state={state()}
-      size={props.size ?? 28}
-      seed={seedFor(props.seed || key())}
-      shading="fabric"
-      furLength={1}
-      furDensity={1.6}
-      furFuzz={0.9}
-      aria-hidden="true"
-      {...(working() ? {} : { jumpEvery: 0, turn: 0.35 })}
-    />
-  );
-}
-
 function formatWhen(value: string): string {
   if (!value) return "—";
   const date = new Date(value);
@@ -444,8 +393,12 @@ export function DispatchPage(props: {
   tabs?: readonly { id: string; label: string }[];
   tabsLabel?: string;
   onTabChange?: (tab: string) => void;
-  /** Opens New run with this card and prompt filled in, such as Commander's Dispatch this card; a new `key` opens it again. */
-  startDraft?: { key: number; cardSlug: string; prompt: string };
+  /**
+   * Opens Start run with this card and prompt filled in, such as Commander's Dispatch this card; a new `key`
+   * opens it again. With `route` it starts the run at once on that route (Commander's Run an agent),
+   * opening Start run with the draft only when the run cannot start.
+   */
+  startDraft?: { key: number; cardSlug: string; prompt: string; route?: RunRouteSelection };
   /** Called once New run has taken the draft, so it does not open again on the next visit. */
   onStartDraftUsed?: () => void;
   /** A new value closes the open run and shows the list (the sidebar item chosen again). */
@@ -471,11 +424,8 @@ export function DispatchPage(props: {
   const [selectedRunResult, setSelectedRunResult] = createSignal("");
   const [liveEvents, setLiveEvents] = createSignal<DispatchWatchEventView[]>([]);
 
-  const [draftTier, setDraftTier] = createSignal("normal");
-  const [draftAgent, setDraftAgent] = createSignal("");
-  const [draftCard, setDraftCard] = createSignal("");
-  // The milestone narrows the card list; both are optional.
-  const [draftMilestone, setDraftMilestone] = createSignal("");
+  // Start run's Route, Milestone, and Card; the models load when it opens.
+  const route = createRunRoute({ tiers, agents, models: () => paletteModels(), cards: () => props.cards ?? [] });
   const [draftPrompt, setDraftPrompt] = createSignal("");
   const [startOpen, setStartOpen] = createSignal(false);
   const [cancellingId, setCancellingId] = createSignal("");
@@ -629,11 +579,15 @@ export function DispatchPage(props: {
   createEffect(on(() => props.homeKey, () => { if (openedRunId()) closeRun(); }, { defer: true }));
   createEffect(on(() => props.startDraft, (draft) => {
     if (!draft) return;
-    setDraftCard(draft.cardSlug);
-    setDraftMilestone(props.cards?.find((card) => card.slug === draft.cardSlug)?.milestone ?? "");
+    route.clearCard();
+    route.setCard(draft.cardSlug);
     setDraftPrompt(draft.prompt);
-    setStartOpen(true);
     props.onStartDraftUsed?.();
+    if (!draft.route || !draft.prompt.trim()) {
+      setStartOpen(true);
+      return;
+    }
+    void handleStartRun(draft.prompt, draft.route).then((started) => { if (!started) setStartOpen(true); });
   }));
   // Start run lists the models the installed agents report, like a tier's Add model.
   createEffect(on(startOpen, (open) => { if (open) void loadPaletteModels(); }));
@@ -645,26 +599,23 @@ export function DispatchPage(props: {
   };
 
   /** Resolves false when nothing started, so the composer keeps the draft. */
-  const handleStartRun = async (prompt: string): Promise<boolean> => {
+  const handleStartRun = async (prompt: string, picked: RunRouteSelection = route.selection()): Promise<boolean> => {
     const bridge = dispatchBridge();
     const projectId = props.projectId.trim();
     if (!bridge || !projectId || !prompt.trim()) return false;
-    // The agent pick is "agent" or "agent<NUL>model"; empty lets the tier choose.
-    const [agent = "", model = ""] = draftAgent().split("\u0000");
     try {
       const started = mapDispatchRun(
         await bridge.startRun({
           projectId,
-          tier: draftTier(),
+          tier: picked.tier,
           prompt: prompt.trim(),
-          ...(draftCard().trim() ? { cardSlug: draftCard().trim() } : {}),
-          ...(agent ? { agent } : {}),
-          ...(model ? { model } : {}),
+          ...(picked.cardSlug ? { cardSlug: picked.cardSlug } : {}),
+          ...(picked.agent ? { agent: picked.agent } : {}),
+          ...(picked.model ? { model: picked.model } : {}),
         }),
       );
       setDraftPrompt("");
-      setDraftCard("");
-      setDraftMilestone("");
+      route.clearCard();
       if (activeTab() !== "runs") {
         setLocalTab("runs");
         props.onTabChange?.("runs");
@@ -827,111 +778,6 @@ export function DispatchPage(props: {
     });
     onCleanup(() => cancelAnimationFrame(frame));
   });
-
-  /**
-   * Start run's pills: the tier, the agent and model (grouped by agent with their bots, from the
-   * models the installed agents report, plus agents with no listed model), and the card it works on.
-   */
-  // Option icons are getters: an icon is a DOM node, and the pill and the list each need their own.
-  const startProperties = (): ComposerProperty[] => {
-    const avatar = (agent: string) => <DispatchAgentAvatar agent={agent} seed={agent} size={18} />;
-    const listed = new Set(paletteModels().map((model) => model.agent));
-    // Route a run by tier (its table picks the agent and model, with fallbacks) or by one model.
-    const tierNames = [...new Set(tiers().map((tier) => tier.name))];
-    const byTier: PropertyOption[] = (tierNames.length > 0 ? tierNames : DEFAULT_TIER_OPTIONS.map((option) => option.value)).map((name) => {
-      const entries = tiers().filter((tier) => tier.name === name).sort((a, b) => a.position - b.position);
-      const primary = entries[0];
-      return {
-        value: `tier:${name}`,
-        label: name.charAt(0).toUpperCase() + name.slice(1),
-        hint: primary ? `${primary.agent} / ${primary.model}${entries.length > 1 ? `, then ${entries.length - 1} fallback${entries.length === 2 ? "" : "s"}` : ""}` : "The tier table picks",
-        group: "By tier",
-        get icon() { return <Gauge size={14} />; },
-      };
-    });
-    const routeOptions: PropertyOption[] = [
-      ...byTier,
-      ...paletteModels().map((model): PropertyOption => ({
-        value: `${model.agent}\u0000${model.model}`,
-        label: model.model,
-        hint: [model.provider, model.tier].filter(Boolean).join(" / ") || undefined,
-        group: model.agent,
-        get icon() { return avatar(model.agent); },
-        bareIcon: true,
-      })),
-      ...agents().filter((agent) => !listed.has(agent.name)).map((agent): PropertyOption => ({
-        value: agent.name,
-        label: agent.name,
-        hint: "Its default model",
-        group: agent.name,
-        get icon() { return avatar(agent.name); },
-        bareIcon: true,
-      })),
-    ];
-    const cards = props.cards ?? [];
-    const milestones = [...new Set(cards.map((card) => card.milestone).filter((name): name is string => Boolean(name)))];
-    const milestoneOptions: PropertyOption[] = [
-      { value: "", label: "Any milestone", get icon() { return <Briefcase06Icon size={14} />; } },
-      ...milestones.map((name): PropertyOption => {
-        const count = cards.filter((card) => card.milestone === name).length;
-        return { value: name, label: name, hint: `${count} open card${count === 1 ? "" : "s"}`, get icon() { return <Briefcase06Icon size={14} />; } };
-      }),
-    ];
-    const cardOptions: PropertyOption[] = [
-      { value: "", label: "No card", get icon() { return <FolderKanban size={14} />; } },
-      ...cards.filter((card) => card.milestone === draftMilestone()).map((card): PropertyOption => ({
-        value: card.slug,
-        label: card.title || card.slug,
-        hint: card.slug,
-        group: card.stage,
-        get icon() { return <FolderKanban size={14} />; },
-      })),
-    ];
-    return [
-      {
-        id: "route",
-        label: "Route",
-        get icon() { return <Bot size={14} />; },
-        options: routeOptions,
-        value: draftAgent() || `tier:${draftTier()}`,
-        onChange: (value) => {
-          if (value.startsWith("tier:")) {
-            setDraftTier(value.slice("tier:".length));
-            setDraftAgent("");
-          } else setDraftAgent(value);
-        },
-        pickerWidth: 340,
-      },
-      {
-        id: "milestone",
-        label: "Milestone",
-        get icon() { return <Briefcase06Icon size={14} />; },
-        options: milestoneOptions,
-        value: draftMilestone(),
-        onChange: (value) => {
-          setDraftMilestone(value);
-          // Card shows only under a milestone, and a card from another one no longer fits the pick.
-          if (cards.find((card) => card.slug === draftCard())?.milestone !== value) setDraftCard("");
-        },
-        pickerWidth: 280,
-      },
-      {
-        id: "card",
-        label: "Card",
-        get icon() { return <FolderKanban size={14} />; },
-        // Picking a milestone first keeps the card list short.
-        hidden: !draftMilestone(),
-        options: cardOptions,
-        value: draftCard(),
-        onChange: (value) => {
-          setDraftCard(value);
-          const milestone = cards.find((card) => card.slug === value)?.milestone;
-          if (milestone) setDraftMilestone(milestone);
-        },
-        pickerWidth: 320,
-      },
-    ];
-  };
 
   /** Per-agent usedPercent series ordered by sampledAt, skipping snapshots without usedPercent. */
   const agentQuotaSeries = createMemo((): AgentQuotaSeries[] => {
@@ -1378,7 +1224,7 @@ export function DispatchPage(props: {
         titlePlaceholder="What should the agent do?"
         descriptionPlaceholder="Details, files to touch, how to check it…"
         initial={startInitial()}
-        properties={startProperties()}
+        properties={route.properties()}
         createMore={false}
         submitLabel="Start run"
         onSubmit={(draft) => handleStartRun(draft.description ? `${draft.title}\n\n${draft.description}` : draft.title)}

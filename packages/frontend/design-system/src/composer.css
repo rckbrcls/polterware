@@ -4,6 +4,19 @@
   padding: 18px 24px 8px;
 }
 
+/* Expand sits left of the dialog's Close, which is absolutely placed at its top right. */
+.pw-composer__expand {
+  position: absolute;
+  top: 16px;
+  right: 52px;
+  z-index: 10;
+}
+
+/* The title keeps clear of Close (and Expand). */
+.pw-composer--expandable .pw-composer__title {
+  padding-right: 72px;
+}
+
 .pw-composer {
   display: flex;
   flex-direction: column;
@@ -54,17 +67,7 @@
 }
 
 .pw-composer__properties {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
   padding-top: 4px;
-}
-
-/* Holds one pill and its picker; PillPresence moves it on the compositor. */
-.pw-composer__pill {
-  display: inline-flex;
-  transform-origin: left center;
-  will-change: opacity, transform;
 }
 
 .pw-composer__field {

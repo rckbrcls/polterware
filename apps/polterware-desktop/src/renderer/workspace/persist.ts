@@ -161,6 +161,22 @@ export async function persistKnowledgeBody(
   });
 }
 
+/** Saves a decision's or a doc's title and body in one write. */
+export async function persistKnowledgeEdit(
+  workspace: WorkspaceSnapshot,
+  projectId: string,
+  itemId: string,
+  edit: { title: string; body: string },
+  change: ChangeEnvelope,
+): Promise<void> {
+  const current = workspace.rawKnowledge.find((item) => asString(item.id) === itemId);
+  if (!current) throw new Error("This record is no longer in the project.");
+  await core().knowledge.save({
+    item: { ...current, projectId, title: edit.title, body: edit.body },
+    change: changePayload(change),
+  });
+}
+
 export async function persistKnowledgeTitle(
   workspace: WorkspaceSnapshot,
   projectId: string,
@@ -361,6 +377,43 @@ export async function persistStructureNode(input: {
   if (patch.kind !== undefined) text += `kind: ${patch.kind}\n`;
   if (patch.tech !== undefined) text += `tech: ${polterValue(patch.tech)}\n`;
   if (patch.intent?.trim()) text += `\n${patch.intent.trim()}\n`;
+  await applyPolter(input.projectId, text, input.change);
+}
+
+/**
+ * Rewrites a card's title, stage, milestone (empty slug: the Backlog), component (empty: none),
+ * kind, and intent in one Polter block; an empty intent keeps the one it has.
+ */
+export async function persistWorkUpdateCard(input: {
+  projectId: string;
+  slug: string;
+  title: string;
+  stage: string;
+  milestone: string;
+  under: string;
+  kind: "feature" | "architecture";
+  intent: string;
+  change: ChangeEnvelope;
+}): Promise<void> {
+  const meta = { stage: input.stage, milestone: input.milestone, under: polterValue(input.under), kind: input.kind };
+  // A heading line in the intent would start a new block, so its marks are dropped.
+  const intent = input.intent.split("\n").map((line) => line.replace(/^\s*#+\s+/, "")).join("\n").trim();
+  await applyPolter(input.projectId, polterCard(input.slug, input.title, meta) + (intent ? `\n${intent}\n` : ""), input.change);
+}
+
+/**
+ * Rewrites one Rule's statement as a `#### rule <handle>: Statement` block, with `scope:` and its
+ * node paths when they change (empty: the whole project), like the Rules list's composer.
+ */
+export async function persistRuleEdit(input: {
+  projectId: string;
+  handle: string;
+  statement: string;
+  scopePaths?: readonly string[];
+  change: ChangeEnvelope;
+}): Promise<void> {
+  let text = `---\npolter: 1\n---\n\n#### rule ${input.handle}: ${oneLine(input.statement)}\n`;
+  if (input.scopePaths) text += `scope:${input.scopePaths.length ? ` ${input.scopePaths.join(", ")}` : ""}\n`;
   await applyPolter(input.projectId, text, input.change);
 }
 

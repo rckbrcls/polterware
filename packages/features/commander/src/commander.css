@@ -3,11 +3,20 @@
  * Uses default surface-panel-float (opaque --color-surface + float shadow).
  */
 .pw-dialog-content.commander-panel {
-  width: 720px !important;
-  max-width: min(720px, calc(100vw - 2.5rem)) !important;
-  height: 680px !important;
-  max-height: min(680px, calc(100vh - 2.5rem)) !important;
+  /* The md dialog's width, with a fixed height so filtering never resizes the frame. */
+  width: min(36rem, calc(100vw - 2.5rem)) !important;
+  max-width: min(36rem, calc(100vw - 2.5rem)) !important;
+  height: min(26rem, calc(100vh - 2.5rem)) !important;
+  max-height: min(26rem, calc(100vh - 2.5rem)) !important;
   min-height: 0 !important;
+}
+
+/* Run an agent's Route, Milestone, and Card, under the search row. */
+.commander-run-pills {
+  flex-shrink: 0;
+  padding: 10px 1.25rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+  -webkit-app-region: no-drag;
 }
 
 /* Shared search row — same padding on in-app and global. */

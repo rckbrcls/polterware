@@ -58,14 +58,28 @@ export function contextProperty(nodes: readonly ScopeNodeItem[], values: () => s
   };
 }
 
-function CardComposer(props: {
+/** A card the composer edits instead of creating; its values fill the fields each time it opens. */
+export type CardEdit = {
+  title: string;
+  intent: string;
+  stage: WorkStage;
+  milestoneId: string;
+  under: string;
+  kind: CardKind;
+};
+
+export function CardComposer(props: {
   open: boolean;
   request: Extract<ComposeRequest, { kind: "card" }>;
   crumb: string;
   milestones: readonly WorkspaceMilestone[];
   components: readonly { path: string; title: string }[];
   onClose: () => void;
+  /** Creates the card, or saves `edit`. */
   onCreate: Create<CardDraft>;
+  edit?: CardEdit;
+  /** With `edit`: opens the card's page. */
+  onExpand?: () => void;
 }) {
   const [stage, setStage] = createSignal<WorkStage>("shape");
   const [milestoneId, setMilestoneId] = createSignal("");
@@ -73,10 +87,10 @@ function CardComposer(props: {
   const [kind, setKind] = createSignal<CardKind>("feature");
   createEffect(on(() => [props.open, props.request] as const, ([open]) => {
     if (!open) return;
-    setStage(props.request.stage ?? "shape");
-    setMilestoneId(props.request.milestoneId ?? "");
-    setUnder("");
-    setKind("feature");
+    setStage(props.edit?.stage ?? props.request.stage ?? "shape");
+    setMilestoneId(props.edit?.milestoneId ?? props.request.milestoneId ?? "");
+    setUnder(props.edit?.under ?? "");
+    setKind(props.edit?.kind ?? "feature");
   }));
   const milestones = createMemo(() => listedMilestones(props.milestones));
   const properties = (): ComposerProperty[] => [
@@ -117,12 +131,15 @@ function CardComposer(props: {
     <Composer
       open={props.open}
       onClose={props.onClose}
-      crumbs={[props.crumb, "New card"]}
+      crumbs={[props.crumb, props.edit ? "Edit card" : "New card"]}
       titlePlaceholder="Card title"
       descriptionPlaceholder="What we want and why…"
       properties={properties()}
       whyPlaceholder={WHY}
-      submitLabel="Create card"
+      initial={props.edit ? { title: props.edit.title, description: props.edit.intent } : undefined}
+      createMore={!props.edit}
+      onExpand={props.edit ? props.onExpand : undefined}
+      submitLabel={props.edit ? "Save card" : "Create card"}
       onSubmit={(draft: ComposerDraft) =>
         props.onCreate({
           title: draft.title,

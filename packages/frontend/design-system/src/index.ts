@@ -60,6 +60,7 @@ export { RailGroup, RailPage } from "./rail-page";
 export type { RailPageProps } from "./rail-page";
 export { Composer } from "./composer";
 export type { ComposerDraft, ComposerField, ComposerProperty, ComposerProps, ComposerSingleProperty, ComposerTokensProperty } from "./composer";
+export { PropertyPills } from "./property-pills";
 export { ArchivedList } from "./archived-list";
 export type { ArchivedListItem } from "./archived-list";
 export { PageHeader, PageContent, PageToolbar } from "./page";

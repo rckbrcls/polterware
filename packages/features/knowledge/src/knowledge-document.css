@@ -151,6 +151,11 @@
   margin-top: 48px;
 }
 
+/* In the text column a group's content sits further from its tiled heading than in the rail. */
+.pw-card-work > .pw-document__group {
+  gap: 12px;
+}
+
 .pw-card-work__muted {
   margin: 0;
   color: var(--color-text-muted);

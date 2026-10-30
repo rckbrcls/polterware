@@ -1,4 +1,4 @@
-import { Match, Show, Switch, Suspense, createEffect, createMemo, createSignal, lazy, onCleanup, onMount } from "solid-js";
+import { Match, Show, Switch, Suspense, createEffect, createMemo, createSignal, lazy, on, onCleanup, onMount } from "solid-js";
 import {
   Shell,
   InboxPage,
@@ -23,7 +23,6 @@ import {
   setMilestoneView,
   setExpandedDetailTarget,
   setDetailExpandHandler,
-  setPageBackHandler,
   requestDetailExpanded,
   setSectionNavigateHandler,
   ShortcutsPanel,
@@ -50,11 +49,12 @@ import {
 } from "@polterware/feature-shell";
 import { StructureView, STRUCTURE_SCOPE, type StructureRecordKind } from "@polterware/feature-architecture";
 import { CanvasWorkspace, drawStructureCanvas, rememberOpenCanvas } from "./canvas-workspace";
-import type { CardDraft, ComposeRequest, DecisionDraft, DocDraft, MilestoneAction, RecordPeekTarget } from "@polterware/feature-knowledge";
+import type { CardDraft, ComposeRequest, DecisionDraft, DocDraft, KnowledgeEditDraft, MilestoneAction, RecordEditTarget, RuleDraft } from "@polterware/feature-knowledge";
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
 import { hydrateAppearancePreferences, hydrateShortcutPreferences, settingsTabScope } from "@polterware/feature-settings/boot";
 import type { ProjectSettingsPageId } from "@polterware/feature-settings";
-import { CARD_PALETTE_ITEMS, CommandPalette, DEFAULT_ITEMS } from "@polterware/feature-commander";
+import { CARD_PALETTE_ITEMS, CommandPalette, DEFAULT_ITEMS, RUN_AGENT_PREFIX } from "@polterware/feature-commander";
+import { createRunRoute, createRunRouteSources, type RunRouteSelection } from "@polterware/feature-dispatch/run-route";
 import { PageLoading, pushToast, requestConfirm, requestReason, type ArchivedListItem, type ReasonOptions, type TabItem } from "@polterware/frontend-design-system";
 import {
   SHORTCUT_SEQUENCES,
@@ -90,8 +90,8 @@ const NewFeatureFlow = lazy(() =>
 const KnowledgeComposer = lazy(() =>
   import("@polterware/feature-knowledge").then((m) => ({ default: m.KnowledgeComposer })),
 );
-const RecordPeek = lazy(() =>
-  import("@polterware/feature-knowledge").then((m) => ({ default: m.RecordPeek })),
+const RecordEditor = lazy(() =>
+  import("@polterware/feature-knowledge").then((m) => ({ default: m.RecordEditor })),
 );
 const DocumentActivity = lazy(() =>
   import("@polterware/feature-knowledge").then((m) => ({ default: m.DocumentActivity })),
@@ -140,6 +140,8 @@ import {
   persistKnowledgeTitle,
   persistKnowledgeCreate,
   persistKnowledgeScope,
+  persistKnowledgeEdit,
+  persistRuleEdit,
   persistKnowledgeArchived,
   persistKnowledgeDeletePermanently,
   loadArchivedKnowledge,
@@ -149,6 +151,7 @@ import {
   persistAgentsSync,
   persistDecisionAction,
   persistWorkCreateCard,
+  persistWorkUpdateCard,
   persistWorkRestoreCard,
   persistMilestoneCreate,
   persistMilestoneRename,
@@ -542,25 +545,19 @@ export function App() {
       if (target) applyRoute(setExpandedDetail(route(), target));
       return;
     }
-    const collapsed = setExpandedDetail(route(), null);
+    const open = route().expandedDetail;
+    let collapsed = setExpandedDetail(route(), null);
+    // A card opened from elsewhere (a Structure node, Commander) lands on the Roadmap; its Back
+    // goes to its own board instead: its milestone's, or All cards for one in the Backlog.
+    if (open?.entityKind === "card" && collapsed.section === "milestones" && !collapsed.milestone) {
+      const card = workspace().workCards.find((item) => item.slug === open.entityId);
+      collapsed = setMilestoneView(collapsed, card?.milestoneId || "all");
+    }
     const previous = history()[historyIndex() - 1];
     if (previous && routesEqual(previous, collapsed)) goBack();
     else applyRoute(collapsed, "replace");
   });
   onCleanup(() => setDetailExpandHandler(undefined));
-  // A page's Back goes back in history, to wherever it was opened from.
-  /** The history entry of the page `navigateToDetail` opened last; its Back returns to the entry before. */
-  const [detailOpenedAt, setDetailOpenedAt] = createSignal(-1);
-
-  // A page's Back returns to the place that opened it (a Structure node's peek, a link elsewhere)
-  // while that entry is still the one before it. A page restored by the section's memory, or
-  // reached through other steps, closes to its own list instead.
-  setPageBackHandler(() => {
-    if (historyIndex() <= 0 || historyIndex() !== detailOpenedAt()) return false;
-    goBack();
-    return true;
-  });
-  onCleanup(() => setPageBackHandler(undefined));
   // A crumb on an open page: its own section (or the tab it was opened from) closes the page
   // back to that list; any other crumb opens its place.
   setSectionNavigateHandler((section, tab) => {
@@ -634,7 +631,6 @@ export function App() {
     // Page-only kinds land on their full page; the others open the lateral panel.
     const page = detailDisplayFor(entityKind) === "page";
     applyRoute(page ? setExpandedDetail(nextRoute, target) : nextRoute);
-    if (page) setDetailOpenedAt(historyIndex());
   }
 
   function goBack() {
@@ -693,7 +689,16 @@ export function App() {
         stage: stageNames[card.stage] ?? stageLabel(card.stage),
       }));
   });
-  const [dispatchDraft, setDispatchDraft] = createSignal<{ key: number; cardSlug: string; prompt: string }>();
+  const [dispatchDraft, setDispatchDraft] = createSignal<{ key: number; cardSlug: string; prompt: string; route?: RunRouteSelection }>();
+  // Commander's Run an agent picks its Route, Milestone, and Card like Start run; the open card comes preset.
+  const paletteRouteSources = createRunRouteSources();
+  const paletteRoute = createRunRoute({ ...paletteRouteSources, cards: startRunCards });
+  createEffect(on(paletteOpen, (open) => {
+    if (!open) return;
+    void paletteRouteSources.load();
+    paletteRoute.clearCard();
+    paletteRoute.setCard(openCardSlug());
+  }));
 
   function handlePaletteCommand(id: string) {
     if (id === "action.copy-brief" || id === "action.dispatch-card") {
@@ -713,6 +718,14 @@ export function App() {
       navigateSection("dispatch");
       // Opened once Commander has closed and handed focus back, so its close does not dismiss New run.
       window.setTimeout(() => setDispatchDraft({ key: Date.now(), cardSlug: slug, prompt: `${title}: work on card ${slug}. Read \`polterware brief ${slug}\` first.` }), 200);
+      return;
+    }
+    if (id.startsWith(RUN_AGENT_PREFIX)) {
+      // Commander's Run an agent: the query starts a run at once on the route and card its pills hold.
+      const prompt = id.slice(RUN_AGENT_PREFIX.length).trim();
+      const picked = paletteRoute.selection();
+      navigateSection("dispatch");
+      window.setTimeout(() => setDispatchDraft({ key: Date.now(), cardSlug: picked.cardSlug, prompt, route: picked }), 200);
       return;
     }
     if (id === "action.start-run") {
@@ -816,7 +829,7 @@ export function App() {
     })) };
   });
   // A record cited by a Structure node opens in a peek first; Expand opens its page.
-  const [peekRecord, setPeekRecord] = createSignal<RecordPeekTarget | null>(null);
+  const [peekRecord, setPeekRecord] = createSignal<RecordEditTarget | null>(null);
   function openStructureRecord(kind: StructureRecordKind, id: string) {
     if (kind === "card") { const next = sectionRoute("milestones"); navigateToDetail(next, next.tab === "board" ? "knowledge:board" : "knowledge:specs", id, "card"); }
     else if (kind === "decision") navigateToDetail(setTab(sectionRoute("truth"), "decisions"), "knowledge:library", id, "decision");
@@ -1029,6 +1042,74 @@ export function App() {
         if (draft.scopeNodeIds.length > 0) await persistKnowledgeScope(currentProjectId(), id, draft.scopeNodeIds);
         return () => navigateToDetail(setTab(sectionRoute("truth"), "docs"), "knowledge:docs", id, "doc");
       },
+    });
+  }
+
+  /** One justified edit from a record's composer; false keeps the draft in the composer. */
+  async function saveWrite(input: { summary: string; why: string; failure: string; write: (change: ChangeEnvelope) => Promise<void> }): Promise<boolean> {
+    try {
+      const change = await justifyChange({ title: input.summary, defaultSummary: input.summary, why: input.why });
+      if (!change) return false;
+      await input.write(change);
+      await refreshWorkspace(currentProjectId());
+      pushToast("Saved.", "success");
+      return true;
+    } catch (error: unknown) {
+      pushToast(error instanceof Error ? error.message : input.failure, "danger");
+      return false;
+    }
+  }
+
+  function saveCard(slug: string, draft: CardDraft): Promise<boolean> {
+    return saveWrite({
+      summary: `Edit card: ${draft.title}`,
+      why: draft.why,
+      failure: "Could not save the card.",
+      write: (change) => persistWorkUpdateCard({
+        projectId: currentProjectId(),
+        slug,
+        title: draft.title,
+        stage: draft.stage,
+        milestone: draft.milestone,
+        under: draft.under,
+        kind: draft.kind,
+        intent: draft.intent,
+        change,
+      }),
+    });
+  }
+
+  /** A decision's or a doc's title, body, and contexts. */
+  function saveKnowledge(id: string, draft: KnowledgeEditDraft, what: "decision" | "doc"): Promise<boolean> {
+    return saveWrite({
+      summary: `Edit ${what}: ${draft.title}`,
+      why: draft.why,
+      failure: `Could not save the ${what}.`,
+      write: async (change) => {
+        await persistKnowledgeEdit(workspace(), currentProjectId(), id, { title: draft.title, body: draft.body }, change);
+        const current = what === "decision" ? workspace().decisions.find((item) => item.id === id) : workspace().docs.find((item) => item.id === id);
+        const same = (current?.scopeNodeIds ?? []).slice().sort().join("\0") === draft.scopeNodeIds.slice().sort().join("\0");
+        if (!same) await persistKnowledgeScope(currentProjectId(), id, draft.scopeNodeIds);
+      },
+    });
+  }
+
+  /** A Rule's statement and, when they changed, the node paths it holds for. */
+  function saveRule(draft: RuleDraft): Promise<boolean> {
+    const current = workspace().rules.find((rule) => (rule.slug || rule.id) === draft.ref);
+    const paths = scopeNodes().filter((node) => draft.scopeNodeIds.includes(node.id)).map((node) => node.path).sort();
+    const changed = !current || current.scopePaths.slice().sort().join("\0") !== paths.join("\0");
+    return saveWrite({
+      summary: `Edit rule: ${draft.statement}`.slice(0, 120),
+      why: draft.why ?? "",
+      failure: "Could not save the rule.",
+      write: (change) => persistRuleEdit({
+        projectId: currentProjectId(),
+        handle: draft.ref ?? "",
+        statement: draft.statement,
+        scopePaths: changed ? paths : undefined,
+        change,
+      }),
     });
   }
 
@@ -1939,13 +2020,20 @@ export function App() {
       </Show>
       <Show when={peekRecord()}>
         <Suspense>
-          <RecordPeek
+          <RecordEditor
             target={peekRecord()}
+            crumb={workspace().settings.name || "Project"}
             cards={workspace().workCards}
             decisions={workspace().decisions}
             rules={workspace().rules}
             docs={workspace().docs}
+            milestones={workspace().milestones}
+            components={flowComponents()}
             nodes={scopeNodes()}
+            onSaveCard={saveCard}
+            onSaveDecision={(id, draft) => saveKnowledge(id, draft, "decision")}
+            onSaveDoc={(id, draft) => saveKnowledge(id, draft, "doc")}
+            onSaveRule={saveRule}
             onClose={() => setPeekRecord(null)}
             onExpand={(target) => {
               setPeekRecord(null);
@@ -1957,6 +2045,7 @@ export function App() {
       <ShortcutsPanel open={shortcutsOpen()} onClose={() => setShortcutsOpen(false)} />
       <CommandPalette
         open={paletteOpen()}
+        runProperties={paletteRoute.properties()}
         items={paletteItems()}
         platform={PLATFORM_CONTEXT}
         onClose={() => setPaletteOpen(false)}

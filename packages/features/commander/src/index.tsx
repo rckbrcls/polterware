@@ -3,6 +3,7 @@ import { Button } from "@polterware/frontend-design-system";
 export type { PaletteItem } from "./palette-items";
 export { CARD_PALETTE_ITEMS, DEFAULT_PALETTE_ITEMS as DEFAULT_ITEMS } from "./palette-items";
 export { CommandPalette } from "./command-palette";
+export { RUN_AGENT_PREFIX } from "./palette-body";
 export { CommanderWindow } from "./commander-window";
 export { OverviewCards, type OverviewCardModel } from "./overview-cards";
 export { OverviewDetail } from "./overview-detail";

@@ -1,4 +1,4 @@
-import { A11yDialog, Button, X } from "@polterware/frontend-design-system";
+import { A11yDialog, Button, X, type ComposerProperty } from "@polterware/frontend-design-system";
 import type { PlatformContext } from "@polterware/frontend-platform";
 import { PaletteBody } from "./palette-body";
 import type { PaletteItem } from "./palette-items";
@@ -11,6 +11,8 @@ export function CommandPalette(props: {
   onCommand?: (id: string) => void;
   items?: PaletteItem[];
   platform?: PlatformContext;
+  /** Route, Milestone, and Card for Run an agent. */
+  runProperties?: readonly ComposerProperty[];
 }) {
   return (
     <A11yDialog
@@ -27,6 +29,8 @@ export function CommandPalette(props: {
         platform={props.platform}
         onCommand={props.onCommand}
         onConsumed={props.onClose}
+        runAgent
+        runProperties={props.runProperties}
         trailing={
           <Button
             variant="icon"
