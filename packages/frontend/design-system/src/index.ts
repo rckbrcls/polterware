@@ -102,7 +102,7 @@ export type {
   TooltipRootProps,
   TooltipTriggerProps,
 } from "./tooltip";
-export { DisplayOptions } from "./display-options";
+export { DisplayOptions, DisplayOptionsPanel } from "./display-options";
 export type { DisplayChoice, DisplayOptionsProps } from "./display-options";
 export { Kbd } from "./kbd";
 export type { KbdProps } from "./kbd";

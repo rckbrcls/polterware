@@ -3,6 +3,7 @@ import type { JSX } from "solid-js";
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 import { matchesShortcut } from "@polterware/frontend-state";
 import { Button } from "./button";
+import { DisplayOptionsPanel, type DisplayOptionsProps } from "./display-options";
 import {
   addClause,
   sameClauses,
@@ -35,6 +36,8 @@ export type FilterPopoverProps = {
   /** Open with the add-filter shortcut (F). Give it to one filter control per page. */
   shortcut?: boolean;
   class?: string;
+  /** How the list shows, at the end of the menu (grouping, ordering, properties), so a list needs no separate Display button. */
+  display?: Omit<DisplayOptionsProps, "label">;
 };
 
 type RootRow =
@@ -339,7 +342,7 @@ export function FilterPopover(props: FilterPopoverProps) {
         anchorRef={() => triggerRef}
         persistentElements={[() => submenuContentRef]}
         placement={variant() === "ghost" ? "bottom-start" : "bottom-end"}
-        width={260}
+        width={props.display ? 320 : 260}
         title={label()}
         class="max-h-[calc(100vh-64px)]"
       >
@@ -371,6 +374,15 @@ export function FilterPopover(props: FilterPopoverProps) {
                     <MenuList class="p-1.5">
                       <For each={props.saved?.items ?? []}>{(filter) => <SavedRow filter={filter} />}</For>
                     </MenuList>
+                  </Show>
+                  <Show when={props.display}>
+                    {(display) => (
+                      <section aria-label="Display">
+                        <div class="border-t border-[var(--color-border-subtle)]" aria-hidden />
+                        <p class="m-0 px-3.5 pt-2.5 text-[11px] font-medium text-[var(--color-text-muted)]">Display</p>
+                        <DisplayOptionsPanel {...display()} />
+                      </section>
+                    )}
                   </Show>
                 </Show>
               }

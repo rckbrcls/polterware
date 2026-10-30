@@ -4,11 +4,10 @@ import {
   DropdownMenuItem, DropdownMenuTrigger, Eye, IconTile,
   MoreHorizontal, PageEmpty, PageError, PageLoading,
   PageToolbar, Pencil, PinOff, Plus, SchemeIcon, SearchBar, buttonClassName,
-  ToolbarIconButton, Blocks, pushToast, requestConfirm, type ArchivedListItem,
+  ToolbarIconButton, pushToast, requestConfirm, type ArchivedListItem,
 } from "@polterware/frontend-design-system";
 import { CanvasEditor } from "./editor";
 import { CanvasMinimap } from "./minimap";
-import { ShapeGallery } from "./shape-gallery";
 import { toDocument, type CanvasPort, type CanvasRecord, type CanvasType } from "./model";
 import type { ArchitectureDocument } from "@polterware/frontend-canvas";
 export type { CanvasPort, CanvasRecord, CanvasPatch, CanvasType } from "./model";
@@ -58,7 +57,6 @@ function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: 
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal("");
   const [query, setQuery] = createSignal("");
-  const [gallery, setGallery] = createSignal(false);
   const visibleCanvases = createMemo(() => {
     const needle = query().trim().toLowerCase();
     if (!needle) return data()?.canvases ?? [];
@@ -136,14 +134,13 @@ function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: 
       pushToast(`Deleted “${item.title}”`);
     });
   }
-  return <Show when={selected()} keyed fallback={<Show when={!gallery()} fallback={<ShapeGallery types={data()?.types ?? []} onBack={() => setGallery(false)} />}><div class="flex h-full min-h-0 flex-col">
+  return <Show when={selected()} keyed fallback={<div class="flex h-full min-h-0 flex-col">
     <PageToolbar.Root>
       <PageToolbar.Leading>{null}</PageToolbar.Leading>
       <PageToolbar.Actions>
         <Show when={!showArchived()}><SearchBar placeholder="Search canvases" value={query()} onInput={setQuery} aria-label="Search canvases" /></Show>
         <Button variant="texture" size="icon" aria-label={showArchived() ? "Back to canvases" : "Archived canvases"} aria-pressed={showArchived()} selected={showArchived()} onClick={() => setShowArchived((value) => !value)}><Archive size={14} /></Button>
         <Show when={!showArchived()}>
-          <ToolbarIconButton label="Shape gallery" onClick={() => setGallery(true)}><Blocks size={14} /></ToolbarIconButton>
           <ToolbarIconButton label="New canvas" disabled={busy() || !data()?.types.length} onClick={() => showDialog("create")}><Plus size={14} /></ToolbarIconButton>
         </Show></PageToolbar.Actions>
     </PageToolbar.Root>
@@ -182,7 +179,7 @@ function CanvasProject(props: { projectId: string; port: CanvasPort; entities?: 
       onClose={() => { if (!busy()) setDialog(undefined); }}
       onSubmit={submit}
     />
-  </div></Show>}>{(value) => <CanvasEditor canvas={value.canvas} document={value.document} definition={value.definition} port={props.port} entities={props.entities} onBack={() => { setSelected(undefined); void refetch(); }} />}</Show>;
+  </div>}>{(value) => <CanvasEditor canvas={value.canvas} document={value.document} definition={value.definition} port={props.port} entities={props.entities} onBack={() => { setSelected(undefined); void refetch(); }} />}</Show>;
 }
 
 /** One canvas in the grid: the minimap fills the card and the title row floats over it. */

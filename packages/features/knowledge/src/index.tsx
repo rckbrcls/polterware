@@ -6,7 +6,6 @@ import {
   Breadcrumb,
   Button,
   ChevronLeft,
-  DisplayOptions,
   FileText,
   FilterPopover,
   LibraryBig,
@@ -800,28 +799,27 @@ export function KnowledgeView(props: {
                 clauses={pageFilters().clauses()}
                 onClausesChange={pageFilters().onClausesChange}
                 saved={pageFilters().saved()}
-              />
-              <Show when={tab() === "specs"}>
-                <DisplayOptions
-                  grouping={{
+                // The List's Display (grouping, ordering, properties) sits at the end of its filter menu.
+                display={tab() === "specs" ? {
+                  grouping: {
                     options: WORK_LIST_GROUPINGS,
                     value: workListDisplay().grouping,
                     onChange: (value) => changeWorkListDisplay({ ...workListDisplay(), grouping: value as WorkListGrouping }),
-                  }}
-                  ordering={{
+                  },
+                  ordering: {
                     options: WORK_LIST_ORDERINGS,
                     value: workListDisplay().ordering,
                     onChange: (value) => changeWorkListDisplay({ ...workListDisplay(), ordering: value as WorkListOrdering }),
                     direction: workListDisplay().direction,
                     onDirectionChange: (direction) => changeWorkListDisplay({ ...workListDisplay(), direction }),
-                  }}
-                  properties={{
+                  },
+                  properties: {
                     options: WORK_LIST_PROPERTIES,
                     visible: workListDisplay().properties,
                     onChange: (visible) => changeWorkListDisplay({ ...workListDisplay(), properties: visible as WorkListProperty[] }),
-                  }}
-                />
-              </Show>
+                  },
+                } : undefined}
+              />
               {/* Cards are added from a column's or group's +, so a board has no toolbar +. */}
               <Show when={props.onCompose && !cardTab()}>
                 <ToolbarIconButton label={createLabel()} onClick={composeHere}>

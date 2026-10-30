@@ -515,71 +515,9 @@
   white-space: nowrap;
 }
 
-/* Shape gallery: every kind drawn by the real node renderer, grouped like the shape library and centered on the page. */
-.pw-canvas-gallery {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  width: 100%;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 24px 16px 32px;
-  box-sizing: border-box;
-}
-
-.pw-canvas-gallery-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.pw-canvas-gallery-heading {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin: 0;
-  padding: 0 2px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-}
-
-.pw-canvas-gallery-heading span {
-  color: var(--color-text-muted);
-  font-weight: 400;
-}
-
-.pw-canvas-gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
-  gap: 12px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* No card around a kind: the drawing sits on the page grid like a shape on the canvas. */
-.pw-canvas-gallery-tile {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.pw-canvas-gallery-art-box {
-  height: 132px;
-}
-
+/* A kind drawn by the real renderer, fitted to its box (the shape library's art). */
 .pw-canvas-gallery-art {
   display: block;
   width: 100%;
   height: 100%;
-}
-
-.pw-canvas-gallery-meta {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 8px;
-  padding: 0 2px;
 }
