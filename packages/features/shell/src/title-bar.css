@@ -22,7 +22,7 @@
   align-items: center;
   gap: 2px;
 }
-.pw-titlebar-crumbs__sep { flex: none; color: var(--color-text-disabled); }
+.pw-titlebar-crumbs__sep { flex: none; padding-inline: 2px; color: var(--color-text-disabled); }
 .pw-titlebar-crumbs__link,
 .pw-titlebar-crumbs__current {
   overflow: hidden;

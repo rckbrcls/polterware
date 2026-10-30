@@ -673,6 +673,26 @@ export function App() {
   // The card a page shows, for Commander's card actions.
   const openCardSlug = createDetailPanelSelector((state) => state.activeTarget?.entityKind === "card" ? state.activeTarget.entityId : "");
   const paletteItems = createMemo(() => openCardSlug() ? [...CARD_PALETTE_ITEMS, ...DEFAULT_ITEMS] : DEFAULT_ITEMS);
+  /** Open cards for Start run, under their milestone: active milestones first, then planned, then the Backlog. */
+  const startRunCards = createMemo(() => {
+    const rank = { active: 0, planned: 1, done: 2 } as const;
+    const milestones = [...workspace().milestones].sort((a, b) => rank[a.state] - rank[b.state]);
+    const stageNames: Record<string, string> = { shape: "Idea", plan: "Planned", build: "In progress", verify: "In review" };
+    const open = workspace().workCards.filter((card) => card.stage !== "delivered");
+    const milestoneIndex = (card: (typeof open)[number]) => {
+      const index = milestones.findIndex((milestone) => milestone.id === card.milestoneId);
+      return index < 0 ? milestones.length : index;
+    };
+    // Stage sections in board order; within one, the milestones in Start run's order, Backlog last.
+    return [...open]
+      .sort((a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage) || milestoneIndex(a) - milestoneIndex(b))
+      .map((card) => ({
+        slug: card.slug,
+        title: card.title,
+        milestone: milestones[milestoneIndex(card)]?.name ?? "Backlog",
+        stage: stageNames[card.stage] ?? stageLabel(card.stage),
+      }));
+  });
   const [dispatchDraft, setDispatchDraft] = createSignal<{ key: number; cardSlug: string; prompt: string }>();
 
   function handlePaletteCommand(id: string) {
@@ -1718,8 +1738,7 @@ export function App() {
             startDraft={dispatchDraft()}
             onStartDraftUsed={() => setDispatchDraft(undefined)}
             homeKey={sectionHomeKey()}
-            projectDir={workspace().projects.find((project) => project.projectId === currentProjectId())?.directory ?? ""}
-            cards={workspace().workCards.filter((card) => card.stage !== "delivered").map((card) => ({ slug: card.slug, title: card.title, group: stageLabel(card.stage) }))}
+            cards={startRunCards()}
           />
         </Match>
 
@@ -1749,6 +1768,7 @@ export function App() {
               applyRoute(closeDialog(route()), "silent");
             }}
             projectId={currentProjectId()}
+            projectDir={workspace().projects.find((project) => project.projectId === currentProjectId())?.directory ?? ""}
             loading={loading()}
             onTabChange={(tab) => applyRoute(openDialog(route(), { type: "settings", tab: tab as ProjectSettingsTabId }), "silent")}
             renderProjectSettings={(tab) => <ProjectSettings embedded tab={tab} />}

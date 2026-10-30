@@ -1,19 +1,18 @@
 import { For, Show, createSignal, onMount, type JSX } from "solid-js";
 import {
   Button,
-  Card,
   Field,
   FilterChip,
   Input,
-  PageContent,
   Select,
+  SettingsSection,
   StatusChip,
   SwitchRow,
   Textarea,
   X,
   pushToast,
 } from "@polterware/frontend-design-system";
-import { dispatchBridge, dispatchOpBody } from "./dispatch-bridge";
+import { dispatchBridge, dispatchOpBody, mapDispatchAgents } from "./dispatch-bridge";
 
 const TIERS = [
   { value: "easy", label: "Easy" },
@@ -61,29 +60,17 @@ async function runOp(call: (() => Promise<unknown>) | undefined, failure: string
   }
 }
 
-function Section(props: { title: string; description: string; children: JSX.Element }) {
-  return (
-    <Card variant="texture" class="flex flex-col gap-3 p-4">
-      <div class="flex flex-col gap-1">
-        <h2 class="m-0 text-[14px] font-semibold text-[var(--color-text-primary)]">{props.title}</h2>
-        <p class="m-0 text-[12.5px] text-[var(--color-text-muted)]">{props.description}</p>
-      </div>
-      {props.children}
-    </Card>
-  );
-}
-
 /**
- * Models › Policy: what the CLI's route, classify, config, subagents, verify --init, and skill
- * commands do, from the Desktop. Every write goes through the core (`DispatchService`).
+ * App settings › Dispatch policy: what the CLI's route, classify, config, subagents, verify --init,
+ * and skill commands do, from the Desktop. Every write goes through the core (`DispatchService`).
  */
-export function DispatchPolicyPage(props: {
-  /** Agent names the router knows, for the agent picker. */
-  agents: readonly string[];
+export function DispatchPolicySettings(props: {
   /** The project's checkout, for the project policy, subagents, and verify.json. */
   projectDir: string;
 }) {
   const bridge = () => dispatchBridge();
+  // Agent names the router knows, for the agent picker.
+  const [agents, setAgents] = createSignal<string[]>([]);
 
   // Route: which agent a run with these options would get, without starting it.
   const [routeTier, setRouteTier] = createSignal("normal");
@@ -140,6 +127,7 @@ export function DispatchPolicyPage(props: {
   };
 
   onMount(() => {
+    void bridge()?.listAgents({}).then((raw) => setAgents(mapDispatchAgents(raw).map((agent) => agent.name)), () => undefined);
     void loadPolicy();
     void loadProfiles();
   });
@@ -147,9 +135,8 @@ export function DispatchPolicyPage(props: {
   const wrote = (body: Record<string, unknown>, fallback: string) => pushToast(`Wrote ${String(body.wrote ?? fallback)}.`, "success");
 
   return (
-    <PageContent class="flex min-h-0 flex-1 flex-col overflow-auto p-4">
-      <div class="mx-auto grid w-full max-w-3xl gap-4">
-        <Section title="Try a route" description="Which agent a run with these options would get, in order, without starting it.">
+    <div class="grid gap-6">
+        <SettingsSection title="Try a route" description="Which agent a run with these options would get, in order, without starting it.">
           <div class="grid grid-cols-2 gap-3">
             <Field label="Tier">
               <Select aria-label="Route tier" options={TIERS} value={routeTier()} onChange={setRouteTier} />
@@ -157,7 +144,7 @@ export function DispatchPolicyPage(props: {
             <Field label="Agent">
               <Select
                 aria-label="Route agent"
-                options={[{ value: "", label: "Any agent" }, ...props.agents.map((name) => ({ value: name, label: name }))]}
+                options={[{ value: "", label: "Any agent" }, ...agents().map((name) => ({ value: name, label: name }))]}
                 value={routeAgent()}
                 onChange={setRouteAgent}
               />
@@ -185,9 +172,9 @@ export function DispatchPolicyPage(props: {
               </div>
             )}
           </Show>
-        </Section>
+        </SettingsSection>
 
-        <Section title="Classify a prompt" description="The tier the learned classifier suggests, from the runs it has verified.">
+        <SettingsSection title="Classify a prompt" description="The tier the learned classifier suggests, from the runs it has verified.">
           <Field label="Prompt">
             <Textarea aria-label="Prompt to classify" rows={3} value={prompt()} onInput={(event) => setPrompt(event.currentTarget.value)} />
           </Field>
@@ -218,9 +205,9 @@ export function DispatchPolicyPage(props: {
               </p>
             )}
           </Show>
-        </Section>
+        </SettingsSection>
 
-        <Section title="Routing policy" description="The priority, discovery, and which providers, models, and agents a run may or may not use.">
+        <SettingsSection title="Routing policy" description="The priority, discovery, and which providers, models, and agents a run may or may not use.">
           <SwitchRow
             label="This project only"
             checked={projectScope()}
@@ -288,9 +275,9 @@ export function DispatchPolicyPage(props: {
               </div>
             )}
           </Show>
-        </Section>
+        </SettingsSection>
 
-        <Section title="Subagents" description="Named profiles a run can take: a tier, the agents to prefer or avoid, and its own prompt.">
+        <SettingsSection title="Subagents" description="Named profiles a run can take: a tier, the agents to prefer or avoid, and its own prompt.">
           <div class="flex flex-wrap gap-1.5">
             <For each={profiles()} fallback={<span class="text-[12.5px] text-[var(--color-text-muted)]">No subagents yet.</span>}>
               {(name) => <StatusChip tone="muted" label={name} />}
@@ -327,9 +314,9 @@ export function DispatchPolicyPage(props: {
               </Show>
             )}
           </Show>
-        </Section>
+        </SettingsSection>
 
-        <Section title="Verify checks" description="Verify runs the commands in the repository's .dispatch/verify.json in a run's worktree.">
+        <SettingsSection title="Verify checks" description="Verify runs the commands in the repository's .dispatch/verify.json in a run's worktree.">
           <div>
             <Button
               size="sm"
@@ -346,9 +333,9 @@ export function DispatchPolicyPage(props: {
               Write example verify.json
             </Button>
           </div>
-        </Section>
+        </SettingsSection>
 
-        <Section title="Dispatch skill" description="The skill that teaches the agent CLIs to delegate with polterware run.">
+        <SettingsSection title="Dispatch skill" description="The skill that teaches the agent CLIs to delegate with polterware run.">
           <div class="flex gap-2">
             <Button
               size="sm"
@@ -376,8 +363,7 @@ export function DispatchPolicyPage(props: {
               Refresh
             </Button>
           </div>
-        </Section>
-      </div>
-    </PageContent>
+        </SettingsSection>
+    </div>
   );
 }

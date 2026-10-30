@@ -35,6 +35,7 @@ import {
   ToolbarIconButton,
   Composer,
   FolderKanban,
+  Briefcase06Icon,
   EntityMenuButton,
   type ComposerProperty,
   type PropertyOption,
@@ -81,13 +82,13 @@ import { dispatchOpBody, runMoreActions, runReviewAction } from "./dispatch-brid
 import { buildTranscript } from "./run-log";
 import { RunTerminal } from "./run-terminal";
 import { DispatchLearningPage } from "./learning-page";
-import { DispatchPolicyPage } from "./policy-page";
 import { TierBoard } from "./tier-board";
 import { DISPATCH_STATS_BY_OPTIONS, DISPATCH_STATS_SINCE_OPTIONS, DispatchStatsPage } from "./stats-page";
 
 export * from "./dispatch-types";
 export * from "./dispatch-bridge";
 export { DispatchLearningPage } from "./learning-page";
+export { DispatchPolicySettings } from "./policy-page";
 export { DispatchStatsPage } from "./stats-page";
 
 const DISPATCH_RUNS_SCOPE = "dispatch:runs";
@@ -103,7 +104,6 @@ function normalizeDispatchTab(tab?: string): DispatchTab {
     tab === "agents"
     || tab === "tiers"
     || tab === "learning"
-    || tab === "policy"
     || tab === "stats"
   ) {
     return tab;
@@ -450,10 +450,8 @@ export function DispatchPage(props: {
   onStartDraftUsed?: () => void;
   /** A new value closes the open run and shows the list (the sidebar item chosen again). */
   homeKey?: number;
-  /** The project's checkout, for Policy's project policy, subagents, and verify.json. */
-  projectDir?: string;
-  /** Cards Start run can work on, searchable by title and slug; `group` is the heading they list under. */
-  cards?: readonly { slug: string; title: string; group?: string }[];
+  /** Open cards Start run can work on, searchable by title and slug, listed under their stage in this order. */
+  cards?: readonly { slug: string; title: string; milestone?: string; stage?: string }[];
 }) {
   const [localTab, setLocalTab] = createSignal<DispatchTab>(normalizeDispatchTab(props.tab));
   const activeTab = () => (props.tab ? normalizeDispatchTab(props.tab) : localTab());
@@ -476,6 +474,8 @@ export function DispatchPage(props: {
   const [draftTier, setDraftTier] = createSignal("normal");
   const [draftAgent, setDraftAgent] = createSignal("");
   const [draftCard, setDraftCard] = createSignal("");
+  // The milestone narrows the card list; both are optional.
+  const [draftMilestone, setDraftMilestone] = createSignal("");
   const [draftPrompt, setDraftPrompt] = createSignal("");
   const [startOpen, setStartOpen] = createSignal(false);
   const [cancellingId, setCancellingId] = createSignal("");
@@ -630,6 +630,7 @@ export function DispatchPage(props: {
   createEffect(on(() => props.startDraft, (draft) => {
     if (!draft) return;
     setDraftCard(draft.cardSlug);
+    setDraftMilestone(props.cards?.find((card) => card.slug === draft.cardSlug)?.milestone ?? "");
     setDraftPrompt(draft.prompt);
     setStartOpen(true);
     props.onStartDraftUsed?.();
@@ -663,6 +664,7 @@ export function DispatchPage(props: {
       );
       setDraftPrompt("");
       setDraftCard("");
+      setDraftMilestone("");
       if (activeTab() !== "runs") {
         setLocalTab("runs");
         props.onTabChange?.("runs");
@@ -826,51 +828,107 @@ export function DispatchPage(props: {
     onCleanup(() => cancelAnimationFrame(frame));
   });
 
-  const tierSelectOptions = createMemo(() => {
-    const dynamic = tiers().map((tier) => ({ value: tier.name, label: `${tier.name} (${tier.agent})` }));
-    return dynamic.length > 0 ? dynamic : DEFAULT_TIER_OPTIONS;
-  });
-
   /**
    * Start run's pills: the tier, the agent and model (grouped by agent with their bots, from the
    * models the installed agents report, plus agents with no listed model), and the card it works on.
    */
+  // Option icons are getters: an icon is a DOM node, and the pill and the list each need their own.
   const startProperties = (): ComposerProperty[] => {
     const avatar = (agent: string) => <DispatchAgentAvatar agent={agent} seed={agent} size={18} />;
     const listed = new Set(paletteModels().map((model) => model.agent));
-    const agentOptions: PropertyOption[] = [
-      { value: "", label: "Any agent", hint: "The tier picks the agent and model", icon: <Route size={14} /> },
-      ...paletteModels().map((model) => ({
+    // Route a run by tier (its table picks the agent and model, with fallbacks) or by one model.
+    const tierNames = [...new Set(tiers().map((tier) => tier.name))];
+    const byTier: PropertyOption[] = (tierNames.length > 0 ? tierNames : DEFAULT_TIER_OPTIONS.map((option) => option.value)).map((name) => {
+      const entries = tiers().filter((tier) => tier.name === name).sort((a, b) => a.position - b.position);
+      const primary = entries[0];
+      return {
+        value: `tier:${name}`,
+        label: name.charAt(0).toUpperCase() + name.slice(1),
+        hint: primary ? `${primary.agent} / ${primary.model}${entries.length > 1 ? `, then ${entries.length - 1} fallback${entries.length === 2 ? "" : "s"}` : ""}` : "The tier table picks",
+        group: "By tier",
+        get icon() { return <Gauge size={14} />; },
+      };
+    });
+    const routeOptions: PropertyOption[] = [
+      ...byTier,
+      ...paletteModels().map((model): PropertyOption => ({
         value: `${model.agent}\u0000${model.model}`,
         label: model.model,
         hint: [model.provider, model.tier].filter(Boolean).join(" / ") || undefined,
         group: model.agent,
-        icon: avatar(model.agent),
+        get icon() { return avatar(model.agent); },
         bareIcon: true,
       })),
-      ...agents().filter((agent) => !listed.has(agent.name)).map((agent) => ({
+      ...agents().filter((agent) => !listed.has(agent.name)).map((agent): PropertyOption => ({
         value: agent.name,
         label: agent.name,
         hint: "Its default model",
         group: agent.name,
-        icon: avatar(agent.name),
+        get icon() { return avatar(agent.name); },
         bareIcon: true,
       })),
     ];
+    const cards = props.cards ?? [];
+    const milestones = [...new Set(cards.map((card) => card.milestone).filter((name): name is string => Boolean(name)))];
+    const milestoneOptions: PropertyOption[] = [
+      { value: "", label: "Any milestone", get icon() { return <Briefcase06Icon size={14} />; } },
+      ...milestones.map((name): PropertyOption => {
+        const count = cards.filter((card) => card.milestone === name).length;
+        return { value: name, label: name, hint: `${count} open card${count === 1 ? "" : "s"}`, get icon() { return <Briefcase06Icon size={14} />; } };
+      }),
+    ];
     const cardOptions: PropertyOption[] = [
-      { value: "", label: "No card", icon: <FolderKanban size={14} /> },
-      ...(props.cards ?? []).map((card) => ({
+      { value: "", label: "No card", get icon() { return <FolderKanban size={14} />; } },
+      ...cards.filter((card) => !draftMilestone() || card.milestone === draftMilestone()).map((card): PropertyOption => ({
         value: card.slug,
         label: card.title || card.slug,
-        hint: card.slug,
-        group: card.group,
-        icon: <FolderKanban size={14} />,
+        // Under one milestone its name would only repeat the pill.
+        hint: draftMilestone() || !card.milestone ? card.slug : `${card.slug} / ${card.milestone}`,
+        group: card.stage,
+        get icon() { return <FolderKanban size={14} />; },
       })),
     ];
     return [
-      { id: "tier", label: "Tier", icon: <Gauge size={14} />, options: tierSelectOptions().map((option) => ({ ...option, icon: <Gauge size={14} /> })), value: draftTier(), onChange: setDraftTier },
-      { id: "agent", label: "Agent", icon: <Bot size={14} />, options: agentOptions, value: draftAgent(), onChange: setDraftAgent, pickerWidth: 320 },
-      { id: "card", label: "Card", icon: <FolderKanban size={14} />, options: cardOptions, value: draftCard(), onChange: setDraftCard, pickerWidth: 320 },
+      {
+        id: "route",
+        label: "Route",
+        get icon() { return <Bot size={14} />; },
+        options: routeOptions,
+        value: draftAgent() || `tier:${draftTier()}`,
+        onChange: (value) => {
+          if (value.startsWith("tier:")) {
+            setDraftTier(value.slice("tier:".length));
+            setDraftAgent("");
+          } else setDraftAgent(value);
+        },
+        pickerWidth: 340,
+      },
+      {
+        id: "milestone",
+        label: "Milestone",
+        get icon() { return <Briefcase06Icon size={14} />; },
+        options: milestoneOptions,
+        value: draftMilestone(),
+        onChange: (value) => {
+          setDraftMilestone(value);
+          // A card from another milestone no longer fits the pick.
+          if (value && cards.find((card) => card.slug === draftCard())?.milestone !== value) setDraftCard("");
+        },
+        pickerWidth: 280,
+      },
+      {
+        id: "card",
+        label: "Card",
+        get icon() { return <FolderKanban size={14} />; },
+        options: cardOptions,
+        value: draftCard(),
+        onChange: (value) => {
+          setDraftCard(value);
+          const milestone = cards.find((card) => card.slug === value)?.milestone;
+          if (milestone) setDraftMilestone(milestone);
+        },
+        pickerWidth: 320,
+      },
     ];
   };
 
@@ -1310,9 +1368,6 @@ export function DispatchPage(props: {
           <DispatchLearningPage query={learningQuery()} clauses={learningFilters.pageClauses()} />
         </Match>
 
-        <Match when={activeTab() === "policy"}>
-          <DispatchPolicyPage agents={agents().map((agent) => agent.name)} projectDir={props.projectDir ?? ""} />
-        </Match>
       </Switch>
 
       <Composer

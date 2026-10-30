@@ -29,6 +29,7 @@ export type ProjectSettingsTabId =
   | "agents-setup"
   | "agents-hooks"
   | "agents-skill"
+  | "dispatch-policy"
   | "platforms-connected"
   | "platforms-catalog"
   | "cli-reference"
@@ -44,7 +45,6 @@ export type DispatchTabId =
   | "agents"
   | "tiers"
   | "learning"
-  | "policy"
   | "stats";
 
 export type DialogState =
@@ -127,7 +127,6 @@ export const SECTION_TABS = {
   "dispatch-routing": [
     { id: "tiers", label: "Tiers" },
     { id: "learning", label: "Learning" },
-    { id: "policy", label: "Policy" },
   ],
   // Quota and pace per agent, and what the runs cost.
   "dispatch-usage": [

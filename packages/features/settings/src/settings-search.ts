@@ -92,6 +92,14 @@ export const SETTINGS_SEARCH_ENTRIES: SettingsSearchEntry[] = [
     keywords: "markdown download copy instructions",
   },
   {
+    id: "dispatch-policy",
+    tab: "dispatch-policy",
+    section: "Dispatch policy",
+    label: "Dispatch policy",
+    description: "Try a route, classify a prompt, and set the routing policy, subagents, verify checks, and the dispatch skill.",
+    keywords: "route classify priority allow deny subagents verify skill tiers",
+  },
+  {
     id: "platforms-connected",
     tab: "platforms-connected",
     section: "Connected",

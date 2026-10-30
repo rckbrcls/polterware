@@ -64,7 +64,7 @@ export function TitleBar(props: TitleBarProps) {
               <For each={props.crumbs}>
                 {(crumb, index) => (
                   <li>
-                    <Show when={index() > 0}><ChevronRight size={12} class="pw-titlebar-crumbs__sep" aria-hidden /></Show>
+                    <Show when={index() > 0}><span class="pw-titlebar-crumbs__sep" aria-hidden="true">/</span></Show>
                     <Show
                       when={crumb.onClick && index() < props.crumbs!.length - 1}
                       fallback={<span class="pw-titlebar-crumbs__current" aria-current={index() === props.crumbs!.length - 1 ? "page" : undefined}>{crumb.label}</span>}

@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Package,
   Terminal,
+  Route,
   type TabItem,
 } from "@polterware/frontend-design-system";
 import type { ProjectEnvironment, SettingsTabId } from "./types";
@@ -128,6 +129,16 @@ export const SETTINGS_TABS: SettingsTab[] = [
       title: "AI skill",
       description: "Copy or download the Polterware instructions for coding agents.",
       icon: BookOpen,
+    },
+  },
+  {
+    id: "dispatch-policy",
+    group: "Agents",
+    label: "Dispatch policy",
+    tooltip: {
+      title: "Dispatch policy",
+      description: "Try a route, classify a prompt, and set the routing policy, subagents, verify checks, and the dispatch skill.",
+      icon: Route,
     },
   },
   {

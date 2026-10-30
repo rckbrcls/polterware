@@ -3,7 +3,6 @@ export type DispatchTab =
   | "agents"
   | "tiers"
   | "learning"
-  | "policy"
   | "stats";
 
 export type DispatchHistoryEventKind = "started" | "verified" | "merged" | "failed";

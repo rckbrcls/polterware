@@ -15,6 +15,7 @@ import { Portal } from "solid-js/web";
 import { animate, motionValue, type AnimationPlaybackControls } from "motion";
 import { Button, type ButtonProps } from "./button";
 import { FloatingSurfaceProvider } from "./floating-surface";
+import { createPanelPortalOwnership } from "./panel-interaction";
 import { prefersReducedMotion } from "./reduced-motion";
 import { spring } from "./springs";
 import { Tooltip } from "./tooltip";
@@ -286,6 +287,9 @@ function MorphPanel(props: MorphPanelProps) {
     } else if (mounted()) leave();
   }));
 
+  // The portaled panel belongs to the detail panel that holds its trigger, so its clicks do not dismiss that panel.
+  const ownPortal = createPanelPortalOwnership(mounted);
+
   // Dismissal: a pointerdown outside the panel and its trigger, and window resizes.
   createEffect(() => {
     if (!context.open()) return;
@@ -309,6 +313,7 @@ function MorphPanel(props: MorphPanelProps) {
         <div
           ref={(element) => {
             layer = element;
+            ownPortal(element);
             queueMicrotask(enter);
           }}
           role="dialog"

@@ -23,6 +23,7 @@ describe("settings helpers", () => {
       "agents-setup",
       "agents-hooks",
       "agents-skill",
+      "dispatch-policy",
       "cli-reference",
       "shortcuts",
       "appearance",
@@ -51,6 +52,7 @@ describe("settings helpers", () => {
       "platforms-catalog",
     ]);
     expect(settingsTabsFor("app").map((tab) => tab.group)).toEqual([
+      "Agents",
       "Agents",
       "Agents",
       "Agents",

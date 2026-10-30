@@ -5,6 +5,7 @@ import {
   SettingsDialog,
 } from "@polterware/frontend-design-system";
 import { CliReferenceSettings } from "@polterware/feature-shell";
+import { DispatchPolicySettings } from "@polterware/feature-dispatch";
 import { normalizeSettingsTab, settingsTabScope, settingsTabsFor, SETTINGS_TABS } from "./settings-helpers";
 import { SettingsRow, SettingsSection } from "./settings-section";
 import { ShortcutsPage } from "./shortcuts-page";
@@ -46,6 +47,8 @@ export function SettingsView(props: {
   onClose: () => void;
   tab?: string;
   projectId?: string;
+  /** The open project's checkout, for the project's dispatch policy. */
+  projectDir?: string;
   loading?: boolean;
   onTabChange?: (t: string) => void;
   /** Project controls share the host callbacks with the project switcher dialog. */
@@ -92,6 +95,10 @@ export function SettingsView(props: {
 
         <Show when={tab() === "cli-reference"}>
           <CliReferenceSettings />
+        </Show>
+
+        <Show when={tab() === "dispatch-policy"}>
+          <DispatchPolicySettings projectDir={props.projectDir ?? ""} />
         </Show>
 
         <Show when={tab().startsWith("agents-")}>
