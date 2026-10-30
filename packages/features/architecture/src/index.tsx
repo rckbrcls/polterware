@@ -54,25 +54,13 @@ export function checkoutLabel(repo = "", folder = ""): string {
   return repo && folder ? `${repo}/${folder}` : repo || folder;
 }
 
-/** A component's kind and technology ("Database / Postgres"), or the node's level. */
-function levelLabel(node: Pick<StructureNode, "level" | "kind" | "tech">): string {
-  if (node.level !== "component") return kindLabel(node.level);
-  const kind = node.kind ? componentKindLabel(node.kind) : "Component";
-  return node.tech ? `${kind} / ${node.tech}` : kind;
+/** The level, and a component's kind and technology, for the expanded card's About. */
+function nodeProperties(node: Pick<StructureNode, "level" | "kind" | "tech">): readonly (readonly [string, string | undefined])[] {
+  if (node.level !== "component") return [["Level", kindLabel(node.level)]];
+  return [["Level", kindLabel(node.level)], ["Kind", node.kind ? componentKindLabel(node.kind) : undefined], ["Technology", node.tech || undefined]];
 }
 
-function plural(count: number, singular: string) {
-  return `${count} ${singular}${count === 1 ? "" : "s"}`;
-}
-
-/** "2 cards / 1 decision / 3 facts", leaving out the empty ones; empty when there are none. */
-function recordsLabel(counts: Counts | undefined): string {
-  if (!counts) return "";
-  return [counts.work ? plural(counts.work, "card") : "", counts.decisions ? plural(counts.decisions, "decision") : "", counts.facts ? plural(counts.facts, "fact") : ""]
-    .filter(Boolean).join(" / ");
-}
-
-/** A card's details region: collapses to its measured height on the shared springs, snapping on first paint. */
+/** A card's details region: collapses to its measured height on `spring.moderate` and fades with it, snapping on first paint. */
 function NodeExpand(props: { open: boolean; children: JSX.Element }) {
   let region: HTMLDivElement | undefined;
   let controls: CollapseControls | undefined;
@@ -80,7 +68,7 @@ function NodeExpand(props: { open: boolean; children: JSX.Element }) {
   createEffect(() => {
     const open = props.open;
     if (!region) return;
-    controls = animateCollapse(region, open, { previous: controls, instant: first });
+    controls = animateCollapse(region, open, { previous: controls, instant: first, fade: true, tier: "moderate" });
     first = false;
   });
   onCleanup(() => controls?.stop());
@@ -91,15 +79,26 @@ function NodeExpand(props: { open: boolean; children: JSX.Element }) {
 }
 
 /**
- * What a card shows when it expands, in groups titled with a 24px icon tile as on every
- * other page (`RailGroup`), side by side in columns that wrap: About, Checkout (repo/folder
- * and path), Uses, and Deploys. Empty groups are left out.
+ * What a card shows when it expands: everything the card knows, in groups titled with a
+ * 24px icon tile as on every other page (`RailGroup`), side by side in columns that wrap:
+ * About (description, level, kind, technology), Records (cards, decisions, facts), Checkout
+ * (repo/folder and path), Uses, and Deploys. Empty groups are left out.
  */
-function NodeInfo(props: { description?: string; checkout?: string; path?: string; uses?: readonly string[]; deploys?: StructureNode["deploys"]; isProviderConnected: (provider: string) => boolean }) {
+function NodeInfo(props: { description?: string; properties: readonly (readonly [string, string | undefined])[]; counts?: Counts; checkout?: string; path?: string; uses?: readonly string[]; deploys?: StructureNode["deploys"]; isProviderConnected: (provider: string) => boolean }) {
+  const properties = () => props.properties.filter((entry): entry is readonly [string, string] => Boolean(entry[1]));
+  const records = () => props.counts && (props.counts.work || props.counts.decisions || props.counts.facts) ? ([["Cards", props.counts.work], ["Decisions", props.counts.decisions], ["Facts", props.counts.facts]] as const) : [];
   return <div class="pw-structure-info">
     <RailGroup title="About" icon={<InformationCircle size={14} />}>
       <Show when={props.description} fallback={<p class="pw-structure-info__empty">No description yet.</p>}>{(text) => <p class="pw-structure-info__text">{text()}</p>}</Show>
+      <Show when={properties().length}>
+        <dl class="pw-structure-info__rows"><For each={properties()}>{([label, value]) => <><dt>{label}</dt><dd>{value}</dd></>}</For></dl>
+      </Show>
     </RailGroup>
+    <Show when={records().length}>
+      <RailGroup title="Records" icon={<Layers size={14} />}>
+        <dl class="pw-structure-info__rows"><For each={records()}>{([label, count]) => <><dt>{label}</dt><dd>{count}</dd></>}</For></dl>
+      </RailGroup>
+    </Show>
     <Show when={props.checkout || props.path}>
       <RailGroup title="Checkout" icon={<GitBranch size={14} />}>
         <dl class="pw-structure-info__rows">
@@ -127,10 +126,9 @@ function NodeInfo(props: { description?: string; checkout?: string; path?: strin
   </div>;
 }
 
-/** A tree card's one line after its title: kind / technology and the record counts, then Add child and the actions. */
-function NodeLine(props: { meta: string; addLabel?: string; onAdd?: () => void; title: string; actions: readonly EntityAction[] }) {
+/** A tree card's one line after its title: Add child and the actions; everything else is inside the card. */
+function NodeLine(props: { addLabel?: string; onAdd?: () => void; title: string; actions: readonly EntityAction[] }) {
   return <span class="pw-structure-line" onKeyDown={(event) => event.stopPropagation()}>
-    <span class="pw-structure-line__meta">{props.meta}</span>
     <Show when={props.onAdd}>
       <span class="pw-structure-line__add">
         <Button size="icon" variant="ghost" aria-label={props.addLabel ?? "Add child"} onClick={(event) => { event.stopPropagation(); props.onAdd?.(); }}><Plus size={14} /></Button>
@@ -272,22 +270,21 @@ export function StructureView(props: {
   const projectActions = (): EntityAction[] => [{ id: "add-system", label: "Add system", icon: Plus, disabled: !!props.loading || !!props.error, onSelect: () => { open(PROJECT_ID); props.onOpenCreate(); } }];
   const rowMenu = createEntityContextMenu();
   const addChild = (id: string) => { open(id); props.onOpenCreate(); };
-  const meta = (parts: readonly string[]) => parts.filter(Boolean).join(" / ");
   const toTreeNode = (item: StructureTreeItem): TreeViewNode => ({
     id: item.node.id, label: item.node.title, icon: <IconTile size={24} tone="neutral" seed={item.node.id}><KindIcon kind={item.node.level} size={14} /></IconTile>,
-    trailing: <NodeLine title={item.node.title} actions={nodeActions(item.node)} meta={meta([levelLabel(item.node), recordsLabel(props.counts[item.node.id])])}
+    trailing: <NodeLine title={item.node.title} actions={nodeActions(item.node)}
       onAdd={item.node.level === "component" ? undefined : () => addChild(item.node.id)} addLabel={`Add child to ${item.node.title}`} />,
     onContextMenu: (event) => rowMenu.open(event, nodeActions(item.node)),
-    details: <NodeExpand open={detailsOpen(item.node.id)}><NodeInfo description={item.node.intent} checkout={checkoutLabel(item.node.repo, item.node.folder)} path={item.node.path}
+    details: <NodeExpand open={detailsOpen(item.node.id)}><NodeInfo description={item.node.intent} properties={nodeProperties(item.node)} counts={props.counts[item.node.id]} checkout={checkoutLabel(item.node.repo, item.node.folder)} path={item.node.path}
       uses={usesTitles(item.node)} deploys={item.node.level === "component" ? item.node.deploys : undefined} isProviderConnected={isProviderConnected} /></NodeExpand>,
     children: item.children.map(toTreeNode),
   });
   const treeNodes = createMemo<TreeViewNode[]>(() => props.loading || props.error ? [] : [{
     id: PROJECT_ID, label: props.projectName, icon: <IconTile size={24} tone="neutral" seed={PROJECT_ID}><KindIcon kind="project" size={14} /></IconTile>,
-    trailing: <NodeLine title={props.projectName} actions={projectActions()} meta={meta(["Project", recordsLabel(props.projectCounts)])}
+    trailing: <NodeLine title={props.projectName} actions={projectActions()}
       onAdd={props.loading || props.error ? undefined : () => addChild(PROJECT_ID)} addLabel="Add system" />,
     onContextMenu: (event) => rowMenu.open(event, projectActions()),
-    details: <NodeExpand open={detailsOpen(PROJECT_ID)}><NodeInfo description={props.projectDescription} checkout={props.projectRepository} isProviderConnected={isProviderConnected} /></NodeExpand>,
+    details: <NodeExpand open={detailsOpen(PROJECT_ID)}><NodeInfo description={props.projectDescription} properties={[["Level", "Project"]]} counts={props.projectCounts} checkout={props.projectRepository} isProviderConnected={isProviderConnected} /></NodeExpand>,
     children: tree().map(toTreeNode),
   }]);
 

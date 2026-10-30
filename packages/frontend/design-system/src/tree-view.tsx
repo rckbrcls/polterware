@@ -1,6 +1,6 @@
 import { TreeView as ArkTreeView, createTreeCollection, useTreeViewNodeContext, type TreeViewRootProps } from "@ark-ui/solid/tree-view";
 import { For, Show, createEffect, createMemo, on, onCleanup, splitProps, type JSX } from "solid-js";
-import { animate, type AnimationPlaybackControls } from "motion";
+import { animate } from "motion";
 import { prefersReducedMotion } from "./reduced-motion";
 import { spring } from "./springs";
 import { createFluidHover, FluidHoverHighlight, type FluidHover } from "./fluid-hover";
@@ -154,13 +154,14 @@ function TreeChildren(props: TreeNodeProps) {
 /**
  * Branch cards open and close like the shared collapse: the children (and the elbows they
  * carry) grow from 0 to their measured height on `spring.moderate` and fold on its quicker
- * exit tween, interruptible from the height on screen. Snaps on first paint and under
- * reduced motion.
+ * exit tween, interruptible from the height on screen. They fade with it: in on the same
+ * spring, and out early (an ease-out over the fold's ease-in), so rows are gone before the
+ * edge cuts them. Snaps on first paint; under reduced motion only the fade in remains.
  */
 function createBranchGrowth() {
   const node = useTreeViewNodeContext();
   let element: HTMLElement | undefined;
-  let controls: AnimationPlaybackControls | undefined;
+  let controls: { stop: () => void } | undefined;
   let first = true;
   const settle = (open: boolean) => {
     if (!element) return;
@@ -168,13 +169,21 @@ function createBranchGrowth() {
     element.style.marginTop = open ? "" : "0px";
     element.style.overflow = open ? "" : "hidden";
     element.style.visibility = open ? "" : "hidden";
+    element.style.opacity = "";
   };
   createEffect(on(() => node().expanded, (open) => {
     if (!element) return;
     controls?.stop();
+    const opacity = element.style.visibility === "hidden" ? 0 : Number(getComputedStyle(element).opacity);
     if (first || prefersReducedMotion()) {
-      first = false;
       settle(open);
+      if (!first && open) {
+        element.style.opacity = String(opacity);
+        const fade = animate(element, { opacity: [opacity, 1] }, spring.moderate);
+        controls = fade;
+        void fade.finished.then(() => { if (controls === fade) element!.style.opacity = ""; });
+      }
+      first = false;
       return;
     }
     const from = element.getBoundingClientRect().height;
@@ -187,8 +196,10 @@ function createBranchGrowth() {
     element.style.height = `${from}px`;
     const transition = open ? spring.moderate : ({ type: "tween", ...spring.moderate.exit, ease: "easeIn" } as const);
     const run = animate(element, { height: [`${from}px`, `${to}px`], marginTop: open ? [from ? gap : "0px", gap] : [gap, "0px"] }, transition);
-    controls = run;
-    void run.finished.then(() => { if (controls === run) settle(open); });
+    const fade = animate(element, { opacity: [opacity, open ? 1 : 0] }, open ? spring.moderate : { type: "tween", ...spring.moderate.exit, ease: "easeOut" });
+    controls = { stop: () => { run.stop(); fade.stop(); } };
+    const current = controls;
+    void run.finished.then(() => { if (controls === current) settle(open); });
   }));
   onCleanup(() => controls?.stop());
   return (el: HTMLElement) => {

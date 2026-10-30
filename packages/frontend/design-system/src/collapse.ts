@@ -7,6 +7,11 @@
  * The element carries its state for CSS: `data-state="open|closed"`, `inert` while
  * closed, and `hidden` once a close has finished. After a run the inline height is
  * cleared, so a child resizing later is followed by layout, never chased by a spring.
+ *
+ * `fade` also fades the content: it comes in with the height and, on a close, leaves early
+ * (an ease-out over the fold's ease-in), so it is gone before the edge cuts it. `tier` picks
+ * a slower spring for a larger region (`fast` by default). Reduced motion keeps only the
+ * fade in.
  */
 import { animate } from "motion";
 import { prefersReducedMotion } from "./reduced-motion";
@@ -20,7 +25,7 @@ const FALLBACK_SLACK_MS = 100;
 export function animateCollapse(
   element: HTMLElement,
   open: boolean,
-  options: { previous?: CollapseControls; instant?: boolean } = {},
+  options: { previous?: CollapseControls; instant?: boolean; fade?: boolean; tier?: "fast" | "moderate" } = {},
 ): CollapseControls | undefined {
   const wasHidden = element.hidden;
   const from = options.previous ? element.offsetHeight : wasHidden ? 0 : element.scrollHeight;
@@ -36,22 +41,36 @@ export function animateCollapse(
   element.inert = !open;
 
   const to = open ? element.scrollHeight : 0;
+  const tier = spring[options.tier ?? "fast"];
+  const fromOpacity = wasHidden ? 0 : Number(getComputedStyle(element).opacity);
   const finish = () => {
     element.style.height = "";
     element.style.overflow = "";
+    element.style.opacity = "";
     element.hidden = !open;
   };
-  if (options.instant || prefersReducedMotion() || from === to) {
+  if (options.instant || from === to) {
     finish();
     return undefined;
+  }
+  if (prefersReducedMotion()) {
+    finish();
+    if (!options.fade || !open) return undefined;
+    element.style.opacity = String(fromOpacity);
+    const fade = animate(element, { opacity: [fromOpacity, 1] }, tier);
+    void fade.finished.then(() => { element.style.opacity = ""; });
+    return { stop: () => fade.stop() };
   }
 
   element.style.overflow = "hidden";
   element.style.height = `${from}px`;
   const transition = open
-    ? spring.fast
-    : ({ type: "tween", ...spring.fast.exit, ease: "easeIn" } as const);
+    ? tier
+    : ({ type: "tween", ...tier.exit, ease: "easeIn" } as const);
   const animation = animate(element, { height: [`${from}px`, `${to}px`] }, transition);
+  const fade = options.fade
+    ? animate(element, { opacity: [fromOpacity, open ? 1 : 0] }, open ? tier : { type: "tween", ...tier.exit, ease: "easeOut" })
+    : undefined;
   let settled = false;
   const settle = () => {
     if (settled) return;
@@ -61,7 +80,7 @@ export function animateCollapse(
   };
   const fallback = window.setTimeout(
     settle,
-    (open ? spring.fast.duration : spring.fast.exit.duration) * 1000 + FALLBACK_SLACK_MS,
+    (open ? tier.duration : tier.exit.duration) * 1000 + FALLBACK_SLACK_MS,
   );
   void animation.finished.then(settle);
 
@@ -70,6 +89,7 @@ export function animateCollapse(
       settled = true;
       window.clearTimeout(fallback);
       animation.stop();
+      fade?.stop();
     },
   };
 }

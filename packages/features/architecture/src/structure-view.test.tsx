@@ -32,10 +32,13 @@ describe("Structure collection", () => {
     search.dispatchEvent(new Event("input", { bubbles: true }));
     await tick();
     const api = host.querySelector<HTMLElement>('[data-part="item"][data-value="api"]')!;
-    // One line: kind / technology and the record counts; the details start folded.
-    expect(api.textContent).toContain("API / Go / 2 cards / 1 decision / 3 facts");
+    // One line with the title alone; kind, technology, and the record counts live in the folded details.
     const details = api.querySelector<HTMLElement>(".pw-structure-expand")!;
+    expect(api.textContent!.replace(details.textContent!, "")).not.toContain("Go");
     expect(details.hidden).toBe(true);
+    expect(details.textContent).toContain("Technology");
+    expect(details.textContent).toContain("Go");
+    expect(details.textContent).toContain("Decisions");
     expect(api.querySelector('[aria-label="Actions for API"]')).not.toBeNull();
     // A component has no children, so its card offers no Add child; its system does.
     expect(api.querySelector('[aria-label^="Add child"]')).toBeNull();
