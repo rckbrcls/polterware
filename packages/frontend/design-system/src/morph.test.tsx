@@ -75,6 +75,25 @@ describe("Morph", () => {
     expect(panel()!.contains(button("Cancel")!)).toBe(true);
   });
 
+  it("docks Cancel inside the surface when the trigger is scrolled partly out of view", async () => {
+    const mounted = mount();
+    dispose = mounted.dispose;
+    const anchor = mounted.trigger.parentElement!;
+    anchor.getBoundingClientRect = () => new DOMRect(window.innerWidth - 40, 100, 120, 32);
+    mounted.trigger.click();
+    await vi.waitFor(() => expect(button("Cancel")?.hasAttribute("data-docked")).toBe(true));
+  });
+
+  it("keeps Cancel on the trigger when the whole trigger is in view", async () => {
+    const mounted = mount();
+    dispose = mounted.dispose;
+    const anchor = mounted.trigger.parentElement!;
+    anchor.getBoundingClientRect = () => new DOMRect(100, 100, 120, 32);
+    mounted.trigger.click();
+    await vi.waitFor(() => expect(button("Cancel")).toBeDefined());
+    expect(button("Cancel")!.hasAttribute("data-docked")).toBe(false);
+  });
+
   it("keeps keys inside the panel so page shortcuts do not fire", async () => {
     const mounted = mount();
     dispose = mounted.dispose;

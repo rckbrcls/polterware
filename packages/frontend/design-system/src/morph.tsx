@@ -167,6 +167,8 @@ function MorphPanel(props: MorphPanelProps) {
   const radius = motionValue(0);
   const alpha = motionValue(0);
   let running: AnimationPlaybackControls[] = [];
+  /** Whether Cancel sits inside the panel because the trigger is not fully on screen. */
+  let docked = false;
 
   const paint = () => {
     if (!panel) return;
@@ -175,6 +177,8 @@ function MorphPanel(props: MorphPanelProps) {
     panel.style.height = `${height.get()}px`;
     panel.style.borderRadius = `${radius.get()}px`;
     if (content) content.style.opacity = String(alpha.get());
+    // Docked in the panel, Cancel fades with the content instead of standing on the trigger.
+    if (cancel) cancel.style.opacity = docked ? String(alpha.get()) : "";
   };
   const unsubscribe = [x, y, width, height, radius, alpha].map((value) => value.on("change", paint));
   onCleanup(() => {
@@ -190,6 +194,29 @@ function MorphPanel(props: MorphPanelProps) {
     return { x: box.left, y: box.top, width: box.width, height: box.height, radius: Number.isFinite(corner) ? corner : 0 };
   };
 
+  /**
+   * Whether the whole trigger can be seen: inside the window and every ancestor that clips
+   * its overflow, such as a scrolled board column.
+   */
+  const triggerVisible = (from: Rect): boolean => {
+    let left = Math.max(0, from.x);
+    let top = Math.max(0, from.y);
+    let right = Math.min(window.innerWidth, from.x + from.width);
+    let bottom = Math.min(window.innerHeight, from.y + from.height);
+    for (let node = context.anchor()?.parentElement; node && node !== document.body; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (style.overflowX === "visible" && style.overflowY === "visible") continue;
+      const box = node.getBoundingClientRect();
+      left = Math.max(left, box.left);
+      top = Math.max(top, box.top);
+      right = Math.min(right, box.right);
+      bottom = Math.min(bottom, box.bottom);
+    }
+    const tolerance = 1;
+    return left <= from.x + tolerance && top <= from.y + tolerance
+      && right >= from.x + from.width - tolerance && bottom >= from.y + from.height - tolerance;
+  };
+
   /** The trigger's place among its siblings: first on the start, last on the end, any other on center. */
   const rowAlign = (): "start" | "center" | "end" => {
     const anchor = context.anchor();
@@ -201,14 +228,18 @@ function MorphPanel(props: MorphPanelProps) {
 
   /**
    * The surface's rect: it wraps the card and the trigger's rect (where Cancel sits) with its
-   * inset, so it grows upward out of the trigger; kept on screen.
+   * inset, so it grows upward out of the trigger; kept on screen. With Cancel docked, the
+   * surface also stays inside the window vertically.
    */
   const targetRect = (from: Rect): Rect => {
     const panelWidth = Math.min(Math.max(props.width ?? DEFAULT_WIDTH, from.width + INSET * 2), window.innerWidth - EDGE * 2);
     if (content) content.style.width = `${panelWidth}px`;
     if (slot) slot.style.height = `${from.height}px`;
-    const bottom = from.y + from.height + INSET;
-    const panelHeight = Math.min(content?.scrollHeight ?? 0, bottom - EDGE);
+    const natural = content?.scrollHeight ?? 0;
+    const bottom = docked
+      ? Math.min(Math.max(from.y + from.height + INSET, EDGE + natural), window.innerHeight - EDGE)
+      : from.y + from.height + INSET;
+    const panelHeight = Math.min(natural, bottom - EDGE);
     const align = props.align ?? rowAlign();
     const wanted = align === "start" ? from.x - INSET
       : align === "end" ? from.x + from.width + INSET - panelWidth
@@ -244,18 +275,28 @@ function MorphPanel(props: MorphPanelProps) {
     target?.focus();
   };
 
-  /** Cancel takes the trigger's exact rect, so the pointer that opened the panel is already on it. */
-  const placeCancel = (from: Rect) => {
+  /**
+   * Cancel takes the trigger's exact rect, so the pointer that opened the panel is already on
+   * it. When the trigger is clipped (scrolled partly out of view), Cancel docks at the
+   * bottom of the panel instead, across its width, so it is always in reach.
+   */
+  const placeCancel = (from: Rect, to: Rect) => {
     if (!cancel) return;
-    cancel.style.transform = `translate3d(${from.x}px, ${from.y}px, 0)`;
-    cancel.style.width = `${from.width}px`;
-    cancel.style.height = `${from.height}px`;
+    const at = docked
+      ? { x: to.x + INSET, y: to.y + to.height - INSET - from.height, width: to.width - INSET * 2, height: from.height }
+      : from;
+    cancel.toggleAttribute("data-docked", docked);
+    cancel.style.transform = `translate3d(${at.x}px, ${at.y}px, 0)`;
+    cancel.style.width = `${at.width}px`;
+    cancel.style.height = `${at.height}px`;
   };
 
   const enter = () => {
     if (!panel) return;
     const from = anchorRect();
-    placeCancel(from);
+    docked = !triggerVisible(from);
+    const to = targetRect(from);
+    placeCancel(from, to);
     if (alpha.get() === 0) {
       x.jump(from.x);
       y.jump(from.y);
@@ -264,7 +305,7 @@ function MorphPanel(props: MorphPanelProps) {
       radius.jump(from.radius);
     }
     paint();
-    play(targetRect(from), true);
+    play(to, true);
     focusInside();
   };
 

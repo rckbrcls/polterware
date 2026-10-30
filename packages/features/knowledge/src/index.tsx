@@ -852,22 +852,17 @@ export function KnowledgeView(props: {
             <Show
               when={viewCards().length > 0}
               fallback={
-                <WorkBoard selectedBoard={selectedBoard()} cards={[]} activeSlug={null} onActivate={(slug) => activate(slug, "card")} onMoveCard={props.onSetCardStage} onAddCard={addCardTo} />
+                <WorkBoard selectedBoard={selectedBoard()} cards={[]} onActivate={(slug) => activate(slug, "card")} onMoveCard={props.onSetCardStage} onAddCard={addCardTo} />
               }
             >
               <Show when={cards().length > 0} fallback={workCardsFilterEmpty()}>
                 <WorkBoard
                   selectedBoard={selectedBoard()}
                   cards={cards()}
-                  activeSlug={
-                    activeTarget()?.scopeId === "knowledge:board"
-                    && activeTarget()?.entityKind === "card"
-                      ? activeTarget()?.entityId
-                      : null
-                  }
                   onActivate={(slug) => activate(slug, "card")}
                   onMoveCard={props.onSetCardStage}
                   onAddCard={addCardTo}
+                  onSetTaskState={props.onSetTaskState}
                 />
               </Show>
             </Show>

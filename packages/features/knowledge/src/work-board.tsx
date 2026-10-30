@@ -8,19 +8,18 @@ import {
   createDragMotion,
   createFluidHover,
   IconTile,
-  FluidHoverHighlight,
   Pencil,
   Plus,
-  Popover,
+  Morph,
+  Checkbox,
   Route,
   ShieldCheck,
   RadioButtonIcon,
-  spring,
   type IconTileTone,
   type DragMotion,
   type FluidHover,
 } from "@polterware/frontend-design-system";
-import type { WorkStage, WorkspaceWorkCard } from "@polterware/feature-shell";
+import type { WorkStage, WorkspaceWorkCard, WorkspaceWorkTask } from "@polterware/feature-shell";
 import { WORK_STAGES, cardTaskProgress } from "./work-stage";
 import { DRAG_DEAD_ZONE, columnAt, type ColumnSpan } from "./work-board-drag";
 import "./work-board.css";
@@ -55,20 +54,20 @@ type BoardDrag = {
 };
 
 /**
- * One active marker that springs between cards, across columns too; the hover only
- * lights the title (no travelling overlay). Cards drag between stage columns: the card
+ * Cards are the same at rest, open or not; the hover only lights the title. Cards drag between stage columns: the card
  * follows the pointer, and a drop moves it optimistically while the change is recorded.
  */
 export function WorkBoard(props: {
   cards: readonly WorkspaceWorkCard[];
   /** The milestone view being shown; every view groups its cards by WORK_STAGES. */
   selectedBoard?: { id: string; name: string };
-  activeSlug?: string | null;
   onActivate: (slug: string) => void;
   /** Persist a stage change; resolve `false` when it was cancelled or failed. */
   onMoveCard?: (slug: string, stage: WorkStage) => Promise<boolean> | void;
   /** Start a new card directly in a column. */
   onAddCard?: (stage: WorkStage) => void;
+  /** Checks a task off or opens it again from the card's Tasks. */
+  onSetTaskState?: (slug: string, task: WorkspaceWorkTask, state: WorkspaceWorkTask["state"]) => Promise<void>;
 }) {
   let board: HTMLDivElement | undefined;
   // A board has generous whitespace: gap clicks land only within 16px of the lit card.
@@ -116,19 +115,6 @@ export function WorkBoard(props: {
     const next = new Map(pending());
     next.delete(slug);
     setPending(next);
-  };
-
-  const activeRect = () => {
-    // The dragged card's marker would be left behind; it returns when the card lands.
-    if (props.activeSlug && draggingSlug() === props.activeSlug) return null;
-    let index = 0;
-    for (const column of columns()) {
-      for (const slug of column.slugs) {
-        if (slug === props.activeSlug) return hover.rects()[index] ?? null;
-        index++;
-      }
-    }
-    return null;
   };
 
   const drag: BoardDrag = {
@@ -183,13 +169,6 @@ export function WorkBoard(props: {
 
   return (
     <div ref={board} class="pw-work-board" role="list" aria-label={props.selectedBoard?.name ?? "All cards"} data-board-id={props.selectedBoard?.id ?? ""} {...hover.handlers}>
-      {/* A card changing stage keeps its slug: the marker follows it without a spring. */}
-      <FluidHoverHighlight
-        class="pw-work-board-active"
-        rect={activeRect()}
-        targetKey={props.activeSlug ?? null}
-        transition={spring.moderate}
-      />
       <Index each={columns()}>
         {(column, columnIndex) => (
           <section
@@ -233,10 +212,10 @@ export function WorkBoard(props: {
                       card={cardsBySlug().get(slug) as WorkspaceWorkCard}
                       hover={hover}
                       index={(columnOffsets()[columnIndex] ?? 0) + index()}
-                      active={props.activeSlug === slug}
                       draggable={Boolean(props.onMoveCard)}
                       drag={drag}
                       onActivate={() => props.onActivate(slug)}
+                      onSetTaskState={props.onSetTaskState ? (task, state) => props.onSetTaskState!(slug, task, state) : undefined}
                     />
                   )}
                 </For>
@@ -269,16 +248,27 @@ function WorkCard(props: {
   card: WorkspaceWorkCard;
   hover: FluidHover;
   index: number;
-  active: boolean;
   draggable: boolean;
   drag: BoardDrag;
   onActivate: () => void;
+  onSetTaskState?: (task: WorkspaceWorkTask, state: WorkspaceWorkTask["state"]) => Promise<void>;
 }) {
   const progress = createMemo(() => cardTaskProgress(props.card));
   const tasks = createMemo(() => props.card.tasks.filter((task) => task.state !== "dropped"));
-  const [expanded, setExpanded] = createSignal(false);
+  // The task being written, so the boxes wait for the write.
+  const [savingTask, setSavingTask] = createSignal("");
+  const setTaskState = async (task: WorkspaceWorkTask, state: WorkspaceWorkTask["state"]) => {
+    if (!props.onSetTaskState || savingTask()) return;
+    setSavingTask(task.id);
+    try {
+      await props.onSetTaskState(task, state);
+    } catch {
+      // The host reports the failure; the box shows the stored state again.
+    } finally {
+      setSavingTask("");
+    }
+  };
   let element: HTMLDivElement | undefined;
-  const [summaryButton, setSummaryButton] = createSignal<HTMLButtonElement>();
   const [lifted, setLifted] = createSignal(false);
   let motion: DragMotion | undefined;
   let session: {
@@ -422,10 +412,7 @@ function WorkCard(props: {
   return (
     <Card
       ref={element}
-      class={[
-        "pw-work-card !p-0",
-        props.active ? "pw-work-card--active" : "",
-      ].join(" ")}
+      class="pw-work-card !p-0"
     >
       <div class="pw-work-card__head">
         <button
@@ -433,7 +420,6 @@ function WorkCard(props: {
           class="pw-work-card__button"
           data-detail-opener
           data-detail-target-id={props.card.slug}
-          aria-pressed={props.active ? "true" : "false"}
           aria-roledescription={props.draggable ? "draggable card" : undefined}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -450,58 +436,52 @@ function WorkCard(props: {
         </button>
       </div>
       <Show when={tasks().length > 0}>
-        <div class="pw-work-card__expandable">
-          <button
-            ref={setSummaryButton}
-            type="button"
-            class="pw-work-card__summary"
-            aria-haspopup="dialog"
-            aria-expanded={expanded()}
-            data-state={expanded() ? "open" : "closed"}
-            onClick={() => setExpanded((value) => !value)}
-          >
+        <Morph.Root>
+          <Morph.Trigger size="sm" variant="texture" class="pw-work-card__expandable" hint="Check tasks off or open them again">
             <span>Tasks {progress().done}/{progress().total}</span>
             <ChevronDown size={14} aria-hidden />
-          </button>
-          <Popover
-            open={expanded()}
-            onClose={() => setExpanded(false)}
-            title={`${props.card.title} tasks`}
-            anchorRef={summaryButton}
-            placement="bottom-start"
-            width={280}
-          >
-            <ul class="pw-work-card__tasks" aria-label={`${props.card.title} tasks`}>
-              <For each={tasks()}>
-                {(task) => (
-                  <li class="pw-work-card__task" data-state={task.state}>
-                    <span class="pw-work-card__task-mark" aria-hidden="true">
-                      {task.state === "done" ? (
-                        <Check size={12} />
-                      ) : task.claimHolder ? (
-                        <Bot size={12} />
-                      ) : (
-                        <RadioButtonIcon size={12} />
-                      )}
-                    </span>
-                    <span class="pw-work-card__task-body">
-                      <span class="pw-work-card__task-title">{task.title}</span>
-                      <span class="pw-work-card__task-meta">
-                        <span class="font-mono">T{task.number}</span>
-                        <span>{taskStatus(task)}</span>
-                        <Show when={task.scope}>
-                          <span class="pw-work-card__task-scope font-mono" title={task.scope}>
-                            {task.scope}
+          </Morph.Trigger>
+          <Morph.Panel title={`${props.card.title} tasks`} width={300} align="start" cancelLabel="Close">
+            <Morph.Body>
+              <ul class="pw-work-card__tasks" aria-label={`${props.card.title} tasks`}>
+                <For each={tasks()}>
+                  {(task) => (
+                    <li class="pw-work-card__task" data-state={task.state}>
+                      <Show
+                        when={props.onSetTaskState}
+                        fallback={
+                          <span class="pw-work-card__task-mark" aria-hidden="true">
+                            {task.state === "done" ? <Check size={12} /> : task.claimHolder ? <Bot size={12} /> : <RadioButtonIcon size={12} />}
                           </span>
-                        </Show>
+                        }
+                      >
+                        <Checkbox
+                          class="pw-work-card__task-check"
+                          label={<span class="sr-only">{task.state === "done" ? `Reopen T${task.number}` : `Mark T${task.number} done`}</span>}
+                          checked={task.state === "done"}
+                          disabled={savingTask() !== ""}
+                          onCheckedChange={(details) => void setTaskState(task, details.checked === true ? "done" : "open")}
+                        />
+                      </Show>
+                      <span class="pw-work-card__task-body">
+                        <span class="pw-work-card__task-title">{task.title}</span>
+                        <span class="pw-work-card__task-meta">
+                          <span class="font-mono">T{task.number}</span>
+                          <span>{taskStatus(task)}</span>
+                          <Show when={task.scope}>
+                            <span class="pw-work-card__task-scope font-mono" title={task.scope}>
+                              {task.scope}
+                            </span>
+                          </Show>
+                        </span>
                       </span>
-                    </span>
-                  </li>
-                )}
-              </For>
-            </ul>
-          </Popover>
-        </div>
+                    </li>
+                  )}
+                </For>
+              </ul>
+            </Morph.Body>
+          </Morph.Panel>
+        </Morph.Root>
       </Show>
     </Card>
   );
