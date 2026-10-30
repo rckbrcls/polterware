@@ -446,3 +446,80 @@ func applyMigration(t *testing.T, db *sql.DB, name string) {
 		t.Fatalf("%s: %v", name, err)
 	}
 }
+
+func TestEntityContextsMigration(t *testing.T) {
+	db, err := Open(filepath.Join(t.TempDir(), "contexts.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	migrateBefore(t, db, "0046")
+	seed := []string{
+		`INSERT INTO projects(id,name,root_path,created_at,updated_at) VALUES('p','Project','/tmp','now','now')`,
+		`INSERT INTO structure_nodes(id,project_id,level,slug,path,title,created_at,updated_at) VALUES('app','p','system','app','app','App','now','now')`,
+		`INSERT INTO structure_nodes(id,project_id,parent_id,level,slug,path,title,created_at,updated_at) VALUES('api','p','app','component','api','app/api','API','now','now')`,
+		// A principle loses its scope; a plain scoped decision keeps it as a context.
+		`INSERT INTO knowledge_items(id,project_id,title,body,kind,extra_json,created_at,updated_at,scope_node_id) VALUES('principle','p','Local first','b','decision','{"level":"principle","reviewTrigger":"x"}','now','now','app')`,
+		`INSERT INTO knowledge_items(id,project_id,title,body,kind,extra_json,created_at,updated_at,scope_node_id) VALUES('scoped','p','Cache','b','decision','{}','now','now','api')`,
+		`INSERT INTO knowledge_items(id,project_id,title,body,kind,extra_json,created_at,updated_at) VALUES('unscoped','p','Ship weekly','b','decision','{"level":"decision"}','now','now')`,
+		`INSERT INTO knowledge_items(id,project_id,title,body,kind,doc_type,created_at,updated_at,scope_node_id) VALUES('doc','p','Guide','b','doc','doc','now','now','app')`,
+		`INSERT INTO canon_facts(id,project_id,statement,observed_at,created_at,updated_at,scope_node_id) VALUES('fact','p','One core','now','now','now','api')`,
+		`INSERT INTO canon_evidence(id,project_id,kind,summary,observed_at,created_at,updated_at,scope_node_id) VALUES('ev','p','file','go.mod','now','now','now','app')`,
+		`INSERT INTO scope_assignments(project_id,item_key,node_id,updated_at) VALUES('p','drift:x','api','now')`,
+	}
+	for _, statement := range seed {
+		if _, err := db.Exec(statement); err != nil {
+			t.Fatalf("%s: %v", statement, err)
+		}
+	}
+	applyMigration(t, db, "0046_entity_contexts.sql")
+
+	contexts := map[string]string{}
+	rows, err := db.Query(`SELECT entity_id,node_id FROM entity_contexts WHERE project_id='p'`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for rows.Next() {
+		var entity, node string
+		if err := rows.Scan(&entity, &node); err != nil {
+			t.Fatal(err)
+		}
+		contexts[entity] = node
+	}
+	_ = rows.Close()
+	want := map[string]string{"scoped": "api", "doc": "app", "fact": "api", "ev": "app", "drift:x": "api"}
+	if len(contexts) != len(want) {
+		t.Fatalf("contexts = %v, want %v", contexts, want)
+	}
+	for entity, node := range want {
+		if contexts[entity] != node {
+			t.Fatalf("contexts = %v, want %v", contexts, want)
+		}
+	}
+	var levels, scoped int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM knowledge_items WHERE json_extract(extra_json,'$.level') IS NOT NULL`).Scan(&levels); err != nil || levels != 0 {
+		t.Fatalf("decisions keep a level: %d %v", levels, err)
+	}
+	var trigger string
+	if err := db.QueryRow(`SELECT json_extract(extra_json,'$.reviewTrigger') FROM knowledge_items WHERE id='principle'`).Scan(&trigger); err != nil || trigger != "x" {
+		t.Fatalf("other lifecycle data was lost: %q %v", trigger, err)
+	}
+	if err := db.QueryRow(`SELECT (SELECT COUNT(*) FROM knowledge_items WHERE scope_node_id IS NOT NULL) + (SELECT COUNT(*) FROM canon_facts WHERE scope_node_id IS NOT NULL) + (SELECT COUNT(*) FROM canon_evidence WHERE scope_node_id IS NOT NULL)`).Scan(&scoped); err != nil || scoped != 0 {
+		t.Fatalf("retired columns still hold %d scopes: %v", scoped, err)
+	}
+	var tables int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='scope_assignments'`).Scan(&tables); err != nil || tables != 0 {
+		t.Fatalf("scope_assignments is still there: %d %v", tables, err)
+	}
+	// Contexts go with their entity and with their node.
+	if _, err := db.Exec(`DELETE FROM knowledge_items WHERE id='doc'`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`DELETE FROM structure_nodes WHERE id='api'`); err != nil {
+		t.Fatal(err)
+	}
+	var left int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM entity_contexts`).Scan(&left); err != nil || left != 1 {
+		t.Fatalf("contexts left = %d, want only the evidence's: %v", left, err)
+	}
+}

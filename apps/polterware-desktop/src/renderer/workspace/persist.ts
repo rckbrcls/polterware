@@ -225,9 +225,9 @@ export async function persistKnowledgeCreate(input: {
   return id;
 }
 
-/** Scopes a knowledge item (Decision or Evidence) to a Structure node path; an empty path clears it. */
-export async function persistKnowledgeScope(projectId: string, id: string, path: string): Promise<void> {
-  await core().work.setScope({ projectId, kind: "knowledge", id, node: path });
+/** Replaces the contexts of a knowledge item (a Decision or doc) with Structure node ids; none clears them. */
+export async function persistKnowledgeScope(projectId: string, id: string, nodeIds: readonly string[]): Promise<void> {
+  await core().work.setScope({ projectId, kind: "knowledge", id, nodes: [...nodeIds] });
 }
 
 /** Archives a knowledge item, or restores it when `archived` is false. Decisions are refused by the core. */
@@ -369,9 +369,9 @@ export async function persistWorkCardUnder(input: { projectId: string; slug: str
   await applyPolter(input.projectId, polterCard(input.slug, null, { under: input.under }), input.change);
 }
 
-/** Scopes a fact to a Structure node path; an empty path clears it. */
-export async function persistFactScope(projectId: string, id: string, path: string): Promise<void> {
-  await core().work.setScope({ projectId, kind: "fact", id, node: path });
+/** Replaces the contexts of a fact with Structure node ids; none clears them. */
+export async function persistFactScope(projectId: string, id: string, nodeIds: readonly string[]): Promise<void> {
+  await core().work.setScope({ projectId, kind: "fact", id, nodes: [...nodeIds] });
 }
 
 async function applyPolter(projectId: string, text: string, change: ChangeEnvelope): Promise<void> {
@@ -405,9 +405,6 @@ export async function persistDecisionAction(input: {
       break;
     case "supersede":
       block = `### ${input.action.byId}\nsupersedes: ${input.decision.id} · reason: ${reason}`;
-      break;
-    case "level":
-      block = `### ${input.decision.id}\nlevel: ${input.action.level}`;
       break;
   }
   await applyPolter(input.projectId, `---\npolter: 1\n---\n\n${block}\n`, input.change);

@@ -103,6 +103,7 @@ export type { KnowledgeAgentPrompt, KnowledgePromptKind } from "./agent-prompts"
 export type { MilestoneAction } from "./milestones";
 export type { DecisionAction } from "./decision-detail";
 export { KnowledgeComposer } from "./composers";
+export { RecordPeek, type RecordPeekTarget } from "./record-peek";
 export { DocumentActivity } from "./document-activity";
 export type { CardDraft, CardKind, ComposeRequest, DecisionDraft, DocDraft } from "./composers";
 export { WORK_STAGES, workStageLabel } from "./work-stage";
@@ -213,10 +214,8 @@ export function KnowledgeView(props: {
   /** Changes what a doc is: a document, a runbook, or a source file. */
   /** Structure nodes offered by the scope pickers; the global scope preselects new items. */
   scopeNodes?: ScopeNodeItem[];
-  /** Path of the active global scope, used as the default for new items. */
-  activeScopePath?: string;
-  /** Writes the scope of a Decision or doc as a Structure node path; empty clears it. */
-  onSetScope?: (id: string, path: string) => void;
+  /** Writes the contexts of a Decision or doc as Structure node ids; none clears them (a decision becomes a principle). */
+  onSetScope?: (id: string, nodeIds: string[]) => void;
   /** Opens the composer for a card, a decision, or a doc, with what this view already knows. */
   onCompose?: (request: ComposeRequest) => void;
   /** Reopens the flow for a card in shape or plan. */
@@ -937,7 +936,7 @@ export function KnowledgeView(props: {
             }}
             onAction={props.onDecisionAction ? (action) => props.onDecisionAction?.(item().id, action) : undefined}
             scopeNodes={props.scopeNodes}
-            onScopeChange={props.onSetScope ? (path) => props.onSetScope?.(item().id, path) : undefined}
+            onScopeChange={props.onSetScope ? (ids) => props.onSetScope?.(item().id, ids) : undefined}
             note={docNote(item().id, item().title, item().tags)}
           />
         )}
@@ -958,7 +957,7 @@ export function KnowledgeView(props: {
               props.onArchive?.(id);
             } : undefined}
             scopeNodes={props.scopeNodes}
-            onScopeChange={props.onSetScope ? (path) => props.onSetScope?.(item().id, path) : undefined}
+            onScopeChange={props.onSetScope ? (ids) => props.onSetScope?.(item().id, ids) : undefined}
           />
         )}
       </Show>

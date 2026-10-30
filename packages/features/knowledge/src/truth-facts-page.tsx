@@ -29,7 +29,7 @@ export function TruthFactsPage(props: {
   scopeCatalogNodes?: readonly ScopeNodeItem[];
   scopeEnvironments?: readonly EnvironmentItem[];
   onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
-  /** Canon entities, to name and pick a Fact's subject. */
+  /** Canon entities, to name the subject of a rule with no contexts. */
   entities?: readonly WorkspaceCanonEntity[];
 }) {
   const [query, setQuery] = createSignal("");

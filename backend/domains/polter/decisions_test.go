@@ -1,17 +1,22 @@
 package polter
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/polterware/polterware/backend/domains/decision"
+	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
 func decisionSnapshot() work.Snapshot {
-	return work.Snapshot{ProjectID: "p1", Decisions: []decision.Decision{
+	return work.Snapshot{ProjectID: "p1", Nodes: []structure.Node{
+		{ID: "n-core", Path: "core", Level: structure.LevelSystem, Status: structure.NodeActive},
+		{ID: "n-api", ParentID: "n-core", Path: "core/api", Level: structure.LevelComponent, Status: structure.NodeActive},
+	}, Decisions: []decision.Decision{
 		{ID: "a1", Title: "Decision 0001: SQLite", Status: "accepted"},
-		{ID: "a2", Title: "Decision 0002: Import", Status: "active"},
+		{ID: "a2", Title: "Decision 0002: Import", Status: "active", Scopes: []string{"core"}},
 		{ID: "a3", Title: "Decision 0003: Context", Status: "proposed"},
 		{ID: "a4", Title: "Decision 0004: Old", Status: "superseded", Meta: decision.Meta{SupersededBy: "a2"}},
 	}}
@@ -174,23 +179,50 @@ func TestComposeDecisionFlattensValues(t *testing.T) {
 	}
 }
 
-func TestDecisionLevelPrinciple(t *testing.T) {
-	ops, diags := planDecisionText(t, "### new: Local first\nlevel: principle · status: active\n")
-	if HasErrors(diags) || len(ops) != 1 || ops[0].Fields["level"] != decision.LevelPrinciple {
+func TestDecisionContexts(t *testing.T) {
+	// scope: takes a list; the stored list is sorted and deduplicated.
+	ops, diags := planDecisionText(t, "### new: Local first\nstatus: active · scope: core/api, core, core/api\n")
+	if HasErrors(diags) || len(ops) != 1 || !slices.Equal(ops[0].Fields["scope"].([]string), []string{"core", "core/api"}) {
 		t.Fatalf("ops = %+v diags = %+v", ops, diags)
 	}
-	ops, diags = planDecisionText(t, "### Decision-0002\nlevel: principle\n")
-	if HasErrors(diags) || len(ops) != 1 || ops[0].Fields["level"] != decision.LevelPrinciple || ops[0].Before["level"] != "" {
+	ops, diags = planDecisionText(t, "### Decision-0002\nscope: core, core/api\n")
+	if HasErrors(diags) || len(ops) != 1 || !slices.Equal(ops[0].Fields["scope"].([]string), []string{"core", "core/api"}) ||
+		!slices.Equal(ops[0].Before["scope"].([]string), []string{"core"}) {
 		t.Fatalf("update ops = %+v diags = %+v", ops, diags)
+	}
+	// Writing the stored contexts again changes nothing.
+	if ops, diags = planDecisionText(t, "### Decision-0002\nscope: core\n"); HasErrors(diags) || len(ops) != 0 {
+		t.Fatalf("unchanged ops = %+v diags = %+v", ops, diags)
+	}
+	// level: principle is still read: it clears the contexts.
+	ops, diags = planDecisionText(t, "### Decision-0002\nlevel: principle\n")
+	if HasErrors(diags) || len(ops) != 1 || len(ops[0].Fields["scope"].([]string)) != 0 {
+		t.Fatalf("principle ops = %+v diags = %+v", ops, diags)
+	}
+	if _, diags = planDecisionText(t, "### Decision-0002\nlevel: principle · scope: core\n"); !HasErrors(diags) {
+		t.Fatal("a principle with contexts must be rejected")
+	}
+	if _, diags = planDecisionText(t, "### Decision-0002\nscope: core, nowhere\n"); !HasErrors(diags) {
+		t.Fatal("an unknown context path must be rejected")
 	}
 	if _, diags := Decode("---\npolter: 1\n---\n### Decision-0002\nlevel: pinned\n"); !HasErrors(diags) {
 		t.Fatal("an unknown level must be rejected")
 	}
-	pinned := decision.Decision{ID: "a2", Title: "Decision 0002: Import", Status: "active", Meta: decision.Meta{Level: decision.LevelPrinciple}}
-	if got := EncodeDecision(pinned, []decision.Decision{pinned}, nil); !strings.Contains(got, "level: principle") {
-		t.Fatalf("encoded decision lacks its level:\n%s", got)
+	scoped := decision.Decision{ID: "a2", Title: "Decision 0002: Import", Status: "active", Scopes: []string{"core", "core/api"}}
+	text := EncodeDecision(scoped, []decision.Decision{scoped}, nil)
+	if !strings.Contains(text, "scope: core, core/api") {
+		t.Fatalf("encoded decision lacks its contexts:\n%s", text)
 	}
-	if got := EncodeDecisions([]decision.Decision{pinned}, ""); !strings.Contains(got, "Decision 0002: Import · active · principle") {
-		t.Fatalf("decision list lacks the principle mark:\n%s", got)
+	doc, diags := Decode(text)
+	if HasErrors(diags) || len(doc.Decisions) != 1 {
+		t.Fatalf("round trip decode: %+v", diags)
+	}
+	if value, _ := doc.Decisions[0].MetaValue("scope"); !slices.Equal(ParseScopes(value), scoped.Scopes) {
+		t.Fatalf("round trip scope = %q", value)
+	}
+	pinned := decision.Decision{ID: "a5", Title: "Decision 0005: Local", Status: "active"}
+	if got := EncodeDecisions([]decision.Decision{pinned, scoped}, ""); !strings.Contains(got, "Decision 0005: Local · active · principle") ||
+		strings.Contains(got, "Import · active · principle") {
+		t.Fatalf("decision list marks principles by having no contexts:\n%s", got)
 	}
 }

@@ -2,6 +2,7 @@ package wedge
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/polterware/polterware/backend/domains/decision"
@@ -30,8 +31,8 @@ func queryShow(store *storepkg.Store, snapshot work.Snapshot, id string) (string
 		if fact.Slug != "" {
 			fmt.Fprintf(&b, "slug: %s\n", fact.Slug)
 		}
-		if fact.Scope != "" {
-			fmt.Fprintf(&b, "scope: %s\n", fact.Scope)
+		if len(fact.Scopes) > 0 {
+			fmt.Fprintf(&b, "scope: %s\n", strings.Join(fact.Scopes, ", "))
 		}
 		fmt.Fprintf(&b, "source: %s · actor: %s\n", fact.Source, fact.Actor)
 		for _, evidenceID := range fact.Evidence {
@@ -64,10 +65,15 @@ func queryShow(store *storepkg.Store, snapshot work.Snapshot, id string) (string
 		}
 		text := fmt.Sprintf("doc %s %q", item.ID, item.Title)
 		text += "\n"
+		var paths []string
 		for _, node := range snapshot.Nodes {
-			if node.ID == scopes[item.ID] {
-				text += "scope: " + node.Path + "\n"
+			if slices.Contains(scopes[item.ID], node.ID) {
+				paths = append(paths, node.Path)
 			}
+		}
+		if len(paths) > 0 {
+			slices.Sort(paths)
+			text += "scope: " + strings.Join(paths, ", ") + "\n"
 		}
 		if len(item.Tags) > 0 {
 			text += "tags: " + strings.Join(item.Tags, ", ") + "\n"

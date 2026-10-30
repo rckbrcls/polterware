@@ -638,18 +638,19 @@ func (x *SyncProjectModelResponse) GetEntityCount() int32 {
 }
 
 type CanonFact struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ProjectId     string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Statement     string                 `protobuf:"bytes,3,opt,name=statement,proto3" json:"statement,omitempty"`
-	TruthClass    string                 `protobuf:"bytes,4,opt,name=truth_class,json=truthClass,proto3" json:"truth_class,omitempty"`
-	Source        string                 `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
-	Actor         string                 `protobuf:"bytes,6,opt,name=actor,proto3" json:"actor,omitempty"`
-	ObservedAt    string                 `protobuf:"bytes,7,opt,name=observed_at,json=observedAt,proto3" json:"observed_at,omitempty"`
-	EntityId      string                 `protobuf:"bytes,8,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     string                 `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	ScopeNodeId   string                 `protobuf:"bytes,11,opt,name=scope_node_id,json=scopeNodeId,proto3" json:"scope_node_id,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Id         string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ProjectId  string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Statement  string                 `protobuf:"bytes,3,opt,name=statement,proto3" json:"statement,omitempty"`
+	TruthClass string                 `protobuf:"bytes,4,opt,name=truth_class,json=truthClass,proto3" json:"truth_class,omitempty"`
+	Source     string                 `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
+	Actor      string                 `protobuf:"bytes,6,opt,name=actor,proto3" json:"actor,omitempty"`
+	ObservedAt string                 `protobuf:"bytes,7,opt,name=observed_at,json=observedAt,proto3" json:"observed_at,omitempty"`
+	EntityId   string                 `protobuf:"bytes,8,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
+	CreatedAt  string                 `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt  string                 `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// scope_node_ids are the Structure nodes the fact is about; none is the whole project.
+	ScopeNodeIds  []string `protobuf:"bytes,12,rep,name=scope_node_ids,json=scopeNodeIds,proto3" json:"scope_node_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -754,26 +755,27 @@ func (x *CanonFact) GetUpdatedAt() string {
 	return ""
 }
 
-func (x *CanonFact) GetScopeNodeId() string {
+func (x *CanonFact) GetScopeNodeIds() []string {
 	if x != nil {
-		return x.ScopeNodeId
+		return x.ScopeNodeIds
 	}
-	return ""
+	return nil
 }
 
 type CanonEvidence struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ProjectId     string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Kind          string                 `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
-	Summary       string                 `protobuf:"bytes,4,opt,name=summary,proto3" json:"summary,omitempty"`
-	Source        string                 `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
-	Path          string                 `protobuf:"bytes,6,opt,name=path,proto3" json:"path,omitempty"`
-	Actor         string                 `protobuf:"bytes,7,opt,name=actor,proto3" json:"actor,omitempty"`
-	ObservedAt    string                 `protobuf:"bytes,8,opt,name=observed_at,json=observedAt,proto3" json:"observed_at,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     string                 `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	ScopeNodeId   string                 `protobuf:"bytes,11,opt,name=scope_node_id,json=scopeNodeId,proto3" json:"scope_node_id,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Id         string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ProjectId  string                 `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	Kind       string                 `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	Summary    string                 `protobuf:"bytes,4,opt,name=summary,proto3" json:"summary,omitempty"`
+	Source     string                 `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
+	Path       string                 `protobuf:"bytes,6,opt,name=path,proto3" json:"path,omitempty"`
+	Actor      string                 `protobuf:"bytes,7,opt,name=actor,proto3" json:"actor,omitempty"`
+	ObservedAt string                 `protobuf:"bytes,8,opt,name=observed_at,json=observedAt,proto3" json:"observed_at,omitempty"`
+	CreatedAt  string                 `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt  string                 `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// scope_node_ids are the Structure nodes the evidence is about; none is the whole project.
+	ScopeNodeIds  []string `protobuf:"bytes,12,rep,name=scope_node_ids,json=scopeNodeIds,proto3" json:"scope_node_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -878,11 +880,11 @@ func (x *CanonEvidence) GetUpdatedAt() string {
 	return ""
 }
 
-func (x *CanonEvidence) GetScopeNodeId() string {
+func (x *CanonEvidence) GetScopeNodeIds() []string {
 	if x != nil {
-		return x.ScopeNodeId
+		return x.ScopeNodeIds
 	}
-	return ""
+	return nil
 }
 
 type ListFactsRequest struct {
@@ -1772,7 +1774,7 @@ const file_polterware_local_v1_canon_proto_rawDesc = "" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\"=\n" +
 	"\x18SyncProjectModelResponse\x12!\n" +
-	"\fentity_count\x18\x01 \x01(\x05R\ventityCount\"\xc7\x02\n" +
+	"\fentity_count\x18\x01 \x01(\x05R\ventityCount\"\xde\x02\n" +
 	"\tCanonFact\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -1789,8 +1791,8 @@ const file_polterware_local_v1_canon_proto_rawDesc = "" +
 	"created_at\x18\t \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
 	"updated_at\x18\n" +
-	" \x01(\tR\tupdatedAt\x12\"\n" +
-	"\rscope_node_id\x18\v \x01(\tR\vscopeNodeId\"\xb1\x02\n" +
+	" \x01(\tR\tupdatedAt\x12$\n" +
+	"\x0escope_node_ids\x18\f \x03(\tR\fscopeNodeIdsJ\x04\b\v\x10\fR\rscope_node_id\"\xc8\x02\n" +
 	"\rCanonEvidence\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -1806,8 +1808,8 @@ const file_polterware_local_v1_canon_proto_rawDesc = "" +
 	"created_at\x18\t \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
 	"updated_at\x18\n" +
-	" \x01(\tR\tupdatedAt\x12\"\n" +
-	"\rscope_node_id\x18\v \x01(\tR\vscopeNodeId\"\xaf\x01\n" +
+	" \x01(\tR\tupdatedAt\x12$\n" +
+	"\x0escope_node_ids\x18\f \x03(\tR\fscopeNodeIdsJ\x04\b\v\x10\fR\rscope_node_id\"\xaf\x01\n" +
 	"\x10ListFactsRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x1b\n" +

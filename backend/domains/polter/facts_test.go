@@ -72,7 +72,7 @@ func TestFactPlanCreateUpdateAndOmission(t *testing.T) {
 			t.Fatalf("plan=%s fields=%+v", FormatPlan(ops), ops[0].Fields)
 		}
 	}
-	snapshot.Facts = []work.Fact{{Fact: canon.Fact{ID: "fact-1", Statement: "Local core", TruthClass: "observed"}, Slug: "local-core", Scope: "core", Evidence: []string{"ev-1"}}}
+	snapshot.Facts = []work.Fact{{Fact: canon.Fact{ID: "fact-1", Statement: "Local core", TruthClass: "observed"}, Slug: "local-core", Scopes: []string{"core"}, Evidence: []string{"ev-1"}}}
 	for _, ref := range []string{"local-core", "fact-1"} {
 		doc, _ := Decode(Header + "#### " + ref + ": Renamed\n")
 		ops, diags := Plan(doc, snapshot)

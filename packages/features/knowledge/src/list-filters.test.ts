@@ -32,7 +32,7 @@ const evidence = {
   tags: ["reference", "contracts"],
   updatedAt: "2026-01-01",
   owner: "Ada",
-  entityLinks: [],
+  entityLinks: [], scopeNodeIds: [],
 } satisfies WorkspaceDoc;
 
 describe("list-filters", () => {

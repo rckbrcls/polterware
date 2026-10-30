@@ -13,8 +13,9 @@ import (
 	localv1 "github.com/polterware/polterware/backend/platform/gen/polterware/local/v1"
 )
 
-const scopeUsage = `usage: polterware scope <decision|fact|evidence|item> <id> [<node path>] [--project <id>]
-       (an empty node clears the scope; item is a derived Drift or Inbox item key)`
+const scopeUsage = `usage: polterware scope <decision|fact|evidence|item> <id> [<node path>...] [--project <id>]
+       (the nodes replace its contexts, separated by spaces or commas; none clears
+       them (the whole project); item is a derived Drift or Inbox item key)`
 
 // scopeList accepts repeated --scope flags and comma-separated nodes.
 type scopeList []string
@@ -55,7 +56,7 @@ func addScopeFlags(flags *flag.FlagSet) scopeFlags {
 	}
 }
 
-// runScope assigns an entity to a Structure node, or clears its scope.
+// runScope sets an entity's contexts to the given Structure nodes, or clears them.
 func runScope(dbPath string, args []string) error {
 	flags := flag.NewFlagSet("scope", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
@@ -64,12 +65,12 @@ func runScope(dbPath string, args []string) error {
 	if err != nil {
 		return err
 	}
-	if len(positional) < 2 || len(positional) > 3 {
+	if len(positional) < 2 {
 		return errors.New(scopeUsage)
 	}
-	node := ""
-	if len(positional) == 3 {
-		node = positional[2]
+	var nodes scopeList
+	for _, value := range positional[2:] {
+		_ = nodes.Set(value)
 	}
 	c, err := dial(dbPath)
 	if err != nil {
@@ -80,14 +81,14 @@ func runScope(dbPath string, args []string) error {
 		return err
 	}
 	if _, err := c.Work.SetScope(context.Background(), connect.NewRequest(&localv1.SetScopeRequest{
-		ProjectId: project.Id, Kind: positional[0], Id: positional[1], Node: node,
+		ProjectId: project.Id, Kind: positional[0], Id: positional[1], Nodes: nodes,
 	})); err != nil {
 		return err
 	}
-	if node == "" {
+	if len(nodes) == 0 {
 		fmt.Printf("%s %s: scope cleared (whole project)\n", positional[0], positional[1])
 		return nil
 	}
-	fmt.Printf("%s %s: scope %s\n", positional[0], positional[1], node)
+	fmt.Printf("%s %s: scope %s\n", positional[0], positional[1], strings.Join(nodes, ", "))
 	return nil
 }

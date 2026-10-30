@@ -79,9 +79,11 @@ export {
   expandedDetail,
   openDetail,
   requestDetailExpanded,
+  requestPageBack,
   requestSectionNavigate,
   setDetailExpandHandler,
   setExpandedDetailTarget,
+  setPageBackHandler,
   setSectionNavigateHandler,
 } from "./detail-expansion";
 export { ShortcutsPanel } from "./shortcuts-panel";
@@ -97,7 +99,7 @@ export { TerminalTranscript } from "./terminal-transcript";
 export { CreateProjectDialog } from "./create-project-dialog";
 export { ProjectSwitcher } from "./project-switcher";
 export { WorkspaceContextBar } from "./context-switchers";
-export { clausesToScopeTokens, isScopeFieldId, scopeFilterFields, scopeTokensToClauses } from "./scope-filter-menu";
+export { clausesToScopeTokens, isScopeFieldId, scopeContextOptions, scopeFilterFields, scopeTokensToClauses } from "./scope-filter-menu";
 export { createPageFilters, polterwareSavedFiltersApi } from "./page-filters";
 export type { PageFilterScope, PageFilters, PageFiltersOptions } from "./page-filters";
 export {

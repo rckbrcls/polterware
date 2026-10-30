@@ -74,7 +74,7 @@ func Polterware(store *storepkg.Store, root string) error {
 		}
 		registered[checkout.name] = true
 	}
-	for _, text := range []string{decisionsPolter, decisionStatusPolter, structureText(registered["web"], registered["cloud"])} {
+	for _, text := range []string{decisionsPolter, decisionStatusPolter, structureText(registered["web"], registered["cloud"]), decisionContextsPolter} {
 		if err := apply(store, text); err != nil {
 			return err
 		}

@@ -32,7 +32,7 @@ func seedKnowledge(store *storepkg.Store) error {
 			ID: principle.id, ProjectID: ProjectID, Title: principle.title, Kind: "decision",
 			Body:    "## Decision\n\n" + principle.body,
 			Summary: principle.summary, Owner: "Platform", Status: "active",
-			ExtraJSON: mustJSON(map[string]string{"level": "principle"}), CreatedAt: at, UpdatedAt: at,
+			ExtraJSON: "{}", CreatedAt: at, UpdatedAt: at,
 		})
 	}
 	for _, doc := range docs {

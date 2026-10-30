@@ -81,7 +81,8 @@ export function EntityDetailHost(props: EntityDetailHostProps) {
       >
         <DetailPanel.Collection>
           <Show when={documentPage()}>
-            <div ref={setDocumentHost} class="flex h-full min-h-0 flex-1 flex-col [&>div]:flex [&>div]:min-h-0 [&>div]:flex-1 [&>div]:flex-col" />
+            {/* Empty while a document opens elsewhere (a rule opens in the composer), so it takes no room. */}
+            <div ref={setDocumentHost} class="flex h-full min-h-0 flex-1 flex-col empty:hidden [&>div]:flex [&>div]:min-h-0 [&>div]:flex-1 [&>div]:flex-col" />
           </Show>
           <div
             class="contents"

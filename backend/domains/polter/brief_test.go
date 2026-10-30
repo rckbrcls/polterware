@@ -39,21 +39,24 @@ func briefFixture() BriefInput {
 			Decisions: []decision.Decision{
 				{ID: "k1", Title: "Decision 0001: Sessions in cookies", Status: "active", Body: "## Decision\nSessions live in signed cookies. Tokens are not used."},
 				{ID: "k2", Title: "Decision 0002: One API process", Status: "proposed", Body: "One process serves the API."},
-				{ID: "k3", Title: "Decision 0003: Postgres", Status: "superseded", Scope: "app"},
-				{ID: "k4", Title: "Decision 0004: Audit writes", Status: "challenged", Scope: "app", Body: "Every write is audited.", Meta: decision.Meta{StatusReason: "too slow"}},
-				{ID: "k5", Title: "Local first", Status: "active", Meta: decision.Meta{Level: decision.LevelPrinciple}},
+				{ID: "k3", Title: "Decision 0003: Postgres", Status: "superseded", Scopes: []string{"app"}},
+				{ID: "k4", Title: "Decision 0004: Audit writes", Status: "challenged", Scopes: []string{"app"}, Body: "Every write is audited.", Meta: decision.Meta{StatusReason: "too slow"}},
+				{ID: "k5", Title: "Local first", Status: "active"},
+				// Any one context on the target's path picks a decision.
+				{ID: "k6", Title: "Decision 0006: Cache reads", Status: "active", Scopes: []string{"app/db", "app/api"}, Body: "Reads go through a cache."},
+				{ID: "k7", Title: "Decision 0007: Batch jobs", Status: "active", Scopes: []string{"app/db"}},
 			},
 			Facts: []work.Fact{
-				{Fact: canon.Fact{Statement: "The API runs on port 8080.", TruthClass: canon.TruthObserved}, Scope: "app/api"},
-				{Fact: canon.Fact{Statement: "The app ships weekly.", TruthClass: canon.TruthDeclared}, Scope: "app"},
+				{Fact: canon.Fact{Statement: "The API runs on port 8080.", TruthClass: canon.TruthObserved}, Scopes: []string{"app/api", "app/db"}},
+				{Fact: canon.Fact{Statement: "The app ships weekly.", TruthClass: canon.TruthDeclared}, Scopes: []string{"app"}},
 				{Fact: canon.Fact{Statement: "Project-wide fact.", TruthClass: canon.TruthDeclared}},
 			},
 			Milestones: []work.Milestone{{ID: "m1", Slug: "beta", Name: "Beta", State: work.MilestoneActive, TargetDate: "2026-12-01", Goal: "Outside users sign in.", ExitCriteria: []string{"10 users", "no P1"}}},
 		},
 		Docs: []Doc{
-			{ID: "doc-1", Title: "API runbook", DocType: "runbook", ScopeNodeID: "c"},
-			{ID: "doc-2", Title: "Style guide", DocType: "doc", ScopeNodeID: "s"},
-			{ID: "doc-3", Title: "Unrelated", ScopeNodeID: "d"},
+			{ID: "doc-1", Title: "API runbook", DocType: "doc", ScopeNodeIDs: []string{"d", "c"}},
+			{ID: "doc-2", Title: "Style guide", DocType: "doc", ScopeNodeIDs: []string{"s"}},
+			{ID: "doc-3", Title: "Unrelated", ScopeNodeIDs: []string{"d"}},
 		},
 		Canvases: []canvas.Canvas{{Name: "Architecture", Graph: canvas.Graph{
 			Nodes: []canvas.Node{{ID: "n1", Label: "API", Ref: &canvas.Ref{Kind: canvas.RefNode, ID: "c"}}, {ID: "n2", Label: "Postgres"}},
@@ -83,6 +86,7 @@ handoff codex on feat/login: next: wire the route
 Decisions:
 - Decision-0001 [active] Sessions in cookies: Sessions live in signed cookies.
 - Decision-0002 [proposed] One API process: One process serves the API.
+- Decision-0006 [active] Cache reads: Reads go through a cache.
 - Decision-0004 [challenged] Audit writes: Every write is audited. (challenged: too slow)
 principles: Local first
 

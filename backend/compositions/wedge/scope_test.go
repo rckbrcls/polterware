@@ -20,7 +20,7 @@ func TestScopeRefsMergesSingleRepeatedAndCommas(t *testing.T) {
 
 func TestFilterChangesByScope(t *testing.T) {
 	resolved := storepkg.NodeScope{Set: structure.ScopeSet{"auth": true}}
-	scopes := map[string]string{"fact-auth": "auth", "fact-bill": "billing"}
+	scopes := map[string][]string{"fact-auth": {"auth"}, "fact-bill": {"billing"}, "fact-both": {"billing", "auth"}}
 	rows := []storepkg.ChangeRow{
 		{StepID: "open", PayloadJSON: `{"summary":"note"}`},
 		{StepID: "bad-json", PayloadJSON: `{`},
@@ -28,13 +28,14 @@ func TestFilterChangesByScope(t *testing.T) {
 		{StepID: "in", PayloadJSON: `{"subject_ids":["fact-auth"]}`},
 		{StepID: "out", PayloadJSON: `{"subject_ids":["fact-bill"]}`},
 		{StepID: "either", PayloadJSON: `{"subject_ids":["fact-bill","fact-auth"]}`},
+		{StepID: "any-context", PayloadJSON: `{"subject_ids":["fact-both"]}`},
 	}
 	kept := FilterChangesByScope(resolved, scopes, rows)
 	var ids []string
 	for _, row := range kept {
 		ids = append(ids, row.StepID)
 	}
-	if strings.Join(ids, "|") != "open|bad-json|unscoped|in|either" {
+	if strings.Join(ids, "|") != "open|bad-json|unscoped|in|either|any-context" {
 		t.Fatalf("kept = %v", ids)
 	}
 	if got := FilterChangesByScope(storepkg.NodeScope{}, scopes, rows); len(got) != len(rows) {

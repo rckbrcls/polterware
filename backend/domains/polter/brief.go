@@ -3,6 +3,7 @@ package polter
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/polterware/polterware/backend/domains/canvas"
@@ -20,21 +21,21 @@ var ErrUnknownBriefTarget = errors.New("unknown brief target")
 // BriefInput is what a brief draws from. The caller loads it; Brief only reads it.
 type BriefInput struct {
 	Snapshot work.Snapshot
-	// Docs are the project's active docs. A brief lists only those scoped to
-	// the target's node or one of its ancestors.
+	// Docs are the project's active docs. A brief lists only those with a
+	// context on the target's node or one of its ancestors.
 	Docs []Doc
 	// Canvases are the agent-visible canvases, with linked nodes already
 	// carrying their Structure title (canvas.WithStructure).
 	Canvases []canvas.Canvas
 }
 
-// Doc is one doc with the Structure node it is scoped to. Search reads the body.
+// Doc is one doc with the Structure nodes it is about. Search reads the body.
 type Doc struct {
-	ID          string
-	Title       string
-	DocType     string
-	ScopeNodeID string
-	Body        string
+	ID           string
+	Title        string
+	DocType      string
+	ScopeNodeIDs []string
+	Body         string
 }
 
 // Brief renders what an agent reads before it works on a card or a Structure
@@ -331,14 +332,14 @@ func (b briefBuilder) decisions() []string {
 	}
 	for _, path := range paths {
 		for _, d := range all {
-			if d.Scope == path {
+			if slices.Contains(d.Scopes, path) {
 				add(d)
 			}
 		}
 	}
 	var principles []string
 	for _, d := range all {
-		if d.Level == decision.LevelPrinciple && !seen[d.ID] && decision.Normalize(d.Status) != decision.StateSuperseded {
+		if d.IsPrinciple() && !seen[d.ID] && decision.Normalize(d.Status) != decision.StateSuperseded {
 			principles = append(principles, decision.StripNumber(d.Title))
 		}
 	}
@@ -366,9 +367,11 @@ func (b briefBuilder) decisions() []string {
 // Project-wide facts are the same in every brief and are left to search.
 func (b briefBuilder) facts() []string {
 	var lines []string
+	seen := map[int]bool{}
 	for _, path := range b.chainPaths() {
-		for _, fact := range b.in.Snapshot.Facts {
-			if fact.Scope == path {
+		for i, fact := range b.in.Snapshot.Facts {
+			if !seen[i] && slices.Contains(fact.Scopes, path) {
+				seen[i] = true
 				lines = append(lines, fmt.Sprintf("- %s: %s", fact.TruthClass, fact.Statement))
 			}
 		}
@@ -449,11 +452,13 @@ func (b briefBuilder) docs() []string {
 		ids = append(ids, node.ID)
 	}
 	var lines []string
+	seen := map[int]bool{}
 	for _, id := range ids {
-		for _, doc := range b.in.Docs {
-			if doc.ScopeNodeID != id {
+		for i, doc := range b.in.Docs {
+			if seen[i] || !slices.Contains(doc.ScopeNodeIDs, id) {
 				continue
 			}
+			seen[i] = true
 			lines = append(lines, "- "+doc.Title)
 		}
 	}

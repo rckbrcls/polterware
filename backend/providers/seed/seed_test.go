@@ -65,8 +65,10 @@ func TestPolterwareContentIsReal(t *testing.T) {
 	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='decision' AND status='active'`, seed.ProjectID); n != 10 {
 		t.Errorf("want 10 active Decisions, got %d", n)
 	}
-	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items WHERE project_id=? AND kind='decision' AND extra_json LIKE '%"level":"principle"%'`, seed.ProjectID); n != 5 {
-		t.Errorf("want 5 principles, got %d", n)
+	// A decision with no contexts is a principle: the five pinned ones and Decision-0004.
+	if n := count(t, store, `SELECT COUNT(*) FROM knowledge_items k WHERE k.project_id=? AND k.kind='decision'
+		AND NOT EXISTS (SELECT 1 FROM entity_contexts c WHERE c.entity_id=k.id)`, seed.ProjectID); n != 6 {
+		t.Errorf("want 6 principles, got %d", n)
 	}
 	if n := count(t, store, `SELECT COUNT(*) FROM structure_nodes WHERE project_id=?`, seed.ProjectID); n < 10 {
 		t.Errorf("want a Structure of Polterware, got %d nodes", n)

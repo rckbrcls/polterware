@@ -300,11 +300,11 @@ func (core *Core) ListKnowledge(_ context.Context, request *connect.Request[loca
 	}
 	result := make([]*localv1.KnowledgeItem, 0, len(items))
 	for _, item := range items {
-		if !resolved.Matches(scopes[item.ID]) {
+		if !resolved.MatchesAny(scopes[item.ID]) {
 			continue
 		}
 		msg := knowledgeProto(item)
-		msg.ScopeNodeId = scopes[item.ID]
+		msg.ScopeNodeIds = scopes[item.ID]
 		result = append(result, msg)
 	}
 	return connect.NewResponse(&localv1.ListKnowledgeResponse{Items: result}), nil

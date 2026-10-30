@@ -17,7 +17,7 @@ const decision = {
   tags: ["decision"],
   status: "accepted",
   state: "active",
-  level: "decision",
+  scopeNodeIds: ["n-api"],
   supersededBy: "",
   supersedes: [],
   reviewTrigger: "",
@@ -27,7 +27,7 @@ const decision = {
   entityLinks: [],
 } satisfies WorkspaceDecision;
 
-const principle = { ...decision, id: "decision-2", title: "Evidence over opinion", level: "principle", state: "proposed" } satisfies WorkspaceDecision;
+const principle = { ...decision, id: "decision-2", title: "Evidence over opinion", scopeNodeIds: [], state: "proposed" } satisfies WorkspaceDecision;
 
 describe("libraryRowsFromWorkspace", () => {
   it("pins principles above local decisions", () => {

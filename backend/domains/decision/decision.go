@@ -70,8 +70,9 @@ func CanTransition(from, to string) bool {
 	return false
 }
 
-// Levels. A principle applies to the whole project and is pinned above the
-// other decisions; a plain decision has no stored level.
+// Levels are read on input only. A decision with no contexts is a principle:
+// it applies to the whole project and is pinned above the others. `level:
+// principle` clears a decision's contexts; `level: decision` changes nothing.
 const (
 	LevelDecision  = "decision"
 	LevelPrinciple = "principle"
@@ -79,16 +80,8 @@ const (
 
 // ValidLevel reports whether level is a decision level.
 func ValidLevel(level string) bool {
+	level = strings.ToLower(strings.TrimSpace(level))
 	return level == LevelDecision || level == LevelPrinciple
-}
-
-// StoredLevel is the level kept in extra_json: principle, or empty for a plain
-// decision.
-func StoredLevel(level string) string {
-	if strings.EqualFold(strings.TrimSpace(level), LevelPrinciple) {
-		return LevelPrinciple
-	}
-	return ""
 }
 
 // Meta is the lifecycle data kept in a knowledge item's extra_json.
@@ -96,8 +89,6 @@ type Meta struct {
 	SupersededBy  string `json:"supersededBy,omitempty"`
 	ReviewTrigger string `json:"reviewTrigger,omitempty"`
 	StatusReason  string `json:"statusReason,omitempty"`
-	// Level is principle or empty; see StoredLevel.
-	Level string `json:"level,omitempty"`
 }
 
 // ParseMeta reads lifecycle data from extra_json; other keys are ignored.
@@ -122,7 +113,8 @@ func MergeMeta(extraJSON string, meta Meta) string {
 	set("supersededBy", meta.SupersededBy)
 	set("reviewTrigger", meta.ReviewTrigger)
 	set("statusReason", meta.StatusReason)
-	set("level", StoredLevel(meta.Level))
+	// The level merged into contexts; a stale key is dropped on the next write.
+	delete(fields, "level")
 	body, err := json.Marshal(fields)
 	if err != nil {
 		return "{}"
@@ -136,11 +128,14 @@ type Decision struct {
 	Title  string
 	Status string
 	Body   string
-	// Scope is the path of the Structure node the decision applies to; empty is the
-	// whole project.
-	Scope string
+	// Scopes are the paths of the Structure nodes the decision applies to, sorted.
+	// None means the whole project: the decision is a principle.
+	Scopes []string
 	Meta
 }
+
+// IsPrinciple reports whether the decision applies to the whole project.
+func (d Decision) IsPrinciple() bool { return len(d.Scopes) == 0 }
 
 // numbered reads a decision number from a reference ("Decision-0008") or from
 // the start of a numbered title ("Decision 0008: Title"). It also reads the

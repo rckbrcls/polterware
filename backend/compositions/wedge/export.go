@@ -115,9 +115,9 @@ func loadProjections(store *storepkg.Store, projectID string) (projections, erro
 	if err != nil {
 		return projections{}, err
 	}
-	principles := map[string]bool{}
+	contexts := map[string][]string{}
 	for _, item := range snapshot.Decisions {
-		principles[item.ID] = item.Level == decision.LevelPrinciple
+		contexts[item.ID] = item.Scopes
 	}
 	items, err := store.ListKnowledge(projectID, "decision")
 	if err != nil {
@@ -125,7 +125,7 @@ func loadProjections(store *storepkg.Store, projectID string) (projections, erro
 	}
 	in := projections{nodes: snapshot.Nodes}
 	for _, item := range items {
-		record := projection.Decision{ID: item.ID, Title: item.Title, Body: item.Body, Status: decision.Normalize(item.Status), Principle: principles[item.ID]}
+		record := projection.Decision{ID: item.ID, Title: item.Title, Body: item.Body, Status: decision.Normalize(item.Status), Contexts: contexts[item.ID], Principle: len(contexts[item.ID]) == 0}
 		in.decisions = append(in.decisions, record)
 		if record.Status != decision.StateSuperseded {
 			in.binding = append(in.binding, record)

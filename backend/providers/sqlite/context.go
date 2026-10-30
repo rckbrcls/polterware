@@ -150,7 +150,7 @@ func (s *Store) scopeContextItems(req contextpkg.Request, items []contextpkg.Ite
 	if err != nil {
 		return nil, err
 	}
-	maps := map[string]map[string]string{}
+	maps := map[string]map[string][]string{}
 	for _, kind := range []string{ScopeKnowledge, ScopeFact} {
 		m, err := s.ScopeMap(req.ProjectID, kind)
 		if err != nil {
@@ -160,14 +160,14 @@ func (s *Store) scopeContextItems(req contextpkg.Request, items []contextpkg.Ite
 	}
 	out := make([]contextpkg.Item, 0, len(items))
 	for _, item := range items {
-		var node string
+		var nodes []string
 		switch item.Kind {
 		case "fact":
-			node = maps[ScopeFact][item.ID]
+			nodes = maps[ScopeFact][item.ID]
 		case knowledge.KindDecision, knowledge.KindDoc:
-			node = maps[ScopeKnowledge][item.ID]
+			nodes = maps[ScopeKnowledge][item.ID]
 		}
-		if resolved.Matches(node) {
+		if resolved.MatchesAny(nodes) {
 			out = append(out, item)
 		}
 	}

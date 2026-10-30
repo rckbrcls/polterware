@@ -1,11 +1,13 @@
 import { createEffect, createSignal, on, type JSX } from "solid-js";
-import { Boxes, Composer, type ComposerProperty } from "@polterware/frontend-design-system";
-import type { WorkspaceCanonEntity } from "@polterware/feature-shell";
+import { Composer, type ComposerProperty } from "@polterware/frontend-design-system";
+import type { ScopeNodeItem } from "@polterware/feature-shell";
 import type { CanonFactDraft, CanonFactTruthClass } from "./canon-facts-types";
+import { contextProperty } from "./composers";
 
 /**
- * Adds or edits a rule in the shared composer: the statement first, then what it is about. A rule
- * has no kind to pick: a new one is declared, and an edit keeps how it is known.
+ * Adds or edits a rule in the shared composer: the statement first, then the parts of the project it
+ * is about (its contexts). A rule has no kind to pick: a new one is declared, and an edit keeps how
+ * it is known and the canon subject it already had (the CLI and MCP still set it).
  */
 export function CanonFactFormDialog(props: {
   open: boolean;
@@ -14,36 +16,22 @@ export function CanonFactFormDialog(props: {
   onClose: () => void;
   /** Resolves false when the write failed, so the composer keeps the draft. */
   onSubmit: (draft: CanonFactDraft) => Promise<boolean>;
-  /** Canon entities a Fact can be about; none leaves it about the whole project. */
-  entities?: readonly WorkspaceCanonEntity[];
+  /** Structure nodes a rule can be about; none leaves the Context property out. */
+  scopeNodes?: readonly ScopeNodeItem[];
   /** A quiet action at the start of the footer, such as Link evidence. */
   footerAction?: JSX.Element;
 }) {
   const [truthClass, setTruthClass] = createSignal<CanonFactTruthClass>("declared");
-  const [entityId, setEntityId] = createSignal("");
+  const [contexts, setContexts] = createSignal<string[]>([]);
 
   createEffect(on(() => props.open, (open) => {
     if (!open) return;
     setTruthClass(props.initial?.truthClass ?? "declared");
-    setEntityId(props.initial?.entityId ?? "");
+    setContexts([...(props.initial?.scopeNodeIds ?? [])]);
   }));
 
   const properties = (): ComposerProperty[] => [
-    {
-      id: "subject",
-      label: "About",
-      icon: <Boxes size={14} />,
-      options: [
-        { value: "", label: "Whole project" },
-        ...(props.entities ?? []).map((entity) => ({ value: entity.id, label: entity.title })),
-        // A subject outside the list (an older id) stays selectable.
-        ...(entityId() && !(props.entities ?? []).some((entity) => entity.id === entityId())
-          ? [{ value: entityId(), label: entityId() }]
-          : []),
-      ],
-      value: entityId(),
-      onChange: setEntityId,
-    },
+    ...(props.scopeNodes?.length ? [contextProperty(props.scopeNodes, contexts, setContexts)] : []),
   ];
 
   return (
@@ -63,7 +51,8 @@ export function CanonFactFormDialog(props: {
           id: props.initial?.id,
           statement: draft.title,
           truthClass: truthClass(),
-          entityId: entityId().trim(),
+          entityId: props.initial?.entityId ?? "",
+          scopeNodeIds: contexts(),
           why: draft.why,
         })}
     />

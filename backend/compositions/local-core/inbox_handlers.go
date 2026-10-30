@@ -38,7 +38,7 @@ func (core *Core) ListInbox(_ context.Context, request *connect.Request[localv1.
 	}
 	withScope := func(item inbox.Item) *localv1.InboxItem {
 		msg := inboxItemProto(item)
-		msg.ScopeNodeId = assigned[item.Key]
+		msg.ScopeNodeIds = assigned[item.Key]
 		return msg
 	}
 	for _, item := range result.Items {

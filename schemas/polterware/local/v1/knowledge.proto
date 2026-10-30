@@ -18,10 +18,14 @@ message KnowledgeItem {
   string extra_json = 10;
   string created_at = 11;
   string updated_at = 12;
-  string scope_node_id = 13;
+  reserved 13;
+  reserved "scope_node_id";
+  // scope_node_ids are the Structure nodes the item is about; none is the whole
+  // project (a decision with none is a principle).
+  repeated string scope_node_ids = 16;
   // archived_at is empty while the item is active (RFC3339 otherwise).
   string archived_at = 14;
-  // doc_type is doc, runbook, or source for a doc and empty for a decision.
+  // doc_type is doc for a doc and empty for a decision.
   string doc_type = 15;
 }
 

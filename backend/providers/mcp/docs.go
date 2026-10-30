@@ -57,15 +57,16 @@ func (s *Server) docUpsert(args map[string]any) (string, error) {
 		}
 	}
 	item.DocType = knowledge.DocTypeDoc
-	scopeNode, setScope := "", false
+	var scopeNodes []string
+	setScope := false
 	if scope, ok := args["scope"].(string); ok {
 		setScope = true
-		if scope = strings.TrimSpace(scope); scope != "" {
-			resolved, err := wedge.ResolveScopeRefs(s.Store, projectID, []string{scope}, true)
-			if err != nil || len(resolved.NodeIDs) != 1 {
-				return "", fmt.Errorf("unknown scope %q: use a Structure node path", scope)
+		if refs := wedge.ScopeRefs("", []string{scope}); len(refs) > 0 {
+			resolved, err := wedge.ResolveScopeRefs(s.Store, projectID, refs, true)
+			if err != nil {
+				return "", fmt.Errorf("unknown scope %q: use Structure node paths, comma separated", scope)
 			}
-			scopeNode = resolved.NodeIDs[0]
+			scopeNodes = resolved.NodeIDs
 		}
 	}
 	runID := stringFrom(args["agent_run_id"])
@@ -83,7 +84,7 @@ func (s *Server) docUpsert(args map[string]any) (string, error) {
 				return nil, nil, err
 			}
 			if setScope {
-				if err := s.Store.SetScope(projectID, storepkg.ScopeKnowledge, item.ID, scopeNode); err != nil {
+				if err := s.Store.SetScope(projectID, storepkg.ScopeKnowledge, item.ID, scopeNodes); err != nil {
 					return nil, nil, err
 				}
 			}

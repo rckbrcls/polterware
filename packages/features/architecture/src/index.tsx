@@ -338,8 +338,11 @@ export function StructureView(props: {
   onEditNode?: (nodeId: string, patch: StructureNodePatch) => Promise<void>;
   /** Writes the project's name or description from its document. */
   onEditProject?: (patch: { name?: string; description?: string }) => Promise<void>;
-  /** Links a card, decision, fact, or doc to a node, or unlinks it when `nodeId` is empty. */
-  onLinkRecord?: (kind: StructureRecordKind, recordId: string, nodeId: string) => Promise<void>;
+  /**
+   * Links a card, decision, fact, or doc to a node (`linked`), or unlinks it. A decision, fact, or doc
+   * gains or loses only this node among its contexts; a card moves under it or out of any component.
+   */
+  onLinkRecord?: (kind: StructureRecordKind, recordId: string, nodeId: string, linked: boolean) => Promise<void>;
   /** Checkout names a node's repository can be set to. */
   repositories?: readonly string[];
   /** A node's Activity at the end of its document: its edits and the relations drawn to it. */
@@ -495,8 +498,8 @@ export function StructureView(props: {
         ...(node.level === "component" ? { card: candidates("cards") } : {}),
         decision: candidates("decisions"), fact: candidates("facts"), doc: candidates("docs"),
       } : undefined,
-      link: props.onLinkRecord ? (kind, id) => write(props.onLinkRecord!(kind, id, node.id), "Could not link it.") : undefined,
-      unlink: props.onLinkRecord ? (kind, id) => write(props.onLinkRecord!(kind, id, ""), "Could not unlink it.") : undefined,
+      link: props.onLinkRecord ? (kind, id) => write(props.onLinkRecord!(kind, id, node.id, true), "Could not link it.") : undefined,
+      unlink: props.onLinkRecord ? (kind, id) => write(props.onLinkRecord!(kind, id, node.id, false), "Could not unlink it.") : undefined,
     };
   });
 

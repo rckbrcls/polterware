@@ -88,13 +88,11 @@ func TestNumberReadsRefsAndTitlesOnly(t *testing.T) {
 	}
 }
 
-func TestLevelIsStoredOnlyForPrinciples(t *testing.T) {
-	extra := MergeMeta(`{"other":1}`, Meta{Level: "Principle"})
-	if ParseMeta(extra).Level != LevelPrinciple {
-		t.Fatalf("principle not stored: %s", extra)
+func TestMergeMetaDropsTheRetiredLevel(t *testing.T) {
+	if extra := MergeMeta(`{"other":1,"level":"principle"}`, Meta{}); extra != `{"other":1}` {
+		t.Fatalf("the level key stays: %s", extra)
 	}
-	extra = MergeMeta(extra, Meta{Level: LevelDecision})
-	if extra != `{"other":1}` {
-		t.Fatalf("a plain decision keeps no level: %s", extra)
+	if !(Decision{}).IsPrinciple() || (Decision{Scopes: []string{"core"}}).IsPrinciple() {
+		t.Fatal("a decision is a principle exactly when it has no contexts")
 	}
 }

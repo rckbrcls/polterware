@@ -73,3 +73,40 @@ status: active
 ### Decision-0005:
 status: active
 `
+
+// decisionContextsPolter points each Decision at the Structure nodes it applies
+// to, once the Structure exists. Decision-0004 keeps none: the product positioning
+// applies to the whole project, so it is a principle like the pinned ones.
+const decisionContextsPolter = `---
+polter: 1
+summary: Point the Polterware Decisions at the parts they apply to
+rationale: A decision with no contexts is a principle, so each one names the Structure nodes it governs
+---
+
+### Decision-0001:
+scope: polterware/cloud
+
+### Decision-0002:
+scope: polterware/desktop, polterware/cloud
+
+### Decision-0003:
+scope: polterware/web
+
+### Decision-0005:
+scope: polterware/cloud
+
+### Decision-0006:
+scope: polterware/core/work
+
+### Decision-0007:
+scope: polterware/core
+
+### Decision-0008:
+scope: polterware/core/structure
+
+### Decision-0009:
+scope: polterware/core/structure
+
+### Decision-0010:
+scope: polterware/core/decisions
+`

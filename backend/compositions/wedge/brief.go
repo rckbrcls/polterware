@@ -67,10 +67,10 @@ func briefInput(store *storepkg.Store, snapshot work.Snapshot, scope structure.M
 	}
 	in := polter.BriefInput{Snapshot: snapshot}
 	for _, item := range items {
-		if !resolved.Matches(scopes[item.ID]) {
+		if !resolved.MatchesAny(scopes[item.ID]) {
 			continue
 		}
-		in.Docs = append(in.Docs, polter.Doc{ID: item.ID, Title: item.Title, DocType: item.DocType, ScopeNodeID: scopes[item.ID], Body: item.Body})
+		in.Docs = append(in.Docs, polter.Doc{ID: item.ID, Title: item.Title, DocType: item.DocType, ScopeNodeIDs: scopes[item.ID], Body: item.Body})
 	}
 	canvases, err := store.ListCanvases(snapshot.ProjectID)
 	if err != nil {

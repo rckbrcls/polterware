@@ -34,10 +34,13 @@ const (
 // Decision is one decision record from the project store. A principle
 // applies to the whole project, so every checkout's block lists it.
 type Decision struct {
-	ID        string
-	Title     string
-	Body      string
-	Status    string
+	ID     string
+	Title  string
+	Body   string
+	Status string
+	// Contexts are the paths of the Structure nodes the decision applies to; a
+	// decision governs the checkouts of those nodes and of the nodes citing it.
+	Contexts  []string
 	Principle bool
 }
 
@@ -59,6 +62,9 @@ func Govern(nodes []structure.Node, decisions []Decision) map[string][]Decision 
 		for _, node := range nodes {
 			if node.Status == structure.NodeRemoved {
 				continue
+			}
+			if slices.Contains(decision.Contexts, node.Path) {
+				repos[node.Repo] = true
 			}
 			for _, ref := range node.Decisions {
 				if Cites(ref, decision) {

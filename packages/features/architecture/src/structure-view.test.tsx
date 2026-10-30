@@ -11,7 +11,7 @@ const nodes: StructureNode[] = [
 ];
 let dispose: (() => void) | undefined;
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
-function mount(options: { error?: string; loading?: boolean; onEditNode?: (nodeId: string, patch: StructureNodePatch) => Promise<void>; onLinkRecord?: (kind: string, id: string, nodeId: string) => Promise<void>; onMove?: (nodeId: string, parentId: string) => Promise<void> } = {}) {
+function mount(options: { error?: string; loading?: boolean; onEditNode?: (nodeId: string, patch: StructureNodePatch) => Promise<void>; onLinkRecord?: (kind: string, id: string, nodeId: string, linked: boolean) => Promise<void>; onMove?: (nodeId: string, parentId: string) => Promise<void> } = {}) {
   const host = document.createElement("div");
   document.body.append(host);
   const open = vi.fn((entityId: string) => { detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId, entityKind: "arch-node" }); });
@@ -100,7 +100,7 @@ describe("Structure collection", () => {
     expect(onEditNode.mock.calls.length).toBe(calls);
     // A direct link has Unlink; the section's + links what is not linked yet.
     doc.querySelector<HTMLButtonElement>('button[aria-label="Unlink Use Go"]')!.click();
-    expect(onLinkRecord).toHaveBeenLastCalledWith("decision", "dec-1", "");
+    expect(onLinkRecord).toHaveBeenLastCalledWith("decision", "dec-1", "api", false);
     expect(doc.querySelector('button[aria-label="Link decision"]')).not.toBeNull();
     expect(doc.textContent).toContain("Rules");
   });

@@ -2,7 +2,7 @@ import { Show, type JSX } from "solid-js";
 import { Button } from "@polterware/frontend-design-system";
 import type { ScopeNodeItem, WorkspaceDoc } from "@polterware/feature-shell";
 import { KnowledgeDocumentProperty } from "./knowledge-document-properties";
-import { ScopePicker, scopePathOf } from "./scope-picker";
+import { ContextPicker } from "./scope-picker";
 import { KnowledgeDocumentNotFound, KnowledgeDocumentShell, type DocNoteProps } from "./knowledge-document-shell";
 
 /** One page for every doc: a markdown note with its scope and tags. */
@@ -13,8 +13,8 @@ export function DocDetail(props: {
   onBodyChange: (markdown: string) => void;
   onArchive?: () => void;
   scopeNodes?: ScopeNodeItem[];
-  /** Writes the Structure scope as a node path; empty clears it. */
-  onScopeChange?: (path: string) => void;
+  /** Writes the contexts as node ids; none is the whole project. */
+  onScopeChange?: (ids: string[]) => void;
 }) {
   return (
     <Show when={props.doc} fallback={<KnowledgeDocumentNotFound kindLabel="Doc" />}>
@@ -32,11 +32,10 @@ export function DocDetail(props: {
             <>
               <Show when={props.onScopeChange}>
                 <KnowledgeDocumentProperty label="About">
-                  <ScopePicker
+                  <ContextPicker
                     nodes={props.scopeNodes ?? []}
-                    value={scopePathOf(props.scopeNodes ?? [], doc().scopeNodeId)}
-                    onChange={(path) => props.onScopeChange?.(path)}
-                    class="w-full min-w-0 max-w-[20rem]"
+                    values={doc().scopeNodeIds}
+                    onChange={(ids) => props.onScopeChange?.(ids)}
                   />
                 </KnowledgeDocumentProperty>
               </Show>

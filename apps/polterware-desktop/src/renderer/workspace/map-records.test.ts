@@ -185,9 +185,13 @@ describe("mapDecisions", () => {
     expect(decisions[2]).toMatchObject({ state: "active", statusReason: "scale" });
   });
 
-  it("reads a principle from its level", () => {
-    const [principle] = mapDecisions([{ id: "p", kind: "decision", title: "Local first", extraJson: JSON.stringify({ level: "principle" }) }]);
-    expect(principle?.level).toBe("principle");
+  it("reads a Decision's contexts as node ids", () => {
+    const [scoped, principle] = mapDecisions([
+      { id: "s", kind: "decision", title: "Scoped", scopeNodeIds: ["n-api", "n-core"] },
+      { id: "p", kind: "decision", title: "Local first" },
+    ]);
+    expect(scoped?.scopeNodeIds).toEqual(["n-api", "n-core"]);
+    expect(principle?.scopeNodeIds).toEqual([]);
   });
 
   it("lists the live Structure nodes that cite a Decision by id or by number", () => {

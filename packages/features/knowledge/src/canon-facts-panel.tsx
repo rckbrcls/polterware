@@ -9,7 +9,7 @@ import {
   matchClauses,
   type FilterClause,
 } from "@polterware/frontend-design-system";
-import { expandedDetail, openDetail, requestDetailExpanded, type ScopeNodeItem, type WorkspaceCanonEntity } from "@polterware/feature-shell";
+import { expandedDetail, openDetail, requestDetailExpanded, requestPageBack, type ScopeNodeItem, type WorkspaceCanonEntity } from "@polterware/feature-shell";
 import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
 import { CanonFactFormDialog } from "./canon-fact-form-dialog";
 import type {
@@ -56,7 +56,7 @@ function mapFact(value: unknown): CanonFactRow | undefined {
     source: asString(raw.source),
     actor: asString(raw.actor),
     entityId: asString(raw.entityId),
-    scopeNodeId: asString(raw.scopeNodeId),
+    scopeNodeIds: Array.isArray(raw.scopeNodeIds) ? raw.scopeNodeIds.filter((id): id is string => typeof id === "string") : [],
     observedAt: asString(raw.observedAt),
     createdAt: asString(raw.createdAt),
     updatedAt: asString(raw.updatedAt),
@@ -88,6 +88,8 @@ type CanonBridge = {
   listEvidence: (payload: { projectId: string; scopeNodes?: string[] }) => Promise<unknown>;
   upsertEvidence: (payload: Record<string, unknown>) => Promise<unknown>;
   linkEvidenceToFact: (payload: Record<string, unknown>) => Promise<unknown>;
+  /** Replaces an entity's contexts (`WorkService.SetScope`). */
+  setScope?: (payload: Record<string, unknown>) => Promise<unknown>;
 };
 
 function canonBridge(): CanonBridge | undefined {
@@ -102,6 +104,7 @@ function canonBridge(): CanonBridge | undefined {
           upsertEvidence?: CanonBridge["upsertEvidence"];
           linkEvidenceToFact?: CanonBridge["linkEvidenceToFact"];
         };
+        work?: { setScope?: CanonBridge["setScope"] };
       };
     };
   };
@@ -123,6 +126,7 @@ function canonBridge(): CanonBridge | undefined {
     listEvidence: canon.listEvidence,
     upsertEvidence: canon.upsertEvidence,
     linkEvidenceToFact: canon.linkEvidenceToFact,
+    setScope: root.polterware?.core?.work?.setScope,
   };
 }
 
@@ -151,7 +155,7 @@ export function CanonFactsPanel(props: {
   projectId: string;
   /** Expanded Structure node ids. Empty leaves the lists unscoped. */
   scopeNodes?: readonly string[];
-  /** Canon entities, to name a Fact's subject. */
+  /** Canon entities, to name the subject of a rule with no contexts. */
   entities?: readonly WorkspaceCanonEntity[];
   /** Structure nodes, to name a Fact's scope. */
   scopeCatalogNodes?: readonly ScopeNodeItem[];
@@ -175,10 +179,11 @@ export function CanonFactsPanel(props: {
 
   const subjectOf = (fact: CanonFactRow) =>
     (props.entities ?? []).find((entity) => entity.id === fact.entityId)?.title ?? "";
-  const scopeNodeOf = (fact: CanonFactRow) =>
-    (props.scopeCatalogNodes ?? []).find((node) => node.id === fact.scopeNodeId);
-  /** The part of the project a rule is about: its Structure node, else its subject. */
-  const aboutOf = (fact: CanonFactRow) => scopeNodeOf(fact)?.title || subjectOf(fact) || "Whole project";
+  const contextNodesOf = (fact: CanonFactRow) =>
+    (props.scopeCatalogNodes ?? []).filter((node) => fact.scopeNodeIds.includes(node.id));
+  /** The parts of the project a rule is about: its Structure nodes, else its subject. */
+  const aboutOf = (fact: CanonFactRow) =>
+    contextNodesOf(fact).map((node) => node.title).join(", ") || subjectOf(fact) || "Whole project";
 
   const visibleFacts = createMemo(() => {
     const needle = props.query.trim().toLowerCase();
@@ -186,7 +191,7 @@ export function CanonFactsPanel(props: {
       (fact) =>
         fact.truthClass !== "observed" &&
         matchClauses(fact, props.clauses, {}) &&
-        (!needle || [fact.statement, fact.id, subjectOf(fact), scopeNodeOf(fact)?.title ?? "", fact.source].some((value) => value.toLowerCase().includes(needle))),
+        (!needle || [fact.statement, fact.id, subjectOf(fact), aboutOf(fact), fact.source].some((value) => value.toLowerCase().includes(needle))),
     );
   });
 
@@ -289,7 +294,7 @@ export function CanonFactsPanel(props: {
     if (!envelope) return false;
     props.onBusyChange(true);
     try {
-      await bridge.upsertFact({
+      const saved = asRecord(asRecord(await bridge.upsertFact({
         fact: {
           id: draft.id ?? "",
           projectId,
@@ -303,7 +308,13 @@ export function CanonFactsPanel(props: {
           updatedAt: "",
         },
         change: changePayload(envelope),
-      });
+      })).fact);
+      const id = asString(saved.id) || draft.id || "";
+      const before = facts().find((fact) => fact.id === id)?.scopeNodeIds ?? [];
+      const changed = before.length !== draft.scopeNodeIds.length || before.some((node) => !draft.scopeNodeIds.includes(node));
+      if (id && changed && bridge.setScope) {
+        await bridge.setScope({ projectId, kind: "fact", id, nodes: draft.scopeNodeIds });
+      }
       pushToast(draft.id ? "Rule updated." : "Rule created.", "success");
       await refresh();
       return true;
@@ -358,6 +369,7 @@ export function CanonFactsPanel(props: {
       ? fact.truthClass
       : "declared") as CanonFactTruthClass,
     entityId: fact.entityId,
+    scopeNodeIds: fact.scopeNodeIds,
   });
   // Opening a rule opens it for editing.
   const editing = () => Boolean(canonBridge()) && !factDialogOpen() && Boolean(pageFact());
@@ -395,7 +407,7 @@ export function CanonFactsPanel(props: {
                       title={row.statement || row.id}
                     />
                     <DataTable.Cell>
-                      <span title={scopeNodeOf(row)?.path}>{aboutOf(row)}</span>
+                      <span title={contextNodesOf(row).map((node) => node.path).join(", ") || undefined}>{aboutOf(row)}</span>
                     </DataTable.Cell>
                   </DataTable.Row>
                 )}
@@ -428,11 +440,11 @@ export function CanonFactsPanel(props: {
       </div>
 
       <CanonFactFormDialog
-        entities={props.entities}
+        scopeNodes={props.scopeCatalogNodes}
         open={factDialogOpen() || editing()}
         mode={editing() ? "edit" : "create"}
         initial={editing() ? draftOf(pageFact()!) : undefined}
-        onClose={() => (editing() ? requestDetailExpanded(false) : setFactDialogOpen(false))}
+        onClose={() => (editing() ? requestPageBack() : setFactDialogOpen(false))}
         onSubmit={saveFact}
       />
     </div>

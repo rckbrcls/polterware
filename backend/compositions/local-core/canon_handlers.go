@@ -93,7 +93,7 @@ func (core *Core) ListFacts(_ context.Context, request *connect.Request[localv1.
 	out := make([]*localv1.CanonFact, 0, len(items))
 	for _, item := range wedge.FilterFactsByScope(resolved, scopes, items) {
 		msg := canonFactProto(item)
-		msg.ScopeNodeId = scopes[item.ID]
+		msg.ScopeNodeIds = scopes[item.ID]
 		out = append(out, msg)
 	}
 	return connect.NewResponse(&localv1.ListFactsResponse{Facts: out}), nil
@@ -180,7 +180,7 @@ func (core *Core) ListEvidence(_ context.Context, request *connect.Request[local
 	out := make([]*localv1.CanonEvidence, 0, len(items))
 	for _, item := range wedge.FilterEvidenceByScope(resolved, scopes, items) {
 		msg := canonEvidenceProto(item)
-		msg.ScopeNodeId = scopes[item.ID]
+		msg.ScopeNodeIds = scopes[item.ID]
 		out = append(out, msg)
 	}
 	return connect.NewResponse(&localv1.ListEvidenceResponse{Evidence: out}), nil

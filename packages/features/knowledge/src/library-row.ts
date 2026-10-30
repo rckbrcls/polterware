@@ -47,14 +47,15 @@ export function libraryRowsFromWorkspace(input: { decisions?: WorkspaceDecision[
     id: decision.id,
     entityKind: "decision",
     title: decision.title,
-    levelLabel: decision.level === "principle" ? "Principle" : "Decision",
+    // A decision with no contexts is a principle: it applies to the whole project.
+    levelLabel: decision.scopeNodeIds.length === 0 ? "Principle" : "Decision",
     state: decision.state,
     statusLabel: DECISION_STATE_LABEL[decision.state],
     statusTone: decisionStateTone(decision.state),
     owner: decision.owner,
     updatedAt: decision.updatedAt,
     hasLinks: decision.entityLinks.length > 0,
-    pinned: decision.level === "principle",
+    pinned: decision.scopeNodeIds.length === 0,
   }));
   return [...rows.filter((row) => row.pinned), ...rows.filter((row) => !row.pinned)];
 }

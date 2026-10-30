@@ -1,4 +1,4 @@
-import { Box, Boxes, Cloud, Layers, type FilterClause, type FilterField } from "@polterware/frontend-design-system";
+import { Box, Boxes, Cloud, Layers, type FilterClause, type FilterField, type PropertyOption } from "@polterware/frontend-design-system";
 import type { ScopeFilterEnvironment, ScopeFilterKey, ScopeFilterNode, ScopeFilterToken } from "./scope-filter";
 import { dedupeScopeTokens } from "./scope-filter";
 import { scopeFilterMenuSections } from "./scope-filter-menu-state";
@@ -37,6 +37,23 @@ export function scopeFilterFields(props: {
       icon: () => <ScopeIcon kind={section.key} />,
     })),
   }));
+}
+
+/**
+ * The Structure nodes as context options for a `TokenPicker`: the scope filter menu's
+ * groups in its order (systems, then domains, then components) with the same icons, and
+ * the node id as the value. A title two nodes share shows its path instead.
+ */
+export function scopeContextOptions(nodes: readonly (ScopeFilterNode & { path?: string })[]): PropertyOption[] {
+  const titles = new Map<string, number>();
+  for (const node of nodes) titles.set(node.title, (titles.get(node.title) ?? 0) + 1);
+  return scopeFilterMenuSections({ nodes, environments: [], allowEnv: false }).flatMap((section) =>
+    section.options.map((option) => {
+      const node = nodes.find((item) => item.id === option.id);
+      const label = (titles.get(option.label) ?? 0) > 1 && node?.path ? node.path : option.label;
+      return { value: option.id, label, icon: <ScopeIcon kind={section.key} /> };
+    }),
+  );
 }
 
 /** One clause per scope level, holding that level's tokens. */

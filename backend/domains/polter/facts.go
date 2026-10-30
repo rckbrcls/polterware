@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/polterware/polterware/backend/domains/canon"
-	"github.com/polterware/polterware/backend/domains/structure"
 	"github.com/polterware/polterware/backend/domains/work"
 )
 
@@ -167,17 +166,17 @@ func (p *planner) planFacts(doc Document) {
 				current.TruthClass = kind
 			}
 		}
-		if scope, ok := node.MetaValue("scope"); ok {
-			if scope != "" {
-				target, exists := p.nodes[scope]
-				if !exists || target.Status == structure.NodeRemoved {
-					p.errorf(factMetaLine(node, "scope"), "unknown scope %q: use a Structure node path", scope)
-					continue
-				}
+		if value, ok := node.MetaValue("scope"); ok {
+			scopes := ParseScopes(value)
+			if !p.checkScopes(factMetaLine(node, "scope"), scopes) {
+				continue
 			}
-			if scope != current.Scope {
-				set("scope", current.Scope, scope)
-				current.Scope = scope
+			if scopes == nil {
+				scopes = []string{}
+			}
+			if !slices.Equal(scopes, current.Scopes) {
+				set("scope", current.Scopes, scopes)
+				current.Scopes = scopes
 			}
 		}
 		if value, ok := node.MetaValue("evidence"); ok {

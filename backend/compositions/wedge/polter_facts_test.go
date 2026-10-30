@@ -3,6 +3,7 @@ package wedge_test
 import (
 	"errors"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -57,7 +58,7 @@ func TestPolterFactApplyRoundTripAndAudit(t *testing.T) {
 		t.Fatalf("evidence: %+v %v", links, err)
 	}
 	snapshot, err := store.LoadWorkSnapshot(project.ID)
-	if err != nil || snapshot.Facts[0].Slug != "local-core" || snapshot.Facts[0].Scope != "core" {
+	if err != nil || snapshot.Facts[0].Slug != "local-core" || !slices.Equal(snapshot.Facts[0].Scopes, []string{"core"}) {
 		t.Fatalf("snapshot: %+v %v", snapshot, err)
 	}
 	var op, batch, actor string
@@ -96,7 +97,7 @@ func TestPolterFactApplyRoundTripAndAudit(t *testing.T) {
 		t.Fatalf("clear evidence: %+v %v", links, err)
 	}
 	scope, err := store.ScopeMap(project.ID, storepkg.ScopeFact)
-	if err != nil || scope[id] != "" {
+	if err != nil || len(scope[id]) != 0 {
 		t.Fatalf("clear scope: %+v %v", scope, err)
 	}
 	// Foreign-project evidence is not a valid reference, and the whole document is rejected.

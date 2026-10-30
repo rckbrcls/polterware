@@ -14,6 +14,21 @@ export function setDetailExpandHandler(next: ((expanded: boolean) => void) | und
   handler = next;
 }
 
+let backHandler: (() => boolean) | undefined;
+
+/** The app goes back in its history; it returns false when there is nowhere to go back to. */
+export function setPageBackHandler(next: (() => boolean) | undefined) {
+  backHandler = next;
+}
+
+/**
+ * The Back of an open page: the place it was opened from (a Structure node, a list), like the
+ * title bar's back; with no history, the page closes back to its list.
+ */
+export function requestPageBack() {
+  if (!backHandler?.()) requestDetailExpanded(false);
+}
+
 let sectionHandler: ((section: string, tab?: string) => void) | undefined;
 
 /** The app routes what a page asks for through its trail, such as a crumb back to Truth › Docs. */

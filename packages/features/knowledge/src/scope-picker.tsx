@@ -1,36 +1,28 @@
 import { createMemo } from "solid-js";
-import { Select } from "@polterware/frontend-design-system";
-import type { ScopeNodeItem } from "@polterware/feature-shell";
+import { Layers, TokenPicker } from "@polterware/frontend-design-system";
+import { scopeContextOptions, type ScopeNodeItem } from "@polterware/feature-shell";
 
-/** Picks the Structure node an entity belongs to; the empty value is the whole project. */
-export function ScopePicker(props: {
+/**
+ * Picks the Structure nodes an entity is about, as tokens like the scope filter menu's.
+ * None is the whole project; for a decision, that makes it a principle.
+ */
+export function ContextPicker(props: {
   nodes: readonly ScopeNodeItem[];
-  /** Path of the selected node; empty for the whole project. */
-  value: string;
-  onChange: (path: string) => void;
-  "aria-label"?: string;
-  class?: string;
+  /** Ids of the picked nodes. */
+  values: readonly string[];
+  onChange: (ids: string[]) => void;
+  disabled?: boolean;
 }) {
-  const options = createMemo(() => [
-    { value: "", label: "Whole project" },
-    ...[...props.nodes]
-      .sort((a, b) => a.path.localeCompare(b.path))
-      .map((node) => ({ value: node.path, label: node.path })),
-  ]);
+  const options = createMemo(() => scopeContextOptions(props.nodes));
   return (
-    <Select
-      size="sm"
-      class={props.class ?? "w-full min-w-0"}
-      aria-label={props["aria-label"] ?? "Structure scope"}
+    <TokenPicker
+      label="Context"
+      icon={<Layers size={14} />}
+      emptyLabel="Whole project"
       options={options()}
-      value={props.value}
+      values={props.values}
       onChange={props.onChange}
+      disabled={props.disabled}
     />
   );
-}
-
-/** Path of the node with `id`, or empty when it is gone or unset. */
-export function scopePathOf(nodes: readonly ScopeNodeItem[], id: string | undefined): string {
-  if (!id) return "";
-  return nodes.find((node) => node.id === id)?.path ?? "";
 }

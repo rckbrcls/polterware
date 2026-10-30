@@ -118,4 +118,50 @@ describe("Composer", () => {
     expect(path()).toBe("docs/deploy.md");
     expect(field("Path")).toBe(before);
   });
+
+  it("adds and removes context chips on a tokens property", async () => {
+    const [contexts, setContexts] = createSignal<string[]>([]);
+    dispose = render(
+      () => (
+        <Composer
+          open
+          onClose={() => {}}
+          crumbs={["Polterware", "New decision"]}
+          titlePlaceholder="Decision title"
+          properties={[{
+            id: "contexts",
+            label: "Context",
+            emptyLabel: "Whole project",
+            options: [{ value: "app", label: "App" }, { value: "app/api", label: "API" }],
+            values: contexts(),
+            onValuesChange: setContexts,
+          }]}
+          submitLabel="Create decision"
+          onSubmit={() => {}}
+        />
+      ),
+      document.body.appendChild(document.createElement("div")),
+    );
+    const option = (label: string) =>
+      [...document.querySelectorAll<HTMLButtonElement>('[role="option"]')].find((item) => item.textContent?.includes(label));
+    // Empty, the add button says what no context means.
+    await expect.poll(() => field("Context: Whole project")).toBeTruthy();
+    field("Context: Whole project")!.click();
+    await expect.poll(() => option("API")).toBeTruthy();
+    option("API")!.click();
+    expect(contexts()).toEqual(["app/api"]);
+    await expect.poll(() => field("Remove API")).toBeTruthy();
+    expect(field("Context: Whole project")).toBeNull();
+    // With a chip, the add button is a plain + that offers only what is not picked yet.
+    field("Add context")!.click();
+    await expect.poll(() => option("App")).toBeTruthy();
+    expect(option("API")).toBeUndefined();
+    option("App")!.click();
+    expect(contexts()).toEqual(["app/api", "app"]);
+    field("Remove API")!.click();
+    expect(contexts()).toEqual(["app"]);
+    field("Remove App")!.click();
+    expect(contexts()).toEqual([]);
+    await expect.poll(() => field("Context: Whole project")).toBeTruthy();
+  });
 });

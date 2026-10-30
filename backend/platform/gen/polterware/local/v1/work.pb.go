@@ -1263,7 +1263,7 @@ type InboxItem struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id is the short id people type; it is stable while the item is the same.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// kind is "decision", "drift", or "verify".
+	// kind is "decision", "drift", or "setup".
 	Kind     string   `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	Blocking bool     `protobuf:"varint,3,opt,name=blocking,proto3" json:"blocking,omitempty"`
 	Title    string   `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
@@ -1275,10 +1275,10 @@ type InboxItem struct {
 	// state is "open" or "deferred".
 	State string `protobuf:"bytes,9,opt,name=state,proto3" json:"state,omitempty"`
 	// actions are the item's action ids, primary first: decide, delegate,
-	// defer, fix_code, update_intent, ignore, verify, reject.
+	// defer, fix_code, update_intent, ignore.
 	Actions []string `protobuf:"bytes,10,rep,name=actions,proto3" json:"actions,omitempty"`
-	// scope_node_id is the item's own scope; empty when it follows its source.
-	ScopeNodeId   string `protobuf:"bytes,11,opt,name=scope_node_id,json=scopeNodeId,proto3" json:"scope_node_id,omitempty"`
+	// scope_node_ids are the item's own contexts; empty when it follows its source.
+	ScopeNodeIds  []string `protobuf:"bytes,12,rep,name=scope_node_ids,json=scopeNodeIds,proto3" json:"scope_node_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1383,11 +1383,11 @@ func (x *InboxItem) GetActions() []string {
 	return nil
 }
 
-func (x *InboxItem) GetScopeNodeId() string {
+func (x *InboxItem) GetScopeNodeIds() []string {
 	if x != nil {
-		return x.ScopeNodeId
+		return x.ScopeNodeIds
 	}
-	return ""
+	return nil
 }
 
 // RoutedInboxItem is an item a person handed to agents (delegate, fix_code,
@@ -1518,12 +1518,14 @@ func (x *ListInboxRequest) GetScopeNodes() []string {
 // SetScope assigns an entity to a Structure node, or clears it when node is empty.
 // kind is "decision", "fact", "evidence", or "item" (a derived Drift/Inbox item,
 // identified by its item key). node is a Structure node id or path.
+// SetScopeRequest replaces an entity's contexts with nodes (ids or paths); an
+// empty list clears them (the whole project).
 type SetScopeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProjectId     string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	Kind          string                 `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	Id            string                 `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
-	Node          string                 `protobuf:"bytes,4,opt,name=node,proto3" json:"node,omitempty"`
+	Nodes         []string               `protobuf:"bytes,5,rep,name=nodes,proto3" json:"nodes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1579,11 +1581,11 @@ func (x *SetScopeRequest) GetId() string {
 	return ""
 }
 
-func (x *SetScopeRequest) GetNode() string {
+func (x *SetScopeRequest) GetNodes() []string {
 	if x != nil {
-		return x.Node
+		return x.Nodes
 	}
-	return ""
+	return nil
 }
 
 type SetScopeResponse struct {
@@ -5072,7 +5074,7 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\";\n" +
 	"\x12EndSessionResponse\x12%\n" +
-	"\x0ecompleted_runs\x18\x01 \x01(\x05R\rcompletedRuns\"\x95\x02\n" +
+	"\x0ecompleted_runs\x18\x01 \x01(\x05R\rcompletedRuns\"\xac\x02\n" +
 	"\tInboxItem\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04kind\x18\x02 \x01(\tR\x04kind\x12\x1a\n" +
@@ -5084,8 +5086,8 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x06source\x18\b \x01(\tR\x06source\x12\x14\n" +
 	"\x05state\x18\t \x01(\tR\x05state\x12\x18\n" +
 	"\aactions\x18\n" +
-	" \x03(\tR\aactions\x12\"\n" +
-	"\rscope_node_id\x18\v \x01(\tR\vscopeNodeId\"]\n" +
+	" \x03(\tR\aactions\x12$\n" +
+	"\x0escope_node_ids\x18\f \x03(\tR\fscopeNodeIdsJ\x04\b\v\x10\fR\rscope_node_id\"]\n" +
 	"\x0fRoutedInboxItem\x122\n" +
 	"\x04item\x18\x01 \x01(\v2\x1e.polterware.local.v1.InboxItemR\x04item\x12\x16\n" +
 	"\x06action\x18\x02 \x01(\tR\x06action\"\x92\x01\n" +
@@ -5097,13 +5099,13 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\vscope_exact\x18\x03 \x01(\bR\n" +
 	"scopeExact\x12\x1f\n" +
 	"\vscope_nodes\x18\x04 \x03(\tR\n" +
-	"scopeNodes\"h\n" +
+	"scopeNodes\"v\n" +
 	"\x0fSetScopeRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x12\n" +
 	"\x04kind\x18\x02 \x01(\tR\x04kind\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\tR\x02id\x12\x12\n" +
-	"\x04node\x18\x04 \x01(\tR\x04node\"\x12\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\x12\x14\n" +
+	"\x05nodes\x18\x05 \x03(\tR\x05nodesJ\x04\b\x04\x10\x05R\x04node\"\x12\n" +
 	"\x10SetScopeResponse\"\xcd\x01\n" +
 	"\x11ListInboxResponse\x124\n" +
 	"\x05items\x18\x01 \x03(\v2\x1e.polterware.local.v1.InboxItemR\x05items\x12<\n" +

@@ -5,13 +5,11 @@ import {
   Composer,
   Folder,
   Layers,
-  Scale,
   StatusDot,
   type ComposerDraft,
   type ComposerProperty,
-  type PropertyOption,
 } from "@polterware/frontend-design-system";
-import type { DecisionLevel, ScopeNodeItem, WorkStage, WorkspaceMilestone } from "@polterware/feature-shell";
+import { scopeContextOptions, type ScopeNodeItem, type WorkStage, type WorkspaceMilestone } from "@polterware/feature-shell";
 import { listedMilestones } from "./milestones";
 import { WORK_STAGES, workStageTone } from "./work-stage";
 
@@ -36,24 +34,28 @@ export type CardDraft = {
   why: string;
 };
 
-export type DecisionDraft = { title: string; context: string; level: DecisionLevel; scopePath: string; why: string };
+/** `scopeNodeIds` are the contexts; none makes the decision a principle. */
+export type DecisionDraft = { title: string; context: string; scopeNodeIds: string[]; why: string };
 
-export type DocDraft = { title: string; body: string; scopePath: string; why: string };
+export type DocDraft = { title: string; body: string; scopeNodeIds: string[]; why: string };
 
 /** Resolves false when the write failed, so the composer keeps the draft. */
 type Create<T> = (draft: T) => Promise<boolean>;
 
 const WHY = "Optional. Recorded in Activity";
 
-function scopeOptions(nodes: readonly ScopeNodeItem[]): PropertyOption[] {
-  return [
-    { value: "", label: "Whole project" },
-    ...[...nodes].sort((a, b) => a.path.localeCompare(b.path)).map((node) => ({ value: node.path, label: node.path })),
-  ];
-}
-
-function scopeProperty(nodes: readonly ScopeNodeItem[], value: () => string, onChange: (path: string) => void): ComposerProperty {
-  return { id: "scope", label: "About", icon: <Layers size={14} />, options: scopeOptions(nodes), value: value(), onChange };
+/** The Context property: Structure nodes as tokens, like the scope filter menu's. */
+/** The Context property: the Structure nodes an entity is about, as chips. */
+export function contextProperty(nodes: readonly ScopeNodeItem[], values: () => string[], onChange: (ids: string[]) => void): ComposerProperty {
+  return {
+    id: "contexts",
+    label: "Context",
+    icon: <Layers size={14} />,
+    emptyLabel: "Whole project",
+    options: scopeContextOptions(nodes),
+    values: values(),
+    onValuesChange: onChange,
+  };
 }
 
 function CardComposer(props: {
@@ -139,29 +141,17 @@ function DecisionComposer(props: {
   open: boolean;
   crumb: string;
   scopeNodes: readonly ScopeNodeItem[];
-  defaultScopePath: string;
+  defaultScopeNodeIds: readonly string[];
   onClose: () => void;
   onCreate: Create<DecisionDraft>;
 }) {
-  const [level, setLevel] = createSignal<DecisionLevel>("decision");
-  const [scopePath, setScopePath] = createSignal("");
+  const [contexts, setContexts] = createSignal<string[]>([]);
   createEffect(on(() => props.open, (open) => {
-    if (!open) return;
-    setLevel("decision");
-    setScopePath(props.defaultScopePath);
+    if (open) setContexts([...props.defaultScopeNodeIds]);
   }));
-  const properties = (): ComposerProperty[] => [
-    {
-      id: "level",
-      label: "Level",
-      icon: <Scale size={14} />,
-      options: [{ value: "decision", label: "Decision" }, { value: "principle", label: "Principle (whole project)" }],
-      value: level(),
-      onChange: (value) => setLevel(value === "principle" ? "principle" : "decision"),
-    },
-    // A principle applies to the whole project, so it takes no scope.
-    ...(level() === "decision" && props.scopeNodes.length > 0 ? [scopeProperty(props.scopeNodes, scopePath, setScopePath)] : []),
-  ];
+  // No context makes the decision a principle: it applies to the whole project.
+  const properties = (): ComposerProperty[] =>
+    props.scopeNodes.length > 0 ? [contextProperty(props.scopeNodes, contexts, setContexts)] : [];
   return (
     <Composer
       open={props.open}
@@ -173,13 +163,7 @@ function DecisionComposer(props: {
       whyPlaceholder={WHY}
       submitLabel="Create decision"
       onSubmit={(draft) =>
-        props.onCreate({
-          title: draft.title,
-          context: draft.description,
-          level: level(),
-          scopePath: level() === "decision" ? scopePath() : "",
-          why: draft.why,
-        })}
+        props.onCreate({ title: draft.title, context: draft.description, scopeNodeIds: contexts(), why: draft.why })}
     />
   );
 }
@@ -188,18 +172,16 @@ function DocComposer(props: {
   open: boolean;
   crumb: string;
   scopeNodes: readonly ScopeNodeItem[];
-  defaultScopePath: string;
+  defaultScopeNodeIds: readonly string[];
   onClose: () => void;
   onCreate?: Create<DocDraft>;
 }) {
-  const [scopePath, setScopePath] = createSignal("");
+  const [contexts, setContexts] = createSignal<string[]>([]);
   createEffect(on(() => props.open, (open) => {
-    if (!open) return;
-    setScopePath(props.defaultScopePath);
+    if (open) setContexts([...props.defaultScopeNodeIds]);
   }));
-  const properties = (): ComposerProperty[] => [
-    ...(props.scopeNodes.length > 0 ? [scopeProperty(props.scopeNodes, scopePath, setScopePath)] : []),
-  ];
+  const properties = (): ComposerProperty[] =>
+    props.scopeNodes.length > 0 ? [contextProperty(props.scopeNodes, contexts, setContexts)] : [];
   return (
     <Composer
       open={props.open}
@@ -212,12 +194,11 @@ function DocComposer(props: {
       submitLabel="Create doc"
       onSubmit={(draft) => {
         if (!props.onCreate) return false;
-        return props.onCreate({ title: draft.title, body: draft.description, scopePath: scopePath(), why: draft.why });
+        return props.onCreate({ title: draft.title, body: draft.description, scopeNodeIds: contexts(), why: draft.why });
       }}
     />
   );
 }
-
 /**
  * The one composer a surface opens with C or "+": a card, a decision, or a doc, with the
  * properties the request already knows. The host owns every write.
@@ -230,8 +211,8 @@ export function KnowledgeComposer(props: {
   milestones: readonly WorkspaceMilestone[];
   components: readonly { path: string; title: string }[];
   scopeNodes: readonly ScopeNodeItem[];
-  /** Path of the active global scope; new decisions and docs start in it. */
-  defaultScopePath?: string;
+  /** Node ids of the active global scope; new decisions and docs start with them as contexts. */
+  defaultScopeNodeIds?: readonly string[];
   onCreateCard: Create<CardDraft>;
   onCreateDecision: Create<DecisionDraft>;
   onCreateDoc?: Create<DocDraft>;
@@ -258,7 +239,7 @@ export function KnowledgeComposer(props: {
         open={kind() === "decision"}
         crumb={props.crumb}
         scopeNodes={props.scopeNodes}
-        defaultScopePath={props.defaultScopePath ?? ""}
+        defaultScopeNodeIds={props.defaultScopeNodeIds ?? []}
         onClose={props.onClose}
         onCreate={props.onCreateDecision}
       />
@@ -266,7 +247,7 @@ export function KnowledgeComposer(props: {
         open={kind() === "doc"}
         crumb={props.crumb}
         scopeNodes={props.scopeNodes}
-        defaultScopePath={props.defaultScopePath ?? ""}
+        defaultScopeNodeIds={props.defaultScopeNodeIds ?? []}
         onClose={props.onClose}
         onCreate={props.onCreateDoc}
       />

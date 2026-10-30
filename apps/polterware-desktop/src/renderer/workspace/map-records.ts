@@ -178,7 +178,7 @@ export function mapDocs(
       summary: asString(item.summary),
       bodyMarkdown: asString(item.body),
       tags: asStringArray(item.tags),
-      scopeNodeId: asString(item.scopeNodeId),
+      scopeNodeIds: asStringArray(item.scopeNodeIds),
       owner: asString(item.owner, "Platform"),
       updatedAt: formatInstant(asString(item.updatedAt)),
       entityLinks: linksByKnowledge.get(id) ?? [],
@@ -233,7 +233,6 @@ export function mapDecisions(
       tags: asStringArray(item.tags),
       status: asString(item.status, "proposed"),
       state: decisionState(asString(item.status)),
-      level: extra.level === "principle" ? "principle" : "decision",
       supersededBy: titleById.get(asString(extra.supersededBy)) ?? "",
       supersedes: decisionItems.filter((other) => supersededBy(other) === id).map((other) => asString(other.title)),
       reviewTrigger: asString(extra.reviewTrigger),
@@ -241,7 +240,7 @@ export function mapDecisions(
       governs: nodes
         .filter((node) => node.status !== "removed" && node.decisions.some((ref) => citesDecision(ref, id, title)))
         .map((node) => node.path),
-      scopeNodeId: asString(item.scopeNodeId),
+      scopeNodeIds: asStringArray(item.scopeNodeIds),
       owner: asString(item.owner, "Platform"),
       entityLinks: linksByKnowledge.get(id) ?? [],
     };

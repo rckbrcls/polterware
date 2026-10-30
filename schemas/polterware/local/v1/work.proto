@@ -150,7 +150,7 @@ message EndSessionResponse { int32 completed_runs = 1; }
 message InboxItem {
   // id is the short id people type; it is stable while the item is the same.
   string id = 1;
-  // kind is "decision", "drift", or "verify".
+  // kind is "decision", "drift", or "setup".
   string kind = 2;
   bool blocking = 3;
   string title = 4;
@@ -162,10 +162,12 @@ message InboxItem {
   // state is "open" or "deferred".
   string state = 9;
   // actions are the item's action ids, primary first: decide, delegate,
-  // defer, fix_code, update_intent, ignore, verify, reject.
+  // defer, fix_code, update_intent, ignore.
   repeated string actions = 10;
-  // scope_node_id is the item's own scope; empty when it follows its source.
-  string scope_node_id = 11;
+  reserved 11;
+  reserved "scope_node_id";
+  // scope_node_ids are the item's own contexts; empty when it follows its source.
+  repeated string scope_node_ids = 12;
 }
 
 // RoutedInboxItem is an item a person handed to agents (delegate, fix_code,
@@ -188,11 +190,15 @@ message ListInboxRequest {
 // SetScope assigns an entity to a Structure node, or clears it when node is empty.
 // kind is "decision", "fact", "evidence", or "item" (a derived Drift/Inbox item,
 // identified by its item key). node is a Structure node id or path.
+// SetScopeRequest replaces an entity's contexts with nodes (ids or paths); an
+// empty list clears them (the whole project).
 message SetScopeRequest {
   string project_id = 1;
   string kind = 2;
   string id = 3;
-  string node = 4;
+  reserved 4;
+  reserved "node";
+  repeated string nodes = 5;
 }
 message SetScopeResponse {}
 message ListInboxResponse {

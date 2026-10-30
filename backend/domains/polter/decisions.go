@@ -2,6 +2,7 @@ package polter
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/polterware/polterware/backend/domains/decision"
@@ -90,17 +91,18 @@ func (p *planner) createDecision(node DecisionNode, state map[string]decision.De
 	}
 	trigger, _ := node.MetaValue("trigger")
 	reason, _ := node.MetaValue("reason")
-	scope, _ := node.MetaValue("scope")
-	level, _ := node.MetaValue("level")
-	level = decision.StoredLevel(level)
+	scopes, _, ok := p.decisionScopes(node)
+	if !ok {
+		return
+	}
 	id := ids.NewULID()
-	created := decision.Decision{ID: id, Title: title, Status: status, Scope: scope, Meta: decision.Meta{ReviewTrigger: trigger, Level: level}}
+	created := decision.Decision{ID: id, Title: title, Status: status, Scopes: scopes, Meta: decision.Meta{ReviewTrigger: trigger}}
 	state[id] = created
 	p.ops = append(p.ops, work.Op{
 		Entity: work.EntityDecision, Kind: work.OpCreate, EntityID: id, CardSlug: title, Label: title,
 		Fields: map[string]any{
 			"title": title, "body": node.Body, "status": status,
-			"review_trigger": trigger, "scope": scope, "level": level,
+			"review_trigger": trigger, "scope": scopes,
 		},
 	})
 	if hasSupersedes {
@@ -143,13 +145,13 @@ func (p *planner) updateDecision(node DecisionNode, current decision.Decision, s
 		set("review_trigger", current.ReviewTrigger, trigger)
 		updated.ReviewTrigger = trigger
 	}
-	if scope, ok := node.MetaValue("scope"); ok && scope != current.Scope {
-		set("scope", current.Scope, scope)
-		updated.Scope = scope
+	scopes, hasScopes, ok := p.decisionScopes(node)
+	if !ok {
+		return
 	}
-	if level, ok := node.MetaValue("level"); ok && decision.StoredLevel(level) != current.Level {
-		set("level", current.Level, decision.StoredLevel(level))
-		updated.Level = decision.StoredLevel(level)
+	if hasScopes && !slices.Equal(scopes, current.Scopes) {
+		set("scope", current.Scopes, scopes)
+		updated.Scopes = scopes
 	}
 	if hasReason && hasStatus && reason != current.StatusReason {
 		set("status_reason", current.StatusReason, reason)
@@ -252,7 +254,7 @@ func EncodeDecisions(decisions []decision.Decision, state string) string {
 		}
 		shown++
 		line := fmt.Sprintf("- %s · %s", d.Title, s)
-		if d.Level == decision.LevelPrinciple {
+		if d.IsPrinciple() {
 			line += " · principle"
 		}
 		if d.ReviewTrigger != "" && decision.Binding(s) {
@@ -286,9 +288,8 @@ func EncodeDecision(target decision.Decision, all []decision.Decision, nodePaths
 		}
 	}
 	add("status", decision.Normalize(target.Status))
-	add("level", target.Level)
 	add("trigger", target.ReviewTrigger)
-	add("scope", target.Scope)
+	add("scope", strings.Join(target.Scopes, ", "))
 	add("reason", target.StatusReason)
 	var b strings.Builder
 	b.WriteString(Header)
@@ -332,11 +333,9 @@ func NodesCiting(nodes []structure.Node, d decision.Decision) []string {
 // DecisionInput is one lifecycle change composed by the CLI and the Desktop.
 type DecisionInput struct {
 	// Ref is `new` or a Decision number, id, or title.
-	Ref    string
-	Title  string
-	Status string
-	// Level is principle, decision, or empty to leave it unchanged.
-	Level      string
+	Ref        string
+	Title      string
+	Status     string
 	Supersedes string
 	Trigger    string
 	Reason     string
@@ -354,7 +353,6 @@ func ComposeDecision(in DecisionInput, summary, rationale string) string {
 		}
 	}
 	add("status", in.Status)
-	add("level", in.Level)
 	add("supersedes", in.Supersedes)
 	add("trigger", in.Trigger)
 	add("reason", in.Reason)
@@ -367,4 +365,37 @@ func flatten(value string) string {
 	value = strings.ReplaceAll(value, " · ", ", ")
 	value = strings.ReplaceAll(value, " • ", ", ")
 	return strings.ReplaceAll(value, " - ", " – ")
+}
+
+// decisionScopes reads a decision's contexts from `scope:` (a list of node
+// paths) and `level: principle` (no contexts: the whole project). has is false
+// when the text names neither, so an update keeps the stored contexts.
+func (p *planner) decisionScopes(node DecisionNode) (scopes []string, has, ok bool) {
+	value, hasScope := node.MetaValue("scope")
+	level, hasLevel := node.MetaValue("level")
+	principle := hasLevel && strings.EqualFold(strings.TrimSpace(level), decision.LevelPrinciple)
+	scopes = ParseScopes(value)
+	if principle && len(scopes) > 0 {
+		p.errorf(node.Line, "level: principle applies to the whole project: drop scope: or level:")
+		return nil, false, false
+	}
+	if principle {
+		return []string{}, true, true
+	}
+	if !hasScope {
+		return nil, false, true
+	}
+	line := node.Line
+	for _, entry := range node.Meta {
+		if entry.Key == "scope" {
+			line = entry.Line
+		}
+	}
+	if !p.checkScopes(line, scopes) {
+		return nil, false, false
+	}
+	if scopes == nil {
+		scopes = []string{}
+	}
+	return scopes, true, true
 }

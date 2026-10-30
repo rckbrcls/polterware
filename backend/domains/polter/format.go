@@ -73,7 +73,7 @@ var SpecTopics = map[string]string{
 		"\n" +
 		"- `### ref: Title` is a Decision lifecycle block. `new` proposes one (a number is assigned); a ref such as `Decision-0003` or an id changes an existing one.\n" +
 		"- States: proposed → active → challenged → active or superseded. `status: challenged` needs a reason:. `supersedes: Decision-0003` on the newer decision marks the older one superseded. Decisions are never removed.\n" +
-		"- `level: principle` pins it for the whole project; `trigger:` is the review condition; `scope:` is the Structure node path it applies to (omit for the whole project).\n" +
+		"- `scope:` lists the Structure node paths it applies to, comma separated (empty clears). A decision with none is a principle: it applies to the whole project and every brief names it. `level: principle` clears scope:. `trigger:` is the review condition.\n" +
 		"- The body is plain text: no # lines. A card cites decisions with `decisions: Decision-0007`.\n",
 	"facts": "Polter Facts.\n" +
 		"\n" +
@@ -81,7 +81,7 @@ var SpecTopics = map[string]string{
 		"kind: declared · scope: core · evidence: file:backend/serve.go, ev-existing-id\n" +
 		"\n" +
 		"- `#### slug: Statement` creates a canon Fact or updates it by its lowercase-kebab slug; an existing Fact id can replace the slug. Omit the heading statement on updates to keep it.\n" +
-		"- `kind:` is declared (default on create), observed, inferred, or verified. `scope:` names a Structure node path (empty clears; omit for the whole project on create).\n" +
+		"- `kind:` is declared (default on create), observed, inferred, or verified. `scope:` lists the Structure node paths it is about, comma separated (empty clears; none is the whole project).\n" +
 		"- `evidence:` lists evidence, comma separated: an existing id, or file:<path>, commit:<sha>, or url:<link>, which creates the record with a stable id. A present line replaces links, empty clears. Omitted fields stay unchanged. Plan output uses the Fact id. Facts have no body text.\n",
 	"feature": "Polter feature flow, tasks, and claims.\n" +
 		"\n" +

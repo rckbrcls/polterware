@@ -28,18 +28,20 @@ type KnowledgeItem struct {
 	Title     string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
 	Body      string                 `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
 	// kind is doc or decision.
-	Kind        string   `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
-	Tags        []string `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
-	Summary     string   `protobuf:"bytes,7,opt,name=summary,proto3" json:"summary,omitempty"`
-	Owner       string   `protobuf:"bytes,8,opt,name=owner,proto3" json:"owner,omitempty"`
-	Status      string   `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"`
-	ExtraJson   string   `protobuf:"bytes,10,opt,name=extra_json,json=extraJson,proto3" json:"extra_json,omitempty"`
-	CreatedAt   string   `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt   string   `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	ScopeNodeId string   `protobuf:"bytes,13,opt,name=scope_node_id,json=scopeNodeId,proto3" json:"scope_node_id,omitempty"`
+	Kind      string   `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
+	Tags      []string `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
+	Summary   string   `protobuf:"bytes,7,opt,name=summary,proto3" json:"summary,omitempty"`
+	Owner     string   `protobuf:"bytes,8,opt,name=owner,proto3" json:"owner,omitempty"`
+	Status    string   `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"`
+	ExtraJson string   `protobuf:"bytes,10,opt,name=extra_json,json=extraJson,proto3" json:"extra_json,omitempty"`
+	CreatedAt string   `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt string   `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// scope_node_ids are the Structure nodes the item is about; none is the whole
+	// project (a decision with none is a principle).
+	ScopeNodeIds []string `protobuf:"bytes,16,rep,name=scope_node_ids,json=scopeNodeIds,proto3" json:"scope_node_ids,omitempty"`
 	// archived_at is empty while the item is active (RFC3339 otherwise).
 	ArchivedAt string `protobuf:"bytes,14,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
-	// doc_type is doc, runbook, or source for a doc and empty for a decision.
+	// doc_type is doc for a doc and empty for a decision.
 	DocType       string `protobuf:"bytes,15,opt,name=doc_type,json=docType,proto3" json:"doc_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -159,11 +161,11 @@ func (x *KnowledgeItem) GetUpdatedAt() string {
 	return ""
 }
 
-func (x *KnowledgeItem) GetScopeNodeId() string {
+func (x *KnowledgeItem) GetScopeNodeIds() []string {
 	if x != nil {
-		return x.ScopeNodeId
+		return x.ScopeNodeIds
 	}
-	return ""
+	return nil
 }
 
 func (x *KnowledgeItem) GetArchivedAt() string {
@@ -1199,7 +1201,7 @@ var File_polterware_local_v1_knowledge_proto protoreflect.FileDescriptor
 
 const file_polterware_local_v1_knowledge_proto_rawDesc = "" +
 	"\n" +
-	"#polterware/local/v1/knowledge.proto\x12\x13polterware.local.v1\x1a\"polterware/local/v1/agentrun.proto\"\x95\x03\n" +
+	"#polterware/local/v1/knowledge.proto\x12\x13polterware.local.v1\x1a\"polterware/local/v1/agentrun.proto\"\xac\x03\n" +
 	"\rKnowledgeItem\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -1217,11 +1219,11 @@ const file_polterware_local_v1_knowledge_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\v \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\f \x01(\tR\tupdatedAt\x12\"\n" +
-	"\rscope_node_id\x18\r \x01(\tR\vscopeNodeId\x12\x1f\n" +
+	"updated_at\x18\f \x01(\tR\tupdatedAt\x12$\n" +
+	"\x0escope_node_ids\x18\x10 \x03(\tR\fscopeNodeIds\x12\x1f\n" +
 	"\varchived_at\x18\x0e \x01(\tR\n" +
 	"archivedAt\x12\x19\n" +
-	"\bdoc_type\x18\x0f \x01(\tR\adocType\"\xb1\x02\n" +
+	"\bdoc_type\x18\x0f \x01(\tR\adocTypeJ\x04\b\r\x10\x0eR\rscope_node_id\"\xb1\x02\n" +
 	"\x13KnowledgeEntityLink\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +

@@ -1,0 +1,104 @@
+/* Peek: a quick look laid out like the Composer. Space, not dividers, separates the kind line,
+   the title, the chips, and the summary. */
+.pw-peek__body {
+  padding: 16px 24px 22px;
+}
+
+.pw-peek {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  outline: none;
+}
+
+.pw-peek__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  margin-right: -10px;
+}
+
+.pw-peek__kind {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pw-peek__tools {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.pw-peek__title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.pw-peek__properties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pw-peek__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: var(--control-height-sm);
+  padding: 0 10px;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.pw-peek__chip svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  color: var(--color-text-muted);
+}
+
+.pw-peek__chip-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pw-peek__content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 6px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pw-peek__section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pw-peek__section-title {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 550;
+}

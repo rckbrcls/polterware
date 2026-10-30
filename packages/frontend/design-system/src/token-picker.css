@@ -1,0 +1,17 @@
+/* TokenPicker: the filter bar's pills, wrapping in a row with the add button at the end. */
+.pw-token-picker {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.pw-token-picker__token {
+  min-width: 0;
+}
+
+.pw-token-picker__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}

@@ -85,7 +85,7 @@ func toolDefinitions() []map[string]any {
 		},
 		{
 			"name":        ToolDocUpsert,
-			"description": "Create or update a doc (Markdown body) in one audited write that joins this session's run. Pass id to update; omitted fields stay. scope is the Structure path the doc is about (empty clears).",
+			"description": "Create or update a doc (Markdown body) in one audited write that joins this session's run. Pass id to update; omitted fields stay. scope lists the Structure paths the doc is about, comma separated (empty clears).",
 			"inputSchema": map[string]any{
 				"type": "object",
 				"properties": map[string]any{

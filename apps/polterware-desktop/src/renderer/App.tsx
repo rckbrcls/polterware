@@ -23,6 +23,7 @@ import {
   setMilestoneView,
   setExpandedDetailTarget,
   setDetailExpandHandler,
+  setPageBackHandler,
   requestDetailExpanded,
   setSectionNavigateHandler,
   ShortcutsPanel,
@@ -49,7 +50,7 @@ import {
 } from "@polterware/feature-shell";
 import { StructureView, STRUCTURE_SCOPE, type StructureRecordKind } from "@polterware/feature-architecture";
 import { CanvasWorkspace, drawStructureCanvas, rememberOpenCanvas } from "./canvas-workspace";
-import type { CardDraft, ComposeRequest, DecisionDraft, DocDraft, MilestoneAction } from "@polterware/feature-knowledge";
+import type { CardDraft, ComposeRequest, DecisionDraft, DocDraft, MilestoneAction, RecordPeekTarget } from "@polterware/feature-knowledge";
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
 import { hydrateAppearancePreferences, hydrateShortcutPreferences, settingsTabScope } from "@polterware/feature-settings/boot";
 import type { ProjectSettingsPageId } from "@polterware/feature-settings";
@@ -88,6 +89,9 @@ const NewFeatureFlow = lazy(() =>
 );
 const KnowledgeComposer = lazy(() =>
   import("@polterware/feature-knowledge").then((m) => ({ default: m.KnowledgeComposer })),
+);
+const RecordPeek = lazy(() =>
+  import("@polterware/feature-knowledge").then((m) => ({ default: m.RecordPeek })),
 );
 const DocumentActivity = lazy(() =>
   import("@polterware/feature-knowledge").then((m) => ({ default: m.DocumentActivity })),
@@ -543,6 +547,13 @@ export function App() {
     else applyRoute(collapsed, "replace");
   });
   onCleanup(() => setDetailExpandHandler(undefined));
+  // A page's Back goes back in history, to wherever it was opened from.
+  setPageBackHandler(() => {
+    if (historyIndex() <= 0) return false;
+    goBack();
+    return true;
+  });
+  onCleanup(() => setPageBackHandler(undefined));
   // A crumb on an open page: its own section (or the tab it was opened from) closes the page
   // back to that list; any other crumb opens its place.
   setSectionNavigateHandler((section, tab) => {
@@ -742,12 +753,15 @@ export function App() {
       return [node.id, {
         // A card under the node, or a record scoped to it, is a direct link its document can remove.
         cards: workspace().workCards.filter((item) => item.under === node.path).map((item) => ({ ...card(item), direct: true })),
-        decisions: workspace().decisions.filter((item) => item.scopeNodeId === node.id || item.governs.includes(node.path) || item.entityLinks.some((link) => entityIds.has(link.entityId))).map((item) => ({ ...decision(item), direct: item.scopeNodeId === node.id })),
-        facts: workspace().structureFacts.filter((item) => item.scopeNodeId === node.id || entityIds.has(item.entityId)).map((item) => ({ ...fact(item), direct: item.scopeNodeId === node.id })),
-        docs: workspace().docs.filter((item) => item.scopeNodeId === node.id || item.entityLinks.some((link) => entityIds.has(link.entityId))).map((item) => ({ ...doc(item), direct: item.scopeNodeId === node.id })),
+        // A record with the node among its contexts is direct; unlinking removes only this node.
+        decisions: workspace().decisions.filter((item) => item.scopeNodeIds.includes(node.id) || item.governs.includes(node.path) || item.entityLinks.some((link) => entityIds.has(link.entityId))).map((item) => ({ ...decision(item), direct: item.scopeNodeIds.includes(node.id) })),
+        facts: workspace().structureFacts.filter((item) => item.scopeNodeIds.includes(node.id) || entityIds.has(item.entityId)).map((item) => ({ ...fact(item), direct: item.scopeNodeIds.includes(node.id) })),
+        docs: workspace().docs.filter((item) => item.scopeNodeIds.includes(node.id) || item.entityLinks.some((link) => entityIds.has(link.entityId))).map((item) => ({ ...doc(item), direct: item.scopeNodeIds.includes(node.id) })),
       }];
     })) };
   });
+  // A record cited by a Structure node opens in a peek first; Expand opens its page.
+  const [peekRecord, setPeekRecord] = createSignal<RecordPeekTarget | null>(null);
   function openStructureRecord(kind: StructureRecordKind, id: string) {
     if (kind === "card") { const next = sectionRoute("milestones"); navigateToDetail(next, next.tab === "board" ? "knowledge:board" : "knowledge:specs", id, "card"); }
     else if (kind === "decision") navigateToDetail(setTab(sectionRoute("truth"), "decisions"), "knowledge:library", id, "decision");
@@ -766,11 +780,10 @@ export function App() {
     const projectId = route().projectId ?? workspace().settings.projectId;
     return workspace().environments.filter((environment) => environment.projectId === projectId);
   });
-  const activeScopePath = createMemo(() => {
-    const selected = scopeTokens().filter((token) => token.key !== "env");
-    if (selected.length !== 1) return "";
-    return scopeNodes().find((node) => node.id === selected[0]?.id)?.path ?? "";
-  });
+  // The global scope's nodes preselect the contexts of a new decision or doc.
+  const defaultContexts = createMemo(() =>
+    scopeTokens().filter((token) => token.key !== "env").map((token) => token.id),
+  );
 
   createEffect(() => {
     setActiveScope({ nodeIds: scopeNodeIdList() });
@@ -936,10 +949,9 @@ export function App() {
           kind: "decision",
           title: draft.title,
           body: `## Status\n\nProposed\n\n## Context\n\n${draft.context}\n\n## Decision\n\n\n\n## Consequences\n\n`,
-          extraJson: draft.level === "principle" ? JSON.stringify({ level: "principle" }) : undefined,
           change,
         });
-        if (draft.scopePath) await persistKnowledgeScope(currentProjectId(), id, draft.scopePath);
+        if (draft.scopeNodeIds.length > 0) await persistKnowledgeScope(currentProjectId(), id, draft.scopeNodeIds);
         return () => navigateToDetail(setTab(sectionRoute("truth"), "decisions"), "knowledge:library", id, "decision");
       },
     });
@@ -959,7 +971,7 @@ export function App() {
           body: draft.body,
           change,
         });
-        if (draft.scopePath) await persistKnowledgeScope(currentProjectId(), id, draft.scopePath);
+        if (draft.scopeNodeIds.length > 0) await persistKnowledgeScope(currentProjectId(), id, draft.scopeNodeIds);
         return () => navigateToDetail(setTab(sectionRoute("truth"), "docs"), "knowledge:docs", id, "doc");
       },
     });
@@ -1084,9 +1096,6 @@ export function App() {
             reactivate: `Keep decision active after review: ${decision.title}`,
             challenge: `Open review of decision: ${decision.title}`,
             supersede: `Replace ${decision.title} with ${successor?.title ?? "another decision"}`,
-            level: action.kind === "level" && action.level === "principle"
-              ? `Make ${decision.title} a principle`
-              : `Make ${decision.title} a decision`,
           } as const;
           // Reopening or replacing a decision changes intent, so it asks why; the reason is what
           // the Polter block records as `reason:`.
@@ -1148,9 +1157,8 @@ export function App() {
         scopeTokens={scopeTokens()}
         scopeEnvironments={scopeEnvironmentCatalog()}
         onScopeTokensChange={applyScopeTokens}
-        activeScopePath={activeScopePath()}
-        onSetScope={(id, path) => {
-          void persistKnowledgeScope(currentProjectId(), id, path)
+        onSetScope={(id, nodeIds) => {
+          void persistKnowledgeScope(currentProjectId(), id, nodeIds)
             .then(() => refreshWorkspace(currentProjectId()))
             .catch((error: unknown) => {
               pushToast(error instanceof Error ? error.message : "Could not save scope.", "danger");
@@ -1503,7 +1511,7 @@ export function App() {
             repositories={workspace().repositories.map((repo) => repo.name)}
             registryNodes={workspace().structure.nodes}
             projectRecords={structureRecords().project}
-            onOpenRecord={openStructureRecord}
+            onOpenRecord={(kind, id) => setPeekRecord({ kind, id })}
             error={structureError() || (!workspace().available ? workspace().healthMessage : undefined)}
             loading={!structureError() && workspace().available && (loading() || !workspace().extensionsReady)}
             createDialogOpen={route().dialog?.type === "arch-node-create"}
@@ -1547,19 +1555,25 @@ export function App() {
                 navigateSection("canvas", DEFAULT_TABS.canvas);
               } } });
             }}
-            onLinkRecord={async (kind, recordId, nodeId) => {
+            onLinkRecord={async (kind, recordId, nodeId, linked) => {
               const projectId = currentProjectId();
               const node = workspace().structure.nodes.find((item) => item.id === nodeId);
-              const path = node?.path ?? "";
+              // A decision, fact, or doc gains or loses this one context and keeps the others.
+              const withContext = (contexts: readonly string[]) =>
+                linked ? [...contexts.filter((id) => id !== nodeId), nodeId] : contexts.filter((id) => id !== nodeId);
               if (kind === "card") {
                 const card = workspace().workCards.find((item) => item.slug === recordId);
-                const change = await justifyChange({ title: "Link card", defaultSummary: node ? `Put ${card?.title ?? recordId} under ${node.title}` : `Take ${card?.title ?? recordId} out of its component` });
+                const change = await justifyChange({ title: "Link card", defaultSummary: linked && node ? `Put ${card?.title ?? recordId} under ${node.title}` : `Take ${card?.title ?? recordId} out of its component` });
                 if (!change) return;
-                await persistWorkCardUnder({ projectId, slug: recordId, under: path, change });
+                await persistWorkCardUnder({ projectId, slug: recordId, under: linked ? node?.path ?? "" : "", change });
               } else if (kind === "fact") {
-                await persistFactScope(projectId, recordId, path);
+                const contexts = workspace().structureFacts.find((item) => item.id === recordId)?.scopeNodeIds ?? [];
+                await persistFactScope(projectId, recordId, withContext(contexts));
               } else {
-                await persistKnowledgeScope(projectId, recordId, path);
+                const record = kind === "decision"
+                  ? workspace().decisions.find((item) => item.id === recordId)
+                  : workspace().docs.find((item) => item.id === recordId);
+                await persistKnowledgeScope(projectId, recordId, withContext(record?.scopeNodeIds ?? []));
               }
               await refreshWorkspace(projectId);
             }}
@@ -1849,10 +1863,27 @@ export function App() {
             milestones={workspace().milestones}
             components={flowComponents()}
             scopeNodes={scopeNodes()}
-            defaultScopePath={activeScopePath()}
+            defaultScopeNodeIds={defaultContexts()}
             onCreateCard={createCard}
             onCreateDecision={createDecision}
             onCreateDoc={createDoc}
+          />
+        </Suspense>
+      </Show>
+      <Show when={peekRecord()}>
+        <Suspense>
+          <RecordPeek
+            target={peekRecord()}
+            cards={workspace().workCards}
+            decisions={workspace().decisions}
+            facts={workspace().structureFacts}
+            docs={workspace().docs}
+            nodes={scopeNodes()}
+            onClose={() => setPeekRecord(null)}
+            onExpand={(target) => {
+              setPeekRecord(null);
+              openStructureRecord(target.kind, target.id);
+            }}
           />
         </Suspense>
       </Show>

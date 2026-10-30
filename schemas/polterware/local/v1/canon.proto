@@ -77,7 +77,10 @@ message CanonFact {
   string entity_id = 8;
   string created_at = 9;
   string updated_at = 10;
-  string scope_node_id = 11;
+  reserved 11;
+  reserved "scope_node_id";
+  // scope_node_ids are the Structure nodes the fact is about; none is the whole project.
+  repeated string scope_node_ids = 12;
 }
 
 message CanonEvidence {
@@ -91,7 +94,10 @@ message CanonEvidence {
   string observed_at = 8;
   string created_at = 9;
   string updated_at = 10;
-  string scope_node_id = 11;
+  reserved 11;
+  reserved "scope_node_id";
+  // scope_node_ids are the Structure nodes the evidence is about; none is the whole project.
+  repeated string scope_node_ids = 12;
 }
 
 message ListFactsRequest {

@@ -20,12 +20,18 @@ func (s *Store) loadPolterFacts(projectID string) ([]work.Fact, error) {
 		index[fact.ID] = len(result)
 		result = append(result, work.Fact{Fact: fact})
 	}
-	// Load handles, scope and links together rather than querying once per Fact.
-	err = s.eachRow(`SELECT f.id,COALESCE(f.slug,''),COALESCE(n.path,''),COALESCE(fe.evidence_id,'')
-		FROM canon_facts f LEFT JOIN structure_nodes n ON n.id=f.scope_node_id
-		LEFT JOIN canon_fact_evidence fe ON fe.fact_id=f.id WHERE f.project_id=?`, projectID, func(rows *sql.Rows) error {
-		var id, slug, scope, evidence string
-		if err := rows.Scan(&id, &slug, &scope, &evidence); err != nil {
+	contexts, err := s.contextPaths(projectID)
+	if err != nil {
+		return nil, err
+	}
+	for i := range result {
+		result[i].Scopes = contexts[result[i].ID]
+	}
+	// Load handles and links together rather than querying once per Fact.
+	err = s.eachRow(`SELECT f.id,COALESCE(f.slug,''),COALESCE(fe.evidence_id,'')
+		FROM canon_facts f LEFT JOIN canon_fact_evidence fe ON fe.fact_id=f.id WHERE f.project_id=?`, projectID, func(rows *sql.Rows) error {
+		var id, slug, evidence string
+		if err := rows.Scan(&id, &slug, &evidence); err != nil {
 			return err
 		}
 		i, ok := index[id]
@@ -33,7 +39,7 @@ func (s *Store) loadPolterFacts(projectID string) ([]work.Fact, error) {
 			return nil
 		} // A concurrent insert belongs to the next snapshot.
 		item := &result[i]
-		item.Slug, item.Scope = slug, scope
+		item.Slug = slug
 		if evidence != "" {
 			item.Evidence = append(item.Evidence, evidence)
 		}
@@ -79,16 +85,8 @@ func applyFactOp(tx *sql.Tx, projectID string, op work.Op, now string) error {
 			return err
 		}
 	}
-	if scope, ok := op.Fields["scope"].(string); ok {
-		var node any
-		if scope != "" {
-			var id string
-			if err := tx.QueryRow(`SELECT id FROM structure_nodes WHERE project_id=? AND path=? AND status<>'removed'`, projectID, scope).Scan(&id); err != nil {
-				return fmt.Errorf("unknown scope %q", scope)
-			}
-			node = id
-		}
-		if _, err := tx.Exec(`UPDATE canon_facts SET scope_node_id=? WHERE id=? AND project_id=?`, node, op.EntityID, projectID); err != nil {
+	if paths, ok := op.Fields["scope"].([]string); ok {
+		if err := setContextPaths(tx, projectID, op.EntityID, paths); err != nil {
 			return err
 		}
 	}

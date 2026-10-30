@@ -221,11 +221,13 @@ type Snapshot struct {
 	Milestones []Milestone
 }
 
-// Fact is a canon fact with its Polter identity, scope path and evidence links.
+// Fact is a canon fact with its Polter identity, context paths and evidence links.
 type Fact struct {
 	canon.Fact
-	Slug     string
-	Scope    string
+	Slug string
+	// Scopes are the paths of the Structure nodes the fact is about, sorted; none
+	// is the whole project.
+	Scopes   []string
 	Evidence []string
 }
 

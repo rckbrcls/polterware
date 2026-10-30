@@ -376,9 +376,9 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
   {
     id: "scope",
     name: "polterware scope",
-    synopsis: "polterware scope <decision|fact|evidence|item> <id> [<node path>] [--project <id>]",
+    synopsis: "polterware scope <decision|fact|evidence|item> <id> [<node path>...] [--project <id>]",
     summary:
-      "Scope a Decision, Fact, Evidence item, or derived Inbox item to a Structure node. Leave the node out to clear the scope.",
+      "Set the contexts of a Decision, Fact, Evidence item, or derived Inbox item: the Structure nodes it is about. Name several to give it several; leave them out to clear its contexts (the whole project; a Decision with none is a principle).",
     flags: [PROJECT_FLAG],
     example: "polterware scope fact f-12 backend/domains/work",
   },

@@ -40,6 +40,20 @@ func (s ScopeSet) Matches(nodeID string) bool {
 	return s[nodeID]
 }
 
+// MatchesAny reports whether an entity with these contexts is inside the set: any
+// one of them matches, and an entity with none belongs to the whole project.
+func (s ScopeSet) MatchesAny(nodeIDs []string) bool {
+	if s == nil || len(nodeIDs) == 0 {
+		return true
+	}
+	for _, id := range nodeIDs {
+		if s.Matches(id) {
+			return true
+		}
+	}
+	return false
+}
+
 // ResolveScope returns the node itself and its descendants, plus its ancestors
 // unless the scope is exact. Removed nodes are skipped. An unknown node yields
 // an empty set that matches only unscoped entities.

@@ -3,7 +3,6 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/polterware/polterware/backend/domains/structure"
 )
@@ -26,67 +25,123 @@ var scopeTables = map[string]string{
 	ScopeEvidence:  "canon_evidence",
 }
 
-// SetScope assigns an entity to a Structure node, or clears the scope when nodeID
-// is empty. A node path in nodeID is not accepted; resolve it first.
-func (s *Store) SetScope(projectID, kind, id, nodeID string) error {
-	if nodeID != "" {
+// SetScope replaces an entity's contexts (or a derived item's, by item key) with
+// nodeIDs; an empty list clears them, which means the whole project. Node paths
+// are not accepted; resolve them first. Every node must be an active Structure node.
+func (s *Store) SetScope(projectID, kind, id string, nodeIDs []string) error {
+	nodeIDs = uniqueIDs(nodeIDs)
+	for _, nodeID := range nodeIDs {
 		var found string
 		err := s.DB.QueryRow(`SELECT id FROM structure_nodes WHERE id=? AND project_id=? AND status<>'removed'`, nodeID, projectID).Scan(&found)
 		if err != nil {
 			return fmt.Errorf("unknown structure node %q", nodeID)
 		}
 	}
-	if kind == ScopeItem {
-		if nodeID == "" {
-			_, err := s.DB.Exec(`DELETE FROM scope_assignments WHERE project_id=? AND item_key=?`, projectID, id)
-			return err
+	if kind != ScopeItem {
+		table, ok := scopeTables[kind]
+		if !ok {
+			return fmt.Errorf("unknown scope kind %q", kind)
 		}
-		_, err := s.DB.Exec(`INSERT INTO scope_assignments(project_id,item_key,node_id,updated_at) VALUES(?,?,?,?)
-			ON CONFLICT(project_id,item_key) DO UPDATE SET node_id=excluded.node_id, updated_at=excluded.updated_at`,
-			projectID, id, nodeID, time.Now().UTC().Format(time.RFC3339))
-		return err
+		var found string
+		if err := s.DB.QueryRow(`SELECT id FROM `+table+` WHERE id=? AND project_id=?`, id, projectID).Scan(&found); err != nil {
+			return fmt.Errorf("%s %q not found", kind, id)
+		}
 	}
-	table, ok := scopeTables[kind]
-	if !ok {
-		return fmt.Errorf("unknown scope kind %q", kind)
-	}
-	var value any
-	if nodeID != "" {
-		value = nodeID
-	}
-	res, err := s.DB.Exec(`UPDATE `+table+` SET scope_node_id=? WHERE id=? AND project_id=?`, value, id, projectID)
+	tx, err := s.DB.Begin()
 	if err != nil {
 		return err
 	}
-	if n, _ := res.RowsAffected(); n == 0 {
-		return fmt.Errorf("%s %q not found", kind, id)
+	defer func() { _ = tx.Rollback() }()
+	if err := replaceContexts(tx, projectID, id, nodeIDs); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// replaceContexts writes an entity's contexts as exactly nodeIDs.
+func replaceContexts(tx *sql.Tx, projectID, id string, nodeIDs []string) error {
+	if _, err := tx.Exec(`DELETE FROM entity_contexts WHERE project_id=? AND entity_id=?`, projectID, id); err != nil {
+		return err
+	}
+	for _, nodeID := range uniqueIDs(nodeIDs) {
+		if _, err := tx.Exec(`INSERT INTO entity_contexts(project_id,entity_id,node_id) VALUES(?,?,?)`, projectID, id, nodeID); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-// ScopeMap returns entity ID (or item key) to node ID for every scoped entity
-// of kind in the project. Unscoped entities are absent.
-func (s *Store) ScopeMap(projectID, kind string) (map[string]string, error) {
+// setContextPaths resolves Structure node paths and writes them as an entity's
+// contexts. An empty list clears them.
+func setContextPaths(tx *sql.Tx, projectID, id string, paths []string) error {
+	nodeIDs := make([]string, 0, len(paths))
+	for _, path := range paths {
+		var nodeID string
+		if err := tx.QueryRow(`SELECT id FROM structure_nodes WHERE project_id=? AND path=? AND status<>'removed'`, projectID, path).Scan(&nodeID); err != nil {
+			return fmt.Errorf("scope %q is not a Structure node path: list them with polterware structure", path)
+		}
+		nodeIDs = append(nodeIDs, nodeID)
+	}
+	return replaceContexts(tx, projectID, id, nodeIDs)
+}
+
+// contextPaths maps entity id to the paths of its context nodes, sorted.
+func (s *Store) contextPaths(projectID string) (map[string][]string, error) {
+	out := map[string][]string{}
+	err := s.eachRow(`SELECT c.entity_id,n.path FROM entity_contexts c JOIN structure_nodes n ON n.id=c.node_id
+		WHERE c.project_id=? ORDER BY c.entity_id, n.path`, projectID, func(rows *sql.Rows) error {
+		var id, path string
+		if err := rows.Scan(&id, &path); err != nil {
+			return err
+		}
+		out[id] = append(out[id], path)
+		return nil
+	})
+	return out, err
+}
+
+// ScopeMap returns entity ID (or item key) to its context node IDs for every
+// entity of kind in the project that has contexts. Entities without any are absent.
+func (s *Store) ScopeMap(projectID, kind string) (map[string][]string, error) {
 	query := ""
 	if kind == ScopeItem {
-		query = `SELECT item_key,node_id FROM scope_assignments WHERE project_id=?`
+		// Item keys are not rows of any entity table.
+		query = `SELECT c.entity_id,c.node_id FROM entity_contexts c WHERE c.project_id=?
+			AND NOT EXISTS (SELECT 1 FROM knowledge_items t WHERE t.id=c.entity_id)
+			AND NOT EXISTS (SELECT 1 FROM canon_facts t WHERE t.id=c.entity_id)
+			AND NOT EXISTS (SELECT 1 FROM canon_evidence t WHERE t.id=c.entity_id)
+			ORDER BY c.entity_id, c.node_id`
 	} else {
 		table, ok := scopeTables[kind]
 		if !ok {
 			return nil, fmt.Errorf("unknown scope kind %q", kind)
 		}
-		query = `SELECT id,scope_node_id FROM ` + table + ` WHERE project_id=? AND scope_node_id IS NOT NULL`
+		query = `SELECT c.entity_id,c.node_id FROM entity_contexts c JOIN ` + table + ` t ON t.id=c.entity_id
+			WHERE c.project_id=? ORDER BY c.entity_id, c.node_id`
 	}
-	out := map[string]string{}
+	out := map[string][]string{}
 	err := s.eachRow(query, projectID, func(rows *sql.Rows) error {
 		var id, node string
 		if err := rows.Scan(&id, &node); err != nil {
 			return err
 		}
-		out[id] = node
+		out[id] = append(out[id], node)
 		return nil
 	})
 	return out, err
+}
+
+func uniqueIDs(ids []string) []string {
+	seen := map[string]bool{}
+	out := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if id == "" || seen[id] {
+			continue
+		}
+		seen[id] = true
+		out = append(out, id)
+	}
+	return out
 }
 
 // NodeScope is the resolved filter for one project: the matching node set and
@@ -98,6 +153,10 @@ type NodeScope struct {
 
 // Matches reports whether an entity scoped to nodeID is visible.
 func (n NodeScope) Matches(nodeID string) bool { return n.Set.Matches(nodeID) }
+
+// MatchesAny reports whether an entity with these contexts is visible: one of
+// them is inside the scope, or it has none (the whole project).
+func (n NodeScope) MatchesAny(nodeIDs []string) bool { return n.Set.MatchesAny(nodeIDs) }
 
 // MatchesPath reports whether an entity scoped by node path is visible. An empty
 // path is unscoped and always matches.

@@ -15,7 +15,7 @@ import (
 )
 
 // ListInboxScoped derives the Inbox and keeps the items inside scope. An item's
-// own scope wins; otherwise a Question item takes its card's `under`.
+// own contexts win; otherwise a Question item takes its card's `under`.
 // Everything else is unscoped and stays.
 func ListInboxScoped(store *storepkg.Store, projectID string, scope structure.MultiScope) (inbox.Result, error) {
 	snapshot, err := store.LoadWorkSnapshot(projectID)
@@ -44,8 +44,8 @@ func inboxScoped(store *storepkg.Store, snapshot work.Snapshot, scope structure.
 		under[card.Slug] = card.Under
 	}
 	visible := func(item inbox.Item) bool {
-		if node, ok := assigned[item.Key]; ok {
-			return resolved.Matches(node)
+		if nodes, ok := assigned[item.Key]; ok {
+			return resolved.MatchesAny(nodes)
 		}
 		switch item.Kind {
 		case inbox.KindDecision:
@@ -84,7 +84,7 @@ func scopeSnapshot(store *storepkg.Store, snapshot work.Snapshot, scope structur
 	snapshot.Cards = FilterCardsByScope(resolved, snapshot.Cards)
 	kept := make([]decision.Decision, 0, len(snapshot.Decisions))
 	for _, item := range snapshot.Decisions {
-		if resolved.Matches(scopes[item.ID]) {
+		if resolved.MatchesAny(scopes[item.ID]) {
 			kept = append(kept, item)
 		}
 	}
@@ -108,28 +108,28 @@ func FilterCardsByScope(resolved storepkg.NodeScope, cards []work.Card) []work.C
 	return out
 }
 
-// FilterFactsByScope keeps the facts scoped inside scope plus unscoped ones.
-func FilterFactsByScope(resolved storepkg.NodeScope, scopes map[string]string, facts []canon.Fact) []canon.Fact {
+// FilterFactsByScope keeps the facts with a context inside scope plus those with none.
+func FilterFactsByScope(resolved storepkg.NodeScope, scopes map[string][]string, facts []canon.Fact) []canon.Fact {
 	if resolved.Set == nil {
 		return facts
 	}
 	out := make([]canon.Fact, 0, len(facts))
 	for _, fact := range facts {
-		if resolved.Matches(scopes[fact.ID]) {
+		if resolved.MatchesAny(scopes[fact.ID]) {
 			out = append(out, fact)
 		}
 	}
 	return out
 }
 
-// FilterEvidenceByScope keeps the evidence scoped inside scope plus unscoped.
-func FilterEvidenceByScope(resolved storepkg.NodeScope, scopes map[string]string, items []canon.Evidence) []canon.Evidence {
+// FilterEvidenceByScope keeps the evidence with a context inside scope plus those with none.
+func FilterEvidenceByScope(resolved storepkg.NodeScope, scopes map[string][]string, items []canon.Evidence) []canon.Evidence {
 	if resolved.Set == nil {
 		return items
 	}
 	out := make([]canon.Evidence, 0, len(items))
 	for _, item := range items {
-		if resolved.Matches(scopes[item.ID]) {
+		if resolved.MatchesAny(scopes[item.ID]) {
 			out = append(out, item)
 		}
 	}
@@ -226,28 +226,26 @@ func LoadNodeScopes(store *storepkg.Store, projectID string, refs []string, exac
 	return store.LoadScopes(projectID, scope)
 }
 
-// EntityScopeIndex maps entity id (or inbox item key) to scope_node_id for
-// every scoped knowledge item, fact, evidence row, and derived item.
-func EntityScopeIndex(store *storepkg.Store, projectID string) (map[string]string, error) {
-	out := map[string]string{}
+// EntityScopeIndex maps entity id (or inbox item key) to its context node ids for
+// every knowledge item, fact, evidence row, and derived item that has any.
+func EntityScopeIndex(store *storepkg.Store, projectID string) (map[string][]string, error) {
+	out := map[string][]string{}
 	for _, kind := range []string{storepkg.ScopeKnowledge, storepkg.ScopeFact, storepkg.ScopeEvidence, storepkg.ScopeItem} {
 		mapped, err := store.ScopeMap(projectID, kind)
 		if err != nil {
 			return nil, err
 		}
-		for id, node := range mapped {
-			if node != "" {
-				out[id] = node
-			}
+		for id, nodes := range mapped {
+			out[id] = nodes
 		}
 	}
 	return out, nil
 }
 
 // FilterChangesByScope keeps changes whose subjects are inside scope, plus
-// changes that name no scoped subject. Subjects are the scope_node_id values
+// changes that name no scoped subject. Subjects are matched by the contexts
 // already stored on knowledge, facts, and evidence. A nil set matches everything.
-func FilterChangesByScope(resolved storepkg.NodeScope, scopes map[string]string, rows []storepkg.ChangeRow) []storepkg.ChangeRow {
+func FilterChangesByScope(resolved storepkg.NodeScope, scopes map[string][]string, rows []storepkg.ChangeRow) []storepkg.ChangeRow {
 	if resolved.Set == nil {
 		return rows
 	}
@@ -260,13 +258,13 @@ func FilterChangesByScope(resolved storepkg.NodeScope, scopes map[string]string,
 	return out
 }
 
-func changeInScope(resolved storepkg.NodeScope, scopes map[string]string, payload string) bool {
+func changeInScope(resolved storepkg.NodeScope, scopes map[string][]string, payload string) bool {
 	var body agentrun.ChangePayload
 	if err := json.Unmarshal([]byte(payload), &body); err != nil || len(body.SubjectIDs) == 0 {
 		return true
 	}
 	for _, id := range body.SubjectIDs {
-		if resolved.Matches(scopes[id]) {
+		if resolved.MatchesAny(scopes[id]) {
 			return true
 		}
 	}

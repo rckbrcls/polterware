@@ -3,10 +3,11 @@ import { Button } from "./button";
 import { A11yDialog } from "./dialog";
 import { PropertyPicker, type PropertyOption, type PropertyPickerProps } from "./property-picker";
 import { Switch } from "./switch";
+import { TokenPicker } from "./token-picker";
 import "./composer.css";
 
 /** One property pill under the title: it opens the shared property picker. */
-export type ComposerProperty = {
+export type ComposerSingleProperty = {
   id: string;
   /** The property, such as "Stage"; the pill shows it until a value is picked. */
   label: string;
@@ -16,6 +17,22 @@ export type ComposerProperty = {
   onChange: (value: string) => void;
   onCreate?: PropertyPickerProps["onCreate"];
 };
+
+/** A property that holds several values, edited as tokens (`TokenPicker`). */
+export type ComposerTokensProperty = {
+  id: string;
+  label: string;
+  icon?: JSX.Element;
+  options: readonly PropertyOption[];
+  values: readonly string[];
+  onValuesChange: (values: string[]) => void;
+  /** What no value means, such as "Whole project". */
+  emptyLabel?: string;
+};
+
+export type ComposerProperty = ComposerSingleProperty | ComposerTokensProperty;
+
+const isTokens = (property: ComposerProperty): property is ComposerTokensProperty => "values" in property;
 
 /** A short labelled text field under the description, such as a file path. */
 export type ComposerField = {
@@ -111,9 +128,9 @@ export function Composer(props: ComposerProps) {
     }
   }
 
-  const valueLabel = (property: ComposerProperty) =>
+  const valueLabel = (property: ComposerSingleProperty) =>
     property.options.find((option) => option.value === property.value)?.label ?? property.label;
-  const valueIcon = (property: ComposerProperty) =>
+  const valueIcon = (property: ComposerSingleProperty) =>
     property.options.find((option) => option.value === property.value)?.icon ?? property.icon;
 
   return (
@@ -192,30 +209,46 @@ export function Composer(props: ComposerProps) {
         <Show when={(props.properties?.length ?? 0) > 0}>
           <div class="pw-composer__properties" role="group" aria-label="Properties">
             <Index each={props.properties}>
-              {(property, index) => (
-                <>
-                  <Button
-                    ref={(element: HTMLButtonElement) => { pills[index] = element; }}
-                    size="sm"
-                    variant="texture"
-                    aria-label={`${property().label}: ${valueLabel(property())}`}
-                    aria-expanded={openProperty() === property().id}
-                    onClick={() => setOpenProperty((current) => (current === property().id ? null : property().id))}
-                  >
-                    {valueIcon(property())}
-                    {valueLabel(property())}
-                  </Button>
-                  <PropertyPicker
-                    label={property().label}
-                    options={property().options}
-                    value={property().value}
-                    onChange={(value) => property().onChange(value)}
-                    onCreate={property().onCreate}
-                    open={openProperty() === property().id}
-                    onClose={() => setOpenProperty(null)}
-                    anchorRef={() => pills[index]}
-                  />
-                </>
+              {(entry, index) => (
+                <Show
+                  when={!isTokens(entry()) && (entry() as ComposerSingleProperty)}
+                  fallback={
+                    <TokenPicker
+                      label={entry().label}
+                      icon={entry().icon}
+                      options={entry().options}
+                      values={(entry() as ComposerTokensProperty).values}
+                      onChange={(values) => (entry() as ComposerTokensProperty).onValuesChange(values)}
+                      emptyLabel={(entry() as ComposerTokensProperty).emptyLabel}
+                    />
+                  }
+                >
+                  {(property) => (
+                    <>
+                      <Button
+                        ref={(element: HTMLButtonElement) => { pills[index] = element; }}
+                        size="sm"
+                        variant="texture"
+                        aria-label={`${property().label}: ${valueLabel(property())}`}
+                        aria-expanded={openProperty() === property().id}
+                        onClick={() => setOpenProperty((current) => (current === property().id ? null : property().id))}
+                      >
+                        {valueIcon(property())}
+                        {valueLabel(property())}
+                      </Button>
+                      <PropertyPicker
+                        label={property().label}
+                        options={property().options}
+                        value={property().value}
+                        onChange={(value) => property().onChange(value)}
+                        onCreate={property().onCreate}
+                        open={openProperty() === property().id}
+                        onClose={() => setOpenProperty(null)}
+                        anchorRef={() => pills[index]}
+                      />
+                    </>
+                  )}
+                </Show>
               )}
             </Index>
           </div>

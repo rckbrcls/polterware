@@ -8,8 +8,8 @@ export type CanonFactRow = {
   source: string;
   actor: string;
   entityId: string;
-  /** Structure node the Fact is scoped to; empty is the whole project. */
-  scopeNodeId: string;
+  /** Structure nodes the Fact is about; none is the whole project. */
+  scopeNodeIds: string[];
   observedAt: string;
   createdAt: string;
   updatedAt: string;
@@ -38,6 +38,8 @@ export type CanonFactDraft = {
   statement: string;
   truthClass: CanonFactTruthClass;
   entityId: string;
+  /** Structure nodes the rule is about; none is the whole project. */
+  scopeNodeIds: string[];
   /** Optional reason, recorded as the change rationale. */
   why?: string;
 };

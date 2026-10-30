@@ -94,8 +94,6 @@ export type WorkspaceDecision = {
   status: string;
   /** Lifecycle state: proposed, active, challenged, or superseded. */
   state: DecisionState;
-  /** A principle applies to the whole project and stays pinned above the other decisions. */
-  level: DecisionLevel;
   /** Title of the decision that replaced this one; empty when none. */
   supersededBy: string;
   /** Titles of the decisions this one replaced. */
@@ -104,14 +102,14 @@ export type WorkspaceDecision = {
   statusReason: string;
   /** Paths of the Structure nodes that cite this decision. */
   governs: string[];
-  /** Structure node the decision is scoped to; unset means the whole project. */
-  scopeNodeId?: string;
+  /**
+   * Structure nodes the decision applies to (its contexts). None means the whole project:
+   * the decision is a principle, pinned above the others.
+   */
+  scopeNodeIds: string[];
   owner: string;
   entityLinks: WorkspaceEntityLink[];
 };
-
-/** A principle applies to the whole project; a decision is scoped like any other entity. */
-export type DecisionLevel = "principle" | "decision";
 
 /** One doc: a markdown note. Docs have no types; tags are the free labels that tell them apart. */
 export type WorkspaceDoc = {
@@ -120,8 +118,8 @@ export type WorkspaceDoc = {
   summary: string;
   bodyMarkdown: string;
   tags: string[];
-  /** Structure node the doc is scoped to; unset means the whole project. */
-  scopeNodeId?: string;
+  /** Structure nodes the doc is about (its contexts); none means the whole project. */
+  scopeNodeIds: string[];
   owner: string;
   updatedAt: string;
   entityLinks: WorkspaceEntityLink[];

@@ -1,7 +1,7 @@
 import type { JSX } from "solid-js";
 import { Show, createMemo } from "solid-js";
 import { Button, ChevronLeft, RailPage, Input, MarkdownEditor, TagPicker } from "@polterware/frontend-design-system";
-import { EntityDocumentCanvas, requestDetailExpanded } from "@polterware/feature-shell";
+import { EntityDocumentCanvas, requestPageBack } from "@polterware/feature-shell";
 import { DocumentActivity } from "./document-activity";
 import { KnowledgeDocumentProperties } from "./knowledge-document-properties";
 import "./knowledge-document.css";
@@ -51,7 +51,7 @@ export function KnowledgeDocumentShell(props: {
 
   return <Show when={props.entityId} keyed>{entityId => <EntityDocumentCanvas>
     <RailPage
-      onBack={() => requestDetailExpanded(false)}
+      onBack={requestPageBack}
       status={props.status}
       rail={<KnowledgeDocumentProperties properties={props.properties} groups={props.railGroups} metadataActions={props.metadataActions} footerActions={props.footerActions}
         labels={props.onTagsChange ? <TagPicker tags={tagOptions()} selectedIds={props.tags ?? []}
@@ -80,7 +80,7 @@ export function KnowledgeDocumentNotFound(props: { kindLabel: string; title?: st
     <div class="pw-document">
       <header class="pw-document__header">
         <div class="pw-document__trail">
-          <Button size="icon" variant="texture" aria-label="Back" onClick={() => requestDetailExpanded(false)}><ChevronLeft size={14} /></Button>
+          <Button size="icon" variant="texture" aria-label="Back" onClick={requestPageBack}><ChevronLeft size={14} /></Button>
         </div>
       </header>
       <div class="pw-document__scroll">

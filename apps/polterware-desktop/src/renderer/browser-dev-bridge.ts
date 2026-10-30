@@ -53,19 +53,27 @@ const knowledgeItem = (
   const doc = kind === "doc";
   return {
     id, kind: doc ? "doc" : kind, docType: doc ? kind : "", title, summary, body, owner, status,
-    tags, updatedAt, extraJson: JSON.stringify(extra),
+    tags, updatedAt, extraJson: JSON.stringify(extra), scopeNodeIds: previewContexts[id] ?? [],
   };
+};
+
+// The Structure nodes each preview record is about; a decision with none is a principle.
+const previewContexts: Record<string, string[]> = {
+  "decision-001": ["comp-core"],
+  "decision-002": ["comp-core"],
+  "decision-003": ["comp-core", "comp-api"],
+  "decision-004": ["comp-core"],
+  "decision-005": ["comp-api"],
+  "doc-overview": ["comp-core"],
 };
 
 const decisionExtra = (statusReason: string, reviewTrigger: string, supersededBy = "") => ({ supersededBy, reviewTrigger, statusReason });
 
 const previewKnowledge = [
   knowledgeItem("decision-principle-local", "decision", "Local-first truth", "One SQLite database per project.",
-    "## Decision\n\nProject state must stay useful on one machine without a hosted account.", "Platform", "active", [], "2026-09-01T09:00:00.000Z",
-    { level: "principle" }),
+    "## Decision\n\nProject state must stay useful on one machine without a hosted account.", "Platform", "active", [], "2026-09-01T09:00:00.000Z"),
   knowledgeItem("decision-principle-evidence", "decision", "Evidence over opinion", "Observed facts win over inferred ones.",
-    "## Decision\n\nDeclared and observed facts take precedence over inferred knowledge.", "Platform", "active", [], "2026-09-01T09:00:00.000Z",
-    { level: "principle" }),
+    "## Decision\n\nDeclared and observed facts take precedence over inferred knowledge.", "Platform", "active", [], "2026-09-01T09:00:00.000Z"),
   knowledgeItem("doc-overview", "doc", "System overview", "How the pieces fit together.", "# Overview\n\nThe core owns storage; clients attach to it.", "Platform", "published", ["overview"], "2026-09-02T09:00:00.000Z",
     { author: "Ada", environment: "All", componentIds: ["comp-core"] }),
   knowledgeItem("doc-onboarding", "doc", "Onboarding guide", "First week checklist.", "# Onboarding\n\n1. Clone the repo.\n2. Start the core.", "Platform", "published", ["guide"], "2026-09-03T09:00:00.000Z",
@@ -368,7 +376,7 @@ const previewCanonEvidence = previewCanonEvidenceSeeds.map(([id, kind, summary, 
 const previewFacts = previewFactSeeds.map(([id, statement, truthClass, entityId, source, actor], index) => ({
   id, projectId: PREVIEW_PROJECT_ID, statement, truthClass, entityId, source, actor,
   // Each fact is scoped to the Structure component its subject stands for.
-  scopeNodeId: previewEntities.find((item) => item.id === entityId)?.refId ?? "",
+  scopeNodeIds: [previewEntities.find((item) => item.id === entityId)?.refId ?? ""].filter(Boolean),
   observedAt: `2026-09-${String(12 + index).padStart(2, "0")}T09:00:00.000Z`,
   createdAt: `2026-09-${String(12 + index).padStart(2, "0")}T09:00:00.000Z`,
   updatedAt: `2026-09-${String(12 + index).padStart(2, "0")}T09:00:00.000Z`,
@@ -1229,8 +1237,8 @@ function createBrowserDevBridge(): PolterwareBridge {
               ops: changes.map(({ card, stage, status }) => `~ card ${card.slug}${stage ? ` stage ${stage}` : ""}${status ? ` status ${status}` : ""}`),
             };
           }
-          // A `### <decision id>` block moves a stored decision: its status (with the reason a
-          // challenge records) or its level. Supersedes and new decisions fall through.
+          // A `### <decision id>` block moves a stored decision: its status, with the reason a
+          // challenge records. Supersedes and new decisions fall through.
           const decisionBlock = /^### (?!new:)(\S+)\n(.*)$/m.exec(text);
           if (decisionBlock && !/supersedes:/.test(decisionBlock[2]) && knowledgeById(decisionBlock[1])?.kind === "decision") {
             if (!args?.change?.summary?.trim()) throw new Error("A change needs a summary.");
@@ -1238,11 +1246,10 @@ function createBrowserDevBridge(): PolterwareBridge {
             const meta = decisionBlock[2];
             const status = /(?:^|· )status: ([a-z]+)/.exec(meta)?.[1];
             const reason = /(?:^|· )reason: (.+?)(?: ·|$)/.exec(meta)?.[1];
-            const level = /(?:^|· )level: ([a-z]+)/.exec(meta)?.[1];
             if (status === "challenged" && !reason) throw new Error("a challenge needs a reason:");
-            const extra = { ...JSON.parse(String(item.extraJson || "{}")), ...(reason ? { statusReason: reason } : {}), ...(level ? { level } : {}) };
+            const extra = { ...JSON.parse(String(item.extraJson || "{}")), ...(reason ? { statusReason: reason } : {}) };
             if (!args?.dryRun) savedKnowledge.set(String(item.id), { ...item, ...(status ? { status } : {}), extraJson: JSON.stringify(extra), updatedAt: new Date().toISOString() });
-            return { applied: !args?.dryRun, diagnostics: [], ops: [`~ decision ${item.id}${status ? ` status ${status}` : ""}${level ? ` level ${level}` : ""}`] };
+            return { applied: !args?.dryRun, diagnostics: [], ops: [`~ decision ${item.id}${status ? ` status ${status}` : ""}`] };
           }
           // milestone: is resolved here because milestones live in this bridge instance.
           const slug = /(?:^|· )milestone: *([a-z0-9-]*)/m.exec(args?.text ?? "")?.[1] ?? "";
@@ -1256,22 +1263,23 @@ function createBrowserDevBridge(): PolterwareBridge {
           }
           return result;
         },
-        // Scopes a decision, doc, or fact to a node (by path or id); an empty node clears it.
-        setScope: async (args?: { projectId?: string; kind?: string; id?: string; node?: string }) => {
+        // Replaces the contexts of a decision, doc, or fact with nodes (by path or id); none clears them.
+        setScope: async (args?: { projectId?: string; kind?: string; id?: string; nodes?: string[] }) => {
           const projectId = args?.projectId ?? "";
-          const nodeRef = args?.node ?? "";
-          const node = nodeRef ? structure.list(projectId).nodes.find((item) => item.path === nodeRef || item.id === nodeRef) : undefined;
-          if (nodeRef && !node) throw new Error(`unknown structure node "${nodeRef}"`);
-          const scopeNodeId = node?.id ?? "";
+          const scopeNodeIds = [...new Set((args?.nodes ?? []).map((ref) => {
+            const node = structure.list(projectId).nodes.find((item) => item.path === ref || item.id === ref);
+            if (!node) throw new Error(`unknown structure node "${ref}"`);
+            return node.id;
+          }))];
           if (args?.kind === "fact") {
             const fact = [...previewFacts, ...(promotedFacts.get(projectId) ?? [])].find((item) => item.id === args.id);
             if (!fact) throw new Error("Fact not found.");
-            fact.scopeNodeId = scopeNodeId;
+            fact.scopeNodeIds = scopeNodeIds;
             return {};
           }
           const item = knowledgeFor(projectId).find((entry) => entry.id === args?.id);
           if (!item) throw new Error("Knowledge item not found.");
-          savedKnowledge.set(String(item.id), { ...item, scopeNodeId });
+          savedKnowledge.set(String(item.id), { ...item, scopeNodeIds });
           return {};
         },
         listStructureHistory: scoped({ entries: previewStructureHistory }, { entries: [] }),
