@@ -8,6 +8,8 @@
 .pw-morph-anchor > .pw-morph-trigger {
   width: 100%;
   min-width: 0;
+  /* A label stays on one line; a row of triggers wraps instead. */
+  white-space: nowrap;
 }
 
 /* The panel stands in for the trigger until the exit morph ends. */

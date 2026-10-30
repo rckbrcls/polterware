@@ -60,8 +60,8 @@ const ACTION_LABEL: Record<WorkspaceInboxAction, string> = {
   decide: "Decide",
   delegate: "Delegate",
   defer: "Later",
-  fix_code: "Fix the code",
-  update_intent: "Update the rule",
+  fix_code: "Fix code",
+  update_intent: "Update rule",
   ignore: "Dismiss",
 };
 

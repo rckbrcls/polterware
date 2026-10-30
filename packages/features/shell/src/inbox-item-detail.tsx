@@ -8,8 +8,8 @@ const ACTION_LABEL: Record<WorkspaceInboxAction, string> = {
   decide: "Decide",
   delegate: "Delegate",
   defer: "Later",
-  fix_code: "Fix the code",
-  update_intent: "Update the rule",
+  fix_code: "Fix code",
+  update_intent: "Update rule",
   ignore: "Dismiss",
 };
 
@@ -47,12 +47,12 @@ const ACTION_CONFIRM: Record<Exclude<WorkspaceInboxAction, "decide">, { title: s
   fix_code: {
     title: "Fix the code?",
     body: "You keep the rule. The item leaves your Inbox and agents get it as work: change the code to match the rule.",
-    confirm: "Fix the code",
+    confirm: "Fix code",
   },
   update_intent: {
     title: "Update the rule?",
     body: "The code wins. The item leaves your Inbox and agents get it as work: update the rule to match the code.",
-    confirm: "Update the rule",
+    confirm: "Update rule",
   },
   ignore: {
     title: "Dismiss this item?",
@@ -143,7 +143,7 @@ export function InboxItemDetail(props: {
                 <Morph.Root open={opened() === action} onOpenChange={(open) => setOpened(open ? action : null)}>
                   <Morph.Trigger
                     size="sm"
-                    class="min-w-0 flex-1"
+                    class="flex-1"
                     variant={action === "decide" ? "primary" : "ghost"}
                     disabled={props.disabled}
                     hint={ACTION_HINT[action]}

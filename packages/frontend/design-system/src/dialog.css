@@ -58,8 +58,8 @@
   min-height: min(78vh, 760px);
 }
 
-/* Dismiss action (first child) sits left; the primary/destructive action stays right. */
-.pw-dialog-footer > :first-child:not(:only-child) {
+/* Two actions (Cancel and the action) sit together on the right; with three or more, the dismiss action (first child) moves left. */
+.pw-dialog-footer > :first-child:not(:only-child):not(:nth-last-child(2)) {
   margin-inline-end: auto;
 }
 
