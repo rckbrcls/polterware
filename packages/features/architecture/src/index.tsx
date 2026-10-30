@@ -66,19 +66,23 @@ function DocumentSection(props: { title: string; icon: JSX.Element; count?: numb
   </Card>;
 }
 
-/** The cards, decisions, facts, or docs that cite a node, one row each with its status on the right; a row opens its page, and a direct link can be removed. */
-function RecordTable(props: { label: string; rows: readonly StructureRecord[]; icon: JSX.Element; onOpen?: (id: string) => void; onUnlink?: (id: string) => void }) {
+/** A table row: a record, a dependency, or a deploy target, with an optional warning chip before its end. */
+type TableRecord = StructureRecord & { warn?: string };
+
+/** The cards, decisions, facts, or docs that cite a node (or its dependencies and deploys), one row each with its status on the right; a row opens its page, and a direct link can be removed. */
+function RecordTable(props: { label: string; rows: readonly TableRecord[]; icon: JSX.Element; unlinkLabel?: string; onOpen?: (id: string) => void; onUnlink?: (id: string) => void }) {
   return <DataTable.Root rows={props.rows} getRowId={(row) => row.id} density="list">
     <DataTable.Table aria-label={props.label}>
-      <DataTable.Body<StructureRecord>>
+      <DataTable.Body<TableRecord>>
         {(row) => <DataTable.Row row={row} rowId={row.id} aria-label={row.title} onActivate={props.onOpen ? () => props.onOpen!(row.id) : undefined}>
           <DataTable.PrimaryCell icon={props.icon} iconTone="neutral" iconSeed={row.id} title={row.title} />
           <DataTable.Cell align="right">
             <span class="pw-structure__row-end">
               <span class="text-[var(--color-text-muted)]">{row.caption}</span>
+              <Show when={row.warn}>{(warn) => <StatusChip tone="warn" label={warn()} />}</Show>
               <Show when={props.onUnlink && row.direct}>
                 <span class="pw-structure__row-unlink">
-                  <Button size="icon" variant="ghost" aria-label={`Unlink ${row.title}`} onClick={(event) => { event.stopPropagation(); props.onUnlink!(row.id); }}><XIcon size={14} /></Button>
+                  <Button size="icon" variant="ghost" aria-label={`${props.unlinkLabel ?? "Unlink"} ${row.title}`} onClick={(event) => { event.stopPropagation(); props.onUnlink!(row.id); }}><XIcon size={14} /></Button>
                 </span>
               </Show>
             </span>
@@ -161,7 +165,7 @@ function LinkButton(props: { label: string; options: readonly { value: string; l
 type NodeDocumentModel = {
   id: string; project: boolean; title: string; level: StructureKind | "project"; description?: string;
   kind?: string; tech?: string; repo?: string; folder?: string; path?: string;
-  uses: readonly { id: string; title: string }[]; deploys?: StructureNode["deploys"]; records: StructureRecords;
+  uses: readonly { id: string; title: string; level: StructureKind }[]; deploys?: StructureNode["deploys"]; records: StructureRecords;
 };
 
 /** The writes a document makes; each is left out where it cannot apply. */
@@ -183,11 +187,11 @@ type NodeDocumentEdits = {
  * The selected node as a document beside the tree, laid out like a Linear project overview
  * and edited in place: a 36px kind tile, the title, and the description as its summary; then
  * the node's actions in the header's top right; labeled lines (Properties with the level, kind, and technology;
- * Checkout with the repository and folder; Uses; Deploys); then, set well apart, a collapsible
- * section per kind of record that cites the node, where a + links one more and a row's × unlinks
+ * Checkout with the repository and folder); then, set well apart, collapsible table sections:
+ * Uses (a row opens that node), Deploys, and one per kind of record that cites the node, where a + links one more and a row's × unlinks
  * a direct link. Read-only values and empty sections that cannot be linked are left out.
  */
-function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityAction[]; edits: NodeDocumentEdits; isProviderConnected: (provider: string) => boolean; onOpenRecord?: (kind: StructureRecordKind, id: string) => void }) {
+function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityAction[]; edits: NodeDocumentEdits; isProviderConnected: (provider: string) => boolean; onOpenRecord?: (kind: StructureRecordKind, id: string) => void; onOpenNode?: (id: string) => void }) {
   const doc = () => props.doc;
   const component = () => doc().level === "component";
   const repositoryOptions = () => [{ value: "", label: "None" }, ...(props.edits.repositories ?? []).map((name) => ({ value: name, label: name }))];
@@ -236,31 +240,27 @@ function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityA
           <Show when={doc().path}><HeadValue icon={<Route size={14} />} mono>{doc().path}</HeadValue></Show>
         </HeadRow>
       </Show>
-      <Show when={doc().uses.length || props.edits.uses}>
-        <HeadRow label="Uses">
-          <For each={doc().uses}>{(use) => <span class="pw-structure__chip">
-            <HeadValue icon={<Link2 size={14} />}>{use.title}</HeadValue>
-            <Show when={props.edits.uses}>
-              <Button size="icon" variant="ghost" class="pw-structure__chip-remove" aria-label={`Remove ${use.title}`} onClick={() => props.edits.uses!(doc().uses.filter((item) => item.id !== use.id).map((item) => item.id))}><XIcon size={12} /></Button>
-            </Show>
-          </span>}</For>
-          <Show when={props.edits.uses}>
-            <LinkButton label="Add dependency" options={props.edits.usesOptions ?? []} onPick={(id) => props.edits.uses!([...doc().uses.map((item) => item.id), id])} />
-          </Show>
-        </HeadRow>
-      </Show>
-      <Show when={doc().deploys?.length || props.edits.editDeploys}>
-        <HeadRow label="Deploys">
-          <For each={doc().deploys ?? []}>{(deploy) => <HeadValue icon={<Cloud size={14} />}>
-            {deploy.resource}<span class="pw-structure__value-muted">{deploy.provider} / {deploy.environment || deploy.environmentId}</span>
-            <Show when={!props.isProviderConnected(deploy.provider)}><StatusChip tone="warn" label="CLI not connected" /></Show>
-          </HeadValue>}</For>
-          <Show when={props.edits.editDeploys}>
-            <Button size="icon" variant="ghost" aria-label="Edit deploys" onClick={() => props.edits.editDeploys!()}><Pencil size={14} /></Button>
-          </Show>
-        </HeadRow>
-      </Show>
     </dl>
+    <Show when={doc().uses.length || props.edits.uses}>
+      <DocumentSection title="Uses" icon={<Link2 size={14} />} count={doc().uses.length}
+        actions={props.edits.uses ? <LinkButton label="Add dependency" options={props.edits.usesOptions ?? []} onPick={(id) => props.edits.uses!([...doc().uses.map((item) => item.id), id])} /> : undefined}>
+        <Show when={doc().uses.length} fallback={<PageEmpty title="No dependencies yet" mood="sleeping"><p class="pw-structure__empty">Add one with + to show it here.</p></PageEmpty>}>
+          <RecordTable label="Uses" icon={<Link2 size={14} />} unlinkLabel="Remove"
+            rows={doc().uses.map((use) => ({ id: use.id, title: use.title, caption: kindLabel(use.level), direct: true }))}
+            onOpen={props.onOpenNode}
+            onUnlink={props.edits.uses ? (id) => props.edits.uses!(doc().uses.filter((item) => item.id !== id).map((item) => item.id)) : undefined} />
+        </Show>
+      </DocumentSection>
+    </Show>
+    <Show when={doc().deploys?.length || props.edits.editDeploys}>
+      <DocumentSection title="Deploys" icon={<Cloud size={14} />} count={doc().deploys?.length ?? 0}
+        actions={props.edits.editDeploys ? <Button size="icon" variant="ghost" aria-label="Edit deploys" onClick={() => props.edits.editDeploys!()}><Pencil size={14} /></Button> : undefined}>
+        <Show when={doc().deploys?.length} fallback={<PageEmpty title="No deploys yet" mood="sleeping"><p class="pw-structure__empty">Add one with the pencil to show it here.</p></PageEmpty>}>
+          <RecordTable label="Deploys" icon={<Cloud size={14} />}
+            rows={(doc().deploys ?? []).map((deploy) => ({ id: `${deploy.provider}:${deploy.environmentId}:${deploy.resource}`, title: deploy.resource, caption: `${deploy.provider} / ${deploy.environment || deploy.environmentId}`, warn: props.isProviderConnected(deploy.provider) ? undefined : "CLI not connected" }))} />
+        </Show>
+      </DocumentSection>
+    </Show>
     <For each={RECORD_SECTIONS}>{(section) => {
       const options = () => props.edits.linkOptions?.[section.kind];
       return <Show when={doc().records[section.key].length || options()}>
@@ -441,7 +441,7 @@ export function StructureView(props: {
     const node = selected();
     if (!node) return undefined;
     return { id: node.id, project: false, title: node.title, level: node.level, description: node.intent, kind: node.kind, tech: node.tech, repo: node.repo, folder: node.folder, path: node.path,
-      uses: registry().filter((item) => node.uses?.includes(item.path)).map((item) => ({ id: item.id, title: item.title })),
+      uses: registry().filter((item) => node.uses?.includes(item.path)).map((item) => ({ id: item.id, title: item.title, level: item.level })),
       deploys: node.level === "component" ? node.deploys : undefined, records: props.records[node.id] ?? NO_RECORDS };
   });
   const edits = createMemo<NodeDocumentEdits>(() => {
@@ -519,7 +519,7 @@ export function StructureView(props: {
             </Card>
           </nav>
           <div class="pw-structure__pane pw-scroll-fade">
-            <Show when={detail()}>{(item) => <NodeDocument doc={item()} actions={item().project ? projectActions() : nodeActions(selected()!)} edits={edits()} isProviderConnected={isProviderConnected} onOpenRecord={props.onOpenRecord} />}</Show>
+            <Show when={detail()}>{(item) => <NodeDocument doc={item()} actions={item().project ? projectActions() : nodeActions(selected()!)} edits={edits()} isProviderConnected={isProviderConnected} onOpenRecord={props.onOpenRecord} onOpenNode={open} />}</Show>
             <Show when={!props.nodes.length}>
               <div class="pw-document__column pw-structure__start">
                 <PageEmpty title="No structure yet" mood="sleeping"><PromptCardGrid items={STRUCTURE_AGENT_PROMPTS.map((item) => ({ id: item.id, title: item.title, description: item.description, tone: item.tone, icon: <KindIcon kind={item.level} size={16} />, prompt: item.prompt }))} /></PageEmpty>

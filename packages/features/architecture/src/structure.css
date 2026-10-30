@@ -190,23 +190,7 @@
   min-width: 72px;
 }
 
-/* A dependency with its remove button, shown on hover or focus. */
-.pw-structure__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.pw-structure__chip-remove {
-  visibility: hidden;
-}
-
-.pw-structure__chip:hover .pw-structure__chip-remove,
-.pw-structure__chip:focus-within .pw-structure__chip-remove {
-  visibility: visible;
-}
-
-/* A record row's end: its status, then Unlink on hover or focus. */
+/* A table row's end: its caption, an optional warning chip, then Unlink on hover or focus. */
 .pw-structure__row-end {
   display: inline-flex;
   align-items: center;
