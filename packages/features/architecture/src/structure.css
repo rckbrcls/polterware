@@ -32,16 +32,6 @@
   padding: 0 48px 64px;
 }
 
-.pw-structure__icon {
-  display: flex;
-  flex: none;
-  color: var(--color-text-muted);
-}
-
-.pw-tree__row[data-selected] .pw-structure__icon {
-  color: var(--color-text-primary);
-}
-
 /* A tree row's line after its title: Add child alone. */
 .pw-structure-line {
   display: inline-flex;
@@ -74,6 +64,14 @@
   flex-direction: column;
   align-items: flex-start;
   margin-bottom: 28px;
+}
+
+/* The tile on the left and the node's actions menu at the top right. */
+.pw-structure__hero-top {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .pw-structure__hero .pw-document__title {
@@ -236,7 +234,12 @@ tr:focus-within .pw-structure__row-unlink {
   margin-top: 24px;
 }
 
-/* Record sections: 48px between subjects; the rows sit flush under the heading. */
+/* Each record table sits on the shared ring Card; its rows keep the list rhythm inside. */
+.pw-structure__records.card-panel {
+  padding: 4px;
+}
+
+/* Record sections: 48px between subjects. */
 .pw-structure__section {
   margin-bottom: 48px;
 }

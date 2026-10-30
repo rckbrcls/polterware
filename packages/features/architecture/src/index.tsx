@@ -64,9 +64,9 @@ function DocumentSection(props: { title: string; count?: number; actions?: JSX.E
   return <CollapsibleSection class="pw-structure__section" title={props.title} aside={props.count === undefined ? undefined : String(props.count)} actions={props.actions}>{props.children}</CollapsibleSection>;
 }
 
-/** The cards, decisions, facts, or docs that cite a node, one row each with its status on the right; a row opens its page, and a direct link can be removed. */
+/** The cards, decisions, facts, or docs that cite a node, on the ring Card, one row each with its status on the right; a row opens its page, and a direct link can be removed. */
 function RecordTable(props: { label: string; rows: readonly StructureRecord[]; icon: JSX.Element; onOpen?: (id: string) => void; onUnlink?: (id: string) => void }) {
-  return <DataTable.Root rows={props.rows} getRowId={(row) => row.id} density="list">
+  return <Card class="pw-structure__records"><DataTable.Root rows={props.rows} getRowId={(row) => row.id} density="list">
     <DataTable.Table aria-label={props.label}>
       <DataTable.Body<StructureRecord>>
         {(row) => <DataTable.Row row={row} rowId={row.id} aria-label={row.title} onActivate={props.onOpen ? () => props.onOpen!(row.id) : undefined}>
@@ -84,7 +84,7 @@ function RecordTable(props: { label: string; rows: readonly StructureRecord[]; i
         </DataTable.Row>}
       </DataTable.Body>
     </DataTable.Table>
-  </DataTable.Root>;
+  </DataTable.Root></Card>;
 }
 
 const RECORD_SECTIONS = [
@@ -180,7 +180,7 @@ type NodeDocumentEdits = {
 /**
  * The selected node as a document beside the tree, laid out like a Linear project overview
  * and edited in place: a 36px kind tile, the title, and the description as its summary; then
- * labeled lines (Properties with the level, kind, technology, and the node's other actions;
+ * the node's actions in the header's top right; labeled lines (Properties with the level, kind, and technology;
  * Checkout with the repository and folder; Uses; Deploys); then, set well apart, a collapsible
  * section per kind of record that cites the node, where a + links one more and a row's × unlinks
  * a direct link. Read-only values and empty sections that cannot be linked are left out.
@@ -191,7 +191,10 @@ function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityA
   const repositoryOptions = () => [{ value: "", label: "None" }, ...(props.edits.repositories ?? []).map((name) => ({ value: name, label: name }))];
   return <article class="pw-document__column pw-structure__document" aria-label={doc().title}>
     <div class="pw-structure__hero">
-      <IconTile size={36} tone="neutral" seed={`structure-${doc().id}`}><KindIcon kind={doc().level} size={18} /></IconTile>
+      <div class="pw-structure__hero-top">
+        <IconTile size={36} tone="neutral" seed={`structure-${doc().id}`}><KindIcon kind={doc().level} size={18} /></IconTile>
+        <Show when={props.actions.length}><EntityMenuButton label={`Actions for ${doc().title}`} actions={props.actions} /></Show>
+      </div>
       <Show when={props.edits.title} fallback={<h1 class="pw-document__title">{doc().title}</h1>}>
         {(rename) => <InlineText label="Title" class="pw-document__title" required value={doc().title} placeholder="Untitled" onCommit={rename()} />}
       </Show>
@@ -214,7 +217,6 @@ function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityA
             <InlineText label="Technology" value={doc().tech ?? ""} placeholder="Technology" onCommit={(tech) => props.edits.patch!({ tech })} />
           </span>
         </Show>
-        <Show when={props.actions.length}><EntityMenuButton label={`Actions for ${doc().title}`} actions={props.actions} /></Show>
       </HeadRow>
       <Show when={props.edits.patch} fallback={<Show when={doc().repo || doc().folder || doc().path}>
         <HeadRow label="Checkout">
@@ -411,13 +413,13 @@ export function StructureView(props: {
   const projectActions = (): EntityAction[] => [{ id: "add-system", label: "Add system", icon: Plus, disabled: !!props.loading || !!props.error, onSelect: () => { open(PROJECT_ID); props.onOpenCreate(); } }];
   const addChild = (id: string) => { open(id); props.onOpenCreate(); };
   const toTreeNode = (item: StructureTreeItem): TreeViewNode => ({
-    id: item.node.id, label: item.node.title, icon: <span class="pw-structure__icon"><KindIcon kind={item.node.level} size={14} /></span>,
+    id: item.node.id, label: item.node.title,
     trailing: <NodeLine
       onAdd={item.node.level === "component" ? undefined : () => addChild(item.node.id)} addLabel={`Add child to ${item.node.title}`} />,
     children: item.children.map(toTreeNode),
   });
   const treeNodes = createMemo<TreeViewNode[]>(() => props.loading || props.error ? [] : [{
-    id: PROJECT_ID, label: props.projectName, icon: <span class="pw-structure__icon"><KindIcon kind="project" size={14} /></span>,
+    id: PROJECT_ID, label: props.projectName,
     trailing: <NodeLine
       onAdd={props.loading || props.error ? undefined : () => addChild(PROJECT_ID)} addLabel="Add system" />,
     children: tree().map(toTreeNode),
