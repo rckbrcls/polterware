@@ -47,7 +47,7 @@ import {
   type WorkspaceInboxAction,
   type WorkspaceInboxItem,
 } from "@polterware/feature-shell";
-import { StructureView, STRUCTURE_SCOPE, filterStructureNodes, type StructureRecordKind } from "@polterware/feature-architecture";
+import { StructureView, STRUCTURE_SCOPE, type StructureRecordKind } from "@polterware/feature-architecture";
 import { CanvasWorkspace } from "./canvas-workspace";
 import type { CardDraft, ComposeRequest, DecisionDraft, DocDraft, MilestoneAction } from "@polterware/feature-knowledge";
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
@@ -160,7 +160,9 @@ import {
   persistStructureMoveNode,
   persistStructureUses,
   persistStructureUpdateDeploys,
-  persistStructureKindTech,
+  persistStructureNode,
+  persistWorkCardUnder,
+  persistFactScope,
   persistWorkSetStage,
   persistWorkSetStages,
   persistWorkSetMilestones,
@@ -741,10 +743,11 @@ export function App() {
     return { project, nodes: Object.fromEntries(workspace().structure.nodes.map((node) => {
       const entityIds = new Set(workspace().canonEntities.filter((entity) => entity.refId === node.id || entity.refId === node.path).map((entity) => entity.id));
       return [node.id, {
-        cards: workspace().workCards.filter((item) => item.under === node.path).map(card),
-        decisions: workspace().decisions.filter((item) => item.scopeNodeId === node.id || item.governs.includes(node.path) || item.entityLinks.some((link) => entityIds.has(link.entityId))).map(decision),
-        facts: workspace().structureFacts.filter((item) => item.scopeNodeId === node.id || entityIds.has(item.entityId)).map(fact),
-        docs: workspace().docs.filter((item) => item.scopeNodeId === node.id || item.entityLinks.some((link) => entityIds.has(link.entityId))).map(doc),
+        // A card under the node, or a record scoped to it, is a direct link its document can remove.
+        cards: workspace().workCards.filter((item) => item.under === node.path).map((item) => ({ ...card(item), direct: true })),
+        decisions: workspace().decisions.filter((item) => item.scopeNodeId === node.id || item.governs.includes(node.path) || item.entityLinks.some((link) => entityIds.has(link.entityId))).map((item) => ({ ...decision(item), direct: item.scopeNodeId === node.id })),
+        facts: workspace().structureFacts.filter((item) => item.scopeNodeId === node.id || entityIds.has(item.entityId)).map((item) => ({ ...fact(item), direct: item.scopeNodeId === node.id })),
+        docs: workspace().docs.filter((item) => item.scopeNodeId === node.id || item.entityLinks.some((link) => entityIds.has(link.entityId))).map((item) => ({ ...doc(item), direct: item.scopeNodeId === node.id })),
       }];
     })) };
   });
@@ -1599,9 +1602,9 @@ export function App() {
             projectName={workspace().settings.name || "Project"}
             projectDescription={workspace().settings.description}
             projectRepository={workspace().settings.repository}
-            nodes={filterStructureNodes(workspace().structure.nodes, scopeNodeIdList()).map((node) => ({ ...node, deploys: node.deploys?.filter((deploy) =>
-              matchesEnvironment([deploy.environmentId, deploy.environment], scopeEnvironments())) }))}
+            nodes={workspace().structure.nodes}
             records={structureRecords().nodes}
+            repositories={workspace().repositories.map((repo) => repo.name)}
             registryNodes={workspace().structure.nodes}
             projectRecords={structureRecords().project}
             onOpenRecord={openStructureRecord}
@@ -1614,10 +1617,6 @@ export function App() {
             onSelect={(id) => applyRoute(setSelectedNode(route(), id), "silent")}
             environments={workspace().settingsEnvironments.map((e) => ({ id: e.id, label: e.name, kind: e.kind, protected: e.protection === "strict" }))}
             integrations={workspace().integrations}
-            scopeTokens={scopeTokens()}
-            scopeNodes={scopeNodes()}
-            scopeEnvironments={scopeEnvironmentCatalog()}
-            onScopeTokensChange={applyScopeTokens}
             onDeploysChange={async (nodeId, deploys) => {
               const projectId = currentProjectId();
               if (!projectId) throw new Error("No project selected.");
@@ -1628,13 +1627,35 @@ export function App() {
               await persistStructureUpdateDeploys({ projectId, path: node.path, title: node.title, level: node.level, deploys, change });
               await refreshWorkspace(projectId);
             }}
-            onKindTechChange={async (nodeId, kind, tech) => {
+            onEditNode={async (nodeId, patch) => {
               const projectId = currentProjectId();
               const node = workspace().structure.nodes.find((item) => item.id === nodeId);
               if (!projectId || !node) throw new Error("Structure node not found.");
-              const change = await justifyChange({ title: "Update kind and technology", defaultSummary: `Describe what ${node.title} is` });
-              if (!change) throw new Error("Cancelled.");
-              await persistStructureKindTech({ projectId, path: node.path, title: node.title, level: node.level, kind, tech, change });
+              const field = patch.title !== undefined ? "Rename" : patch.intent !== undefined ? "Describe" : "Update";
+              const change = await justifyChange({ title: `${field} structure node`, defaultSummary: `${field} ${node.title}` });
+              if (!change) return;
+              await persistStructureNode({ projectId, path: node.path, title: node.title, level: node.level, patch, change });
+              await refreshWorkspace(projectId);
+            }}
+            onEditProject={async (patch) => {
+              const projectId = currentProjectId();
+              await persistProjectSettings(projectId, { ...workspace().settings, ...patch }, workspace().settingsEnvironments);
+              await refreshWorkspace(projectId);
+            }}
+            onLinkRecord={async (kind, recordId, nodeId) => {
+              const projectId = currentProjectId();
+              const node = workspace().structure.nodes.find((item) => item.id === nodeId);
+              const path = node?.path ?? "";
+              if (kind === "card") {
+                const card = workspace().workCards.find((item) => item.slug === recordId);
+                const change = await justifyChange({ title: "Link card", defaultSummary: node ? `Put ${card?.title ?? recordId} under ${node.title}` : `Take ${card?.title ?? recordId} out of its component` });
+                if (!change) return;
+                await persistWorkCardUnder({ projectId, slug: recordId, under: path, change });
+              } else if (kind === "fact") {
+                await persistFactScope(projectId, recordId, path);
+              } else {
+                await persistKnowledgeScope(projectId, recordId, path);
+              }
               await refreshWorkspace(projectId);
             }}
             onMove={async (nodeId, parentId) => {

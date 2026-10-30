@@ -1228,10 +1228,14 @@ function createBrowserDevBridge(): PolterwareBridge {
               const milestoneSlug = /(?:^|· )milestone: *([a-z0-9-]*)/.exec(meta)?.[1];
               const milestone = milestoneSlug ? listedMilestones(args!.projectId!).find((item) => item.slug === milestoneSlug) : undefined;
               if (milestoneSlug && !milestone) throw new Error(`unknown milestone "${milestoneSlug}"`);
-              return { card, stage: /(?:^|· )stage: ([a-z]+)/.exec(meta)?.[1], status: /(?:^|· )status: ([a-z]+)/.exec(meta)?.[1], milestoneId: milestoneSlug === undefined ? undefined : milestone?.id ?? "" };
+              // under: names a component path; an empty value clears it.
+              const under = /(?:^|· )under: *([^·\n]*)/.exec(meta)?.[1]?.trim();
+              if (under && !structure.list(args!.projectId!).nodes.some((node) => node.path === under && node.level === "component")) throw new Error(`unknown under "${under}": name a component path`);
+              return { card, under, stage: /(?:^|· )stage: ([a-z]+)/.exec(meta)?.[1], status: /(?:^|· )status: ([a-z]+)/.exec(meta)?.[1], milestoneId: milestoneSlug === undefined ? undefined : milestone?.id ?? "" };
             });
             if (!args?.dryRun) {
-              for (const { card, stage, status, milestoneId } of changes) {
+              for (const { card, under, stage, status, milestoneId } of changes) {
+                if (under !== undefined) (card as { under?: string }).under = under;
                 if (stage) card.stage = stage;
                 if (status) card.status = status;
                 if (milestoneId !== undefined) card.milestoneId = milestoneId;
@@ -1271,7 +1275,24 @@ function createBrowserDevBridge(): PolterwareBridge {
           }
           return result;
         },
-        setScope: async () => ({}),
+        // Scopes a decision, doc, or fact to a node (by path or id); an empty node clears it.
+        setScope: async (args?: { projectId?: string; kind?: string; id?: string; node?: string }) => {
+          const projectId = args?.projectId ?? "";
+          const nodeRef = args?.node ?? "";
+          const node = nodeRef ? structure.list(projectId).nodes.find((item) => item.path === nodeRef || item.id === nodeRef) : undefined;
+          if (nodeRef && !node) throw new Error(`unknown structure node "${nodeRef}"`);
+          const scopeNodeId = node?.id ?? "";
+          if (args?.kind === "fact") {
+            const fact = [...previewFacts, ...(promotedFacts.get(projectId) ?? [])].find((item) => item.id === args.id);
+            if (!fact) throw new Error("Fact not found.");
+            fact.scopeNodeId = scopeNodeId;
+            return {};
+          }
+          const item = knowledgeFor(projectId).find((entry) => entry.id === args?.id);
+          if (!item) throw new Error("Knowledge item not found.");
+          savedKnowledge.set(String(item.id), { ...item, scopeNodeId });
+          return {};
+        },
         listStructureHistory: scoped({ entries: previewStructureHistory }, { entries: [] }),
       }),
       savedFilters: browserDevApi({

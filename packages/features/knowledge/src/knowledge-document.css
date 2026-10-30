@@ -33,30 +33,6 @@
   cursor: default;
 }
 
-/* The title as an editable field: the shared title styles (rail-page.css) without the Input's chrome. */
-.pw-document__title.control-field {
-  width: 100%;
-  height: auto;
-  margin: 32px 0 8px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--color-text-primary);
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.16px;
-  line-height: 32px;
-  outline: none;
-}
-
-.pw-document__title.control-field:hover,
-.pw-document__title.control-field:focus,
-.pw-document__title.control-field:focus-visible {
-  background: transparent;
-  box-shadow: none;
-}
-
 /* A Fact page lists the evidence that backs the statement under its title. */
 .pw-fact-evidence {
   display: flex;

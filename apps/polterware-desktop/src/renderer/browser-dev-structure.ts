@@ -40,6 +40,10 @@ export function createBrowserStructure(seedProjectId: string, seed: readonly Par
       const kind = metadata("kind");
       if (kind && level !== "component") throw new Error("Only components have a kind.");
       const tech = metadata("tech");
+      const repo = metadata("repo");
+      const folder = metadata("path");
+      // The intent is the paragraph after the meta lines.
+      const intent = text.slice(text.indexOf(heading[0]) + heading[0].length).split(/\n\s*\n/).slice(1).join("\n\n").trim() || undefined;
       if (dryRun) return { applied: false, diagnostics: [], ops: [`${existing ? "~" : "+"} node ${nextPath}`] };
       if (existing) {
         const oldPath = existing.path;
@@ -48,6 +52,9 @@ export function createBrowserStructure(seedProjectId: string, seed: readonly Par
         if (deploys !== undefined) existing.deploys = deploys;
         if (kind !== undefined) existing.kind = kind;
         if (tech !== undefined) existing.tech = tech;
+        if (repo !== undefined) existing.repo = repo;
+        if (folder !== undefined) existing.folder = folder;
+        if (intent !== undefined) existing.intent = intent;
         if (under !== undefined) {
           existing.parentId = parent?.id ?? "";
           const rewrite = (path: string) => path === oldPath || path.startsWith(`${oldPath}/`) ? nextPath + path.slice(oldPath.length) : path;

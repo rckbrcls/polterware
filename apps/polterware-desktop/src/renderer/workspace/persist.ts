@@ -400,6 +400,43 @@ export async function persistStructureKindTech(input: {
   await applyPolter(input.projectId, `${text}kind: ${input.kind}\ntech: ${polterValue(input.tech)}\n`, input.change);
 }
 
+/** The fields of a Structure node its document edits in place; a field left out is unchanged. */
+export type StructureNodePatch = { title?: string; intent?: string; repo?: string; folder?: string; kind?: string; tech?: string };
+
+/**
+ * Edit a Structure node in place: the title in its heading, `repo:`, `path:` (the folder),
+ * `kind:`, and `tech:` lines (an empty value clears them), and the intent as the paragraph after
+ * them. Polter keeps the stored intent when the paragraph is empty, so the intent cannot be cleared
+ * here. The heading is the node's current path.
+ */
+export async function persistStructureNode(input: {
+  projectId: string;
+  path: string;
+  title: string;
+  level: string;
+  patch: StructureNodePatch;
+  change: ChangeEnvelope;
+}): Promise<void> {
+  const { patch } = input;
+  let text = structureNodeText({ heading: input.path, title: patch.title ?? input.title, level: input.level });
+  if (patch.repo !== undefined) text += `repo: ${patch.repo}\n`;
+  if (patch.folder !== undefined) text += `path: ${patch.folder}\n`;
+  if (patch.kind !== undefined) text += `kind: ${patch.kind}\n`;
+  if (patch.tech !== undefined) text += `tech: ${polterValue(patch.tech)}\n`;
+  if (patch.intent?.trim()) text += `\n${patch.intent.trim()}\n`;
+  await applyPolter(input.projectId, text, input.change);
+}
+
+/** Puts a card under a component path, or takes it out of any when `under` is empty. */
+export async function persistWorkCardUnder(input: { projectId: string; slug: string; under: string; change: ChangeEnvelope }): Promise<void> {
+  await applyPolter(input.projectId, polterCard(input.slug, null, { under: input.under }), input.change);
+}
+
+/** Scopes a fact to a Structure node path; an empty path clears it. */
+export async function persistFactScope(projectId: string, id: string, path: string): Promise<void> {
+  await core().work.setScope({ projectId, kind: "fact", id, node: path });
+}
+
 async function applyPolter(projectId: string, text: string, change: ChangeEnvelope): Promise<void> {
   await core().work.apply({ projectId, text, change: changePayload(change) });
 }

@@ -114,6 +114,65 @@
   line-height: 32px;
 }
 
+/*
+ * Document fields edit in place with no field chrome: the title, and any ghost field
+ * (`.pw-document__ghost-field`) such as a summary or an inline property. The shared Input and
+ * Textarea keep their focus and keyboard behaviour; hover and focus change nothing, so the
+ * field reads as the page's own text. The state rules outrank the field's gradient hover.
+ */
+.pw-document__title.control-field,
+.pw-document__ghost-field.control-field {
+  height: auto;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+}
+
+.pw-document__title.pw-field-control:is(:hover, :focus, :focus-visible):not(:disabled):not([aria-disabled="true"]),
+.pw-document__ghost-field.pw-field-control:is(:hover, :focus, :focus-visible):not(:disabled):not([aria-disabled="true"]) {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* The title as a field keeps the title's type and place. */
+.pw-document__title.control-field {
+  width: 100%;
+  margin: 32px 0 8px;
+  padding: 0;
+  color: var(--color-text-primary);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.16px;
+  line-height: 32px;
+}
+
+.pw-document__ghost-field.control-field {
+  margin: 0;
+  padding: 2px 6px;
+  border-radius: var(--radius-item);
+  color: inherit;
+  font: inherit;
+  resize: none;
+  field-sizing: content;
+}
+
+/* A ghost title keeps the title's type and place, padded like the other ghost fields. */
+.pw-document__ghost-field.pw-document__title.control-field {
+  margin: 32px 0 8px;
+  padding: 0 6px;
+  color: var(--color-text-primary);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.16px;
+  line-height: 32px;
+}
+
+.pw-document__ghost-field.control-field::placeholder {
+  color: var(--color-text-muted);
+}
+
 .pw-document__body {
   display: flex;
   flex-direction: column;

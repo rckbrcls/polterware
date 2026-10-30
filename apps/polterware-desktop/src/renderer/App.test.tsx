@@ -43,7 +43,8 @@ describe("Desktop core composition", () => {
     expect(persist).toContain("syncConnection");
     expect(persist).not.toContain("Metadata refreshed from the local store.");
     expect(source).toContain("projectId={currentProjectId()}");
-    expect(source).toContain("nodes={filterStructureNodes(workspace().structure.nodes, scopeNodeIdList()).map");
+    // Structure shows the whole tree; it has no scope filter of its own.
+    expect(source).toContain("nodes={workspace().structure.nodes}");
     expect(source).not.toContain("PROJECT_SWITCHER_FIXTURES");
     expect(source).not.toContain("RESOURCE_FIXTURES");
     expect(source).not.toContain('fixtureMode="force"');

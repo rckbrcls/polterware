@@ -1,12 +1,10 @@
 import { For, Index, Show, createEffect, createMemo, createSignal, onCleanup, untrack, type JSX } from "solid-js";
-import { createPageFilters, type EnvironmentItem, type ScopeFilterToken, type ScopeNodeItem } from "@polterware/feature-shell";
 import {
-  A11yDialog, Boxes, Button, Card, Cpu, EntityMenuButton, PromptCardGrid, Checkbox, Field, Folder, FormStack, Input,
-  ActiveFilterBar, CollapsibleSection, DataTable, FilterPopover, IconTile, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
-  Cloud, Delete, DetailPanel, Link2, Package, Route,
-  Scale, ShieldCheck, FileText, GitBranch, InformationCircle, SearchBar, Select, SidebarLeftIcon, FolderKanban, StatusChip, TreeView, pushToast,
+  A11yDialog, Boxes, Button, Card, Cpu, EntityMenuButton, PromptCardGrid, Field, Folder, FormStack, Input,
+  CollapsibleSection, DataTable, IconTile, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
+  Cloud, Delete, DetailPanel, Link2, Package, Pencil, PropertyPicker, Route, Textarea, XIcon,
+  Scale, ShieldCheck, FileText, GitBranch, Select, SidebarLeftIcon, FolderKanban, StatusChip, TreeView, pushToast,
   type EntityAction, type TreeViewNode,
-  ToolbarIconButton,
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore, readRemembered, writeRemembered } from "@polterware/frontend-state";
 import { COMPONENTS, component } from "@polterware/feature-canvas/components";
@@ -23,7 +21,10 @@ export type { StructureNode } from "./structure-tree";
 export const STRUCTURE_SCOPE = "structure:nodes";
 const PROJECT_ID = "structure:project";
 /** One thing that cites a node: a card (by slug), decision, fact, or doc, with a muted caption such as its stage. */
-export type StructureRecord = { id: string; title: string; caption?: string };
+/** `direct` marks a link the node owns (a card under it, a record scoped to it), which its document can remove. */
+export type StructureRecord = { id: string; title: string; caption?: string; direct?: boolean };
+/** The fields of a node its document edits in place; a field left out is unchanged, and an empty value clears it. */
+export type StructureNodePatch = { title?: string; intent?: string; repo?: string; folder?: string; kind?: string; tech?: string };
 export type StructureRecordKind = "card" | "decision" | "fact" | "doc";
 export type StructureRecords = { cards: readonly StructureRecord[]; decisions: readonly StructureRecord[]; facts: readonly StructureRecord[]; docs: readonly StructureRecord[] };
 const NO_RECORDS: StructureRecords = { cards: [], decisions: [], facts: [], docs: [] };
@@ -58,25 +59,28 @@ export function checkoutLabel(repo = "", folder = ""): string {
   return repo && folder ? `${repo}/${folder}` : repo || folder;
 }
 
-/** The level, and a component's kind and technology, for the document's metadata. */
-function nodeProperties(node: Pick<StructureNode, "level" | "kind" | "tech">): readonly (readonly [string, string | undefined])[] {
-  if (node.level !== "component") return [["Level", kindLabel(node.level)]];
-  return [["Level", kindLabel(node.level)], ["Kind", node.kind ? componentKindLabel(node.kind) : undefined], ["Technology", node.tech || undefined]];
+/** A titled block of the document, set apart by space alone: the title, a count, a fold chevron, and its actions. */
+function DocumentSection(props: { title: string; count?: number; actions?: JSX.Element; children: JSX.Element }) {
+  return <CollapsibleSection class="pw-structure__section" title={props.title} aside={props.count === undefined ? undefined : String(props.count)} actions={props.actions}>{props.children}</CollapsibleSection>;
 }
 
-/** A titled block of the document, set apart by space alone: the title, a count, and a fold chevron. */
-function DocumentSection(props: { title: string; count?: number; children: JSX.Element }) {
-  return <CollapsibleSection class="pw-structure__section" title={props.title} aside={props.count === undefined ? undefined : String(props.count)}>{props.children}</CollapsibleSection>;
-}
-
-/** The cards, decisions, facts, or docs that cite a node, one row each with its status on the right; a row opens its page. */
-function RecordTable(props: { label: string; rows: readonly StructureRecord[]; icon: JSX.Element; onOpen?: (id: string) => void }) {
+/** The cards, decisions, facts, or docs that cite a node, one row each with its status on the right; a row opens its page, and a direct link can be removed. */
+function RecordTable(props: { label: string; rows: readonly StructureRecord[]; icon: JSX.Element; onOpen?: (id: string) => void; onUnlink?: (id: string) => void }) {
   return <DataTable.Root rows={props.rows} getRowId={(row) => row.id} density="list">
     <DataTable.Table aria-label={props.label}>
       <DataTable.Body<StructureRecord>>
         {(row) => <DataTable.Row row={row} rowId={row.id} aria-label={row.title} onActivate={props.onOpen ? () => props.onOpen!(row.id) : undefined}>
           <DataTable.PrimaryCell icon={props.icon} iconTone="neutral" iconSeed={row.id} title={row.title} />
-          <DataTable.Cell align="right"><span class="text-[var(--color-text-muted)]">{row.caption}</span></DataTable.Cell>
+          <DataTable.Cell align="right">
+            <span class="pw-structure__row-end">
+              <span class="text-[var(--color-text-muted)]">{row.caption}</span>
+              <Show when={props.onUnlink && row.direct}>
+                <span class="pw-structure__row-unlink">
+                  <Button size="icon" variant="ghost" aria-label={`Unlink ${row.title}`} onClick={(event) => { event.stopPropagation(); props.onUnlink!(row.id); }}><XIcon size={14} /></Button>
+                </span>
+              </Show>
+            </span>
+          </DataTable.Cell>
         </DataTable.Row>}
       </DataTable.Body>
     </DataTable.Table>
@@ -95,55 +99,177 @@ function HeadRow(props: { label: string; children: JSX.Element }) {
   return <div class="pw-structure__head-row"><dt>{props.label}</dt><dd>{props.children}</dd></div>;
 }
 
-/** An inline value of the document head: a muted icon and the value. */
+/** A read-only inline value of the document head: a muted icon and the value. */
 function HeadValue(props: { icon: JSX.Element; mono?: boolean; children: JSX.Element }) {
   return <span class="pw-structure__value" classList={{ "pw-structure__value--mono": props.mono }}><span class="pw-structure__value-icon" aria-hidden>{props.icon}</span>{props.children}</span>;
 }
 
 /**
- * The selected node as a document beside the tree, laid out like a Linear project overview:
- * a 36px kind tile, the title, and the description as its summary; then labeled lines
- * (Properties with the level, kind, technology, and the node's actions; Checkout; Uses;
- * Deploys); then, set well apart, a collapsible section per kind of record that cites the
- * node (cards, decisions, facts, docs). Empty lines and sections are left out.
+ * Text that edits in place on the shared Input or Textarea with no field chrome. It commits on
+ * blur or Enter (Shift+Enter breaks a line in a multiline field) and Escape restores the value.
  */
-function NodeDocument(props: { title: string; level: StructureKind | "project"; actions: readonly EntityAction[]; description?: string; properties: readonly (readonly [string, string | undefined])[]; records: StructureRecords; checkout?: string; path?: string; uses?: readonly string[]; deploys?: StructureNode["deploys"]; isProviderConnected: (provider: string) => boolean; onOpenRecord?: (kind: StructureRecordKind, id: string) => void }) {
-  const propertyIcon = (label: string) => label === "Kind" ? <Package size={14} /> : label === "Technology" ? <Cpu size={14} /> : <KindIcon kind={props.level} size={14} />;
-  return <article class="pw-document__column pw-structure__document" aria-label={props.title}>
+function InlineText(props: { label: string; value: string; placeholder: string; class?: string; multiline?: boolean; required?: boolean; onCommit: (value: string) => void }) {
+  const [draft, setDraft] = createSignal(props.value);
+  createEffect(() => setDraft(props.value));
+  const commit = () => {
+    const next = draft().trim();
+    if (props.required && !next) { setDraft(props.value); return; }
+    if (next !== props.value.trim()) props.onCommit(next);
+  };
+  const onKeyDown = (event: KeyboardEvent & { currentTarget: HTMLInputElement | HTMLTextAreaElement }) => {
+    if (event.key === "Escape") { event.preventDefault(); setDraft(props.value); event.currentTarget.blur(); }
+    else if (event.key === "Enter" && !(props.multiline && event.shiftKey)) { event.preventDefault(); event.currentTarget.blur(); }
+  };
+  return <Show when={props.multiline} fallback={
+    <Input aria-label={props.label} class={`pw-document__ghost-field ${props.class ?? ""}`} value={draft()} placeholder={props.placeholder}
+      onInput={(event) => setDraft(event.currentTarget.value)} onBlur={commit} onKeyDown={onKeyDown} />
+  }>
+    <Textarea aria-label={props.label} rows={1} class={`pw-document__ghost-field ${props.class ?? ""}`} value={draft()} placeholder={props.placeholder}
+      onInput={(event) => setDraft(event.currentTarget.value)} onBlur={commit} onKeyDown={onKeyDown} />
+  </Show>;
+}
+
+/** A head value set from a short list: a ghost button with the value (or a muted placeholder) that opens the shared PropertyPicker. */
+function PickerValue(props: { label: string; icon: JSX.Element; value?: string; placeholder: string; options: readonly { value: string; label: string }[]; mono?: boolean; onChange: (value: string) => void }) {
+  const [open, setOpen] = createSignal(false);
+  let trigger: HTMLButtonElement | undefined;
+  const current = () => props.options.find((option) => option.value === props.value)?.label ?? props.value;
+  return <>
+    <Button ref={trigger} variant="ghost" size="sm" class="pw-structure__pick" aria-label={`${props.label}: ${current() || "none"}`} aria-expanded={open()} onClick={() => setOpen((value) => !value)}>
+      <span class="pw-structure__value-icon" aria-hidden>{props.icon}</span>
+      <span classList={{ "pw-structure__value-muted": !current(), "font-mono": props.mono && !!current() }}>{current() || props.placeholder}</span>
+    </Button>
+    <PropertyPicker label={props.label} options={props.options} value={props.value} open={open()} onClose={() => setOpen(false)} anchorRef={() => trigger}
+      onChange={(value) => { setOpen(false); props.onChange(value); }} />
+  </>;
+}
+
+/** A section heading's add button: opens the PropertyPicker of what can still be linked. */
+function LinkButton(props: { label: string; options: readonly { value: string; label: string }[]; onPick: (value: string) => void }) {
+  const [open, setOpen] = createSignal(false);
+  let trigger: HTMLButtonElement | undefined;
+  return <>
+    <Button ref={trigger} size="icon" variant="ghost" aria-label={props.label} aria-expanded={open()} disabled={!props.options.length} onClick={() => setOpen((value) => !value)}><Plus size={14} /></Button>
+    <PropertyPicker label={props.label} options={props.options} open={open()} onClose={() => setOpen(false)} anchorRef={() => trigger} placement="bottom-end"
+      onChange={(value) => { setOpen(false); props.onPick(value); }} />
+  </>;
+}
+
+/** What a document shows and edits; `project` is the project's own document. */
+type NodeDocumentModel = {
+  id: string; project: boolean; title: string; level: StructureKind | "project"; description?: string;
+  kind?: string; tech?: string; repo?: string; folder?: string; path?: string;
+  uses: readonly { id: string; title: string }[]; deploys?: StructureNode["deploys"]; records: StructureRecords;
+};
+
+/** The writes a document makes; each is left out where it cannot apply. */
+type NodeDocumentEdits = {
+  title?: (value: string) => void;
+  description?: (value: string) => void;
+  patch?: (patch: StructureNodePatch) => void;
+  uses?: (ids: string[]) => void;
+  usesOptions?: readonly { value: string; label: string }[];
+  repositories?: readonly string[];
+  editDeploys?: () => void;
+  /** What each record section can still link, by kind; a kind left out has no add button. */
+  linkOptions?: Partial<Record<StructureRecordKind, readonly { value: string; label: string }[]>>;
+  link?: (kind: StructureRecordKind, id: string) => void;
+  unlink?: (kind: StructureRecordKind, id: string) => void;
+};
+
+/**
+ * The selected node as a document beside the tree, laid out like a Linear project overview
+ * and edited in place: a 36px kind tile, the title, and the description as its summary; then
+ * labeled lines (Properties with the level, kind, technology, and the node's other actions;
+ * Checkout with the repository and folder; Uses; Deploys); then, set well apart, a collapsible
+ * section per kind of record that cites the node, where a + links one more and a row's × unlinks
+ * a direct link. Read-only values and empty sections that cannot be linked are left out.
+ */
+function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityAction[]; edits: NodeDocumentEdits; isProviderConnected: (provider: string) => boolean; onOpenRecord?: (kind: StructureRecordKind, id: string) => void }) {
+  const doc = () => props.doc;
+  const component = () => doc().level === "component";
+  const repositoryOptions = () => [{ value: "", label: "None" }, ...(props.edits.repositories ?? []).map((name) => ({ value: name, label: name }))];
+  return <article class="pw-document__column pw-structure__document" aria-label={doc().title}>
     <div class="pw-structure__hero">
-      <IconTile size={36} tone="neutral" seed={`structure-${props.title}`}><KindIcon kind={props.level} size={18} /></IconTile>
-      <h1 class="pw-document__title">{props.title}</h1>
-      <Show when={props.description} fallback={<p class="pw-structure__summary pw-structure__summary--empty">No description yet.</p>}>{(text) => <p class="pw-structure__summary">{text()}</p>}</Show>
+      <IconTile size={36} tone="neutral" seed={`structure-${doc().id}`}><KindIcon kind={doc().level} size={18} /></IconTile>
+      <Show when={props.edits.title} fallback={<h1 class="pw-document__title">{doc().title}</h1>}>
+        {(rename) => <InlineText label="Title" class="pw-document__title" required value={doc().title} placeholder="Untitled" onCommit={rename()} />}
+      </Show>
+      <Show when={props.edits.description} fallback={<Show when={doc().description} fallback={<p class="pw-structure__summary pw-structure__summary--empty">No description yet.</p>}>{(text) => <p class="pw-structure__summary">{text()}</p>}</Show>}>
+        {(describe) => <InlineText label="Description" multiline class="pw-structure__summary" value={doc().description ?? ""} placeholder="Add a short summary…" onCommit={describe()} />}
+      </Show>
     </div>
     <dl class="pw-structure__head">
       <HeadRow label="Properties">
-        <For each={props.properties.filter(([, value]) => value)}>{([label, value]) => <HeadValue icon={propertyIcon(label)}><span title={label}>{value}</span></HeadValue>}</For>
-        <Show when={props.actions.length}><EntityMenuButton label={`Actions for ${props.title}`} actions={props.actions} /></Show>
+        <HeadValue icon={<KindIcon kind={doc().level} size={14} />}>{kindLabel(doc().level)}</HeadValue>
+        <Show when={component() && !props.edits.patch}>
+          <Show when={doc().kind}><HeadValue icon={<Package size={14} />}>{componentKindLabel(doc().kind!)}</HeadValue></Show>
+          <Show when={doc().tech}><HeadValue icon={<Cpu size={14} />}>{doc().tech}</HeadValue></Show>
+        </Show>
+        <Show when={component() && props.edits.patch}>
+          <PickerValue label="Kind" icon={<Package size={14} />} value={doc().kind} placeholder="Kind" options={KIND_OPTIONS}
+            onChange={(value) => props.edits.patch!({ kind: value === NO_KIND ? "" : value })} />
+          <span class="pw-structure__pick-field">
+            <span class="pw-structure__value-icon" aria-hidden><Cpu size={14} /></span>
+            <InlineText label="Technology" value={doc().tech ?? ""} placeholder="Technology" onCommit={(tech) => props.edits.patch!({ tech })} />
+          </span>
+        </Show>
+        <Show when={props.actions.length}><EntityMenuButton label={`Actions for ${doc().title}`} actions={props.actions} /></Show>
       </HeadRow>
-      <Show when={props.checkout || props.path}>
+      <Show when={props.edits.patch} fallback={<Show when={doc().repo || doc().folder || doc().path}>
         <HeadRow label="Checkout">
-          <Show when={props.checkout}><HeadValue icon={<Folder size={14} />} mono>{props.checkout}</HeadValue></Show>
-          <Show when={props.path}><HeadValue icon={<Route size={14} />} mono>{props.path}</HeadValue></Show>
+          <Show when={checkoutLabel(doc().repo, doc().folder)}>{(label) => <HeadValue icon={<Folder size={14} />} mono>{label()}</HeadValue>}</Show>
+          <Show when={doc().path}><HeadValue icon={<Route size={14} />} mono>{doc().path}</HeadValue></Show>
+        </HeadRow>
+      </Show>}>
+        <HeadRow label="Checkout">
+          <PickerValue label="Repository" icon={<GitBranch size={14} />} value={doc().repo} placeholder="Repository" options={repositoryOptions()} mono
+            onChange={(repo) => props.edits.patch!({ repo })} />
+          <span class="pw-structure__pick-field">
+            <span class="pw-structure__value-icon" aria-hidden><Folder size={14} /></span>
+            <InlineText label="Folder" class="font-mono" value={doc().folder ?? ""} placeholder="Folder" onCommit={(folder) => props.edits.patch!({ folder })} />
+          </span>
+          <Show when={doc().path}><HeadValue icon={<Route size={14} />} mono>{doc().path}</HeadValue></Show>
         </HeadRow>
       </Show>
-      <Show when={props.uses?.length}>
-        <HeadRow label="Uses"><For each={props.uses!}>{(title) => <HeadValue icon={<Link2 size={14} />}>{title}</HeadValue>}</For></HeadRow>
+      <Show when={doc().uses.length || props.edits.uses}>
+        <HeadRow label="Uses">
+          <For each={doc().uses}>{(use) => <span class="pw-structure__chip">
+            <HeadValue icon={<Link2 size={14} />}>{use.title}</HeadValue>
+            <Show when={props.edits.uses}>
+              <Button size="icon" variant="ghost" class="pw-structure__chip-remove" aria-label={`Remove ${use.title}`} onClick={() => props.edits.uses!(doc().uses.filter((item) => item.id !== use.id).map((item) => item.id))}><XIcon size={12} /></Button>
+            </Show>
+          </span>}</For>
+          <Show when={props.edits.uses}>
+            <LinkButton label="Add dependency" options={props.edits.usesOptions ?? []} onPick={(id) => props.edits.uses!([...doc().uses.map((item) => item.id), id])} />
+          </Show>
+        </HeadRow>
       </Show>
-      <Show when={props.deploys?.length}>
+      <Show when={doc().deploys?.length || props.edits.editDeploys}>
         <HeadRow label="Deploys">
-          <For each={props.deploys!}>{(deploy) => <HeadValue icon={<Cloud size={14} />}>
+          <For each={doc().deploys ?? []}>{(deploy) => <HeadValue icon={<Cloud size={14} />}>
             {deploy.resource}<span class="pw-structure__value-muted">{deploy.provider} / {deploy.environment || deploy.environmentId}</span>
             <Show when={!props.isProviderConnected(deploy.provider)}><StatusChip tone="warn" label="CLI not connected" /></Show>
           </HeadValue>}</For>
+          <Show when={props.edits.editDeploys}>
+            <Button size="icon" variant="ghost" aria-label="Edit deploys" onClick={() => props.edits.editDeploys!()}><Pencil size={14} /></Button>
+          </Show>
         </HeadRow>
       </Show>
     </dl>
-    <For each={RECORD_SECTIONS}>{(section) => <Show when={props.records[section.key].length}>
-      <DocumentSection title={section.title} count={props.records[section.key].length}>
-        <RecordTable label={section.title} rows={props.records[section.key]} icon={<section.Icon size={14} />}
-          onOpen={props.onOpenRecord ? (id) => props.onOpenRecord!(section.kind, id) : undefined} />
-      </DocumentSection>
-    </Show>}</For>
+    <For each={RECORD_SECTIONS}>{(section) => {
+      const options = () => props.edits.linkOptions?.[section.kind];
+      return <Show when={doc().records[section.key].length || options()}>
+        <DocumentSection title={section.title} count={doc().records[section.key].length}
+          actions={options() && props.edits.link ? <LinkButton label={`Link ${section.title.toLowerCase().replace(/s$/, "")}`} options={options()!} onPick={(id) => props.edits.link!(section.kind, id)} /> : undefined}>
+          <Show when={doc().records[section.key].length} fallback={<p class="pw-structure__empty">Nothing linked yet.</p>}>
+            <RecordTable label={section.title} rows={doc().records[section.key]} icon={<section.Icon size={14} />}
+              onOpen={props.onOpenRecord ? (id) => props.onOpenRecord!(section.kind, id) : undefined}
+              onUnlink={props.edits.unlink ? (id) => props.edits.unlink!(section.kind, id) : undefined} />
+          </Show>
+        </DocumentSection>
+      </Show>;
+    }}</For>
   </article>;
 }
 
@@ -190,14 +316,15 @@ export function StructureView(props: {
   integrations?: readonly WorkspaceIntegration[];
   /** Called when deploys change for a component node. */
   onDeploysChange?: (nodeId: string, deploys: { environmentId: string; provider: string; resource: string }[]) => Promise<void>;
-  /** Writes a component's kind and technology; empty values clear them. */
-  onKindTechChange?: (nodeId: string, kind: string, tech: string) => Promise<void>;
-  scopeTokens?: readonly ScopeFilterToken[];
-  scopeNodes?: readonly ScopeNodeItem[];
-  scopeEnvironments?: readonly EnvironmentItem[];
-  onScopeTokensChange?: (tokens: ScopeFilterToken[]) => void;
+  /** Writes a node's title, description, checkout, kind, or technology from its document. */
+  onEditNode?: (nodeId: string, patch: StructureNodePatch) => Promise<void>;
+  /** Writes the project's name or description from its document. */
+  onEditProject?: (patch: { name?: string; description?: string }) => Promise<void>;
+  /** Links a card, decision, fact, or doc to a node, or unlinks it when `nodeId` is empty. */
+  onLinkRecord?: (kind: StructureRecordKind, recordId: string, nodeId: string) => Promise<void>;
+  /** Checkout names a node's repository can be set to. */
+  repositories?: readonly string[];
 }) {
-  const [query, setQuery] = createSignal("");
   // Expanded tree rows are remembered, so returning to Structure keeps the same layout.
   const [expanded, setExpanded] = createSignal<string[]>(readRemembered("structure.expanded", [PROJECT_ID]));
   createEffect(() => writeRemembered("structure.expanded", expanded()));
@@ -211,20 +338,11 @@ export function StructureView(props: {
   const [kind, setKind] = createSignal<StructureKind>("system");
   const [parent, setParent] = createSignal("");
   const [moveOpen, setMoveOpen] = createSignal(false);
-  const [usesOpen, setUsesOpen] = createSignal(false);
-  const [useTargets, setUseTargets] = createSignal<string[]>([]);
   const [formError, setFormError] = createSignal("");
   const [deploysOpen, setDeploysOpen] = createSignal(false);
-  const [kindTechOpen, setKindTechOpen] = createSignal(false);
-  const [draftKind, setDraftKind] = createSignal("");
-  const [draftTech, setDraftTech] = createSignal("");
-  const techHint = () => {
-    const suggestions = component(draftKind())?.technologies ?? [];
-    return suggestions.length ? `e.g. ${suggestions.slice(0, 3).join(", ")}` : "e.g. Go, Postgres";
-  };
   const [editingDeploys, setEditingDeploys] = createSignal<{ environmentId: string; provider: string; resource: string }[]>([]);
   const target = createDetailPanelSelector((state) => state.activeTarget);
-  const tree = createMemo(() => buildStructureTree(props.nodes, query()));
+  const tree = createMemo(() => buildStructureTree(props.nodes, ""));
   const visible = createMemo(() => flattenStructureTree(tree()));
   const selectedId = () => target()?.scopeId === STRUCTURE_SCOPE ? target()?.entityId : undefined;
   const selected = createMemo(() => props.nodes.find((node) => node.id === selectedId()));
@@ -285,14 +403,10 @@ export function StructureView(props: {
     }
   };
 
-  const usesTitles = (node: StructureNode) => (node.uses ?? []).map((path) => registry().find((item) => item.path === path)?.title ?? path);
   // Actions select their node first: the dialogs below act on the selection.
   const nodeActions = (node: StructureNode): EntityAction[] => [
     ...(node.level === "component" ? [] : [{ id: "add-child", label: node.level === "system" ? "Add domain" : "Add component", icon: Plus, onSelect: () => { open(node.id); props.onOpenCreate(); } }]),
     { id: "move", label: "Move", icon: Route, disabled: node.level === "system", onSelect: () => { open(node.id); setParent(node.parentId); setFormError(""); setMoveOpen(true); } },
-    { id: "uses", label: "Dependencies", icon: Link2, onSelect: () => { open(node.id); setUseTargets(registry().filter((item) => node.uses?.includes(item.path)).map((item) => item.id)); setFormError(""); setUsesOpen(true); } },
-    ...(node.level === "component" && props.onKindTechChange ? [{ id: "kind-tech", label: "Kind and technology", icon: Package, onSelect: () => { open(node.id); setDraftKind(node.kind ?? ""); setDraftTech(node.tech ?? ""); setFormError(""); setKindTechOpen(true); } }] : []),
-    ...(node.level === "component" && props.onDeploysChange ? [{ id: "deploys", label: "Edit deploys", icon: Cloud, onSelect: () => { open(node.id); openDeploysDialog(node); } }] : []),
   ];
   const projectActions = (): EntityAction[] => [{ id: "add-system", label: "Add system", icon: Plus, disabled: !!props.loading || !!props.error, onSelect: () => { open(PROJECT_ID); props.onOpenCreate(); } }];
   const addChild = (id: string) => { open(id); props.onOpenCreate(); };
@@ -311,13 +425,44 @@ export function StructureView(props: {
 
   // A click or the arrow keys select a node; its document shows beside the tree and the row stays selected.
   const treeSelection = createMemo(() => [selectedId() ?? PROJECT_ID]);
-  const detail = createMemo(() => {
+  // A write from the document; a refusal comes back as a toast and the field shows the stored value again.
+  const write = (action: Promise<void> | undefined, failure: string) => {
+    void action?.catch((error: unknown) => pushToast(error instanceof Error ? error.message : failure, "danger"));
+  };
+  const detail = createMemo<NodeDocumentModel | undefined>(() => {
     const id = selectedId() ?? PROJECT_ID;
-    if (id === PROJECT_ID) return { title: props.projectName, level: "project" as const, actions: projectActions(), description: props.projectDescription, properties: [["Level", "Project"]] as const, records: props.projectRecords, checkout: props.projectRepository };
+    if (id === PROJECT_ID) return { id, project: true, title: props.projectName, level: "project", description: props.projectDescription, repo: props.projectRepository, uses: [], records: props.projectRecords };
     const node = selected();
     if (!node) return undefined;
-    return { title: node.title, level: node.level, actions: nodeActions(node), description: node.intent, properties: nodeProperties(node), records: props.records[node.id] ?? NO_RECORDS, checkout: checkoutLabel(node.repo, node.folder), path: node.path,
-      uses: usesTitles(node), deploys: node.level === "component" ? node.deploys : undefined };
+    return { id: node.id, project: false, title: node.title, level: node.level, description: node.intent, kind: node.kind, tech: node.tech, repo: node.repo, folder: node.folder, path: node.path,
+      uses: registry().filter((item) => node.uses?.includes(item.path)).map((item) => ({ id: item.id, title: item.title })),
+      deploys: node.level === "component" ? node.deploys : undefined, records: props.records[node.id] ?? NO_RECORDS };
+  });
+  const edits = createMemo<NodeDocumentEdits>(() => {
+    const doc = detail();
+    if (!doc) return {};
+    if (doc.project) return {
+      title: props.onEditProject ? (name) => write(props.onEditProject!({ name }), "Could not rename the project.") : undefined,
+      description: props.onEditProject ? (description) => write(props.onEditProject!({ description }), "Could not save the description.") : undefined,
+    };
+    const node = selected()!;
+    const linked = (kind: keyof StructureRecords) => new Set(doc.records[kind].map((record) => record.id));
+    const candidates = (kind: keyof StructureRecords) => props.projectRecords[kind].filter((record) => !linked(kind).has(record.id)).map((record) => ({ value: record.id, label: record.title }));
+    return {
+      title: props.onEditNode ? (title) => write(props.onEditNode!(node.id, { title }), "Could not rename the node.") : undefined,
+      description: props.onEditNode ? (intent) => write(props.onEditNode!(node.id, { intent }), "Could not save the description.") : undefined,
+      patch: props.onEditNode ? (patch) => write(props.onEditNode!(node.id, patch), "Could not save the node.") : undefined,
+      repositories: props.repositories,
+      uses: (ids) => write(props.onUses(node.id, ids), "Could not save dependencies."),
+      usesOptions: registry().filter((item) => item.id !== node.id && !node.uses?.includes(item.path)).map((item) => ({ value: item.id, label: `${item.title} (${kindLabel(item.level)})` })),
+      editDeploys: node.level === "component" && props.onDeploysChange ? () => openDeploysDialog(node) : undefined,
+      linkOptions: props.onLinkRecord ? {
+        ...(node.level === "component" ? { card: candidates("cards") } : {}),
+        decision: candidates("decisions"), fact: candidates("facts"), doc: candidates("docs"),
+      } : undefined,
+      link: props.onLinkRecord ? (kind, id) => write(props.onLinkRecord!(kind, id, node.id), "Could not link it.") : undefined,
+      unlink: props.onLinkRecord ? (kind, id) => write(props.onLinkRecord!(kind, id, ""), "Could not unlink it.") : undefined,
+    };
   });
 
   createEffect(() => {
@@ -335,9 +480,6 @@ export function StructureView(props: {
     untrack(() => { const current = expanded(); const next = [...new Set([...current, ...ancestors])]; if (next.length !== current.length) setExpanded(next); });
   });
   createEffect(() => {
-    if (query().trim()) setExpanded([PROJECT_ID, ...visible().map((node) => node.id)]);
-  });
-  createEffect(() => {
     if (!props.createDialogOpen) return;
     setTitle(""); setKind("system"); setParent(""); setFormError("");
     const node = untrack(selected);
@@ -352,17 +494,6 @@ export function StructureView(props: {
     finally { setBusy(false); }
   }
 
-  const filters = createPageFilters({
-    surface: "structure",
-    fields: () => [],
-    scope: {
-      tokens: () => props.scopeTokens ?? [],
-      nodes: () => props.scopeNodes ?? [],
-      environments: () => props.scopeEnvironments ?? [],
-      allowEnv: true,
-      onTokensChange: (tokens) => props.onScopeTokensChange?.(tokens),
-    },
-  });
 
   return <div class="flex min-h-0 flex-1 flex-col">
     <PageToolbar.Root>
@@ -370,29 +501,10 @@ export function StructureView(props: {
         <Button size="icon" variant="texture" aria-label={treeOpen() ? "Hide structure tree" : "Show structure tree"} aria-expanded={treeOpen()} selected={treeOpen()}
           onClick={() => setTreeOpen((value) => !value)}><SidebarLeftIcon size={14} /></Button>
       </PageToolbar.Leading>
-      <PageToolbar.Actions>
-        <SearchBar placeholder="Search structure…" value={query()} onInput={setQuery} />
-        <FilterPopover
-          ariaLabel="Structure filters"
-          title="Filter structure"
-          shortcut
-          fields={filters.fields()}
-          clauses={filters.clauses()}
-          onClausesChange={filters.onClausesChange}
-          saved={filters.saved()}
-        />
-        <ToolbarIconButton label="Add node" disabled={props.loading || !!props.error} onClick={props.onOpenCreate}><Plus size={14} /></ToolbarIconButton>
-      </PageToolbar.Actions>
+      <PageToolbar.Actions>{null}</PageToolbar.Actions>
     </PageToolbar.Root>
-    <ActiveFilterBar
-      fields={filters.fields()}
-      clauses={filters.clauses()}
-      onClausesChange={filters.onClausesChange}
-      saved={filters.saved()}
-    />
     <Show when={props.loading} fallback={<Show when={props.error} fallback={
       <PageContent class="flex flex-col overflow-hidden">
-        <Show when={visible().length} fallback={<PageEmpty title={query().trim() ? "No matches" : "No structure yet"} mood={query().trim() ? "lost" : "sleeping"} >{!query().trim() ? <PromptCardGrid items={STRUCTURE_AGENT_PROMPTS.map((item) => ({ id: item.id, title: item.title, description: item.description, tone: item.tone, icon: <KindIcon kind={item.level} size={16} />, prompt: item.prompt }))} /> : undefined}</PageEmpty>}>
           <div class="pw-structure">
           <nav ref={setTreePane} class="pw-structure__tree" aria-label="Structure tree">
             <Card class="pw-structure__tree-card pw-scroll-fade">
@@ -401,10 +513,14 @@ export function StructureView(props: {
             </Card>
           </nav>
           <div class="pw-structure__pane pw-scroll-fade">
-            <Show when={detail()}>{(item) => <NodeDocument {...item()} isProviderConnected={isProviderConnected} onOpenRecord={props.onOpenRecord} />}</Show>
+            <Show when={detail()}>{(item) => <NodeDocument doc={item()} actions={item().project ? projectActions() : nodeActions(selected()!)} edits={edits()} isProviderConnected={isProviderConnected} onOpenRecord={props.onOpenRecord} />}</Show>
+            <Show when={!props.nodes.length}>
+              <div class="pw-document__column pw-structure__start">
+                <PageEmpty title="No structure yet" mood="sleeping"><PromptCardGrid items={STRUCTURE_AGENT_PROMPTS.map((item) => ({ id: item.id, title: item.title, description: item.description, tone: item.tone, icon: <KindIcon kind={item.level} size={16} />, prompt: item.prompt }))} /></PageEmpty>
+              </div>
+            </Show>
           </div>
           </div>
-        </Show>
       </PageContent>
     }><PageError message={props.error!} /></Show>}><PageLoading label="Loading structure…" /></Show>
     <A11yDialog open={!!props.createDialogOpen || moveOpen()} title={moveOpen() ? "Move node" : "Add structure node"} dismissible={!busy()} onClose={() => { if (!busy()) { setMoveOpen(false); props.onCloseCreate(); } }} footer={<>
@@ -413,24 +529,6 @@ export function StructureView(props: {
     </>}>
       <FormStack><Show when={!moveOpen()}><Field label="Name"><Input value={title()} onInput={(event) => setTitle(event.currentTarget.value)} /></Field><Field label="Kind"><Select value={kind()} options={[{ value: "system", label: "System" }, { value: "domain", label: "Domain" }, { value: "component", label: "Component" }]} onChange={(value) => { setKind(value as StructureKind); setParent(""); }} /></Field></Show>
         <Show when={moveOpen() || kind() !== "system"}><Field label="Parent"><Select value={parent()} options={parentOptions()} onChange={setParent} placeholder="Choose a parent" /></Field><Show when={!parents().length}><p class="text-sm text-[var(--color-text-muted)]">Add a system before adding domains or components.</p></Show></Show>
-        <Show when={formError()}><p role="alert" class="text-sm text-[var(--color-danger)]">{formError()}</p></Show>
-      </FormStack>
-    </A11yDialog>
-    <A11yDialog open={usesOpen()} title="Dependencies" dismissible={!busy()} onClose={() => { if (!busy()) setUsesOpen(false); }} footer={<><Button variant="ghost" disabled={busy()} onClick={() => setUsesOpen(false)}>Cancel</Button><Button disabled={busy()} onClick={() => void save(() => props.onUses(selected()!.id, useTargets()), () => setUsesOpen(false))}>{busy() ? "Saving…" : "Save"}</Button></>}>
-      <Show when={registry().some((node) => node.id !== selectedId())} fallback={<p class="text-sm text-[var(--color-text-muted)]">No other structure nodes yet.</p>}><FormStack><For each={registry().filter((node) => node.id !== selectedId())}>{(node) => <Checkbox label={node.title} checked={useTargets().includes(node.id)} onCheckedChange={(event) => setUseTargets((ids) => event.checked === true ? [...ids, node.id] : ids.filter((id) => id !== node.id))} />}</For></FormStack></Show>
-      <Show when={formError()}><p role="alert" class="text-sm text-[var(--color-danger)]">{formError()}</p></Show>
-    </A11yDialog>
-    <A11yDialog open={kindTechOpen()} title="Kind and technology" dismissible={!busy()} onClose={() => { if (!busy()) setKindTechOpen(false); }} footer={<>
-      <Button variant="ghost" disabled={busy()} onClick={() => setKindTechOpen(false)}>Cancel</Button>
-      <Button disabled={busy()} onClick={() => void save(() => props.onKindTechChange!(selected()!.id, draftKind(), draftTech().trim()), () => setKindTechOpen(false))}>{busy() ? "Saving…" : "Save"}</Button>
-    </>}>
-      <FormStack>
-        <Field label="Kind" hint="What this component is. The canvas uses the same kinds.">
-          <Select aria-label="Component kind" value={draftKind() || NO_KIND} options={KIND_OPTIONS} onChange={(value) => setDraftKind(value === NO_KIND ? "" : value)} />
-        </Field>
-        <Field label="Technology" hint="Free text: the language, framework, or product it is built with.">
-          <Input aria-label="Technology" value={draftTech()} placeholder={techHint()} onInput={(event) => setDraftTech(event.currentTarget.value)} />
-        </Field>
         <Show when={formError()}><p role="alert" class="text-sm text-[var(--color-danger)]">{formError()}</p></Show>
       </FormStack>
     </A11yDialog>

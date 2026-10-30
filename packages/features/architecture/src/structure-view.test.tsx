@@ -1,7 +1,7 @@
 import { render } from "solid-js/web";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { detailPanelDefaultState, detailPanelStore } from "@polterware/frontend-state";
-import { STRUCTURE_SCOPE, StructureView, checkoutLabel, componentKindLabel, type StructureNode } from "./index";
+import { STRUCTURE_SCOPE, StructureView, checkoutLabel, componentKindLabel, type StructureNode, type StructureNodePatch } from "./index";
 
 const nodes: StructureNode[] = [
   { id: "sys", parentId: "", level: "system", path: "app", title: "Application", intent: "", repo: "", decisions: [] },
@@ -10,12 +10,13 @@ const nodes: StructureNode[] = [
 ];
 let dispose: (() => void) | undefined;
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
-function mount(options: { error?: string; loading?: boolean } = {}) {
+function mount(options: { error?: string; loading?: boolean; onEditNode?: (nodeId: string, patch: StructureNodePatch) => Promise<void>; onLinkRecord?: (kind: string, id: string, nodeId: string) => Promise<void> } = {}) {
   const host = document.createElement("div");
   document.body.append(host);
   const open = vi.fn((entityId: string) => { detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId, entityKind: "arch-node" }); });
   const openRecord = vi.fn();
-  dispose = render(() => <StructureView projectName="Project" nodes={nodes} records={{ api: { cards: [{ id: "api-auth", title: "Add auth", caption: "Build" }], decisions: [{ id: "dec-1", title: "Use Go", caption: "Active" }], facts: [], docs: [] } }} projectRecords={{ cards: [], decisions: [], facts: [], docs: [] }} onOpenRecord={openRecord}
+  dispose = render(() => <StructureView projectName="Project" nodes={nodes} records={{ api: { cards: [{ id: "api-auth", title: "Add auth", caption: "Build", direct: true }], decisions: [{ id: "dec-1", title: "Use Go", caption: "Active", direct: true }], facts: [], docs: [] } }}
+    projectRecords={{ cards: [{ id: "api-auth", title: "Add auth" }], decisions: [{ id: "dec-1", title: "Use Go" }, { id: "dec-2", title: "Keep one core" }], facts: [], docs: [] }} onOpenRecord={openRecord}
     onOpenNode={open} onSelect={() => {}} onOpenCreate={() => {}} onCloseCreate={() => {}} onCreate={async () => {}} onMove={async () => {}} onUses={async () => {}} {...options} />, host);
   return { host, open, openRecord };
 }
@@ -31,9 +32,10 @@ describe("Structure collection", () => {
     expect(host.querySelector(".pw-tree--compact")).not.toBeNull();
     expect(host.querySelector(".pw-tree__row.card-panel")).toBeNull();
     expect(host.querySelector(".pw-structure__document h1")?.textContent).toBe("Project");
-    const search = host.querySelector<HTMLInputElement>('[role="searchbox"]')!;
-    search.value = "api";
-    search.dispatchEvent(new Event("input", { bubbles: true }));
+    // The toolbar holds only the tree toggle: no search, filters, or add button.
+    expect(host.querySelector('[role="searchbox"]')).toBeNull();
+    expect(host.querySelector('button[aria-label="Add node"]')).toBeNull();
+    detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId: "web", entityKind: "arch-node" });
     await tick();
     const api = host.querySelector<HTMLElement>('[data-part="item"][data-value="api"]')!;
     // One line with the title alone; the node's content lives in the document.
@@ -71,12 +73,40 @@ describe("Structure collection", () => {
     expect(host.querySelector<HTMLElement>(".pw-structure__tree")!.inert).toBe(true);
     expect(host.querySelector('button[aria-label="Show structure tree"]')?.getAttribute("aria-expanded")).toBe("false");
   });
-  it("retains the toolbar and exposes a collection error", async () => {
+  it("edits a node's document in place and links and unlinks its records", async () => {
+    const onEditNode = vi.fn(async () => {});
+    const onLinkRecord = vi.fn(async () => {});
+    const { host } = mount({ onEditNode, onLinkRecord });
+    await tick();
+    detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId: "api", entityKind: "arch-node" });
+    await tick();
+    const doc = host.querySelector<HTMLElement>(".pw-structure__document")!;
+    const commit = (field: HTMLInputElement | HTMLTextAreaElement, value: string) => {
+      field.value = value;
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+      field.dispatchEvent(new FocusEvent("blur"));
+    };
+    commit(doc.querySelector<HTMLInputElement>('input[aria-label="Title"]')!, "Public API");
+    expect(onEditNode).toHaveBeenLastCalledWith("api", { title: "Public API" });
+    commit(doc.querySelector<HTMLTextAreaElement>('textarea[aria-label="Description"]')!, "Serves every client");
+    expect(onEditNode).toHaveBeenLastCalledWith("api", { intent: "Serves every client" });
+    commit(doc.querySelector<HTMLInputElement>('input[aria-label="Technology"]')!, "Go 1.24");
+    expect(onEditNode).toHaveBeenLastCalledWith("api", { tech: "Go 1.24" });
+    // An empty title is refused and restored; an unchanged value writes nothing.
+    const calls = onEditNode.mock.calls.length;
+    commit(doc.querySelector<HTMLInputElement>('input[aria-label="Title"]')!, " ");
+    commit(doc.querySelector<HTMLInputElement>('input[aria-label="Folder"]')!, "src/api");
+    expect(onEditNode.mock.calls.length).toBe(calls);
+    // A direct link has Unlink; the section's + links what is not linked yet.
+    doc.querySelector<HTMLButtonElement>('button[aria-label="Unlink Use Go"]')!.click();
+    expect(onLinkRecord).toHaveBeenLastCalledWith("decision", "dec-1", "");
+    expect(doc.querySelector('button[aria-label="Link decision"]')).not.toBeNull();
+    expect(doc.textContent).toContain("Facts");
+  });
+  it("exposes a collection error", async () => {
     const { host } = mount({ error: "Core unavailable" });
     await tick();
-    expect(host.querySelector('[role="searchbox"]')).not.toBeNull();
     expect(host.textContent).toContain("Core unavailable");
-    expect(host.querySelector<HTMLButtonElement>('button[aria-label="Add node"]')?.disabled).toBe(true);
   });
 });
 

@@ -250,6 +250,25 @@
   min-width: 0;
 }
 
+/* A CollapsibleSection heading: the toggle fills the row; actions sit after it, outside the button. */
+.pw-collapsible-section__heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.pw-collapsible-section__heading > .pw-detail-panel__section-toggle {
+  flex: 1 1 auto;
+}
+
+.pw-collapsible-section__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
 .pw-detail-panel__section-aside {
   flex: none;
   color: var(--color-text-muted);

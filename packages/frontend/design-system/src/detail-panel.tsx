@@ -205,18 +205,21 @@ function DetailPanelSection(props: DetailPanelSectionProps) {
 }
 
 /** Titled, collapsible block for page content (not the floating panel); shares the animated body. */
-export function CollapsibleSection(props: { title: string; icon?: JSX.Element; /** Muted text after the title, such as a count. */ aside?: JSX.Element; defaultOpen?: boolean; class?: string; children: JSX.Element }) {
+export function CollapsibleSection(props: { title: string; icon?: JSX.Element; /** Muted text after the title, such as a count. */ aside?: JSX.Element; /** Controls at the end of the heading, outside the toggle, such as an add button. */ actions?: JSX.Element; defaultOpen?: boolean; class?: string; children: JSX.Element }) {
   const [open, setOpen] = createSignal(props.defaultOpen !== false);
   const titleId = createUniqueId();
   const bodyId = createUniqueId();
   return (
     <section aria-labelledby={titleId} data-open={open()} class={`pw-detail-panel__section pw-detail-panel__section--card !border-0 ${props.class ?? ""}`}>
-      <button type="button" class="pw-detail-panel__section-toggle !w-auto !flex-none !py-1 [[data-open=true]_&]:!pb-4" aria-expanded={open()} aria-controls={bodyId} onClick={() => setOpen(value => !value)}>
-        <Show when={props.icon}><span class="pw-detail-panel__section-icon" aria-hidden>{props.icon}</span></Show>
-        <h3 id={titleId} class="pw-detail-panel__section-title">{props.title}</h3>
-        <Show when={props.aside}><span class="pw-detail-panel__section-aside">{props.aside}</span></Show>
-        <ChevronDown size={14} class="pw-detail-panel__section-chevron" aria-hidden />
-      </button>
+      <div class="pw-collapsible-section__heading [[data-open=true]_&]:pb-4">
+        <button type="button" class="pw-detail-panel__section-toggle !w-auto !py-1" aria-expanded={open()} aria-controls={bodyId} onClick={() => setOpen(value => !value)}>
+          <Show when={props.icon}><span class="pw-detail-panel__section-icon" aria-hidden>{props.icon}</span></Show>
+          <h3 id={titleId} class="pw-detail-panel__section-title">{props.title}</h3>
+          <Show when={props.aside}><span class="pw-detail-panel__section-aside">{props.aside}</span></Show>
+          <ChevronDown size={14} class="pw-detail-panel__section-chevron" aria-hidden />
+        </button>
+        <Show when={props.actions}><div class="pw-collapsible-section__actions">{props.actions}</div></Show>
+      </div>
       <DetailPanelSectionBody id={bodyId} open={open()}>{props.children}</DetailPanelSectionBody>
     </section>
   );
