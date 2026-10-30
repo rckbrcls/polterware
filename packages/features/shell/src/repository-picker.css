@@ -80,3 +80,41 @@
   font-weight: 500;
   color: var(--color-text-secondary);
 }
+
+/* Dashed: the Composer's quiet invite, like a board's add cell. */
+.pw-repository-picker[data-appearance="dashed"] {
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-card);
+  background: transparent;
+  color: var(--color-text-muted);
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.pw-repository-picker[data-appearance="dashed"][data-empty="true"] {
+  min-height: 6rem;
+  padding: 1rem;
+}
+
+.pw-repository-picker[data-appearance="dashed"][data-empty="false"] {
+  min-height: var(--control-height-md);
+  padding-inline: 0.75rem;
+}
+
+.pw-repository-picker[data-appearance="dashed"]:hover,
+.pw-repository-picker[data-appearance="dashed"]:focus-visible {
+  border-color: var(--color-border-default);
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.pw-repository-picker[data-appearance="dashed"] .pw-repository-picker__title {
+  color: inherit;
+  font-weight: 400;
+}
+
+.pw-repository-picker[data-appearance="dashed"] .pw-repository-picker__plus-icon {
+  color: inherit;
+}

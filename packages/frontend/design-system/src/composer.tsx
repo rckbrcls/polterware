@@ -31,6 +31,8 @@ export type ComposerProps = {
   properties?: readonly ComposerProperty[];
   /** Labelled text fields under the description, such as a file path. */
   fields?: readonly ComposerField[];
+  /** Content of the record's own under the title and description, such as a folder picker. */
+  body?: JSX.Element;
   /** A quiet action at the start of the footer, such as an import. */
   footerAction?: JSX.Element;
   submitLabel: string;
@@ -47,6 +49,12 @@ export type ComposerProps = {
   whyPlaceholder?: string;
   /** Opens the record's own page, for an edit of a record that has one: an Expand button beside Close. */
   onExpand?: () => void;
+  /** False keeps it open until it creates, such as the first project of an empty store. Defaults to true. */
+  dismissible?: boolean;
+  /** A title the host proposes, such as a picked folder's name: it fills the title while it is empty or still the last proposal. */
+  suggestedTitle?: string;
+  /** False holds the submit button for what the host still needs, such as a folder. Defaults to true. */
+  canSubmit?: boolean;
 };
 
 /**
@@ -64,7 +72,8 @@ export function Composer(props: ComposerProps) {
   let descriptionInput: HTMLTextAreaElement | undefined;
 
   const heading = () => props.crumbs[props.crumbs.length - 1] ?? props.submitLabel;
-  const canSubmit = () => title().trim().length > 0 && !busy();
+  const canSubmit = () => title().trim().length > 0 && props.canSubmit !== false && !busy();
+  let lastSuggestion = "";
 
   function reset() {
     setTitle(props.initial?.title ?? "");
@@ -72,7 +81,17 @@ export function Composer(props: ComposerProps) {
     setWhy(props.initial?.why ?? "");
   }
 
-  createEffect(on(() => props.open, (open) => { if (open) reset(); }));
+  createEffect(on(() => props.open, (open) => {
+    if (!open) return;
+    reset();
+    lastSuggestion = "";
+  }));
+
+  createEffect(on(() => props.suggestedTitle, (suggestion) => {
+    if (!suggestion) return;
+    if (!title().trim() || title() === lastSuggestion) setTitle(suggestion);
+    lastSuggestion = suggestion;
+  }, { defer: true }));
 
   async function submit() {
     if (!canSubmit()) return;
@@ -107,6 +126,7 @@ export function Composer(props: ComposerProps) {
       size="lg"
       chrome="flush"
       bodyClass="pw-composer__body"
+      dismissible={props.dismissible}
       onClose={() => { if (!busy()) props.onClose(); }}
       initialFocus={() => titleInput}
       // The property pickers are portalled popovers with a search field.
@@ -168,6 +188,7 @@ export function Composer(props: ComposerProps) {
             onInput={(event) => setDescription(event.currentTarget.value)}
           />
         </Show>
+        {props.body}
         <Index each={props.fields}>
           {(field) => (
             <label class="pw-composer__field">

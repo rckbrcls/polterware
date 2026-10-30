@@ -10,6 +10,8 @@ export function RepositoryPicker(props: {
   value?: string;
   disabled?: boolean;
   "aria-label"?: string;
+  /** `dashed`: a quiet dashed invite, for the Composer; `field` (default): a control field. */
+  appearance?: "field" | "dashed";
   onPick: () => Promise<string | null | undefined>;
   onChange?: (path: string) => void;
 }) {
@@ -33,7 +35,8 @@ export function RepositoryPicker(props: {
       type="button"
       disabled={props.disabled || picking()}
       aria-label={props["aria-label"] ?? (empty() ? "Select a project folder" : "Change project folder")}
-      class="pw-repository-picker control-field"
+      class={props.appearance === "dashed" ? "pw-repository-picker" : "pw-repository-picker control-field"}
+      data-appearance={props.appearance ?? "field"}
       data-empty={empty() ? "true" : "false"}
       data-picking={picking() ? "true" : "false"}
       onClick={() => {
