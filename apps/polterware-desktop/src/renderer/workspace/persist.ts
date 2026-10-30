@@ -4,7 +4,7 @@ import type {
   ProjectGeneralSettings,
   ProtectionLevel,
 } from "@polterware/feature-settings";
-import type { DocType, WorkspaceDecision, WorkspaceCatalogProvider, WorkspaceFeatureReview, WorkspaceMilestone, WorkCardKind, WorkStage } from "@polterware/feature-shell";
+import type { WorkspaceDecision, WorkspaceCatalogProvider, WorkspaceFeatureReview, WorkspaceMilestone, WorkCardKind, WorkStage } from "@polterware/feature-shell";
 import type { ChangeEnvelope, DecisionAction, FeatureFlowLine } from "@polterware/feature-knowledge";
 import { asNumber, asObjectArray, asRecord, asString } from "./format";
 import type { WorkspaceSnapshot } from "./load";
@@ -191,44 +191,14 @@ export async function persistKnowledgeTags(
   });
 }
 
-export async function persistKnowledgeSourcePath(
-  workspace: WorkspaceSnapshot,
-  projectId: string,
-  itemId: string,
-  path: string,
-  change: ChangeEnvelope,
-): Promise<void> {
-  const current = workspace.rawKnowledge.find((item) => asString(item.id) === itemId);
-  if (!current) return;
-  let extra: Record<string, unknown> = {};
-  try {
-    extra = JSON.parse(asString(current.extraJson, "{}")) as Record<string, unknown>;
-  } catch {
-    extra = {};
-  }
-  await core().knowledge.save({
-    item: {
-      ...current,
-      projectId,
-      extraJson: JSON.stringify({ ...extra, path }),
-    },
-    change: changePayload(change),
-  });
-}
-
-/**
- * Create a knowledge item: a Decision, or a doc of `docType` (doc when omitted) whose
- * `path` points at a project file when the doc stands for one.
- */
+/** Create a knowledge item: a Decision or a doc. */
 export async function persistKnowledgeCreate(input: {
   projectId: string;
   kind: "doc" | "decision";
-  docType?: DocType;
   title: string;
   body?: string;
   extraJson?: string;
   tags?: string[];
-  path?: string;
   change: ChangeEnvelope;
 }): Promise<string> {
   const decision = input.kind === "decision";
@@ -236,7 +206,6 @@ export async function persistKnowledgeCreate(input: {
   const defaultBody = decision
     ? "## Status\n\nProposed\n\n## Context\n\n\n\n## Decision\n\n\n\n## Consequences\n\n"
     : "";
-  const path = input.path?.trim();
   await core().knowledge.save({
     item: {
       id,
@@ -244,32 +213,16 @@ export async function persistKnowledgeCreate(input: {
       title: input.title,
       body: input.body ?? defaultBody,
       kind: input.kind,
-      docType: decision ? "" : (input.docType ?? "doc"),
+      docType: decision ? "" : "doc",
       tags: decision ? [] : [...new Set(input.tags ?? [])],
       summary: "",
       owner: "human",
       status: decision ? "proposed" : "",
-      extraJson: input.extraJson ?? (path ? JSON.stringify({ path }) : "{}"),
+      extraJson: input.extraJson ?? "{}",
     },
     change: changePayload(input.change),
   });
   return id;
-}
-
-/** Changes what a doc is (doc, runbook, or source), keeping the rest of the item. */
-export async function persistKnowledgeDocType(
-  workspace: WorkspaceSnapshot,
-  projectId: string,
-  itemId: string,
-  docType: DocType,
-  change: ChangeEnvelope,
-): Promise<void> {
-  const current = workspace.rawKnowledge.find((item) => asString(item.id) === itemId);
-  if (!current) return;
-  await core().knowledge.save({
-    item: { ...current, projectId, docType },
-    change: changePayload(change),
-  });
 }
 
 /** Scopes a knowledge item (Decision or Evidence) to a Structure node path; an empty path clears it. */
@@ -346,22 +299,6 @@ export async function persistStructureMoveNode(input: {
     structureNodeText({ heading: input.path, title: input.title, level: input.level, under: input.under }),
     input.change,
   );
-}
-
-/**
- * Replace a Structure node's `uses:` list (the node paths it depends on). An empty
- * list clears it. The heading is the node's current path.
- */
-export async function persistStructureUses(input: {
-  projectId: string;
-  path: string;
-  title: string;
-  level: string;
-  uses: readonly string[];
-  change: ChangeEnvelope;
-}): Promise<void> {
-  const text = structureNodeText({ heading: input.path, title: input.title, level: input.level });
-  await applyPolter(input.projectId, `${text}uses: ${input.uses.join(", ")}\n`, input.change);
 }
 
 /**
@@ -860,27 +797,6 @@ export async function persistIntegrationSync(input: {
   };
 }
 
-export async function persistImportProjectSources(input: {
-  projectId: string;
-}): Promise<{
-  factCount: number;
-  evidenceCount: number;
-  sourceCount: number;
-  skippedCount: number;
-  message: string;
-}> {
-  const response = asRecord(
-    await core().canon.importSources({ projectId: input.projectId }),
-  );
-  return {
-    factCount: asNumber(response.factCount, 0),
-    evidenceCount: asNumber(response.evidenceCount, 0),
-    sourceCount: asNumber(response.sourceCount, 0),
-    skippedCount: asNumber(response.skippedCount, 0),
-    message: asString(response.message, "Import finished."),
-  };
-}
-
 export async function persistCanonFact(input: {
   fact: {
     id?: string;
@@ -904,49 +820,6 @@ export async function persistCanonFact(input: {
       createdAt: "",
       updatedAt: "",
     },
-    change: changePayload(input.change),
-  });
-}
-
-export async function persistCanonEvidence(input: {
-  evidence: {
-    id?: string;
-    projectId: string;
-    kind: string;
-    summary: string;
-    path?: string;
-  };
-  change: ChangeEnvelope;
-}): Promise<{ id: string }> {
-  const id = input.evidence.id?.trim() || newId("ev");
-  await core().canon.upsertEvidence({
-    evidence: {
-      id,
-      projectId: input.evidence.projectId,
-      kind: input.evidence.kind,
-      summary: input.evidence.summary,
-      path: input.evidence.path ?? "",
-      source: "",
-      actor: "",
-      observedAt: "",
-      createdAt: "",
-      updatedAt: "",
-    },
-    change: changePayload(input.change),
-  });
-  return { id };
-}
-
-export async function persistLinkEvidenceToFact(input: {
-  projectId: string;
-  factId: string;
-  evidenceId: string;
-  change: ChangeEnvelope;
-}): Promise<void> {
-  await core().canon.linkEvidenceToFact({
-    projectId: input.projectId,
-    factId: input.factId,
-    evidenceId: input.evidenceId,
     change: changePayload(input.change),
   });
 }

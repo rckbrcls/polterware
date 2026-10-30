@@ -32,7 +32,7 @@ const SpecCore = "Polter format v1: markdown that writes Work cards. One apply i
 	"\n" +
 	"handoff:\n" +
 	"branch: feat/git-import\n" +
-	"next: wire into ImportProjectSources\n" +
+	"next: wire into ScanProject\n" +
 	"\n" +
 	"Rules:\n" +
 	"- `## slug: Title` is a card; the lowercase-kebab slug is its identity. Stages: shape, plan, build, verify, delivered. under: is a Structure component path; milestone: is a milestone slug (empty is the Backlog).\n" +
@@ -52,7 +52,7 @@ var SpecTopics = map[string]string{
 	"structure": "Polter Structure nodes.\n" +
 		"\n" +
 		"# core/import: Import\n" +
-		"level: component · under: core · kind: service · tech: Go · repo: api · path: src/import · uses: core/store\n" +
+		"level: component · under: core · kind: service · tech: Go · repo: api · path: src/import\n" +
 		"\n" +
 		"Intent paragraph.\n" +
 		"\n" +
@@ -60,7 +60,7 @@ var SpecTopics = map[string]string{
 		"\n" +
 		"- `# path: Title` is a Structure node. level: system, domain, or component. under: names the parent path. A component may also sit directly under its system (outside any domain). A different under: on an existing node moves it and rewrites descendant paths.\n" +
 		"- kind: says what a component is (frontend, service, api, worker, database, cache, queue, storage, auth, llm, and the other canvas component kinds; only components have one, empty clears); tech: names its technology in free text (Go, Postgres; empty clears).\n" +
-		"- uses: lists the node paths it depends on (comma separated; empty clears); the map draws them as edges. deploys: lists env=provider:resource links (comma separated; a present line replaces them, empty clears).\n" +
+		"- How nodes relate is drawn on a canvas, not declared here. deploys: lists env=provider:resource links (comma separated; a present line replaces them, empty clears).\n" +
 		"- repo: names a checkout from `polterware repo add` (empty is the project root); path: is a folder inside it, not the node path. A brief of a file finds the node with the longest repo + path prefix.\n" +
 		"- migrating: old design -> new design marks a node in transition (empty clears it). A card with `kind: architecture` is an Architecture Change: its under: names the node it changes; clear migrating: when the card is delivered.\n" +
 		"- A card under: names a component path once any component exists.\n",

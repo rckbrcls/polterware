@@ -165,10 +165,6 @@ export async function loadFacts(projectId: string) {
   return core().canon.listFacts({ projectId, ...scopeArgs() });
 }
 
-export async function loadCanonEvidence(projectId: string) {
-  return core().canon.listEvidence({ projectId, ...scopeArgs() });
-}
-
 export async function loadChanges(
   projectId: string,
   extra: { actorKind?: string; limit?: number } = {},

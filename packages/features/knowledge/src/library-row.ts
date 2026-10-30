@@ -22,6 +22,8 @@ export type LibraryRow = {
   entityKind: LibraryEntityKind;
   title: string;
   levelLabel: string;
+  /** The Decision's lifecycle state id; the filter matches it. */
+  state: WorkspaceDecision["state"];
   statusLabel: string;
   statusTone: StatusTone;
   owner: string;
@@ -31,6 +33,14 @@ export type LibraryRow = {
   pinned: boolean;
 };
 
+/** What a Decision's lifecycle state reads as. */
+export const DECISION_STATE_LABEL: Record<WorkspaceDecision["state"], string> = {
+  proposed: "Proposed",
+  active: "Active",
+  challenged: "Under review",
+  superseded: "Replaced",
+};
+
 /** The Library lists Decisions; docs have their own list. */
 export function libraryRowsFromWorkspace(input: { decisions?: WorkspaceDecision[] }): LibraryRow[] {
   const rows = (input.decisions ?? []).map((decision): LibraryRow => ({
@@ -38,7 +48,8 @@ export function libraryRowsFromWorkspace(input: { decisions?: WorkspaceDecision[
     entityKind: "decision",
     title: decision.title,
     levelLabel: decision.level === "principle" ? "Principle" : "Decision",
-    statusLabel: decision.state,
+    state: decision.state,
+    statusLabel: DECISION_STATE_LABEL[decision.state],
     statusTone: decisionStateTone(decision.state),
     owner: decision.owner,
     updatedAt: decision.updatedAt,
@@ -58,7 +69,7 @@ export function filterLibraryRows(
 ): LibraryRow[] {
   const needle = filters.query.trim().toLowerCase();
   return rows.filter((row) => {
-    if (filters.statuses.length > 0 && !filters.statuses.includes(row.statusLabel)) return false;
+    if (filters.statuses.length > 0 && !filters.statuses.includes(row.state)) return false;
     if (filters.linked === "linked" && !row.hasLinks) return false;
     if (filters.linked === "unlinked" && row.hasLinks) return false;
     if (!needle) return true;

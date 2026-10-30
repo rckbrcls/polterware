@@ -62,12 +62,6 @@ func CheckGraph(doc Document, stored []structure.Node, cards []work.Card) []Diag
 		known[node.Path] = placed{level: node.Level, status: node.Status}
 	}
 	var diags []Diagnostic
-	type usesRef struct {
-		line int
-		from string
-		to   []string
-	}
-	var uses []usesRef
 	for _, node := range doc.Nodes {
 		level, _ := node.MetaValue("level")
 		under, hasUnder := node.MetaValue("under")
@@ -167,27 +161,6 @@ func CheckGraph(doc Document, stored []structure.Node, cards []work.Card) []Diag
 			delete(known, fromPath)
 		}
 		known[path] = entry
-		if value, ok := node.MetaValue("uses"); ok && status != structure.NodeRemoved {
-			uses = append(uses, usesRef{line: node.Line, from: path, to: splitList(value)})
-		}
-	}
-	// uses: may name a node defined later in the same text, so check after placement.
-	for _, ref := range uses {
-		for _, target := range ref.to {
-			prev, ok := known[target]
-			switch {
-			case target == ref.from:
-				diags = append(diags, Diagnostic{
-					Line: ref.line, Severity: SeverityError,
-					Message: fmt.Sprintf("node %q cannot use itself: remove it from uses:", target),
-				})
-			case !ok || prev.status == structure.NodeRemoved:
-				diags = append(diags, Diagnostic{
-					Line: ref.line, Severity: SeverityError,
-					Message: fmt.Sprintf("unknown uses %q: name a Structure node path", target),
-				})
-			}
-		}
 	}
 	if countComponents(known) == 0 {
 		return diags

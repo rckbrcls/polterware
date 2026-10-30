@@ -16,11 +16,6 @@ func StableEvidenceID(projectID, relPath string) string {
 	return "ev-import-" + shortHash(projectID+"|"+relPath)
 }
 
-// StableSourceID returns a deterministic knowledge source id for a relative path.
-func StableSourceID(projectID, relPath string) string {
-	return "src-import-" + shortHash(projectID+"|"+relPath)
-}
-
 // StableGitHeadEvidenceID is the single current-HEAD evidence row for a project.
 // Rescans replace its SHA in place.
 func StableGitHeadEvidenceID(projectID string) string {

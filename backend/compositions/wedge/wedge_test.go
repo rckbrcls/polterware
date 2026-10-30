@@ -48,7 +48,7 @@ func TestInitScanContextDrift(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if scan.FactCount == 0 || scan.EvidenceCount == 0 || scan.SourceCount == 0 {
+	if scan.FactCount == 0 || scan.EvidenceCount == 0 {
 		t.Fatalf("scan too small: %+v", scan)
 	}
 

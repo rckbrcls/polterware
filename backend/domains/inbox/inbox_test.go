@@ -19,12 +19,10 @@ func TestDeriveSourcesAndOrder(t *testing.T) {
 			SubjectIDs: []string{"t2"}, Details: map[string]string{"slug": "git-import", "task": "T2"}},
 		{Type: drift.TypeDeclaredObservedConflict, Severity: drift.SeverityConflict, Summary: "conflict", SubjectIDs: []string{"e1"}},
 	}
-	facts := []Fact{{ID: "fact-1", Statement: "Local auth is bearer token", TruthClass: "declared", Source: "mcp", Actor: "codex"}}
+	result := Derive(questions, findings, nil, nil)
 
-	result := Derive(questions, findings, facts, nil, nil)
-
-	if len(result.Items) != 5 {
-		t.Fatalf("items = %d, want 5 (info drift left out): %+v", len(result.Items), result.Items)
+	if len(result.Items) != 4 {
+		t.Fatalf("items = %d, want 4 (info drift left out): %+v", len(result.Items), result.Items)
 	}
 	var order []string
 	for _, item := range result.Items {
@@ -35,13 +33,12 @@ func TestDeriveSourcesAndOrder(t *testing.T) {
 		"drift:conflict",
 		"decision:How many commits back?",
 		"drift:task git-import T2 is done with no commit on main",
-		"verify:Local auth is bearer token",
 	}
 	if strings.Join(order, "|") != strings.Join(want, "|") {
 		t.Fatalf("order =\n%v\nwant\n%v", order, want)
 	}
-	if result.Open() != 5 || result.Blocking() != 2 {
-		t.Fatalf("open=%d blocking=%d, want 5 and 2", result.Open(), result.Blocking())
+	if result.Open() != 4 || result.Blocking() != 2 {
+		t.Fatalf("open=%d blocking=%d, want 4 and 2", result.Open(), result.Blocking())
 	}
 	if got := result.Items[3].Where; got != "git-import T2" {
 		t.Fatalf("drift where = %q", got)
@@ -57,22 +54,21 @@ func TestDeriveDispositions(t *testing.T) {
 		{ID: "q2", CardSlug: "a", Text: "Delegate me?", Blocking: true},
 	}
 	finding := drift.Finding{Type: drift.TypeCommitWithoutTask, Severity: drift.SeverityWarning, Summary: "commit", SubjectIDs: []string{"ev1"}, EvidenceIDs: []string{"ev1"}}
-	facts := []Fact{{ID: "f1", Statement: "rejected"}, {ID: "f2", Statement: "kept"}}
+	kept := []DeployLink{{NodeID: "n1", NodePath: "app/web", EnvironmentID: "env-prod", Environment: "production", Provider: "vercel"}}
 	t0 := time.Date(2026, 9, 28, 12, 0, 0, 0, time.UTC)
 	dispositions := []Disposition{
 		{Key: "decision:q1", Action: ActionDefer, CreatedAt: t0},
 		{Key: "decision:q2", Action: ActionDefer, CreatedAt: t0},
 		{Key: "decision:q2", Action: ActionDelegate, CreatedAt: t0.Add(time.Minute)},
 		{Key: DriftKey(finding), Action: ActionIgnore, CreatedAt: t0},
-		{Key: "verify:f1", Action: ActionReject, CreatedAt: t0},
 	}
 
-	result := Derive(questions, []drift.Finding{finding}, facts, nil, dispositions)
+	result := Derive(questions, []drift.Finding{finding}, kept, dispositions)
 
 	if len(result.Items) != 2 {
-		t.Fatalf("items = %+v, want the kept fact and the deferred question", result.Items)
+		t.Fatalf("items = %+v, want the setup item and the deferred question", result.Items)
 	}
-	if result.Items[0].Title != "kept" || result.Items[1].State != StateDeferred {
+	if result.Items[0].Kind != KindSetup || result.Items[1].State != StateDeferred {
 		t.Fatalf("items = %+v: open first, deferred last", result.Items)
 	}
 	if result.Open() != 1 || result.Blocking() != 0 {
@@ -117,8 +113,8 @@ func TestDeriveUnconnectedDeploy(t *testing.T) {
 	if len(pending) != 2 {
 		t.Fatalf("pending = %+v, want vercel and aws (other environment, and ready is not connected)", pending)
 	}
-	result := Derive(nil, nil, nil, pending, nil)
-	if len(result.Items) != 2 || result.Items[0].Kind != KindVerify || result.Items[1].Kind != KindVerify {
+	result := Derive(nil, nil, pending, nil)
+	if len(result.Items) != 2 || result.Items[0].Kind != KindSetup || result.Items[1].Kind != KindSetup {
 		t.Fatalf("items = %+v", result.Items)
 	}
 	key := DeployKey("n1", "env-prod")
@@ -128,13 +124,13 @@ func TestDeriveUnconnectedDeploy(t *testing.T) {
 	if result.Items[0].Title != "Connect vercel for app/web in production" || result.Items[0].Detail != "vercel" || result.Items[0].Where != "app/web" {
 		t.Fatalf("item = %+v", result.Items[0])
 	}
-	again := Derive(nil, nil, nil, pending, nil)
+	again := Derive(nil, nil, pending, nil)
 	if again.Items[0].Key != result.Items[0].Key || again.Items[0].ID != result.Items[0].ID {
 		t.Fatal("deploy item key must be stable")
 	}
-	hidden := Derive(nil, nil, nil, pending, []Disposition{{Key: key, Action: ActionReject, CreatedAt: time.Now().UTC()}})
+	hidden := Derive(nil, nil, pending, []Disposition{{Key: key, Action: ActionIgnore, CreatedAt: time.Now().UTC()}})
 	if len(hidden.Items) != 1 || hidden.Items[0].Key == key {
-		t.Fatalf("reject should hide the vercel item: %+v", hidden.Items)
+		t.Fatalf("dismiss should hide the vercel item: %+v", hidden.Items)
 	}
 	// A connection for the same provider with no environment covers every environment.
 	covered := UnconnectedDeploys(links, []ProviderConnection{{ProviderID: "vercel", Status: ProviderStatusConnected}})
@@ -152,13 +148,13 @@ func TestParseActionAndStatusLines(t *testing.T) {
 	if _, err := ParseAction("approve"); err == nil {
 		t.Fatal("unknown action should fail")
 	}
-	if ValidAction(KindVerify, ActionDecide) {
-		t.Fatal("verify items do not take decide")
+	if ValidAction(KindSetup, ActionDecide) {
+		t.Fatal("setup items do not take decide")
 	}
 
 	result := Derive(
 		[]Question{{ID: "q1", CardSlug: "a", Text: "Pick one?", Blocking: true}, {ID: "q2", CardSlug: "a", Text: "Later?"}},
-		nil, nil, nil,
+		nil, nil,
 		[]Disposition{{Key: "decision:q2", Action: ActionDelegate}},
 	)
 	lines := StatusLines(result)

@@ -93,7 +93,6 @@ func toolDefinitions() []map[string]any {
 					"id":         map[string]any{"type": "string"},
 					"title":      map[string]any{"type": "string"},
 					"body":       map[string]any{"type": "string"},
-					"doc_type":   map[string]any{"type": "string", "enum": []string{"doc", "runbook", "source"}},
 					"tags":       map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 					"scope":      map[string]any{"type": "string"},
 					"summary":    map[string]any{"type": "string"},

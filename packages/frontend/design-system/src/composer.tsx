@@ -1,7 +1,6 @@
-import { For, Index, Show, createEffect, createSignal, on, type JSX } from "solid-js";
+import { Index, Show, createEffect, createSignal, on, type JSX } from "solid-js";
 import { Button } from "./button";
 import { A11yDialog } from "./dialog";
-import { ChevronRight } from "./hugeicons";
 import { PropertyPicker, type PropertyOption, type PropertyPickerProps } from "./property-picker";
 import { Switch } from "./switch";
 import "./composer.css";
@@ -33,7 +32,7 @@ export type ComposerDraft = { title: string; description: string; why: string };
 export type ComposerProps = {
   open: boolean;
   onClose: () => void;
-  /** Trail at the top, such as ["Polterware", "New card"]; the last part names the dialog. */
+  /** Where the record goes, such as ["Polterware", "New card"]; the last part names the dialog. */
   crumbs: readonly string[];
   titlePlaceholder: string;
   /** Leave it out to hide the description. */
@@ -146,16 +145,6 @@ export function Composer(props: ComposerProps) {
       }
     >
       <div class="pw-composer" onKeyDown={onKeyDown}>
-        <nav class="pw-composer__crumbs" aria-label="Location">
-          <For each={props.crumbs}>
-            {(crumb, index) => (
-              <>
-                <Show when={index() > 0}><ChevronRight size={12} aria-hidden /></Show>
-                <span classList={{ "pw-composer__crumb--current": index() === props.crumbs.length - 1 }}>{crumb}</span>
-              </>
-            )}
-          </For>
-        </nav>
         <input
           ref={titleInput}
           class="pw-composer__title"

@@ -1,14 +1,12 @@
-import { createEffect, createSignal, on } from "solid-js";
-import { Boxes, Composer, StatusDot, type ComposerProperty } from "@polterware/frontend-design-system";
+import { createEffect, createSignal, on, type JSX } from "solid-js";
+import { Boxes, Composer, type ComposerProperty } from "@polterware/frontend-design-system";
 import type { WorkspaceCanonEntity } from "@polterware/feature-shell";
-import {
-  CANON_TRUTH_CLASS_OPTIONS,
-  type CanonFactDraft,
-  type CanonFactTruthClass,
-} from "./canon-facts-types";
-import { factKindTone } from "./fact-kind";
+import type { CanonFactDraft, CanonFactTruthClass } from "./canon-facts-types";
 
-/** Adds or edits a Fact in the shared composer: the statement first, then its kind and subject. */
+/**
+ * Adds or edits a rule in the shared composer: the statement first, then what it is about. A rule
+ * has no kind to pick: a new one is declared, and an edit keeps how it is known.
+ */
 export function CanonFactFormDialog(props: {
   open: boolean;
   mode: "create" | "edit";
@@ -18,6 +16,8 @@ export function CanonFactFormDialog(props: {
   onSubmit: (draft: CanonFactDraft) => Promise<boolean>;
   /** Canon entities a Fact can be about; none leaves it about the whole project. */
   entities?: readonly WorkspaceCanonEntity[];
+  /** A quiet action at the start of the footer, such as Link evidence. */
+  footerAction?: JSX.Element;
 }) {
   const [truthClass, setTruthClass] = createSignal<CanonFactTruthClass>("declared");
   const [entityId, setEntityId] = createSignal("");
@@ -30,18 +30,8 @@ export function CanonFactFormDialog(props: {
 
   const properties = (): ComposerProperty[] => [
     {
-      id: "kind",
-      label: "Kind",
-      options: CANON_TRUTH_CLASS_OPTIONS.map((option) => ({
-        ...option,
-        icon: <StatusDot tone={factKindTone(option.value)} showLabel={false} />,
-      })),
-      value: truthClass(),
-      onChange: (value) => setTruthClass(value as CanonFactTruthClass),
-    },
-    {
       id: "subject",
-      label: "Subject",
+      label: "About",
       icon: <Boxes size={14} />,
       options: [
         { value: "", label: "Whole project" },
@@ -60,13 +50,14 @@ export function CanonFactFormDialog(props: {
     <Composer
       open={props.open}
       onClose={props.onClose}
-      crumbs={["Facts", props.mode === "edit" ? "Edit fact" : "New fact"]}
-      titlePlaceholder="The API depends on PostgreSQL"
+      crumbs={["Rules", props.mode === "edit" ? "Edit rule" : "New rule"]}
+      titlePlaceholder="The API returns only fields declared in the contract"
       properties={properties()}
       whyPlaceholder="Optional. Recorded in Activity"
+      footerAction={props.footerAction}
       initial={{ title: props.initial?.statement ?? "" }}
       createMore={props.mode === "create"}
-      submitLabel={props.mode === "edit" ? "Save fact" : "Create fact"}
+      submitLabel={props.mode === "edit" ? "Save rule" : "Create rule"}
       onSubmit={(draft) =>
         props.onSubmit({
           id: props.initial?.id,

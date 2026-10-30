@@ -16,7 +16,7 @@ func briefFixture() BriefInput {
 	system := structure.Node{ID: "s", Path: "app", Level: structure.LevelSystem, Title: "App", Status: structure.NodeActive,
 		Invariants: []structure.Invariant{{Text: "No secrets in logs", State: work.InvariantActive}}}
 	api := structure.Node{ID: "c", ParentID: "s", Path: "app/api", Level: structure.LevelComponent, Title: "API", Status: structure.NodeActive,
-		Kind: "service", Tech: "Go", Folder: "backend", Decisions: []string{"Decision-0002"}, Uses: []string{"app/db"}}
+		Kind: "service", Tech: "Go", Folder: "backend", Decisions: []string{"Decision-0002"}}
 	db := structure.Node{ID: "d", ParentID: "s", Path: "app/db", Level: structure.LevelComponent, Title: "DB", Status: structure.NodeActive}
 	card := work.Card{
 		ID: "card-1", Slug: "login", Title: "Login", Stage: work.StageBuild, Status: work.CardActive, Under: "app/api",
@@ -71,7 +71,6 @@ func TestBriefCardOrdersBlocksByPriority(t *testing.T) {
 stage: build · under: app/api · milestone: beta · claim: codex
 kind: service · tech: Go · path: backend
 Sign people in.
-uses: app/db
 
 - [ ] T2 Login route
 ? Which hash? [blocking] (argon2 | bcrypt)
@@ -99,7 +98,7 @@ Canvas:
 - Architecture: API --reads--> Postgres
 
 Docs:
-- API runbook (runbook)
+- API runbook
 - Style guide
 `
 	if text != want {

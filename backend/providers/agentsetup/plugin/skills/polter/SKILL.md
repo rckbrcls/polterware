@@ -28,7 +28,7 @@ Intent: what we want and why.
 
 handoff:
 branch: feat/git-import
-next: wire into ImportProjectSources
+next: wire into ScanProject
 
 Rules:
 - `## slug: Title` is a card; the lowercase-kebab slug is its identity. Stages: shape, plan, build, verify, delivered. under: is a Structure component path; milestone: is a milestone slug (empty is the Backlog).

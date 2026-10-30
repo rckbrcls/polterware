@@ -13,14 +13,14 @@ export type FeatureFlowLine =
 
 const STEPS: { id: FeatureFlowStep; label: string }[] = [
   { id: "intent", label: "Intent" },
-  { id: "shape", label: "Shape" },
+  { id: "shape", label: "Idea" },
   { id: "contract", label: "Contract" },
   { id: "plan", label: "Plan" },
 ];
 
 const ROUTE_LABEL = {
   inbox: "Inbox",
-  deferred: "Deferred",
+  deferred: "Later",
   delegated: "Delegated to agent",
   answered: "Answered",
 } as const;

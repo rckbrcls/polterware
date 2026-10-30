@@ -7,18 +7,18 @@ const nodes: StructureNode[] = [
   { id: "sys", parentId: "", level: "system", path: "app", title: "Application", intent: "", repo: "", decisions: [] },
   { id: "api", parentId: "sys", level: "component", path: "app/api", title: "API", intent: "Serves the project", repo: "backend", folder: "src/api", kind: "api", tech: "Go", decisions: [] },
   { id: "core", parentId: "sys", level: "domain", path: "app/core", title: "Core", intent: "", repo: "", decisions: [] },
-  { id: "web", parentId: "sys", level: "component", path: "app/web", title: "Web", intent: "", repo: "", uses: ["app/api"], decisions: [] },
+  { id: "web", parentId: "sys", level: "component", path: "app/web", title: "Web", intent: "", repo: "", decisions: [] },
 ];
 let dispose: (() => void) | undefined;
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
-function mount(options: { error?: string; loading?: boolean; onEditNode?: (nodeId: string, patch: StructureNodePatch) => Promise<void>; onLinkRecord?: (kind: string, id: string, nodeId: string) => Promise<void>; onUses?: (nodeId: string, ids: string[]) => Promise<void>; onMove?: (nodeId: string, parentId: string) => Promise<void> } = {}) {
+function mount(options: { error?: string; loading?: boolean; onEditNode?: (nodeId: string, patch: StructureNodePatch) => Promise<void>; onLinkRecord?: (kind: string, id: string, nodeId: string) => Promise<void>; onMove?: (nodeId: string, parentId: string) => Promise<void> } = {}) {
   const host = document.createElement("div");
   document.body.append(host);
   const open = vi.fn((entityId: string) => { detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId, entityKind: "arch-node" }); });
   const openRecord = vi.fn();
   dispose = render(() => <StructureView projectName="Project" nodes={nodes} records={{ api: { cards: [{ id: "api-auth", title: "Add auth", caption: "Build", direct: true }], decisions: [{ id: "dec-1", title: "Use Go", caption: "Active", direct: true }], facts: [], docs: [] } }}
     projectRecords={{ cards: [{ id: "api-auth", title: "Add auth" }], decisions: [{ id: "dec-1", title: "Use Go" }, { id: "dec-2", title: "Keep one core" }], facts: [], docs: [] }} onOpenRecord={openRecord}
-    onOpenNode={open} onSelect={() => {}} onOpenCreate={() => {}} onCloseCreate={() => {}} onCreate={async () => {}} onMove={async () => {}} onUses={async () => {}} {...options} />, host);
+    onOpenNode={open} onSelect={() => {}} onOpenCreate={() => {}} onCloseCreate={() => {}} onCreate={async () => {}} onMove={async () => {}} {...options} />, host);
   return { host, open, openRecord };
 }
 beforeEach(() => detailPanelStore.setState(detailPanelDefaultState));
@@ -64,7 +64,7 @@ describe("Structure collection", () => {
     for (const text of ["Properties", "Component", "Go", "Checkout", "backend/src/api", "app/api"]) expect(head).toContain(text);
     // Every card and decision that cites the node is a table row that opens it; empty sections are left out.
     expect(doc.textContent).toContain("Add auth");
-    expect(doc.textContent).not.toContain("Facts");
+    expect(doc.textContent).not.toContain("Rules");
     expect(doc.querySelector('table[aria-label="Decisions"]')).not.toBeNull();
     doc.querySelector<HTMLElement>('tr[aria-label="Use Go"]')!.click();
     expect(openRecord).toHaveBeenCalledWith("decision", "dec-1");
@@ -102,24 +102,7 @@ describe("Structure collection", () => {
     doc.querySelector<HTMLButtonElement>('button[aria-label="Unlink Use Go"]')!.click();
     expect(onLinkRecord).toHaveBeenLastCalledWith("decision", "dec-1", "");
     expect(doc.querySelector('button[aria-label="Link decision"]')).not.toBeNull();
-    expect(doc.textContent).toContain("Facts");
-  });
-  it("lists a node's dependencies as a table whose rows open the node and can be removed", async () => {
-    const onUses = vi.fn(async () => {});
-    const { host, open } = mount({ onUses });
-    await tick();
-    detailPanelStore.getState().activateTarget({ scopeId: STRUCTURE_SCOPE, entityId: "web", entityKind: "arch-node" });
-    await tick();
-    const doc = host.querySelector<HTMLElement>(".pw-structure__document")!;
-    expect(doc.querySelector(".pw-structure__head")?.textContent).not.toContain("Uses");
-    const row = doc.querySelector<HTMLElement>('table[aria-label="Uses"] tr[aria-label="API"]')!;
-    expect(row.textContent).toContain("Component");
-    expect(doc.querySelector('button[aria-label="Add dependency"]')).not.toBeNull();
-    doc.querySelector<HTMLButtonElement>('button[aria-label="Remove API"]')!.click();
-    expect(onUses).toHaveBeenLastCalledWith("web", []);
-    expect(open).not.toHaveBeenCalledWith("api");
-    row.click();
-    expect(open).toHaveBeenCalledWith("api");
+    expect(doc.textContent).toContain("Rules");
   });
   it("changes a node's level and parent from pickers with icon tiles", async () => {
     const onEditNode = vi.fn(async () => {});

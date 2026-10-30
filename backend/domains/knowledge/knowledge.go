@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -19,7 +20,7 @@ type Item struct {
 	Title     string
 	Body      string
 	Kind      string
-	// DocType is doc, runbook, or source for a doc and empty for a decision.
+	// DocType is doc for a doc and empty for a decision. Docs have no types: tags tell them apart.
 	DocType   string
 	Tags      []string
 	Summary   string
@@ -56,13 +57,26 @@ const (
 	KindDecision = "decision"
 )
 
-// Doc types: a doc describes, a runbook is a procedure, and a source is a
-// registered project file.
-const (
-	DocTypeDoc     = "doc"
-	DocTypeRunbook = "runbook"
-	DocTypeSource  = "source"
-)
+// DocTypeDoc is the one doc type. Docs hold only what lives in Polterware
+// (agents read repository files from the checkout) and are told apart by tags.
+const DocTypeDoc = "doc"
+
+// retiredDocTypeSource was a registered project file. Archived rows may still carry it.
+const retiredDocTypeSource = "source"
+
+// retiredDocTypeRunbook was a procedure; runbooks became docs tagged runbook.
+const retiredDocTypeRunbook = "runbook"
+
+// ErrSourceRetired refuses a write that names the retired source doc type.
+var ErrSourceRetired = errors.New("source docs are retired: agents read repo files directly")
+
+// CheckDocType refuses the retired source type; any other value is read by DocTypeFor.
+func CheckDocType(docType string) error {
+	if strings.TrimSpace(docType) == retiredDocTypeSource {
+		return ErrSourceRetired
+	}
+	return nil
+}
 
 func ValidKind(kind string) bool {
 	switch kind {
@@ -73,36 +87,33 @@ func ValidKind(kind string) bool {
 	}
 }
 
-// NormalizeKind reads a kind and the doc type it implies: a doc type names a
-// doc of that type, and a decision has no doc type.
-func NormalizeKind(kind string) (string, string) {
+// NormalizeKind reads a kind: doc and the retired runbook name a doc, and any
+// other value is kept as given.
+func NormalizeKind(kind string) string {
 	switch kind {
-	case DocTypeDoc, DocTypeRunbook, DocTypeSource:
-		return KindDoc, kind
+	case DocTypeDoc, retiredDocTypeRunbook:
+		return KindDoc
 	default:
-		return kind, ""
+		return kind
 	}
 }
 
-// DocTypeFor returns the stored doc type of kind: the given type for a doc
-// (doc when empty or unknown) and empty for a decision.
-func DocTypeFor(kind, docType string) string {
+// DocTypeFor returns the stored doc type of kind: doc for a doc and empty for a decision.
+func DocTypeFor(kind string) string {
 	if kind != KindDoc {
 		return ""
 	}
-	switch docType {
-	case DocTypeRunbook, DocTypeSource:
-		return docType
-	default:
-		return DocTypeDoc
-	}
+	return DocTypeDoc
 }
 
 func NewItem(id, projectID, title, body, kind string, tags []string) (Item, error) {
-	kind, docType := NormalizeKind(kind)
+	if err := CheckDocType(kind); err != nil {
+		return Item{}, err
+	}
+	kind = NormalizeKind(kind)
 	if id == "" || projectID == "" || title == "" || !ValidKind(kind) || len(body) > MaxBody {
 		return Item{}, ErrInvalid
 	}
 	now := time.Now().UTC()
-	return Item{ID: id, ProjectID: projectID, Title: title, Body: body, Kind: kind, DocType: DocTypeFor(kind, docType), Tags: tags, ExtraJSON: "{}", CreatedAt: now, UpdatedAt: now}, nil
+	return Item{ID: id, ProjectID: projectID, Title: title, Body: body, Kind: kind, DocType: DocTypeFor(kind), Tags: tags, ExtraJSON: "{}", CreatedAt: now, UpdatedAt: now}, nil
 }

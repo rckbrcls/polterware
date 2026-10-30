@@ -23,7 +23,7 @@ func runScan(dbPath string, args []string) error {
 	if err != nil {
 		return err
 	}
-	res, err := c.Canon.ImportProjectSources(context.Background(), connect.NewRequest(&localv1.ImportProjectSourcesRequest{ProjectId: *projectID}))
+	res, err := c.Canon.ScanProject(context.Background(), connect.NewRequest(&localv1.ScanProjectRequest{ProjectId: *projectID}))
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func runScan(dbPath string, args []string) error {
 		return writeProtoJSON(result)
 	}
 	fmt.Printf("%s\n", result.Message)
-	fmt.Printf("facts=%d evidence=%d sources=%d skipped=%d\n",
-		result.FactCount, result.EvidenceCount, result.SourceCount, result.SkippedCount)
+	fmt.Printf("facts=%d evidence=%d skipped=%d\n",
+		result.FactCount, result.EvidenceCount, result.SkippedCount)
 	return nil
 }

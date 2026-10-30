@@ -12,6 +12,7 @@ import { toDocument, type CanvasPort, type CanvasRecord, type CanvasType } from 
 import type { ArchitectureDocument } from "@polterware/frontend-canvas";
 export type { CanvasPort, CanvasRecord, CanvasPatch, CanvasType } from "./model";
 export { readCanvas, readTypes } from "./model";
+export { STRUCTURE_CANVAS_NAME, drawStructure, isStructureCanvas, type StructureSource } from "./structure-canvas";
 export type { StoreEntity } from "./references";
 import type { StoreEntity } from "./references";
 

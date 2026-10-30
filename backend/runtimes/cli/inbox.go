@@ -16,7 +16,7 @@ import (
 )
 
 const inboxUsage = `usage: polterware inbox [--scope <node>[,<node>]] [--exact] [--project <id>]
-       polterware inbox <id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore | verify | reject [--agent name] [--project <id>]`
+       polterware inbox <id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore [--agent name] [--project <id>]`
 
 // runInbox lists the project's Inbox, or applies one action to one item.
 func runInbox(dbPath string, args []string) error {

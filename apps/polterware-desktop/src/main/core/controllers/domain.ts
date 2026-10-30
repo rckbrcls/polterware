@@ -93,8 +93,6 @@ export function createCoreDomainControllers(
     verifyFeature: async (input?: JsonObject) => toJsonObject(await clients.work.verifyFeature(requestMessage(input))),
     listCanonEntities: async (input?: JsonObject) => toJsonObject(await clients.canon.listEntities(requestMessage(input))),
     syncProjectModel: async (input?: JsonObject) => toJsonObject(await clients.canon.syncProjectModel(requestMessage(input))),
-    importProjectSources: async (input?: JsonObject) =>
-      toJsonObject(await clients.canon.importProjectSources(requestMessage(input))),
     listFacts: async (input?: JsonObject) => toJsonObject(await clients.canon.listFacts(requestMessage(input))),
     getFact: async (input?: JsonObject) => toJsonObject(await clients.canon.getFact(requestMessage(input))),
     upsertFact: async (input?: JsonObject) => toJsonObject(await clients.canon.upsertFact(requestMessage(input))),

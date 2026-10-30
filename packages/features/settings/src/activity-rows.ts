@@ -10,8 +10,8 @@ export function dispatchEventRow(event: DispatchRunEventView): ProjectChangeRow 
     actorKind: "agent",
     agentLabel: event.agent ? `${event.agent}${event.tier ? ` / ${event.tier}` : ""}` : "dispatch",
     runStatus: event.kind,
-    runTask: event.tier ? `Dispatch (${event.tier})` : "Dispatch",
-    summary: event.text || `Dispatch ${event.kind}`,
+    runTask: event.tier ? `Agent run (${event.tier})` : "Agent run",
+    summary: event.text || `Agent run ${event.kind}`,
     payloadJson: "{}",
     createdAt: event.at,
   };

@@ -76,7 +76,7 @@ func usage() {
   polterware [-db path] feature new "<intent>" [--title "..."] [--under <node>] [--project <id>]
   polterware [-db path] feature shape <slug> | contract <slug> [--accept] | plan <slug> [--approve] [--project <id>]
   polterware [-db path] verify <slug|slug#T2> [--project <id>]   (exit 1 when a check fails)
-  polterware [-db path] inbox [<id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore | verify | reject] [--agent name] [--scope <node>[,<node>]] [--exact] [--project <id>]
+  polterware [-db path] inbox [<id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore] [--agent name] [--scope <node>[,<node>]] [--exact] [--project <id>]
   polterware [-db path] scope <decision|fact|evidence|item> <id> [<node path>] [--project <id>]   (empty node clears the scope)
   polterware [-db path] setup [doctor] | claude [--uninstall | --enable | --disable | --skill-only] | codex [--uninstall] [--project <id>]
   polterware [-db path] hooks [list] | enable|disable <status|stop|lint|context|session|all>

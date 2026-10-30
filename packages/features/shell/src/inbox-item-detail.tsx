@@ -1,18 +1,16 @@
 import { For, Show } from "solid-js";
-import { Button, DetailPanel, StatusChip, FileText, ListFilter, Network, Check, Bot, Clock, Hammer, Pencil, Eye, ShieldCheck, ThumbsDownIcon } from "@polterware/frontend-design-system";
+import { Button, DetailPanel, StatusChip, FileText, ListFilter, Network, Check, Bot, Clock, Hammer, Pencil, Eye } from "@polterware/frontend-design-system";
 import type { WorkspaceInboxAction, WorkspaceInboxItem } from "./workspace-mocks";
 
-const KIND_LABEL = { decision: "Decision", drift: "Drift", verify: "Verify" } as const;
+const KIND_LABEL = { decision: "Question", drift: "Conflict", setup: "Setup" } as const;
 
 const ACTION_LABEL: Record<WorkspaceInboxAction, string> = {
   decide: "Decide",
   delegate: "Delegate",
-  defer: "Defer",
-  fix_code: "Fix code",
-  update_intent: "Update intent",
-  ignore: "Ignore",
-  verify: "Mark verified",
-  reject: "Reject",
+  defer: "Later",
+  fix_code: "Fix the code",
+  update_intent: "Update the rule",
+  ignore: "Dismiss",
 };
 
 const ACTION_ICON = {
@@ -22,8 +20,6 @@ const ACTION_ICON = {
   fix_code: Hammer,
   update_intent: Pencil,
   ignore: Eye,
-  verify: ShieldCheck,
-  reject: ThumbsDownIcon,
 } as const;
 
 /** Peek-only panel for one Inbox item: what it is, where it came from, and how to resolve it. */
@@ -32,7 +28,7 @@ export function InboxItemDetail(props: {
   disabled?: boolean;
   onAction?: (action: WorkspaceInboxAction) => void;
 }) {
-  const statusLabel = () => (props.item.state === "deferred" ? "Deferred" : props.item.blocking ? "Blocking" : "Open");
+  const statusLabel = () => (props.item.state === "deferred" ? "Later" : props.item.blocking ? "Blocking" : "Open");
   return (
     <DetailPanel.Content>
       <DetailPanel.Header title={props.item.title} aside={<>
@@ -76,7 +72,7 @@ export function InboxItemDetail(props: {
               return <Button
                 size="sm"
                 class="min-w-0 flex-1"
-                variant={action === "decide" || action === "verify" ? "primary" : "ghost"}
+                variant={action === "decide" ? "primary" : "ghost"}
                 disabled={props.disabled}
                 onClick={() => props.onAction?.(action)}
               >

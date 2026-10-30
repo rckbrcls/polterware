@@ -122,6 +122,7 @@ func (core *Core) UpdateCanvas(_ context.Context, request *connect.Request[local
 	if current.Archived() {
 		return nil, mapArchiveErr(canvas.ErrArchived)
 	}
+	before := current.Graph
 	changed := false
 	if msg.Name != nil {
 		current.Name = *msg.Name
@@ -159,12 +160,22 @@ func (core *Core) UpdateCanvas(_ context.Context, request *connect.Request[local
 	}
 	env.ProjectID = prepared.ProjectID
 	env.BatchID = ids.NewULID()
-	written, err := wedge.ExecuteAuditedWrite(core.Store, env, agentrun.ActorKindHuman, "desktop.canvas.update", func(run agentrun.Run) ([]string, any, error) {
+	// Layout edits stay out of the history; a changed relation between Structure
+	// nodes is project truth, so it is listed and joins both nodes' Activity.
+	tool := "desktop.canvas.update"
+	added, removed := canvas.RelationChanges(before, prepared.Graph)
+	subjects := canvas.RelationSubjects(added, removed)
+	if len(subjects) > 0 {
+		tool = "desktop.relations"
+		env.Summary = canvas.RelationSummary(added, removed)
+		env.Rationale = fmt.Sprintf("Drawn on the canvas %s.", prepared.Name)
+	}
+	written, err := wedge.ExecuteAuditedWrite(core.Store, env, agentrun.ActorKindHuman, tool, func(run agentrun.Run) ([]string, any, error) {
 		saved, saveErr := core.Store.UpdateCanvas(prepared, run.ID, env.BatchID)
 		if saveErr != nil {
 			return nil, nil, saveErr
 		}
-		return []string{saved.ID}, saved, nil
+		return append([]string{saved.ID}, subjects...), saved, nil
 	})
 	if err != nil {
 		return nil, mapCanvasWriteErr(err)

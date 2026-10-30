@@ -14,7 +14,6 @@ export type StructureNode = {
   /** Free-text technology. */
   tech?: string;
   decisions: string[];
-  uses?: string[];
   deploys?: { id: string; environmentId: string; environment: string; provider: string; resource: string }[];
 };
 export type StructureTreeItem = { node: StructureNode; children: StructureTreeItem[] };

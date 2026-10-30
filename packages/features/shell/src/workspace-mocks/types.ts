@@ -113,22 +113,13 @@ export type WorkspaceDecision = {
 /** A principle applies to the whole project; a decision is scoped like any other entity. */
 export type DecisionLevel = "principle" | "decision";
 
-/** What a doc is: a document, a runbook (a procedure), or a registered project source file. */
-export type DocType = "doc" | "runbook" | "source";
-
-/**
- * One doc: a markdown note, optionally pointing at a project file. Its type is
- * `docType`; tags are free labels.
- */
+/** One doc: a markdown note. Docs have no types; tags are the free labels that tell them apart. */
 export type WorkspaceDoc = {
   id: string;
   title: string;
   summary: string;
   bodyMarkdown: string;
-  docType: DocType;
   tags: string[];
-  /** Project-relative path of the file this doc points at; empty for a plain note. */
-  path: string;
   /** Structure node the doc is scoped to; unset means the whole project. */
   scopeNodeId?: string;
   owner: string;
@@ -249,8 +240,6 @@ export type WorkspaceStructureNode = {
   migrationFrom: string;
   migrationTo: string;
   deploys?: { id: string; environmentId: string; environment: string; provider: string; resource: string }[];
-  /** Node paths this node depends on. */
-  uses?: string[];
 };
 
 export type WorkspaceStructure = {
@@ -268,7 +257,7 @@ export type WorkspaceStructureHistoryEntry = {
   summary: string;
 };
 
-export type WorkspaceInboxKind = "decision" | "drift" | "verify";
+export type WorkspaceInboxKind = "decision" | "drift" | "setup";
 
 /** Inbox action ids from WorkService.ListInbox, primary first per kind. */
 export type WorkspaceInboxAction =
@@ -277,9 +266,7 @@ export type WorkspaceInboxAction =
   | "defer"
   | "fix_code"
   | "update_intent"
-  | "ignore"
-  | "verify"
-  | "reject";
+  | "ignore";
 
 /** One derived item that needs a person (WorkService.ListInbox). */
 export type WorkspaceInboxItem = {

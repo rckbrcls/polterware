@@ -48,18 +48,3 @@ export type CanonEvidenceDraft = {
   path: string;
   linkToSelectedFact: boolean;
 };
-
-export const CANON_TRUTH_CLASS_OPTIONS: Array<{ value: CanonFactTruthClass; label: string }> = [
-  { value: "declared", label: "Declared" },
-  { value: "observed", label: "Observed" },
-  { value: "inferred", label: "Inferred" },
-  { value: "verified", label: "Verified" },
-];
-
-export const CANON_EVIDENCE_KIND_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: "file", label: "File" },
-  { value: "observation", label: "Observation" },
-  { value: "test", label: "Test" },
-  { value: "commit", label: "Commit" },
-  { value: "other", label: "Other" },
-];

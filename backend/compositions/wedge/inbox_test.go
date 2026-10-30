@@ -39,6 +39,7 @@ func TestInboxEndToEnd(t *testing.T) {
 	if _, err := wedge.ApplyPolter(store, wedge.ApplyInput{ProjectID: project.ID, Text: inboxRoadmap, AutoStartLabel: "cli"}); err != nil {
 		t.Fatal(err)
 	}
+	// A rule with no evidence raises nothing: rules need no proof.
 	declared, err := canon.NewFact(project.ID, "Local auth is bearer token", canon.TruthDeclared, "mcp", "codex", "")
 	if err != nil {
 		t.Fatal(err)
@@ -51,7 +52,7 @@ func TestInboxEndToEnd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if listed.Open() != 3 || listed.Blocking() != 1 {
+	if listed.Open() != 2 || listed.Blocking() != 1 {
 		t.Fatalf("open=%d blocking=%d items=%+v", listed.Open(), listed.Blocking(), listed.Items)
 	}
 	blocking := listed.Items[0]
@@ -64,7 +65,7 @@ func TestInboxEndToEnd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(status, "inbox: 3 open (1 blocking)\n") || !strings.Contains(status, "! "+blocking.ID+" decision Include merge commits?") {
+	if !strings.Contains(status, "inbox: 2 open (1 blocking)\n") || !strings.Contains(status, "! "+blocking.ID+" decision Include merge commits?") {
 		t.Fatalf("status:\n%s", status)
 	}
 
@@ -113,22 +114,6 @@ func TestInboxEndToEnd(t *testing.T) {
 		t.Fatalf("status after delegate:\n%s", status)
 	}
 
-	// Verify marks the fact verified with the acting label; the item closes.
-	fact, ok := findKind(t, store, project.ID, inbox.KindVerify)
-	if !ok {
-		t.Fatal("verify item missing")
-	}
-	if _, err := wedge.ResolveInbox(store, wedge.ResolveInboxInput{ProjectID: project.ID, ItemID: fact.ID, Action: inbox.ActionVerify, Actor: "system"}); !errors.Is(err, canon.ErrVerifiedRequiresActor) {
-		t.Fatalf("verify as system: %v", err)
-	}
-	if _, err := resolve(fact.ID, inbox.ActionVerify, ""); err != nil {
-		t.Fatal(err)
-	}
-	stored, err := store.GetCanonFact(declared.ID)
-	if err != nil || stored.TruthClass != canon.TruthVerified || stored.Actor != "desktop" {
-		t.Fatalf("fact after verify = %+v err=%v", stored, err)
-	}
-
 	final, err := wedge.ListInbox(store, project.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -141,7 +126,7 @@ func TestInboxEndToEnd(t *testing.T) {
 	}
 }
 
-func TestInboxRejectAndDefer(t *testing.T) {
+func TestInboxDefer(t *testing.T) {
 	store, err := storepkg.New(filepath.Join(t.TempDir(), "work.db"))
 	if err != nil {
 		t.Fatal(err)
@@ -154,15 +139,6 @@ func TestInboxRejectAndDefer(t *testing.T) {
 	if _, err := wedge.ApplyPolter(store, wedge.ApplyInput{ProjectID: project.ID, Text: inboxRoadmap, AutoStartLabel: "cli"}); err != nil {
 		t.Fatal(err)
 	}
-	observed, _ := canon.NewFact(project.ID, "Uses pnpm", canon.TruthObserved, "agent", "claude", "")
-	if err := store.UpsertCanonFact(observed); err != nil {
-		t.Fatal(err)
-	}
-
-	fact, _ := findKind(t, store, project.ID, inbox.KindVerify)
-	if _, err := wedge.ResolveInbox(store, wedge.ResolveInboxInput{ProjectID: project.ID, ItemID: fact.ID, Action: inbox.ActionReject, Actor: "desktop"}); err != nil {
-		t.Fatal(err)
-	}
 	listed, _ := wedge.ListInbox(store, project.ID)
 	blocking := listed.Items[0]
 	if _, err := wedge.ResolveInbox(store, wedge.ResolveInboxInput{ProjectID: project.ID, ItemID: blocking.ID, Action: inbox.ActionDefer, Actor: "desktop"}); err != nil {
@@ -171,15 +147,11 @@ func TestInboxRejectAndDefer(t *testing.T) {
 
 	listed, _ = wedge.ListInbox(store, project.ID)
 	if listed.Open() != 1 || listed.Blocking() != 0 {
-		t.Fatalf("open=%d blocking=%d, want 1 and 0 after reject and defer", listed.Open(), listed.Blocking())
+		t.Fatalf("open=%d blocking=%d, want 1 and 0 after defer", listed.Open(), listed.Blocking())
 	}
 	last := listed.Items[len(listed.Items)-1]
 	if last.ID != blocking.ID || last.State != inbox.StateDeferred {
 		t.Fatalf("deferred item should be listed last: %+v", listed.Items)
-	}
-	// The rejected fact is hidden but kept as history.
-	if _, err := store.GetCanonFact(observed.ID); err != nil {
-		t.Fatalf("rejected fact must stay: %v", err)
 	}
 }
 

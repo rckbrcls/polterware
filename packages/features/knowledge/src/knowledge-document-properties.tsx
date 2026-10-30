@@ -1,20 +1,18 @@
 import { children, Show, type JSX } from "solid-js";
-import { DetailPanel, InformationCircle, Link, RailGroup, Tag } from "@polterware/frontend-design-system";
+import { DetailPanel, InformationCircle, RailGroup, Tag } from "@polterware/frontend-design-system";
 
 /** Properties rail for every full Markdown document: groups titled with an icon tile, never cards. */
 export function KnowledgeDocumentProperties(props: {
   properties?: JSX.Element;
   /** Tag picker, shown under "Labels". */
   labels?: JSX.Element;
-  links?: JSX.Element;
-  /** More rail groups after Links, such as a card's tasks and invariants. */
+  /** More rail groups after Labels, such as a card's tasks and invariants. */
   groups?: JSX.Element;
   metadataActions?: JSX.Element;
   footerActions?: JSX.Element;
 }) {
   const properties = children(() => props.properties);
   const labels = children(() => props.labels);
-  const links = children(() => props.links);
   const metadataActions = children(() => props.metadataActions);
   const footerActions = children(() => props.footerActions);
   return <>
@@ -26,11 +24,6 @@ export function KnowledgeDocumentProperties(props: {
     <Show when={labels()}>
       <RailGroup title="Labels" icon={<Tag size={14} />}>
         <div class="pw-document__group-body">{labels()}</div>
-      </RailGroup>
-    </Show>
-    <Show when={links()}>
-      <RailGroup title="Links" icon={<Link size={14} />}>
-        <div class="pw-document__group-body">{links()}</div>
       </RailGroup>
     </Show>
     {props.groups}

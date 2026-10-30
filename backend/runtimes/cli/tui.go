@@ -429,12 +429,12 @@ func (m *tuiModel) runAction(action string) tea.Cmd {
 				return actionMsg{err: err}
 			}
 			project := initRes.Msg.Project
-			scanRes, err := c.Canon.ImportProjectSources(ctx, connect.NewRequest(&localv1.ImportProjectSourcesRequest{ProjectId: project.Id}))
+			scanRes, err := c.Canon.ScanProject(ctx, connect.NewRequest(&localv1.ScanProjectRequest{ProjectId: project.Id}))
 			if err != nil {
 				return actionMsg{err: err, projectID: project.Id}
 			}
 			return actionMsg{
-				text:      fmt.Sprintf("Registered %s · %d facts, %d sources.", project.Name, scanRes.Msg.FactCount, scanRes.Msg.SourceCount),
+				text:      fmt.Sprintf("Registered %s · %d facts.", project.Name, scanRes.Msg.FactCount),
 				projectID: project.Id,
 			}
 		}

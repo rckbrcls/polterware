@@ -267,7 +267,7 @@ func (core *Core) LinkEvidenceToFact(_ context.Context, request *connect.Request
 	return connect.NewResponse(&localv1.LinkEvidenceToFactResponse{}), nil
 }
 
-func (core *Core) ImportProjectSources(_ context.Context, request *connect.Request[localv1.ImportProjectSourcesRequest]) (*connect.Response[localv1.ImportProjectSourcesResponse], error) {
+func (core *Core) ScanProject(_ context.Context, request *connect.Request[localv1.ScanProjectRequest]) (*connect.Response[localv1.ScanProjectResponse], error) {
 	result, err := wedge.ScanProject(core.Store, request.Msg.ProjectId)
 	if err != nil {
 		msg := err.Error()
@@ -282,10 +282,9 @@ func (core *Core) ImportProjectSources(_ context.Context, request *connect.Reque
 			return nil, internal(err)
 		}
 	}
-	return connect.NewResponse(&localv1.ImportProjectSourcesResponse{
+	return connect.NewResponse(&localv1.ScanProjectResponse{
 		FactCount:     result.FactCount,
 		EvidenceCount: result.EvidenceCount,
-		SourceCount:   result.SourceCount,
 		SkippedCount:  result.SkippedCount,
 		Message:       result.Message,
 	}), nil

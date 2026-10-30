@@ -1,6 +1,5 @@
 import { Show, createEffect, createSignal, onCleanup, onMount, untrack, type JSX } from "solid-js";
 import { animate, motionValue, type AnimationPlaybackControls } from "motion";
-import { Breadcrumb, type BreadcrumbItem } from "./breadcrumb";
 import { Button } from "./button";
 import { useDesignSystem } from "./provider";
 import { ChevronLeft, SidebarRightIcon } from "./hugeicons";
@@ -141,11 +140,6 @@ function writeRailPreference(key: string | undefined, open: boolean) {
 }
 
 export type RailPageProps = {
-  /** The places above this one; the last part of the breadcrumb is `title`. */
-  trail: readonly BreadcrumbItem[];
-  title: string;
-  /** Shown at 16px before the title in the breadcrumb. */
-  icon?: JSX.Element;
   onBack: () => void;
   /** Header controls before the rail toggle, such as a run's Verify. */
   actions?: JSX.Element;
@@ -163,8 +157,7 @@ export type RailPageProps = {
 };
 
 /**
- * A full page organized like a Linear issue: a 44px header with Back, the breadcrumb, and the
- * actions, the content column, and a 376px properties rail on the right that opens as a
+ * A full page organized like a Linear issue: a 44px header with Back and the actions, the content column, and a 376px properties rail on the right that opens as a
  * floating drawer on narrow pages. Fill the rail with `RailGroup`s.
  */
 export function RailPage(props: RailPageProps) {
@@ -205,7 +198,6 @@ export function RailPage(props: RailPageProps) {
         <div class="pw-document__trail">
           <Button size="icon" variant="texture" aria-label="Back" onClick={() => props.onBack()}><ChevronLeft size={14} /></Button>
         </div>
-        <Breadcrumb class="pw-document__crumbs" items={props.trail} icon={props.icon} current={props.title || "Untitled"} />
         <div class="pw-document__actions">
           <Show when={props.status}><span role="status" aria-live="polite" class="pw-document__status">{props.status}</span></Show>
           {props.actions}

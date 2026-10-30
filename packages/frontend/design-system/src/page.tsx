@@ -11,7 +11,6 @@ export function PageHeader(props: {
   title: string;
   subtitle?: JSX.Element;
   actions?: JSX.Element;
-  breadcrumb?: JSX.Element;
   /** Optional leading mark (e.g. service brand icon) before the title. */
   leading?: JSX.Element;
   /** Bottom rule. Defaults to on. */
@@ -32,7 +31,6 @@ export function PageHeader(props: {
       }}
     >
       <div class="min-w-0 flex-1" style={{ "min-width": 0, flex: "1 1 auto" }}>
-        {props.breadcrumb}
         <div
           class="flex flex-wrap items-center gap-2"
           style={{ display: "flex", "flex-wrap": "wrap", "align-items": "center", gap: "8px" }}
@@ -108,7 +106,7 @@ function PageToolbarLeading(props: PageToolbarSlotProps) {
   );
 }
 
-/** The middle group of the toolbar, such as a `Breadcrumb`: spaced between the tabs and the actions. */
+/** The middle group of the toolbar: spaced between the tabs and the actions. */
 function PageToolbarCenter(props: PageToolbarSlotProps) {
   return (
     <div class={`pw-page-toolbar-center ${props.class ?? ""}`}>

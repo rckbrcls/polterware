@@ -192,8 +192,6 @@ func applyNodeFields(node *Node, fields map[string]any) {
 			}
 		case "decisions":
 			node.Decisions = stringList(value)
-		case "uses":
-			node.Uses = stringList(value)
 		case "deploys":
 			if deploys, ok := DeploymentsFrom(value); ok {
 				node.Deploys = deploys

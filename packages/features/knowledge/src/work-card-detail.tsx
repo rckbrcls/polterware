@@ -44,11 +44,9 @@ export function WorkCardDetail(props: {
         const progress = createMemo(() => cardTaskProgress(card()));
         return (
           <KnowledgeDocumentShell
-            trail={[{ label: "Milestones", section: "milestones" }]}
             entityId={card().slug}
             activitySubjectId={card().id}
             title={card().title}
-            icon={<ListChecks size={32} />}
             bodyMarkdown={card().intent}
             properties={
               <>

@@ -262,8 +262,8 @@ message StructureNode {
   // between designs.
   string migration_from = 16;
   string migration_to = 17;
-  // uses lists the node paths this node depends on; the map draws them as edges.
-  repeated string uses = 18;
+  reserved 18;
+  reserved "uses";
   // deploys lists this node's links, one per environment.
   repeated NodeDeployment deploys = 19;
   // kind is what a component is (a canvas component kind); empty on other levels.

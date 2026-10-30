@@ -342,7 +342,6 @@ func structureNodeProto(row structure.Row) *localv1.StructureNode {
 		Tech:          row.Tech,
 		MigrationFrom: row.MigrationFrom,
 		MigrationTo:   row.MigrationTo,
-		Uses:          row.Uses,
 	}
 	for _, deploy := range row.Deploys {
 		out.Deploys = append(out.Deploys, &localv1.NodeDeployment{

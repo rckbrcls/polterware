@@ -1,6 +1,6 @@
 /* RailPage: the page structure of docs, decisions, cards, facts, and runs (classes keep the pw-document prefix). */
 /*
- * Document page, organized like a Linear issue: a 44px header with the trail, a 654px text column
+ * Document page, organized like a Linear issue: a 44px header with Back and the actions, a 654px text column
  * centered in the room the rail leaves, and a 376px properties rail on the right edge. The page
  * scrolls as one.
  */
@@ -12,7 +12,7 @@
   flex-direction: column;
 }
 
-/* Back, the breadcrumb, and the actions, spaced apart (justify-between). */
+/* Back and the actions, spaced apart (justify-between). */
 .pw-document__header {
   display: flex;
   height: var(--page-header-height);
@@ -29,11 +29,6 @@
   min-width: 0;
   align-items: center;
   gap: 8px;
-}
-
-/* The trail sits between the Back button and the actions, and truncates first. */
-.pw-document__crumbs {
-  flex: 0 1 auto;
 }
 
 .pw-document__status {

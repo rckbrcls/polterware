@@ -1,7 +1,7 @@
 // Package inbox derives the items that need a person from data the project
-// already has: open questions (Decision), drift findings (Drift), facts no
-// evidence backs (Verify), and deploy links whose provider CLI is not
-// connected (also Verify). Items are never stored; only a person's disposition
+// already has: open questions (Decision), drift findings (Drift: the code
+// disagrees with a rule or a decision), and deploy links whose provider CLI is
+// not connected (Setup). Items are never stored; only a person's disposition
 // is, keyed by the item's stable key.
 package inbox
 
@@ -20,7 +20,7 @@ import (
 const (
 	KindDecision = "decision"
 	KindDrift    = "drift"
-	KindVerify   = "verify"
+	KindSetup    = "setup"
 
 	StateOpen     = "open"
 	StateDeferred = "deferred"
@@ -31,18 +31,16 @@ const (
 	ActionFixCode      = "fix_code"
 	ActionUpdateIntent = "update_intent"
 	ActionIgnore       = "ignore"
-	ActionVerify       = "verify"
-	ActionReject       = "reject"
 )
 
 // kindOrder sorts items of equal blocking by kind.
-var kindOrder = map[string]int{KindDecision: 0, KindDrift: 1, KindVerify: 2}
+var kindOrder = map[string]int{KindDecision: 0, KindDrift: 1, KindSetup: 2}
 
 // KindActions lists the actions each kind accepts, primary first.
 var KindActions = map[string][]string{
 	KindDecision: {ActionDecide, ActionDelegate, ActionDefer},
 	KindDrift:    {ActionFixCode, ActionUpdateIntent, ActionIgnore},
-	KindVerify:   {ActionVerify, ActionReject},
+	KindSetup:    {ActionDefer, ActionIgnore},
 }
 
 // ValidAction reports whether kind accepts action.
@@ -51,9 +49,9 @@ func ValidAction(kind, action string) bool {
 }
 
 // Recorded reports whether action is stored as a disposition. Decide writes
-// the answer on the question and verify writes the fact instead.
+// the answer on the question instead.
 func Recorded(action string) bool {
-	return action != ActionDecide && action != ActionVerify
+	return action != ActionDecide
 }
 
 // Routed reports whether a disposition hands the item to agents through
@@ -71,16 +69,7 @@ type Question struct {
 	Options  []string
 }
 
-// Fact is a declared or observed fact with no linked evidence.
-type Fact struct {
-	ID         string
-	Statement  string
-	TruthClass string
-	Source     string
-	Actor      string
-}
-
-// DeployLink is one node deployment. A Verify item is derived when its
+// DeployLink is one node deployment. A Setup item is derived when its
 // provider CLI is not connected.
 type DeployLink struct {
 	NodeID        string
@@ -125,11 +114,9 @@ type Item struct {
 	Source   string
 	State    string
 	Actions  []string
-	// CardSlug and QuestionText let Decide write the answer; FactID lets
-	// verify write the fact.
+	// CardSlug and QuestionText let Decide write the answer.
 	CardSlug     string
 	QuestionText string
-	FactID       string
 }
 
 // RoutedItem is an item a person handed to agents, with the action taken.
@@ -212,10 +199,10 @@ func DriftKey(finding drift.Finding) string {
 	return "drift:" + finding.Type + ":" + hex.EncodeToString(sum[:6])
 }
 
-// DeployKey is the stable key of a Verify item for one node in one environment.
+// DeployKey is the stable key of a Setup item for one node in one environment.
 // It does not include the provider or resource, so a relink stays the same item.
 func DeployKey(nodeID, environmentID string) string {
-	return "verify:deploy:" + nodeID + ":" + environmentID
+	return "setup:deploy:" + nodeID + ":" + environmentID
 }
 
 // UnconnectedDeploys keeps links whose provider CLI is not connected for that
@@ -245,7 +232,7 @@ func providerConnected(provider, environmentID string, connections []ProviderCon
 // Derive builds the Inbox from its sources and the latest disposition per key.
 // Info drift is left out: a scan clears it, not a person. deploys are the
 // links whose provider CLI is not connected.
-func Derive(questions []Question, findings []drift.Finding, facts []Fact, deploys []DeployLink, dispositions []Disposition) Result {
+func Derive(questions []Question, findings []drift.Finding, deploys []DeployLink, dispositions []Disposition) Result {
 	latest := map[string]Disposition{}
 	for _, d := range dispositions {
 		if current, ok := latest[d.Key]; !ok || !d.CreatedAt.Before(current.CreatedAt) {
@@ -272,14 +259,6 @@ func Derive(questions []Question, findings []drift.Finding, facts []Fact, deploy
 			Title: f.Summary, Detail: f.Type, Where: driftWhere(f), Source: "system",
 		})
 	}
-	for _, fact := range facts {
-		key := "verify:" + fact.ID
-		items = append(items, Item{
-			ID: ShortID(key), Key: key, Kind: KindVerify,
-			Title: fact.Statement, Detail: fact.TruthClass, Where: fact.Source, Source: fact.Actor,
-			FactID: fact.ID,
-		})
-	}
 	for _, link := range deploys {
 		key := DeployKey(link.NodeID, link.EnvironmentID)
 		env := link.Environment
@@ -291,7 +270,7 @@ func Derive(questions []Question, findings []drift.Finding, facts []Fact, deploy
 			where = link.NodeID
 		}
 		items = append(items, Item{
-			ID: ShortID(key), Key: key, Kind: KindVerify,
+			ID: ShortID(key), Key: key, Kind: KindSetup,
 			Title:  fmt.Sprintf("Connect %s for %s in %s", link.Provider, where, env),
 			Detail: link.Provider, Where: where, Source: env,
 		})
@@ -308,7 +287,7 @@ func Derive(questions []Question, findings []drift.Finding, facts []Fact, deploy
 			case Routed(d.Action):
 				result.Routed = append(result.Routed, RoutedItem{Item: item, Action: d.Action})
 				continue
-			case d.Action == ActionIgnore || d.Action == ActionReject:
+			case d.Action == ActionIgnore:
 				continue
 			}
 		}
@@ -358,5 +337,5 @@ func ParseAction(text string) (string, error) {
 			return action, nil
 		}
 	}
-	return "", fmt.Errorf("unknown action %q: use decide, delegate, defer, fix-code, update-intent, ignore, verify, or reject", strings.TrimSpace(text))
+	return "", fmt.Errorf("unknown action %q: use decide, delegate, defer, fix-code, update-intent, or ignore", strings.TrimSpace(text))
 }

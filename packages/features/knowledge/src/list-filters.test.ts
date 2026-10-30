@@ -27,11 +27,9 @@ const card = {
 const evidence = {
   id: "ev-1",
   title: "Contracts",
-  path: "schemas/local/v1/canon.proto",
-  summary: "",
+  summary: "Protobuf contracts for the canon service.",
   bodyMarkdown: "",
-  docType: "source",
-  tags: ["source", "contracts"],
+  tags: ["reference", "contracts"],
   updatedAt: "2026-01-01",
   owner: "Ada",
   entityLinks: [],
@@ -39,10 +37,10 @@ const evidence = {
 
 describe("list-filters", () => {
   it("lists the distinct tags in use", () => {
-    expect(distinctDocTags([evidence, { ...evidence, id: "ev-2", tags: ["runbook", "source"] }])).toEqual([
+    expect(distinctDocTags([evidence, { ...evidence, id: "ev-2", tags: ["runbook", "reference"] }])).toEqual([
       "contracts",
+      "reference",
       "runbook",
-      "source",
     ]);
   });
 
@@ -58,6 +56,6 @@ describe("list-filters", () => {
     expect(filterDocs([evidence], { ...EMPTY_DOC_LIST_FILTERS, tags: ["contracts"] })).toHaveLength(1);
     expect(filterDocs([evidence], { ...EMPTY_DOC_LIST_FILTERS, tags: ["contracts", "runbook"] })).toHaveLength(0);
     expect(filterDocs([evidence], { ...EMPTY_DOC_LIST_FILTERS, linked: "linked" })).toHaveLength(0);
-    expect(filterDocs([evidence], { ...EMPTY_DOC_LIST_FILTERS, query: "canon.proto" })).toHaveLength(1);
+    expect(filterDocs([evidence], { ...EMPTY_DOC_LIST_FILTERS, query: "canon service" })).toHaveLength(1);
   });
 });

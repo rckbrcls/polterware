@@ -53,7 +53,7 @@ export function NodeInspector(props: {
         <Show when={!state().entity}><p class="text-xs text-[var(--color-text-muted)]">The referenced entity is missing from the loaded project data. It may have been deleted or excluded by the current scope.</p></Show>
       </Show>
       <Show when={props.structureRequired}><p class="text-xs text-[var(--color-text-muted)]">This shape requires a Structure reference. Choose another Structure node to replace it.</p></Show>
-      <Input aria-label="Search project entities" placeholder={props.structureRequired ? "Search Structure" : "Search cards, Decisions, Facts or Structure"} value={search()} onInput={(e) => setSearch(e.currentTarget.value)} />
+      <Input aria-label="Search project entities" placeholder={props.structureRequired ? "Search Structure" : "Search cards, Decisions, Rules or Structure"} value={search()} onInput={(e) => setSearch(e.currentTarget.value)} />
       <div class="max-h-64 overflow-auto">
         <DataTable.Root rows={matches()} getRowId={(entity) => `${entity.kind}:${entity.id}`}>
           <DataTable.Table aria-label="Project entities">
@@ -74,7 +74,7 @@ export function NodeInspector(props: {
       <FormStack>
         <Field label="Title"><Input aria-label="Promotion title" disabled={busy() || applied()} value={title()} onInput={(e) => setTitle(e.currentTarget.value)} /></Field>
         <Show when={promotion() === "card" || promotion() === "fact"}><Field label="Slug"><Input aria-label="Promotion slug" disabled={busy() || applied()} value={slug()} onInput={(e) => setSlug(e.currentTarget.value)} /></Field></Show>
-        <p class="text-xs text-[var(--color-text-muted)]">{promotion() === "card" ? "Stage: Shape" : promotion() === "decision" ? "Status: Proposed. The core assigns a Decision number." : "Kind: Declared"}</p>
+        <p class="text-xs text-[var(--color-text-muted)]">{promotion() === "card" ? "Stage: Idea" : promotion() === "decision" ? "Status: Proposed. The core assigns a Decision number." : "Agents keep the code to it."}</p>
       </FormStack>
       <Show when={error()}><p role="alert" class="mt-3 text-sm text-[var(--color-danger)]">{error()}</p></Show>
     </A11yDialog>

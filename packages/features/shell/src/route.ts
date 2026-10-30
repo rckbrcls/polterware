@@ -114,10 +114,10 @@ export const SECTION_TABS = {
     { id: "board", label: "Board" },
     { id: "specs", label: "List" },
   ],
-  // Intent (Decisions) and observed state (Facts) with the docs that back them.
+  // Decisions, the rules agents follow, and docs.
   truth: [
     { id: "decisions", label: "Decisions" },
-    { id: "facts", label: "Facts" },
+    { id: "facts", label: "Rules" },
     { id: "docs", label: "Docs" },
   ],
   // Route id only — Runs is a flat page (no tab rail). Worktree info lives on the run card.

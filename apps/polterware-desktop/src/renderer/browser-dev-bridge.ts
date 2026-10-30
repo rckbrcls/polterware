@@ -50,7 +50,7 @@ const knowledgeItem = (
   id: string, kind: string, title: string, summary: string, body: string, owner: string,
   status: string, tags: string[], updatedAt: string, extra: Record<string, unknown> = {},
 ) => {
-  const doc = kind === "doc" || kind === "runbook" || kind === "source";
+  const doc = kind === "doc";
   return {
     id, kind: doc ? "doc" : kind, docType: doc ? kind : "", title, summary, body, owner, status,
     tags, updatedAt, extraJson: JSON.stringify(extra),
@@ -93,16 +93,10 @@ const previewKnowledge = [
     ["rb-rotate-token", "Rotate the session token", "api", "critical", "Replace the bearer session token."],
     ["rb-restore-db", "Restore the database", "store", "critical", "Restore from the last checkpoint."],
     ["rb-clear-cache", "Clear the session cache", "cache", "low", "Flush stale sessions."],
-  ].map(([id, title, service, severity, summary]) => knowledgeItem(id, "runbook", title, summary, `# ${title}\n\nFollow the steps below.`, "Platform", "published", ["ops"], "2026-09-08T09:00:00.000Z", {
+  ].map(([id, title, service, severity, summary]) => knowledgeItem(id, "doc", title, summary, `# ${title}\n\nFollow the steps below.`, "Platform", "published", ["runbook", "ops"], "2026-09-08T09:00:00.000Z", {
     service, severity, prerequisites: ["Shell access", "Core installed"], steps: ["Check status", "Apply the fix", "Confirm health"],
     commands: [`polterware status`, `polterware serve --check`], rollback: "Restore the previous state and restart.", lastValidated: "2026-09-08T09:00:00.000Z",
   })),
-  ...[
-    ["src-readme", "README", "README.md"],
-    ["src-agents", "Agent instructions", "AGENTS.md"],
-    ["src-package", "Workspace manifest", "package.json"],
-    ["src-schema", "Schema baseline", "schemas/baseline.sql"],
-  ].map(([id, title, path]) => knowledgeItem(id, "source", title, `Registered source ${path}.`, "", "Platform", "active", [], "2026-09-09T09:00:00.000Z", { path })),
 ];
 
 const link = (id: string, knowledgeId: string, entityId: string, predicate: string) => ({
@@ -165,20 +159,9 @@ const previewKindTech: Record<string, [kind: string, tech: string]> = {
   "comp-plugin": ["agent", ""],
 };
 
-/** `uses:` per node id: the node paths it depends on. The map draws them as edges. */
-const previewUses: Record<string, string[]> = {
-  "comp-cli": ["polterware/platform/core"],
-  "comp-api": ["polterware/platform/core", "polterware/data/store"],
-  "comp-desktop": ["polterware/platform/api", "polterware/product/inbox"],
-  "comp-structure": ["polterware/platform/core"],
-  "comp-mcp": ["polterware/platform/core", "polterware/data/contracts"],
-  "comp-plugin": ["polterware/agents/mcp"],
-};
-
 const previewStructure = {
   nodes: structureSeeds.map(([id, parentId, level, slug, path, title, status, decisions, childCount, featureCount, openQuestions, folder]) => ({
     id, parentId, level, slug, path, title, status, decisions, childCount, featureCount, openQuestions, folder,
-    uses: previewUses[id] ?? [],
     kind: previewKindTech[id]?.[0] ?? "",
     tech: previewKindTech[id]?.[1] ?? "",
     intent: `${title} keeps its part of the system coherent.`,
@@ -195,7 +178,7 @@ const promotedDecisions = new Map<string, Record<string, unknown>[]>();
 
 /**
  * Enough of `work.apply` for canvas promotions and the Structure map: a node block that moves it (under:)
- * or replaces its uses:. Everything else is ignored, like the rest of this bridge.
+ * or edits its fields. Everything else is ignored, like the rest of this bridge.
  */
 async function applyPreviewPolter(args?: { projectId?: string; text?: string; dryRun?: boolean; change?: { summary?: string } }): Promise<Record<string, unknown>> {
   const projectId = args?.projectId ?? "";
@@ -301,10 +284,8 @@ const previewInboxItems = [
   inboxItem("inb-2", "decision", true, "Who reviews agent handoff?", "Owner is unset.", ["Ada", "Grace"], "polterware/agents/mcp", "card:agent-handoff", "open", ["decide", "delegate", "defer"]),
   inboxItem("inb-3", "decision", false, "Keep Markdown intent files?", "Decision 004 is challenged.", ["Keep", "Replace"], "Decision 004", "decision:decision-004", "open", ["decide", "defer", "ignore"]),
   inboxItem("inb-4", "drift", false, "API returns fields not in the contract", "Warning from the last scan.", [], "polterware/platform/api", "drift:api", "open", ["fix_code", "update_intent", "ignore"]),
+  inboxItem("inb-6", "setup", false, "Connect vercel for polterware/product/web in production", "vercel", [], "polterware/product/web", "production", "open", ["defer", "ignore"]),
   inboxItem("inb-5", "drift", false, "Desktop imports a removed module", "Conflict with the structure.", [], "polterware/product/desktop", "drift:desktop", "deferred", ["fix_code", "update_intent", "defer"]),
-  inboxItem("inb-6", "verify", false, "Session cache fact has no evidence", "Attach evidence or reject.", [], "Session cache", "fact:cache", "open", ["verify", "reject"]),
-  inboxItem("inb-7", "verify", false, "Web app region is unverified", "No import confirms the region.", [], "Web app", "fact:web", "open", ["verify", "reject"]),
-  inboxItem("inb-8", "verify", false, "Staging database has no owner", "Owner fact is missing.", [], "Staging database", "fact:stg-db", "deferred", ["verify", "defer"]),
 ];
 
 

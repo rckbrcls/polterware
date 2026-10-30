@@ -50,11 +50,13 @@ func (s *Server) docUpsert(args map[string]any) (string, error) {
 	if _, ok := args["tags"]; ok {
 		item.Tags = stringSliceFrom(args["tags"])
 	}
+	// Docs have no types; an older doc_type argument may only not name the retired source.
 	if docType, ok := args["doc_type"].(string); ok {
-		item.DocType = knowledge.DocTypeFor(knowledge.KindDoc, docType)
-	} else if item.DocType == "" {
-		item.DocType = knowledge.DocTypeDoc
+		if err := knowledge.CheckDocType(docType); err != nil {
+			return "", err
+		}
 	}
+	item.DocType = knowledge.DocTypeDoc
 	scopeNode, setScope := "", false
 	if scope, ok := args["scope"].(string); ok {
 		setScope = true

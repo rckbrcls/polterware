@@ -1,10 +1,26 @@
 import { createMemo, createResource, createSignal, Show } from "solid-js";
-import { CanvasView, type StoreEntity } from "@polterware/feature-canvas";
+import { CanvasView, STRUCTURE_CANVAS_NAME, drawStructure, isStructureCanvas, type StoreEntity, type StructureSource } from "@polterware/feature-canvas";
 import { Button } from "@polterware/frontend-design-system";
 import { readRemembered, writeRemembered } from "@polterware/frontend-state";
 import type { WorkspaceSnapshot } from "./workspace/load";
 import { canvasPersistence } from "./workspace/persist";
 import { asObjectArray, asRecord, asString } from "./workspace/format";
+
+/** The canvas the Canvas section opens on next. */
+export function rememberOpenCanvas(projectId: string, canvasId: string) {
+  writeRemembered(`canvas.${projectId}`, canvasId);
+}
+
+/**
+ * Draws the Structure tree on the project's Structure canvas, creating it the first time, and
+ * returns its id. The drawing is agent-visible, so agents read the same picture people see.
+ */
+export async function drawStructureCanvas(projectId: string, nodes: readonly StructureSource[]): Promise<string> {
+  const listed = (await canvasPersistence.list(projectId)).find(isStructureCanvas);
+  const canvas = listed ? await canvasPersistence.get(projectId, listed.id) : await canvasPersistence.create(projectId, STRUCTURE_CANVAS_NAME, "canvas");
+  await canvasPersistence.update(projectId, canvas.id, { ...drawStructure(nodes, canvas), agentVisible: true });
+  return canvas.id;
+}
 
 /** Canvas references use renderer workspace records; Facts reload with that snapshot. */
 export function CanvasWorkspace(props: { projectId: string; workspace: WorkspaceSnapshot; onReload: () => Promise<void> }) {

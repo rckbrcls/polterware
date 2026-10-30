@@ -16,10 +16,10 @@ export const DEFAULT_PALETTE_ITEMS: PaletteItem[] = [
   { id: "nav.milestones", label: "Milestones", group: "Navigation", sequenceId: "go.milestones" },
   { id: "nav.canvas", label: "Canvas", group: "Navigation", shortcutId: "shell.open_canvas" },
   { id: "nav.structure", label: "Structure", group: "Navigation", sequenceId: "go.structure" },
-  { id: "nav.truth", label: "Truth", group: "Navigation", sequenceId: "go.truth" },
-  { id: "nav.dispatch", label: "Dispatch Runs", group: "Navigation", sequenceId: "go.runs" },
-  { id: "nav.dispatch-routing", label: "Dispatch Routing", group: "Navigation" },
-  { id: "nav.dispatch-usage", label: "Dispatch Usage", group: "Navigation" },
+  { id: "nav.truth", label: "Knowledge", group: "Navigation", sequenceId: "go.truth" },
+  { id: "nav.dispatch", label: "Agent Runs", group: "Navigation", sequenceId: "go.runs" },
+  { id: "nav.dispatch-routing", label: "Agent Models", group: "Navigation" },
+  { id: "nav.dispatch-usage", label: "Agent Usage", group: "Navigation" },
   { id: "nav.activity", label: "Activity", group: "Navigation", sequenceId: "go.activity" },
   { id: "nav.settings", label: "Open Project settings", group: "Navigation" },
   { id: "nav.app-settings", label: "Open App settings", group: "Navigation" },
@@ -44,5 +44,5 @@ export const DEFAULT_PALETTE_ITEMS: PaletteItem[] = [
 /** Shown first while a Work card is open: its brief for an agent, and a dispatch run on it. */
 export const CARD_PALETTE_ITEMS: PaletteItem[] = [
   { id: "action.copy-brief", label: "Copy agent brief", group: "Actions" },
-  { id: "action.dispatch-card", label: "Dispatch this card", group: "Actions" },
+  { id: "action.dispatch-card", label: "Send this card to an agent", group: "Actions" },
 ];

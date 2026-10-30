@@ -217,7 +217,7 @@ func (s *Store) SaveKnowledge(item knowledge.Item) error {
 	if item.ExtraJSON == "" {
 		item.ExtraJSON = "{}"
 	}
-	item.DocType = knowledge.DocTypeFor(item.Kind, item.DocType)
+	item.DocType = knowledge.DocTypeFor(item.Kind)
 	_, err := s.DB.Exec(`INSERT INTO knowledge_items(id,project_id,title,body,kind,doc_type,tags_json,summary,owner,status,extra_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
 		ON CONFLICT(id) DO UPDATE SET project_id=excluded.project_id,title=excluded.title,body=excluded.body,kind=excluded.kind,doc_type=excluded.doc_type,tags_json=excluded.tags_json,summary=excluded.summary,owner=excluded.owner,status=excluded.status,extra_json=excluded.extra_json,updated_at=excluded.updated_at`,
 		item.ID, item.ProjectID, item.Title, item.Body, item.Kind, item.DocType, string(tags), item.Summary, item.Owner, item.Status, item.ExtraJSON, item.CreatedAt.Format(time.RFC3339), item.UpdatedAt.Format(time.RFC3339))

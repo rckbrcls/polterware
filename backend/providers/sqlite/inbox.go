@@ -42,28 +42,6 @@ func (s *Store) ListInboxDispositions(projectID string) ([]inbox.Disposition, er
 	return out, rows.Err()
 }
 
-// ListUnbackedCanonFacts returns declared and observed facts with no linked
-// evidence, in one query.
-func (s *Store) ListUnbackedCanonFacts(projectID string) ([]inbox.Fact, error) {
-	rows, err := s.DB.Query(`SELECT f.id,f.statement,f.truth_class,f.source,f.actor FROM canon_facts f
-		WHERE f.project_id=? AND f.truth_class IN ('declared','observed')
-		AND NOT EXISTS (SELECT 1 FROM canon_fact_evidence fe WHERE fe.fact_id=f.id)
-		ORDER BY f.created_at, f.id`, projectID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var out []inbox.Fact
-	for rows.Next() {
-		var f inbox.Fact
-		if err := rows.Scan(&f.ID, &f.Statement, &f.TruthClass, &f.Source, &f.Actor); err != nil {
-			return nil, err
-		}
-		out = append(out, f)
-	}
-	return out, rows.Err()
-}
-
 // ListNodeDeployLinks returns every deploy link on an active Structure node.
 func (s *Store) ListNodeDeployLinks(projectID string) ([]inbox.DeployLink, error) {
 	rows, err := s.DB.Query(`SELECT d.node_id,n.path,d.environment_id,COALESCE(e.name,''),d.provider,d.resource

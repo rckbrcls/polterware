@@ -163,14 +163,16 @@ message LinkEvidenceToFactRequest {
 
 message LinkEvidenceToFactResponse {}
 
-message ImportProjectSourcesRequest {
+// ScanProjectRequest imports evidence and facts from the project's files.
+message ScanProjectRequest {
   string project_id = 1;
 }
 
-message ImportProjectSourcesResponse {
+message ScanProjectResponse {
   int32 fact_count = 1;
   int32 evidence_count = 2;
-  int32 source_count = 3;
+  reserved 3;
+  reserved "source_count";
   int32 skipped_count = 4;
   string message = 5;
 }
@@ -187,5 +189,5 @@ service ProjectModelService {
   rpc GetEvidence(GetEvidenceRequest) returns (GetEvidenceResponse);
   rpc UpsertEvidence(UpsertEvidenceRequest) returns (UpsertEvidenceResponse);
   rpc LinkEvidenceToFact(LinkEvidenceToFactRequest) returns (LinkEvidenceToFactResponse);
-  rpc ImportProjectSources(ImportProjectSourcesRequest) returns (ImportProjectSourcesResponse);
+  rpc ScanProject(ScanProjectRequest) returns (ScanProjectResponse);
 }

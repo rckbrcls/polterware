@@ -92,7 +92,7 @@ rationale: An absent deploys line changes nothing
 	}
 	prodKey := inbox.DeployKey(web.ID, prod.ID)
 	item, ok := deployItem(listed, prodKey)
-	if !ok || item.Kind != inbox.KindVerify || item.Title != "Connect vercel for app/web in production" || item.Detail != "vercel" {
+	if !ok || item.Kind != inbox.KindSetup || item.Title != "Connect vercel for app/web in production" || item.Detail != "vercel" {
 		t.Fatalf("inbox = %+v", listed.Items)
 	}
 	localKey := inbox.DeployKey(web.ID, localID)

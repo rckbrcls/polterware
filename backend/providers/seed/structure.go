@@ -28,17 +28,17 @@ Electron Main, a typed preload bridge, and a Solid renderer over the local core.
 ! The renderer reads and writes only through window.polterware
 
 # polterware/desktop/main: Electron Main
-level: component · under: polterware/desktop · path: apps/polterware-desktop/src/main · uses: polterware/core/server, polterware/contracts/generated · kind: desktop · tech: Electron
+level: component · under: polterware/desktop · path: apps/polterware-desktop/src/main · kind: desktop · tech: Electron
 
 Thin process: window security, IPC, core supervision, updater.
 
 # polterware/desktop/preload: Preload bridge
-level: component · under: polterware/desktop · path: apps/polterware-desktop/src/preload · uses: polterware/desktop/main, polterware/contracts/generated · kind: desktop · tech: Electron
+level: component · under: polterware/desktop · path: apps/polterware-desktop/src/preload · kind: desktop · tech: Electron
 
 The typed window.polterware surface.
 
 # polterware/desktop/renderer: Solid renderer
-level: component · under: polterware/desktop · path: apps/polterware-desktop/src/renderer · uses: polterware/desktop/preload, polterware/frontend/features, polterware/frontend/design-system, polterware/contracts/generated · kind: frontend · tech: Solid
+level: component · under: polterware/desktop · path: apps/polterware-desktop/src/renderer · kind: frontend · tech: Solid
 
 Product surfaces built from the shared design system and feature packages.
 
@@ -50,12 +50,12 @@ level: domain · under: polterware · path: packages
 Feature packages and the shared frontend infrastructure the Desktop renderer is assembled from.
 
 # polterware/frontend/features: Feature packages
-level: component · under: polterware/frontend · path: packages/features · uses: polterware/frontend/design-system, polterware/frontend/state, polterware/frontend/canvas · kind: frontend · tech: Solid
+level: component · under: polterware/frontend · path: packages/features · kind: frontend · tech: Solid
 
 Shell, Structure, Work and Decisions, Reality, Integrations, Settings, and Commander, one package each.
 
 # polterware/frontend/design-system: Design system
-level: component · under: polterware/frontend · path: packages/frontend/design-system · uses: polterware/frontend/state · kind: frontend · tech: Solid
+level: component · under: polterware/frontend · path: packages/frontend/design-system · kind: frontend · tech: Solid
 
 Shared controls, overlays, tables, and the design tokens in DESIGN.md.
 
@@ -87,14 +87,14 @@ The polterware serve process. It owns SQLite and serves Connect RPC and MCP.
 ! Only the core opens SQLite
 
 # polterware/core/server: Core server
-level: component · under: polterware/core · decisions: Decision-0007 · path: backend/compositions/local-core · uses: polterware/core/services, polterware/core/store, polterware/core/mcp, polterware/core/events, polterware/core/integrations, polterware/core/inbox, polterware/core/structure, polterware/agents/runs, polterware/agents/access, polterware/agents/setup, polterware/contracts/generated · kind: service · tech: Go, ConnectRPC
+level: component · under: polterware/core · decisions: Decision-0007 · path: backend/compositions/local-core · kind: service · tech: Go, ConnectRPC
 
 The Connect RPC and MCP HTTP server, the process lock, and the build handshake.
 
 ! One core per database
 
 # polterware/core/services: Project services
-level: component · under: polterware/core · decisions: Decision-0004 · path: backend/compositions/wedge · uses: polterware/core/work, polterware/core/import, polterware/core/drift, polterware/core/context, polterware/core/decisions, polterware/core/structure, polterware/core/inbox, polterware/core/git, polterware/core/facts, polterware/core/store, polterware/agents/runs · kind: service · tech: Go
+level: component · under: polterware/core · decisions: Decision-0004 · path: backend/compositions/wedge · kind: service · tech: Go
 
 Composes the domains into project init, scan, Polter apply, and project model sync.
 
@@ -104,7 +104,7 @@ level: component · under: polterware/core · decisions: Decision-0007 · path: 
 One clean baseline schema and the commit hooks that emit change events.
 
 # polterware/core/work: Work model and Polter codec
-level: component · under: polterware/core · decisions: Decision-0006, Decision-0010 · path: backend/domains/polter · uses: polterware/core/structure, polterware/core/decisions, polterware/core/context · kind: service · tech: Go
+level: component · under: polterware/core · decisions: Decision-0006, Decision-0010 · path: backend/domains/polter · kind: service · tech: Go
 
 Work cards, tasks, questions, invariants, decisions, claims, and the Polter grammar.
 
@@ -116,7 +116,7 @@ level: component · under: polterware/core · decisions: Decision-0004 · path: 
 Project facts, their evidence, and the truth class each one carries.
 
 # polterware/core/import: Deterministic import
-level: component · under: polterware/core · decisions: Decision-0004, Decision-0005 · path: backend/providers/importer · uses: polterware/core/facts, polterware/core/git · kind: worker · tech: Go
+level: component · under: polterware/core · decisions: Decision-0004, Decision-0005 · path: backend/providers/importer · kind: worker · tech: Go
 
 Reads a fixed set of project files and Git metadata into facts and evidence.
 
@@ -128,7 +128,7 @@ level: component · under: polterware/core · decisions: Decision-0005 · path: 
 HEAD, branch, and recent commits read from the registered checkouts.
 
 # polterware/core/drift: Drift checker
-level: component · under: polterware/core · decisions: Decision-0004 · path: backend/domains/drift · uses: polterware/core/facts · kind: service · tech: Go
+level: component · under: polterware/core · decisions: Decision-0004 · path: backend/domains/drift · kind: service · tech: Go
 
 Reports where declared intent and observed code disagree.
 
@@ -144,7 +144,7 @@ Packs the project graph into a budgeted context for an agent session.
 # polterware/core/structure: Structure model
 level: component · under: polterware/core · decisions: Decision-0008, Decision-0009 · path: backend/domains/structure · kind: service · tech: Go
 
-System, domain, and component nodes, their uses edges, derived status, and history.
+System, domain, and component nodes, their derived status, and history.
 
 # polterware/core/decisions: Decision lifecycle
 level: component · under: polterware/core · decisions: Decision-0010 · path: backend/domains/decision · kind: service · tech: Go
@@ -154,9 +154,9 @@ Decision states and the supersede chain.
 ! A challenge is never automatic
 
 # polterware/core/inbox: Inbox derivation
-level: component · under: polterware/core · path: backend/domains/inbox · uses: polterware/core/drift · kind: service · tech: Go
+level: component · under: polterware/core · path: backend/domains/inbox · kind: service · tech: Go
 
-Decision, Drift, and Verify items derived on every read.
+Question, Conflict, and Setup items derived on every read.
 
 # polterware/core/events: Change events
 level: component · under: polterware/core · path: backend/platform/events · kind: stream · tech: Go
@@ -171,7 +171,7 @@ Detects provider CLIs and probes connection status; credentials stay in the OS o
 ! Never persist provider credentials in SQLite
 
 # polterware/core/mcp: MCP server and bridge
-level: component · under: polterware/core · decisions: Decision-0007 · path: backend/providers/mcp · uses: polterware/core/services, polterware/core/store, polterware/core/work, polterware/core/context, polterware/core/drift, polterware/core/facts, polterware/agents/runs, polterware/agents/access · kind: mcp · tech: Go
+level: component · under: polterware/core · decisions: Decision-0007 · path: backend/providers/mcp · kind: mcp · tech: Go
 
 Audited MCP reads and writes inside the core; polterware mcp is a stdio bridge.
 
@@ -183,12 +183,12 @@ level: domain · under: polterware · decisions: Decision-0007 · path: backend/
 The single polterware binary: commands, status TUI, serve, and mcp.
 
 # polterware/cli/commands: CLI commands
-level: component · under: polterware/cli · path: backend/runtimes/cli · uses: polterware/cli/coreclient, polterware/core/server, polterware/core/mcp, polterware/core/work, polterware/agents/setup · kind: cli · tech: Go
+level: component · under: polterware/cli · path: backend/runtimes/cli · kind: cli · tech: Go
 
 Thin core clients: apply, query, status, handoff, structure, brief, search, decision, feature, export.
 
 # polterware/cli/coreclient: Core client
-level: component · under: polterware/cli · path: backend/platform/coreclient · uses: polterware/contracts/generated · kind: cli · tech: Go
+level: component · under: polterware/cli · path: backend/platform/coreclient · kind: cli · tech: Go
 
 Finds or starts the local core and attaches to it.
 
@@ -198,14 +198,14 @@ level: domain · under: polterware · decisions: Decision-0006 · path: backend/
 How Claude Code, Codex, and Cursor reach Polterware, and what a session leaves behind.
 
 # polterware/agents/setup: Agent setup
-level: component · under: polterware/agents · path: backend/providers/agentsetup · uses: polterware/cli/commands, polterware/core/mcp · kind: agent · tech: Go
+level: component · under: polterware/agents · path: backend/providers/agentsetup · kind: agent · tech: Go
 
 Embedded Claude Code plugin, per-hook switches, Codex skill and AGENTS.md line, Cursor MCP entry.
 
 ! The core never edits an agent's own files except through its CLI
 
 # polterware/agents/runs: AgentRun audit
-level: component · under: polterware/agents · decisions: Decision-0004 · path: backend/domains/agentrun · uses: polterware/core/context, polterware/core/drift · kind: agent · tech: Go
+level: component · under: polterware/agents · decisions: Decision-0004 · path: backend/domains/agentrun · kind: agent · tech: Go
 
 One audited run per session, with steps, tool calls, and change batches.
 
@@ -328,12 +328,12 @@ Two agents never claim overlapping scopes.
 ## inbox: Inbox with real items
 stage: verify · under: polterware/core/work
 
-Decision, Drift, and Verify items derived on every read.
+Question, Conflict, and Setup items derived on every read.
 
 - [x] Derived items and blocking flag §backend/domains/inbox/*§
 - [x] Decide, delegate, defer, and verify actions
 - [x] Sidebar count, status, and polterware inbox
-! The Inbox has only Decision, Drift, and Verify items
+! The Inbox has only Question, Conflict, and Setup items
 
 ## structure-hierarchy-oracle: Structure hierarchy and Oracle
 stage: verify · under: polterware/core/context · decisions: Decision-0008, Decision-0009

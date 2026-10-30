@@ -3,8 +3,8 @@ import { cardRuns, gateChecks, latestHandoff, mapVerification, nextGate } from "
 
 describe("work card model", () => {
   it("names the next gate of an open stage", () => {
-    expect(nextGate("shape")).toEqual({ step: "contract", target: "plan", label: "Move to Plan" });
-    expect(nextGate("plan")).toEqual({ step: "plan", target: "build", label: "Move to Build" });
+    expect(nextGate("shape")).toEqual({ step: "contract", target: "plan", label: "Move to Planned" });
+    expect(nextGate("plan")).toEqual({ step: "plan", target: "build", label: "Start work" });
     expect(nextGate("build")).toBeUndefined();
   });
 

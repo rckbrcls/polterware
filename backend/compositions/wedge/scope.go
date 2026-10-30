@@ -15,8 +15,8 @@ import (
 )
 
 // ListInboxScoped derives the Inbox and keeps the items inside scope. An item's
-// own scope wins; otherwise a Decision item takes its card's `under` and a
-// Verify item takes its fact's scope. Everything else is unscoped and stays.
+// own scope wins; otherwise a Question item takes its card's `under`.
+// Everything else is unscoped and stays.
 func ListInboxScoped(store *storepkg.Store, projectID string, scope structure.MultiScope) (inbox.Result, error) {
 	snapshot, err := store.LoadWorkSnapshot(projectID)
 	if err != nil {
@@ -39,10 +39,6 @@ func inboxScoped(store *storepkg.Store, snapshot work.Snapshot, scope structure.
 	if err != nil {
 		return result, err
 	}
-	factScopes, err := store.ScopeMap(projectID, storepkg.ScopeFact)
-	if err != nil {
-		return result, err
-	}
 	under := map[string]string{}
 	for _, card := range snapshot.Cards {
 		under[card.Slug] = card.Under
@@ -54,8 +50,6 @@ func inboxScoped(store *storepkg.Store, snapshot work.Snapshot, scope structure.
 		switch item.Kind {
 		case inbox.KindDecision:
 			return resolved.MatchesPath(under[item.CardSlug])
-		case inbox.KindVerify:
-			return resolved.Matches(factScopes[item.FactID])
 		}
 		return true
 	}

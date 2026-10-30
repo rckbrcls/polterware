@@ -1,4 +1,4 @@
-import { Show, type JSX } from "solid-js";
+import { createUniqueId, Show, type JSX } from "solid-js";
 import type { ArchNode } from "@polterware/frontend-canvas";
 import { Box, Boxes, IconTile, Layers, type HugeiconComponent } from "@polterware/frontend-design-system";
 import { componentIcons } from "./component-icons";
@@ -37,7 +37,7 @@ function SemanticCard(props: { node: ArchNode; selected: boolean; linked?: Linke
       fill={style().stroke === "neutral" ? "var(--tone-neutral-rim)" : strokeToken(style().stroke)} />}</Show>
     <foreignObject x={props.node.x + inset().left} y={props.node.y + inset().top}
       width={Math.max(0, props.node.width - inset().left - inset().right)} height={Math.max(0, props.node.height - inset().top - inset().bottom)}>
-      <div class="pw-canvas-node-card" style={{ color: fillTextToken(style().fill) }}>
+      <div class="pw-canvas-node-card" data-group={props.node.type === "system" || props.node.type === "domain" ? "" : undefined} style={{ color: fillTextToken(style().fill) }}>
         <IconTile size={28} tone="architecture" brand={[technology(), kind()]} seed={props.node.id} class={outline().round ? "pw-icon-tile--circle" : undefined}>{icon()({ size: 16 })}</IconTile>
         <div class="pw-canvas-node-card-text">
           {props.children}
@@ -53,16 +53,27 @@ function SemanticCard(props: { node: ArchNode; selected: boolean; linked?: Linke
  * Every outline, drawing shape or component silhouette, is a face just above the background with one thin line,
  * details included. A chosen fill, line color, width or pattern replaces those; `dashed` breaks the line by default.
  * The line keeps its width on screen, so a scaled-down drawing (zoom, gallery tile, minimap) does not lose it.
+ * The default line is the shared lit material (DESIGN.md): a dark drop under the face and a 0.5px rim that is
+ * brightest along the top band, follows every radius, and fades to the faint side and bottom rim.
  */
 function ShapeSurface(props: { node: ArchNode; definition: Pick<ShapeDefinition, "path" | "strokeOnly">; style: ShapeStyle; dashed?: boolean }) {
+  const rim = `pw-canvas-rim-${createUniqueId()}`;
   const d = () => props.definition.path(props.node.width, props.node.height);
   // Only closed subpaths are filled: an open detail such as a cylinder's lid would close against its chord and punch a hole.
   const outline = () => d().split(/(?=M)/).filter((part) => /Z\s*$/i.test(part)).join("");
   const face = () => props.definition.strokeOnly ? "none" : props.style.fill === "neutral" ? "var(--color-surface)" : fillToken(props.style.fill);
-  const line = () => props.style.stroke === "neutral" ? "var(--tone-neutral-rim)" : strokeToken(props.style.stroke);
+  const dashed = () => props.style.dashed || props.dashed;
+  const lit = () => !props.definition.strokeOnly && props.style.stroke === "neutral" && props.style.strokeWidth === 1 && !dashed();
+  const line = () => lit() ? `url(#${rim})` : props.style.stroke === "neutral" ? "var(--tone-neutral-rim)" : strokeToken(props.style.stroke);
   return <g transform={`translate(${props.node.x} ${props.node.y})`}>
-    <path data-face d={outline()} fill={face()} />
-    <path d={d()} fill="none" stroke={line()} stroke-width={props.style.strokeWidth} stroke-dasharray={props.style.dashed || props.dashed ? "6 4" : undefined}
+    <Show when={lit()}>
+      <defs><linearGradient id={rim} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={Math.min(24, props.node.height)}>
+        <stop offset="0" style={{ "stop-color": "var(--material-rim-strong)" }} />
+        <stop offset="1" style={{ "stop-color": "var(--material-highlight-strong)" }} />
+      </linearGradient></defs>
+    </Show>
+    <path data-face d={outline()} fill={face()} classList={{ "pw-canvas-face--lit": lit() }} />
+    <path d={d()} fill="none" stroke={line()} stroke-width={lit() ? 0.5 : props.style.strokeWidth} stroke-dasharray={dashed() ? "6 4" : undefined}
       stroke-linejoin="round" vector-effect="non-scaling-stroke" />
   </g>;
 }

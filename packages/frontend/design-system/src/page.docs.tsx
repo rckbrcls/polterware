@@ -23,12 +23,11 @@ export default {
       ),
     },
     {
-      id: "header-with-breadcrumb",
-      title: "Breadcrumb and leading mark",
+      id: "header-with-leading",
+      title: "Leading mark",
       render: () => (
-        // #region header-with-breadcrumb
+        // #region header-with-leading
         <PageHeader
-          breadcrumb={<span class="text-[12px] text-[var(--color-text-muted)]">Settings / Project</span>}
           leading={<span class="text-[14px]">P</span>}
           title="General"
           divider={false}

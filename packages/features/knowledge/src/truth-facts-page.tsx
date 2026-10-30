@@ -7,7 +7,6 @@ import {
   PageToolbar,
   Plus,
   SearchBar,
-  StatusDot,
   Tabs,
   ToolbarIconButton,
   type FilterField,
@@ -15,14 +14,12 @@ import {
 } from "@polterware/frontend-design-system";
 import { isTypingTarget, matchesShortcut } from "@polterware/frontend-state";
 import { CanonFactsPanel, type CanonJustifyChange } from "./canon-facts-panel";
-import { FACT_KINDS } from "./fact-kind";
 
 /** Truth → Facts: statements about the project with their subject, scope, and evidence. */
 export function TruthFactsPage(props: {
   projectId: string;
   scopeNodes?: readonly string[];
   loadFacts?: (projectId: string) => Promise<unknown>;
-  loadEvidence?: (projectId: string) => Promise<unknown>;
   tab: string;
   tabs: TabItem[];
   tabsLabel: string;
@@ -52,17 +49,6 @@ export function TruthFactsPage(props: {
   });
 
   const fields = (): FilterField[] => [
-    {
-      id: "kind",
-      label: "Kind",
-      kind: "multi",
-      icon: () => <StatusDot tone="ok" showLabel={false} />,
-      options: FACT_KINDS.map((option) => ({
-        id: option.id,
-        label: option.label,
-        icon: () => <StatusDot tone={option.tone} showLabel={false} />,
-      })),
-    },
   ];
   const filters = createPageFilters({
     surface: "truth.facts",
@@ -89,14 +75,14 @@ export function TruthFactsPage(props: {
         </PageToolbar.Tabs>
         <PageToolbar.Actions>
           <SearchBar
-            placeholder="Search facts"
+            placeholder="Search rules"
             value={query()}
             onInput={setQuery}
-            aria-label="Search facts"
+            aria-label="Search rules"
           />
           <FilterPopover
-            ariaLabel="Fact filters"
-            title="Filter facts"
+            ariaLabel="Rule filters"
+            title="Filter rules"
             shortcut
             fields={filters.fields()}
             clauses={filters.clauses()}
@@ -104,7 +90,7 @@ export function TruthFactsPage(props: {
             saved={filters.saved()}
           />
           <ToolbarIconButton
-            label="New fact"
+            label="New rule"
             disabled={busy() || !props.projectId.trim()}
             onClick={() => setCreateToken((value) => value + 1)}
           >
@@ -126,7 +112,6 @@ export function TruthFactsPage(props: {
           entities={props.entities}
           scopeCatalogNodes={props.scopeCatalogNodes}
           loadFacts={props.loadFacts}
-          loadEvidence={props.loadEvidence}
           query={query()}
           clauses={filters.pageClauses()}
           createToken={createToken()}

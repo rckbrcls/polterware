@@ -1,7 +1,6 @@
 package seed_test
 
 import (
-	"encoding/json"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -115,38 +114,13 @@ func TestDefaultsIsIdempotent(t *testing.T) {
 	}
 }
 
-func TestPolterwareMapIsSeeded(t *testing.T) {
+func TestPolterwareStructureIsSeeded(t *testing.T) {
 	store := newSeeded(t)
-	rows, err := store.DB.Query(`SELECT path, uses_json FROM structure_nodes WHERE project_id=?`, seed.ProjectID)
-	if err != nil {
+	var count int
+	if err := store.DB.QueryRow(`SELECT COUNT(*) FROM structure_nodes WHERE project_id=?`, seed.ProjectID).Scan(&count); err != nil {
 		t.Fatal(err)
 	}
-	defer rows.Close()
-	uses := map[string][]string{}
-	for rows.Next() {
-		var path, raw string
-		if err := rows.Scan(&path, &raw); err != nil {
-			t.Fatal(err)
-		}
-		var list []string
-		if err := json.Unmarshal([]byte(raw), &list); err != nil {
-			t.Fatalf("uses of %s is not JSON: %v", path, err)
-		}
-		uses[path] = list
-	}
-	edges := 0
-	for from, list := range uses {
-		for _, to := range list {
-			edges++
-			if _, ok := uses[to]; !ok {
-				t.Errorf("%s uses %s, which is not a Structure node", from, to)
-			}
-			if to == from {
-				t.Errorf("%s uses itself", from)
-			}
-		}
-	}
-	if len(uses) < 30 || edges < 30 {
-		t.Fatalf("want a real map, got %d nodes and %d uses edges", len(uses), edges)
+	if count < 30 {
+		t.Fatalf("want a real tree, got %d nodes", count)
 	}
 }

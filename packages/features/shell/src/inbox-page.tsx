@@ -27,7 +27,6 @@ import {
   ShieldCheck,
   StatusChip,
   Scale,
-  ThumbsDownIcon,
   matchClauses,
   type FilterField,
   createEntityContextMenu,
@@ -51,26 +50,24 @@ import "./inbox-page.css";
 const INBOX_SCOPE = "inbox:items";
 
 const TYPE_FILTERS: { id: WorkspaceInboxKind; label: string }[] = [
-  { id: "decision", label: "Decisions" },
-  { id: "drift", label: "Drift" },
-  { id: "verify", label: "Verify" },
+  { id: "decision", label: "Questions" },
+  { id: "drift", label: "Conflicts" },
+  { id: "setup", label: "Setup" },
 ];
 
 const KIND_LABEL: Record<WorkspaceInboxKind, string> = {
-  decision: "Decision",
-  drift: "Drift",
-  verify: "Verify",
+  decision: "Question",
+  drift: "Conflict",
+  setup: "Setup",
 };
 
 const ACTION_LABEL: Record<WorkspaceInboxAction, string> = {
   decide: "Decide",
   delegate: "Delegate",
-  defer: "Defer",
-  fix_code: "Fix code",
-  update_intent: "Update intent",
-  ignore: "Ignore",
-  verify: "Mark verified",
-  reject: "Reject",
+  defer: "Later",
+  fix_code: "Fix the code",
+  update_intent: "Update the rule",
+  ignore: "Dismiss",
 };
 
 const ACTION_ICON = {
@@ -80,15 +77,13 @@ const ACTION_ICON = {
   fix_code: Hammer,
   update_intent: Pencil,
   ignore: Eye,
-  verify: ShieldCheck,
-  reject: ThumbsDownIcon,
 } as const;
 
-const KIND_ICON = { decision: Scale, drift: GitCompare, verify: ShieldCheck } as const;
+const KIND_ICON = { decision: Scale, drift: GitCompare, setup: ShieldCheck } as const;
 
 function statusLabel(item: WorkspaceInboxItem): string {
   const kind = KIND_LABEL[item.kind];
-  if (item.state === "deferred") return `Deferred ${kind.toLowerCase()}`;
+  if (item.state === "deferred") return `${kind} for later`;
   return item.blocking ? `Blocking ${kind.toLowerCase()}` : kind;
 }
 
@@ -99,7 +94,7 @@ const KIND_GROUPS = TYPE_FILTERS.map((option) => {
 });
 
 /**
- * Inbox — master/detail, as in Linear: Decision, Drift, and Verify items grouped by kind on
+ * Inbox — master/detail, as in Linear: Question, Conflict, and Setup items grouped by kind on
  * the left, the active item's detail pinned on the right. H defers and D dismisses the active
  * item (or the selection), and the next item takes its place.
  */
@@ -174,7 +169,7 @@ export function InboxPage(props: {
       options: [
         { id: "blocking", label: "Blocking", tone: "danger" as const },
         { id: "open", label: "Open", tone: "ok" as const },
-        { id: "deferred", label: "Deferred", tone: "muted" as const },
+        { id: "deferred", label: "Later", tone: "muted" as const },
       ].map((option) => ({
         id: option.id,
         label: option.label,
@@ -240,7 +235,7 @@ export function InboxPage(props: {
     markActive(list[Math.min(activeIndex, list.length - 1)]!.id);
   });
 
-  // H defers and D dismisses (Ignore) the selection, or the active item, when they offer it.
+  // H moves to Later and D dismisses the selection, or the active item, when they offer it.
   function onKeyDown(event: KeyboardEvent) {
     if (event.defaultPrevented || event.repeat || isTypingTarget(event.target) || pending()) return;
     const action: WorkspaceInboxAction | null = matchesShortcut("inbox.defer", event)
@@ -319,7 +314,7 @@ export function InboxPage(props: {
         />
         <DataTable.Cell>
           <StatusChip tone={item().state === "deferred" ? "muted" : item().blocking ? "danger" : "muted"}>
-            {item().state === "deferred" ? "Deferred" : item().blocking ? "Blocking" : "Open"}
+            {item().state === "deferred" ? "Later" : item().blocking ? "Blocking" : "Open"}
           </StatusChip>
         </DataTable.Cell>
         <DataTable.Cell class="pw-inbox-context">{item().where || "—"}</DataTable.Cell>
@@ -346,7 +341,7 @@ export function InboxPage(props: {
             saved={filters.saved()}
           />
           <Show when={props.onCheckDrift}>
-            <Button variant="texture" size="icon" aria-label={checking() ? "Checking drift…" : "Check drift"} disabled={checking()} onClick={() => void checkDrift()}>
+            <Button variant="texture" size="icon" aria-label={checking() ? "Checking for conflicts…" : "Check for conflicts"} disabled={checking()} onClick={() => void checkDrift()}>
               <RefreshCw size={14} />
             </Button>
           </Show>

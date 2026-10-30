@@ -115,7 +115,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     name: "polterware scan",
     synopsis: "polterware scan --project <id> [--json]",
     summary:
-      "Import facts, evidence, and sources from the project root. Prints fact, evidence, source, and skipped counts.",
+      "Import evidence and observed facts from the project's files, so drift can compare them with the rules. Prints fact, evidence, and skipped counts.",
     flags: [
       { name: "--project", value: "id", required: true, description: "Project id." },
       JSON_FLAG,
@@ -368,7 +368,7 @@ export const CLI_COMMANDS: readonly CliCommand[] = [
     id: "inbox",
     name: "polterware inbox",
     synopsis:
-      'polterware inbox [<id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore | verify | reject] [--agent <name>] [--scope <node>] [--exact] [--project <id>]',
+      'polterware inbox [<id> decide "<answer>" | delegate | defer | fix-code | update-intent | ignore] [--agent <name>] [--scope <node>] [--exact] [--project <id>]',
     summary: "List the Inbox, or apply one action to one item.",
     flags: [...SCOPE_FLAGS, AGENT_FLAG, PROJECT_FLAG],
     example: "polterware inbox",

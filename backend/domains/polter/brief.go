@@ -126,14 +126,14 @@ func (b briefBuilder) target() []string {
 		if card.Intent != "" {
 			lines = append(lines, card.Intent)
 		}
-		return append(lines, usesLine(b.focus)...)
+		return lines
 	}
 	node := b.focus
 	lines = append(lines, fmt.Sprintf("# %s: %s", node.Path, node.Title), nodeMeta(node, true))
 	if node.Intent != "" {
 		lines = append(lines, node.Intent)
 	}
-	return append(lines, usesLine(node)...)
+	return lines
 }
 
 // nodeMeta is `level: component · kind: cli · tech: Go · repo: api · path: src`.
@@ -152,13 +152,6 @@ func nodeMeta(node *structure.Node, withLevel bool) string {
 		}
 	}
 	return strings.Join(parts, " · ")
-}
-
-func usesLine(node *structure.Node) []string {
-	if node == nil || len(node.Uses) == 0 {
-		return nil
-	}
-	return []string{"uses: " + strings.Join(node.Uses, ", ")}
 }
 
 func openClaim(card *work.Card) string {
@@ -461,11 +454,7 @@ func (b briefBuilder) docs() []string {
 			if doc.ScopeNodeID != id {
 				continue
 			}
-			line := "- " + doc.Title
-			if doc.DocType != "" && doc.DocType != "doc" {
-				line += " (" + doc.DocType + ")"
-			}
-			lines = append(lines, line)
+			lines = append(lines, "- "+doc.Title)
 		}
 	}
 	if len(lines) == 0 {

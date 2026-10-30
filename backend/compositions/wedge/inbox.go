@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/canon"
 	"github.com/polterware/polterware/backend/domains/inbox"
 	"github.com/polterware/polterware/backend/domains/work"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
@@ -54,10 +53,6 @@ func listInbox(store *storepkg.Store, snapshot work.Snapshot) (inbox.Result, err
 	if err != nil {
 		return inbox.Result{}, err
 	}
-	facts, err := store.ListUnbackedCanonFacts(snapshot.ProjectID)
-	if err != nil {
-		return inbox.Result{}, err
-	}
 	links, err := store.ListNodeDeployLinks(snapshot.ProjectID)
 	if err != nil {
 		return inbox.Result{}, err
@@ -76,7 +71,7 @@ func listInbox(store *storepkg.Store, snapshot work.Snapshot) (inbox.Result, err
 	if err != nil {
 		return inbox.Result{}, err
 	}
-	return inbox.Derive(questions, findings, facts, inbox.UnconnectedDeploys(links, probes), dispositions), nil
+	return inbox.Derive(questions, findings, inbox.UnconnectedDeploys(links, probes), dispositions), nil
 }
 
 // ResolveInboxInput is one action on one Inbox item.
@@ -101,8 +96,7 @@ type ResolveInboxResult struct {
 }
 
 // ResolveInbox applies one action. Decide writes `? text -> answer` through
-// ApplyPolter, verify marks the fact verified, and every other action appends
-// a disposition.
+// ApplyPolter, and every other action appends a disposition.
 func ResolveInbox(store *storepkg.Store, in ResolveInboxInput) (ResolveInboxResult, error) {
 	current, err := ListInbox(store, in.ProjectID)
 	if err != nil {
@@ -134,24 +128,6 @@ func ResolveInbox(store *storepkg.Store, in ResolveInboxInput) (ResolveInboxResu
 		applied, err := ApplyPolter(store, apply)
 		result.Apply = &applied
 		return result, err
-	case inbox.ActionVerify:
-		if strings.HasPrefix(item.Key, "verify:deploy:") {
-			return result, inboxInput("connect the %s CLI to clear this item", item.Detail)
-		}
-		if actor == "" || actor == "system" {
-			return result, canon.ErrVerifiedRequiresActor
-		}
-		fact, err := store.GetCanonFact(item.FactID)
-		if err != nil {
-			return result, canon.ErrUnknownFact
-		}
-		fact.TruthClass = canon.TruthVerified
-		fact.Actor = actor
-		fact.UpdatedAt = time.Now().UTC()
-		if err := canon.ValidateFact(fact); err != nil {
-			return result, err
-		}
-		return result, store.UpsertCanonFact(fact)
 	default:
 		return result, store.InsertInboxDisposition(in.ProjectID, inbox.Disposition{
 			Key: item.Key, Action: in.Action, Actor: actor, CreatedAt: time.Now().UTC(),

@@ -164,8 +164,6 @@ export function createPolterwareBridge(ipc: BridgeIpc) {
       canon: {
         listEntities: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listCanonEntities, payload),
         sync: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.syncProjectModel, payload),
-        importSources: (payload: JsonObject) =>
-          coreCall(ipc, IPC_CHANNELS.core.importProjectSources, payload),
         listFacts: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.listFacts, payload),
         getFact: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.getFact, payload),
         upsertFact: (payload: JsonObject) => coreCall(ipc, IPC_CHANNELS.core.upsertFact, payload),

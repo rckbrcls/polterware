@@ -198,7 +198,7 @@ var MetaKeys = []string{"stage", "owner", "under", "milestone", "decisions", "st
 // NodeMetaKeys are the Structure node metadata keys. repo: names a registered
 // checkout (empty is the project root); path: is a folder inside it. kind: is
 // what a component is and tech: its technology.
-var NodeMetaKeys = []string{"level", "kind", "tech", "under", "repo", "path", "decisions", "uses", "deploys", "status", "migrating"}
+var NodeMetaKeys = []string{"level", "kind", "tech", "under", "repo", "path", "decisions", "deploys", "status", "migrating"}
 
 var frontmatterKeys = map[string]bool{"polter": true, "summary": true, "rationale": true}
 
@@ -858,7 +858,10 @@ func (d *decoder) nodeMeta(n int, line string) {
 				break
 			}
 			value = FormatDeploys(specs)
-		case "under", "decisions", "uses":
+		case "under", "decisions":
+		case "uses":
+			d.errorf(n, "uses: is retired: draw how nodes relate on a canvas (Structure › Draw as canvas)")
+			continue
 		default:
 			d.errorf(n, "unknown key %q: use %s", key, strings.Join(NodeMetaKeys, ", "))
 			continue

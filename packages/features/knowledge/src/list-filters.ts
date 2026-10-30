@@ -70,7 +70,7 @@ export function filterDocs(
     if (filters.linked === "unlinked" && item.entityLinks.length > 0) return false;
     if (filters.tags.length > 0 && !filters.tags.every((tag) => item.tags.includes(tag))) return false;
     if (!needle) return true;
-    return [item.title, item.path, item.summary, item.owner, ...item.tags].some((value) =>
+    return [item.title, item.summary, item.owner, ...item.tags].some((value) =>
       value.toLowerCase().includes(needle),
     );
   });

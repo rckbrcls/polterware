@@ -383,7 +383,7 @@ export function DispatchEventSummaryDetail(props: {
             icon={<Route size={16} />}
             title={props.event.text || `Dispatch ${props.event.kind}`}
           />
-          <DetailPanel.Section title="Dispatch summary" icon={<FileText size={14} />}>
+          <DetailPanel.Section title="Run summary" icon={<FileText size={14} />}>
             <DetailPanel.Properties>
               <DetailPanel.Property
                 label="Status"
@@ -650,7 +650,7 @@ export function DispatchPage(props: {
       }
       await refresh();
       if (started) openRun(started.id);
-      pushToast("Dispatch run started.", "success");
+      pushToast("Agent run started.", "success");
     } catch (error: unknown) {
       pushToast(error instanceof Error ? error.message : "Could not start dispatch run.", "danger");
     } finally {
@@ -665,7 +665,7 @@ export function DispatchPage(props: {
     try {
       await bridge.cancelRun({ id });
       await refresh();
-      pushToast("Dispatch run cancelled.", "success");
+      pushToast("Agent run cancelled.", "success");
     } catch (error: unknown) {
       pushToast(error instanceof Error ? error.message : "Could not cancel dispatch run.", "danger");
     } finally {
@@ -759,7 +759,7 @@ export function DispatchPage(props: {
     const id = focusRunId();
     if (!id || activeTab() !== "runs" || openedRunId()) return;
     const frame = requestAnimationFrame(() => {
-      const node = document.querySelector<HTMLElement>(`[aria-label="Dispatch runs"] [data-row-id="${CSS.escape(id)}"]`);
+      const node = document.querySelector<HTMLElement>(`[aria-label="Agent runs"] [data-row-id="${CSS.escape(id)}"]`);
       if (!node) return;
       node.focus({ preventScroll: true });
       node.scrollIntoView({ block: "nearest" });
@@ -904,7 +904,7 @@ export function DispatchPage(props: {
                   setLocalTab(next);
                   props.onTabChange?.(next);
                 }}
-                aria-label={props.tabsLabel ?? "Dispatch"}
+                aria-label={props.tabsLabel ?? "Agents"}
               />
             </PageToolbar.Tabs>
           </Show>
@@ -1035,7 +1035,7 @@ export function DispatchPage(props: {
                 }
               >
                 <DataTable.Root rows={visibleRuns()} getRowId={(run) => run.id} columnWidthsKey="dispatch-runs" density="list">
-                  <DataTable.Table aria-label="Dispatch runs">
+                  <DataTable.Table aria-label="Agent runs">
                     <DataTable.Header>
                       <DataTable.ColumnHeader<DispatchRunView> id="prompt" width="44%">Run</DataTable.ColumnHeader>
                       <DataTable.ColumnHeader<DispatchRunView> id="status" sortBy={(run) => run.status}>Status</DataTable.ColumnHeader>
@@ -1433,7 +1433,7 @@ function LinkedRunRow(props: { label: string; agent?: string; seed: string; stat
 /**
  * A run opens in the page structure of docs, in two columns: its output in the center and its
  * metadata in the rail on the right, each group under a title with an icon tile, with no cards.
- * The header has Back, the breadcrumb Runs › prompt, and the next step (Verify, Merge, or Cancel).
+ * The header has Back and the next step (Verify, Merge, or Cancel).
  */
 function DispatchRunDetail(props: {
   run: DispatchRunView;
@@ -1471,11 +1471,7 @@ function DispatchRunDetail(props: {
     return measuredDuration(props.run.queuedMs);
   };
   const attempts = () => agentAttemptCards(props.run);
-  const promptTitle = () => props.run.prompt.trim().split("\n")[0]?.trim() ?? "";
-  const promptRest = () => {
-    const prompt = props.run.prompt.trim();
-    return prompt.includes("\n") || prompt.length > 120 ? prompt : "";
-  };
+  const promptRest = () => props.run.prompt.trim();
   const review = () => runReviewAction(props.run, Boolean(branch() || path()));
   const text = (value: string | undefined) => (value?.trim() ? value.trim() : undefined);
   const linked = () => props.run.resumedOf.trim() || props.resumedBy.length > 0 || props.childRuns.length > 0;
@@ -1549,8 +1545,6 @@ function DispatchRunDetail(props: {
   return (
     <div class="flex min-h-0 flex-1 flex-col">
       <RailPage
-        trail={[{ label: "Runs", onSelect: () => props.onBack() }]}
-        title={promptTitle() || shortRunId(props.run.id)}
         onBack={() => props.onBack()}
         actions={actions()}
         rail={rail()}

@@ -12,9 +12,6 @@ import {
 import { expandedDetail, openDetail, requestDetailExpanded, type ScopeNodeItem, type WorkspaceCanonEntity } from "@polterware/feature-shell";
 import { createDetailPanelSelector, detailPanelStore } from "@polterware/frontend-state";
 import { CanonFactFormDialog } from "./canon-fact-form-dialog";
-import { CanonLinkEvidenceDialog } from "./canon-link-evidence-dialog";
-import { FactDetail } from "./fact-detail";
-import { factKindLabel, factKindTone } from "./fact-kind";
 import type {
   CanonEvidenceRow,
   CanonFactDetail,
@@ -145,7 +142,11 @@ export function factPageOpen(): boolean {
   return target?.scopeId === FACTS_SCOPE && target.entityKind === "fact";
 }
 
-/** Truth → Facts: Canon facts with their subject, scope, and proof; writes carry a change envelope. */
+/**
+ * Knowledge → Rules: what people and agents declare about the project, each about one part of it.
+ * Facts the scan observes in the code are not rules: they stay in the core, where drift compares them
+ * with the rules and raises a Conflict. Writes carry a change envelope.
+ */
 export function CanonFactsPanel(props: {
   projectId: string;
   /** Expanded Structure node ids. Empty leaves the lists unscoped. */
@@ -155,9 +156,8 @@ export function CanonFactsPanel(props: {
   /** Structure nodes, to name a Fact's scope. */
   scopeCatalogNodes?: readonly ScopeNodeItem[];
   loadFacts?: (projectId: string) => Promise<unknown>;
-  loadEvidence?: (projectId: string) => Promise<unknown>;
   query: string;
-  /** Page filter clauses; field `kind` matches how the Fact is known. */
+  /** Page filter clauses. */
   clauses: readonly FilterClause[];
   /** Bumped by the page toolbar's add button. */
   createToken: number;
@@ -170,22 +170,22 @@ export function CanonFactsPanel(props: {
   const [factsLoaded, setFactsLoaded] = createSignal(false);
   const [selectedId, setSelectedId] = createSignal("");
   const [detail, setDetail] = createSignal<CanonFactDetail | undefined>();
-  const [projectEvidence, setProjectEvidence] = createSignal<CanonEvidenceRow[]>([]);
+  // The composer creates a Fact; an opened Fact edits in the same composer.
   const [factDialogOpen, setFactDialogOpen] = createSignal(false);
-  const [factDialogMode, setFactDialogMode] = createSignal<"create" | "edit">("create");
-  const [factDraft, setFactDraft] = createSignal<CanonFactDraft | undefined>();
-  const [linkDialogOpen, setLinkDialogOpen] = createSignal(false);
 
   const subjectOf = (fact: CanonFactRow) =>
     (props.entities ?? []).find((entity) => entity.id === fact.entityId)?.title ?? "";
   const scopeNodeOf = (fact: CanonFactRow) =>
     (props.scopeCatalogNodes ?? []).find((node) => node.id === fact.scopeNodeId);
+  /** The part of the project a rule is about: its Structure node, else its subject. */
+  const aboutOf = (fact: CanonFactRow) => scopeNodeOf(fact)?.title || subjectOf(fact) || "Whole project";
 
   const visibleFacts = createMemo(() => {
     const needle = props.query.trim().toLowerCase();
     return facts().filter(
       (fact) =>
-        matchClauses(fact, props.clauses, { kind: (item) => item.truthClass }) &&
+        fact.truthClass !== "observed" &&
+        matchClauses(fact, props.clauses, {}) &&
         (!needle || [fact.statement, fact.id, subjectOf(fact), scopeNodeOf(fact)?.title ?? "", fact.source].some((value) => value.toLowerCase().includes(needle))),
     );
   });
@@ -221,7 +221,7 @@ export function CanonFactsPanel(props: {
       });
     } catch (error: unknown) {
       setDetail(undefined);
-      pushToast(error instanceof Error ? error.message : "Could not load fact.", "danger");
+      pushToast(error instanceof Error ? error.message : "Could not load the rule.", "danger");
     }
   };
 
@@ -231,13 +231,11 @@ export function CanonFactsPanel(props: {
     const bridge = canonBridge();
     const projectId = props.projectId.trim();
     const loadFacts = props.loadFacts;
-    const loadEvidence = props.loadEvidence;
     if ((!bridge && !loadFacts) || !projectId) {
       setFacts([]);
       setFactsLoaded(true);
       setDetail(undefined);
       setSelectedId("");
-      setProjectEvidence([]);
       props.onBusyChange(false);
       return;
     }
@@ -260,22 +258,7 @@ export function CanonFactsPanel(props: {
       );
       setFacts(nextFacts);
       setFactsLoaded(true);
-      const evidenceResponse = asRecord(
-        await (loadEvidence
-          ? loadEvidence(projectId)
-          : bridge
-            ? bridge.listEvidence({ projectId, ...scoped })
-            : { evidence: [] }),
-      );
       if (ticket !== refreshTicket) return;
-      setProjectEvidence(
-        (Array.isArray(evidenceResponse.evidence) ? evidenceResponse.evidence : []).flatMap(
-          (item) => {
-            const row = mapEvidence(item);
-            return row ? [row] : [];
-          },
-        ),
-      );
       // Keep the user's selection across refreshes; never auto-open the first fact.
       const current = selectedId();
       const selectedFact = nextFacts.find((fact) => fact.id === current);
@@ -283,7 +266,7 @@ export function CanonFactsPanel(props: {
       if (selectedFact) await loadDetail(selectedFact.id);
       else setDetail(undefined);
     } catch (error: unknown) {
-      pushToast(error instanceof Error ? error.message : "Could not load facts.", "danger");
+      pushToast(error instanceof Error ? error.message : "Could not load rules.", "danger");
       setFactsLoaded(true);
     } finally {
       if (ticket === refreshTicket) props.onBusyChange(false);
@@ -295,11 +278,11 @@ export function CanonFactsPanel(props: {
     const bridge = canonBridge();
     const projectId = props.projectId.trim();
     if (!bridge || !projectId) {
-      pushToast("Canon facts are unavailable in this session.", "danger");
+      pushToast("Rules are unavailable in this session.", "danger");
       return false;
     }
     const envelope = await props.justifyChange({
-      title: draft.id ? "Justify fact update" : "Justify new fact",
+      title: draft.id ? "Justify rule update" : "Justify new rule",
       defaultSummary: draft.statement.slice(0, 120),
       why: draft.why,
     });
@@ -321,41 +304,13 @@ export function CanonFactsPanel(props: {
         },
         change: changePayload(envelope),
       });
-      pushToast(draft.id ? "Fact updated." : "Fact created.", "success");
+      pushToast(draft.id ? "Rule updated." : "Rule created.", "success");
       await refresh();
       return true;
     } catch (error: unknown) {
-      pushToast(error instanceof Error ? error.message : "Could not save fact.", "danger");
+      pushToast(error instanceof Error ? error.message : "Could not save the rule.", "danger");
       props.onBusyChange(false);
       return false;
-    }
-  };
-
-  const linkEvidence = async (evidenceId: string) => {
-    const bridge = canonBridge();
-    const projectId = props.projectId.trim();
-    const factId = selectedId();
-    if (!bridge || !projectId || !factId) return;
-    const envelope = await props.justifyChange({
-      title: "Justify evidence link",
-      description: "Link existing evidence to the selected fact.",
-      defaultSummary: `Link ${evidenceId} to ${factId}`,
-    });
-    if (!envelope) return;
-    props.onBusyChange(true);
-    try {
-      await bridge.linkEvidenceToFact({
-        projectId,
-        factId,
-        evidenceId,
-        change: changePayload(envelope),
-      });
-      setLinkDialogOpen(false);
-      pushToast("Evidence linked.", "success");
-      await refresh();
-    } catch (error: unknown) {
-      pushToast(error instanceof Error ? error.message : "Could not link evidence.", "danger");
-      props.onBusyChange(false);
     }
   };
 
@@ -369,8 +324,6 @@ export function CanonFactsPanel(props: {
     on(
       () => props.createToken,
       () => {
-        setFactDialogMode("create");
-        setFactDraft({ statement: "", truthClass: "declared", entityId: "" });
         setFactDialogOpen(true);
       },
       { defer: true },
@@ -393,20 +346,21 @@ export function CanonFactsPanel(props: {
     openDetail({ scopeId: FACTS_SCOPE, entityId: row.id, entityKind: "fact" });
   };
 
-  const editFact = () => {
+  /** The Fact on the open page, once its detail matches the page. */
+  const pageFact = () => {
     const fact = detail()?.fact;
-    if (!fact) return;
-    setFactDialogMode("edit");
-    setFactDraft({
-      id: fact.id,
-      statement: fact.statement,
-      truthClass: (["declared", "observed", "inferred", "verified"].includes(fact.truthClass)
-        ? fact.truthClass
-        : "declared") as CanonFactTruthClass,
-      entityId: fact.entityId,
-    });
-    setFactDialogOpen(true);
+    return factPageOpen() && fact && fact.id === expandedDetail()?.entityId ? fact : undefined;
   };
+  const draftOf = (fact: CanonFactRow): CanonFactDraft => ({
+    id: fact.id,
+    statement: fact.statement,
+    truthClass: (["declared", "observed", "inferred", "verified"].includes(fact.truthClass)
+      ? fact.truthClass
+      : "declared") as CanonFactTruthClass,
+    entityId: fact.entityId,
+  });
+  // Opening a rule opens it for editing.
+  const editing = () => Boolean(canonBridge()) && !factDialogOpen() && Boolean(pageFact());
 
   return (
     <div class="flex h-full min-h-0 flex-col">
@@ -417,22 +371,13 @@ export function CanonFactsPanel(props: {
             columnWidthsKey="truth-facts"
             activeRowId={activeTarget()?.scopeId === FACTS_SCOPE ? activeTarget()?.entityId ?? null : null}
           >
-            <DataTable.Table aria-label="Facts">
+            <DataTable.Table aria-label="Rules">
               <DataTable.Header>
                 <DataTable.ColumnHeader<CanonFactRow> id="statement" sortBy={(row) => row.statement}>
-                  Statement
+                  Rule
                 </DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<CanonFactRow> id="kind" sortBy={(row) => row.truthClass}>
-                  Kind
-                </DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<CanonFactRow> id="subject" sortBy={(row) => subjectOf(row)}>
-                  Subject
-                </DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<CanonFactRow> id="scope" sortBy={(row) => scopeNodeOf(row)?.title ?? ""}>
-                  Scope
-                </DataTable.ColumnHeader>
-                <DataTable.ColumnHeader<CanonFactRow> id="origin" sortBy={(row) => row.source}>
-                  Origin
+                <DataTable.ColumnHeader<CanonFactRow> id="about" sortBy={(row) => aboutOf(row)}>
+                  About
                 </DataTable.ColumnHeader>
               </DataTable.Header>
               <DataTable.Body<CanonFactRow>>
@@ -441,7 +386,7 @@ export function CanonFactsPanel(props: {
                     row={row}
                     rowId={row.id}
                     onActivate={() => openFact(row)}
-                    aria-label={`Open fact ${row.statement || row.id}`}
+                    aria-label={`Open rule ${row.statement || row.id}`}
                   >
                     <DataTable.PrimaryCell
                       icon={<ScrollText size={16} />}
@@ -450,13 +395,8 @@ export function CanonFactsPanel(props: {
                       title={row.statement || row.id}
                     />
                     <DataTable.Cell>
-                      <StatusChip tone={factKindTone(row.truthClass)} label={factKindLabel(row.truthClass)} />
+                      <span title={scopeNodeOf(row)?.path}>{aboutOf(row)}</span>
                     </DataTable.Cell>
-                    <DataTable.Cell>{subjectOf(row) || "—"}</DataTable.Cell>
-                    <DataTable.Cell>
-                      <span title={scopeNodeOf(row)?.path}>{scopeNodeOf(row)?.title ?? "Whole project"}</span>
-                    </DataTable.Cell>
-                    <DataTable.Cell class="text-[var(--color-text-muted)]">{row.source || "—"}</DataTable.Cell>
                   </DataTable.Row>
                 )}
               </DataTable.Body>
@@ -478,7 +418,7 @@ export function CanonFactsPanel(props: {
                   }
                 >
                   <PageEmpty
-                    title="No facts yet"
+                    title="No rules yet"
                     mood="sleeping"
                   />
                 </Show>
@@ -487,34 +427,13 @@ export function CanonFactsPanel(props: {
           </DataTable.Root>
       </div>
 
-      <FactDetail
-          open={factPageOpen() && !factDialogOpen() && !linkDialogOpen()}
-          onClose={() => requestDetailExpanded(false)}
-          // While it closes, the dialog keeps the fact it showed.
-          detail={!factPageOpen() || detail()?.fact.id === expandedDetail()?.entityId ? detail() : undefined}
-          subject={detail() ? subjectOf(detail()!.fact) : ""}
-          scope={detail() ? scopeNodeOf(detail()!.fact)?.title ?? "" : ""}
-          scopePath={detail() ? scopeNodeOf(detail()!.fact)?.path : undefined}
-          busy={props.busy}
-          onEdit={canonBridge() ? editFact : undefined}
-          onLinkEvidence={canonBridge() ? () => setLinkDialogOpen(true) : undefined}
-        />
-
       <CanonFactFormDialog
         entities={props.entities}
-        open={factDialogOpen()}
-        mode={factDialogMode()}
-        initial={factDraft()}
-        onClose={() => setFactDialogOpen(false)}
+        open={factDialogOpen() || editing()}
+        mode={editing() ? "edit" : "create"}
+        initial={editing() ? draftOf(pageFact()!) : undefined}
+        onClose={() => (editing() ? requestDetailExpanded(false) : setFactDialogOpen(false))}
         onSubmit={saveFact}
-      />
-      <CanonLinkEvidenceDialog
-        open={linkDialogOpen()}
-        evidence={projectEvidence()}
-        linkedIds={(detail()?.evidence ?? []).map((item) => item.id)}
-        busy={props.busy}
-        onClose={() => setLinkDialogOpen(false)}
-        onLink={(evidenceId) => void linkEvidence(evidenceId)}
       />
     </div>
   );

@@ -28,18 +28,6 @@ Read this repository and propose its Structure: the top-level systems, the domai
 ${CLOSING}`,
   },
   {
-    id: "prompt-structure-dependencies",
-    title: "Map dependencies",
-    description: "Record which components use which.",
-    tone: "data",
-    level: "component",
-    prompt: `${PREAMBLE}
-
-Read the existing Structure (\`polterware query structure\`) and the imports, API calls, and shared packages between its components. Fill in \`uses:\` on each component with the node paths it depends on, so the map draws the edges. Do not add nodes in this pass.
-
-${CLOSING}`,
-  },
-  {
     id: "prompt-structure-deploys",
     title: "Register deploys",
     description: "Link components to where they run per environment.",

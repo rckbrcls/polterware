@@ -105,7 +105,7 @@ func TestPolterQueryShowsOneRecordAndDrift(t *testing.T) {
 		"Decision-0001":    "### Decision-0001: Local SQLite authority",
 		"ev-go-mod":        "evidence ev-go-mod [file] Go module requires modernc.org/sqlite.\npath: go.mod\n",
 		"fact-no-network":  "fact fact-no-network [declared] Imports never call the network.\n",
-		"rb-service":       "doc rb-service \"Service recovery\" (runbook)\n",
+		"rb-service":       "doc rb-service \"Service recovery\"\n",
 		"doc-architecture": "doc doc-architecture \"System architecture\"\n",
 	} {
 		if text := query(t, server, "show "+id); !strings.Contains(text, want) {
@@ -144,7 +144,7 @@ func TestDocUpsertCreatesUpdatesAndScopesInTheSessionRun(t *testing.T) {
 	}
 	id := strings.Fields(created)[2]
 	shown := query(t, server, "show "+id)
-	for _, want := range []string{"(runbook)", "scope: services/auth", "tags: auth", "Cookies are signed."} {
+	for _, want := range []string{"scope: services/auth", "tags: auth", "Cookies are signed."} {
 		if !strings.Contains(shown, want) {
 			t.Fatalf("show after create missing %q:\n%s", want, shown)
 		}
@@ -160,7 +160,7 @@ func TestDocUpsertCreatesUpdatesAndScopesInTheSessionRun(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if item.Title != "Session handling" || item.Body != "Cookies rotate daily." || item.DocType != knowledge.DocTypeRunbook {
+	if item.Title != "Session handling" || item.Body != "Cookies rotate daily." || item.DocType != knowledge.DocTypeDoc {
 		t.Fatalf("update must keep omitted fields: %+v", item)
 	}
 	if shown := query(t, server, "show "+id); strings.Contains(shown, "scope:") {

@@ -3,7 +3,7 @@ import {
   A11yDialog, Boxes, Button, Card, Cpu, EntityMenuButton, PromptCardGrid, Field, Folder, FormStack, Input,
   CollapsibleSection, DataTable, IconTile, Layers, PageContent, PageEmpty, PageError, PageLoading, PageToolbar, Plus,
   Cloud, Delete, DetailPanel, Link2, Package, Pencil, PropertyPicker, Route, Textarea, XIcon,
-  Scale, ShieldCheck, FileText, GitBranch, Select, SidebarLeftIcon, FolderKanban, StatusChip, TreeView, pushToast,
+  Scale, SchemeIcon, ShieldCheck, FileText, GitBranch, Select, SidebarLeftIcon, FolderKanban, StatusChip, TreeView, pushToast,
   type EntityAction, type TreeViewNode,
 } from "@polterware/frontend-design-system";
 import { createDetailPanelSelector, detailPanelStore, readRemembered, writeRemembered } from "@polterware/frontend-state";
@@ -108,7 +108,7 @@ function RecordTable(props: { label: string; rows: readonly TableRecord[]; icon:
 const RECORD_SECTIONS = [
   { key: "cards", kind: "card", title: "Cards", Icon: FolderKanban },
   { key: "decisions", kind: "decision", title: "Decisions", Icon: Scale },
-  { key: "facts", kind: "fact", title: "Facts", Icon: ShieldCheck },
+  { key: "facts", kind: "fact", title: "Rules", Icon: ShieldCheck },
   { key: "docs", kind: "doc", title: "Docs", Icon: FileText },
 ] as const;
 
@@ -177,7 +177,7 @@ function LinkButton(props: { label: string; options: readonly PickOption[]; onPi
 type NodeDocumentModel = {
   id: string; project: boolean; title: string; level: StructureKind | "project"; description?: string;
   kind?: string; tech?: string; repo?: string; folder?: string; path?: string; parentId?: string;
-  uses: readonly { id: string; title: string; level: StructureKind }[]; deploys?: StructureNode["deploys"]; records: StructureRecords;
+  deploys?: StructureNode["deploys"]; records: StructureRecords;
 };
 
 /** The writes a document makes; each is left out where it cannot apply. */
@@ -185,8 +185,6 @@ type NodeDocumentEdits = {
   title?: (value: string) => void;
   description?: (value: string) => void;
   patch?: (patch: StructureNodePatch) => void;
-  uses?: (ids: string[]) => void;
-  usesOptions?: readonly PickOption[];
   /** The levels the node may take where it sits; one option or none keeps the level read-only. */
   levelOptions?: readonly PickOption[];
   /** The nodes it may move under; picking one moves it. */
@@ -205,10 +203,10 @@ type NodeDocumentEdits = {
  * and edited in place: a 36px kind tile, the title, and the description as its summary; then
  * the node's actions in the header's top right; labeled lines (Properties with the level, kind, and technology;
  * Checkout with the repository and folder); then, set well apart, collapsible table sections:
- * Uses (a row opens that node), Deploys, and one per kind of record that cites the node, where a + links one more and a row's × unlinks
+ * Deploys, and one per kind of record that cites the node, where a + links one more and a row's × unlinks
  * a direct link. Read-only values and empty sections that cannot be linked are left out.
  */
-function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityAction[]; edits: NodeDocumentEdits; isProviderConnected: (provider: string) => boolean; onOpenRecord?: (kind: StructureRecordKind, id: string) => void; onOpenNode?: (id: string) => void }) {
+function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityAction[]; edits: NodeDocumentEdits; isProviderConnected: (provider: string) => boolean; onOpenRecord?: (kind: StructureRecordKind, id: string) => void; onOpenNode?: (id: string) => void; activity?: JSX.Element }) {
   const doc = () => props.doc;
   const component = () => doc().level === "component";
   const repositoryOptions = () => [{ value: "", label: "None", icon: <OptionTile seed="repo-none"><XIcon size={12} /></OptionTile> }, ...(props.edits.repositories ?? []).map((name) => ({ value: name, label: name, icon: <OptionTile seed={`repo-${name}`}><GitBranch size={12} /></OptionTile> }))];
@@ -265,17 +263,6 @@ function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityA
         </HeadRow>
       </Show>
     </dl>
-    <Show when={doc().uses.length || props.edits.uses}>
-      <DocumentSection title="Uses" icon={<Link2 size={14} />} count={doc().uses.length}
-        actions={props.edits.uses ? <LinkButton label="Add dependency" options={props.edits.usesOptions ?? []} onPick={(id) => props.edits.uses!([...doc().uses.map((item) => item.id), id])} /> : undefined}>
-        <Show when={doc().uses.length} fallback={<PageEmpty title="No dependencies yet" mood="sleeping"><p class="pw-structure__empty">Add one with + to show it here.</p></PageEmpty>}>
-          <RecordTable label="Uses" icon={<Link2 size={14} />} unlinkLabel="Remove"
-            rows={doc().uses.map((use) => ({ id: use.id, title: use.title, caption: kindLabel(use.level), direct: true }))}
-            onOpen={props.onOpenNode}
-            onUnlink={props.edits.uses ? (id) => props.edits.uses!(doc().uses.filter((item) => item.id !== id).map((item) => item.id)) : undefined} />
-        </Show>
-      </DocumentSection>
-    </Show>
     <Show when={doc().deploys?.length || props.edits.editDeploys}>
       <DocumentSection title="Deploys" icon={<Cloud size={14} />} count={doc().deploys?.length ?? 0}
         actions={props.edits.editDeploys ? <Button size="icon" variant="ghost" aria-label="Edit deploys" onClick={() => props.edits.editDeploys!()}><Pencil size={14} /></Button> : undefined}>
@@ -300,6 +287,7 @@ function NodeDocument(props: { doc: NodeDocumentModel; actions: readonly EntityA
         </DocumentSection>
       </Show>;
     }}</For>
+    {props.activity}
   </article>;
 }
 
@@ -338,7 +326,6 @@ export function StructureView(props: {
   onOpenCreate: () => void;
   onCreate: (draft: StructureDraft) => Promise<void>;
   onMove: (nodeId: string, parentId: string) => Promise<void>;
-  onUses: (nodeId: string, targetIds: string[]) => Promise<void>;
   onOpenNode: (id: string) => void;
   onSelect: (id: string) => void;
   /** Project environments for the environment select. */
@@ -355,6 +342,10 @@ export function StructureView(props: {
   onLinkRecord?: (kind: StructureRecordKind, recordId: string, nodeId: string) => Promise<void>;
   /** Checkout names a node's repository can be set to. */
   repositories?: readonly string[];
+  /** A node's Activity at the end of its document: its edits and the relations drawn to it. */
+  renderActivity?: (nodeId: string) => JSX.Element;
+  /** Draws the tree on the Structure canvas, the same way every time, and offers to open it. */
+  onDrawCanvas?: () => Promise<void>;
 }) {
   // Expanded tree rows are remembered, so returning to Structure keeps the same layout.
   const [expanded, setExpanded] = createSignal<string[]>(readRemembered("structure.expanded", [PROJECT_ID]));
@@ -471,11 +462,10 @@ export function StructureView(props: {
   };
   const detail = createMemo<NodeDocumentModel | undefined>(() => {
     const id = selectedId() ?? PROJECT_ID;
-    if (id === PROJECT_ID) return { id, project: true, title: props.projectName, level: "project", description: props.projectDescription, repo: props.projectRepository, uses: [], records: props.projectRecords };
+    if (id === PROJECT_ID) return { id, project: true, title: props.projectName, level: "project", description: props.projectDescription, repo: props.projectRepository, records: props.projectRecords };
     const node = selected();
     if (!node) return undefined;
     return { id: node.id, project: false, title: node.title, level: node.level, parentId: node.parentId, description: node.intent, kind: node.kind, tech: node.tech, repo: node.repo, folder: node.folder, path: node.path,
-      uses: registry().filter((item) => node.uses?.includes(item.path)).map((item) => ({ id: item.id, title: item.title, level: item.level })),
       deploys: node.level === "component" ? node.deploys : undefined, records: props.records[node.id] ?? NO_RECORDS };
   });
   const edits = createMemo<NodeDocumentEdits>(() => {
@@ -497,8 +487,6 @@ export function StructureView(props: {
       description: props.onEditNode ? (intent) => write(props.onEditNode!(node.id, { intent }), "Could not save the description.") : undefined,
       patch: props.onEditNode ? (patch) => write(props.onEditNode!(node.id, patch), "Could not save the node.") : undefined,
       repositories: props.repositories,
-      uses: (ids) => write(props.onUses(node.id, ids), "Could not save dependencies."),
-      usesOptions: registry().filter((item) => item.id !== node.id && !node.uses?.includes(item.path)).map((item) => ({ value: item.id, label: `${item.title} (${kindLabel(item.level)})`, icon: <OptionTile seed={item.id}><KindIcon kind={item.level} size={12} /></OptionTile> })),
       levelOptions: levelOptions(node),
       parentOptions: node.level === "system" ? undefined : structureParents(registry(), node.level, node.id).map((item) => ({ value: item.id, label: item.title, icon: <OptionTile seed={item.id}><KindIcon kind={item.level} size={12} /></OptionTile> })),
       move: node.level === "system" ? undefined : (parentId) => write(props.onMove(node.id, parentId), "Could not move the node."),
@@ -534,6 +522,14 @@ export function StructureView(props: {
       setKind(node.level === "system" ? "domain" : "component"); setParent(node.id);
     }
   });
+  const [drawing, setDrawing] = createSignal(false);
+  async function drawCanvas() {
+    setDrawing(true);
+    try { await props.onDrawCanvas?.(); }
+    catch (error) { pushToast(error instanceof Error ? error.message : "Could not draw the canvas.", "danger"); }
+    finally { setDrawing(false); }
+  }
+
   async function save(action: () => Promise<void>, close: () => void) {
     setBusy(true); setFormError("");
     try { await action(); close(); }
@@ -548,7 +544,12 @@ export function StructureView(props: {
         <Button size="icon" variant="texture" aria-label={treeOpen() ? "Hide structure tree" : "Show structure tree"} aria-expanded={treeOpen()} selected={treeOpen()}
           onClick={() => setTreeOpen((value) => !value)}><SidebarLeftIcon size={14} /></Button>
       </PageToolbar.Leading>
-      <PageToolbar.Actions>{null}</PageToolbar.Actions>
+      <PageToolbar.Actions>
+        <Show when={props.onDrawCanvas}>
+          <Button size="icon" variant="texture" aria-label="Draw as canvas" disabled={drawing()}
+            onClick={() => void drawCanvas()}><SchemeIcon size={14} /></Button>
+        </Show>
+      </PageToolbar.Actions>
     </PageToolbar.Root>
     <Show when={props.loading} fallback={<Show when={props.error} fallback={
       <PageContent class="flex flex-col overflow-hidden">
@@ -560,7 +561,8 @@ export function StructureView(props: {
             </Card>
           </nav>
           <div class="pw-structure__pane">
-            <Show when={detail()}>{(item) => <NodeDocument doc={item()} actions={item().project ? projectActions() : nodeActions(selected()!)} edits={edits()} isProviderConnected={isProviderConnected} onOpenRecord={props.onOpenRecord} onOpenNode={open} />}</Show>
+            <Show when={detail()}>{(item) => <NodeDocument doc={item()} actions={item().project ? projectActions() : nodeActions(selected()!)} edits={edits()} isProviderConnected={isProviderConnected} onOpenRecord={props.onOpenRecord} onOpenNode={open}
+              activity={item().project ? undefined : props.renderActivity?.(item().id)} />}</Show>
             <Show when={!props.nodes.length}>
               <div class="pw-document__column pw-structure__start">
                 <PageEmpty title="No structure yet" mood="sleeping"><PromptCardGrid items={STRUCTURE_AGENT_PROMPTS.map((item) => ({ id: item.id, title: item.title, description: item.description, tone: item.tone, icon: <KindIcon kind={item.level} size={16} />, prompt: item.prompt }))} /></PageEmpty>

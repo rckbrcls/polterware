@@ -2,15 +2,12 @@ package wedge
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/polterware/polterware/backend/domains/knowledge"
 	"github.com/polterware/polterware/backend/providers/importer"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
 )
@@ -19,12 +16,12 @@ import (
 type ScanResult struct {
 	FactCount     int32  `json:"fact_count"`
 	EvidenceCount int32  `json:"evidence_count"`
-	SourceCount   int32  `json:"source_count"`
 	SkippedCount  int32  `json:"skipped_count"`
 	Message       string `json:"message"`
 }
 
-// ScanProject discovers MVP sources under the project root and upserts evidence, facts, and knowledge sources.
+// ScanProject discovers the MVP files under the project root and upserts their evidence and facts.
+// Repository files are not registered as docs: agents read them from the checkout.
 func ScanProject(store *storepkg.Store, projectID string) (ScanResult, error) {
 	if projectID == "" {
 		return ScanResult{}, fmt.Errorf("project id is required")
@@ -49,7 +46,7 @@ func ScanProject(store *storepkg.Store, projectID string) (ScanResult, error) {
 	}
 
 	now := time.Now().UTC()
-	var factCount, evidenceCount, sourceCount int32
+	var factCount, evidenceCount int32
 	skipped := int32(discovered.Skipped)
 	importedFiles := 0
 
@@ -78,17 +75,6 @@ func ScanProject(store *storepkg.Store, projectID string) (ScanResult, error) {
 		evidenceCount += extraEvidence
 		if note != "" {
 			gitNotes = append(gitNotes, note)
-		}
-	}
-
-	existingSources, err := store.ListKnowledge(projectID, knowledge.KindDoc)
-	if err != nil {
-		return ScanResult{}, err
-	}
-	sourceByPath := map[string]knowledge.Item{}
-	for _, item := range existingSources {
-		if path := knowledgeSourcePath(item.ExtraJSON); path != "" {
-			sourceByPath[path] = item
 		}
 	}
 
@@ -125,10 +111,6 @@ func ScanProject(store *storepkg.Store, projectID string) (ScanResult, error) {
 			}
 			factCount++
 		}
-		if err := upsertImportedKnowledgeSource(store, projectID, file, sourceByPath, now); err != nil {
-			return ScanResult{}, err
-		}
-		sourceCount++
 		importedFiles++
 	}
 
@@ -142,49 +124,7 @@ func ScanProject(store *storepkg.Store, projectID string) (ScanResult, error) {
 	return ScanResult{
 		FactCount:     factCount,
 		EvidenceCount: evidenceCount,
-		SourceCount:   sourceCount,
 		SkippedCount:  skipped,
 		Message:       message,
 	}, nil
-}
-
-func upsertImportedKnowledgeSource(store *storepkg.Store, projectID string, file importer.FileResult, sourceByPath map[string]knowledge.Item, now time.Time) error {
-	path := filepath.ToSlash(file.Path)
-	title := file.Title
-	if title == "" {
-		title = filepath.Base(path)
-	}
-	extra, _ := json.Marshal(map[string]string{"path": path})
-	if existing, ok := sourceByPath[path]; ok {
-		existing.Title = title
-		existing.ExtraJSON = string(extra)
-		existing.UpdatedAt = now
-		if existing.Summary == "" {
-			existing.Summary = file.Evidence.Summary
-		}
-		return store.SaveKnowledge(existing)
-	}
-	item, err := knowledge.NewItem(importer.StableSourceID(projectID, path), projectID, title, "", knowledge.DocTypeSource, nil)
-	if err != nil {
-		return err
-	}
-	item.Summary = file.Evidence.Summary
-	item.ExtraJSON = string(extra)
-	item.CreatedAt = now
-	item.UpdatedAt = now
-	sourceByPath[path] = item
-	return store.SaveKnowledge(item)
-}
-
-func knowledgeSourcePath(extraJSON string) string {
-	if extraJSON == "" {
-		return ""
-	}
-	var payload struct {
-		Path string `json:"path"`
-	}
-	if err := json.Unmarshal([]byte(extraJSON), &payload); err != nil {
-		return ""
-	}
-	return filepath.ToSlash(payload.Path)
 }

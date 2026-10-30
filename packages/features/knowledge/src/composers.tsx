@@ -11,8 +11,7 @@ import {
   type ComposerProperty,
   type PropertyOption,
 } from "@polterware/frontend-design-system";
-import type { DecisionLevel, DocType, ScopeNodeItem, WorkStage, WorkspaceMilestone } from "@polterware/feature-shell";
-import { DOC_TYPES, docTypeIcon } from "./doc-type";
+import type { DecisionLevel, ScopeNodeItem, WorkStage, WorkspaceMilestone } from "@polterware/feature-shell";
 import { listedMilestones } from "./milestones";
 import { WORK_STAGES, workStageTone } from "./work-stage";
 
@@ -39,7 +38,7 @@ export type CardDraft = {
 
 export type DecisionDraft = { title: string; context: string; level: DecisionLevel; scopePath: string; why: string };
 
-export type DocDraft = { title: string; body: string; docType: DocType; path: string; scopePath: string; why: string };
+export type DocDraft = { title: string; body: string; scopePath: string; why: string };
 
 /** Resolves false when the write failed, so the composer keeps the draft. */
 type Create<T> = (draft: T) => Promise<boolean>;
@@ -54,7 +53,7 @@ function scopeOptions(nodes: readonly ScopeNodeItem[]): PropertyOption[] {
 }
 
 function scopeProperty(nodes: readonly ScopeNodeItem[], value: () => string, onChange: (path: string) => void): ComposerProperty {
-  return { id: "scope", label: "Scope", icon: <Layers size={14} />, options: scopeOptions(nodes), value: value(), onChange };
+  return { id: "scope", label: "About", icon: <Layers size={14} />, options: scopeOptions(nodes), value: value(), onChange };
 }
 
 function CardComposer(props: {
@@ -192,34 +191,15 @@ function DocComposer(props: {
   defaultScopePath: string;
   onClose: () => void;
   onCreate?: Create<DocDraft>;
-  onImportProjectSources?: () => void;
-  importBusy?: boolean;
 }) {
-  const [docType, setDocType] = createSignal<DocType>("doc");
   const [scopePath, setScopePath] = createSignal("");
-  const [path, setPath] = createSignal("");
   createEffect(on(() => props.open, (open) => {
     if (!open) return;
-    setDocType("doc");
     setScopePath(props.defaultScopePath);
-    setPath("");
   }));
   const properties = (): ComposerProperty[] => [
-    {
-      id: "type",
-      label: "Type",
-      options: DOC_TYPES.map((item) => ({ value: item.id, label: item.label, icon: docTypeIcon(item.id, 14) })),
-      value: docType(),
-      onChange: (value) => setDocType(DOC_TYPES.some((item) => item.id === value) ? (value as DocType) : "doc"),
-    },
     ...(props.scopeNodes.length > 0 ? [scopeProperty(props.scopeNodes, scopePath, setScopePath)] : []),
   ];
-  const importAction = (): JSX.Element | undefined =>
-    props.onImportProjectSources ? (
-      <Button size="sm" variant="ghost" disabled={props.importBusy} onClick={() => props.onImportProjectSources?.()}>
-        Import from project root
-      </Button>
-    ) : undefined;
   return (
     <Composer
       open={props.open}
@@ -229,16 +209,10 @@ function DocComposer(props: {
       descriptionPlaceholder="Write in Markdown…"
       properties={properties()}
       whyPlaceholder={WHY}
-      footerAction={importAction()}
       submitLabel="Create doc"
-      fields={[{ id: "path", label: "Path", placeholder: "Optional file, such as README.md or infra/main.tf", value: path(), onChange: setPath }]}
       onSubmit={(draft) => {
         if (!props.onCreate) return false;
-        return props.onCreate({ title: draft.title, body: draft.description, docType: docType(), path: path().trim(), scopePath: scopePath(), why: draft.why })
-          .then((written) => {
-            if (written) setPath("");
-            return written;
-          });
+        return props.onCreate({ title: draft.title, body: draft.description, scopePath: scopePath(), why: draft.why });
       }}
     />
   );
@@ -261,8 +235,6 @@ export function KnowledgeComposer(props: {
   onCreateCard: Create<CardDraft>;
   onCreateDecision: Create<DecisionDraft>;
   onCreateDoc?: Create<DocDraft>;
-  onImportProjectSources?: () => void;
-  importBusy?: boolean;
 }) {
   const kind = () => props.request?.kind;
   // The last card request stays while the composer closes, so its properties do not jump.
@@ -297,8 +269,6 @@ export function KnowledgeComposer(props: {
         defaultScopePath={props.defaultScopePath ?? ""}
         onClose={props.onClose}
         onCreate={props.onCreateDoc}
-        onImportProjectSources={props.onImportProjectSources}
-        importBusy={props.importBusy}
       />
     </>
   );

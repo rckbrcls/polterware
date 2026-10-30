@@ -1,7 +1,7 @@
 import type { JSX } from "solid-js";
 import { Show, createMemo } from "solid-js";
 import { Button, ChevronLeft, RailPage, Input, MarkdownEditor, TagPicker } from "@polterware/frontend-design-system";
-import { EntityDocumentCanvas, requestDetailExpanded, requestSectionNavigate } from "@polterware/feature-shell";
+import { EntityDocumentCanvas, requestDetailExpanded } from "@polterware/feature-shell";
 import { DocumentActivity } from "./document-activity";
 import { KnowledgeDocumentProperties } from "./knowledge-document-properties";
 import "./knowledge-document.css";
@@ -15,11 +15,8 @@ export type DocNoteProps = {
   onTagsChange?: (tags: string[]) => void;
 };
 
-/** A step of the header trail: a link to the section (and tab) the document sits in. */
-export type DocumentCrumb = { label: string; section: string; tab?: string };
-
 /**
- * Full-page Markdown document, organized like a Linear issue: a 44px header with the trail,
+ * Full-page Markdown document, organized like a Linear issue: a 44px header with Back,
  * a 654px text column (24px title, 15/24 prose) and a 376px properties rail on the right.
  */
 export function KnowledgeDocumentShell(props: {
@@ -28,10 +25,6 @@ export function KnowledgeDocumentShell(props: {
   /** The id changes record for this entity, when it differs from `entityId` (a card's id, not its slug). */
   activitySubjectId?: string;
   title: string;
-  /** Entity icon, shown at 16px before the title in the header trail. */
-  icon: JSX.Element;
-  /** Surface path before the title in the header, e.g. Truth › Docs; each step is a link. */
-  trail?: readonly DocumentCrumb[];
   /** Omit for documents without a body, such as a Fact. */
   bodyMarkdown?: string;
   /** Omit for documents whose content is edited through another workflow. */
@@ -39,7 +32,6 @@ export function KnowledgeDocumentShell(props: {
   tabs?: JSX.Element;
   /** Shared Property rows, rendered in the properties rail. */
   properties?: JSX.Element;
-  links?: JSX.Element;
   /** More rail groups after Links (`RailGroup`), such as a card's tasks and invariants. */
   railGroups?: JSX.Element;
   metadataActions?: JSX.Element;
@@ -59,12 +51,9 @@ export function KnowledgeDocumentShell(props: {
 
   return <Show when={props.entityId} keyed>{entityId => <EntityDocumentCanvas>
     <RailPage
-      trail={(props.trail ?? []).map(crumb => ({ label: crumb.label, onSelect: () => requestSectionNavigate(crumb.section, crumb.tab) }))}
-      title={props.title || "Untitled"}
-      icon={props.icon}
       onBack={() => requestDetailExpanded(false)}
       status={props.status}
-      rail={<KnowledgeDocumentProperties properties={props.properties} links={props.links} groups={props.railGroups} metadataActions={props.metadataActions} footerActions={props.footerActions}
+      rail={<KnowledgeDocumentProperties properties={props.properties} groups={props.railGroups} metadataActions={props.metadataActions} footerActions={props.footerActions}
         labels={props.onTagsChange ? <TagPicker tags={tagOptions()} selectedIds={props.tags ?? []}
           onChange={ids => props.onTagsChange?.(ids)} onCreate={async name => name.trim() || undefined} /> : undefined} />}
     >

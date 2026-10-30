@@ -1996,8 +1996,6 @@ type StructureNode struct {
 	// between designs.
 	MigrationFrom string `protobuf:"bytes,16,opt,name=migration_from,json=migrationFrom,proto3" json:"migration_from,omitempty"`
 	MigrationTo   string `protobuf:"bytes,17,opt,name=migration_to,json=migrationTo,proto3" json:"migration_to,omitempty"`
-	// uses lists the node paths this node depends on; the map draws them as edges.
-	Uses []string `protobuf:"bytes,18,rep,name=uses,proto3" json:"uses,omitempty"`
 	// deploys lists this node's links, one per environment.
 	Deploys []*NodeDeployment `protobuf:"bytes,19,rep,name=deploys,proto3" json:"deploys,omitempty"`
 	// kind is what a component is (a canvas component kind); empty on other levels.
@@ -2155,13 +2153,6 @@ func (x *StructureNode) GetMigrationTo() string {
 		return x.MigrationTo
 	}
 	return ""
-}
-
-func (x *StructureNode) GetUses() []string {
-	if x != nil {
-		return x.Uses
-	}
-	return nil
 }
 
 func (x *StructureNode) GetDeploys() []*NodeDeployment {
@@ -5140,7 +5131,7 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x0eenvironment_id\x18\x02 \x01(\tR\renvironmentId\x12 \n" +
 	"\venvironment\x18\x03 \x01(\tR\venvironment\x12\x1a\n" +
 	"\bprovider\x18\x04 \x01(\tR\bprovider\x12\x1a\n" +
-	"\bresource\x18\x05 \x01(\tR\bresource\"\x85\x05\n" +
+	"\bresource\x18\x05 \x01(\tR\bresource\"\xfd\x04\n" +
 	"\rStructureNode\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tparent_id\x18\x02 \x01(\tR\bparentId\x12\x14\n" +
@@ -5162,11 +5153,10 @@ const file_polterware_local_v1_work_proto_rawDesc = "" +
 	"\x04repo\x18\x0e \x01(\tR\x04repo\x12\x16\n" +
 	"\x06folder\x18\x0f \x01(\tR\x06folder\x12%\n" +
 	"\x0emigration_from\x18\x10 \x01(\tR\rmigrationFrom\x12!\n" +
-	"\fmigration_to\x18\x11 \x01(\tR\vmigrationTo\x12\x12\n" +
-	"\x04uses\x18\x12 \x03(\tR\x04uses\x12=\n" +
+	"\fmigration_to\x18\x11 \x01(\tR\vmigrationTo\x12=\n" +
 	"\adeploys\x18\x13 \x03(\v2#.polterware.local.v1.NodeDeploymentR\adeploys\x12\x12\n" +
 	"\x04kind\x18\x14 \x01(\tR\x04kind\x12\x12\n" +
-	"\x04tech\x18\x15 \x01(\tR\x04tech\"J\n" +
+	"\x04tech\x18\x15 \x01(\tR\x04techJ\x04\b\x12\x10\x13R\x04uses\"J\n" +
 	"\x14ListStructureRequest\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x13\n" +

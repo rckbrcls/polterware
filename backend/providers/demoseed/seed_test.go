@@ -106,28 +106,18 @@ func TestSeededDecisionsCoverTheLifecycleStates(t *testing.T) {
 	}
 }
 
-func TestSeededSourcesAreProjectRelative(t *testing.T) {
+func TestSeedRegistersNoSourceDocs(t *testing.T) {
 	store := newSeeded(t)
 	items, err := store.ListKnowledge(demoseed.ProjectID, knowledge.KindDoc)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var sources []knowledge.Item
 	for _, item := range items {
-		if item.DocType == knowledge.DocTypeSource {
-			sources = append(sources, item)
-		}
-	}
-	if len(sources) == 0 {
-		t.Fatal("seed must register sources")
-	}
-	for _, source := range sources {
-		if source.ExtraJSON == "" || filepath.IsAbs(source.Title) {
-			t.Fatalf("source %+v must carry a project-relative path", source)
+		if item.DocType != knowledge.DocTypeDoc {
+			t.Fatalf("doc %s has type %q: docs have no types", item.ID, item.DocType)
 		}
 	}
 }
-
 func TestEmptyProjectHasNoContent(t *testing.T) {
 	store := newSeeded(t)
 	for _, table := range []string{"knowledge_items", "work_cards", "canon_facts"} {

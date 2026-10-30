@@ -62,8 +62,6 @@ type Node struct {
 	Intent    string
 	Status    string
 	Decisions []string
-	// Uses lists the node paths this node depends on. The map draws them as edges.
-	Uses []string
 	// Deploys lists where this node is deployed, one link per environment.
 	// Provider is a catalog id. Resource names the remote target.
 	// Credentials are never stored.

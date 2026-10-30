@@ -100,7 +100,6 @@ export const IPC_CHANNELS = {
     verifyFeature: "core:verify-feature",
     listCanonEntities: "core:list-canon-entities",
     syncProjectModel: "core:sync-project-model",
-    importProjectSources: "core:import-project-sources",
     listFacts: "core:list-facts",
     getFact: "core:get-fact",
     upsertFact: "core:upsert-fact",

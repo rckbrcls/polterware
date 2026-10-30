@@ -24,7 +24,7 @@ export const SEARCH_HITS: SearchHit[] = [
   { id: "h2", category: "Structure", title: "Payment flow", subtitle: "System", section: "structure" },
   { id: "h3", category: "Structure", title: "payment-service", subtitle: "Component / AWS / Healthy", section: "structure", entityKind: "resource", entityId: "payment-service" },
   { id: "h5", category: "Milestones", title: "Payment flow", subtitle: "card / Build", section: "milestones", tab: "board", entityKind: "card", entityId: "payment-flow" },
-  { id: "h6", category: "Truth", title: "Decision 0004", subtitle: "decision / Product positioning", section: "truth", tab: "decisions", entityKind: "decision", entityId: "decision-0004" },
+  { id: "h6", category: "Knowledge", title: "Decision 0004", subtitle: "decision / Product positioning", section: "truth", tab: "decisions", entityKind: "decision", entityId: "decision-0004" },
 ];
 
 export function knowledgeHitsFromSearch(hits: Array<{
@@ -39,8 +39,8 @@ export function knowledgeHitsFromSearch(hits: Array<{
     const tags = hit.item?.tags ?? [];
     const kind = hit.item?.kind === "decision" ? "decision" : "evidence";
     const { section, tab, category } = kind === "decision"
-      ? { section: "truth", tab: "decisions", category: "Truth" }
-      : { section: "truth", tab: "evidence", category: "Truth" };
+      ? { section: "truth", tab: "decisions", category: "Knowledge" }
+      : { section: "truth", tab: "evidence", category: "Knowledge" };
     const entityKind = kind;
     return [{
       id: `knowledge-${id}`,
@@ -91,7 +91,7 @@ export function SearchResultsPage(props: {
     for (const h of base) c.set(h.category, (c.get(h.category) ?? 0) + 1);
     return c;
   });
-  const cats = () => ["all", "Structure", "Milestones", "Truth"];
+  const cats = () => ["all", "Structure", "Milestones", "Knowledge"];
 
   return (
     <div class="flex h-full min-h-0 flex-col">
@@ -117,7 +117,7 @@ export function SearchResultsPage(props: {
         {filtered().length === 0 ? (
           <p class="text-center text-[13px] text-[var(--color-text-muted)]">No results — refine your query</p>
         ) : (
-          <For each={["Structure", "Milestones", "Truth"]}>
+          <For each={["Structure", "Milestones", "Knowledge"]}>
             {(cat) => {
               const items = () => filtered().filter((h) => h.category === cat);
               if (!items().length) return null;

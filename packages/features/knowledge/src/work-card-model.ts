@@ -10,10 +10,10 @@ const obj = (value: unknown): Json => (value && typeof value === "object" && !Ar
 const list = (value: unknown): Json[] => (Array.isArray(value) ? value.map(obj) : []);
 const text = (value: unknown) => (typeof value === "string" ? value : "");
 
-/** The gate an open stage passes next: shape passes the contract into Plan, plan passes the plan into Build. */
+/** The gate an open stage passes next: an idea passes the contract into Planned, a planned card passes the plan into In progress. */
 export function nextGate(stage: string): { step: "contract" | "plan"; target: string; label: string } | undefined {
-  if (stage === "shape") return { step: "contract", target: "plan", label: "Move to Plan" };
-  if (stage === "plan") return { step: "plan", target: "build", label: "Move to Build" };
+  if (stage === "shape") return { step: "contract", target: "plan", label: "Move to Planned" };
+  if (stage === "plan") return { step: "plan", target: "build", label: "Start work" };
   return undefined;
 }
 

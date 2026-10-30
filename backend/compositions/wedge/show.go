@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/polterware/polterware/backend/domains/decision"
-	"github.com/polterware/polterware/backend/domains/knowledge"
 	"github.com/polterware/polterware/backend/domains/polter"
 	"github.com/polterware/polterware/backend/domains/work"
 	storepkg "github.com/polterware/polterware/backend/providers/sqlite"
@@ -64,9 +63,6 @@ func queryShow(store *storepkg.Store, snapshot work.Snapshot, id string) (string
 			return "", err
 		}
 		text := fmt.Sprintf("doc %s %q", item.ID, item.Title)
-		if item.Kind == knowledge.KindDoc && item.DocType != "" && item.DocType != knowledge.DocTypeDoc {
-			text += " (" + item.DocType + ")"
-		}
 		text += "\n"
 		for _, node := range snapshot.Nodes {
 			if node.ID == scopes[item.ID] {

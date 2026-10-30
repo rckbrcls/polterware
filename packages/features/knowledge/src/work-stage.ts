@@ -2,11 +2,11 @@ import type { StatusTone } from "@polterware/frontend-design-system";
 import type { WorkStage, WorkspaceWorkCard } from "@polterware/feature-shell";
 
 export const WORK_STAGES: readonly { id: WorkStage; label: string }[] = [
-  { id: "shape", label: "Shape" },
-  { id: "plan", label: "Plan" },
-  { id: "build", label: "Build" },
-  { id: "verify", label: "Verify" },
-  { id: "delivered", label: "Delivered" },
+  { id: "shape", label: "Idea" },
+  { id: "plan", label: "Planned" },
+  { id: "build", label: "In progress" },
+  { id: "verify", label: "In review" },
+  { id: "delivered", label: "Done" },
 ];
 
 export function isWorkStage(value: string): value is WorkStage {

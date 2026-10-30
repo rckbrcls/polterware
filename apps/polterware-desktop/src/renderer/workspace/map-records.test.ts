@@ -206,7 +206,7 @@ describe("mapDocs", () => {
   const records = [
     { id: "d1", kind: "doc", title: "Guide", summary: "How to" },
     { id: "rb", kind: "doc", docType: "runbook", tags: ["ops"], title: "Restore" },
-    { id: "s1", kind: "doc", docType: "source", title: "README", extraJson: JSON.stringify({ path: "README.md" }) },
+    { id: "s1", kind: "doc", docType: "source", title: "README" },
     { id: "v1", kind: "decision", title: "Decision" },
   ];
 
@@ -214,17 +214,7 @@ describe("mapDocs", () => {
   it("maps every doc with its type and skips other kinds", () => {
     const items = mapDocs(records);
     expect(items.map((item) => item.id)).toEqual(["d1", "rb", "s1"]);
-    expect(items.map((item) => item.docType)).toEqual(["doc", "runbook", "source"]);
-    expect(items[1]).toMatchObject({ tags: ["ops"], path: "", owner: "Platform" });
-  });
-
-  it("keeps the project-relative path of a file-backed item", () => {
-    expect(mapDocs(records)[2]).toMatchObject({ title: "README", path: "README.md" });
-  });
-
-  it("survives malformed extraJson", () => {
-    const [item] = mapDocs([{ id: "bad", kind: "doc", title: "T", extraJson: "{not json" }]);
-    expect(item).toMatchObject({ id: "bad", path: "" });
+    expect(items[1]).toMatchObject({ tags: ["ops"], owner: "Platform" });
   });
 });
 

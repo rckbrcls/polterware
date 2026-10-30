@@ -3,23 +3,12 @@ import { KnowledgePromptGrid } from "./knowledge-prompt-grid";
 
 export function DocsEmpty(props: {
   onCreate?: () => void;
-  onImport?: () => void;
-  importBusy?: boolean;
 }) {
   const action = () =>
-    props.onImport || props.onCreate ? (
-      <div class="flex flex-wrap items-center justify-center gap-2">
-        {props.onImport ? (
-          <Button size="sm" variant="primary" disabled={props.importBusy} onClick={() => props.onImport?.()}>
-            Import from project root
-          </Button>
-        ) : null}
-        {props.onCreate ? (
-          <Button size="sm" variant="secondary" onClick={() => props.onCreate?.()}>
-            Add doc
-          </Button>
-        ) : null}
-      </div>
+    props.onCreate ? (
+      <Button size="sm" variant="primary" onClick={() => props.onCreate?.()}>
+        Add doc
+      </Button>
     ) : undefined;
 
   return (

@@ -5,7 +5,6 @@ import type {
   ProjectSwitcherItem,
   WorkspaceCatalogProvider,
   WorkspaceDoc,
-  DocType,
   DecisionState,
   WorkspaceDecision,
   WorkspaceEntityLink,
@@ -166,26 +165,19 @@ export function mapKnowledgeEntityLinks(
 }
 
 /** The doc type of a stored doc; anything unknown reads as a plain doc. */
-export function docType(value: string): DocType {
-  return value === "runbook" || value === "source" ? value : "doc";
-}
-
-/** Docs are the `doc` knowledge items; their type is `docType` and tags are free labels. */
+/** Docs are the `doc` knowledge items; tags are free labels. */
 export function mapDocs(
   items: Record<string, unknown>[],
   linksByKnowledge: Map<string, WorkspaceEntityLink[]> = new Map(),
 ): WorkspaceDoc[] {
   return items.filter((item) => asString(item.kind) === "doc").map((item) => {
-    const extra = parseJsonObject(asString(item.extraJson));
     const id = asString(item.id);
     return {
       id,
       title: asString(item.title),
       summary: asString(item.summary),
       bodyMarkdown: asString(item.body),
-      docType: docType(asString(item.docType)),
       tags: asStringArray(item.tags),
-      path: asString(extra.path),
       scopeNodeId: asString(item.scopeNodeId),
       owner: asString(item.owner, "Platform"),
       updatedAt: formatInstant(asString(item.updatedAt)),
@@ -341,7 +333,6 @@ export function mapStructure(raw: Record<string, unknown>): WorkspaceStructure {
       tech: asString(item.tech),
       migrationFrom: asString(item.migrationFrom),
       migrationTo: asString(item.migrationTo),
-      uses: asStringArray(item.uses),
       deploys: asObjectArray(item.deploys).map((deploy) => ({
         id: asString(deploy.id), environmentId: asString(deploy.environmentId),
         environment: asString(deploy.environment), provider: asString(deploy.provider), resource: asString(deploy.resource),
@@ -361,7 +352,7 @@ export function mapStructureHistory(raw: Record<string, unknown>): WorkspaceStru
   }));
 }
 
-const INBOX_KINDS: WorkspaceInboxKind[] = ["decision", "drift", "verify"];
+const INBOX_KINDS: WorkspaceInboxKind[] = ["decision", "drift", "setup"];
 const INBOX_ACTIONS: WorkspaceInboxAction[] = [
   "decide",
   "delegate",
@@ -369,8 +360,6 @@ const INBOX_ACTIONS: WorkspaceInboxAction[] = [
   "fix_code",
   "update_intent",
   "ignore",
-  "verify",
-  "reject",
 ];
 
 /** Inbox from WorkService.ListInbox; unknown kinds and actions are dropped. */

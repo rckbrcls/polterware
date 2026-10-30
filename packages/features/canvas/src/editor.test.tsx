@@ -166,7 +166,7 @@ describe("Desktop canvas interactions", () => {
     setEntities([{ kind: "fact", id: "fact-1", title: "Renamed fact" }]);
     expect(container.textContent).toContain("Renamed fact");
     setEntities([]);
-    expect(container.textContent).toContain("Missing Fact");
+    expect(container.textContent).toContain("Missing Rule");
     expect(container.textContent).toContain("Unverified");
   });
   it("keeps ApplyPolter errors in the promotion dialog and links only after explicit success", async () => {
@@ -185,15 +185,15 @@ describe("Desktop canvas interactions", () => {
     await vi.waitFor(() => expect(api.promote).toHaveBeenCalledTimes(2));
     await vi.waitFor(() => expect(vi.mocked(api.update).mock.calls.at(-1)?.[2].graph?.nodes[0]?.ref).toEqual({ kind: "card", id: "created" }));
   });
-  it("promotes a note to a Fact and persists the returned canon reference", async () => {
+  it("promotes a note to a Rule and persists the returned canon reference", async () => {
     const api = port(); api.promote = vi.fn().mockResolvedValue({ kind: "fact", id: "fact-created", title: "Original", slug: "original" });
     const host = mount(api); pointer(host, "pointerdown", 160, 160); pointer(host, "pointerup", 160, 160);
     await openTab("Data");
-    [...container.querySelectorAll("button")].find((button) => button.textContent?.includes("Promote to Fact"))!.click();
+    [...container.querySelectorAll("button")].find((button) => button.textContent?.includes("Promote to Rule"))!.click();
     const dialog = () => document.body.querySelector('[role="dialog"]')!;
     await vi.waitFor(() => expect(dialog()).toBeTruthy());
     const promote = [...dialog().querySelectorAll("button")].find((button) => button.textContent === "Promote")!;
-    expect(promote.disabled).toBe(false); expect(dialog().textContent).toContain("Kind: Declared");
+    expect(promote.disabled).toBe(false); expect(dialog().textContent).toContain("Agents keep the code to it.");
     promote.click();
     await vi.waitFor(() => expect(api.promote).toHaveBeenCalledWith("project", { kind: "fact", title: "Original", slug: "original", canvasName: "Sketch" }));
     await vi.waitFor(() => expect(vi.mocked(api.update).mock.calls.at(-1)?.[2].graph?.nodes[0]?.ref).toEqual({ kind: "fact", id: "fact-created" }));

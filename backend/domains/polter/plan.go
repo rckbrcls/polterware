@@ -163,7 +163,6 @@ func (p *planner) createNode(node StructureNode, path, level, parentID string) {
 		return
 	}
 	decisions, _ := node.MetaValue("decisions")
-	uses, _ := node.MetaValue("uses")
 	repo, _ := node.MetaValue("repo")
 	folder, _ := node.MetaValue("path")
 	kind, _ := node.MetaValue("kind")
@@ -183,7 +182,7 @@ func (p *planner) createNode(node StructureNode, path, level, parentID string) {
 	created := structure.Node{
 		ID: id, Slug: node.Slug, Path: path, Title: node.Title, Intent: node.Intent,
 		Level: level, Status: structure.NodeActive, ParentID: parentID, Position: p.nextNode,
-		Uses: splitList(uses), Repo: repo, Folder: folder, Kind: kind, Tech: tech,
+		Repo: repo, Folder: folder, Kind: kind, Tech: tech,
 		MigrationFrom: migrationFrom, MigrationTo: migrationTo, Deploys: deploys,
 	}
 	p.ops = append(p.ops, work.Op{
@@ -191,7 +190,7 @@ func (p *planner) createNode(node StructureNode, path, level, parentID string) {
 		Fields: map[string]any{
 			"slug": node.Slug, "title": node.Title, "intent": node.Intent, "level": level,
 			"status": structure.NodeActive, "path": path, "parent_id": parentID,
-			"decisions": splitList(decisions), "uses": splitList(uses), "position": p.nextNode,
+			"decisions": splitList(decisions), "position": p.nextNode,
 			"repo": repo, "folder": folder, "kind": kind, "tech": tech,
 			"migration_from": migrationFrom, "migration_to": migrationTo,
 			"deploys": nonNilDeploys(deploys),
@@ -226,13 +225,6 @@ func (p *planner) updateNode(node StructureNode, existing structure.Node, path, 
 	if decisions, ok := node.MetaValue("decisions"); ok {
 		if list := splitList(decisions); !slices.Equal(list, existing.Decisions) {
 			set("decisions", existing.Decisions, list)
-		}
-	}
-	// A present uses: is authoritative; an empty value clears the edges.
-	if value, ok := node.MetaValue("uses"); ok {
-		if list := splitList(value); !slices.Equal(list, nonNil(existing.Uses)) {
-			set("uses", nonNil(existing.Uses), list)
-			existing.Uses = list
 		}
 	}
 	// A present deploys: replaces the node's links; an empty value clears them.

@@ -1,22 +1,14 @@
 import { Show, type JSX } from "solid-js";
 import {
   Button,
-  Book03Icon,
   Select,
   StatusChip,
 } from "@polterware/frontend-design-system";
 import type { DecisionLevel, ScopeNodeItem, WorkspaceDecision } from "@polterware/feature-shell";
 import { KnowledgeDocumentProperty } from "./knowledge-document-properties";
 import { KnowledgeDocumentShell, type DocNoteProps } from "./knowledge-document-shell";
-import { decisionStateTone } from "./library-row";
+import { DECISION_STATE_LABEL, decisionStateTone } from "./library-row";
 import { ScopePicker, scopePathOf } from "./scope-picker";
-
-const STATE_LABEL: Record<WorkspaceDecision["state"], string> = {
-  proposed: "Proposed",
-  active: "Active",
-  challenged: "Challenged",
-  superseded: "Superseded",
-};
 
 const LEVEL_LABEL: Record<DecisionLevel, string> = {
   principle: "Principle (whole project)",
@@ -47,7 +39,6 @@ export function DecisionDetail(props: {
   scopeNodes?: ScopeNodeItem[];
   /** Writes the Structure scope as a node path; empty clears it. */
   onScopeChange?: (path: string) => void;
-  links?: JSX.Element;
   /** Note-style editing: editable title and tags, like docs and Notes. */
   note?: DocNoteProps;
 }) {
@@ -57,20 +48,18 @@ export function DecisionDetail(props: {
     Boolean(props.onAction) && (props.decision.state === "active" || props.decision.state === "challenged") && successors().length > 0;
   return (
     <KnowledgeDocumentShell
-      trail={[{ label: "Truth", section: "truth" }, { label: "Decisions", section: "truth", tab: "decisions" }]}
       entityId={props.decision.id}
       title={props.note?.title ?? props.decision.title}
       onTitleChange={props.note?.onTitleChange}
       tags={props.note?.tags}
       tagSuggestions={props.note?.tagSuggestions}
       onTagsChange={props.note?.onTagsChange}
-      icon={<Book03Icon size={32} />}
       bodyMarkdown={props.bodyMarkdown}
       onBodyChange={props.onBodyChange}
       properties={
         <>
           <KnowledgeDocumentProperty label="Status">
-            <StatusChip tone={decisionStateTone(props.decision.state)}>{STATE_LABEL[props.decision.state]}</StatusChip>
+            <StatusChip tone={decisionStateTone(props.decision.state)}>{DECISION_STATE_LABEL[props.decision.state]}</StatusChip>
             <Show when={props.onAction}>
               <Show when={props.decision.state === "proposed"}>
                 <Button variant="secondary" size="sm" onClick={() => props.onAction?.({ kind: "activate" })}>Activate</Button>
@@ -106,7 +95,7 @@ export function DecisionDetail(props: {
             </Show>
           </KnowledgeDocumentProperty>
           <Show when={props.onScopeChange && props.decision.level === "decision"}>
-            <KnowledgeDocumentProperty label="Scope">
+            <KnowledgeDocumentProperty label="About">
               <ScopePicker
                 nodes={props.scopeNodes ?? []}
                 value={scopePathOf(props.scopeNodes ?? [], props.decision.scopeNodeId)}
@@ -118,15 +107,15 @@ export function DecisionDetail(props: {
           <KnowledgeDocumentProperty label="Governs" mono show={props.decision.governs.length > 0}>
             {props.decision.governs.join(", ")}
           </KnowledgeDocumentProperty>
-          <KnowledgeDocumentProperty label="Supersedes" show={props.decision.supersedes.length > 0}>
+          <KnowledgeDocumentProperty label="Replaces" show={props.decision.supersedes.length > 0}>
             {props.decision.supersedes.join(", ")}
           </KnowledgeDocumentProperty>
-          <KnowledgeDocumentProperty label="Superseded by" show={Boolean(props.decision.supersededBy)}>
+          <KnowledgeDocumentProperty label="Replaced by" show={Boolean(props.decision.supersededBy)}>
             {props.decision.supersededBy}
           </KnowledgeDocumentProperty>
-          <KnowledgeDocumentProperty label="Supersede with" show={canSupersede()}>
+          <KnowledgeDocumentProperty label="Replace with" show={canSupersede()}>
             <Select
-              aria-label="Supersede with"
+              aria-label="Replace with"
               size="sm"
               class="w-full min-w-0 max-w-[20rem]"
               placeholder="Choose a decision…"
@@ -139,7 +128,6 @@ export function DecisionDetail(props: {
           </KnowledgeDocumentProperty>
         </>
       }
-      links={props.links}
     />
   );
 }

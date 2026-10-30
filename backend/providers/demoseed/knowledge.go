@@ -34,9 +34,9 @@ func seedKnowledge(store *storepkg.Store) error {
 			CreatedAt: docsUpdated.Add(-72 * time.Hour), UpdatedAt: docsUpdated.Add(-72 * time.Hour),
 		},
 		{
-			ID: "rb-service", ProjectID: ProjectID, Title: "Service recovery", Kind: "doc", DocType: "runbook",
+			ID: "rb-service", ProjectID: ProjectID, Title: "Service recovery", Kind: "doc", DocType: "doc",
 			Body: "## Objective\n\nRestore a local service after a failed health check.\n\n## Prerequisites\n\n- Confirm the affected environment\n- Open a visual terminal session\n\n## Steps\n\n1. Inspect the process record\n2. Review the restart command\n3. Record the expected result\n\n## Commands\n\n```bash\nsystemctl status example-api\nsystemctl restart example-api\n```\n\n## Rollback\n\nRestore the previous service version if the health check remains degraded.",
-			Tags: []string{"api", "recovery"}, Summary: "Restore a local service after a failed health check.",
+			Tags: []string{"runbook", "api", "recovery"}, Summary: "Restore a local service after a failed health check.",
 			Owner: "Platform", Status: "published", ExtraJSON: mustJSON(map[string]any{
 				"service": "API", "severity": "high",
 				"prerequisites": []string{"Confirm the affected environment", "Open a visual terminal session"},
@@ -48,9 +48,9 @@ func seedKnowledge(store *storepkg.Store) error {
 			CreatedAt: runbookUpdated, UpdatedAt: runbookUpdated,
 		},
 		{
-			ID: "rb-database", ProjectID: ProjectID, Title: "Database failover", Kind: "doc", DocType: "runbook",
+			ID: "rb-database", ProjectID: ProjectID, Title: "Database failover", Kind: "doc", DocType: "doc",
 			Body: "## Objective\n\nReview a failover sequence for the primary database.\n\n## Prerequisites\n\n- Verify the standby is healthy\n- Pause local writes\n\n## Steps\n\n1. Review replication state\n2. Promote the standby\n3. Validate application health\n\n## Commands\n\n```bash\npg_isready\npsql -c 'select now();'\n```\n\n## Rollback\n\nRestore the previous primary reference if validation fails.",
-			Tags: []string{"database", "failover"}, Summary: "Review a failover sequence for the primary database.",
+			Tags: []string{"runbook", "database", "failover"}, Summary: "Review a failover sequence for the primary database.",
 			Owner: "Platform", Status: "published", ExtraJSON: mustJSON(map[string]any{
 				"service": "Database", "severity": "critical",
 				"prerequisites": []string{"Verify the standby is healthy", "Pause local writes"},
@@ -88,10 +88,6 @@ func seedKnowledge(store *storepkg.Store) error {
 			}),
 			CreatedAt: docsUpdated.Add(-12 * time.Hour), UpdatedAt: docsUpdated.Add(-12 * time.Hour),
 		},
-		sourceItem("src-readme", "README", "README.md", "Project overview and setup.", docsUpdated),
-		sourceItem("src-agents", "Agent instructions", "AGENTS.md", "Rules agents follow in this repository.", docsUpdated),
-		sourceItem("src-package", "package.json", "package.json", "Workspace scripts and dependencies.", docsUpdated),
-		sourceItem("src-gomod", "go.mod", "go.mod", "Go module and dependencies.", docsUpdated),
 		principleItem("decision-principle-local-first", "Local-first truth", "Project state must stay useful on one machine.", "Project state must remain useful on one machine without requiring a hosted account.", docsUpdated.Add(-48*time.Hour)),
 		principleItem("decision-principle-honest-boundaries", "Honest product boundaries", "Never describe planned work as shipped.", "Do not describe planned capabilities as shipped.", docsUpdated.Add(-48*time.Hour)),
 		principleItem("decision-principle-provenance", "Provenance over inference", "Observed facts win over inferred ones.", "Declared and observed facts take precedence over inferred knowledge.", docsUpdated.Add(-48*time.Hour)),
@@ -140,16 +136,6 @@ func mustJSON(value any) string {
 		return "{}"
 	}
 	return string(body)
-}
-
-// sourceItem is a registered project-relative source, shaped like the items
-// ImportProjectSources writes.
-func sourceItem(id, title, path, summary string, at time.Time) knowledge.Item {
-	return knowledge.Item{
-		ID: id, ProjectID: ProjectID, Title: title, Kind: "doc", DocType: "source",
-		Tags: []string{}, Summary: summary, ExtraJSON: mustJSON(map[string]string{"path": path}),
-		CreatedAt: at, UpdatedAt: at,
-	}
 }
 
 func principleItem(id, title, summary, body string, at time.Time) knowledge.Item {

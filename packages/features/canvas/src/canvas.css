@@ -408,6 +408,11 @@
   overflow-wrap: anywhere;
 }
 
+/* The raised drop of `--material-raised`, under a lit outline's face. */
+.pw-canvas-face--lit {
+  filter: drop-shadow(0 2px 4px var(--material-drop)) drop-shadow(0 1px 2px var(--material-drop));
+}
+
 .pw-canvas-selection {
   fill: none;
   stroke: var(--color-info);
@@ -480,6 +485,12 @@
   box-sizing: border-box;
   overflow: hidden;
   user-select: none;
+}
+
+/* Systems and domains hold other nodes: their tile and title head the group from its top. */
+.pw-canvas-node-card[data-group] {
+  align-items: flex-start;
+  padding-top: 18px;
 }
 
 .pw-canvas-node-card-text {

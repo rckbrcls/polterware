@@ -48,7 +48,7 @@ import {
   type WorkspaceInboxItem,
 } from "@polterware/feature-shell";
 import { StructureView, STRUCTURE_SCOPE, type StructureRecordKind } from "@polterware/feature-architecture";
-import { CanvasWorkspace } from "./canvas-workspace";
+import { CanvasWorkspace, drawStructureCanvas, rememberOpenCanvas } from "./canvas-workspace";
 import type { CardDraft, ComposeRequest, DecisionDraft, DocDraft, MilestoneAction } from "@polterware/feature-knowledge";
 import type { ChangeEnvelope } from "@polterware/feature-knowledge/change-envelope";
 import { hydrateAppearancePreferences, hydrateShortcutPreferences, settingsTabScope } from "@polterware/feature-settings/boot";
@@ -89,6 +89,9 @@ const NewFeatureFlow = lazy(() =>
 const KnowledgeComposer = lazy(() =>
   import("@polterware/feature-knowledge").then((m) => ({ default: m.KnowledgeComposer })),
 );
+const DocumentActivity = lazy(() =>
+  import("@polterware/feature-knowledge").then((m) => ({ default: m.DocumentActivity })),
+);
 /** The Facts page's collection scope (`FACTS_SCOPE` in the lazily loaded knowledge feature). */
 const FACTS_SCOPE = "truth:facts";
 const TruthFactsPage = lazy(() =>
@@ -107,7 +110,6 @@ import {
   loadWorkCards,
   loadMilestones,
   loadStructure,
-  loadCanonEvidence,
   loadChanges,
   loadFacts,
   loadInbox,
@@ -129,17 +131,14 @@ import {
   persistEnvironmentDefault,
   persistIntegrationConnection,
   persistIntegrationSync,
-  persistImportProjectSources,
   persistKnowledgeBody,
   persistKnowledgeTags,
   persistKnowledgeTitle,
   persistKnowledgeCreate,
-  persistKnowledgeDocType,
   persistKnowledgeScope,
   persistKnowledgeArchived,
   persistKnowledgeDeletePermanently,
   loadArchivedKnowledge,
-  persistKnowledgeSourcePath,
   persistAddProjectRepo,
   persistProjectSettings,
   persistRemoveProjectRepo,
@@ -158,7 +157,6 @@ import {
   persistWorkRemoveCard,
   persistStructureCreateNode,
   persistStructureMoveNode,
-  persistStructureUses,
   persistStructureUpdateDeploys,
   persistStructureNode,
   persistWorkCardUnder,
@@ -254,7 +252,7 @@ function dispatchTabsFor(section: string): TabItem[] {
 }
 
 function dispatchTabsLabel(section: string): string {
-  if (section === "dispatch-routing") return "Routing";
+  if (section === "dispatch-routing") return "Models";
   if (section === "dispatch-usage") return "Usage";
   return "Runs";
 }
@@ -267,7 +265,6 @@ export function App() {
   const [paletteOpen, setPaletteOpen] = createSignal(false);
   const [shortcutsOpen, setShortcutsOpen] = createSignal(false);
   const [createProjectOpen, setCreateProjectOpen] = createSignal(false);
-  const [importSourcesBusy, setImportSourcesBusy] = createSignal(false);
   const [workspace, setWorkspace] = createSignal<WorkspaceSnapshot>(emptyWorkspace());
   const [loading, setLoading] = createSignal(true);
   const [structureError, setStructureError] = createSignal("");
@@ -738,7 +735,7 @@ export function App() {
     const card = (item: WorkspaceSnapshot["workCards"][number]) => ({ id: item.slug, title: item.title, caption: stageLabel(item.stage) });
     const decision = (item: WorkspaceSnapshot["decisions"][number]) => ({ id: item.id, title: item.title, caption: cap(item.state) });
     const fact = (item: WorkspaceSnapshot["structureFacts"][number]) => ({ id: item.id, title: item.statement || item.id, caption: item.truthClass ? cap(item.truthClass) : undefined });
-    const doc = (item: WorkspaceSnapshot["docs"][number]) => ({ id: item.id, title: item.title, caption: cap(item.docType) });
+    const doc = (item: WorkspaceSnapshot["docs"][number]) => ({ id: item.id, title: item.title, caption: item.tags.join(", ") || undefined });
     const project = { cards: workspace().workCards.map(card), decisions: workspace().decisions.map(decision), facts: workspace().structureFacts.map(fact), docs: workspace().docs.map(doc) };
     return { project, nodes: Object.fromEntries(workspace().structure.nodes.map((node) => {
       const entityIds = new Set(workspace().canonEntities.filter((entity) => entity.refId === node.id || entity.refId === node.path).map((entity) => entity.id));
@@ -874,20 +871,6 @@ export function App() {
   const cardScopeId = () =>
     route().section === "milestones" && route().tab === "board" ? "knowledge:board" : "knowledge:specs";
 
-  function importProjectSources() {
-    if (importSourcesBusy()) return;
-    setImportSourcesBusy(true);
-    void persistImportProjectSources({ projectId: currentProjectId() })
-      .then(async (result) => {
-        await refreshWorkspace(currentProjectId());
-        pushToast(result.message, "success");
-      })
-      .catch((error: unknown) => {
-        pushToast(error instanceof Error ? error.message : "Could not import project sources.", "danger");
-      })
-      .finally(() => setImportSourcesBusy(false));
-  }
-
   /** The current route when it is already on the section, so its tab stays. */
   const sectionRoute = (section: string): ClientRoute => (route().section === section ? route() : goSection(route(), section));
 
@@ -964,7 +947,7 @@ export function App() {
 
   function createDoc(draft: DocDraft): Promise<boolean> {
     return composeWrite({
-      summary: `Add ${draft.docType}: ${draft.title}`,
+      summary: `Add doc: ${draft.title}`,
       why: draft.why,
       failure: "Could not add the doc.",
       created: `Created “${draft.title}”`,
@@ -972,10 +955,8 @@ export function App() {
         const id = await persistKnowledgeCreate({
           projectId: currentProjectId(),
           kind: "doc",
-          docType: draft.docType,
           title: draft.title,
           body: draft.body,
-          path: draft.path || undefined,
           change,
         });
         if (draft.scopePath) await persistKnowledgeScope(currentProjectId(), id, draft.scopePath);
@@ -1102,7 +1083,7 @@ export function App() {
             activate: `Activate decision: ${decision.title}`,
             reactivate: `Keep decision active after review: ${decision.title}`,
             challenge: `Open review of decision: ${decision.title}`,
-            supersede: `Supersede ${decision.title} with ${successor?.title ?? "another decision"}`,
+            supersede: `Replace ${decision.title} with ${successor?.title ?? "another decision"}`,
             level: action.kind === "level" && action.level === "principle"
               ? `Make ${decision.title} a principle`
               : `Make ${decision.title} a decision`,
@@ -1110,9 +1091,9 @@ export function App() {
           // Reopening or replacing a decision changes intent, so it asks why; the reason is what
           // the Polter block records as `reason:`.
           const askWhy: ReasonOptions | undefined = action.kind === "challenge"
-            ? { title: `Open a review of “${decision.title}”?`, description: "It goes back to review until someone keeps or supersedes it. Say what is wrong with it.", confirmLabel: "Open review", placeholder: "What should the review look at?" }
+            ? { title: `Open a review of “${decision.title}”?`, description: "It stays under review until someone keeps or replaces it. Say what is wrong with it.", confirmLabel: "Open review", placeholder: "What should the review look at?" }
             : action.kind === "supersede"
-              ? { title: `Supersede “${decision.title}”?`, description: `${successor?.title ?? "The other decision"} replaces it. Say why.`, confirmLabel: "Supersede", placeholder: "Why replace it?" }
+              ? { title: `Replace “${decision.title}”?`, description: `${successor?.title ?? "The other decision"} replaces it. Say why.`, confirmLabel: "Replace", placeholder: "Why replace it?" }
               : undefined;
           void justifyChange({
             title: "Justify decision change",
@@ -1129,65 +1110,6 @@ export function App() {
           });
         }}
         onOpenCard={(slug) => activateDetail(cardScopeId(), slug, "card")}
-        onOpenEntity={(_entityId, refId, kind) => {
-          if (kind === "component") {
-            applyRoute(goSection(route(), "structure"));
-            activateDetail(STRUCTURE_SCOPE, refId, "arch-node");
-          }
-        }}
-        onLinkEntity={(knowledgeId, entityId, kind) => {
-          const predicate = kind === "resource" || kind === "component"
-            ? (workspace().docs.some((item) => item.id === knowledgeId && item.docType === "runbook") ? "OPERATES" : "DOCUMENTS")
-            : "RELATED_TO";
-          void justifyChange({
-            title: "Justify entity link",
-            defaultSummary: `Link knowledge to ${kind}`,
-          }).then((change) => {
-            if (!change) return;
-            return window.polterware.core.knowledge.saveLink({
-              link: {
-                projectId: currentProjectId(),
-                knowledgeId,
-                entityId,
-                predicate,
-                truthClass: "declared",
-                source: "desktop",
-                actor: "human",
-              },
-              change: {
-                summary: change.summary,
-                rationale: change.rationale,
-                agentRunId: change.agentRunId ?? "",
-              },
-            }).then(async () => {
-              await refreshWorkspace(currentProjectId());
-              pushToast("Entity linked.", "success");
-            });
-          }).catch((error: unknown) => {
-            pushToast(error instanceof Error ? error.message : "Could not link entity.", "danger");
-          });
-        }}
-        onUnlinkEntity={(linkId) => {
-          void justifyChange({
-            title: "Justify unlink",
-            defaultSummary: "Unlink knowledge entity",
-          }).then((change) => {
-            if (!change) return;
-            return window.polterware.core.knowledge.deleteLink({
-              id: linkId,
-              change: {
-                summary: change.summary,
-                rationale: change.rationale,
-                agentRunId: change.agentRunId ?? "",
-              },
-            }).then(async () => {
-              await refreshWorkspace(currentProjectId());
-              pushToast("Entity unlinked.", "success");
-            });
-          }).catch((error: unknown) => {
-            pushToast(error instanceof Error ? error.message : "Could not unlink entity.", "danger");
-          });
-        }}
         onSaveBody={(id, body) => {
           // Persist without refreshWorkspace — full reload per keystroke freezes Knowledge + TipTap.
           void justifyChange({
@@ -1222,19 +1144,6 @@ export function App() {
             pushToast(error instanceof Error ? error.message : "Could not save tags.", "danger");
           });
         }}
-        onSaveDocType={(id, docType) => {
-          const title = workspace().docs.find((item) => item.id === id)?.title ?? "doc";
-          void justifyChange({
-            title: "Justify doc type",
-            defaultSummary: `Mark ${title} as a ${docType}`,
-          }).then((change) => {
-            if (!change) return;
-            return persistKnowledgeDocType(workspace(), currentProjectId(), id, docType, change)
-              .then(() => refreshWorkspace(currentProjectId()));
-          }).catch((error: unknown) => {
-            pushToast(error instanceof Error ? error.message : "Could not change the doc type.", "danger");
-          });
-        }}
         scopeNodes={scopeNodes()}
         scopeTokens={scopeTokens()}
         scopeEnvironments={scopeEnvironmentCatalog()}
@@ -1247,20 +1156,7 @@ export function App() {
               pushToast(error instanceof Error ? error.message : "Could not save scope.", "danger");
             });
         }}
-        onSaveSourcePath={(id, path) => {
-          void justifyChange({
-            title: "Justify source path",
-            defaultSummary: "Update source path",
-          }).then((change) => {
-            if (!change) return;
-            return persistKnowledgeSourcePath(workspace(), currentProjectId(), id, path, change);
-          }).catch((error: unknown) => {
-            pushToast(error instanceof Error ? error.message : "Could not save source path.", "danger");
-          });
-        }}
         onCompose={setComposeRequest}
-        onImportProjectSources={importProjectSources}
-        importBusy={importSourcesBusy()}
         onAdvanceCard={async (slug, step) => {
           // Passing a gate moves the card forward, which asks no why; a refusal stays on the page.
           try {
@@ -1642,6 +1538,15 @@ export function App() {
               await persistProjectSettings(projectId, { ...workspace().settings, ...patch }, workspace().settingsEnvironments);
               await refreshWorkspace(projectId);
             }}
+            renderActivity={(nodeId) => <Suspense fallback={null}><DocumentActivity subjectId={nodeId} /></Suspense>}
+            onDrawCanvas={async () => {
+              const projectId = currentProjectId();
+              const canvasId = await drawStructureCanvas(projectId, workspace().structure.nodes);
+              pushToast("Structure drawn on its canvas.", "success", { action: { label: "Open canvas", onClick: () => {
+                rememberOpenCanvas(projectId, canvasId);
+                navigateSection("canvas", DEFAULT_TABS.canvas);
+              } } });
+            }}
             onLinkRecord={async (kind, recordId, nodeId) => {
               const projectId = currentProjectId();
               const node = workspace().structure.nodes.find((item) => item.id === nodeId);
@@ -1682,16 +1587,6 @@ export function App() {
               });
               await refreshWorkspace(currentProjectId());
             }}
-            onUses={async (nodeId, targetIds) => {
-              const nodes = workspace().structure.nodes;
-              const source = nodes.find((node) => node.id === nodeId);
-              if (!source) throw new Error("Missing structure node.");
-              const change = await justifyChange({ title: "Update dependencies", defaultSummary: `Update dependencies of ${source.title}` });
-              if (!change) throw new Error("Cancelled.");
-              await persistStructureUses({ projectId: currentProjectId(), path: source.path, title: source.title, level: source.level,
-                uses: nodes.filter((node) => targetIds.includes(node.id)).map((node) => node.path), change });
-              await refreshWorkspace(currentProjectId());
-            }}
             onCreate={async (draft) => {
               const nodes = workspace().structure.nodes;
               const parent = nodes.find((node) => node.id === draft.parentId);
@@ -1718,7 +1613,7 @@ export function App() {
             tab="library"
             tabs={[...SECTION_TABS.truth]}
             activeTab={route().tab}
-            tabsLabel="Truth"
+            tabsLabel="Knowledge"
           />
         </Match>
 
@@ -1727,7 +1622,7 @@ export function App() {
             tab="docs"
             tabs={[...SECTION_TABS.truth]}
             activeTab={route().tab}
-            tabsLabel="Truth"
+            tabsLabel="Knowledge"
           />
         </Match>
 
@@ -1741,10 +1636,9 @@ export function App() {
             onScopeTokensChange={applyScopeTokens}
             entities={workspace().canonEntities}
             loadFacts={loadFacts}
-            loadEvidence={loadCanonEvidence}
             tab="facts"
             tabs={[...SECTION_TABS.truth]}
-            tabsLabel="Truth"
+            tabsLabel="Knowledge"
             onTabChange={(tab) => applyRoute(setTab(route(), tab))}
             justifyChange={justifyChange}
           />
@@ -1959,11 +1853,6 @@ export function App() {
             onCreateCard={createCard}
             onCreateDecision={createDecision}
             onCreateDoc={createDoc}
-            onImportProjectSources={() => {
-              setComposeRequest(null);
-              importProjectSources();
-            }}
-            importBusy={importSourcesBusy()}
           />
         </Suspense>
       </Show>

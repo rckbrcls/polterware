@@ -3,13 +3,11 @@ import {
   ActiveFilterBar,
   Archive,
   ArchivedList,
-  Breadcrumb,
   Button,
   ChevronLeft,
   FileText,
   FilterPopover,
   LibraryBig,
-  Link,
   ListChecks,
   PropertyPicker,
   PageContent,
@@ -40,7 +38,6 @@ import {
   type WorkspaceDecision,
   type WorkspaceCanonEntity,
   type WorkspaceDoc,
-  type DocType,
   type WorkspaceWorkCard,
   type WorkspaceMilestone,
   type WorkStage,
@@ -61,10 +58,9 @@ import { DecisionDetail, type DecisionAction } from "./decision-detail";
 import { DocDetail } from "./doc-detail";
 import { DocsEmpty, docsFilterEmpty } from "./docs-empty";
 import { DocsTable } from "./docs-table";
-import { DOC_TYPES, docTypeIcon } from "./doc-type";
-import { EntityLinks } from "./entity-links";
 import { LibraryEmpty, libraryFilterEmpty } from "./library-empty";
 import {
+  DECISION_STATE_LABEL,
   EMPTY_LIBRARY_FILTERS,
   filterLibraryRows,
   libraryRowsFromWorkspace,
@@ -107,6 +103,7 @@ export type { KnowledgeAgentPrompt, KnowledgePromptKind } from "./agent-prompts"
 export type { MilestoneAction } from "./milestones";
 export type { DecisionAction } from "./decision-detail";
 export { KnowledgeComposer } from "./composers";
+export { DocumentActivity } from "./document-activity";
 export type { CardDraft, CardKind, ComposeRequest, DecisionDraft, DocDraft } from "./composers";
 export { WORK_STAGES, workStageLabel } from "./work-stage";
 export { NewFeatureFlow, type FeatureFlowLine } from "./new-feature-flow";
@@ -208,25 +205,18 @@ export function KnowledgeView(props: {
   onDecisionAction?: (decisionId: string, action: DecisionAction) => void;
   onOpenCard?: (slug: string) => void;
   onOpenComponent?: (componentId: string) => void;
-  onOpenEntity?: (entityId: string, refId: string, kind: string) => void;
-  onLinkEntity?: (knowledgeId: string, entityId: string, kind: string) => void;
-  onUnlinkEntity?: (linkId: string) => void;
   onSaveBody?: (id: string, body: string) => void;
-  onSaveSourcePath?: (id: string, path: string) => void;
   /** Renames a doc (debounced). */
   onSaveTitle?: (id: string, title: string) => void;
   /** Replaces the tags of a doc. */
   onSaveTags?: (id: string, tags: string[]) => void;
   /** Changes what a doc is: a document, a runbook, or a source file. */
-  onSaveDocType?: (id: string, docType: DocType) => void;
   /** Structure nodes offered by the scope pickers; the global scope preselects new items. */
   scopeNodes?: ScopeNodeItem[];
   /** Path of the active global scope, used as the default for new items. */
   activeScopePath?: string;
   /** Writes the scope of a Decision or doc as a Structure node path; empty clears it. */
   onSetScope?: (id: string, path: string) => void;
-  onImportProjectSources?: () => void;
-  importBusy?: boolean;
   /** Opens the composer for a card, a decision, or a doc, with what this view already knows. */
   onCompose?: (request: ComposeRequest) => void;
   /** Reopens the flow for a card in shape or plan. */
@@ -298,7 +288,6 @@ export function KnowledgeView(props: {
     ...EMPTY_CARD_LIST_FILTERS,
   });
   const [bodyOverrides, setBodyOverrides] = createSignal<Record<string, string>>({});
-  const [pathOverrides, setPathOverrides] = createSignal<Record<string, string>>({});
   const [peekSlug, setPeekSlug] = createSignal<string | null>(null);
   const scopeId = createMemo(() => `knowledge:${tab()}`);
   const activeTarget = createDetailPanelSelector((state) => state.activeTarget);
@@ -311,16 +300,11 @@ export function KnowledgeView(props: {
   const titleAutosave = createDocumentAutosave({
     save: (id, title) => props.onSaveTitle?.(id, title),
   });
-  const pathAutosave = createDocumentAutosave({
-    save: (id, path) => props.onSaveSourcePath?.(id, path),
-  });
   onCleanup(() => {
     bodyAutosave.flush();
-    pathAutosave.flush();
     titleAutosave.flush();
     titleAutosave.dispose();
     bodyAutosave.dispose();
-    pathAutosave.dispose();
   });
 
   /** Tags already used by docs and Decisions, offered when adding a tag. */
@@ -366,36 +350,12 @@ export function KnowledgeView(props: {
     bodyAutosave.schedule(id, markdown);
   }
 
-  function notePathChange(id: string, path: string, baseline: string) {
-    if (path === baseline) {
-      setPathOverrides((current) => {
-        if (!(id in current)) return current;
-        const { [id]: _removed, ...rest } = current;
-        return rest;
-      });
-      pathAutosave.cancel(id);
-      return;
-    }
-    setPathOverrides((current) => ({ ...current, [id]: path }));
-    pathAutosave.schedule(id, path);
-  }
-
   const allLibraryRows = createMemo(() => libraryRowsFromWorkspace({ decisions: props.decisions }));
 
   const HAS_OPERATORS = [
     { id: FILTER_IS, label: "has" },
     { id: FILTER_IS_NOT, label: "has no" },
   ];
-  const linkedField = (subject: string): FilterField => ({
-    id: "linked",
-    label: subject,
-    menuLabel: "Linked",
-    kind: "boolean",
-    section: "flags",
-    icon: () => <Link size={14} aria-hidden />,
-    operators: HAS_OPERATORS,
-    options: [{ id: "linked", label: "links", icon: () => <Link size={14} aria-hidden /> }],
-  });
   const scopeFor = (allowEnv: boolean) => ({
     tokens: () => props.scopeTokens ?? [],
     nodes: () => props.scopeNodes ?? [],
@@ -442,11 +402,10 @@ export function KnowledgeView(props: {
         icon: () => <StatusDot tone="ok" showLabel={false} />,
         options: ["active", "challenged", "proposed", "superseded"].map((id) => ({
           id,
-          label: id[0]!.toUpperCase() + id.slice(1),
+          label: DECISION_STATE_LABEL[id as WorkspaceDecision["state"]],
           icon: () => <StatusDot tone={libraryStatusTone(id)} showLabel={false} />,
         })),
       },
-      linkedField("Decision"),
     ],
   });
   const docPageFilters = createPageFilters({
@@ -454,33 +413,25 @@ export function KnowledgeView(props: {
     scope: scopeFor(true),
     fields: () => [
       {
-        id: "type",
-        label: "Type",
-        kind: "multi",
-        icon: () => <FileText size={14} aria-hidden />,
-        options: DOC_TYPES.map((type) => ({ id: type.id, label: type.label, icon: () => docTypeIcon(type.id, 14) })),
-      },
-      {
         id: "tags",
         label: "Tag",
         kind: "multi",
         icon: () => <FileText size={14} aria-hidden />,
         options: distinctDocTags(props.docs ?? []).map((name) => ({ id: name, label: name })),
       },
-      linkedField("Doc"),
     ],
   });
   const pageFilters = () => (cardTab() ? cardPageFilters : docsTab() ? docPageFilters : libraryPageFilters);
 
   const libraryRows = createMemo(() =>
     filterLibraryRows(allLibraryRows(), libraryFilters()).filter((row) =>
-      matchClauses(row, libraryPageFilters.pageClauses(), { status: (item) => item.statusLabel, linked: (item) => item.hasLinks }),
+      matchClauses(row, libraryPageFilters.pageClauses(), { status: (item) => item.state }),
     ),
   );
 
   const docRows = createMemo(() =>
     filterDocs(props.docs ?? [], docFilters()).filter((item) =>
-      matchClauses(item, docPageFilters.pageClauses(), { type: (entry) => entry.docType, tags: (entry) => entry.tags, linked: (entry) => entry.entityLinks.length > 0 }),
+      matchClauses(item, docPageFilters.pageClauses(), { tags: (entry) => entry.tags }),
     ),
   );
 
@@ -630,28 +581,6 @@ export function KnowledgeView(props: {
     return "New Decision";
   });
 
-  function linksFor(
-    knowledgeId: string,
-    links: WorkspaceDecision["entityLinks"] | WorkspaceDoc["entityLinks"],
-  ) {
-    return (
-      <EntityLinks
-        links={links}
-        entities={props.entities}
-        onOpenEntity={props.onOpenEntity}
-        onLinkEntity={
-          props.onLinkEntity
-            ? (entityId) => {
-                const entity = (props.entities ?? []).find((item) => item.id === entityId);
-                props.onLinkEntity?.(knowledgeId, entityId, entity?.kind ?? "component");
-              }
-            : undefined
-        }
-        onUnlink={props.onUnlinkEntity}
-      />
-    );
-  }
-
   const hasLibraryItems = createMemo(() => allLibraryRows().length > 0);
 
   // Cmd+B switches Milestones between the board and the list, outside fields and pages. C opens
@@ -767,7 +696,6 @@ export function KnowledgeView(props: {
           <Show when={cardTab()}>
             <PageToolbar.Center>
               <div ref={(element) => { viewAnchor = element; }} class="flex min-w-0">
-                <Breadcrumb items={[{ label: "Milestones", onSelect: () => openView(null) }]} current={selectedBoard().name} />
               </div>
             </PageToolbar.Center>
           </Show>
@@ -897,8 +825,6 @@ export function KnowledgeView(props: {
               fallback={
                 <DocsEmpty
                   onCreate={props.onCompose ? composeHere : undefined}
-                  onImport={props.onImportProjectSources ? () => props.onImportProjectSources?.() : undefined}
-                  importBusy={props.importBusy}
                 />
               }
             >
@@ -1012,7 +938,6 @@ export function KnowledgeView(props: {
             onAction={props.onDecisionAction ? (action) => props.onDecisionAction?.(item().id, action) : undefined}
             scopeNodes={props.scopeNodes}
             onScopeChange={props.onSetScope ? (path) => props.onSetScope?.(item().id, path) : undefined}
-            links={linksFor(item().id, item().entityLinks)}
             note={docNote(item().id, item().title, item().tags)}
           />
         )}
@@ -1022,19 +947,10 @@ export function KnowledgeView(props: {
           <DocDetail
             doc={item()}
             bodyMarkdown={bodyOverrides()[item().id] ?? item().bodyMarkdown}
-            pathValue={pathOverrides()[item().id] ?? item().path}
-            onDocTypeChange={props.onSaveDocType ? (docType) => props.onSaveDocType?.(item().id, docType) : undefined}
             note={docNote(item().id, item().title, item().tags)}
             onBodyChange={(markdown) => {
               noteBodyChange(item().id, markdown, item().bodyMarkdown);
             }}
-            onPathChange={
-              props.onSaveSourcePath
-                ? (path) => {
-                    notePathChange(item().id, path, item().path);
-                  }
-                : undefined
-            }
             onArchive={props.onArchive ? () => {
               // The archived document leaves the list, so the page goes back to it.
               const id = item().id;
@@ -1043,7 +959,6 @@ export function KnowledgeView(props: {
             } : undefined}
             scopeNodes={props.scopeNodes}
             onScopeChange={props.onSetScope ? (path) => props.onSetScope?.(item().id, path) : undefined}
-            links={linksFor(item().id, item().entityLinks)}
           />
         )}
       </Show>

@@ -53,7 +53,7 @@
 }
 
 /* With a middle slot the toolbar spaces its three groups apart (justify-between): the
-   breadcrumb sits between the tabs and the actions, exactly centered only when they match. */
+   middle group sits between the tabs and the actions, exactly centered only when they match. */
 .pw-page-toolbar:has(> .pw-page-toolbar-center) > .pw-page-toolbar-leading {
   flex: 0 1 auto;
 }

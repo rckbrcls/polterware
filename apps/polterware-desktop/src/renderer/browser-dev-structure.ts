@@ -6,7 +6,7 @@ export function createBrowserStructure(seedProjectId: string, seed: readonly Par
   const list = (projectId: string) => {
     if (!projects.has(projectId)) projects.set(projectId, projectId === seedProjectId ? seed.map((node) => ({
       id: "", parentId: "", level: "system", slug: "", path: "", title: "", intent: "", decisions: [], invariants: [], status: "proposed",
-      childCount: 0, featureCount: 0, openQuestions: 0, repo: "", folder: "", migrationFrom: "", migrationTo: "", uses: [], deploys: [], ...structuredClone(node),
+      childCount: 0, featureCount: 0, openQuestions: 0, repo: "", folder: "", migrationFrom: "", migrationTo: "", deploys: [], ...structuredClone(node),
     })) : []);
     return projects.get(projectId)!;
   };
@@ -29,9 +29,6 @@ export function createBrowserStructure(seedProjectId: string, seed: readonly Par
       const slug = existing?.slug ?? heading[1]!.split("/").at(-1)!;
       const nextPath = parent ? `${parent.path}/${slug}` : slug;
       if (nodes.some((node) => node !== existing && node.path === nextPath)) throw new Error("That structure path already exists.");
-      const usesText = metadata("uses");
-      const uses = usesText === undefined ? undefined : usesText.split(",").map((path) => path.trim()).filter(Boolean);
-      if (uses?.some((path) => path === existing?.path || !nodes.some((node) => node.path === path))) throw new Error("Unknown dependency or self dependency.");
       const deploysText = metadata("deploys");
       const deploys = deploysText === undefined ? undefined : deploysText.split(",").map((part) => {
         const [env, rest] = part.trim().split("=");
@@ -50,7 +47,6 @@ export function createBrowserStructure(seedProjectId: string, seed: readonly Par
         const oldPath = existing.path;
         existing.title = heading[2]!.trim();
         existing.level = level;
-        if (uses) existing.uses = uses;
         if (deploys !== undefined) existing.deploys = deploys;
         if (kind !== undefined) existing.kind = kind;
         if (tech !== undefined) existing.tech = tech;
@@ -60,13 +56,10 @@ export function createBrowserStructure(seedProjectId: string, seed: readonly Par
         if (under !== undefined) {
           existing.parentId = parent?.id ?? "";
           const rewrite = (path: string) => path === oldPath || path.startsWith(`${oldPath}/`) ? nextPath + path.slice(oldPath.length) : path;
-          for (const node of nodes) {
-            node.path = rewrite(node.path);
-            node.uses = (node.uses ?? []).map(rewrite);
-          }
+          for (const node of nodes) node.path = rewrite(node.path);
         }
       } else {
-        nodes.push({ id: `structure-${crypto.randomUUID()}`, parentId: parent?.id ?? "", level, slug, path: nextPath, title: heading[2]!.trim(), intent: "", decisions: [], invariants: [], status: "proposed", childCount: 0, featureCount: 0, openQuestions: 0, repo: "", folder: "", kind: kind ?? "", tech: tech ?? "", migrationFrom: "", migrationTo: "", uses: uses ?? [], deploys: [] });
+        nodes.push({ id: `structure-${crypto.randomUUID()}`, parentId: parent?.id ?? "", level, slug, path: nextPath, title: heading[2]!.trim(), intent: "", decisions: [], invariants: [], status: "proposed", childCount: 0, featureCount: 0, openQuestions: 0, repo: "", folder: "", kind: kind ?? "", tech: tech ?? "", migrationFrom: "", migrationTo: "", deploys: [] });
       }
       for (const node of nodes) node.childCount = nodes.filter((child) => child.parentId === node.id).length;
       return { applied: true, diagnostics: [], ops: [`${existing ? "~" : "+"} node ${nextPath}`] };
