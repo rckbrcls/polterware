@@ -54,12 +54,11 @@ describe("Structure collection", () => {
     expect(api.hasAttribute("data-selected")).toBe(true);
     const doc = host.querySelector<HTMLElement>(".pw-structure__document")!;
     expect(doc.querySelector("h1")?.textContent).toBe("API");
-    expect(doc.querySelector('[role="toolbar"][aria-label="Actions for API"]')?.textContent).toContain("Dependencies");
-    // Metadata sits in sections under the title, the description below it.
-    const meta = doc.querySelector(".pw-structure__meta")?.textContent ?? "";
-    for (const text of ["Properties", "Technology", "Go", "Checkout", "backend/src/api", "app/api"]) expect(meta).toContain(text);
-    expect(meta).not.toContain("Serves the project");
-    expect(doc.textContent).toContain("Serves the project");
+    expect(doc.querySelector('button[aria-label="Actions for API"]')).not.toBeNull();
+    // The description is the summary under the title; the metadata sits on labeled lines below it.
+    expect(doc.querySelector(".pw-structure__summary")?.textContent).toBe("Serves the project");
+    const head = doc.querySelector(".pw-structure__head")?.textContent ?? "";
+    for (const text of ["Properties", "Component", "Go", "Checkout", "backend/src/api", "app/api"]) expect(head).toContain(text);
     // Every card and decision that cites the node is a table row that opens it; empty sections are left out.
     expect(doc.textContent).toContain("Add auth");
     expect(doc.textContent).not.toContain("Facts");

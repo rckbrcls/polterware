@@ -56,68 +56,93 @@
   visibility: visible;
 }
 
-/* Every action but Add child, under the document title. */
-.pw-structure__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin: 0 0 16px -8px;
+/*
+ * The document, laid out like a Linear project overview: a hero (tile, title, summary), labeled
+ * head lines, then record sections set well apart. Space alone separates the subjects.
+ */
+.pw-structure__document {
+  padding-top: 48px;
 }
 
-/* The document: metadata sections under the title, then the description and the records. Sections are collapsible (CollapsibleSections: a 24px icon tile, the title, and a count). */
-.pw-structure__meta {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 4px;
-}
-
-.pw-structure__sections {
+.pw-structure__hero {
   display: flex;
   flex-direction: column;
-  margin-top: 32px;
+  align-items: flex-start;
+  margin-bottom: 28px;
 }
 
-.pw-structure__section {
-  margin-bottom: 12px;
+.pw-structure__hero .pw-document__title {
+  margin: 16px 0 4px;
 }
 
-.pw-structure__text {
+.pw-structure__summary {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: 15px;
   line-height: 24px;
 }
 
-.pw-structure__text--empty {
+.pw-structure__summary--empty {
   color: var(--color-text-muted);
 }
 
-.pw-structure__deploys {
+/* Labeled lines: a 104px muted label column, then the values inline with 20px between them. */
+.pw-structure__head {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  gap: 8px;
+  margin: 0 0 56px;
 }
 
-.pw-structure__deploys li {
-  display: flex;
-  min-width: 0;
+.pw-structure__head-row {
+  display: grid;
+  min-height: 28px;
   align-items: center;
-  gap: 8px;
+  grid-template-columns: 104px minmax(0, 1fr);
+}
+
+.pw-structure__head-row dt {
   color: var(--color-text-muted);
   font-size: 13px;
 }
 
-/* Add child is the bare +: no hover circle, sized to the 20px label line; hover only brightens the glyph. */
-.pw-structure-line__add .pw-button {
-  width: 20px;
-  height: 20px;
-  background: transparent;
-  box-shadow: none;
+.pw-structure__head-row dd {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 20px;
+  margin: 0;
 }
 
-.pw-structure-line__add .pw-button::before {
-  display: none;
+.pw-structure__value {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pw-structure__value--mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.pw-structure__value-icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.pw-structure__value-muted {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+/* Record sections: 48px between subjects; the rows sit flush under the heading. */
+.pw-structure__section {
+  margin-bottom: 48px;
 }
